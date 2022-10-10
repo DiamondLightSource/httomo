@@ -1,0 +1,18 @@
+name: httomo
+channels:
+  - astra-toolbox
+  - conda-forge
+  - savu-dep
+dependencies:
+  - astra-toolbox::astra-toolbox
+  - conda-forge::click
+  - conda-forge::cupy
+  - conda-forge::h5py[build=*openmpi*]
+  - conda-forge::hdf5plugin
+  - conda-forge::mpi4py
+  - conda-forge::numpy
+  - conda-forge::nvtx
+  - conda-forge::python
+  - conda-forge::tomopy
+  - savu-dep::larix
+  - savu-dep::tomobar

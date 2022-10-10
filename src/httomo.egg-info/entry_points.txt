@@ -1,0 +1,2 @@
+[console_scripts]
+httomo = httomo.cli:main
