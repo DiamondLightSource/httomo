@@ -7,16 +7,19 @@ import cupy
 from mpi4py import MPI
 from nvtx import annotate
 
+
 from httomo.common import PipelineTasks
-from httomo.tasks.centering.original_gpu import find_center_of_rotation
-from httomo.tasks.data_loading.original import load_data
-from httomo.tasks.filtering.original_gpu import filter_data
-from httomo.tasks.normalization.original_gpu import normalize_data
-from httomo.tasks.reconstruction.tomopy_gpu import reconstruct
-from httomo.tasks.reslice.original import reslice
-from httomo.tasks.saving.original import save_data
-from httomo.tasks.stripe_removal.original_gpu import remove_stripes
-from httomo.tasks.to_device.mpi_gatherv import to_device
+
+from httomo.tasks._DATA_.data_loading import load_data
+from httomo.tasks._DATA_.data_saving import save_data
+from httomo.tasks._DATA_.data_reslice import reslice
+from httomo.tasks._DATA_.mpi_gatherv import to_device
+
+from httomo.tasks._METHODS_.filtering.original_gpu import filter_data
+from httomo.tasks._METHODS_.centering.original_gpu import find_center_of_rotation
+from httomo.tasks._METHODS_.normalisation.original_gpu import normalise_data
+from httomo.tasks._METHODS_.reconstruction.tomopy_gpu import reconstruct
+from httomo.tasks._METHODS_.stripe_removal.original_gpu import remove_stripes
 
 
 def gpu_pipeline(
@@ -80,7 +83,7 @@ def gpu_pipeline(
     ###############################################################################
     #               Normalising the data and taking the negative log
     with annotate(PipelineTasks.NORMALIZE.name, color="blue"):
-        data = normalize_data(data, darks, flats)
+        data = normalise_data(data, darks, flats)
     print(f"{proc_id} Finished {PipelineTasks.NORMALIZE.name}")
     if stop_after == PipelineTasks.NORMALIZE:
         sys.exit()
@@ -123,5 +126,5 @@ def gpu_pipeline(
     ###############################################################################
     #                   Saving the result of the reconstruction
     with annotate(PipelineTasks.SAVE.name, color="blue"):
-        save_data(recon, run_out_dir, comm)
+        save_data(recon, run_out_dir, 'reconstruction', comm)
     print(f"{proc_id} Finished {PipelineTasks.SAVE.name}")

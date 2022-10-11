@@ -25,3 +25,8 @@ Running the code:
 * Install the module as described in "Install as a Python module"
 * Execute the python module with :code:`python -m httomo <args>`
 * For help with the command line interface, execute :code:`python -m httomo --help`
+
+Am example of running the code with test data:
+=================
+* Go to the home directory and run:
+* :code:`python -m httomo testdata/tomo_standard.nxs . cpu`

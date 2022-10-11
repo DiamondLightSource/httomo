@@ -5,7 +5,7 @@ import click
 
 from httomo.common import PipelineTasks
 from httomo.cpu_pipeline import cpu_pipeline
-from httomo.gpu_pipeline import gpu_pipeline
+#from httomo.gpu_pipeline import gpu_pipeline
 
 from ._version_git import __version__
 
