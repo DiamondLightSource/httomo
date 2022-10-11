@@ -5,7 +5,7 @@ import click
 
 from httomo.common import PipelineTasks
 from httomo.cpu_pipeline import cpu_pipeline
-from httomo.gpu_pipeline import gpu_pipeline
+#from httomo.gpu_pipeline import gpu_pipeline
 
 from ._version_git import __version__
 
@@ -20,6 +20,7 @@ class GlobalOptions:
     dimension: int
     crop: int
     pad: int
+    ncores: int
     stop_after: PipelineTasks
 
 
@@ -56,6 +57,12 @@ class GlobalOptions:
     help="The number of slices to pad each block of data.",
 )
 @click.option(
+    "--ncores",
+    type=click.INT,
+    default=1,
+    help=" The number of the CPU cores per process.",
+)
+@click.option(
     "--stop_after",
     type=click.Choice(PipelineTasks._member_names_, False),
     callback=lambda c, p, v: PipelineTasks[str(v).upper()]
@@ -73,11 +80,12 @@ def main(
     dimension: int,
     crop: int,
     pad: int,
+    ncores: int,
     stop_after: PipelineTasks,
 ):
     """httomo: High Throughput Tomography."""
     ctx.obj = GlobalOptions(
-        in_file, out_dir, data_key, dimension, crop, pad, stop_after
+        in_file, out_dir, data_key, dimension, crop, pad, ncores, stop_after
     )
 
     if ctx.invoked_subcommand is None:
@@ -95,6 +103,7 @@ def cpu(global_options: GlobalOptions):
         global_options.dimension,
         global_options.crop,
         global_options.pad,
+        global_options.ncores,
         global_options.stop_after,
     )
 
