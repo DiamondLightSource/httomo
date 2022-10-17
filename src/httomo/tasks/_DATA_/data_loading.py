@@ -13,7 +13,7 @@ def load_data(
     with File(in_file, "r", driver="mpio", comm=comm) as file:
         dataset = file[data_key]
         shape = dataset.shape
-    print_once(f"Dataset shape is {shape}", comm)
+    print_once(f"The full dataset shape is {shape}", comm)
 
     angles_degrees = load_h5.get_angles(in_file, comm=comm)
     data_indices = load_h5.get_data_indices(
