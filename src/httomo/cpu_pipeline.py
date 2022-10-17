@@ -4,6 +4,7 @@ from os import mkdir
 from pathlib import Path
 
 from mpi4py import MPI
+import numpy as np
 from nvtx import annotate
 import multiprocessing
 
@@ -18,8 +19,6 @@ from httomo.tasks._METHODS_.normalisation.normalise_cpu import normalise_tomopy
 from httomo.tasks._METHODS_.stripe_removal.stripes_cpu import remove_stripes_tomopy    
 from httomo.tasks._METHODS_.centering.tomopy_cpu import find_center_of_rotation
 from httomo.tasks._METHODS_.reconstruction.tomopy_cpu import reconstruct
-
-
 
 def cpu_pipeline(
     in_file: Path,
@@ -66,15 +65,15 @@ def cpu_pipeline(
             detector_x,
         ) = load_data(in_file, data_key, dimension, crop, pad, comm)
     if stop_after == PipelineTasks.LOAD:
-        sys.exit()
+        sys.exit()      
     ###################################################################################
     #            3D median or dezinger filter to apply to raw data/flats/darks
-    method_name = 'median3d_larix'
+    method_name = 'median3d_larix'    
     save_result = True
     radius_kernel = 1 # a half-size of the median smoothing kernel
-    mu_dezinger = 0.0 # when > 0.0, then dezinging enabled, otherwise median filter
+    mu_dezinger = 0.0 # when > 0.0, then dezinging enabled, otherwise median filter (smaller value more sensitive)
     with annotate(PipelineTasks.FILTER.name):
-        data, flats, darks = median3d_larix(data, flats, darks, radius_kernel, mu_dezinger, ncores)
+        data, flats, darks = median3d_larix(data, flats, darks, radius_kernel, mu_dezinger, ncores, comm)
     if save_result:
         save_data(data, run_out_dir, method_name, comm)
     if stop_after == PipelineTasks.FILTER:
