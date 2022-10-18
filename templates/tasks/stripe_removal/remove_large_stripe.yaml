@@ -1,0 +1,7 @@
+remove_large_stripe:
+- snr: '3'
+- size: '51'
+- drop_ratio: '0.1'
+- norm: 'True'
+- ncore: None
+- nchunk: None

@@ -3,6 +3,7 @@ channels:
   - astra-toolbox
   - conda-forge
   - savu-dep
+  - anaconda
 dependencies:
   - astra-toolbox::astra-toolbox
   - conda-forge::click
@@ -13,6 +14,7 @@ dependencies:
   - conda-forge::numpy
   - conda-forge::nvtx
   - conda-forge::python
+  - anaconda:: ipython 
   - conda-forge::tomopy
   - savu-dep::larix
   - savu-dep::tomobar

@@ -1,0 +1,6 @@
+remove_stripe_based_filtering:
+- sigma: '3'
+- size: None
+- dim: '1'
+- ncore: None
+- nchunk: None

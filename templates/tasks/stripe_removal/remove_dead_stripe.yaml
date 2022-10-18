@@ -1,0 +1,6 @@
+remove_dead_stripe:
+- snr: '3'
+- size: '51'
+- norm: 'True'
+- ncore: None
+- nchunk: None

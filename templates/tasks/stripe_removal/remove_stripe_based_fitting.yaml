@@ -1,0 +1,5 @@
+remove_stripe_based_fitting:
+- order: '3'
+- sigma: (5, 20)
+- ncore: None
+- nchunk: None
