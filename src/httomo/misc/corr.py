@@ -1,7 +1,9 @@
-from numpy import ndarray
 import numpy as np
-from httomo.tasks._METHODS_.statistics.global_stats import max_min_mean_std
+from numpy import ndarray
 from mpi4py.MPI import Comm
+
+from httomo._stats.globals import max_min_mean_std
+
 
 def _stats_global_calc(data, flats, darks, mu_dezinger, comm):
     """global stats pre-calculation
@@ -15,8 +17,10 @@ def _stats_global_calc(data, flats, darks, mu_dezinger, comm):
         std_all_data = (1, 1, 1)
     return std_all_data
 
-def median3d_larix(data: ndarray, flats: ndarray, darks: ndarray, radius_kernel: int, mu_dezinger: float, ncores: int, comm: Comm):
-    """Performs median or dezinger filtration on the data using the larix library.
+def larix(data: ndarray, method_name: str, flats: ndarray, darks: ndarray,
+          radius_kernel: int, mu_dezinger: float, ncores: int, comm: Comm):
+    """Wrapper for the median and dezinger filtration methods in the larix
+    library.
 
     Args:
         data: A numpy array containing raw projections.
