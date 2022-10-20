@@ -1,7 +1,0 @@
-remove_stripe_based_interpolation:
-- snr: '3'
-- size: '31'
-- drop_ratio: '0.1'
-- norm: 'True'
-- ncore: None
-- nchunk: None

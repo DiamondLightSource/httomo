@@ -1,4 +1,0 @@
-remove_stripe_sf:
-- size: '5'
-- ncore: None
-- nchunk: None

@@ -1,7 +1,0 @@
-remove_stripe_fw:
-- level: None
-- wname: '''db5'''
-- sigma: '2'
-- pad: 'True'
-- ncore: None
-- nchunk: None

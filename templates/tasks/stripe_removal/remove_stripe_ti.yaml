@@ -1,5 +1,0 @@
-remove_stripe_ti:
-- nblock: '0'
-- alpha: '1.5'
-- ncore: None
-- nchunk: None

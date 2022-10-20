@@ -1,5 +1,0 @@
-remove_stripe_based_sorting:
-- size: None
-- dim: '1'
-- ncore: None
-- nchunk: None
