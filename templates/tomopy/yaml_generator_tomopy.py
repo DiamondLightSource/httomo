@@ -27,11 +27,14 @@ import yaml
 import os
 import importlib
 
-#ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(os.path.abspath("tomopy_main_modules.yml"))
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+#ROOT_DIR = os.path.dirname(os.path.abspath("tomopy_main_modules.yml"))
 path_to_tomopy_modules = ROOT_DIR + '/tomopy_main_modules.yml'
 
-discard_keys = ["tomo", "arr", "prj", "ncore", "nchunk", "flats", "flat", "dark", "darks", "theta", "out"] # discard from parameters list
+discard_keys = ["tomo", "arr", "prj", "ncore", 
+                "nchunk", "flats", "flat", "dark",
+                "darks", "theta", "out",
+                "ang"] # discard from parameters list
 
 # open YAML file with TomoPy modules exposed
 with open(path_to_tomopy_modules, "r") as stream:
