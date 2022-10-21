@@ -3,11 +3,12 @@ from pathlib import Path
 import numpy
 from mpi4py.MPI import Comm
 
-from httomo.h5_utils.chunk_h5 import save_dataset
+from httomo.data.hdf._utils.chunk import save_dataset
 
 
-def save_data(data: numpy.ndarray, run_out_dir: Path, method_name: str, comm: Comm) -> None:
-    """Write the data to an hdf5 file.
+def intermediate_dataset(data: numpy.ndarray, run_out_dir: Path,
+                         method_name: str, comm: Comm) -> None:
+    """Save an intermeidate dataset as an hdf file.
 
     Args:
         data: The data to be written.

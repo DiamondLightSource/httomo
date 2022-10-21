@@ -4,19 +4,20 @@ from h5py import File
 from mpi4py.MPI import Comm
 from numpy import asarray, deg2rad, ndarray
 
-from httomo.h5_utils import load_h5
+from httomo.data.hdf._utils import load
 from httomo.utils import print_once, print_rank
 
 
-def load_data(
-    in_file: Path, data_key: str, dimension: int, crop: int, pad: int, comm: Comm) -> tuple([ndarray, ndarray, ndarray, ndarray]):
+def standard_tomo(in_file: Path, data_key: str, dimension: int,
+                  crop: int, pad: int, comm: Comm
+                  ) -> tuple([ndarray, ndarray, ndarray, ndarray]):
     with File(in_file, "r", driver="mpio", comm=comm) as file:
         dataset = file[data_key]
         shape = dataset.shape
     print_once(f"The full dataset shape is {shape}", comm)
 
-    angles_degrees = load_h5.get_angles(in_file, comm=comm)
-    data_indices = load_h5.get_data_indices(
+    angles_degrees = load.get_angles(in_file, comm=comm)
+    data_indices = load.get_data_indices(
         in_file,
         image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
         comm=comm,
@@ -42,7 +43,7 @@ def load_data(
     print_once(f"Cropped data shape is {cropped_shape}", comm)
 
     dim = dimension
-    pad_values = load_h5.get_pad_values(
+    pad_values = load.get_pad_values(
         pad,
         dim,
         shape[dim - 1],
@@ -51,11 +52,11 @@ def load_data(
         comm=comm,
     )
     print_rank(f"Pad values are {pad_values}.", comm)
-    data = load_h5.load_data(
+    data = load.load_data(
         in_file, dim, data_key, preview=preview, pad=pad_values, comm=comm
     )
 
-    darks, flats = load_h5.get_darks_flats(
+    darks, flats = load.get_darks_flats(
         in_file,
         data_key,
         image_key_path="/entry1/tomo_entry/instrument/detector/image_key",

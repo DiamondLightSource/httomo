@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy
 from mpi4py.MPI import Comm
 
-from httomo.h5_utils import chunk_h5, load_h5
+from httomo.data.hdf._utils import chunk, load
 
 
 def reslice(
@@ -40,7 +40,7 @@ def reslice(
         chunks_data = (num_angles, detector_y, slices_no_in_chunks)
 
     if dimension == 1:
-        chunk_h5.save_dataset(
+        chunk.save_dataset(
             run_out_dir,
             "intermediate.h5",
             data,
@@ -49,7 +49,7 @@ def reslice(
             comm=comm,
         )
         dimension = 2  # assuming sinogram slicing here to get it loaded
-        data = load_h5.load_data(
+        data = load.load_data(
             f"{run_out_dir}/intermediate.h5", dimension, "/data", comm=comm
         )
 
