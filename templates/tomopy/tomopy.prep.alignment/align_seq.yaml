@@ -2,7 +2,6 @@
     align_seq:
       data_in: tomo
       data_out: tomo
-      ang: REQUIRED
       fdir: '''.'''
       iters: '10'
       pad: (0, 0)
