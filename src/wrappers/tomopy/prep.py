@@ -1,40 +1,42 @@
+from typing import Dict
+
 from numpy import ndarray
 from tomopy import prep
 
 
-def stripes(data: ndarray, method_name: str, ncores: int) -> ndarray:
-    """Wrapper for tomopy.prep.stripes module.
+def stripe(method_name: str, data: ndarray, params: Dict) -> ndarray:
+    """Wrapper for tomopy.prep.stripe module.
 
     Args:
+        method_name: The name of the method to use in tomopy.prep.stripe
         data: A numpy array of projections.
-        method_name: the name of method as in tomopy.prep.stripe
-        ncores: The number of CPU cores per process
+        params: A dict containing all params of the wrapped tomopy function that
+                are not related to the data loaded by a loader function
 
     Returns:
         ndarray: A numpy array of projections with stripes removed.
     """
-    module = getattr(prep, 'stripes')
-    data = getattr(module, method_name)(data, ncore=ncores)
+    module = getattr(prep, 'stripe')
+    data = getattr(module, method_name)(data, **params)
     return data
 
 
-def normalize(data: ndarray, flats: ndarray, darks: ndarray,
-              ncores: int) -> ndarray:
+def normalize(method_name: str, data: ndarray, flats: ndarray, darks: ndarray,
+              params: Dict) -> ndarray:
     """Wrapper for tomopy.prep.normalize module.
 
     Args:
+        method_name: The name of the method to use in tomopy.prep.normalize
         data: A numpy array containing the sample projections.
         flats: A numpy array containing the flatfield projections.
         darks: A numpy array containing the dark projections.
-        ncores: The number of CPU cores per process
+        params: A dict containing all params of the wrapped tomopy function that
+                are not related to the data loaded by a loader function
 
     Returns:
         ndarray: A numpy array of normalized projections.
     """
     module = getattr(prep, 'normalize')
-    data = getattr(module, 'normalize')(data, flats, dark, ncore=ncores,
-                                        cutoff=10)
+    data = getattr(module, method_name)(data, flats, darks, **params)
     data[data == 0.0] = 1e-09
-    data = getattr(module, 'minus_log')(data, ncore=ncores)
-
     return data
