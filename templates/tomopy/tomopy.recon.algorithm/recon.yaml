@@ -1,0 +1,9 @@
+- tomopy.recon.algorithm:
+    recon:
+      data_in: tomo
+      data_out: tomo
+      center: None
+      sinogram_order: 'False'
+      algorithm: None
+      init_recon: None
+      '#additional parameters': AVAILABLE

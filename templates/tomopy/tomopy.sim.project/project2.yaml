@@ -1,0 +1,11 @@
+- tomopy.sim.project:
+    project2:
+      data_in: tomo
+      data_out: tomo
+      objx: REQUIRED
+      objy: REQUIRED
+      center: None
+      emission: 'True'
+      pad: 'True'
+      sinogram_order: 'False'
+      axis: '0'

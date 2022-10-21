@@ -1,0 +1,4 @@
+- tomopy.prep.normalize:
+    minus_log:
+      data_in: tomo
+      data_out: tomo

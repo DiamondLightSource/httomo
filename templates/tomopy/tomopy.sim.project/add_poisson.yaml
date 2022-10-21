@@ -1,0 +1,4 @@
+- tomopy.sim.project:
+    add_poisson:
+      data_in: tomo
+      data_out: tomo

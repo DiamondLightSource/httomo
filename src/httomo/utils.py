@@ -1,8 +1,6 @@
 from typing import Any
-
 from mpi4py.MPI import Comm
-
-
+ 
 def print_once(output: Any, comm: Comm):
     """Print an output from rank zero only.
 
@@ -22,3 +20,4 @@ def print_rank(output: Any, comm: Comm):
         comm: The comm used to determine the process rank.
     """
     print(f"[{comm.rank}] {output}")
+
