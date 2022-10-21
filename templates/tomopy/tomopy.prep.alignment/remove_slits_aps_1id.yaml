@@ -1,0 +1,7 @@
+- tomopy.prep.alignment:
+    remove_slits_aps_1id:
+      data_in: tomo
+      data_out: tomo
+      imgstacks: REQUIRED
+      slit_box_corners: REQUIRED
+      inclip: (1, 10, 1, 10)

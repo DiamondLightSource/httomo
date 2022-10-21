@@ -1,0 +1,9 @@
+- tomopy.misc.morph:
+    trim_sinogram:
+      data_in: tomo
+      data_out: tomo
+      data: REQUIRED
+      center: REQUIRED
+      x: REQUIRED
+      y: REQUIRED
+      diameter: REQUIRED

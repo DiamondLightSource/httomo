@@ -1,0 +1,8 @@
+- tomopy.prep.stripe:
+    remove_stripe_fw:
+      data_in: tomo
+      data_out: tomo
+      level: None
+      wname: '''db5'''
+      sigma: '2'
+      pad: 'True'

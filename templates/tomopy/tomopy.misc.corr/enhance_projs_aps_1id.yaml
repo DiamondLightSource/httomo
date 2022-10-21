@@ -1,0 +1,6 @@
+- tomopy.misc.corr:
+    enhance_projs_aps_1id:
+      data_in: tomo
+      data_out: tomo
+      imgstack: REQUIRED
+      median_ks: '5'

@@ -27,11 +27,11 @@ import yaml
 import os
 import importlib
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-#ROOT_DIR = os.path.dirname(os.path.abspath("tomopy_main_modules.yml"))
+#ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(os.path.abspath("tomopy_main_modules.yml"))
 path_to_tomopy_modules = ROOT_DIR + '/tomopy_main_modules.yml'
 
-discard_keys = ["tomo", "arr", "prj", "ncore", "nchunk"] # discard from parameters list
+discard_keys = ["tomo", "arr", "prj", "ncore", "nchunk", "flats", "flat", "dark", "darks", "theta", "out"] # discard from parameters list
 
 # open YAML file with TomoPy modules exposed
 with open(path_to_tomopy_modules, "r") as stream:
@@ -67,14 +67,17 @@ for i in range(modules_no):
                if str(k) == x:
                   append = False
                   break
-            if append:
-               if str(v).find("=") == -1:
+            if append:               
+               if str(v).find("=") == -1 and  str(k) != "kwargs":
                   params_dict[str(k)] = 'REQUIRED'
+               elif str(k) == "kwargs":
+                  params_dict["#additional parameters"] = 'AVAILABLE'
                else:
                   params_dict[str(k)] = str(v).split('=')[1::2][0]
       
-      params_list = [{method_name: params_dict}]
+      params_list = [{module_name: {method_name: params_dict}}]
 
+   
       # save the list as a YAML file
       path_dir = ROOT_DIR + '/' + module_name
       path_file = path_dir + '/' + str(method_name) + '.yaml'

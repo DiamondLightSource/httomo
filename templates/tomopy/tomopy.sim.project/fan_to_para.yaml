@@ -1,0 +1,6 @@
+- tomopy.sim.project:
+    fan_to_para:
+      data_in: tomo
+      data_out: tomo
+      dist: REQUIRED
+      geom: REQUIRED
