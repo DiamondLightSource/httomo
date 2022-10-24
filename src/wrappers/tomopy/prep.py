@@ -9,7 +9,7 @@ def stripe(params: Dict, method_name: str, data: ndarray) -> ndarray:
 
     Args:
         params: A dict containing all params of the wrapped tomopy function that
-                are not related to the data loaded by a loader function
+                are independent of HTTomo
         method_name: The name of the method to use in tomopy.prep.stripe
         data: A numpy array of projections.
 
@@ -27,7 +27,7 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
 
     Args:
         params: A dict containing all params of the wrapped tomopy function that
-                are not related to the data loaded by a loader function
+                are independent of HTTomo
         method_name: The name of the method to use in tomopy.prep.normalize
         data: A numpy array containing the sample projections.
         flats: A numpy array containing the flatfield projections.

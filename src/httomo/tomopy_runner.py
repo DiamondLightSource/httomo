@@ -64,10 +64,23 @@ def run_tasks(
             params.update(loader_extra_params)
             data, flats, darks, angles, angles_total, detector_y, detector_x = \
                 _run_loader(func, params)
+
+            # Define all params relevant to HTTomo that a wrapper function might
+            # need
+            possible_extra_params = [
+                (['data'], data),
+                (['darks'], darks),
+                (['flats'], flats),
+                (['angles', 'angles_radians'], angles),
+                (['comm'], comm)
+            ]
         else:
             method_name = params.pop('method_name')
-            data_params = _check_signature_for_data_params(func, darks, flats,
-                                                           angles)
+
+            # Check for any extra params unrelated to tomopy but related to
+            # HTTomo that should be added in
+            httomo_params = \
+                _check_signature_for_httomo_params(func, possible_extra_params)
 
             # TODO: Not used in I/O yet
             dataset_params = {
@@ -75,9 +88,7 @@ def run_tasks(
                 'data_out': params.pop('data_out')
             }
 
-            # Add `data` as another param
-            data_params.update({'data': data})
-            data = _run_method(func, method_name, params, data_params)
+            data = _run_method(func, method_name, params, httomo_params)
 
 
 def _get_method_funcs(yaml_config: Path) -> List[Tuple[Callable, Dict, bool]]:
@@ -143,38 +154,43 @@ def _run_loader(func: Callable, params: Dict) -> Tuple[ndarray, ndarray,
 
 
 def _run_method(func: Callable, method_name:str, method_params: Dict,
-                data_params: Dict) -> None:
+                httomo_params: Dict) -> None:
     """Run a method function in the processing pipeline.
 
     Args:
         func: The python function that performs the method.
         method_name: The name of the method to apply.
-        method_params: A dict of parameters for the method.
-        data_params: A dict of parameters related to the data from a loader.
+        method_params: A dict of parameters for the tomopy method.
+        httomo_params: A dict of parameters related to HTTomo.
     """
-    return func(method_params, method_name, **data_params)
+    return func(method_params, method_name, **httomo_params)
 
 
-def _check_signature_for_data_params(func: Callable, darks: ndarray,
-                                     flats: ndarray, angles: ndarray) -> Dict:
-    """Check if the given method requires any parameters related to the loader.
+def _check_signature_for_httomo_params(func: Callable,
+                                       params: List[Tuple[List[str], object]]) -> Dict:
+    """Check if the given method requires any parameters related to HTTomo.
 
-    Args:
-        func: The method function to inspect.
-        darks: The darks to potentially pass onto the method function.
-        flats: The flats to potentially pass onto the method function.
-        angles: The angles to potentially pass onto the method function.
+    Parameters
+    ----------
+    func : Callable
+        Function whose type signature is to be inspected
 
-    Returns:
-        Dict: The updates parameter dict for the method function
+    params : List[Tuple[List[str], object]]
+        Each tuples contains a parameter name and the associated value that
+        should be added if a method requires that parameter (note: multiple
+        parameter names can be given in case the parameter isn't consistently
+        named across tomopy functions, such as "angles" vs "angles_radians")
+
+    Returns
+    -------
+    Dict
+        A dict with the parameter names and values to be added for the given
+        method function
     """
-    data_params = {}
-    func_params = signature(func).parameters
-    if 'darks' in func_params:
-        data_params['darks'] = darks
-    if 'flats' in func_params:
-        data_params['flats'] = flats
-    if 'angles' in func_params:
-        data_params['angles'] = angles
-
-    return data_params
+    extra_params = {}
+    sig_params = signature(func).parameters
+    for names, val in params:
+        for name in names:
+            if name in sig_params:
+                extra_params[name] = val
+    return extra_params
