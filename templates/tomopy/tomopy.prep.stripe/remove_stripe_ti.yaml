@@ -2,5 +2,5 @@
     remove_stripe_ti:
       data_in: tomo
       data_out: tomo
-      nblock: '0'
-      alpha: '1.5'
+      nblock: 0
+      alpha: 1.5

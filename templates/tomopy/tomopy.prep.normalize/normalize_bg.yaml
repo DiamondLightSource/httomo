@@ -2,4 +2,4 @@
     normalize_bg:
       data_in: tomo
       data_out: tomo
-      air: '1'
+      air: 1

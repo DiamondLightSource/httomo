@@ -3,4 +3,4 @@
       data_in: tomo
       data_out: tomo
       sinogram_order: REQUIRED
-      sharedmem: 'True'
+      sharedmem: true

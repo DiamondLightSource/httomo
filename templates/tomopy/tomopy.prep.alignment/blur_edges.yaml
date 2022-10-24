@@ -2,5 +2,5 @@
     blur_edges:
       data_in: tomo
       data_out: tomo
-      low: '0'
-      high: '0.8'
+      low: 0
+      high: 0.8

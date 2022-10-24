@@ -2,8 +2,8 @@
     recon:
       data_in: tomo
       data_out: tomo
-      center: None
-      sinogram_order: 'False'
-      algorithm: None
-      init_recon: None
+      center: null
+      sinogram_order: false
+      algorithm: null
+      init_recon: null
       '#additional parameters': AVAILABLE

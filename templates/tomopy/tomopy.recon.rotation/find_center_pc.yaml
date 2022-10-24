@@ -4,5 +4,5 @@
       data_out: tomo
       proj1: REQUIRED
       proj2: REQUIRED
-      tol: '0.5'
-      rotc_guess: None
+      tol: 0.5
+      rotc_guess: null

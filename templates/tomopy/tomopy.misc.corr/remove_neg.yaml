@@ -2,4 +2,4 @@
     remove_neg:
       data_in: tomo
       data_out: tomo
-      val: '0.0'
+      val: 0.0

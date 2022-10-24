@@ -5,8 +5,8 @@
       objx: REQUIRED
       objy: REQUIRED
       objz: REQUIRED
-      center: None
-      emission: 'True'
-      pad: 'True'
-      sinogram_order: 'False'
-      axis: '0'
+      center: null
+      emission: true
+      pad: true
+      sinogram_order: false
+      axis: 0
