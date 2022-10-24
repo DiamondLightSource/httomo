@@ -4,14 +4,14 @@ from numpy import ndarray
 from tomopy import prep
 
 
-def stripe(method_name: str, data: ndarray, params: Dict) -> ndarray:
+def stripe(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for tomopy.prep.stripe module.
 
     Args:
-        method_name: The name of the method to use in tomopy.prep.stripe
-        data: A numpy array of projections.
         params: A dict containing all params of the wrapped tomopy function that
                 are not related to the data loaded by a loader function
+        method_name: The name of the method to use in tomopy.prep.stripe
+        data: A numpy array of projections.
 
     Returns:
         ndarray: A numpy array of projections with stripes removed.
@@ -21,17 +21,17 @@ def stripe(method_name: str, data: ndarray, params: Dict) -> ndarray:
     return data
 
 
-def normalize(method_name: str, data: ndarray, flats: ndarray, darks: ndarray,
-              params: Dict) -> ndarray:
+def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
+              darks: ndarray) -> ndarray:
     """Wrapper for tomopy.prep.normalize module.
 
     Args:
+        params: A dict containing all params of the wrapped tomopy function that
+                are not related to the data loaded by a loader function
         method_name: The name of the method to use in tomopy.prep.normalize
         data: A numpy array containing the sample projections.
         flats: A numpy array containing the flatfield projections.
         darks: A numpy array containing the dark projections.
-        params: A dict containing all params of the wrapped tomopy function that
-                are not related to the data loaded by a loader function
 
     Returns:
         ndarray: A numpy array of normalized projections.

@@ -68,10 +68,12 @@ def run_tasks(
             method_name = params.pop('method_name')
             data_params = _check_signature_for_data_params(func, darks, flats,
                                                            angles)
-            #dataset_params = {
-            #    'data_in': params.pop('data_in'),
-            #    'data_out': params.pop('data_out')
-            #}
+
+            # TODO: Not used in I/O yet
+            dataset_params = {
+                'data_in': params.pop('data_in'),
+                'data_out': params.pop('data_out')
+            }
 
             # Add `data` as another param
             data_params.update({'data': data})
@@ -160,8 +162,8 @@ def _check_signature_for_data_params(func: Callable, darks: ndarray,
     Args:
         func: The method function to inspect.
         darks: The darks to potentially pass onto the method function.
-        darks: The flats to potentially pass onto the method function.
-        darks: The angles to potentially pass onto the method function.
+        flats: The flats to potentially pass onto the method function.
+        angles: The angles to potentially pass onto the method function.
 
     Returns:
         Dict: The updates parameter dict for the method function
