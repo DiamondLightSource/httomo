@@ -44,6 +44,10 @@ def run_tasks(
     if comm.size == 1:
         ncores = multiprocessing.cpu_count() # use all available CPU cores if not an MPI run
 
+    # Define dict to store arrays that are specified as datasets in the user
+    # config YAML
+    datasets = _initialise_datasets(yaml_config)
+
     # Get a list of the python functions associated to the methods defined in
     # user config YAML
     method_funcs = _get_method_funcs(yaml_config)
@@ -89,6 +93,46 @@ def run_tasks(
             }
 
             data = _run_method(func, method_name, params, httomo_params)
+
+
+def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
+    """Add keys to dict that will contain all datasets defined in the YAML
+    config.
+
+    Parameters
+    ----------
+    yaml_config : Path
+        The file containing the processing pipeline info as YAML
+
+    Returns
+    -------
+    Dict
+        The dict of datasets, whose keys are the names of the datasets, and
+        values will eventually be arrays (but initialised to None in this
+        function)
+    """
+    datasets = {}
+    # Define the params related to dataset names in the given function, whether
+    # it's a loader or a method function
+    loader_dataset_params = ['name']
+    method_dataset_params = ['data_in', 'data_out']
+
+    yaml_conf = open_yaml_config(yaml_config)
+    for task_conf in yaml_conf:
+        module_name, module_conf = task_conf.popitem()
+        if 'loaders' in module_name:
+            dataset_params = loader_dataset_params
+        else:
+            dataset_params = method_dataset_params
+
+        # Add dataset param value to the dict of datasets if it doesn't already
+        # exist
+        _, method_conf = module_conf.popitem()
+        for dataset_param in dataset_params:
+            if method_conf[dataset_param] not in datasets:
+                datasets[method_conf[dataset_param]] = None
+
+    return datasets
 
 
 def _get_method_funcs(yaml_config: Path) -> List[Tuple[Callable, Dict, bool]]:
