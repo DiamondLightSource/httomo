@@ -89,14 +89,22 @@ def run_tasks(
             httomo_params = \
                 _check_signature_for_httomo_params(func, possible_extra_params)
 
+            data_in = params.pop('data_in')
+            data_out = params.pop('data_out')
+
             # Add the appropriate dataset as the `data` parameter to the method
             # function's dict of parameters
-            data_in = params.pop('data_in')
             httomo_params['data'] = datasets[data_in]
+
+            # Check if the method function's params require any datasets stored
+            # in the `datasets` dict
+            dataset_params = _check_method_params_for_datasets(params, datasets)
+            # Update the relevant parameter values according to the required
+            # datasets
+            params.update(dataset_params)
 
             # Run the method, then store the result in the appropriate dataset
             # in the `datasets` dict
-            data_out = params.pop('data_out')
             datasets[data_out] = \
                 _run_method(func, method_name, params, httomo_params)
 
@@ -244,3 +252,33 @@ def _check_signature_for_httomo_params(func: Callable,
             if name in sig_params:
                 extra_params[name] = val
     return extra_params
+
+
+def _check_method_params_for_datasets(params: Dict,
+                                      datasets: Dict[str, ndarray]) -> Dict:
+    """Check a given method function's parameter values to see if any of them
+    are a dataset.
+
+    Parameters
+    ----------
+    params : Dict
+        The dict of param names and their values for a given method function.
+
+    datasets: Dict[str, ndarray]
+        The dict of dataset names and their associated arrays.
+
+    Returns
+    -------
+    Dict
+        A dict containing the parameter names assigned to particular datasets,
+        and the associated dataset values. This dict can be used to update the
+        method function's params dict to reflect the dataset arrays that the
+        method function requires.
+    """
+    dataset_params = {}
+    for name, val in params.items():
+        # If the value of this parameter is a dataset, then replace the
+        # parameter value with the dataset value
+        if val in datasets:
+            dataset_params[name] = datasets[val]
+    return dataset_params

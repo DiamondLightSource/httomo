@@ -37,8 +37,8 @@
     recon:
       data_in: tomo
       data_out: tomo
-      center: null
+      center: cor
       sinogram_order: false
-      algorithm: null
+      algorithm: gridrec
       init_recon: null
-      '#additional parameters': AVAILABLE
+      #additional parameters': AVAILABLE
