@@ -17,18 +17,27 @@ def reslice(
 ) -> tuple[numpy.ndarray, int]:
     """Reslice data by writing to hdf5 store and reading back.
 
-    Args:
-        data: The data to be re-sliced.
-        run_out_dir: The output directory to write the hdf5 file to.
-        dimension: The dimension along which the data is currently sliced.
-        angles_total: The total number of slices.
-        detector_y: The detector height.
-        detector_x: The detector width.
-        comm: The MPI communicator to be used.
+    Parameters
+    ----------
+    data : numpy.ndarray
+        The data to be re-sliced.
+    run_out_dir : Path
+        The output directory to write the hdf5 file to.
+    dimension : int
+        The dimension along which the data is currently sliced.
+    num_angles : int
+        The total number of slices.
+    detector_y : int
+        The detector height.
+    detector_x : int
+        The detector width.
+    comm : Comm
+        The MPI communicator to be used.
 
     Returns:
-        tuple[numpy.ndarray, int]: A tuple containing the resliced data and the
-            dimension along which it is now sliced.
+    tuple[numpy.ndarray, int]:
+        A tuple containing the resliced data and the dimension along which it is
+        now sliced.
     """
     # calculate the chunk size for the projection data
     slices_no_in_chunks = 4

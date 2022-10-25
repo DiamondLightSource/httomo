@@ -22,18 +22,25 @@ def run_tasks(
     crop: int = 100,
     pad: int = 0,
     ncores: int = 1
-):
+) -> None:
     """Run the tomopy pipeline defined in the YAML config file
 
-    Args:
-        in_file: The file to read data from.
-        yaml_config: The file containing the processing pipeline info as YAML
-        out_dir: The directory to write data to.
-        data_key: The input file dataset key to read.
-        dimension: The dimension to slice in.
-        crop: The percentage of data to use. Defaults to 100.
-        pad: The padding size to use. Defaults to 0.
-        ncores: The number of the CPU cores per process
+    Parameters
+    ----------
+    in_file : Path
+        The file to read data from.
+    yaml_config : Path
+        The file containing the processing pipeline info as YAML.
+    out_dir : Path
+        The directory to write data to.
+    dimension : int
+        The dimension to slice in.
+    crop : int
+        The percentage of data to use. Defaults to 100.
+    pad : int
+        The padding size to use. Defaults to 0.
+    ncores : int
+        The number of the CPU cores per process.
     """
     comm = MPI.COMM_WORLD
     run_out_dir = out_dir.joinpath(
@@ -151,10 +158,20 @@ def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
 
 def _get_method_funcs(yaml_config: Path) -> List[Tuple[Callable, Dict, bool]]:
     """Gather all the python functions needed to run the defined processing
-    pipeline
+    pipeline.
 
-    Args:
-        yaml_config: The file containing the processing pipeline info as YAML
+    Parameters
+    ----------
+    yaml_config : Path
+        The file containing the processing pipeline info as YAML
+
+    Returns
+    -------
+    List[Tuple[Callable, Dict, bool]]
+        A list, each element being a tuple containing three elements:
+        - a method function
+        - a dict of parameters for the method function
+        - a boolean describing if it is a loader function or not
     """
     method_funcs = []
     yaml_conf = open_yaml_config(yaml_config)
@@ -204,22 +221,40 @@ def _run_loader(func: Callable, params: Dict) -> Tuple[ndarray, ndarray,
                                                        ndarray, int, int, int]:
     """Run a loader function in the processing pipeline.
 
-    Args:
-        func: The python function that performs the loading.
-        params: A dict of parameters for the loader.
+    Parameters
+    ----------
+    func : Callable
+        The python function that performs the loading.
+    params : Dict
+        A dict of parameters for the loader.
+
+    Returns
+    -------
+    Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int, int, int]
+        A tuple of 8 values that all loader functions return.
     """
     return func(**params)
 
 
 def _run_method(func: Callable, method_name:str, method_params: Dict,
-                httomo_params: Dict) -> None:
+                httomo_params: Dict) -> ndarray:
     """Run a method function in the processing pipeline.
 
-    Args:
-        func: The python function that performs the method.
-        method_name: The name of the method to apply.
-        method_params: A dict of parameters for the tomopy method.
-        httomo_params: A dict of parameters related to HTTomo.
+    Parameters
+    ----------
+    func : Callable
+        The python function that performs the method.
+    method_name : str
+        The name of the method to apply.
+    method_params : Dict
+        A dict of parameters for the tomopy method.
+    httomo_params : Dict
+        A dict of parameters related to HTTomo.
+
+    Returns
+    -------
+    ndarray
+        An array containing the result of the method function.
     """
     return func(method_params, method_name, **httomo_params)
 

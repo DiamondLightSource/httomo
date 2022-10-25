@@ -1,20 +1,35 @@
 import math
+from typing import Tuple, List
 
 import h5py as h5
 from mpi4py import MPI
+from numpy import ndarray
 
 
-def load_data(file, dim, path, preview=":,:,:", pad=(0, 0), comm=MPI.COMM_WORLD):
+def load_data(file: str, dim: int, path: str, preview: str=":,:,:",
+              pad: Tuple=(0, 0), comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
     """Load data in parallel, slicing it through a certain dimension.
 
-    Args:
-        file: Path to file containing the dataset.
-        dim: Dimension along which data is sliced when being split between MPI
-            processes.
-        path: Path to dataset within the file.
-        preview: Crop the data with a preview:
-        pad: Pad the data by this number of slices.
-        comm: MPI communicator object.
+    Parameters
+    ----------
+    file : str
+        Path to file containing the dataset.
+    dim : int
+        Dimension along which data is sliced when being split between MPI
+        processes.
+    path : str
+        Path to dataset within the file.
+    preview : str
+        Crop the data with a preview:
+    pad : Tuple
+        Pad the data by this number of slices.
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    ndarray
+        The numpy array that has been loaded.
     """
     if dim == 1:
         data = read_through_dim1(file, path, preview=preview, pad=pad, comm=comm)
@@ -27,15 +42,28 @@ def load_data(file, dim, path, preview=":,:,:", pad=(0, 0), comm=MPI.COMM_WORLD)
     return data
 
 
-def read_through_dim3(file, path, preview=":,:,:", pad=(0, 0), comm=MPI.COMM_WORLD):
+def read_through_dim3(file: str, path: str, preview: str=":,:,:",
+                      pad: Tuple=(0, 0),
+                      comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
     """Read a dataset in parallel, with each MPI process loading a block.
 
-    Args:
-        file: Path to file containing the dataset.
-        path: Path to dataset within the file.
-        preview: Crop the data with a preview.
-        pad: Pad the data by this number of slices.
-        comm: MPI communicator object.
+    Parameters
+    ----------
+    file : str
+        Path to file containing the dataset.
+    path : str
+        Path to dataset within the file.
+    preview : str
+        Crop the data with a preview:
+    pad : Tuple
+        Pad the data by this number of slices.
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    ndarray
+        ADD DESC
     """
     rank = comm.rank
     nproc = comm.size
@@ -72,15 +100,28 @@ def read_through_dim3(file, path, preview=":,:,:", pad=(0, 0), comm=MPI.COMM_WOR
         return data
 
 
-def read_through_dim2(file, path, preview=":,:,:", pad=(0, 0), comm=MPI.COMM_WORLD):
+def read_through_dim2(file: str, path: str, preview: str=":,:,:",
+                      pad: Tuple=(0, 0),
+                      comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
     """Read a dataset in parallel, with each MPI process loading a block.
 
-    Args:
-        file: Path to file containing the dataset.
-        path: Path to dataset within the file.
-        preview: Crop the data with a preview.
-        pad: Pad the data by this number of slices.
-        comm: MPI communicator object.
+    Parameters
+    ----------
+    file : str
+        Path to file containing the dataset.
+    path : str
+        Path to dataset within the file.
+    preview : str
+        Crop the data with a preview:
+    pad : Tuple
+        Pad the data by this number of slices.
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    ndarray
+        ADD DESC
     """
     rank = comm.rank
     nproc = comm.size
@@ -117,15 +158,28 @@ def read_through_dim2(file, path, preview=":,:,:", pad=(0, 0), comm=MPI.COMM_WOR
         return data
 
 
-def read_through_dim1(file, path, preview=":,:,:", pad=(0, 0), comm=MPI.COMM_WORLD):
+def read_through_dim1(file: str, path: str, preview: str=":,:,:",
+                      pad: Tuple=(0, 0),
+                      comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
     """Read a dataset in parallel, with each MPI process loading a block.
 
-    Args:
-        file: Path to file containing the dataset.
-        path: Path to dataset within the file.
-        preview: Crop the data with a preview.
-        pad: Pad the data by this number of slices.
-        comm: MPI communicator object.
+    Parameters
+    ----------
+    file : str
+        Path to file containing the dataset.
+    path : str
+        Path to dataset within the file.
+    preview : str
+        Crop the data with a preview:
+    pad : Tuple
+        Pad the data by this number of slices.
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    ndarray
+        ADD DESC
     """
     rank = comm.rank
     nproc = comm.size
@@ -163,20 +217,34 @@ def read_through_dim1(file, path, preview=":,:,:", pad=(0, 0), comm=MPI.COMM_WOR
 
 
 def get_pad_values(
-    pad, dim, dim_length, data_indices=None, preview=":,:,:", comm=MPI.COMM_WORLD
-):
+    pad: int, dim: int, dim_length: int, data_indices: List[int]=None,
+    preview: str=":,:,:", comm: MPI.Comm=MPI.COMM_WORLD
+) -> Tuple[int, int]:
     """Get number of slices the block of data is padded either side.
 
-    Args:
-        pad: Number of slices to pad block with.
-        dim: Dimension data is to be padded in (same dimension data is sliced in).
-        dim_length: Size of dataset in the relevant dimension.
-        data_indices: When a dataset has non-data in the dataset (for example darks &
-            flats) provide data indices to indicate where in the dataset the data lies.
-            Only has an effect when dim = 1, as darks and flats are in projection space.
-        preview: Preview the data will be cropped by. Should be the same preview given
-            to the get_data() method.
-        comm: MPI communicator object.
+    Parameters
+    ----------
+    pad : int
+        Number of slices to pad block with.
+    dim : int
+        Dimension data is to be padded in (same dimension data is sliced in).
+    dim_length : int
+        Size of dataset in the relevant dimension.
+    data_indices : List[int]
+        When a dataset has non-data in the dataset (for example darks & flats)
+        provide data indices to indicate where in the dataset the data lies.
+        Only has an effect when dim = 1, as darks and flats are in projection
+        space.
+    preview : str
+        Preview the data will be cropped by. Should be the same preview given to
+        the get_data() method.
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    Tuple[int, int]
+        ADD DESC
     """
     rank = comm.rank
     nproc = comm.size
@@ -214,15 +282,24 @@ def get_pad_values(
     return pad0, pad1
 
 
-def get_num_chunks(file, path, comm):
+def get_num_chunks(filepath: str, path: str, comm: MPI.Comm) -> int:
     """Gets the number of chunks in a file.
 
-    Args:
-        file: The hdf5 file to read from.
-        path: The key of the dataset within the file.
-        comm: The MPI communicator.
+    Parameters
+    ----------
+    filepath : str
+        The hdf5 file to read from.
+    path : str
+        The key of the dataset within the file.
+    comm : MPI.Comm
+        The MPI communicator.
+
+    Returns
+    -------
+    int
+        ADD DESC
     """
-    with h5.File(file, "r", driver="mpio", comm=comm) as in_file:
+    with h5.File(filepath, "r", driver="mpio", comm=comm) as in_file:
         dataset = in_file[path]
         shape = dataset.shape
         chunks = dataset.chunks
@@ -248,15 +325,23 @@ def get_num_chunks(file, path, comm):
     return nchunks
 
 
-def get_angles(
-    file, path="/entry1/tomo_entry/data/rotation_angle", comm=MPI.COMM_WORLD
-):
+def get_angles(file: str, path: str="/entry1/tomo_entry/data/rotation_angle",
+               comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
     """Get angles.
 
-    Args:
-        file: Path to file containing the data and angles.
-        path: Path to the angles within the file.
-        comm: MPI communicator object.
+    Parameters
+    ----------
+    file : str
+        Path to file containing the data and angles.
+    path : str
+        Path to the angles within the file.
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    ndarray
+        A numpy array containing the angles within the give dataset.
     """
     with h5.File(file, "r", driver="mpio", comm=comm) as file:
         angles = file[path][...]
@@ -264,26 +349,39 @@ def get_angles(
 
 
 def get_darks_flats(
-    file,
-    data_path="/entry1/tomo_entry/data/data",
-    image_key_path="/entry1/instrument/image_key/image_key",
-    dim=1,
-    pad=0,
-    preview=":,:,:",
-    comm=MPI.COMM_WORLD,
-):
+    file: str,
+    data_path: str="/entry1/tomo_entry/data/data",
+    image_key_path: str="/entry1/instrument/image_key/image_key",
+    dim: int=1,
+    pad: int=0,
+    preview: str=":,:,:",
+    comm: MPI.Comm=MPI.COMM_WORLD,
+) -> Tuple[ndarray, ndarray]:
     """Get darks and flats.
 
-    Args:
-        file: Path to file containing the dataset.
-        data_path: Path to the dataset within the file.
-        image_key_path: Path to the image_key within the file.
-        dim: Dimension along which data is being split between MPI processes. Only
-            effects darks and flats if dim = 2.
-        pad: How many slices data is being padded. Only effects darks and flats if
-            dim = 2. (not implemented yet)
-        preview: Preview data is being cropped by.
-        comm: MPI communicator object.
+    Parameters
+    ----------
+    file : str
+        Path to file containing the dataset.
+    data_path : str
+        Path to the dataset within the file.
+    image_key_path : str
+        Path to the image_key within the file.
+    dim : int
+        Dimension along which data is being split between MPI processes. Only
+        affects darks and flats if dim = 2.
+    pad : int
+        How many slices data is being padded. Only affects darks and flats if
+        dim = 2. (not implemented yet)
+    preview : str
+        Crop the data with a preview:
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    Tuple[ndarray, ndarray]
+        Contains the darks and flats arrays.
     """
     slice_list = get_slice_list_from_preview(preview)
     with h5.File(file, "r", driver="mpio", comm=comm) as file:
@@ -328,28 +426,45 @@ def get_darks_flats(
 
 
 def get_data_indices(
-    file, image_key_path="/entry1/instrument/image_key/image_key", comm=MPI.COMM_WORLD
-):
+    filepath: str, image_key_path: str="/entry1/instrument/image_key/image_key",
+    comm: MPI.Comm=MPI.COMM_WORLD) -> List[int]:
     """Get the indices of where the data is in a dataset.
 
-    Args:
-        file: Path to the file containing the dataset and image key.
-        image_key_path: Path to the image key within the file.
-        comm: MPI communicator object.
+    Parameters
+    ----------
+    filepath : str
+        Path to the file containing the dataset and image key.
+    image_key_path : str
+        Path to the image key within the file.
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    List[int]
+        Contains the indices where data is in the dataset (ie, as opposed to
+        indices where darks and flats are).
     """
-    with h5.File(file, "r", driver="mpio", comm=comm) as file:
+    with h5.File(filepath, "r", driver="mpio", comm=comm) as f:
         data_indices = []
-        for i, key in enumerate(file[image_key_path]):
+        for i, key in enumerate(f[image_key_path]):
             if int(key) == 0:
                 data_indices.append(i)
     return data_indices
 
 
-def get_slice_list_from_preview(preview):
+def get_slice_list_from_preview(preview: str) -> List[slice]:
     """Generate slice list to crop data from a preview.
 
-    Args:
-        preview: Preview in the form 'start: stop: step, start: stop: step'.
+    Parameters
+    ----------
+    preview : str
+        Preview in the form 'start: stop: step, start: stop: step'.
+
+    Returns
+    -------
+    List[slice, slice, slice]
+        A list of slice objects that correspond to the given preview notation.
     """
     slice_list = [None] * 3
     preview = preview.split(",")  # Splitting the dimensions

@@ -13,17 +13,31 @@ def standard_tomo(name: str, in_file: Path, data_path: str, image_key_path: str,
                   dimension: int, crop: int, pad: int, comm: Comm
                   ) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int,
                              int, int]:
-    """Loader for standard tomography data
+    """Loader for standard tomography data.
 
-    Args:
-        name: The name to label the given dataset.
-        in_file: The absolute filepath to the input data.
-        data_path: The path within the hdf/nxs file to the data.
-        image_key_path: The path within the hdf/nxs file to the image key data.
-        dimension: The dimension to slice in.
-        crop: The percentage of data to use.
-        pad: The padding size to use.
-        comm: The MPI communicator to use.
+    Parameters
+    ----------
+    name : str
+        The name to label the given dataset.
+    in_file : Path
+        The absolute filepath to the input data.
+    data_path : str
+        The path within the hdf/nxs file to the data.
+    image_key_path : str
+        The path within the hdf/nxs file to the image key data.
+    dimension : int
+        The dimension to slice in.
+    crop : int
+        The percentage of data to use.
+    pad : int
+        The padding size to use.
+    comm : Comm
+        The MPI communicator to use.
+
+    Returns
+    -------
+    Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int, int, int]
+        A tuple of 8 values that all loader functions return.
     """
     with File(in_file, "r", driver="mpio", comm=comm) as file:
         dataset = file[data_path]
