@@ -69,10 +69,13 @@ def run_tasks(
             data, flats, darks, angles, angles_total, detector_y, detector_x = \
                 _run_loader(func, params)
 
+            # Update `datasets` dict with the data that has been loaded by the
+            # loader
+            datasets[params['name']] = data
+
             # Define all params relevant to HTTomo that a wrapper function might
             # need
             possible_extra_params = [
-                (['data'], data),
                 (['darks'], darks),
                 (['flats'], flats),
                 (['angles', 'angles_radians'], angles),
@@ -86,13 +89,16 @@ def run_tasks(
             httomo_params = \
                 _check_signature_for_httomo_params(func, possible_extra_params)
 
-            # TODO: Not used in I/O yet
-            dataset_params = {
-                'data_in': params.pop('data_in'),
-                'data_out': params.pop('data_out')
-            }
+            # Add the appropriate dataset as the `data` parameter to the method
+            # function's dict of parameters
+            data_in = params.pop('data_in')
+            httomo_params['data'] = datasets[data_in]
 
-            data = _run_method(func, method_name, params, httomo_params)
+            # Run the method, then store the result in the appropriate dataset
+            # in the `datasets` dict
+            data_out = params.pop('data_out')
+            datasets[data_out] = \
+                _run_method(func, method_name, params, httomo_params)
 
 
 def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
