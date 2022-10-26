@@ -11,6 +11,7 @@ from mpi4py import MPI
 
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf import loaders
+from httomo.data.hdf._utils.save import intermediate_dataset
 from wrappers.tomopy import misc, prep, recon
 
 
@@ -69,7 +70,7 @@ def run_tasks(
     }
 
     # Run the methods
-    for idx, (func, params, is_loader) in enumerate(method_funcs):
+    for idx, (package, func, params, is_loader) in enumerate(method_funcs):
         print(f"Running method {idx+1}...")
         if is_loader:
             params.update(loader_extra_params)
@@ -90,6 +91,13 @@ def run_tasks(
             ]
         else:
             method_name = params.pop('method_name')
+
+            # Default behaviour for saving datasets is to save the output of the
+            # last task.
+            if idx == len(method_funcs) - 1:
+                save_result = True
+            else:
+                save_result = False
 
             # Check for any extra params unrelated to tomopy but related to
             # HTTomo that should be added in
@@ -114,6 +122,16 @@ def run_tasks(
             # in the `datasets` dict
             datasets[data_out] = \
                 _run_method(func, method_name, params, httomo_params)
+
+            # TODO: The dataset saving functionality only supports 3D data
+            # currently, so check that the dimension of the data is 3 before
+            # saving it
+            is_3d = len(datasets[data_out].shape) == 3
+            # Save the result if necessary
+            if save_result and is_3d:
+                intermediate_dataset(datasets[data_out], run_out_dir,
+                                     comm, idx+1, package, method_name,
+                                     recon_algorithm=params.pop('algorithm', None))
 
 
 def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
@@ -156,7 +174,7 @@ def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
     return datasets
 
 
-def _get_method_funcs(yaml_config: Path) -> List[Tuple[Callable, Dict, bool]]:
+def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool]]:
     """Gather all the python functions needed to run the defined processing
     pipeline.
 
@@ -168,7 +186,8 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[Callable, Dict, bool]]:
     Returns
     -------
     List[Tuple[Callable, Dict, bool]]
-        A list, each element being a tuple containing three elements:
+        A list, each element being a tuple containing four elements:
+        - a package name
         - a method function
         - a dict of parameters for the method function
         - a boolean describing if it is a loader function or not
@@ -188,7 +207,12 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[Callable, Dict, bool]]:
             module = globals()[module_name]
             method_name, method_conf = module_conf.popitem()
             method_func = getattr(module, method_name)
-            method_funcs.append((method_func, method_conf, is_loader))
+            method_funcs.append((
+                split_module_name[0],
+                method_func,
+                method_conf,
+                is_loader
+            ))
         elif split_module_name[0] == 'tomopy':
             # The structure of wrapper functions for tomopy is that each module
             # in tomopy is represented by a function in HTTomo.
@@ -207,7 +231,12 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[Callable, Dict, bool]]:
             wrapper_func = getattr(wrapper_module, wrapper_func_name)
             method_name, method_conf = module_conf.popitem()
             method_conf['method_name'] = method_name
-            method_funcs.append((wrapper_func, method_conf, False))
+            method_funcs.append((
+                split_module_name[0],
+                wrapper_func,
+                method_conf,
+                False
+            ))
         else:
             err_str = f"An unknown module name was encountered: " \
                       f"{split_module_name[0]}"
