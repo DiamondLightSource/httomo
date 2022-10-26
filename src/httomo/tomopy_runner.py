@@ -113,6 +113,12 @@ def run_tasks(
             if save_all:
                 save_result = True
 
+            # Finally, check if `save_result` param has been specified in the
+            # YAML config, as it can override both default behaviour and the
+            # `--save_all` flag
+            if 'save_result' in params.keys():
+                save_result = params.pop('save_result')
+
             # Check for any extra params unrelated to tomopy but related to
             # HTTomo that should be added in
             httomo_params = \
