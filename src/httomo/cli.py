@@ -23,6 +23,7 @@ class GlobalOptions:
     pad: int
     ncores: int
     stop_after: PipelineTasks
+    save_all: bool
 
 
 @click.group(invoke_without_command=True)
@@ -68,6 +69,11 @@ class GlobalOptions:
     else PipelineTasks.SAVE,
     help="Stop after the specified stage.",
 )
+@click.option(
+    "--save_all",
+    is_flag=True,
+    help="Save intermediate datasets for all tasks in the pipeline."
+)
 @click.version_option(version=__version__, message="%(version)s")
 @click.pass_context
 def main(
@@ -80,10 +86,12 @@ def main(
     pad: int,
     ncores: int,
     stop_after: PipelineTasks,
+    save_all: bool
 ):
     """httomo: High Throughput Tomography."""
     ctx.obj = GlobalOptions(
-        in_file, yaml_config, out_dir, dimension, crop, pad, ncores, stop_after
+        in_file, yaml_config, out_dir, dimension, crop, pad, ncores, stop_after,
+        save_all
     )
 
     if ctx.invoked_subcommand is None:
@@ -133,5 +141,6 @@ def tomopy_runner(global_options: GlobalOptions):
         global_options.dimension,
         global_options.crop,
         global_options.pad,
-        global_options.ncores
+        global_options.ncores,
+        global_options.save_all
     )

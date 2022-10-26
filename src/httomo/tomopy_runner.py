@@ -22,7 +22,8 @@ def run_tasks(
     dimension: int,
     crop: int = 100,
     pad: int = 0,
-    ncores: int = 1
+    ncores: int = 1,
+    save_all: bool = False
 ) -> None:
     """Run the tomopy pipeline defined in the YAML config file
 
@@ -42,6 +43,9 @@ def run_tasks(
         The padding size to use. Defaults to 0.
     ncores : int
         The number of the CPU cores per process.
+    save_all : bool
+        Specifies if intermediate datasets should be saved for all tasks in the
+        pipeline.
     """
     comm = MPI.COMM_WORLD
     run_out_dir = out_dir.joinpath(
@@ -91,13 +95,23 @@ def run_tasks(
             ]
         else:
             method_name = params.pop('method_name')
+            save_result = False
 
             # Default behaviour for saving datasets is to save the output of the
             # last task.
+            #
+            # The default behaviour can be overridden in two ways:
+            # 1. the flag `--save_all` which affects all tasks
+            # 2. the method param `save_result` which affects individual tasks
+            #
+            # Here, enforce default behaviour.
             if idx == len(method_funcs) - 1:
                 save_result = True
-            else:
-                save_result = False
+
+            # Now, check if `--save_all` has been specified, as this can
+            # override default behaviour
+            if save_all:
+                save_result = True
 
             # Check for any extra params unrelated to tomopy but related to
             # HTTomo that should be added in
