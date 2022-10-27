@@ -126,9 +126,14 @@ def run_tasks(
             data_in = params.pop('data_in')
             data_out = params.pop('data_out')
 
-            # Add the appropriate dataset as the `data` parameter to the method
-            # function's dict of parameters
-            httomo_params['data'] = datasets[data_in]
+            # Add the appropriate dataset to the method function's dict of
+            # parameters based on the parameter name for the method's python
+            # function
+            if package == 'tomopy':
+                httomo_params['data'] = datasets[data_in]
+            elif package == 'httomo':
+                data_param = _set_method_data_param(func, data_in, datasets)
+                httomo_params.update(data_param)
 
             # Check if the method function's params require any datasets stored
             # in the `datasets` dict
@@ -389,3 +394,49 @@ def _check_method_params_for_datasets(params: Dict,
         if val in datasets:
             dataset_params[name] = datasets[val]
     return dataset_params
+
+
+def _set_method_data_param(func: Callable, dataset_name: str,
+                           datasets: Dict[str, ndarray]) -> Dict[str, ndarray]:
+    """Set a key in the param dict whose value is the array associated with the
+    input dataset name given in the YAML config. The name of this key must be
+    the same as the associated parameter name in the python function which
+    performs the method, in order to pass the parameters via dict-unpacking.
+
+    E.g. suppose a method function has parameters:
+
+    def my_func(sino: ndarray, ...) -> ndarray:
+        ...
+
+    and in the user config YAML file, the dataset name to be passed into this
+    method function is called `tomo`, defined by YAML like the following:
+    ```
+    my_func:
+      data_in: tomo
+      data_out: tomo_out
+    ```
+
+    This function `_set_method_data_param()` would return a dict that contains:
+    - the key `sino` mapped to the value of the array associated to the `tomo`
+      dataset
+
+    Parameters
+    ----------
+    func : Callable
+        The method function whose data parameters will be inspected.
+    dataset_name : str
+        The name of the input dataset name from the user config YAML.
+    datasets : Dict[str, ndarray]
+        A dict of all the available datasets in the current run.
+
+    Returns
+    -------
+    Dict[str, ndarray]
+        A dict containing the input data parameter key and value needed for the
+        given method function.
+    """
+    sig_params = list(signature(func).parameters.keys())
+    # For httomo functions, the input data paramater will always be the first
+    # parameter
+    data_param = sig_params[0]
+    return {data_param: datasets[dataset_name]}
