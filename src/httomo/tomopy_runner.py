@@ -5,14 +5,13 @@ from pathlib import Path
 from typing import List, Dict, Tuple
 from collections.abc import Callable
 from inspect import signature
+from importlib import import_module
 
 from numpy import ndarray
 from mpi4py import MPI
 
 from httomo.yaml_utils import open_yaml_config
-from httomo.data.hdf import loaders
 from httomo.data.hdf._utils.save import intermediate_dataset
-from wrappers.tomopy import misc, prep, recon
 
 
 def run_tasks(
@@ -76,6 +75,7 @@ def run_tasks(
     # Run the methods
     for idx, (package, func, params, is_loader) in enumerate(method_funcs):
         print(f"Running method {idx+1}...")
+        method_name = params.pop('method_name')
         if is_loader:
             params.update(loader_extra_params)
             data, flats, darks, angles, angles_total, detector_y, detector_x = \
@@ -94,7 +94,6 @@ def run_tasks(
                 (['comm'], comm)
             ]
         else:
-            method_name = params.pop('method_name')
             save_result = False
 
             # Default behaviour for saving datasets is to save the output of the
@@ -223,9 +222,9 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
                 is_loader = True
             else:
                 is_loader = False
-            module_name = split_module_name[-1]
-            module = globals()[module_name]
+            module = import_module(module_name)
             method_name, method_conf = module_conf.popitem()
+            method_conf['method_name'] = method_name
             method_func = getattr(module, method_name)
             method_funcs.append((
                 split_module_name[0],
@@ -245,8 +244,9 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
             # `tomopy.misc.corr` module are then exposed in HTTomo by passing a
             # `method_name` parameter to the corr() function via the YAML config
             # file.
-            wrapper_module_name = split_module_name[-2]
-            wrapper_module = globals()[wrapper_module_name]
+            module_name = '.'.join(split_module_name[:-1])
+            wrapper_module_name = f"wrappers.{module_name}"
+            wrapper_module = import_module(wrapper_module_name)
             wrapper_func_name = split_module_name[-1]
             wrapper_func = getattr(wrapper_module, wrapper_func_name)
             method_name, method_conf = module_conf.popitem()
