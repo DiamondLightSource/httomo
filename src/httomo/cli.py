@@ -5,7 +5,7 @@ import click
 
 from httomo.common import PipelineTasks
 from httomo.cpu_pipeline import cpu_pipeline
-from httomo.tomopy_runner import run_tasks
+from httomo.task_runner import run_tasks
 #from httomo.gpu_pipeline import gpu_pipeline
 
 from ._version_git import __version__
@@ -131,8 +131,8 @@ def gpu(global_options: GlobalOptions):
 
 @main.command()
 @click.pass_obj
-def tomopy_runner(global_options: GlobalOptions):
-    """Run the tomopy processing pipeline defined in the given YAML config file.
+def task_runner(global_options: GlobalOptions):
+    """Run the processing pipeline defined in the given YAML config file.
     """
     run_tasks(
         global_options.in_file,

@@ -139,8 +139,13 @@ def run_tasks(
 
             # Run the method, then store the result in the appropriate dataset
             # in the `datasets` dict
-            datasets[data_out] = \
-                _run_method(func, method_name, params, httomo_params)
+            if package == 'tomopy':
+                datasets[data_out] = \
+                    _run_tomopy_method(func, method_name, params, httomo_params)
+            elif package == 'httomo':
+                params.update(httomo_params)
+                datasets[data_out] = \
+                    _run_httomo_method(func, params)
 
             # TODO: The dataset saving functionality only supports 3D data
             # currently, so check that the dimension of the data is 3 before
@@ -285,9 +290,9 @@ def _run_loader(func: Callable, params: Dict) -> Tuple[ndarray, ndarray,
     return func(**params)
 
 
-def _run_method(func: Callable, method_name:str, method_params: Dict,
-                httomo_params: Dict) -> ndarray:
-    """Run a method function in the processing pipeline.
+def _run_tomopy_method(func: Callable, method_name:str, method_params: Dict,
+                       httomo_params: Dict) -> ndarray:
+    """Run a tomopy method function in the processing pipeline.
 
     Parameters
     ----------
@@ -306,6 +311,24 @@ def _run_method(func: Callable, method_name:str, method_params: Dict,
         An array containing the result of the method function.
     """
     return func(method_params, method_name, **httomo_params)
+
+
+def _run_httomo_method(func: Callable, params: Dict) -> ndarray:
+    """Run an HTTomo method function in the processing pipeline.
+
+    Parameters
+    ----------
+    func : Callable
+        The python function that performs the method.
+    params : Dict
+        A dict of parameters.
+
+    Returns
+    -------
+    ndarray
+        An array containing the result of the method function.
+    """
+    return func(**params)
 
 
 def _check_signature_for_httomo_params(func: Callable,
