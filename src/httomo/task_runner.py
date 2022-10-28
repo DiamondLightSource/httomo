@@ -84,6 +84,8 @@ def run_tasks(
             # Update `datasets` dict with the data that has been loaded by the
             # loader
             datasets[params['name']] = data
+            datasets['flats'] = flats
+            datasets['darks'] = darks
 
             # Define all params relevant to HTTomo that a wrapper function might
             # need
