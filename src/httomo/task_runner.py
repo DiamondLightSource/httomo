@@ -10,6 +10,7 @@ from importlib import import_module
 from numpy import ndarray
 from mpi4py import MPI
 
+from httomo.utils import print_once
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 
@@ -74,8 +75,8 @@ def run_tasks(
 
     # Run the methods
     for idx, (package, func, params, is_loader) in enumerate(method_funcs):
-        print(f"Running method {idx+1}...")
         method_name = params.pop('method_name')
+        print_once(f"Running task {idx+1}: {method_name}...", comm)
         if is_loader:
             params.update(loader_extra_params)
             data, flats, darks, angles, angles_total, detector_y, detector_x = \
