@@ -185,22 +185,32 @@ def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
     # Define the params related to dataset names in the given function, whether
     # it's a loader or a method function
     loader_dataset_params = ['name']
-    method_dataset_params = ['data_in', 'data_out']
 
     yaml_conf = open_yaml_config(yaml_config)
     for task_conf in yaml_conf:
         module_name, module_conf = task_conf.popitem()
+        _, method_conf = module_conf.popitem()
         if 'loaders' in module_name:
             dataset_params = loader_dataset_params
         else:
+            if 'data_in_multi' in method_conf.keys() and \
+                'data_out_multi' in method_conf.keys():
+                method_dataset_params = ['data_in_multi', 'data_out_multi']
+            else:
+                method_dataset_params = ['data_in', 'data_out']
             dataset_params = method_dataset_params
 
         # Add dataset param value to the dict of datasets if it doesn't already
         # exist
-        _, method_conf = module_conf.popitem()
         for dataset_param in dataset_params:
-            if method_conf[dataset_param] not in datasets:
-                datasets[method_conf[dataset_param]] = None
+            # Check if there are multiple input/output datasets to account for
+            if type(method_conf[dataset_param]) is list:
+                for dataset_name in method_conf[dataset_param]:
+                    if dataset_name not in datasets:
+                        datasets[dataset_name] = None
+            else:
+                if method_conf[dataset_param] not in datasets:
+                    datasets[method_conf[dataset_param]] = None
 
     return datasets
 
