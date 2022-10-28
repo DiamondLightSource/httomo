@@ -8,7 +8,8 @@ from httomo.data.hdf._utils.chunk import save_dataset
 
 def intermediate_dataset(data: numpy.ndarray, run_out_dir: Path,
                          comm: Comm, task_no: int, package_name: str,
-                         method_name: str, recon_algorithm: str=None) -> None:
+                         method_name: str, dataset_name: str,
+                         recon_algorithm: str=None) -> None:
     """Save an intermediate dataset as an hdf file.
 
     Parameters
@@ -27,6 +28,8 @@ def intermediate_dataset(data: numpy.ndarray, run_out_dir: Path,
         "tomopy", etc.)
     method_name : str
         The method that was used in `package_name` to produce the given dataset.
+    dataset_name : str
+        The name of the output dataset given in the YAML config.
     recon_algorithm : str
         If the dataset contains a reconstructions, this is the reconstruction
         algorithm name that was used.
@@ -34,7 +37,7 @@ def intermediate_dataset(data: numpy.ndarray, run_out_dir: Path,
     (vert_slices, recon_x, recon_y) = data.shape
     chunks_recon = (1, recon_x, recon_y)
 
-    filename = f"{task_no}-{package_name}-{method_name}"
+    filename = f"{task_no}-{package_name}-{method_name}-{dataset_name}"
     if recon_algorithm is not None:
         filename = f"{filename}-{recon_algorithm}.h5"
     else:

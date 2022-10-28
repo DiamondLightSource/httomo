@@ -125,17 +125,20 @@ def run_tasks(
             httomo_params = \
                 _check_signature_for_httomo_params(func, possible_extra_params)
 
-            data_in = params.pop('data_in')
-            data_out = params.pop('data_out')
-
-            # Add the appropriate dataset to the method function's dict of
-            # parameters based on the parameter name for the method's python
-            # function
-            if package == 'tomopy':
-                httomo_params['data'] = datasets[data_in]
-            elif package == 'httomo':
-                data_param = _set_method_data_param(func, data_in, datasets)
-                httomo_params.update(data_param)
+            # Get the information describing if the method is being run only
+            # once, or multiple times with different input datasets
+            if 'data_in' in params.keys() and 'data_out' in params.keys():
+                data_in = params.pop('data_in')
+                data_out = params.pop('data_out')
+            elif 'data_in_multi' in params.keys() and \
+                'data_out_multi' in params.keys():
+                data_in = params.pop('data_in_multi')
+                data_out = params.pop('data_out_multi')
+            else:
+                # TODO: This error reporting is possibly better handled by
+                # schema validation of the user config YAML
+                err_str = "Invalid in/out dataset parameters"
+                raise ValueError(err_str)
 
             # Check if the method function's params require any datasets stored
             # in the `datasets` dict
@@ -144,25 +147,44 @@ def run_tasks(
             # datasets
             params.update(dataset_params)
 
-            # Run the method, then store the result in the appropriate dataset
-            # in the `datasets` dict
-            if package == 'tomopy':
-                datasets[data_out] = \
-                    _run_tomopy_method(func, method_name, params, httomo_params)
-            elif package == 'httomo':
-                params.update(httomo_params)
-                datasets[data_out] = \
-                    _run_httomo_method(func, params)
+            # Make the input datasets a list if it's not, just to be generic and
+            # below loop through all the datasets that the method should be
+            # applied to
+            if type(data_in) is str and type(data_out) is str:
+                data_in = [data_in]
+                data_out = [data_out]
 
-            # TODO: The dataset saving functionality only supports 3D data
-            # currently, so check that the dimension of the data is 3 before
-            # saving it
-            is_3d = len(datasets[data_out].shape) == 3
-            # Save the result if necessary
-            if save_result and is_3d:
-                intermediate_dataset(datasets[data_out], run_out_dir,
-                                     comm, idx+1, package, method_name,
-                                     recon_algorithm=params.pop('algorithm', None))
+            for in_dataset, out_dataset in zip(data_in, data_out):
+                # Add the appropriate dataset to the method function's dict of
+                # parameters based on the parameter name for the method's python
+                # function
+                if package == 'tomopy':
+                    httomo_params['data'] = datasets[in_dataset]
+                elif package == 'httomo':
+                    data_param = \
+                        _set_method_data_param(func, in_dataset, datasets)
+                    httomo_params.update(data_param)
+
+                # Run the method, then store the result in the appropriate
+                # dataset in the `datasets` dict
+                if package == 'tomopy':
+                    datasets[out_dataset] = \
+                        _run_tomopy_method(func, method_name, params, httomo_params)
+                elif package == 'httomo':
+                    params.update(httomo_params)
+                    datasets[out_dataset] = \
+                        _run_httomo_method(func, params)
+
+                # TODO: The dataset saving functionality only supports 3D data
+                # currently, so check that the dimension of the data is 3 before
+                # saving it
+                is_3d = len(datasets[out_dataset].shape) == 3
+                # Save the result if necessary
+                if save_result and is_3d:
+                    intermediate_dataset(datasets[out_dataset], run_out_dir,
+                                        comm, idx+1, package, method_name,
+                                        out_dataset,
+                                        recon_algorithm=params.pop('algorithm', None))
 
 
 def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
