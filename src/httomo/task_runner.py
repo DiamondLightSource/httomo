@@ -155,36 +155,14 @@ def run_tasks(
                 data_out = [data_out]
 
             for in_dataset, out_dataset in zip(data_in, data_out):
-                # Add the appropriate dataset to the method function's dict of
-                # parameters based on the parameter name for the method's python
-                # function
-                if package == 'tomopy':
-                    httomo_params['data'] = datasets[in_dataset]
-                elif package == 'httomo':
-                    data_param = \
-                        _set_method_data_param(func, in_dataset, datasets)
-                    httomo_params.update(data_param)
-
-                # Run the method, then store the result in the appropriate
-                # dataset in the `datasets` dict
-                if package == 'tomopy':
-                    datasets[out_dataset] = \
-                        _run_tomopy_method(func, method_name, params, httomo_params)
-                elif package == 'httomo':
-                    params.update(httomo_params)
-                    datasets[out_dataset] = \
-                        _run_httomo_method(func, params)
-
-                # TODO: The dataset saving functionality only supports 3D data
-                # currently, so check that the dimension of the data is 3 before
-                # saving it
-                is_3d = len(datasets[out_dataset].shape) == 3
-                # Save the result if necessary
-                if save_result and is_3d:
-                    intermediate_dataset(datasets[out_dataset], run_out_dir,
-                                        comm, idx+1, package, method_name,
-                                        out_dataset,
-                                        recon_algorithm=params.pop('algorithm', None))
+                if save_result:
+                    _run_method(func, idx+1, package, method_name, in_dataset,
+                                out_dataset, datasets, params, httomo_params,
+                                comm, out_dir=run_out_dir)
+                else:
+                    _run_method(func, idx+1, package, method_name, in_dataset,
+                                out_dataset, datasets, params, httomo_params,
+                                comm)
 
 
 def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
@@ -307,6 +285,74 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
             raise ValueError(err_str)
 
     return method_funcs
+
+
+def _run_method(func: Callable, task_no: int, package_name: str,
+                method_name: str, in_dataset: str, out_dataset: str,
+                datasets: Dict[str, ndarray], method_params: Dict,
+                httomo_params: Dict, comm: MPI.Comm,
+                out_dir: str=None) -> ndarray:
+    """Run a method function in the processing pipeline.
+
+    Parameters
+    ----------
+    func : Callable
+        The python function that performs the method.
+    task_no : int
+        The number of the given task, starting at index 1.
+    package_name : str
+        The package that the method function `func` comes from.
+    method_name : str
+        The name of the method to apply.
+    in_dataset : str
+        The name of the input dataset.
+    out_dataset : str
+        The name of the output dataset.
+    datasets : Dict[str, ndarray]
+        A dict containing all available datasets in the given pipeline.
+    method_params : Dict
+        A dict of parameters for the method.
+    httomo_params : Dict, optional
+        A dict of parameters related to HTTomo.
+    comm : MPI.Comm
+        MPI communicator object.
+    out_dir : str, optional
+        If the result should be saved in an intermediate file, the directory to
+        save it should be provided.
+
+    Returns
+    -------
+    ndarray
+        An array containing the result of the method function.
+    """
+    # Add the appropriate dataset to the method function's dict of
+    # parameters based on the parameter name for the method's python
+    # function
+    if package_name == 'tomopy':
+        httomo_params['data'] = datasets[in_dataset]
+    elif package_name == 'httomo':
+        data_param = _set_method_data_param(func, in_dataset, datasets)
+        httomo_params.update(data_param)
+
+    # Run the method, then store the result in the appropriate
+    # dataset in the `datasets` dict
+    if package_name == 'tomopy':
+        datasets[out_dataset] = \
+            _run_tomopy_method(func, method_name, method_params, httomo_params)
+    elif package_name == 'httomo':
+        method_params.update(httomo_params)
+        datasets[out_dataset] = _run_httomo_method(func, method_params)
+
+    # TODO: The dataset saving functionality only supports 3D data
+    # currently, so check that the dimension of the data is 3 before
+    # saving it
+    is_3d = len(datasets[out_dataset].shape) == 3
+    # Save the result if necessary
+    if out_dir is not None and is_3d:
+        intermediate_dataset(datasets[out_dataset], out_dir,
+                            comm, task_no, package_name, method_name,
+                            out_dataset,
+                            recon_algorithm=method_params.pop('algorithm', None))
 
 
 def _run_loader(func: Callable, params: Dict) -> Tuple[ndarray, ndarray,
