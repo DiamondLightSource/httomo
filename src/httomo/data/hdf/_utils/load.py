@@ -16,6 +16,9 @@ def load_data(file, dim, path, preview=":,:,:", pad=(0, 0), comm=MPI.COMM_WORLD)
         pad: Pad the data by this number of slices.
         comm: MPI communicator object.
     """
+    print(file)
+    print(path)
+    print(preview)    
     if dim == 1:
         data = read_through_dim1(file, path, preview=preview, pad=pad, comm=comm)
     elif dim == 2:
