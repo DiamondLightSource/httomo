@@ -28,7 +28,7 @@ import os
 from PIL import Image
 import skimage.exposure as exposure
 
-def _save_image(array2d, glob_stats, bits, jpeg_quality, path_to_out_file):    
+def _save_single_img(array2d, glob_stats, bits, jpeg_quality, path_to_out_file):    
     """rescale to the bit chosen and save an image
 
     Args:
@@ -47,7 +47,7 @@ def _save_image(array2d, glob_stats, bits, jpeg_quality, path_to_out_file):
     img = Image.fromarray(array2d)
     img.save(path_to_out_file, quality=jpeg_quality)
 
-def save(data: ndarray,
+def save_to_images(data: ndarray,
          out_folder_path: str,
          glob_stats: tuple,  
          comm: Comm,
@@ -62,9 +62,9 @@ def save(data: ndarray,
     data : ndarray
         Required input array.
     out_folder_path : str
-        Required path to the output folder (subfolder "images" will be generated). 
+        Required path to the output folder (subfolder will be automatically generated).
     glob_stats: tuple
-        Collected global statistics of input data in a tuple given as: (min, max, mean, std_var).
+        Global statistics of input data in a tuple given as: (min, max, mean, std_var).
     comm: int
         MPI communicator.
     axis : int, optional
@@ -90,9 +90,7 @@ def save(data: ndarray,
         slice_dim_size=data_full_shape[axis]
         for i in range(slice_dim_size):
             filename = '%s%05i.%s' % (path_to_images_dir, i + comm.rank*slice_dim_size, file_format)
-            _save_image(data.take(indices=i,axis=axis), glob_stats, bits, jpeg_quality, filename)
+            _save_single_img(data.take(indices=i,axis=axis), glob_stats, bits, jpeg_quality, filename)
     else:
-        _save_image(data, glob_stats, bits, jpeg_quality, '%s%05i.%s' % (path_to_images_dir, 1, file_format))
-        
-    print(comm.rank)
+        _save_single_img(data, glob_stats, bits, jpeg_quality, '%s%05i.%s' % (path_to_images_dir, 1, file_format))
     return
