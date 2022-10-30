@@ -49,8 +49,8 @@ def median_filter3d(data: ndarray,
 
 def dezinger_filter3d(data: ndarray, 
                       glob_stats: tuple,
-                      radius_kernel: int = 1,                      
-                      mu_dezinger: float = 0.1, 
+                      radius_kernel: int = 1,
+                      mu_dezinger: float = 0.1,
                       ncore: int = 1) -> ndarray:
     """Dezinger filter (aka remove_outlier in TomoPy) in 3D from the Larix toolbox (C - implementation)
 
@@ -58,10 +58,10 @@ def dezinger_filter3d(data: ndarray,
     ----------
     data : ndarray
         Input array.
+    glob_stats: tuple
+        Global statistics of input data in a tuple given as: (min, max, mean, std_var).        
     radius_kernel : int, optional
         The radius of the median kernel (the full size 3D kernel is (2*radius_kernel+1)^3).
-    glob_stats: tuple
-        Global statistics of input data in a tuple given as: (min, max, mean, std_var).
     mu_dezinger : float, optional
         A threshold dezinging parameter, when it equals zero all values are median-filtered
     ncore : int, optional

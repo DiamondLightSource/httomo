@@ -24,13 +24,16 @@
 import numpy as np
 from numpy import ndarray
 
-def otsu_thresholding(data: ndarray) -> float:
+def otsu_thresholding(data: ndarray,
+                      foreground: bool = True) -> float:
     """Otsu thresholding of a 2D image
 
     Parameters
     ----------
     data : ndarray
         Input array.
+    foreground : bool, optional
+        data is thresholded to get the foreground, otherwise background
 
     Returns
     -------
