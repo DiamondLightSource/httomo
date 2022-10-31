@@ -157,13 +157,13 @@ def run_tasks(
 
             for in_dataset, out_dataset in zip(data_in, data_out):
                 if save_result:
-                    _run_method(func, idx+1, package, method_name, in_dataset,
-                                out_dataset, datasets, params, httomo_params,
-                                comm, out_dir=run_out_dir)
+                    out_dir = run_out_dir
                 else:
-                    _run_method(func, idx+1, package, method_name, in_dataset,
-                                out_dataset, datasets, params, httomo_params,
-                                comm)
+                    out_dir = None
+
+                _run_method(func, idx+1, package, method_name, in_dataset,
+                            out_dataset, datasets, params, httomo_params,
+                            comm, out_dir=out_dir)
 
 
 def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
