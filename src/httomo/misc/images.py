@@ -49,9 +49,9 @@ def _save_single_img(array2d, glob_stats, bits, jpeg_quality, path_to_out_file):
 
 def save_to_images(data: ndarray,
          out_folder_path: str,
-         glob_stats: tuple,  
+         glob_stats: tuple,
          comm: Comm,
-         axis: int = 0,         
+         axis: int = 0,
          file_format: str = 'tif',
          bits: int = 8,
          jpeg_quality: int = 95):
@@ -81,11 +81,11 @@ def save_to_images(data: ndarray,
         bits = 32
         print("The selected bit type %s is not available, resetting to 32 bit \n" % str(bits))
     # create the output folder
-    path_to_images_dir = out_folder_path + '/' + "images" + str(bits) + "bit" + "_" + str(file_format) + '/'    
+    path_to_images_dir = out_folder_path + '/' + "images" + str(bits) + "bit" + "_" + str(file_format) + '/'
     if not os.path.exists(path_to_images_dir):
         os.makedirs(path_to_images_dir)    
     
-    data_full_shape = np.shape(data)    
+    data_full_shape = np.shape(data)
     if data.ndim == 3:
         slice_dim_size=data_full_shape[axis]
         for i in range(slice_dim_size):

@@ -30,7 +30,8 @@ def standard_tomo(in_file: Path, data_key: str, dimension: int,
     if crop != 100:
         new_length = int(round(shape[1] * crop / 100))
         offset = int((shape[1] - new_length) / 2)
-        preview[1] = f"{offset}: {offset + new_length}"
+        #preview[1] = f"{offset}: {offset + new_length}"
+        preview[1] = "1320:1340"
         cropped_shape = (
             data_indices[-1] + 1 - data_indices[0],
             new_length,
