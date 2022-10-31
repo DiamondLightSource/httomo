@@ -31,6 +31,9 @@ def load_data(file: str, dim: int, path: str, preview: str=":,:,:",
     ndarray
         The numpy array that has been loaded.
     """
+    print(file)
+    print(path)
+    print(preview)    
     if dim == 1:
         data = read_through_dim1(file, path, preview=preview, pad=pad, comm=comm)
     elif dim == 2:
