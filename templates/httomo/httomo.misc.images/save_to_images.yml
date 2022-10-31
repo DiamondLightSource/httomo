@@ -1,0 +1,8 @@
+- httomo.misc.images:
+    save_to_images:
+      data_in: tomo      
+      out_folder_path: None
+      axis: 0
+      file_format: 'tif'
+      bits: 8
+      jpeg_quality: 95
