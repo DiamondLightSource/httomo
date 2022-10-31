@@ -13,6 +13,7 @@ from mpi4py import MPI
 from httomo.utils import print_once
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
+from httomo._stats.globals import min_max_mean_std
 
 
 def run_tasks(
@@ -155,11 +156,18 @@ def run_tasks(
                 data_in = [data_in]
                 data_out = [data_out]
 
+            # Check if method type signature requires global statistics
+            req_glob_stats = 'glob_stats' in signature(func).parameters
+
             for in_dataset, out_dataset in zip(data_in, data_out):
                 if save_result:
                     out_dir = run_out_dir
                 else:
                     out_dir = None
+
+                if req_glob_stats is True:
+                    stats = _fetch_glob_stats(datasets[in_dataset], comm)
+                    params.update({'glob_stats': stats})
 
                 _run_method(func, idx+1, package, method_name, in_dataset,
                             out_dataset, datasets, params, httomo_params,
@@ -521,3 +529,22 @@ def _set_method_data_param(func: Callable, dataset_name: str,
     # parameter
     data_param = sig_params[0]
     return {data_param: datasets[dataset_name]}
+
+
+def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
+                                                              float, float]:
+    """Fetch the mix, max, mean, standard deviation of the given data.
+
+    Parameters
+    ----------
+    data : ndarray
+        The data to calculate statistics from.
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    Tuple[float, float, float, float]
+        A tuple containing the stats values.
+    """
+    return min_max_mean_std(data, comm)
