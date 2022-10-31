@@ -61,6 +61,9 @@ def run_tasks(
     # config YAML
     datasets = _initialise_datasets(yaml_config)
 
+    # Define list to store dataset stats for each task in the user config YAML
+    glob_stats = _initialise_stats(yaml_config)
+
     # Get a list of the python functions associated to the methods defined in
     # user config YAML
     method_funcs = _get_method_funcs(yaml_config)
@@ -167,6 +170,7 @@ def run_tasks(
 
                 if req_glob_stats is True:
                     stats = _fetch_glob_stats(datasets[in_dataset], comm)
+                    glob_stats[idx][in_dataset] = stats
                     params.update({'glob_stats': stats})
 
                 _run_method(func, idx+1, package, method_name, in_dataset,
@@ -222,6 +226,58 @@ def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
                     datasets[method_conf[dataset_param]] = None
 
     return datasets
+
+
+# TODO: There's a lot of overlap with the `_initialise_datasets()` function, the
+# only difference is that this function doesn't need to inspect the output
+# datasets of a method, so perhaps the two functions can be nicely merged?
+def _initialise_stats(yaml_config: Path) -> List[Dict]:
+    """Generate a list of dicts that will hold the stats for the datasets in all
+    the methods in the pipeline.
+
+    Parameters
+    ----------
+    yaml_config : Path
+        The file containing the processing pipeline info as YAML
+
+    Returns
+    -------
+    List[Dict]
+        A list containing the stats of all datasets of all methods in the
+        pipeline.
+    """
+    stats = []
+    # Define the params related to dataset names in the given function, whether
+    # it's a loader or a method function
+    loader_dataset_param = 'name'
+
+    yaml_conf = open_yaml_config(yaml_config)
+    for task_conf in yaml_conf:
+        module_name, module_conf = task_conf.popitem()
+        _, method_conf = module_conf.popitem()
+
+        if 'loaders' in module_name:
+            dataset_param = loader_dataset_param
+        else:
+            if 'data_in_multi' in method_conf.keys():
+                method_dataset_param = 'data_in_multi'
+            else:
+                method_dataset_param = 'data_in'
+            dataset_param = method_dataset_param
+
+        # Dict to hold the stats for each dataset associated with the method
+        method_stats = {}
+
+        # Check if there are multiple input datasets to account for
+        if type(method_conf[dataset_param]) is list:
+            for dataset_name in method_conf[dataset_param]:
+                method_stats[dataset_name] = None
+        else:
+            method_stats[method_conf[dataset_param]] = None
+
+        stats.append(method_stats)
+
+    return stats
 
 
 def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool]]:
