@@ -2,4 +2,4 @@
     mask_empty_slice:
       data_in: tomo
       data_out: tomo
-      threshold: '0.25'
+      threshold: 0.25

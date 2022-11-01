@@ -2,4 +2,4 @@
     add_rings:
       data_in: tomo
       data_out: tomo
-      std: '0.05'
+      std: 0.05

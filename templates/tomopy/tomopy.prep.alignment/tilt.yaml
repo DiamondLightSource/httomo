@@ -3,5 +3,5 @@
       data_in: tomo
       data_out: tomo
       obj: REQUIRED
-      rad: '0'
-      phi: '0'
+      rad: 0
+      phi: 0

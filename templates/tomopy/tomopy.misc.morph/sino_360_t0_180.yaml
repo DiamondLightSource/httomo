@@ -3,5 +3,5 @@
       data_in: tomo
       data_out: tomo
       data: REQUIRED
-      overlap: '0'
-      rotation: '''left'''
+      overlap: 0
+      rotation: left

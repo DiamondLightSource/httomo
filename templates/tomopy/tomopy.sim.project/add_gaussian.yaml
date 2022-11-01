@@ -2,5 +2,5 @@
     add_gaussian:
       data_in: tomo
       data_out: tomo
-      mean: '0'
-      std: None
+      mean: 0
+      std: null

@@ -2,6 +2,6 @@
     remove_stripe_based_filtering:
       data_in: tomo
       data_out: tomo
-      sigma: '3'
-      size: None
-      dim: '1'
+      sigma: 3
+      size: null
+      dim: 1

@@ -76,7 +76,7 @@ for i in range(modules_no):
                elif str(k) == "kwargs":
                   params_dict["#additional parameters"] = 'AVAILABLE'
                else:
-                  params_dict[str(k)] = str(v).split('=')[1::2][0]
+                  params_dict[str(k)] = v.default
       
       params_list = [{module_name: {method_name: params_dict}}]
 
