@@ -95,8 +95,12 @@ def save_to_images(data: ndarray,
     if data.ndim == 3:
         slice_dim_size=data_full_shape[axis]
         for i in range(slice_dim_size):
-            filename = '%s%05i.%s' % (path_to_images_dir, i + comm.rank*slice_dim_size, file_format)
-            _save_single_img(data.take(indices=i,axis=axis), glob_stats, bits, jpeg_quality, filename)
+            filename = f"{i + comm.rank*slice_dim_size:05d}.{file_format}"
+            filepath = os.path.join(path_to_images_dir, f"{filename}")
+            _save_single_img(data.take(indices=i,axis=axis), glob_stats, bits,
+                             jpeg_quality, filepath)
     else:
-        _save_single_img(data, glob_stats, bits, jpeg_quality, '%s%05i.%s' % (path_to_images_dir, 1, file_format))
+        filename = f"{1:05d}.{file_format}"
+        filepath = os.path.join(path_to_images_dir, f"{filename}")
+        _save_single_img(data, glob_stats, bits, jpeg_quality, filepath)
     return
