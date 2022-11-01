@@ -57,9 +57,14 @@ def run_tasks(
     if comm.size == 1:
         ncores = multiprocessing.cpu_count() # use all available CPU cores if not an MPI run
 
+    # TODO: Define a list of savers which have no output dataset and so need to
+    # be treated differently to other methods. Probably should be handled in a
+    # more robust way than this workaround.
+    SAVERS_NO_DATA_OUT_PARAM = ['save_to_images']
+
     # Define dict to store arrays that are specified as datasets in the user
     # config YAML
-    datasets = _initialise_datasets(yaml_config)
+    datasets = _initialise_datasets(yaml_config, SAVERS_NO_DATA_OUT_PARAM)
 
     # Define list to store dataset stats for each task in the user config YAML
     glob_stats = _initialise_stats(yaml_config)
@@ -98,7 +103,8 @@ def run_tasks(
                 (['darks'], darks),
                 (['flats'], flats),
                 (['angles', 'angles_radians'], angles),
-                (['comm'], comm)
+                (['comm'], comm),
+                (['out_dir'], run_out_dir)
             ]
         else:
             save_result = False
@@ -142,8 +148,12 @@ def run_tasks(
             else:
                 # TODO: This error reporting is possibly better handled by
                 # schema validation of the user config YAML
-                err_str = "Invalid in/out dataset parameters"
-                raise ValueError(err_str)
+                if method_name not in SAVERS_NO_DATA_OUT_PARAM:
+                    err_str = "Invalid in/out dataset parameters"
+                    raise ValueError(err_str)
+                else:
+                    data_in = [params.pop('data_in')]
+                    data_out = [None]
 
             # Check if the method function's params require any datasets stored
             # in the `datasets` dict
@@ -175,10 +185,11 @@ def run_tasks(
 
                 _run_method(func, idx+1, package, method_name, in_dataset,
                             out_dataset, datasets, params, httomo_params,
-                            comm, out_dir=out_dir)
+                            SAVERS_NO_DATA_OUT_PARAM, comm, out_dir=out_dir)
 
 
-def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
+def _initialise_datasets(yaml_config: Path,
+                         savers_no_data_out_param: List[str]) -> Dict[str, None]:
     """Add keys to dict that will contain all datasets defined in the YAML
     config.
 
@@ -186,6 +197,9 @@ def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
     ----------
     yaml_config : Path
         The file containing the processing pipeline info as YAML
+    savers_no_data_out_param : List[str]
+        A list of savers which have neither `data_out` nor `data_out_multi` as
+        their output.
 
     Returns
     -------
@@ -198,13 +212,23 @@ def _initialise_datasets(yaml_config: Path) -> Dict[str, None]:
     # Define the params related to dataset names in the given function, whether
     # it's a loader or a method function
     loader_dataset_params = ['name']
+    # TODO: For now, make savers such as `save_to_images` a special case where:
+    # - `data_in` is defined
+    # - but `data_out` is not, since the output of the method is not a dataset
+    # but something else, like a directory containing many subdirectories of
+    # images.
+    # And therefore, don't try to inspect the `data_out` parameter of the method
+    # to then try and initialise a dataset from its value, since it won't exist!
+    savers_no_data_out_params = ['data_in']
 
     yaml_conf = open_yaml_config(yaml_config)
     for task_conf in yaml_conf:
         module_name, module_conf = task_conf.popitem()
-        _, method_conf = module_conf.popitem()
+        method_name, method_conf = module_conf.popitem()
         if 'loaders' in module_name:
             dataset_params = loader_dataset_params
+        elif method_name in savers_no_data_out_param:
+            dataset_params = savers_no_data_out_params
         else:
             if 'data_in_multi' in method_conf.keys() and \
                 'data_out_multi' in method_conf.keys():
@@ -355,8 +379,8 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
 def _run_method(func: Callable, task_no: int, package_name: str,
                 method_name: str, in_dataset: str, out_dataset: str,
                 datasets: Dict[str, ndarray], method_params: Dict,
-                httomo_params: Dict, comm: MPI.Comm,
-                out_dir: str=None) -> ndarray:
+                httomo_params: Dict, savers_no_data_out_param: List[str],
+                comm: MPI.Comm, out_dir: str=None) -> ndarray:
     """Run a method function in the processing pipeline.
 
     Parameters
@@ -379,6 +403,9 @@ def _run_method(func: Callable, task_no: int, package_name: str,
         A dict of parameters for the method.
     httomo_params : Dict, optional
         A dict of parameters related to HTTomo.
+    savers_no_data_out_param : List[str]
+        A list of savers which have neither `data_out` nor `data_out_multi` as
+        their output.
     comm : MPI.Comm
         MPI communicator object.
     out_dir : str, optional
@@ -406,6 +433,11 @@ def _run_method(func: Callable, task_no: int, package_name: str,
             _run_tomopy_method(func, method_name, method_params, httomo_params)
     elif package_name == 'httomo':
         method_params.update(httomo_params)
+        if method_name in savers_no_data_out_param:
+            _run_httomo_method(func, method_params)
+            # Nothing more to do with output data if the saver has a special
+            # kind of output
+            return
         datasets[out_dataset] = _run_httomo_method(func, method_params)
 
     # TODO: The dataset saving functionality only supports 3D data
