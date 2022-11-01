@@ -34,14 +34,14 @@ def median_filter3d(data: ndarray,
     data : ndarray
         Input array.
     radius_kernel : int, optional
-        The radius of the median kernel (the full size 3D kernel is (2*radius_kernel+1)^3).
+        The radius of the median kernel (e.g., the full size 3D kernel is (2*radius_kernel+1)^3).
     ncore : int, optional
         The number of CPU cores.
 
     Returns
     -------
     ndarray
-        Median filtered 3D array.
+        Median filtered array.
     """
     from larix.methods.misc import MEDIAN_FILT
     
@@ -61,7 +61,7 @@ def dezinger_filter3d(data: ndarray,
     glob_stats: tuple
         Global statistics of input data in a tuple given as: (min, max, mean, std_var).        
     radius_kernel : int, optional
-        The radius of the median kernel (the full size 3D kernel is (2*radius_kernel+1)^3).
+        The radius of the median kernel (e.g.,the full size 3D kernel is (2*radius_kernel+1)^3).
     mu_dezinger : float, optional
         A threshold dezinging parameter, when it equals zero all values are median-filtered
     ncore : int, optional
@@ -70,8 +70,44 @@ def dezinger_filter3d(data: ndarray,
     Returns
     -------
     ndarray
-        Dezinger filtered 3D array.
+        Dezinger filtered array.
     """
     from larix.methods.misc import MEDIAN_DEZING
 
     return MEDIAN_DEZING(data, radius_kernel, glob_stats[3]*mu_dezinger, ncore)
+
+
+def inpainting_filter3d(data: ndarray,
+                        mask: ndarray,
+                        number_of_iterations: int = 15,
+                        windowsize_half: int = 5,
+                        method_type: str = "random",
+                        ncore: int = 1) -> tuple((ndarray, ndarray)):
+    """Inpainting filter in 3D from the Larix toolbox (C - implementation). 
+    A morphological inpainting scheme which progresses from the edge of the mask inwards, 
+    therefore acting like a diffusion-type process, but much faster
+
+    Parameters
+    ----------
+    data : ndarray
+        Input array.
+    mask : ndarray
+        Input binary mask (uint8) the same size as data, integer 1 will define the inpainting area.
+    number_of_iterations : int, optional
+        An additional number of iterations to run after the region has been inpainted (smoothing effect).
+    windowsize_half : int, optional
+        Half-window size of the searching window (neighbourhood window).
+    method_type : str, optional
+        method how to select a value in the neighbourhood: mean, meadian or random.
+    ncore : int, optional
+        The number of CPU cores.
+
+    Returns
+    -------
+    ndarray
+        Inpainted array.
+    """
+    from larix.methods.misc import INPAINT_EUCL_WEIGHTED    
+  
+    return INPAINT_EUCL_WEIGHTED(np.ascontiguousarray(data, dtype=np.float32),
+                                 np.ascontiguousarray(mask, dtype=np.uint8), number_of_iterations, windowsize_half, method_type, ncore)
