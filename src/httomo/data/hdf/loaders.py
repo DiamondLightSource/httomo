@@ -116,16 +116,6 @@ def _parse_preview(preview: List[Dict[str, int]],
     """
     preview_str = ''
 
-    # TODO: If the `preview`` parameter is omitted in the YAML config, then do
-    # the bare minimum of cropping out the flats and darks, but leave the rest
-    # of the projection data untouched.
-    #
-    # Currently assuming the data to be a stack of projections and thus
-    # that the data has 3 dims. Should make this provide as many semicolons as
-    # needed to cover the number of dimensions that the given data has.
-    if preview is None:
-        return f"{data_indices[0]}:{data_indices[-1]+1}, :, :"
-
     # Pad the `preview` list with None until it is the same length as the number
     # of dimensions in the data, since the user may not have specified a preview
     # value for every dimension after the last dimension with previewing in the

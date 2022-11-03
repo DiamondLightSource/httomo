@@ -88,7 +88,7 @@ def run_tasks(
             # Check if a value for the `preview` parameter of the loader has
             # been provided
             if 'preview' not in params.keys():
-                params['preview'] = None
+                params['preview'] = [None]
 
             data, flats, darks, angles, angles_total, detector_y, detector_x = \
                 _run_loader(func, params)
