@@ -21,7 +21,6 @@ def run_tasks(
     yaml_config: Path,
     out_dir: Path,
     dimension: int,
-    crop: int = 100,
     pad: int = 0,
     ncores: int = 1,
     save_all: bool = False
@@ -38,8 +37,6 @@ def run_tasks(
         The directory to write data to.
     dimension : int
         The dimension to slice in.
-    crop : int
-        The percentage of data to use. Defaults to 100.
     pad : int
         The padding size to use. Defaults to 0.
     ncores : int
@@ -77,7 +74,6 @@ def run_tasks(
     loader_extra_params = {
         'in_file': in_file,
         'dimension': dimension,
-        'crop': crop,
         'pad': pad,
         'comm': comm
     }
@@ -88,6 +84,12 @@ def run_tasks(
         print_once(f"Running task {idx+1}: {method_name}...", comm)
         if is_loader:
             params.update(loader_extra_params)
+
+            # Check if a value for the `preview` parameter of the loader has
+            # been provided
+            if 'preview' not in params.keys():
+                params['preview'] = None
+
             data, flats, darks, angles, angles_total, detector_y, detector_x = \
                 _run_loader(func, params)
 

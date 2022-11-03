@@ -4,7 +4,7 @@ from pathlib import Path
 import click
 
 from httomo.common import PipelineTasks
-from httomo.cpu_pipeline import cpu_pipeline
+#from httomo.cpu_pipeline import cpu_pipeline
 from httomo.task_runner import run_tasks
 #from httomo.gpu_pipeline import gpu_pipeline
 
@@ -19,7 +19,6 @@ class GlobalOptions:
     yaml_config: Path
     out_dir: Path
     dimension: int
-    crop: int
     pad: int
     ncores: int
     stop_after: PipelineTasks
@@ -42,12 +41,6 @@ class GlobalOptions:
     type=click.IntRange(1, 3),
     default=1,
     help="The dimension to slice through.",
-)
-@click.option(
-    "--crop",
-    type=click.IntRange(1, 100),
-    default=100,
-    help="The percentage of data to process.",
 )
 @click.option(
     "--pad",
@@ -82,7 +75,6 @@ def main(
     yaml_config: Path,
     out_dir: Path,
     dimension: int,
-    crop: int,
     pad: int,
     ncores: int,
     stop_after: PipelineTasks,
@@ -90,7 +82,7 @@ def main(
 ):
     """httomo: High Throughput Tomography."""
     ctx.obj = GlobalOptions(
-        in_file, yaml_config, out_dir, dimension, crop, pad, ncores, stop_after,
+        in_file, yaml_config, out_dir, dimension, pad, ncores, stop_after,
         save_all
     )
 
@@ -107,7 +99,6 @@ def cpu(global_options: GlobalOptions):
         #global_options.yaml_config,
         global_options.out_dir,
         global_options.dimension,
-        global_options.crop,
         global_options.pad,
         global_options.ncores,
         global_options.stop_after,
@@ -123,7 +114,6 @@ def gpu(global_options: GlobalOptions):
         #global_options.yaml_config,
         global_options.out_dir,
         global_options.dimension,
-        global_options.crop,
         global_options.pad,
         global_options.stop_after,
     )
@@ -139,7 +129,6 @@ def task_runner(global_options: GlobalOptions):
         global_options.yaml_config,
         global_options.out_dir,
         global_options.dimension,
-        global_options.crop,
         global_options.pad,
         global_options.ncores,
         global_options.save_all
