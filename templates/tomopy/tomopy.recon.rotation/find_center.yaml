@@ -2,9 +2,9 @@
     find_center:
       data_in: tomo
       data_out: tomo
-      ind: None
-      init: None
-      tol: '0.5'
-      mask: 'True'
-      ratio: '1.0'
-      sinogram_order: 'False'
+      ind: null
+      init: null
+      tol: 0.5
+      mask: true
+      ratio: 1.0
+      sinogram_order: false

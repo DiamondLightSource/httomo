@@ -3,6 +3,6 @@
       data_in: tomo
       data_out: tomo
       img: REQUIRED
-      method: '''quadrant+'''
-      medfilt2_kernel_size: '3'
-      medfilt_kernel_size: '23'
+      method: quadrant+
+      medfilt2_kernel_size: 3
+      medfilt_kernel_size: 23

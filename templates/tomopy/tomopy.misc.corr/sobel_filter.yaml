@@ -2,4 +2,4 @@
     sobel_filter:
       data_in: tomo
       data_out: tomo
-      axis: '0'
+      axis: 0

@@ -3,6 +3,6 @@
       data_in: tomo
       data_out: tomo
       axis: REQUIRED
-      npad: None
-      mode: '''constant'''
+      npad: null
+      mode: constant
       '#additional parameters': AVAILABLE

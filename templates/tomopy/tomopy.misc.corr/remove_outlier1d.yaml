@@ -3,5 +3,5 @@
       data_in: tomo
       data_out: tomo
       dif: REQUIRED
-      size: '3'
-      axis: '0'
+      size: 3
+      axis: 0

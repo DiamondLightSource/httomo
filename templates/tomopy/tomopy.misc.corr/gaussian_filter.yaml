@@ -2,6 +2,6 @@
     gaussian_filter:
       data_in: tomo
       data_out: tomo
-      sigma: '3'
-      order: '0'
-      axis: '0'
+      sigma: 3
+      order: 0
+      axis: 0

@@ -2,6 +2,6 @@
     add_drift:
       data_in: tomo
       data_out: tomo
-      amp: '0.2'
-      period: '50'
-      mean: '1'
+      amp: 0.2
+      period: 50
+      mean: 1
