@@ -1,5 +1,5 @@
 HTTOmo (High Throughput Tomography pipeline)
-******************************************
+********************************************
 
 * A Python tool for parallel read of h5 tomographic data using MPI protocols
 * The data can be re-chunked, saved and re-loaded (e.g. projection or sinogram-wise)
@@ -27,6 +27,6 @@ Running the code:
 * For help with the command line interface, execute :code:`python -m httomo --help`
 
 Am example of running the code with test data:
-=================
+==============================================
 * Go to the home directory and run:
 * :code:`python -m httomo testdata/tomo_standard.nxs . cpu`
