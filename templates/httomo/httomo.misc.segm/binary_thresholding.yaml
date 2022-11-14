@@ -1,0 +1,8 @@
+- httomo.misc.segm:
+    binary_thresholding:
+      data_in: tomo
+      data_out: tomo
+      val_intensity: 0.1
+      otsu: False
+      foreground: True
+      axis: 1

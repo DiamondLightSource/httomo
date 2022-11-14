@@ -79,13 +79,13 @@ def dezinger_filter3d(data: ndarray,
 
 def inpainting_filter3d(data: ndarray,
                         mask: ndarray,
-                        number_of_iterations: int = 15,
+                        number_of_iterations: int = 3,
                         windowsize_half: int = 5,
                         method_type: str = "random",
-                        ncore: int = 1) -> tuple((ndarray, ndarray)):
+                        ncore: int = 1) -> ndarray:
     """Inpainting filter in 3D from the Larix toolbox (C - implementation). 
-    A morphological inpainting scheme which progresses from the edge of the mask inwards, 
-    therefore acting like a diffusion-type process, but much faster
+    A morphological inpainting scheme which progresses from the edge of the mask inwards. 
+    It acts like a diffusion-type process but significantly faster in convergence.
 
     Parameters
     ----------
@@ -107,7 +107,6 @@ def inpainting_filter3d(data: ndarray,
     ndarray
         Inpainted array.
     """
-    from larix.methods.misc import INPAINT_EUCL_WEIGHTED    
+    from larix.methods.misc import INPAINT_EUCL_WEIGHTED
   
-    return INPAINT_EUCL_WEIGHTED(np.ascontiguousarray(data, dtype=np.float32),
-                                 np.ascontiguousarray(mask, dtype=np.uint8), number_of_iterations, windowsize_half, method_type, ncore)
+    return INPAINT_EUCL_WEIGHTED(data, mask, number_of_iterations, windowsize_half, method_type, ncore)

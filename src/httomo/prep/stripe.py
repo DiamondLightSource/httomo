@@ -28,24 +28,61 @@ def _gradient(data, axis):
     return np.gradient(data, axis=axis)
 
 def detect_stripes(data: ndarray,
-                   threshold_val: float = 0.1,
-                   ncore: int = 1) -> ndarray:
-    """A module to detect stripes in the data
+                   search_window_dims: tuple = (1,9,1),
+                   horiz_window_size: int = 11,
+                   gradient_gap: int = 2,
+                   ncore: int = 1) -> ndarray: 
+    """module to detect stripes in sinograms (2D) OR projection data (3D). 
+    1. Taking first derrivative of the input in the direction orthogonal to stripes.
+    2. Slide horizontal rectangular window orthogonal to stripes direction to accenuate outliers (stripes) using median.
+    3. Slide the vertical thin (1 pixel) window to calculate a mean (further accenuates stripes).
 
-    Parameters
-    ----------
-    data : ndarray
-        Input array.
-    radius_kernel : int, optional
-        The radius of the median kernel (e.g., the full size 3D kernel is (2*radius_kernel+1)^3).
-    ncore : int, optional
-        The number of CPU cores.
+    Args:
+        data (ndarray): sinogram (2D) [angles x detectorsX] OR projection data (3D) [angles x detectorsY x detectorsX]
+        search_window_dims (tuple, optional): searching rectangular window for weights calculation, 
+        of a size (detectors_window_height, detectors_window_width, angles_window_depth). Defaults to (1,9,1).
+        horiz_window_size (int, optional): the half size of the horizontal 1D window to calculate mean. Defaults to 11.
+        gradient_gap (int, optional):  the gap in pixels with the neighbour while calculating a gradient (1 is the normal gradient). Defaults to 2.
+        ncore (int, optional): _description_. Defaults to 1.
 
-    Returns
-    -------
-    ndarray
-        Median filtered array.
-    """
-    from larix.methods.misc import MEDIAN_FILT
+    Returns:
+        ndarray: The associated weights (needed for thresholding)
+    """       
+    from larix.methods.misc import STRIPES_DETECT
     
-    return MEDIAN_FILT(data, radius_kernel, ncore)
+    # calculate weights for stripes
+    (stripe_weights, stats_vec) = STRIPES_DETECT(data, search_window_dims, horiz_window_size, gradient_gap, ncore)
+       
+    return stripe_weights
+
+
+def merge_stripes(data: ndarray,
+                   stripe_width_max_perc: float = 5,
+                   mask_dilate: int = 2,
+                   threshold_stripes: float = 0.1,
+                   ncore: int = 1) -> ndarray:
+    """module to threshold the obtained stripe weights in sinograms (2D) OR projection data (3D) and merge stripes that are close to each other. 
+    
+    Args:
+        data (ndarray): weigths for sinogram (2D) [angles x detectorsX] OR projection data (3D) [angles x detectorsY x detectorsX]
+        stripe_width_max_perc (float, optional):  the maximum width of stripes in the data, given in percents relative to the size of the DetectorX. Defaults to 5.
+        mask_dilate (int, optional): the number of pixels/voxels to dilate the obtained mask. Defaults to 2.
+        threshold_stripes (float, optional): Threshold the obtained weights to get a binary mask, larger vaules are more sensitive to stripes. Defaults to 0.1.
+        ncore (int, optional): _description_. Defaults to 1.
+
+    Returns:
+        ndarray: mask_stripe
+    """       
+    from larix.methods.misc import STRIPES_MERGE
+    
+    gradientX = _gradient(data, 2)    
+    med_val = np.median(np.abs(gradientX).flatten(), axis=0)
+    
+    # we get a local stats here, needs to be adopted for global stats
+    mask_stripe = np.zeros_like(data,dtype="uint8")    
+    mask_stripe[data > med_val/threshold_stripes] = 1
+    
+    # merge stripes that are close to each other
+    mask_stripe_merged = STRIPES_MERGE(mask_stripe, stripe_width_max_perc, mask_dilate, ncore)
+    
+    return mask_stripe_merged

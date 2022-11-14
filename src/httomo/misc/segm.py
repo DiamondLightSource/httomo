@@ -40,7 +40,7 @@ def _get_mask(data, mask, val_intensity, otsu, foreground):
 
 
 def binary_thresholding(data: ndarray,
-                        val_intensity: float,
+                        val_intensity: float = 0.1,
                         otsu: bool = False,
                         foreground: bool = True,
                         axis: int = 1) -> ndarray:
