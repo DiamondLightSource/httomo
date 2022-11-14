@@ -29,7 +29,7 @@ def _gradient(data, axis):
 
 def detect_stripes(data: ndarray,
                    search_window_dims: tuple = (1,9,1),
-                   horiz_window_size: int = 11,
+                   vert_window_size: float = 5,
                    gradient_gap: int = 2,
                    ncore: int = 1) -> ndarray: 
     """module to detect stripes in sinograms (2D) OR projection data (3D). 
@@ -41,7 +41,7 @@ def detect_stripes(data: ndarray,
         data (ndarray): sinogram (2D) [angles x detectorsX] OR projection data (3D) [angles x detectorsY x detectorsX]
         search_window_dims (tuple, optional): searching rectangular window for weights calculation, 
         of a size (detectors_window_height, detectors_window_width, angles_window_depth). Defaults to (1,9,1).
-        horiz_window_size (int, optional): the half size of the horizontal 1D window to calculate mean. Defaults to 11.
+        vert_window_size (float, optional): the half size of the vertical 1D window to calculate mean. Given in percents relative to the size of the angle dimension. Defaults to 5.
         gradient_gap (int, optional):  the gap in pixels with the neighbour while calculating a gradient (1 is the normal gradient). Defaults to 2.
         ncore (int, optional): _description_. Defaults to 1.
 
@@ -51,7 +51,7 @@ def detect_stripes(data: ndarray,
     from larix.methods.misc import STRIPES_DETECT
     
     # calculate weights for stripes
-    (stripe_weights, stats_vec) = STRIPES_DETECT(data, search_window_dims, horiz_window_size, gradient_gap, ncore)
+    (stripe_weights, stats_vec) = STRIPES_DETECT(data, search_window_dims, vert_window_size, gradient_gap, ncore)
        
     return stripe_weights
 
