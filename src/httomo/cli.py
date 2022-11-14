@@ -4,9 +4,7 @@ from pathlib import Path
 import click
 
 from httomo.common import PipelineTasks
-#from httomo.cpu_pipeline import cpu_pipeline
 from httomo.task_runner import run_tasks
-#from httomo.gpu_pipeline import gpu_pipeline
 
 from ._version_git import __version__
 
@@ -88,35 +86,6 @@ def main(
 
     if ctx.invoked_subcommand is None:
         click.echo(main.get_help(ctx))
-
-
-@main.command()
-@click.pass_obj
-def cpu(global_options: GlobalOptions):
-    """Perform reconstruction using the reference CPU pipeline."""
-    cpu_pipeline(
-        global_options.in_file,
-        #global_options.yaml_config,
-        global_options.out_dir,
-        global_options.dimension,
-        global_options.pad,
-        global_options.ncores,
-        global_options.stop_after,
-    )
-
-
-@main.command()
-@click.pass_obj
-def gpu(global_options: GlobalOptions):
-    """Perform reconstruction using the GPU accelerated pipeline."""
-    gpu_pipeline(
-        global_options.in_file,
-        #global_options.yaml_config,
-        global_options.out_dir,
-        global_options.dimension,
-        global_options.pad,
-        global_options.stop_after,
-    )
 
 
 @main.command()
