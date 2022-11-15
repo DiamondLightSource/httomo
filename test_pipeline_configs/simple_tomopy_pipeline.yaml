@@ -42,7 +42,7 @@
       data_in: tomo
       data_out: tomo
       center: cor
-      sinogram_order: false
+      sinogram_order: true
       algorithm: gridrec
       init_recon: null
       #additional parameters': AVAILABLE

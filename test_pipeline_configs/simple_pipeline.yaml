@@ -45,3 +45,12 @@
       algorithm: gridrec
       init_recon: null
       #additional parameters': AVAILABLE
+- httomo.misc.images:
+    save_to_images:
+      data_in: tomo      
+      out_folder_name: recon
+      axis: 0
+      file_format: 'tif'
+      bits: 8
+      jpeg_quality: 95
+

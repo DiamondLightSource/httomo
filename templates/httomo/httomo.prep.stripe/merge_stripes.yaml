@@ -1,7 +1,7 @@
 - httomo.prep.stripe:
     merge_stripes:
-      data_in: tomo
-      data_out: tomo
+      data_in: stripes_weight
+      data_out: stripes_mask
       stripe_width_max_perc: 5
       mask_dilate: 2
       threshold_stripes: 0.1
