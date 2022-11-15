@@ -13,6 +13,7 @@ from mpi4py import MPI
 from httomo.utils import print_once
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
+from httomo.data.hdf._utils.reslice import reslice
 from httomo._stats.globals import min_max_mean_std
 
 
@@ -78,6 +79,13 @@ def run_tasks(
         'comm': comm
     }
 
+    # Describes whether a task's input dataset needs to be resliced before being
+    # passed to the task
+    should_reslice = False
+    # TODO: Hardcoded slciing dimension since we are assuming to be working with
+    # projections, but this needs to be generalised
+    SLICING_DIM = 1
+
     # Run the methods
     for idx, (package, func, params, is_loader) in enumerate(method_funcs):
         method_name = params.pop('method_name')
@@ -133,6 +141,10 @@ def run_tasks(
             if 'save_result' in params.keys():
                 save_result = params.pop('save_result')
 
+            # Check if the input dataset should be resliced before the task runs
+            should_reslice = \
+                _check_if_should_reslice(method_funcs[idx-1][1], func)
+
             # Check for any extra params unrelated to tomopy but related to
             # HTTomo that should be added in
             httomo_params = \
@@ -179,6 +191,13 @@ def run_tasks(
                     out_dir = run_out_dir
                 else:
                     out_dir = None
+
+                if should_reslice:
+                    resliced_data, _ = reslice(datasets[in_dataset],
+                                              run_out_dir, SLICING_DIM,
+                                              angles_total, detector_y,
+                                              detector_x, comm)
+                    datasets[in_dataset] = resliced_data
 
                 if req_glob_stats is True:
                     stats = _fetch_glob_stats(datasets[in_dataset], comm)
@@ -638,3 +657,52 @@ def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
         A tuple containing the stats values.
     """
     return min_max_mean_std(data, comm)
+
+
+# TODO: The entire idea of this function is fragile and more of a workaround
+# than a proper solution to dynamically determining if the input dataset for a
+# method should be resliced or not. A better approach would be to do something
+# like:
+# - track the slicing-orientation for each dataset
+# - each method function somehow specifies what slicing-orientation the input
+#   data needs to be
+# and then the runner would decide on how and when to reslice the datasets based
+# on that, rather than this fragile way of checking adjacent tasks.
+def _check_if_should_reslice(prev_func: Callable,
+                             current_func: Callable) -> bool:
+    """Determine if the input dataset for the next method function should be
+    resliced.
+
+    Parameters
+    ----------
+    prev_func : Callable
+        The python function for the previously executed task in the pipeline.
+    current_func : Callable
+        The pyhton function for the next task to execute in the pipeline.
+
+    Returns
+    -------
+    bool
+        Describes whether the input dataset should be resliced or not.
+    """
+    # If centering method is encountered then perform reslice, since reslicing
+    # can safely be done serially or in parallel before the centering
+    if 'rotation' in current_func.__module__ or \
+        'rotation' == current_func.__name__:
+        return True
+
+    # If centering was done right before recon, then reslice before centering and
+    # NOT before the recon
+    if 'recon' in current_func.__module__ and \
+        ('rotation' in prev_func.__module__ or \
+            'rotation' == prev_func.__name__):
+        return False
+
+    # If centering was not done before recon, then do reslicing before recon
+    if 'recon' in current_func.__module__ and \
+        ('rotation' not in prev_func.__module__ or \
+            'rotation' != prev_func.__name__):
+        return True
+
+    # For any other cases, do not reslice
+    return False
