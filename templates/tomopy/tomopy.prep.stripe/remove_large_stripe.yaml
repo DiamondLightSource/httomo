@@ -1,0 +1,8 @@
+- tomopy.prep.stripe:
+    remove_large_stripe:
+      data_in: tomo
+      data_out: tomo
+      snr: 3
+      size: 51
+      drop_ratio: 0.1
+      norm: true

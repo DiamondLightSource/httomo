@@ -1,0 +1,5 @@
+- httomo.misc.corr:
+    median_filter3d:
+      data_in: tomo
+      data_out: tomo
+      radius_kernel: 1

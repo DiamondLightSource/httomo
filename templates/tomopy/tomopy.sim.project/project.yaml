@@ -1,0 +1,9 @@
+- tomopy.sim.project:
+    project:
+      data_in: tomo
+      data_out: tomo
+      obj: REQUIRED
+      center: null
+      emission: true
+      pad: true
+      sinogram_order: false

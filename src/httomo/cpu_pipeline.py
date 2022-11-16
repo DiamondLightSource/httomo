@@ -4,21 +4,20 @@ from os import mkdir
 from pathlib import Path
 
 from mpi4py import MPI
+import numpy as np
 from nvtx import annotate
 import multiprocessing
 
 from httomo.common import PipelineTasks
 
-from httomo.tasks._DATA_.data_loading import load_data
-from httomo.tasks._DATA_.data_saving import save_data
-from httomo.tasks._DATA_.data_reslice import reslice
+from httomo.data.hdf.loaders import standard_tomo
+from httomo.data.hdf._utils.save import intermediate_dataset
+from httomo.data.hdf._utils import reslice
 
-from httomo.tasks._METHODS_.filtering.median3d_cpu import median3d_larix
-from httomo.tasks._METHODS_.normalisation.normalise_cpu import normalise_tomopy
-from httomo.tasks._METHODS_.stripe_removal.stripes_cpu import remove_stripes_tomopy    
-from httomo.tasks._METHODS_.centering.tomopy_cpu import find_center_of_rotation
-from httomo.tasks._METHODS_.reconstruction.tomopy_cpu import reconstruct
-
+from httomo.misc.corr import median_filter3d
+from wrappers.tomopy.prep import normalize
+from wrappers.tomopy.prep import stripe
+from wrappers.tomopy.recon import rotation, algorithm
 
 
 def cpu_pipeline(
@@ -64,19 +63,19 @@ def cpu_pipeline(
             angles_total,
             detector_y,
             detector_x,
-        ) = load_data(in_file, data_key, dimension, crop, pad, comm)
+        ) = standard_tomo(in_file, data_key, dimension, crop, pad, comm)
     if stop_after == PipelineTasks.LOAD:
-        sys.exit()
+        sys.exit()      
     ###################################################################################
     #            3D median or dezinger filter to apply to raw data/flats/darks
-    method_name = 'median3d_larix'
+    method_name = 'larix'
     save_result = True
     radius_kernel = 1 # a half-size of the median smoothing kernel
-    mu_dezinger = 0.0 # when > 0.0, then dezinging enabled, otherwise median filter
+    mu_dezinger = 0.0 # when > 0.0, then dezinging enabled, otherwise median filter (smaller value more sensitive)
     with annotate(PipelineTasks.FILTER.name):
-        data, flats, darks = median3d_larix(data, flats, darks, radius_kernel, mu_dezinger, ncores)
+        data, flats, darks = larix(data, flats, darks, radius_kernel, mu_dezinger, ncores, comm)
     if save_result:
-        save_data(data, run_out_dir, method_name, comm)
+        intermediate_dataset(data, run_out_dir, method_name, comm)
     if stop_after == PipelineTasks.FILTER:
         sys.exit()
     ###################################################################################
@@ -84,9 +83,9 @@ def cpu_pipeline(
     method_name = 'normalisation'
     save_result = True
     with annotate(PipelineTasks.NORMALIZE.name):
-        data = normalise_tomopy(data, flats, darks, ncores)
+        data = normalize(data, flats, darks, ncores)
     if save_result:
-        save_data(data, run_out_dir, method_name, comm)        
+        intermediate_dataset(data, run_out_dir, method_name, comm)
     if stop_after == PipelineTasks.NORMALIZE:
         sys.exit()
     ###################################################################################
@@ -94,15 +93,16 @@ def cpu_pipeline(
     method_name = 'remove_stripe_fw' # TomoPy methods exposed here as in tomopy.prep.stripe 
     save_result = True
     with annotate(PipelineTasks.STRIPES.name):
-        remove_stripes_tomopy(data, method_name, ncores)
+        stripe(data, method_name, ncores)
     if save_result:
-        save_data(data, run_out_dir, method_name, comm)               
+        intermediate_dataset(data, run_out_dir, method_name, comm)
     if stop_after == PipelineTasks.STRIPES:
         sys.exit()
     ###################################################################################
     #                        Calculating the center of rotation
+    method_name = 'find_center_vo'
     with annotate(PipelineTasks.CENTER.name):
-        rot_center = find_center_of_rotation(data, comm)
+        rot_center = rotation(data, method_name, comm)
     if stop_after == PipelineTasks.CENTER:
         sys.exit()
     ###################################################################################
@@ -117,9 +117,9 @@ def cpu_pipeline(
     #                           Reconstruction with gridrec
     method_name = 'gridrec'
     with annotate(PipelineTasks.RECONSTRUCT.name):
-        recon = reconstruct(data, angles_radians, rot_center)
+        recon = algorithm(data, method_name, angles_radians, rot_center)
     if save_result:
         with annotate(PipelineTasks.SAVE.name):
-            save_data(recon, run_out_dir, method_name, comm)
+            intermediate_dataset(recon, run_out_dir, method_name, comm)
     if stop_after == PipelineTasks.RECONSTRUCT:
         sys.exit()

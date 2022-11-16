@@ -1,0 +1,6 @@
+- tomopy.misc.corr:
+    median_filter:
+      data_in: tomo
+      data_out: tomo
+      size: 3
+      axis: 0

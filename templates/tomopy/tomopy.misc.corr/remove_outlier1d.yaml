@@ -1,0 +1,7 @@
+- tomopy.misc.corr:
+    remove_outlier1d:
+      data_in: tomo
+      data_out: tomo
+      dif: REQUIRED
+      size: 3
+      axis: 0

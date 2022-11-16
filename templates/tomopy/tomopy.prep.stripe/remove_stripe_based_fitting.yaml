@@ -1,0 +1,8 @@
+- tomopy.prep.stripe:
+    remove_stripe_based_fitting:
+      data_in: tomo
+      data_out: tomo
+      order: 3
+      sigma: !!python/tuple
+      - 5
+      - 20

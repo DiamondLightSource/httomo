@@ -1,0 +1,6 @@
+- tomopy.misc.corr:
+    adjust_range:
+      data_in: tomo
+      data_out: tomo
+      dmin: null
+      dmax: null

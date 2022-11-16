@@ -1,9 +1,9 @@
 HTTOmo (High Throughput Tomography pipeline)
 ********************************************
 
-* A Python tool for parallel read of h5 tomographic data using MPI protocols
+* A Python tool for parallel read of HDF5 tomographic data using MPI protocols
 * The data can be re-chunked, saved and re-loaded (e.g. projection or sinogram-wise)
-* The data is then can be processed by any tomographic packages, e.g. TomoPy, ASTRA
+* All `TomoPy <https://tomopy.readthedocs.io>`_ functions are exposed through YAML templates enabling fast task programming
 
 Setup a Development Environment:
 ================================
@@ -28,5 +28,4 @@ Running the code:
 
 Am example of running the code with test data:
 ==============================================
-* Go to the home directory and run:
-* :code:`python -m httomo testdata/tomo_standard.nxs . cpu`
+* Go to the home directory and run: :code:`python -m httomo testdata/tomo_standard.nxs . cpu`

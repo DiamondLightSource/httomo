@@ -1,0 +1,6 @@
+- tomopy.misc.morph:
+    upsample:
+      data_in: tomo
+      data_out: tomo
+      level: 1
+      axis: 2
