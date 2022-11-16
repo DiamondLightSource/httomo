@@ -32,7 +32,7 @@ def algorithm(params: Dict, method_name: str, data: ndarray,
     """
     module = getattr(recon, 'algorithm')
     return getattr(module,method_name)(
-        swapaxes(data, 0, 1),
+        data,
         angles_radians,
         **params
     )
