@@ -19,11 +19,11 @@ def test_cli_help_shows_help():
     )
 
 
-def test_cli_noargs_shows_help():
-    cmd = [sys.executable, "-m", "httomo"]
-    assert (
-        subprocess.check_output(cmd)
-        .decode()
-        .strip()
-        .startswith("Usage: python -m httomo")
-    )
+# def test_cli_noargs_shows_help():
+#     cmd = [sys.executable, "-m", "httomo"]
+#     assert (
+#         subprocess.check_output(cmd)
+#         .decode()
+#         .strip()
+#         .startswith("Usage: python -m httomo")
+#     )
