@@ -174,7 +174,7 @@ def run_tasks(
             dataset_params = _check_method_params_for_datasets(params, datasets)
             # Update the relevant parameter values according to the required
             # datasets
-            params.update(dataset_params)
+            params.update(dataset_params)            
 
             # Make the input datasets a list if it's not, just to be generic and
             # below loop through all the datasets that the method should be

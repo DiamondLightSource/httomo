@@ -19,7 +19,6 @@ class GlobalOptions:
     dimension: int
     pad: int
     ncores: int
-    stop_after: PipelineTasks
     save_all: bool
 
 
@@ -53,14 +52,6 @@ class GlobalOptions:
     help=" The number of the CPU cores per process.",
 )
 @click.option(
-    "--stop_after",
-    type=click.Choice(PipelineTasks._member_names_, False),
-    callback=lambda c, p, v: PipelineTasks[str(v).upper()]
-    if v is not None
-    else PipelineTasks.SAVE,
-    help="Stop after the specified stage.",
-)
-@click.option(
     "--save_all",
     is_flag=True,
     help="Save intermediate datasets for all tasks in the pipeline."
@@ -75,20 +66,18 @@ def main(
     dimension: int,
     pad: int,
     ncores: int,
-    stop_after: PipelineTasks,
     save_all: bool
 ):
     """httomo: High Throughput Tomography."""
     ctx.obj = GlobalOptions(
-        in_file, yaml_config, out_dir, dimension, pad, ncores, stop_after,
-        save_all
+        in_file, yaml_config, out_dir, dimension, pad, ncores, save_all
     )
 
     if ctx.invoked_subcommand is None:
         click.echo(main.get_help(ctx))
 
 
-@main.command()
+@main.command('task_runner')
 @click.pass_obj
 def task_runner(global_options: GlobalOptions):
     """Run the processing pipeline defined in the given YAML config file.

@@ -23,25 +23,56 @@
 
 import numpy as np
 from numpy import ndarray
+from skimage import filters
 
-def otsu_thresholding(data: ndarray,
-                      foreground: bool = True) -> float:
-    """Otsu thresholding of a 2D image
+def _get_mask(data, mask, val_intensity, otsu, foreground):
+    """gets data binary segmented into a mask  
+    
+    """
+    if otsu:
+        # get the intensity value based on Otsu
+        val_intensity = filters.threshold_otsu(data)
+    if foreground:
+        mask[data > val_intensity] = 1
+    else:
+        mask[data <= val_intensity] = 1
+    return mask
+
+
+def binary_thresholding(data: ndarray,
+                        val_intensity: float = 0.1,
+                        otsu: bool = False,
+                        foreground: bool = True,
+                        axis: int = 1) -> ndarray:
+    """Performs a binary thresholding of the input data 
 
     Parameters
     ----------
     data : ndarray
         Input array.
+    val_intensity: float
+        The grayscale intensity value that defines the binary threshold.      
+    otsu: str, optional
+        If set to True, val_intensity will be overwritten by Otsu method.
     foreground : bool, optional
-        data is thresholded to get the foreground, otherwise background
+        get the foreground, otherwise background.
+    axis : int, optional
+        Specify the axis to use to slice the data (if data is the 3D array).        
 
     Returns
     -------
     ndarray
-        A 2D thresholded image.
+        A binary mask of the input data.
     """
-    from skimage import filters
-    
-    val = filters.threshold_otsu(data)
 
-    return val
+    # initialising output mask
+    mask = np.uint8(np.zeros(np.shape(data)))
+
+    data_full_shape = np.shape(data)
+    if data.ndim == 3:
+        slice_dim_size=data_full_shape[axis]
+        for i in range(slice_dim_size):
+            _get_mask(data, mask, val_intensity, otsu, foreground)
+    else:
+        _get_mask(data, mask, val_intensity, otsu, foreground)
+    return mask    
