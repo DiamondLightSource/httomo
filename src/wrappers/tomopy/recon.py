@@ -2,7 +2,6 @@ from typing import Dict
 
 from numpy import ndarray, swapaxes
 from mpi4py.MPI import Comm
-from httomo.utils import _parse_preview
 # TODO: Doing `from tomopy import recon` imports the function
 # `tomopy.recon.algorithm.recon()` rather than the module `tomopy.recon`, so the
 # two lines below are a temporary workaround to this
