@@ -52,7 +52,7 @@ def save_to_images(data: ndarray,
          out_dir: str,
          glob_stats: tuple,  
          comm: Comm,
-         axis: int = 0,         
+         axis: int = 0,
          file_format: str = 'tif',
          bits: int = 8,
          jpeg_quality: int = 95):
@@ -88,10 +88,13 @@ def save_to_images(data: ndarray,
     # create the output folder
     subfolder_name = f"images{str(bits)}bit_{str(file_format)}"
     path_to_images_dir = os.path.join(out_dir, out_folder_name, subfolder_name)
-    if not os.path.exists(path_to_images_dir):
-        os.makedirs(path_to_images_dir)    
-    
-    data_full_shape = np.shape(data)    
+    try:
+      os.makedirs(path_to_images_dir)
+    except OSError:
+      if not os.path.isdir(path_to_images_dir):
+        raise
+       
+    data_full_shape = np.shape(data)
     if data.ndim == 3:
         slice_dim_size=data_full_shape[axis]
         for i in range(slice_dim_size):

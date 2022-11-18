@@ -26,7 +26,7 @@ from numpy import ndarray
 from scipy import stats
 import scipy.ndimage as ndi
 
-def find_center_360(data: ndarray,
+def find_center_360(sino_360: ndarray,
                     win_width: int = 10,
                     side: set = None,
                     denoise: bool = True,
@@ -69,10 +69,13 @@ def find_center_360(data: ndarray,
     ----------
     [1] : https://doi.org/10.1364/OE.418448
     """
-    (nrow, ncol) = data.shape
+    if sino_360.ndim != 2:
+        raise ValueError("360-degree sinogram must be a 2D array.")
+
+    (nrow, ncol) = sino_360.shape
     nrow_180 = nrow // 2 + 1
-    sino_top = data[0:nrow_180, :]
-    sino_bot = np.fliplr(data[-nrow_180:, :])
+    sino_top = sino_360[0:nrow_180, :]
+    sino_bot = np.fliplr(sino_360[-nrow_180:, :])
     (overlap, side, overlap_position) = _find_overlap(
         sino_top, sino_bot, win_width, side, denoise, norm, use_overlap)
     if side == 0:
