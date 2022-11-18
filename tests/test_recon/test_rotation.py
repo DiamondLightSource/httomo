@@ -49,7 +49,6 @@ def test_find_center_360():
 
     # getting the dictionaries from the YAML template file
     standard_tomo_params = pipeline[0]['httomo.data.hdf.loaders']['standard_tomo']
-    pp.pprint(standard_tomo_params) # print parameters from the YAML template
 
     # loading the data
     data, flats, darks, _, _, _, _ = standard_tomo(standard_tomo_params['name'],
