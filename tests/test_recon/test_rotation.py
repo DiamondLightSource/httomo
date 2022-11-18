@@ -18,15 +18,13 @@ from tomopy.prep.normalize import normalize, minus_log
 
 
 def test_find_center_360():
-    # test a random matrix first
-    mat = np.random.rand(100, 100, 100)
+    mat = np.ones(shape=(100, 100, 100))
     (cor, overlap, side, overlap_position) = find_center_360(mat[:, 2, :])
-
-    eps = 1e-5
-    assert_allclose(cor, 76.5484790802002, rtol=eps)
-    assert_allclose(overlap, 44.90304183959961, rtol=eps)
-    assert side == 1
-    assert_allclose(overlap_position, 60.09695816040039, rtol=eps)
+    for _ in range(10):
+        assert_allclose(cor, 5.0)
+        assert_allclose(overlap, 12.0)
+        assert side == 0
+        assert_allclose(overlap_position, 7.0)
 
     # load the corresponding YAML configuration ftask ile which can be excecuted through the HTTomo task runner
     pipeline = yaml.safe_load(open('../../pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml'))
@@ -65,6 +63,7 @@ def test_find_center_360():
     data[data == 0.0] = 1e-09
     data = minus_log(data, ncore=ncore)
 
+    eps = 1e-5
     (cor, overlap, side, overlap_position) = find_center_360(data[:, 10, :])
     assert_allclose(cor, 40.361228942871094, rtol=eps)
     assert_allclose(overlap, 82.72245788574219, rtol=eps)
