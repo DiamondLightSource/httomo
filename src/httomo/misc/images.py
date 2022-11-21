@@ -38,6 +38,7 @@ def _save_single_img(array2d, glob_stats, bits, jpeg_quality, path_to_out_file):
         jpeg_quality (int): chosen quality for jpegs
         path_to_out_file (str): full path to the file
     """
+    np.nan_to_num(array2d, copy=False, nan=0.0, posinf=0, neginf=0)
     if bits == 8:
         array2d = exposure.rescale_intensity(array2d, in_range=(glob_stats[0], glob_stats[1]), out_range=(0,255)).astype(np.uint8)
     elif bits == 16:
