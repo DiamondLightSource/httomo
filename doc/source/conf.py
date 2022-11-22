@@ -1,3 +1,7 @@
+
+# -- General configuration ------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
+
 #!/usr/bin/env python
 import sys
 import os
@@ -5,13 +9,36 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
+
 sys.path.insert(0, os.path.abspath('../../src/httomo'))
+sys.path.insert(0, os.path.abspath('../../src'))
 
-# -- General configuration ------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+# -- Mock imports -------------------------------------------------------------
 
-project = u'HTTomo'
-copyright = u'2022, Diamond Light Source'
+from unittest import mock
+
+# Mock imports instead of full environment in readthedocs
+MOCK_MODULES = ["numpy",
+                "click",
+                "mpi4py",
+                "cupy",
+                "h5py",
+                "yaml",
+                "skimage",
+                "skimage.exposure",
+                "nvtx",
+                "mpi4py.MPI",
+                "scipy",
+                "scipy.ndimage"
+                ]
+
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
+
+# ------------------------------------------------------------------------------
+
+project = 'HTTomo'
+copyright = '2022, Diamond Light Source'
 
 release = os.popen('git log -1 --format="%H"').read().strip()
 
@@ -29,6 +56,8 @@ extensions = [
 ]
 
 exclude_patterns = []
+
+template_patterns = ['_templates']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -53,7 +82,3 @@ todo_include_todos = True
 # -- Options for HTML output --------------------------------------------------
 
 html_theme = 'sphinx_rtd_theme'
-
-autodoc_mock_imports = [
-    '_METHODS_',
-]
