@@ -43,7 +43,9 @@ def standard_tomo(name: str, in_file: Path, data_path: str, image_key_path: str,
     with File(in_file, "r", driver="mpio", comm=comm) as file:
         dataset = file[data_path]
         shape = dataset.shape
-    print_once(f"The full dataset shape is {shape}", comm)
+
+    if comm.rank == 0:
+        print('\033[33m' + f"The full dataset shape is {shape}" + '\033[0m')
 
     angles_degrees = load.get_angles(in_file, comm=comm)
     data_indices = load.get_data_indices(

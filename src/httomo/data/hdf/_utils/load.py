@@ -420,10 +420,10 @@ def get_darks_flats(
             flats = [dataset[x][i0:i1:step][slice_list[2]] for x in flats_indices]
         else:
             darks = [
-                file[data_path][x][slice_list[1]][slice_list[2]] for x in darks_indices
+                file[data_path][x][slice_list[1], slice_list[2]] for x in darks_indices
             ]
             flats = [
-                file[data_path][x][slice_list[1]][slice_list[2]] for x in flats_indices
+                file[data_path][x][slice_list[1], slice_list[2]] for x in flats_indices
             ]
         return darks, flats
 
