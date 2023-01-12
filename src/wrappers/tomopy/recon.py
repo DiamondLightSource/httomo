@@ -58,13 +58,15 @@ def rotation(params: Dict, method_name:str, comm: Comm, data: ndarray) -> float:
     float
         The center of rotation.
     """
+   
     module = getattr(recon, 'rotation')
     method_func = getattr(module, method_name)
     rot_center = 0
     mid_rank = int(round(comm.size / 2) + 0.1)
     if comm.rank == mid_rank:
-        mid_slice = data.shape[1] // 2
-        rot_center = method_func(data[:, mid_slice, :], **params)
+        if params['ind'] == 'mid':
+            params['ind'] = data.shape[1] // 2 # get the middle slice
+        rot_center = method_func(data, **params)
     rot_center = comm.bcast(rot_center, root=mid_rank)
 
     return rot_center
