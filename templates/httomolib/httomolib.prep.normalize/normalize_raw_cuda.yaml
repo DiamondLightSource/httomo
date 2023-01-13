@@ -1,0 +1,5 @@
+- httomolib.prep.normalize:
+    normalize_raw_cuda:
+      data_in: tomo
+      data_out: tomo
+      cutoff: 10.0

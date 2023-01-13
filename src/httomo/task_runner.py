@@ -107,7 +107,7 @@ def run_tasks(
             datasets['flats'] = flats
             datasets['darks'] = darks
 
-            # Define all params relevant to HTTomo that a wrapper function might
+            # Define all params relevant to httomo that a wrapper function might
             # need
             possible_extra_params = [
                 (['darks'], darks),
@@ -148,8 +148,8 @@ def run_tasks(
             # Check for any extra params unrelated to tomopy but related to
             # HTTomo that should be added in
             httomo_params = \
-                _check_signature_for_httomo_params(func, possible_extra_params)
-
+                _check_signature_for_httomo_params(func, possible_extra_params)            
+            
             # Get the information describing if the method is being run only
             # once, or multiple times with different input datasets
             if 'data_in' in params.keys() and 'data_out' in params.keys():
@@ -364,16 +364,16 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
                 method_conf,
                 is_loader
             ))
-        elif split_module_name[0] == 'tomopy':
-            # The structure of wrapper functions for tomopy is that each module
-            # in tomopy is represented by a function in HTTomo.
+        elif (split_module_name[0] == 'tomopy') or (split_module_name[0] == 'httomolib'):
+            # The structure of wrapper functions for tomopy and httomolib is that 
+            # each module in tomopy/httomolib is represented by a function in httomo.
             #
             # For example, the module `tomopy.misc.corr` module (which contains
-            # the `median_filter()` method function) is represented in HTTomo in
+            # the `median_filter()` method function) is represented in httomo in
             # the `wrappers.tomopy.misc` module as the `corr()` function.
             #
             # Different method functions that are available in the
-            # `tomopy.misc.corr` module are then exposed in HTTomo by passing a
+            # `tomopy.misc.corr` module are then exposed in httomo by passing a
             # `method_name` parameter to the corr() function via the YAML config
             # file.
             module_name = '.'.join(split_module_name[:-1])
@@ -441,26 +441,16 @@ def _run_method(func: Callable, task_no: int, package_name: str,
     # Add the appropriate dataset to the method function's dict of
     # parameters based on the parameter name for the method's python
     # function
-    if package_name == 'tomopy':
+    if (package_name == 'tomopy') or (package_name == 'httomolib'):
         httomo_params['data'] = datasets[in_dataset]
-    elif package_name == 'httomo':
-        data_param = _set_method_data_param(func, in_dataset, datasets)
-        httomo_params.update(data_param)
-
-    # Run the method, then store the result in the appropriate
-    # dataset in the `datasets` dict
-    if package_name == 'tomopy':
-        datasets[out_dataset] = \
-            _run_tomopy_method(func, method_name, method_params, httomo_params)
-    elif package_name == 'httomo':
-        method_params.update(httomo_params)
+        # Run the method, then store the result in the appropriate
+        # dataset in the `datasets` dict    
         if method_name in savers_no_data_out_param:
-            _run_httomo_method(func, method_params)
+            _run_method_wrapper(func, method_name, method_params, httomo_params)
             # Nothing more to do with output data if the saver has a special
             # kind of output
             return
-        datasets[out_dataset] = _run_httomo_method(func, method_params)
-
+        datasets[out_dataset] = _run_method_wrapper(func, method_name, method_params, httomo_params)
     # TODO: The dataset saving functionality only supports 3D data
     # currently, so check that the dimension of the data is 3 before
     # saving it
@@ -493,9 +483,9 @@ def _run_loader(func: Callable, params: Dict) -> Tuple[ndarray, ndarray,
     return func(**params)
 
 
-def _run_tomopy_method(func: Callable, method_name:str, method_params: Dict,
+def _run_method_wrapper(func: Callable, method_name:str, method_params: Dict,
                        httomo_params: Dict) -> ndarray:
-    """Run a tomopy method function in the processing pipeline.
+    """Run a wrapper method function (httomolib/tomopy) in the processing pipeline.
 
     Parameters
     ----------
@@ -506,7 +496,7 @@ def _run_tomopy_method(func: Callable, method_name:str, method_params: Dict,
     method_params : Dict
         A dict of parameters for the tomopy method.
     httomo_params : Dict
-        A dict of parameters related to HTTomo.
+        A dict of parameters related to httomo.
 
     Returns
     -------
@@ -514,25 +504,6 @@ def _run_tomopy_method(func: Callable, method_name:str, method_params: Dict,
         An array containing the result of the method function.
     """
     return func(method_params, method_name, **httomo_params)
-
-
-def _run_httomo_method(func: Callable, params: Dict) -> ndarray:
-    """Run an HTTomo method function in the processing pipeline.
-
-    Parameters
-    ----------
-    func : Callable
-        The python function that performs the method.
-    params : Dict
-        A dict of parameters.
-
-    Returns
-    -------
-    ndarray
-        An array containing the result of the method function.
-    """
-    return func(**params)
-
 
 def _check_signature_for_httomo_params(func: Callable,
                                        params: List[Tuple[List[str], object]]) -> Dict:
@@ -642,7 +613,7 @@ def _set_method_data_param(func: Callable, dataset_name: str,
 
 def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
                                                               float, float]:
-    """Fetch the mix, max, mean, standard deviation of the given data.
+    """Fetch the min, max, mean, standard deviation of the given data.
 
     Parameters
     ----------

@@ -1,0 +1,11 @@
+- httomolib.prep.stripe:
+    detect_stripes:
+      data_in: tomo
+      data_out: tomo
+      search_window_dims: !!python/tuple
+      - 1
+      - 9
+      - 1
+      vert_window_size: 5.0
+      gradient_gap: 2
+      ncore: 1

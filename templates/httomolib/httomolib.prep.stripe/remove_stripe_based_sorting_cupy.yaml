@@ -1,0 +1,7 @@
+- httomolib.prep.stripe:
+    remove_stripe_based_sorting_cupy:
+      data_in: tomo
+      data_out: tomo
+      tomo: REQUIRED
+      size: null
+      dim: 1

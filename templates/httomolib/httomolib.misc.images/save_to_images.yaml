@@ -1,0 +1,10 @@
+- httomolib.misc.images:
+    save_to_images:
+      data_in: tomo
+      subfolder_name: images
+      axis: 0
+      file_format: tif
+      bits: 8
+      perc_range_min: 0.0
+      perc_range_max: 100.0
+      jpeg_quality: 95
