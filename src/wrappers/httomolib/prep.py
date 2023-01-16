@@ -2,8 +2,7 @@ from typing import Dict
 from inspect import signature
 
 from numpy import ndarray
-# a workaround to expose functions in prep. Needs investigation why you cannot just do: from httomolib import prep as with tomopy
-from httomolib.prep.phase import *
+
 from httomolib import prep
 
 def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:

@@ -2,8 +2,6 @@ from typing import Dict
 from numpy import ndarray
 from mpi4py.MPI import Comm
 
-# a workaround to expose functions in misc. Needs investigation why you cannot just do: from httomolib import misc as with tomopy
-from httomolib.misc.images import save_to_images
 from httomolib import misc
 
 def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: ndarray) -> ndarray:
