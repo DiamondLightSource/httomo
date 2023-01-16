@@ -17,7 +17,7 @@ def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: ndarr
     out_dir : str
         The output directory.
     comm: int
-        the MPI communicator.        
+        the MPI communicator.
     data : ndarray
         A numpy array of projections.
 
