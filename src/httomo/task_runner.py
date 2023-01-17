@@ -441,7 +441,7 @@ def _run_method(func: Callable, task_no: int, package_name: str,
     # Add the appropriate dataset to the method function's dict of
     # parameters based on the parameter name for the method's python
     # function
-    if (package_name == 'tomopy') or (package_name == 'httomolib'):
+    if package_name in ['httomolib', 'tomopy']:
         httomo_params['data'] = datasets[in_dataset]
         # Run the method, then store the result in the appropriate
         # dataset in the `datasets` dict    
