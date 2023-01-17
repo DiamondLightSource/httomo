@@ -85,6 +85,9 @@ def run_tasks(
     # TODO: Hardcoded slciing dimension since we are assuming to be working with
     # projections, but this needs to be generalised
     SLICING_DIM = 1
+    # Hardcoded string that is used to check if a method is in a reconstruction
+    # module or not
+    RECON_MODULE_MATCH = 'recon.algorithm'
 
     # Run the methods
     for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
@@ -121,7 +124,8 @@ def run_tasks(
             save_result = False
 
             # Default behaviour for saving datasets is to save the output of the
-            # last task.
+            # last task, and the output of reconstruction methods are always
+            # saved unless specified otherwise.
             #
             # The default behaviour can be overridden in two ways:
             # 1. the flag `--save_all` which affects all tasks
@@ -134,6 +138,10 @@ def run_tasks(
             # Now, check if `--save_all` has been specified, as this can
             # override default behaviour
             if save_all:
+                save_result = True
+
+            # Now, check if it's a method from a reconstruction module
+            if RECON_MODULE_MATCH in module_path:
                 save_result = True
 
             # Finally, check if `save_result` param has been specified in the
