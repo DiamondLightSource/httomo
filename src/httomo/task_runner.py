@@ -452,14 +452,18 @@ def _run_method(func: Callable, task_no: int, package_name: str,
     # function
     if package_name in ['httomolib', 'tomopy']:
         httomo_params['data'] = datasets[in_dataset]
+
+    if method_name in savers_no_data_out_param:
+        _run_method_wrapper(func, method_name, method_params, httomo_params)
+        # Nothing more to do with output data if the saver has a special
+        # kind of output
+        return
+    else:
         # Run the method, then store the result in the appropriate
         # dataset in the `datasets` dict    
-        if method_name in savers_no_data_out_param:
+        datasets[out_dataset] = \
             _run_method_wrapper(func, method_name, method_params, httomo_params)
-            # Nothing more to do with output data if the saver has a special
-            # kind of output
-            return
-        datasets[out_dataset] = _run_method_wrapper(func, method_name, method_params, httomo_params)
+
     # TODO: The dataset saving functionality only supports 3D data
     # currently, so check that the dimension of the data is 3 before
     # saving it
