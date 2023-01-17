@@ -53,6 +53,10 @@ extensions = [
     "sphinx.ext.napoleon",
     # Add links to highlighted source code
     "sphinx.ext.viewcode",
+    # Allows a grid layout and dropdown boxes
+    "sphinx_panels",
+    # copy to clipboard button
+    'sphinx_copybutton',
 ]
 
 exclude_patterns = []
