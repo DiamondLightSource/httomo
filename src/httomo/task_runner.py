@@ -87,7 +87,8 @@ def run_tasks(
     SLICING_DIM = 1
 
     # Run the methods
-    for idx, (package, func, params, is_loader) in enumerate(method_funcs):
+    for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
+        package = module_path.split('.')[0]
         method_name = params.pop('method_name')
         print_once(f"Running task {idx+1}: {method_name}...", comm)
         if is_loader:
@@ -359,7 +360,7 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
             method_conf['method_name'] = method_name
             method_func = getattr(module, method_name)
             method_funcs.append((
-                split_module_name[0],
+                module_name,
                 method_func,
                 method_conf,
                 is_loader
@@ -376,15 +377,15 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
             # `tomopy.misc.corr` module are then exposed in httomo by passing a
             # `method_name` parameter to the corr() function via the YAML config
             # file.
-            module_name = '.'.join(split_module_name[:-1])
-            wrapper_module_name = f"wrappers.{module_name}"
+            wrapper_module_name = '.'.join(split_module_name[:-1])
+            wrapper_module_name = f"wrappers.{wrapper_module_name}"
             wrapper_module = import_module(wrapper_module_name)
             wrapper_func_name = split_module_name[-1]
             wrapper_func = getattr(wrapper_module, wrapper_func_name)
             method_name, method_conf = module_conf.popitem()
             method_conf['method_name'] = method_name
             method_funcs.append((
-                split_module_name[0],
+                module_name,
                 wrapper_func,
                 method_conf,
                 False
