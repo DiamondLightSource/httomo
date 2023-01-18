@@ -25,7 +25,7 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
     darks : ndarray
         A numpy array containing the dark projections.
     gpu_id : int
-        A GPU device index to perform operation on.
+        A GPU device index to execute operation on.
 
     Returns
     -------

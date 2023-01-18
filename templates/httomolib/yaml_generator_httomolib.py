@@ -31,7 +31,14 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #ROOT_DIR = os.path.dirname(os.path.abspath("httomolib_modules.yml"))
 path_to_httomolib_modules = ROOT_DIR + '/httomolib_modules.yml'
 
-discard_keys = ["data", "glob_stats", "comm_rank", "out_dir", "flats", "darks"] # discard from parameters list
+discard_keys = ["data",
+                "glob_stats",
+                "comm_rank",
+                "out_dir",
+                "gpu_id",
+                "angles",
+                "flats",
+                "darks"] # discard from parameters list
 no_data_out_modules = ['save_to_images'] # discard data_out from certain modules
 
 # open YAML file with httomolib modules exposed

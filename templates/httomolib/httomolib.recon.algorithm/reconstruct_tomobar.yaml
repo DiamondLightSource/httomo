@@ -1,0 +1,7 @@
+- httomolib.recon.algorithm:
+    reconstruct_tomobar:
+      data_in: tomo
+      data_out: tomo
+      center: null
+      objsize: null
+      algorithm: FBP3D
