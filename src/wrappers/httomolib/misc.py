@@ -1,10 +1,10 @@
 from typing import Dict
-from numpy import ndarray
+import numpy as np
 from mpi4py.MPI import Comm
 
 from httomolib import misc
 
-def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: ndarray) -> ndarray:
+def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.ndarray) -> np.ndarray:
     """Wrapper for httomolib.misc.images module.
 
     Parameters
@@ -19,12 +19,10 @@ def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: ndarr
     comm: int
         the MPI communicator.
     data : ndarray
-        A numpy array of projections.
+        A CuPy data array.
 
     Returns
     -------
-    ndarray
-        A numpy array of projections with the correction method applied.
     """
     
     module = getattr(misc, 'images')

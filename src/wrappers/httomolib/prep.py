@@ -33,7 +33,7 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
         A numpy array of normalized projections.
     """
     module = getattr(prep, 'normalize')
-    # converting arrays to cupy array, TODO: checks above if this is required, make it cpu/gpu agnostic
+    # converting arrays to CuPy arrays
     data = getattr(module, method_name)(cp.asarray(data), cp.asarray(flats), cp.asarray(darks), gpu_id, **params)
     return cp.asnumpy(data)
 
