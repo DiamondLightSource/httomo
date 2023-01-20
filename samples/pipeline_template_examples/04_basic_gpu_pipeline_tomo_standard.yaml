@@ -21,7 +21,7 @@
       data_out: tomo
       center: 80
       objsize: null
-      algorithm: FBP3D
+      algorithm: FBP3D_device
 - httomolib.misc.images:
     save_to_images:
       data_in: tomo

@@ -33,5 +33,5 @@ def algorithm(params: Dict,
         A numpy array of projections with stripes removed.
     """
     module = getattr(recon, 'algorithm')
-    data = getattr(module, method_name)(data, angles=angles_radians, gpu_id=gpu_id, **params)
-    return data
+    data = getattr(module, method_name)(cp.asarray(data), angles=angles_radians, gpu_id=gpu_id, **params)
+    return cp.asnumpy(data)
