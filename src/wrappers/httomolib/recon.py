@@ -5,6 +5,8 @@ import numpy as np
 import cupy as cp
 from cupy import ndarray
 
+from httomo.utils import print_once
+
 from mpi4py.MPI import Comm
 
 from httomolib import recon
@@ -35,6 +37,8 @@ def algorithm(params: Dict,
     ndarray
         A CuPy array of projections with stripes removed.
     """
+    cp._default_memory_pool.free_all_blocks()
+
     module = getattr(recon, 'algorithm')
     data = getattr(module, method_name)(cp.asarray(data), angles=angles_radians, gpu_id=gpu_id, **params)
     return cp.asnumpy(data)
@@ -60,6 +64,7 @@ def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray) -> flo
     float
         The center of rotation.
     """
+    cp._default_memory_pool.free_all_blocks()
    
     module = getattr(recon, 'rotation')
     method_func = getattr(module, method_name)
@@ -70,5 +75,6 @@ def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray) -> flo
             params['ind'] = data.shape[1] // 2 # get the middle slice
         rot_center = method_func(cp.asarray(data), **params)
     rot_center = comm.bcast(rot_center, root=mid_rank)
+    print_once("The center of rotation is {}".format(rot_center), comm, colour="cyan")
 
     return cp.asnumpy(rot_center)

@@ -2,7 +2,9 @@ from typing import Any
 from mpi4py.MPI import Comm
 from typing import Tuple, List, Dict
  
-def print_once(output: Any, comm: Comm) -> None:
+def print_once(output: Any,
+               comm: Comm,
+               colour: str="green") -> None:
     """Print an output from rank zero only.
 
     Parameters
@@ -11,12 +13,29 @@ def print_once(output: Any, comm: Comm) -> None:
         The item to be printed.
     comm : Comm
         The comm used to determine the rank zero process.
+    colour : str, optional
+        The colour of the output.
     """
-    CSTART = '\33[92m'
-    CEND = '\033[0m'
+    if colour == "blue":
+        CSTART = '\33[94m'
+        CEND = '\033[0m'
+    elif colour == "cyan":
+        CSTART = '\33[96m'
+        CEND = '\033[0m'      
+    elif colour == "green":
+        CSTART = '\33[92m'
+        CEND = '\033[0m'
+    elif colour == "yellow":
+        CSTART = '\33[93m'
+        CEND = '\033[0m'
+    elif colour == "red":
+        CSTART = '\33[91m'
+        CEND = '\033[0m'        
+    else:
+        CSTART = '\33[92m'
+        CEND = '\033[0m'
     if comm.rank == 0:
         print(CSTART + output + CEND)
-
 
 def print_rank(output: Any, comm: Comm) -> None:
     """Print an output with rank prefix.

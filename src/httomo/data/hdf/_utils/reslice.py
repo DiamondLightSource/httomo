@@ -4,7 +4,7 @@ import numpy
 from mpi4py.MPI import Comm
 
 from httomo.data.hdf._utils import chunk, load
-
+from httomo.utils import print_once
 
 def reslice(
     data: numpy.ndarray,
@@ -48,6 +48,7 @@ def reslice(
     else:
         chunks_data = (num_angles, detector_y, slices_no_in_chunks)
 
+    print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour="blue")
     if dimension == 1:
         chunk.save_dataset(
             run_out_dir,
