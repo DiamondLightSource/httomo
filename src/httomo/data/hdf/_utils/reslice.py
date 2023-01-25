@@ -40,7 +40,7 @@ def reslice(
         now sliced.
     """
     # calculate the chunk size for the projection data
-    slices_no_in_chunks = 4
+    slices_no_in_chunks = 1
     if dimension == 1:
         chunks_data = (slices_no_in_chunks, detector_y, detector_x)
     elif dimension == 2:
