@@ -2,8 +2,11 @@ from typing import Dict
 import numpy as np
 from mpi4py.MPI import Comm
 
+from httomo.utils import pattern, Pattern
 from httomolib import misc
 
+
+@pattern(Pattern.all)
 def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.ndarray) -> np.ndarray:
     """Wrapper for httomolib.misc.images module.
 

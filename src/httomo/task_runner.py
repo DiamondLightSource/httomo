@@ -11,7 +11,7 @@ from numpy import ndarray
 import cupy as cp
 from mpi4py import MPI
 
-from httomo.utils import print_once
+from httomo.utils import print_once, Pattern, _get_slicing_dim
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.reslice import reslice
@@ -90,9 +90,6 @@ def run_tasks(
     # Describes whether a task's input dataset needs to be resliced before being
     # passed to the task
     should_reslice = False
-    # TODO: Hardcoded slciing dimension since we are assuming to be working with
-    # projections, but this needs to be generalised
-    SLICING_DIM = 1
 
     # Run the methods
     for idx, (package, func, params, is_loader) in enumerate(method_funcs):
@@ -153,6 +150,10 @@ def run_tasks(
             # Check if the input dataset should be resliced before the task runs
             should_reslice = \
                 _check_if_should_reslice(method_funcs[idx-1][1], func)
+            if should_reslice:
+                current_slice_dim = \
+                    _get_slicing_dim(method_funcs[idx-1][1].pattern)
+                next_slice_dim = _get_slicing_dim(func.pattern)
 
             # Check for any extra params unrelated to tomopy but related to
             # HTTomo that should be added in
@@ -203,9 +204,8 @@ def run_tasks(
 
                 if should_reslice:
                     resliced_data, _ = reslice(datasets[in_dataset],
-                                              run_out_dir, SLICING_DIM,
-                                              angles_total, detector_y,
-                                              detector_x, comm)
+                                               run_out_dir, current_slice_dim,
+                                               next_slice_dim, comm)
                     datasets[in_dataset] = resliced_data
 
                 if req_glob_stats is True:
@@ -640,15 +640,6 @@ def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
     return min_max_mean_std(data, comm)
 
 
-# TODO: The entire idea of this function is fragile and more of a workaround
-# than a proper solution to dynamically determining if the input dataset for a
-# method should be resliced or not. A better approach would be to do something
-# like:
-# - track the slicing-orientation for each dataset
-# - each method function somehow specifies what slicing-orientation the input
-#   data needs to be
-# and then the runner would decide on how and when to reslice the datasets based
-# on that, rather than this fragile way of checking adjacent tasks.
 def _check_if_should_reslice(prev_func: Callable,
                              current_func: Callable) -> bool:
     """Determine if the input dataset for the next method function should be
@@ -666,24 +657,14 @@ def _check_if_should_reslice(prev_func: Callable,
     bool
         Describes whether the input dataset should be resliced or not.
     """
-    # If centering method is encountered then perform reslice, since reslicing
-    # can safely be done serially or in parallel before the centering
-    if 'rotation' in current_func.__module__ or \
-        'rotation' == current_func.__name__:
-        return True
-
-    # If centering was done right before recon, then reslice before centering and
-    # NOT before the recon
-    if 'recon' in current_func.__module__ and \
-        ('rotation' in prev_func.__module__ or \
-            'rotation' == prev_func.__name__):
+    # Rules for when and when-not to reslice the data:
+    # - If the pattern of the current method to run is `Pattern.all`, then do
+    #   not reslice the data
+    # - If the pattern of the current method to run is DIFFERENT from the
+    #   pattern of the previous method, then reslice the data
+    # - If the pattern of the current method to run is THE SAME as the pattern
+    #   of the previous method, then do not reslice the data
+    if current_func.pattern == Pattern.all:
         return False
-
-    # If centering was not done before recon, then do reslicing before recon
-    if 'recon' in current_func.__module__ and \
-        ('rotation' not in prev_func.__module__ or \
-            'rotation' != prev_func.__name__):
-        return True
-
-    # For any other cases, do not reslice
-    return False
+    else:
+        return current_func.pattern != prev_func.pattern

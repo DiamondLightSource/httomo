@@ -9,8 +9,11 @@ from httomo.utils import print_once
 
 from mpi4py.MPI import Comm
 
+from httomo.utils import pattern, Pattern
 from httomolib import recon
 
+
+@pattern(Pattern.sinogram)
 def algorithm(params: Dict,
               method_name: str, 
               data: np.ndarray,
@@ -44,6 +47,7 @@ def algorithm(params: Dict,
     return cp.asnumpy(data)
 
 
+@pattern(Pattern.sinogram)
 def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray) -> float:
     """Wrapper for the httomolib.recon.rotation module.
 

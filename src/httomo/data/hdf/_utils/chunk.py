@@ -12,6 +12,7 @@ def save_dataset(
     slice_dim: int = 1,
     chunks: Tuple=(150, 150, 10),
     path: str="/data",
+    reslice: bool=False,
     comm: MPI.Comm=MPI.COMM_WORLD,
 ) -> None:
     """Save dataset in parallel.
@@ -32,12 +33,19 @@ def save_dataset(
         Specify how the data should be chunked when saved.
     path : str
         Path to dataset within the file.
+    reslice : bool
+        Whether or not the dataset being saved is for a reslice operation (in
+        which case, the dataset is permitted to be overwritten if the file
+        exists).
     comm : MPI.Comm
         MPI communicator object.
     """
     shape = get_data_shape(data, slice_dim - 1, comm)
     dtype = data.dtype
-    with h5.File(f"{out_folder}/{file_name}", "a", driver="mpio", comm=comm) as file:
+    # If reslicing, can overwrite the intermediate file contents by first
+    # truncating the file
+    file_mode = 'w' if reslice else 'a'
+    with h5.File(f"{out_folder}/{file_name}", file_mode, driver="mpio", comm=comm) as file:
         dataset = file.create_dataset(path, shape, dtype, chunks=chunks)
         save_data_parallel(dataset, data, slice_dim)
 
