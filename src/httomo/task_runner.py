@@ -90,6 +90,11 @@ def run_tasks(
     # Describes whether a task's input dataset needs to be resliced before being
     # passed to the task
     should_reslice = False
+    # A counter to track how many reslices occur in the processing pipeline
+    reslice_counter = 0
+    reslice_warn_str = f"WARNING: Reslicing is performed more than once in " \
+                       f"this pipeline, is there a need for this?"
+    has_reslice_warn_printed = False
 
     # Run the methods
     for idx, (package, func, params, is_loader) in enumerate(method_funcs):
@@ -153,9 +158,14 @@ def run_tasks(
             should_reslice = \
                 _check_if_should_reslice(method_funcs[idx-1][1], func)
             if should_reslice:
+                reslice_counter += 1
                 current_slice_dim = \
                     _get_slicing_dim(method_funcs[idx-1][1].pattern)
                 next_slice_dim = _get_slicing_dim(func.pattern)
+
+            if reslice_counter > 1 and not has_reslice_warn_printed:
+                print_once(reslice_warn_str, comm=comm, colour='red')
+                has_reslice_warn_printed = True
 
             # Check for any extra params unrelated to tomopy but related to
             # HTTomo that should be added in
@@ -218,6 +228,11 @@ def run_tasks(
                 _run_method(func, idx+1, package, method_name, in_dataset,
                             out_dataset, datasets, params, httomo_params,
                             SAVERS_NO_DATA_OUT_PARAM, comm, out_dir=out_dir)
+
+    # Print the number of reslice operations peformed in the pipeline
+    reslice_summary_str = f"Total number of reslices: {reslice_counter}"
+    reslice_summary_colour = 'blue' if reslice_counter <= 1 else 'red'
+    print_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour)
 
 
 def _initialise_datasets(yaml_config: Path,
