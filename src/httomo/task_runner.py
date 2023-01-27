@@ -94,7 +94,9 @@ def run_tasks(
     # Run the methods
     for idx, (package, func, params, is_loader) in enumerate(method_funcs):
         method_name = params.pop('method_name')
-        print_once(f"Running task {idx+1}: {method_name}...", comm)
+        task_no_str = f"Running task {idx+1}"
+        pattern_str = f"(pattern={func.pattern.name})"
+        print_once(f"{task_no_str} {pattern_str}: {method_name}...", comm)
         if is_loader:
             params.update(loader_extra_params)
 
