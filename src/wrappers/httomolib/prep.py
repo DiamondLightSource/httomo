@@ -4,9 +4,11 @@ from inspect import signature
 from numpy import ndarray
 import cupy as cp
 
+from httomo.utils import pattern, Pattern
 from httomolib import prep
 
 
+@pattern(Pattern.projection)
 def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
               darks: ndarray, gpu_id: int) -> ndarray:
     """Wrapper for httomolib.prep.normalize module.
