@@ -1,0 +1,6 @@
+- httomolib.recon.algorithm:
+    reconstruct_tomopy:
+      data_in: tomo
+      data_out: tomo
+      center: null
+      algorithm: FBP_CUDA

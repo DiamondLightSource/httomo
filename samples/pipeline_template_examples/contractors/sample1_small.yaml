@@ -9,31 +9,14 @@
         - 
         - 
       pad: 0
-#- httomo.misc.corr:
-#    dezinger_filter3d:
-#      data_in_multi: [tomo, flats, darks]
-#      data_out_multi: [tomo, flats, darks]
-#      radius_kernel: 1
-#      mu_dezinger: 0.1
-- tomopy.prep.normalize:
-    normalize:
+- httomolib.prep.normalize:
+    normalize_cupy:
       data_in: tomo
       data_out: tomo
-      cutoff: null
-- tomopy.prep.normalize:
-    minus_log:
-      data_in: tomo
-      data_out: tomo
-- tomopy.prep.stripe:
-    remove_stripe_fw:
-      data_in: tomo
-      data_out: tomo
-      level: null
-      wname: db5
-      sigma: 2
-      pad: true
-- tomopy.recon.rotation:
-    find_center_vo:
+      cutoff: 10.0
+      minus_log: true
+- httomolib.recon.rotation:
+    find_center_vo_cupy:
       data_in: tomo
       data_out: cor
       ind: mid
@@ -42,16 +25,14 @@
       srad: 6
       step: 0.25
       ratio: 0.5
-      drop: 20
-- tomopy.recon.algorithm:
-    recon:
+      drop: 20      
+- httomolib.recon.algorithm:
+    reconstruct_tomobar:
       data_in: tomo
       data_out: tomo
       center: cor
-      sinogram_order: false
-      algorithm: gridrec
-      init_recon: null
-      #additional parameters': AVAILABLE
+      objsize: null
+      algorithm: FBP3D_device
 - httomolib.misc.images:
     save_to_images:
       data_in: tomo

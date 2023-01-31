@@ -1,0 +1,10 @@
+- httomolib.recon.rotation:
+    find_center_360:
+      data_in: tomo
+      data_out: tomo
+      sino_360: REQUIRED
+      win_width: 10
+      side: null
+      denoise: true
+      norm: false
+      use_overlap: false

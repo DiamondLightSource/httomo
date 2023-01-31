@@ -4,18 +4,17 @@ import numpy
 from mpi4py.MPI import Comm
 
 from httomo.data.hdf._utils import chunk, load
-
+from httomo.utils import print_once
 
 def reslice(
     data: numpy.ndarray,
     run_out_dir: Path,
-    dimension: int,
-    num_angles: int,
-    detector_y: int,
-    detector_x: int,
+    current_slice_dim: int,
+    next_slice_dim: int,
     comm: Comm,
 ) -> tuple[numpy.ndarray, int]:
-    """Reslice data by writing to hdf5 store and reading back.
+    """Reslice data by writing to hdf5 store with data chunked along a different
+    dimension, and reading back along the new chunking dimension.
 
     Parameters
     ----------
@@ -23,14 +22,11 @@ def reslice(
         The data to be re-sliced.
     run_out_dir : Path
         The output directory to write the hdf5 file to.
-    dimension : int
+    current_slice_dim : int
         The dimension along which the data is currently sliced.
-    num_angles : int
-        The total number of slices.
-    detector_y : int
-        The detector height.
-    detector_x : int
-        The detector width.
+    next_slice_dim : int
+        The dimension along which the data should be sliced after re-chunking
+        and saving.
     comm : Comm
         The MPI communicator to be used.
 
@@ -39,27 +35,38 @@ def reslice(
         A tuple containing the resliced data and the dimension along which it is
         now sliced.
     """
-    # calculate the chunk size for the projection data
-    slices_no_in_chunks = 4
-    if dimension == 1:
-        chunks_data = (slices_no_in_chunks, detector_y, detector_x)
-    elif dimension == 2:
-        chunks_data = (num_angles, slices_no_in_chunks, detector_x)
+    # Get shape of full/unsplit data, in order to set the chunk shape based on
+    # the dims of the full data rather than of the split data
+    data_shape = chunk.get_data_shape(data, current_slice_dim - 1)
+
+    # Calculate the chunk size for the resliced data
+    slices_no_in_chunks = 1
+    if next_slice_dim == 1:
+        # Chunk along projection (rotation angle) dimension
+        chunks_data = (slices_no_in_chunks, data_shape[1], data_shape[2])
+    elif next_slice_dim == 2:
+        # Chunk along sinogram (detector y) dimension
+        chunks_data = (data_shape[0], slices_no_in_chunks, data_shape[2])
     else:
-        chunks_data = (num_angles, detector_y, slices_no_in_chunks)
+        # Chunk along detector x dimension
+        chunks_data = (data_shape[0], data_shape[1], slices_no_in_chunks)
 
-    if dimension == 1:
-        chunk.save_dataset(
-            run_out_dir,
-            "intermediate.h5",
-            data,
-            dimension,
-            chunks_data,
-            comm=comm,
-        )
-        dimension = 2  # assuming sinogram slicing here to get it loaded
-        data = load.load_data(
-            f"{run_out_dir}/intermediate.h5", dimension, "/data", comm=comm
-        )
+    print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour="blue")
+    # Pass the current slicing dim so then data can be gathered and assembled
+    # correctly, and the new chunk shape to save the data in an hdf5 file with
+    # the new chunking
+    chunk.save_dataset(
+        run_out_dir,
+        "intermediate.h5",
+        data,
+        current_slice_dim,
+        chunks_data,
+        reslice=True,
+        comm=comm,
+    )
+    # Read data back along the new slicing dimension
+    data = load.load_data(
+        f"{run_out_dir}/intermediate.h5", next_slice_dim, "/data", comm=comm
+    )
 
-    return data, dimension
+    return data, next_slice_dim

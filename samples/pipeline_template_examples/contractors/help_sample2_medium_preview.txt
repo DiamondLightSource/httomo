@@ -1,0 +1,7 @@
+# sample2_medium_preview applies the processing pipeline with the preview (cropping a smaller chunk) from the real data dataset 119670.nxs
+
+# the serial run:
+python -m httomo test_data/medium/119670.nxs sample2_medium_preview.yaml output_folder task_runner
+
+# the parallel (mpi) run depending how many cpu cores available, here 6 cores in total:
+mpirun -N 3 python -m httomo --ncores 2 test_data/medium/119670.nxs sample2_medium_preview.yaml output_folder task_runner

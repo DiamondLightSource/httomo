@@ -1,9 +1,0 @@
-- httomo.recon.rotation:
-    find_center_360:
-      data_in: tomo
-      data_out: tomo
-      win_width: 10
-      side: None
-      denoise: True
-      norm: False
-      use_overlap: False

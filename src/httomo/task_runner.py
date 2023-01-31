@@ -8,9 +8,10 @@ from inspect import signature
 from importlib import import_module
 
 from numpy import ndarray
+import cupy as cp
 from mpi4py import MPI
 
-from httomo.utils import print_once
+from httomo.utils import print_once, Pattern, _get_slicing_dim
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.reslice import reslice
@@ -55,6 +56,13 @@ def run_tasks(
     if comm.size == 1:
         ncores = multiprocessing.cpu_count() # use all available CPU cores if not an MPI run
 
+    # GPU related MPI communicators and indices
+    num_GPUs = cp.cuda.runtime.getDeviceCount()
+    gpu_id = int(comm.rank / comm.size * num_GPUs)
+    gpu_comm = comm.Split(gpu_id)
+    proc_id = f"[{gpu_id}:{gpu_comm.rank}]"
+    cp.cuda.Device(gpu_id).use()
+
     # TODO: Define a list of savers which have no output dataset and so need to
     # be treated differently to other methods. Probably should be handled in a
     # more robust way than this workaround.
@@ -82,14 +90,18 @@ def run_tasks(
     # Describes whether a task's input dataset needs to be resliced before being
     # passed to the task
     should_reslice = False
-    # TODO: Hardcoded slciing dimension since we are assuming to be working with
-    # projections, but this needs to be generalised
-    SLICING_DIM = 1
+    # A counter to track how many reslices occur in the processing pipeline
+    reslice_counter = 0
+    reslice_warn_str = f"WARNING: Reslicing is performed more than once in " \
+                       f"this pipeline, is there a need for this?"
+    has_reslice_warn_printed = False
 
     # Run the methods
     for idx, (package, func, params, is_loader) in enumerate(method_funcs):
         method_name = params.pop('method_name')
-        print_once(f"Running task {idx+1}: {method_name}...", comm)
+        task_no_str = f"Running task {idx+1}"
+        pattern_str = f"(pattern={func.pattern.name})"
+        print_once(f"{task_no_str} {pattern_str}: {method_name}...", comm)
         if is_loader:
             params.update(loader_extra_params)
 
@@ -107,13 +119,14 @@ def run_tasks(
             datasets['flats'] = flats
             datasets['darks'] = darks
 
-            # Define all params relevant to HTTomo that a wrapper function might
+            # Define all params relevant to httomo that a wrapper function might
             # need
             possible_extra_params = [
                 (['darks'], darks),
                 (['flats'], flats),
                 (['angles', 'angles_radians'], angles),
                 (['comm'], comm),
+                (['gpu_id'], gpu_id),
                 (['out_dir'], run_out_dir)
             ]
         else:
@@ -144,12 +157,21 @@ def run_tasks(
             # Check if the input dataset should be resliced before the task runs
             should_reslice = \
                 _check_if_should_reslice(method_funcs[idx-1][1], func)
+            if should_reslice:
+                reslice_counter += 1
+                current_slice_dim = \
+                    _get_slicing_dim(method_funcs[idx-1][1].pattern)
+                next_slice_dim = _get_slicing_dim(func.pattern)
+
+            if reslice_counter > 1 and not has_reslice_warn_printed:
+                print_once(reslice_warn_str, comm=comm, colour='red')
+                has_reslice_warn_printed = True
 
             # Check for any extra params unrelated to tomopy but related to
             # HTTomo that should be added in
             httomo_params = \
-                _check_signature_for_httomo_params(func, possible_extra_params)
-
+                _check_signature_for_httomo_params(func, possible_extra_params)            
+            
             # Get the information describing if the method is being run only
             # once, or multiple times with different input datasets
             if 'data_in' in params.keys() and 'data_out' in params.keys():
@@ -194,9 +216,8 @@ def run_tasks(
 
                 if should_reslice:
                     resliced_data, _ = reslice(datasets[in_dataset],
-                                              run_out_dir, SLICING_DIM,
-                                              angles_total, detector_y,
-                                              detector_x, comm)
+                                               run_out_dir, current_slice_dim,
+                                               next_slice_dim, comm)
                     datasets[in_dataset] = resliced_data
 
                 if req_glob_stats is True:
@@ -207,6 +228,11 @@ def run_tasks(
                 _run_method(func, idx+1, package, method_name, in_dataset,
                             out_dataset, datasets, params, httomo_params,
                             SAVERS_NO_DATA_OUT_PARAM, comm, out_dir=out_dir)
+
+    # Print the number of reslice operations peformed in the pipeline
+    reslice_summary_str = f"Total number of reslices: {reslice_counter}"
+    reslice_summary_colour = 'blue' if reslice_counter <= 1 else 'red'
+    print_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour)
 
 
 def _initialise_datasets(yaml_config: Path,
@@ -364,16 +390,16 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
                 method_conf,
                 is_loader
             ))
-        elif split_module_name[0] == 'tomopy':
-            # The structure of wrapper functions for tomopy is that each module
-            # in tomopy is represented by a function in HTTomo.
+        elif (split_module_name[0] == 'tomopy') or (split_module_name[0] == 'httomolib'):
+            # The structure of wrapper functions for tomopy and httomolib is that 
+            # each module in tomopy/httomolib is represented by a function in httomo.
             #
             # For example, the module `tomopy.misc.corr` module (which contains
-            # the `median_filter()` method function) is represented in HTTomo in
+            # the `median_filter()` method function) is represented in httomo in
             # the `wrappers.tomopy.misc` module as the `corr()` function.
             #
             # Different method functions that are available in the
-            # `tomopy.misc.corr` module are then exposed in HTTomo by passing a
+            # `tomopy.misc.corr` module are then exposed in httomo by passing a
             # `method_name` parameter to the corr() function via the YAML config
             # file.
             module_name = '.'.join(split_module_name[:-1])
@@ -441,31 +467,22 @@ def _run_method(func: Callable, task_no: int, package_name: str,
     # Add the appropriate dataset to the method function's dict of
     # parameters based on the parameter name for the method's python
     # function
-    if package_name == 'tomopy':
+    if (package_name == 'tomopy') or (package_name == 'httomolib'):
         httomo_params['data'] = datasets[in_dataset]
-    elif package_name == 'httomo':
-        data_param = _set_method_data_param(func, in_dataset, datasets)
-        httomo_params.update(data_param)
-
-    # Run the method, then store the result in the appropriate
-    # dataset in the `datasets` dict
-    if package_name == 'tomopy':
-        datasets[out_dataset] = \
-            _run_tomopy_method(func, method_name, method_params, httomo_params)
-    elif package_name == 'httomo':
-        method_params.update(httomo_params)
+        # Run the method, then store the result in the appropriate
+        # dataset in the `datasets` dict    
         if method_name in savers_no_data_out_param:
-            _run_httomo_method(func, method_params)
+            _run_method_wrapper(func, method_name, method_params, httomo_params)
             # Nothing more to do with output data if the saver has a special
             # kind of output
             return
-        datasets[out_dataset] = _run_httomo_method(func, method_params)
-
+        datasets[out_dataset] = _run_method_wrapper(func, method_name, method_params, httomo_params)
     # TODO: The dataset saving functionality only supports 3D data
     # currently, so check that the dimension of the data is 3 before
     # saving it
     is_3d = len(datasets[out_dataset].shape) == 3
     # Save the result if necessary
+    print(method_name)
     if out_dir is not None and is_3d:
         intermediate_dataset(datasets[out_dataset], out_dir,
                             comm, task_no, package_name, method_name,
@@ -493,9 +510,9 @@ def _run_loader(func: Callable, params: Dict) -> Tuple[ndarray, ndarray,
     return func(**params)
 
 
-def _run_tomopy_method(func: Callable, method_name:str, method_params: Dict,
+def _run_method_wrapper(func: Callable, method_name:str, method_params: Dict,
                        httomo_params: Dict) -> ndarray:
-    """Run a tomopy method function in the processing pipeline.
+    """Run a wrapper method function (httomolib/tomopy) in the processing pipeline.
 
     Parameters
     ----------
@@ -506,7 +523,7 @@ def _run_tomopy_method(func: Callable, method_name:str, method_params: Dict,
     method_params : Dict
         A dict of parameters for the tomopy method.
     httomo_params : Dict
-        A dict of parameters related to HTTomo.
+        A dict of parameters related to httomo.
 
     Returns
     -------
@@ -514,25 +531,6 @@ def _run_tomopy_method(func: Callable, method_name:str, method_params: Dict,
         An array containing the result of the method function.
     """
     return func(method_params, method_name, **httomo_params)
-
-
-def _run_httomo_method(func: Callable, params: Dict) -> ndarray:
-    """Run an HTTomo method function in the processing pipeline.
-
-    Parameters
-    ----------
-    func : Callable
-        The python function that performs the method.
-    params : Dict
-        A dict of parameters.
-
-    Returns
-    -------
-    ndarray
-        An array containing the result of the method function.
-    """
-    return func(**params)
-
 
 def _check_signature_for_httomo_params(func: Callable,
                                        params: List[Tuple[List[str], object]]) -> Dict:
@@ -642,7 +640,7 @@ def _set_method_data_param(func: Callable, dataset_name: str,
 
 def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
                                                               float, float]:
-    """Fetch the mix, max, mean, standard deviation of the given data.
+    """Fetch the min, max, mean, standard deviation of the given data.
 
     Parameters
     ----------
@@ -659,15 +657,6 @@ def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
     return min_max_mean_std(data, comm)
 
 
-# TODO: The entire idea of this function is fragile and more of a workaround
-# than a proper solution to dynamically determining if the input dataset for a
-# method should be resliced or not. A better approach would be to do something
-# like:
-# - track the slicing-orientation for each dataset
-# - each method function somehow specifies what slicing-orientation the input
-#   data needs to be
-# and then the runner would decide on how and when to reslice the datasets based
-# on that, rather than this fragile way of checking adjacent tasks.
 def _check_if_should_reslice(prev_func: Callable,
                              current_func: Callable) -> bool:
     """Determine if the input dataset for the next method function should be
@@ -685,24 +674,14 @@ def _check_if_should_reslice(prev_func: Callable,
     bool
         Describes whether the input dataset should be resliced or not.
     """
-    # If centering method is encountered then perform reslice, since reslicing
-    # can safely be done serially or in parallel before the centering
-    if 'rotation' in current_func.__module__ or \
-        'rotation' == current_func.__name__:
-        return True
-
-    # If centering was done right before recon, then reslice before centering and
-    # NOT before the recon
-    if 'recon' in current_func.__module__ and \
-        ('rotation' in prev_func.__module__ or \
-            'rotation' == prev_func.__name__):
+    # Rules for when and when-not to reslice the data:
+    # - If the pattern of the current method to run is `Pattern.all`, then do
+    #   not reslice the data
+    # - If the pattern of the current method to run is DIFFERENT from the
+    #   pattern of the previous method, then reslice the data
+    # - If the pattern of the current method to run is THE SAME as the pattern
+    #   of the previous method, then do not reslice the data
+    if current_func.pattern == Pattern.all:
         return False
-
-    # If centering was not done before recon, then do reslicing before recon
-    if 'recon' in current_func.__module__ and \
-        ('rotation' not in prev_func.__module__ or \
-            'rotation' != prev_func.__name__):
-        return True
-
-    # For any other cases, do not reslice
-    return False
+    else:
+        return current_func.pattern != prev_func.pattern
