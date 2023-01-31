@@ -11,21 +11,23 @@ Setup a Development Environment:
 * Install dependencies from the environment file :code:`conda env create httomo --file conda/environment.yml` (SLOW)
 * Alternatively you can install from the existing explicit file :code:`conda create --name httomo --file conda/explicit/latest.txt`
 * Activate the environment with :code:`conda activate httomo`
-* Install the enviroment in development mode with :code:`python setup.py develop`
+* Install the enviroment in development mode with :code:`pip install -e .[dev]`
+
 
 Install as a Python module
 ==========================
 
-* Ensure all necessary dependencies are present in the environment
-* Install the module with :code:`python setup.py install`
+* You should choose which backend(s) you'd like to use - either :code:`tomopy` or :code:`httomolib`, or both
+* Install the module + backend(s) with :code:`pip install .[httomolib,tomopy]`
 
 Running the code:
 =================
 
 * Install the module as described in "Install as a Python module"
-* Execute the python module with :code:`python -m httomo <args>`
-* For help with the command line interface, execute :code:`python -m httomo --help`
+* Execute the python module with :code:`httomo <args>`
+* For help with the command line interface, execute :code:`httomo --help`
 
 An example of running the code with test data:
 =================
-* Go to the home directory and run: :code:`python -m httomo testdata/tomo_standard.nxs . cpu`
+
+* Go to the home directory and run: :code:`httomo testdata/tomo_standard.nxs . cpu`
