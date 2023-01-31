@@ -7,6 +7,7 @@ packages = ["httomo", "wrappers"]
 
 [tool.setuptools-git-versioning]
 enabled = true
+tag_filter = "v(?P<tag>[0-9].*)"
 
 [project]
 name = "httomo"

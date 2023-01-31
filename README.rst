@@ -31,3 +31,13 @@ An example of running the code with test data:
 =================
 
 * Go to the home directory and run: :code:`httomo testdata/tomo_standard.nxs . cpu`
+
+
+Release Tagging Scheme
+======================
+
+We use the `setuptools-git-versioning <https://setuptools-git-versioning.readthedocs.io/en/stable/index.html>`_ 
+package for automatically determining the version from the latest git tag.
+For this to work, release tags should start with a :code:`v` followed by the actual version,
+e.g. :code:`v1.1.0a`.
+We have setup a  :code:`tag_filter` in :code:`pyproject.toml` to filter tags following this pattern.
