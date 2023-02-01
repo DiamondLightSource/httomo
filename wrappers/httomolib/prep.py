@@ -41,7 +41,7 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
     data = getattr(module, method_name)(cp.asarray(data), cp.asarray(flats), cp.asarray(darks), gpu_id=gpu_id, **params)
     return cp.asnumpy(data)
 
-
+@pattern(Pattern.sinogram)
 def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray:
     """Wrapper for httomolib.prep.stripe module.
 
@@ -69,7 +69,7 @@ def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarra
     return cp.asnumpy(data)
 
 
-
+@pattern(Pattern.projection)
 def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for httomolib.prep.phase module.
 
@@ -88,6 +88,7 @@ def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:
     ndarray
         A numpy array of projections with phase-contrast enhancement.
     """
+    cp._default_memory_pool.free_all_blocks()
     module = getattr(prep, 'phase')
-    data = getattr(module, method_name)(data, **params)
-    return data
+    data = getattr(module, method_name)(cp.asarray(data), **params)
+    return cp.asnumpy(data)
