@@ -13,7 +13,8 @@ from httomo.utils import _parse_preview, print_once, print_rank, pattern, \
 @pattern(Pattern.projection)
 def standard_tomo(name: str, in_file: Path, data_path: str, image_key_path: str,
                   dimension: int, preview: List[Dict[str, int]], pad: int,
-                  comm: Comm
+                  comm: Comm,
+                  angles_path: str="/entry1/tomo_entry/data/rotation_angle"
                   ) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int,
                              int, int]:
     """Loader for standard tomography data.
@@ -36,6 +37,8 @@ def standard_tomo(name: str, in_file: Path, data_path: str, image_key_path: str,
         The padding size to use.
     comm : Comm
         The MPI communicator to use.
+    angles_path : str
+        The path within the hdf/nxs file to the angles data.
 
     Returns
     -------
@@ -49,7 +52,7 @@ def standard_tomo(name: str, in_file: Path, data_path: str, image_key_path: str,
     if comm.rank == 0:
         print('\033[33m' + f"The full dataset shape is {shape}" + '\033[0m')
 
-    angles_degrees = load.get_angles(in_file, comm=comm)
+    angles_degrees = load.get_angles(in_file, path=angles_path, comm=comm)
     data_indices = load.get_data_indices(
         in_file,
         image_key_path=image_key_path,

@@ -328,8 +328,7 @@ def get_num_chunks(filepath: str, path: str, comm: MPI.Comm) -> int:
     return nchunks
 
 
-def get_angles(file: str, path: str="/entry1/tomo_entry/data/rotation_angle",
-               comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
+def get_angles(file: str, path: str, comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
     """Get angles.
 
     Parameters
