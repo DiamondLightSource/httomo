@@ -93,14 +93,31 @@ def standard_tomo(name: str, in_file: Path, data_path: str, dimension: int,
     )
 
     # Get darks and flats
-    if darks is not None and flats is not None:
+    if darks is not None and flats is not None and \
+        darks['file'] != flats['file']:
+        # Get darks and flats from different datasets within different NeXuS
+        # files
         darks = \
             load.get_darks_flats_separate(darks['file'], darks['data_path'],
                                           dim=dimension, preview=preview_str)
         flats = \
             load.get_darks_flats_separate(flats['file'], flats['data_path'],
                                           dim=dimension, preview=preview_str)
+    elif darks is not None and flats is not None and \
+        darks['file'] == flats['file']:
+        # Get darks and flats from different datasets within the same NeXuS file
+        darks, flats = load.get_darks_flats_together(
+            in_file,
+            data_path,
+            darks_path=darks['data_path'],
+            flats_path=flats['data_path'],
+            image_key_path=image_key_path,
+            comm=comm,
+            preview=preview_str,
+            dim=dimension,
+        )
     else:
+        # Get darks and flats from the same dataset within the same NeXuS file
         darks, flats = load.get_darks_flats_together(
             in_file,
             data_path,

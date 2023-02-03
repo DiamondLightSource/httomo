@@ -354,6 +354,8 @@ def get_angles(file: str, path: str, comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
 def get_darks_flats_together(
     file: str,
     data_path: str="/entry1/tomo_entry/data/data",
+    darks_path: str=None,
+    flats_path: str=None,
     image_key_path: str="/entry1/instrument/image_key/image_key",
     dim: int=1,
     pad: int=0,
@@ -368,6 +370,10 @@ def get_darks_flats_together(
         Path to file containing the dataset.
     data_path : str
         Path to the dataset within the file.
+    darks_path : optional, str
+        Path to the darks dataset within the file.
+    flats_path : optional, str
+        Path to the flats dataset within the file.
     image_key_path : str
         Path to the image_key within the file.
     dim : int
@@ -387,19 +393,33 @@ def get_darks_flats_together(
         Contains the darks and flats arrays.
     """
     with h5.File(file, "r", driver="mpio", comm=comm) as file:
-        darks_indices = []
-        flats_indices = []
-        # Collect indices corresponding to darks and flats
-        for i, key in enumerate(file[image_key_path]):
-            if int(key) == 1:
-                flats_indices.append(i)
-            elif int(key) == 2:
-                darks_indices.append(i)
-        dataset = file[data_path]
-        darks = \
-            _get_darks_flats(dataset, darks_indices, dim, pad, preview, comm)
-        flats = \
-            _get_darks_flats(dataset, flats_indices, dim, pad, preview, comm)
+        if darks_path is None and flats_path is None:
+            # Get darks and flats from the same dataset within the same NeXuS
+            # file
+            darks_indices = []
+            flats_indices = []
+            # Collect indices corresponding to darks and flats
+            for i, key in enumerate(file[image_key_path]):
+                if int(key) == 1:
+                    flats_indices.append(i)
+                elif int(key) == 2:
+                    darks_indices.append(i)
+            dataset = file[data_path]
+            darks = \
+                _get_darks_flats(dataset, darks_indices, dim, pad, preview, comm)
+            flats = \
+                _get_darks_flats(dataset, flats_indices, dim, pad, preview, comm)
+        else:
+            # Get darks and flats from different datasets within the same NeXuS
+            # file
+            darks_dataset = file[darks_path]
+            darks_indices = np.arange(darks_dataset.shape[0])
+            darks = _get_darks_flats(darks_dataset, darks_indices, dim, pad,
+                                     preview, comm)
+            flats_dataset = file[flats_path]
+            flats_indices = np.arange(flats_dataset.shape[0])
+            flats = _get_darks_flats(flats_dataset, flats_indices,
+                                     dim, pad, preview, comm)
 
     return darks, flats
 
