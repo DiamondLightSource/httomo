@@ -1,7 +1,8 @@
 import math
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 
 import h5py as h5
+import numpy as np
 from mpi4py import MPI
 from numpy import ndarray
 
@@ -425,6 +426,70 @@ def get_darks_flats(
                 file[data_path][x][slice_list[1], slice_list[2]] for x in flats_indices
             ]
         return darks, flats
+
+
+def _get_separate_darks_flats(
+    file_path: str,
+    data_path: str,
+    dim: int=1,
+    pad: int=0,
+    preview: str=":,:,:",
+    comm: MPI.Comm=MPI.COMM_WORLD,
+) -> ndarray:
+    """Get darks/flats from a separate dataset and/or file from the projection
+    data.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to file containing the dataset.
+    data_path : str
+        Path to the dataset within the file.
+    dim : int
+        Dimension along which data is being split between MPI processes. Only
+        affects darks and flats if dim = 2.
+    pad : int
+        How many slices data is being padded. Only affects darks and flats if
+        dim = 2. (not implemented yet)
+    preview : str
+        Crop the data with a preview:
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    ndarray
+        The darks or flats.
+    """
+    slice_list = get_slice_list_from_preview(preview)
+    with h5.File(file_path, 'r', driver='mpio', comm=comm) as f:
+        dataset = f[data_path]
+        indices = np.arange(dataset.shape[0])
+        if dim == 2:
+            rank = comm.rank
+            nproc = comm.size
+            if slice_list[1] == slice(None):
+                length = dataset.shape[1]
+                offset = 0
+                step = 1
+            else:
+                start = 0 if slice_list[1].start is None else slice_list[1].start
+                stop = (
+                    dataset.shape[1]
+                    if slice_list[1].stop is None
+                    else slice_list[1].stop
+                )
+                step = 1 if slice_list[1].step is None else slice_list[1].step
+                length = (stop - start) // step
+                offset = start
+            i0 = round((length / nproc) * rank) + offset
+            i1 = round((length / nproc) * (rank + 1)) + offset
+            data = [dataset[x][i0:i1:step][slice_list[2]] for x in indices]
+        else:
+            data = [
+                f[data_path][x][slice_list[1], slice_list[2]] for x in indices
+            ]
+    return data
 
 
 def get_data_indices(

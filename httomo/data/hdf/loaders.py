@@ -3,7 +3,7 @@ from typing import Tuple, List, Dict
 
 from h5py import File
 from mpi4py.MPI import Comm
-from numpy import asarray, deg2rad, ndarray
+from numpy import asarray, deg2rad, ndarray, arange
 
 from httomo.data.hdf._utils import load
 from httomo.utils import _parse_preview, print_once, print_rank, pattern, \
@@ -11,10 +11,11 @@ from httomo.utils import _parse_preview, print_once, print_rank, pattern, \
 
 
 @pattern(Pattern.projection)
-def standard_tomo(name: str, in_file: Path, data_path: str, image_key_path: str,
-                  dimension: int, preview: List[Dict[str, int]], pad: int,
-                  comm: Comm,
-                  angles_path: str="/entry1/tomo_entry/data/rotation_angle"
+def standard_tomo(name: str, in_file: Path, data_path: str, dimension: int,
+                  preview: List[Dict[str, int]], pad: int, comm: Comm,
+                  image_key_path: str=None,
+                  angles_path: str="/entry1/tomo_entry/data/rotation_angle",
+                  darks: Dict=None, flats: Dict=None
                   ) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int,
                              int, int]:
     """Loader for standard tomography data.
@@ -27,8 +28,6 @@ def standard_tomo(name: str, in_file: Path, data_path: str, image_key_path: str,
         The absolute filepath to the input data.
     data_path : str
         The path within the hdf/nxs file to the data.
-    image_key_path : str
-        The path within the hdf/nxs file to the image key data.
     dimension : int
         The dimension to slice in.
     preview : List[Dict[str, int]]
@@ -37,8 +36,16 @@ def standard_tomo(name: str, in_file: Path, data_path: str, image_key_path: str,
         The padding size to use.
     comm : Comm
         The MPI communicator to use.
+    image_key_path : optional, str
+        The path within the hdf/nxs file to the image key data.
     angles_path : str
         The path within the hdf/nxs file to the angles data.
+    darks : optional, Dict
+        A dict containing filepath and dataset information about the darks if
+        they are not in the same dataset as the data.
+    flats : optional, Dict
+        A dict containing filepath and dataset information about the flats if
+        they are not in the same dataset as the data.
 
     Returns
     -------
@@ -52,12 +59,20 @@ def standard_tomo(name: str, in_file: Path, data_path: str, image_key_path: str,
     if comm.rank == 0:
         print('\033[33m' + f"The full dataset shape is {shape}" + '\033[0m')
 
+    # Get indices in data which contain projections
+    if image_key_path is not None:
+        data_indices = load.get_data_indices(
+            in_file,
+            image_key_path=image_key_path,
+            comm=comm,
+        )
+    else:
+        # Assume that only projection data is in `in_file` (no darks/flats), so
+        # the "data indices" are simply all images in `in_file`
+        data_indices = arange(shape[0])
+
+    # Get the angles associated to the projection data
     angles_degrees = load.get_angles(in_file, path=angles_path, comm=comm)
-    data_indices = load.get_data_indices(
-        in_file,
-        image_key_path=image_key_path,
-        comm=comm,
-    )
     angles = deg2rad(angles_degrees[data_indices])
 
     # Get string representation of `preview` parameter
@@ -77,14 +92,23 @@ def standard_tomo(name: str, in_file: Path, data_path: str, image_key_path: str,
         in_file, dim, data_path, preview=preview_str, pad=pad_values, comm=comm
     )
 
-    darks, flats = load.get_darks_flats(
-        in_file,
-        data_path,
-        image_key_path=image_key_path,
-        comm=comm,
-        preview=preview_str,
-        dim=dimension,
-    )
+    # Get darks and flats
+    if darks is not None and flats is not None:
+        darks = \
+            load._get_separate_darks_flats(darks['file'], darks['data_path'],
+                                           dim=dimension, preview=preview_str)
+        flats = \
+            load._get_separate_darks_flats(flats['file'], flats['data_path'],
+                                           dim=dimension, preview=preview_str)
+    else:
+        darks, flats = load.get_darks_flats(
+            in_file,
+            data_path,
+            image_key_path=image_key_path,
+            comm=comm,
+            preview=preview_str,
+            dim=dimension,
+        )
     darks = asarray(darks)
     flats = asarray(flats)
 
