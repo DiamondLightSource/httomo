@@ -95,13 +95,13 @@ def standard_tomo(name: str, in_file: Path, data_path: str, dimension: int,
     # Get darks and flats
     if darks is not None and flats is not None:
         darks = \
-            load._get_separate_darks_flats(darks['file'], darks['data_path'],
-                                           dim=dimension, preview=preview_str)
+            load.get_darks_flats_separate(darks['file'], darks['data_path'],
+                                          dim=dimension, preview=preview_str)
         flats = \
-            load._get_separate_darks_flats(flats['file'], flats['data_path'],
-                                           dim=dimension, preview=preview_str)
+            load.get_darks_flats_separate(flats['file'], flats['data_path'],
+                                          dim=dimension, preview=preview_str)
     else:
-        darks, flats = load.get_darks_flats(
+        darks, flats = load.get_darks_flats_together(
             in_file,
             data_path,
             image_key_path=image_key_path,
