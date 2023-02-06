@@ -6,7 +6,7 @@ import click
 from httomo.common import PipelineTasks
 from httomo.task_runner import run_tasks
 
-from ._version_git import __version__
+from . import __version__
 
 
 @dataclass(frozen=True)

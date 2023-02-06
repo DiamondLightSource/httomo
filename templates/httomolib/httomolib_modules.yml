@@ -6,3 +6,4 @@
 - httomolib.prep.phase
 - httomolib.prep.stripe
 - httomolib.recon.rotation
+- httomolib.recon.algorithm

@@ -1,8 +1,11 @@
 from typing import Any
 from mpi4py.MPI import Comm
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Callable
+from enum import Enum
  
-def print_once(output: Any, comm: Comm) -> None:
+def print_once(output: Any,
+               comm: Comm,
+               colour: str="green") -> None:
     """Print an output from rank zero only.
 
     Parameters
@@ -11,12 +14,29 @@ def print_once(output: Any, comm: Comm) -> None:
         The item to be printed.
     comm : Comm
         The comm used to determine the rank zero process.
+    colour : str, optional
+        The colour of the output.
     """
-    CSTART = '\33[92m'
-    CEND = '\033[0m'
+    if colour == "blue":
+        CSTART = '\33[94m'
+        CEND = '\033[0m'
+    elif colour == "cyan":
+        CSTART = '\33[96m'
+        CEND = '\033[0m'      
+    elif colour == "green":
+        CSTART = '\33[92m'
+        CEND = '\033[0m'
+    elif colour == "yellow":
+        CSTART = '\33[93m'
+        CEND = '\033[0m'
+    elif colour == "red":
+        CSTART = '\33[91m'
+        CEND = '\033[0m'        
+    else:
+        CSTART = '\33[92m'
+        CEND = '\033[0m'
     if comm.rank == 0:
         print(CSTART + output + CEND)
-
 
 def print_rank(output: Any, comm: Comm) -> None:
     """Print an output with rank prefix.
@@ -91,3 +111,67 @@ def _parse_preview(preview: List[Dict[str, int]],
             preview_str += ', '
 
     return preview_str
+
+
+class Pattern(Enum):
+    """Enum for the different slicing-orientations/"patterns" that tomographic
+    data can have.
+    """
+    projection = 0
+    sinogram = 1
+    all = 2
+
+
+def _get_slicing_dim(pattern: Pattern) -> int:
+    """Assuming 3D projection data with the axes ordered as
+    - axis 0 = rotation angle
+    - axis 1 = detector y
+    - axis 2 = detector x
+
+    when given the pattern of a method, return the dimension of the data that
+    the method requires the data to be sliced in.
+    """
+    if pattern == Pattern.projection:
+        return 1
+    elif pattern == Pattern.sinogram:
+        return 2
+    elif pattern == Pattern.all:
+        # Any slicing dimension is fine, so arbitrarily just return 1
+        return 1
+    else:
+        err_str = f"An unknown pattern has been encountered {pattern}"
+        raise ValueError(err_str)
+
+
+def pattern(pattern: Pattern) -> Callable:
+    """Decorator factory function for creating a decorator that takes a single
+    argument, the `pattern` to associate with the decorated function.
+
+    Parameters
+    ----------
+    pattern : Pattern
+        The `pattern` to associate with the given method function's data.
+
+    Returns
+    -------
+    Callable
+        The decorated method function with the `pattern` attribute set
+        accordingly.
+    """
+    def decorate(fn: Callable) -> Callable:
+        """Decorator for method functions to specify the `pattern` that the
+        method function expects for its input data.
+
+        Parameters
+        ----------
+        fn : Callable
+            The method function to set/mark the `pattern`.
+
+        Returns
+        -------
+        Callable
+            The decorated function with the `pattern` attribute set accordingly.
+        """
+        fn.pattern = pattern
+        return fn
+    return decorate
