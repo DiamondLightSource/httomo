@@ -3,7 +3,7 @@ from typing import Tuple, List, Dict
 
 from h5py import File
 from mpi4py.MPI import Comm
-from numpy import asarray, deg2rad, ndarray, arange
+from numpy import asarray, deg2rad, ndarray, arange, linspace
 
 from httomo.data.hdf._utils import load
 from httomo.utils import _parse_preview, print_once, print_rank, pattern, \
@@ -14,7 +14,7 @@ from httomo.utils import _parse_preview, print_once, print_rank, pattern, \
 def standard_tomo(name: str, in_file: Path, data_path: str, dimension: int,
                   preview: List[Dict[str, int]], pad: int, comm: Comm,
                   image_key_path: str=None,
-                  angles_path: str="/entry1/tomo_entry/data/rotation_angle",
+                  rotation_angles: Dict={'data_path': '/entry1/tomo_entry/data/rotation_angle'},
                   darks: Dict=None, flats: Dict=None
                   ) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int,
                              int, int]:
@@ -38,8 +38,11 @@ def standard_tomo(name: str, in_file: Path, data_path: str, dimension: int,
         The MPI communicator to use.
     image_key_path : optional, str
         The path within the hdf/nxs file to the image key data.
-    angles_path : str
-        The path within the hdf/nxs file to the angles data.
+    rotation_angles : optional, Dict
+        A dict that can contain either
+        - The path within the hdf/nxs file to the angles data
+        - Start, stop, and the total number of angles info to generate a list of
+          angles
     darks : optional, Dict
         A dict containing filepath and dataset information about the darks if
         they are not in the same dataset as the data.
@@ -72,7 +75,15 @@ def standard_tomo(name: str, in_file: Path, data_path: str, dimension: int,
         data_indices = arange(shape[0])
 
     # Get the angles associated to the projection data
-    angles_degrees = load.get_angles(in_file, path=angles_path, comm=comm)
+    if 'data_path' in rotation_angles.keys():
+        angles_degrees = load.get_angles(in_file,
+                                         path=rotation_angles['data_path'],
+                                         comm=comm)
+    else:
+        angles_info = rotation_angles['user_defined']
+        angles_degrees = linspace(angles_info['start_angle'],
+                                  angles_info['stop_angle'],
+                                  angles_info['angles_total'])
     angles = deg2rad(angles_degrees[data_indices])
 
     # Get string representation of `preview` parameter
