@@ -40,11 +40,23 @@ def algorithm(params: Dict,
     ndarray
         A CuPy array of projections with stripes removed.
     """
-    cp._default_memory_pool.free_all_blocks()
-
+    cp._default_memory_pool.free_all_blocks()    
     module = getattr(recon, 'algorithm')
-    data = getattr(module, method_name)(cp.asarray(data), angles=angles_radians, gpu_id=gpu_id, **params)
-    return cp.asnumpy(data)
+    
+    # TODO: possibly change this clumsy way of operating with numpy/cupy arrays depending on the methods choice
+    if method_name == "reconstruct_tomobar":
+        # this function does not require ncore parameter
+        del params["ncore"]
+        if params["algorithm"] == "FBP3D_device":            
+            data = getattr(module, method_name)(cp.asarray(data), angles=angles_radians, gpu_id=gpu_id, **params)
+            return cp.asnumpy(data)            
+        else:
+            data = getattr(module, method_name)(data, angles=angles_radians, gpu_id=gpu_id, **params)
+            return data
+        
+    if method_name == "reconstruct_tomopy":
+        data = getattr(module, method_name)(data, angles=angles_radians, gpu_id=gpu_id, **params)
+        return data   
 
 
 @pattern(Pattern.sinogram)
@@ -68,6 +80,9 @@ def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray) -> flo
     float
         The center of rotation.
     """
+    # this function does not require ncore parameter
+    del params["ncore"]
+    
     cp._default_memory_pool.free_all_blocks()
    
     module = getattr(recon, 'rotation')

@@ -27,6 +27,8 @@ def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.nd
     Returns
     -------
     """
+    # as now this function does not require ncore parameter 
+    del params["ncore"]
     
     module = getattr(misc, 'images')
     comm_rank = comm.rank
