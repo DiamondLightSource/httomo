@@ -237,9 +237,22 @@ def run_tasks(
                     glob_stats[idx][in_dataset] = stats
                     params.update({'glob_stats': stats})
 
-                _run_method(func, idx+1, package, method_name, in_dataset,
-                            out_dataset, datasets, params, httomo_params,
-                            SAVERS_NO_DATA_OUT_PARAM, comm, out_dir=out_dir)
+                res = _run_method(func, package, method_name, params,
+                                  httomo_params,datasets[in_dataset],
+                                  SAVERS_NO_DATA_OUT_PARAM)
+                # Store result in `datasets` dict for subsequent methods
+                datasets[out_dataset] = res
+
+                # TODO: The dataset saving functionality only supports 3D data
+                # currently, so check that the dimension of the data is 3 before
+                # saving it
+                is_3d = len(res.shape) == 3
+                # Save the result if necessary
+                if out_dir is not None and is_3d:
+                    intermediate_dataset(datasets[out_dataset], out_dir,
+                                         comm, idx+1, package, method_name,
+                                         out_dataset,
+                                         recon_algorithm=params.pop('algorithm', None))
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
@@ -435,41 +448,28 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
     return method_funcs
 
 
-def _run_method(func: Callable, task_no: int, package_name: str,
-                method_name: str, in_dataset: str, out_dataset: str,
-                datasets: Dict[str, ndarray], method_params: Dict,
-                httomo_params: Dict, savers_no_data_out_param: List[str],
-                comm: MPI.Comm, out_dir: str=None) -> ndarray:
+def _run_method(func: Callable, package_name: str,
+                method_name: str, method_params: Dict, httomo_params: Dict,
+                arr, savers_no_data_out_param: List[str]) -> ndarray:
     """Run a method function in the processing pipeline.
 
     Parameters
     ----------
     func : Callable
         The python function that performs the method.
-    task_no : int
-        The number of the given task, starting at index 1.
     package_name : str
         The package that the method function `func` comes from.
     method_name : str
         The name of the method to apply.
-    in_dataset : str
-        The name of the input dataset.
-    out_dataset : str
-        The name of the output dataset.
-    datasets : Dict[str, ndarray]
-        A dict containing all available datasets in the given pipeline.
     method_params : Dict
         A dict of parameters for the method.
     httomo_params : Dict, optional
         A dict of parameters related to HTTomo.
+    arr : { np.ndarray, cp.ndarray }
+        The data array used as input to the given method.
     savers_no_data_out_param : List[str]
         A list of savers which have neither `data_out` nor `data_out_multi` as
         their output.
-    comm : MPI.Comm
-        MPI communicator object.
-    out_dir : str, optional
-        If the result should be saved in an intermediate file, the directory to
-        save it should be provided.
 
     Returns
     -------
@@ -480,30 +480,19 @@ def _run_method(func: Callable, task_no: int, package_name: str,
     # parameters based on the parameter name for the method's python
     # function
     if package_name in ['httomolib', 'tomopy']:
-        httomo_params['data'] = datasets[in_dataset]
+        httomo_params['data'] = arr
 
     if method_name in savers_no_data_out_param:
         _run_method_wrapper(func, method_name, method_params, httomo_params)
-        # Nothing more to do with output data if the saver has a special
-        # kind of output
+        # Nothing more to do if the saver has a special kind of output which
+        # handles saving the result
         return
     else:
-        # Run the method, then store the result in the appropriate
+        # Run the method, then return the result for storage in the appropriate
         # dataset in the `datasets` dict    
-        datasets[out_dataset] = \
+        res = \
             _run_method_wrapper(func, method_name, method_params, httomo_params)
-
-    # TODO: The dataset saving functionality only supports 3D data
-    # currently, so check that the dimension of the data is 3 before
-    # saving it
-    is_3d = len(datasets[out_dataset].shape) == 3
-    # Save the result if necessary
-    print(method_name)
-    if out_dir is not None and is_3d:
-        intermediate_dataset(datasets[out_dataset], out_dir,
-                            comm, task_no, package_name, method_name,
-                            out_dataset,
-                            recon_algorithm=method_params.pop('algorithm', None))
+        return res
 
 
 def _run_loader(func: Callable, params: Dict) -> Tuple[ndarray, ndarray,
