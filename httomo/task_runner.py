@@ -18,6 +18,18 @@ from httomo.data.hdf._utils.reslice import reslice
 from httomo._stats.globals import min_max_mean_std
 
 
+# TODO: Define a list of savers which have no output dataset and so need to
+# be treated differently to other methods. Probably should be handled in a
+# more robust way than this workaround.
+SAVERS_NO_DATA_OUT_PARAM = ['save_to_images']
+
+reslice_warn_str = f"WARNING: Reslicing is performed more than once in this " \
+                   f"pipeline, is there a need for this?"
+# Hardcoded string that is used to check if a method is in a reconstruction
+# module or not
+RECON_MODULE_MATCH = 'recon.algorithm'
+
+
 def run_tasks(
     in_file: Path,
     yaml_config: Path,
@@ -63,11 +75,6 @@ def run_tasks(
     proc_id = f"[{gpu_id}:{gpu_comm.rank}]"
     cp.cuda.Device(gpu_id).use()
 
-    # TODO: Define a list of savers which have no output dataset and so need to
-    # be treated differently to other methods. Probably should be handled in a
-    # more robust way than this workaround.
-    SAVERS_NO_DATA_OUT_PARAM = ['save_to_images']
-
     # Define dict to store arrays that are specified as datasets in the user
     # config YAML
     datasets = _initialise_datasets(yaml_config, SAVERS_NO_DATA_OUT_PARAM)
@@ -87,19 +94,11 @@ def run_tasks(
         'comm': comm
     }
 
-    # Describes whether a task's input dataset needs to be resliced before being
-    # passed to the task
-    should_reslice = False
     # TODO: Hardcoded slciing dimension since we are assuming to be working with
     # projections, but this needs to be generalised
     SLICING_DIM = 1
-    # Hardcoded string that is used to check if a method is in a reconstruction
-    # module or not
-    RECON_MODULE_MATCH = 'recon.algorithm'
     # A counter to track how many reslices occur in the processing pipeline
     reslice_counter = 0
-    reslice_warn_str = f"WARNING: Reslicing is performed more than once in " \
-                       f"this pipeline, is there a need for this?"
     has_reslice_warn_printed = False
 
     # Run the methods
@@ -137,122 +136,13 @@ def run_tasks(
                 (['out_dir'], run_out_dir)
             ]
         else:
-            save_result = False
-
-            # Default behaviour for saving datasets is to save the output of the
-            # last task, and the output of reconstruction methods are always
-            # saved unless specified otherwise.
-            #
-            # The default behaviour can be overridden in two ways:
-            # 1. the flag `--save_all` which affects all tasks
-            # 2. the method param `save_result` which affects individual tasks
-            #
-            # Here, enforce default behaviour.
-            if idx == len(method_funcs) - 1:
-                save_result = True
-
-            # Now, check if `--save_all` has been specified, as this can
-            # override default behaviour
-            if save_all:
-                save_result = True
-
-            # Now, check if it's a method from a reconstruction module
-            if RECON_MODULE_MATCH in module_path:
-                save_result = True
-
-            # Finally, check if `save_result` param has been specified in the
-            # YAML config, as it can override both default behaviour and the
-            # `--save_all` flag
-            if 'save_result' in params.keys():
-                save_result = params.pop('save_result')
-
-            # Check if the input dataset should be resliced before the task runs
-            should_reslice = \
-                _check_if_should_reslice(method_funcs[idx-1][1], func)
-            if should_reslice:
-                reslice_counter += 1
-                current_slice_dim = \
-                    _get_slicing_dim(method_funcs[idx-1][1].pattern)
-                next_slice_dim = _get_slicing_dim(func.pattern)
-
-            if reslice_counter > 1 and not has_reslice_warn_printed:
-                print_once(reslice_warn_str, comm=comm, colour='red')
-                has_reslice_warn_printed = True
-
-            # Check for any extra params unrelated to tomopy but related to
-            # HTTomo that should be added in
-            httomo_params = \
-                _check_signature_for_httomo_params(func, possible_extra_params)            
-            
-            # Get the information describing if the method is being run only
-            # once, or multiple times with different input datasets
-            if 'data_in' in params.keys() and 'data_out' in params.keys():
-                data_in = params.pop('data_in')
-                data_out = params.pop('data_out')
-            elif 'data_in_multi' in params.keys() and \
-                'data_out_multi' in params.keys():
-                data_in = params.pop('data_in_multi')
-                data_out = params.pop('data_out_multi')
-            else:
-                # TODO: This error reporting is possibly better handled by
-                # schema validation of the user config YAML
-                if method_name not in SAVERS_NO_DATA_OUT_PARAM:
-                    err_str = "Invalid in/out dataset parameters"
-                    raise ValueError(err_str)
-                else:
-                    data_in = [params.pop('data_in')]
-                    data_out = [None]
-
-            # Check if the method function's params require any datasets stored
-            # in the `datasets` dict
-            dataset_params = _check_method_params_for_datasets(params, datasets)
-            # Update the relevant parameter values according to the required
-            # datasets
-            params.update(dataset_params)            
-
-            # Make the input datasets a list if it's not, just to be generic and
-            # below loop through all the datasets that the method should be
-            # applied to
-            if type(data_in) is str and type(data_out) is str:
-                data_in = [data_in]
-                data_out = [data_out]
-
-            # Check if method type signature requires global statistics
-            req_glob_stats = 'glob_stats' in signature(func).parameters
-
-            for in_dataset, out_dataset in zip(data_in, data_out):
-                if save_result:
-                    out_dir = run_out_dir
-                else:
-                    out_dir = None
-
-                if should_reslice:
-                    resliced_data, _ = reslice(datasets[in_dataset],
-                                               run_out_dir, current_slice_dim,
-                                               next_slice_dim, comm)
-                    datasets[in_dataset] = resliced_data
-
-                if req_glob_stats is True:
-                    stats = _fetch_glob_stats(datasets[in_dataset], comm)
-                    glob_stats[idx][in_dataset] = stats
-                    params.update({'glob_stats': stats})
-
-                res = _run_method(func, package, method_name, params,
-                                  httomo_params,datasets[in_dataset],
-                                  SAVERS_NO_DATA_OUT_PARAM)
-                # Store result in `datasets` dict for subsequent methods
-                datasets[out_dataset] = res
-
-                # TODO: The dataset saving functionality only supports 3D data
-                # currently, so check that the dimension of the data is 3 before
-                # saving it
-                is_3d = len(res.shape) == 3
-                # Save the result if necessary
-                if out_dir is not None and is_3d:
-                    intermediate_dataset(datasets[out_dataset], out_dir,
-                                         comm, idx+1, package, method_name,
-                                         out_dataset,
-                                         recon_algorithm=params.pop('algorithm', None))
+            reslice_counter, has_reslice_warn_printed = \
+                 _run_method_alt(idx, save_all, module_path, package,
+                                 method_name, params, possible_extra_params,
+                                 len(method_funcs), method_funcs[idx][1],
+                                 method_funcs[idx-1][1], datasets, run_out_dir,
+                                 glob_stats, comm, reslice_counter,
+                                 has_reslice_warn_printed)
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
@@ -446,6 +336,169 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
             raise ValueError(err_str)
 
     return method_funcs
+
+
+def _run_method_alt(task_idx: int, save_all: bool, module_path: str,
+                    package_name: str, method_name: str,
+                    params: Dict, misc_params: Dict, no_of_tasks: int,
+                    current_func: Callable, prev_func: Callable,
+                    datasets: Dict, out_dir: str, glob_stats: List,
+                    comm: MPI.Comm, reslice_counter: int,
+                    has_reslice_warn_printed: bool) -> Tuple[bool, bool]:
+    """Run a method function in the processing pipeline.
+
+    Parameters
+    ----------
+    task_idx : int
+        The index of the current task (zero-based indexing).
+    save_all : bool
+        Whether to save the result of all methods in the pipeline,
+    module_path : str
+        The path of the module that the method function comes from.
+    package_name : str
+        The name of the package that the method function comes from.
+    method_name : str
+        The name of the method.
+    params : Dict
+        A dict of parameters for the method.
+    misc_params : Dict
+        A list of possible extra params that may be needed by a method.
+    no_of_tasks : int
+        The number of tasks in the pipeline.
+    current_func : Callable
+        The python function that performs the method.
+    prev_func : Callable
+        The python function that performed the previous method in the pipeline.
+    datasets : Dict
+        A dict of all the datasets involved in the pipeline.
+    out_dir : str
+        The path to the output directory of the run.
+    glob_stats : List
+    comm : MPI.Comm
+        The MPI communicator used for the run.
+    reslice_counter : int
+        A counter for how many times reslicing has occurred in the pipeline.
+    has_reslice_warn_printed : bool
+        A flag to describe if the reslice warning has been printed or not.
+
+    Returns
+    -------
+    Tuple[int, bool]
+        Contains the `reslice_counter` and `has_reslice_warn_printed` values to
+        enable the information to persist across method executions.
+    """
+    save_result = False
+
+    # Default behaviour for saving datasets is to save the output of the
+    # last task, and the output of reconstruction methods are always
+    # saved unless specified otherwise.
+    #
+    # The default behaviour can be overridden in two ways:
+    # 1. the flag `--save_all` which affects all tasks
+    # 2. the method param `save_result` which affects individual tasks
+    #
+    # Here, enforce default behaviour.
+    if task_idx == no_of_tasks - 1:
+        save_result = True
+
+    # Now, check if `--save_all` has been specified, as this can
+    # override default behaviour
+    if save_all:
+        save_result = True
+
+    # Now, check if it's a method from a reconstruction module
+    if RECON_MODULE_MATCH in module_path:
+        save_result = True
+
+    # Finally, check if `save_result` param has been specified in the
+    # YAML config, as it can override both default behaviour and the
+    # `--save_all` flag
+    if 'save_result' in params.keys():
+        save_result = params.pop('save_result')
+
+    # Check if the input dataset should be resliced before the task runs
+    should_reslice = _check_if_should_reslice(prev_func, current_func)
+    if should_reslice:
+        reslice_counter += 1
+        current_slice_dim = _get_slicing_dim(prev_func.pattern)
+        next_slice_dim = _get_slicing_dim(current_func.pattern)
+
+    if reslice_counter > 1 and not has_reslice_warn_printed:
+        print_once(reslice_warn_str, comm=comm, colour='red')
+        has_reslice_warn_printed = True
+
+    # Check for any extra params unrelated to tomopy but related to
+    # HTTomo that should be added in
+    httomo_params = \
+        _check_signature_for_httomo_params(current_func, misc_params)
+
+    # Get the information describing if the method is being run only
+    # once, or multiple times with different input datasets
+    if 'data_in' in params.keys() and 'data_out' in params.keys():
+        data_in = params.pop('data_in')
+        data_out = params.pop('data_out')
+    elif 'data_in_multi' in params.keys() and \
+        'data_out_multi' in params.keys():
+        data_in = params.pop('data_in_multi')
+        data_out = params.pop('data_out_multi')
+    else:
+        # TODO: This error reporting is possibly better handled by
+        # schema validation of the user config YAML
+        if method_name not in SAVERS_NO_DATA_OUT_PARAM:
+            err_str = "Invalid in/out dataset parameters"
+            raise ValueError(err_str)
+        else:
+            data_in = [params.pop('data_in')]
+            data_out = [None]
+
+    # Check if the method function's params require any datasets stored
+    # in the `datasets` dict
+    dataset_params = _check_method_params_for_datasets(params, datasets)
+    # Update the relevant parameter values according to the required
+    # datasets
+    params.update(dataset_params)
+
+    # Make the input datasets a list if it's not, just to be generic and
+    # below loop through all the datasets that the method should be
+    # applied to
+    if type(data_in) is str and type(data_out) is str:
+        data_in = [data_in]
+        data_out = [data_out]
+
+    # Check if method type signature requires global statistics
+    req_glob_stats = 'glob_stats' in signature(current_func).parameters
+
+    for in_dataset, out_dataset in zip(data_in, data_out):
+        if should_reslice:
+            resliced_data, _ = reslice(datasets[in_dataset],
+                                        out_dir, current_slice_dim,
+                                        next_slice_dim, comm)
+            datasets[in_dataset] = resliced_data
+
+        if req_glob_stats is True:
+            stats = _fetch_glob_stats(datasets[in_dataset], comm)
+            glob_stats[task_idx][in_dataset] = stats
+            params.update({'glob_stats': stats})
+
+        res = _run_method(current_func, package_name, method_name, params,
+                            httomo_params,datasets[in_dataset],
+                            SAVERS_NO_DATA_OUT_PARAM)
+        # Store result in `datasets` dict for subsequent methods
+        datasets[out_dataset] = res
+
+        # TODO: The dataset saving functionality only supports 3D data
+        # currently, so check that the dimension of the data is 3 before
+        # saving it
+        is_3d = len(res.shape) == 3
+        # Save the result if necessary
+        if save_result and is_3d:
+            intermediate_dataset(datasets[out_dataset], out_dir,
+                                 comm, task_idx+1,
+                                 package_name, method_name,
+                                 out_dataset,
+                                 recon_algorithm=params.pop('algorithm', None))
+
+    return reslice_counter, has_reslice_warn_printed
 
 
 def _run_method(func: Callable, package_name: str,
