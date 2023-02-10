@@ -137,12 +137,11 @@ def run_tasks(
             ]
         else:
             reslice_counter, has_reslice_warn_printed = \
-                 _run_method_alt(idx, save_all, module_path, package,
-                                 method_name, params, possible_extra_params,
-                                 len(method_funcs), method_funcs[idx][1],
-                                 method_funcs[idx-1][1], datasets, run_out_dir,
-                                 glob_stats, comm, reslice_counter,
-                                 has_reslice_warn_printed)
+                 _run_method(idx, save_all, module_path, package, method_name,
+                             params, possible_extra_params, len(method_funcs),
+                             method_funcs[idx][1], method_funcs[idx-1][1],
+                             datasets, run_out_dir, glob_stats, comm,
+                             reslice_counter, has_reslice_warn_printed)
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
@@ -338,13 +337,12 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
     return method_funcs
 
 
-def _run_method_alt(task_idx: int, save_all: bool, module_path: str,
-                    package_name: str, method_name: str,
-                    params: Dict, misc_params: Dict, no_of_tasks: int,
-                    current_func: Callable, prev_func: Callable,
-                    datasets: Dict, out_dir: str, glob_stats: List,
-                    comm: MPI.Comm, reslice_counter: int,
-                    has_reslice_warn_printed: bool) -> Tuple[bool, bool]:
+def _run_method(task_idx: int, save_all: bool, module_path: str,
+                package_name: str, method_name: str, params: Dict,
+                misc_params: Dict, no_of_tasks: int, current_func: Callable,
+                prev_func: Callable, datasets: Dict, out_dir: str,
+                glob_stats: List, comm: MPI.Comm, reslice_counter: int,
+                has_reslice_warn_printed: bool) -> Tuple[bool, bool]:
     """Run a method function in the processing pipeline.
 
     Parameters
@@ -480,9 +478,24 @@ def _run_method_alt(task_idx: int, save_all: bool, module_path: str,
             glob_stats[task_idx][in_dataset] = stats
             params.update({'glob_stats': stats})
 
-        res = _run_method(current_func, package_name, method_name, params,
-                            httomo_params,datasets[in_dataset],
-                            SAVERS_NO_DATA_OUT_PARAM)
+        # Add the appropriate dataset to the method function's dict of
+        # parameters based on the parameter name for the method's python
+        # function
+        if package_name in ['httomolib', 'tomopy']:
+            httomo_params['data'] = datasets[in_dataset]
+
+        if method_name in SAVERS_NO_DATA_OUT_PARAM:
+            _run_method_wrapper(current_func, method_name, params,
+                                httomo_params)
+            # Nothing more to do if the saver has a special kind of output which
+            # handles saving the result
+            return
+        else:
+            # Run the method, then return the result for storage in the appropriate
+            # dataset in the `datasets` dict
+            res = _run_method_wrapper(current_func, method_name, params,
+                                      httomo_params)
+
         # Store result in `datasets` dict for subsequent methods
         datasets[out_dataset] = res
 
@@ -499,53 +512,6 @@ def _run_method_alt(task_idx: int, save_all: bool, module_path: str,
                                  recon_algorithm=params.pop('algorithm', None))
 
     return reslice_counter, has_reslice_warn_printed
-
-
-def _run_method(func: Callable, package_name: str,
-                method_name: str, method_params: Dict, httomo_params: Dict,
-                arr, savers_no_data_out_param: List[str]) -> ndarray:
-    """Run a method function in the processing pipeline.
-
-    Parameters
-    ----------
-    func : Callable
-        The python function that performs the method.
-    package_name : str
-        The package that the method function `func` comes from.
-    method_name : str
-        The name of the method to apply.
-    method_params : Dict
-        A dict of parameters for the method.
-    httomo_params : Dict, optional
-        A dict of parameters related to HTTomo.
-    arr : { np.ndarray, cp.ndarray }
-        The data array used as input to the given method.
-    savers_no_data_out_param : List[str]
-        A list of savers which have neither `data_out` nor `data_out_multi` as
-        their output.
-
-    Returns
-    -------
-    ndarray
-        An array containing the result of the method function.
-    """
-    # Add the appropriate dataset to the method function's dict of
-    # parameters based on the parameter name for the method's python
-    # function
-    if package_name in ['httomolib', 'tomopy']:
-        httomo_params['data'] = arr
-
-    if method_name in savers_no_data_out_param:
-        _run_method_wrapper(func, method_name, method_params, httomo_params)
-        # Nothing more to do if the saver has a special kind of output which
-        # handles saving the result
-        return
-    else:
-        # Run the method, then return the result for storage in the appropriate
-        # dataset in the `datasets` dict    
-        res = \
-            _run_method_wrapper(func, method_name, method_params, httomo_params)
-        return res
 
 
 def _run_loader(func: Callable, params: Dict) -> Tuple[ndarray, ndarray,
