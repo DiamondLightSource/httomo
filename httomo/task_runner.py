@@ -696,11 +696,13 @@ def _check_if_should_reslice(prev_func: Callable,
     # Rules for when and when-not to reslice the data:
     # - If the pattern of the current method to run is `Pattern.all`, then do
     #   not reslice the data
+    # - If the pattern of the previous method was `Pattern.all`, then do not
+    #   reslice the data
     # - If the pattern of the current method to run is DIFFERENT from the
     #   pattern of the previous method, then reslice the data
     # - If the pattern of the current method to run is THE SAME as the pattern
     #   of the previous method, then do not reslice the data
-    if current_func.pattern == Pattern.all:
+    if current_func.pattern == Pattern.all or prev_func.pattern == Pattern.all:
         return False
     else:
         return current_func.pattern != prev_func.pattern
