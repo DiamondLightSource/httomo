@@ -90,6 +90,12 @@ def run_tasks(
     # Describes whether a task's input dataset needs to be resliced before being
     # passed to the task
     should_reslice = False
+    # TODO: Hardcoded slciing dimension since we are assuming to be working with
+    # projections, but this needs to be generalised
+    SLICING_DIM = 1
+    # Hardcoded string that is used to check if a method is in a reconstruction
+    # module or not
+    RECON_MODULE_MATCH = 'recon.algorithm'
     # A counter to track how many reslices occur in the processing pipeline
     reslice_counter = 0
     reslice_warn_str = f"WARNING: Reslicing is performed more than once in " \
@@ -97,7 +103,8 @@ def run_tasks(
     has_reslice_warn_printed = False
 
     # Run the methods
-    for idx, (package, func, params, is_loader) in enumerate(method_funcs):
+    for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
+        package = module_path.split('.')[0]
         method_name = params.pop('method_name')
         task_no_str = f"Running task {idx+1}"
         pattern_str = f"(pattern={func.pattern.name})"
@@ -133,7 +140,8 @@ def run_tasks(
             save_result = False
 
             # Default behaviour for saving datasets is to save the output of the
-            # last task.
+            # last task, and the output of reconstruction methods are always
+            # saved unless specified otherwise.
             #
             # The default behaviour can be overridden in two ways:
             # 1. the flag `--save_all` which affects all tasks
@@ -146,6 +154,10 @@ def run_tasks(
             # Now, check if `--save_all` has been specified, as this can
             # override default behaviour
             if save_all:
+                save_result = True
+
+            # Now, check if it's a method from a reconstruction module
+            if RECON_MODULE_MATCH in module_path:
                 save_result = True
 
             # Finally, check if `save_result` param has been specified in the
@@ -388,7 +400,7 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
             method_conf['method_name'] = method_name
             method_func = getattr(module, method_name)
             method_funcs.append((
-                split_module_name[0],
+                module_name,
                 method_func,
                 method_conf,
                 is_loader
@@ -405,15 +417,15 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
             # `tomopy.misc.corr` module are then exposed in httomo by passing a
             # `method_name` parameter to the corr() function via the YAML config
             # file.
-            module_name = '.'.join(split_module_name[:-1])
-            wrapper_module_name = f"wrappers.{module_name}"
+            wrapper_module_name = '.'.join(split_module_name[:-1])
+            wrapper_module_name = f"wrappers.{wrapper_module_name}"
             wrapper_module = import_module(wrapper_module_name)
             wrapper_func_name = split_module_name[-1]
             wrapper_func = getattr(wrapper_module, wrapper_func_name)
             method_name, method_conf = module_conf.popitem()
             method_conf['method_name'] = method_name
             method_funcs.append((
-                split_module_name[0],
+                module_name,
                 wrapper_func,
                 method_conf,
                 False
@@ -470,16 +482,20 @@ def _run_method(func: Callable, task_no: int, package_name: str,
     # Add the appropriate dataset to the method function's dict of
     # parameters based on the parameter name for the method's python
     # function
-    if (package_name == 'tomopy') or (package_name == 'httomolib'):
+    if package_name in ['httomolib', 'tomopy']:
         httomo_params['data'] = datasets[in_dataset]
+
+    if method_name in savers_no_data_out_param:
+        _run_method_wrapper(func, method_name, method_params, httomo_params)
+        # Nothing more to do with output data if the saver has a special
+        # kind of output
+        return
+    else:
         # Run the method, then store the result in the appropriate
         # dataset in the `datasets` dict    
-        if method_name in savers_no_data_out_param:
+        datasets[out_dataset] = \
             _run_method_wrapper(func, method_name, method_params, httomo_params)
-            # Nothing more to do with output data if the saver has a special
-            # kind of output
-            return
-        datasets[out_dataset] = _run_method_wrapper(func, method_name, method_params, httomo_params)
+
     # TODO: The dataset saving functionality only supports 3D data
     # currently, so check that the dimension of the data is 3 before
     # saving it
