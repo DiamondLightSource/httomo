@@ -485,7 +485,7 @@ def _run_method(func: Callable, task_no: int, package_name: str,
     # saving it
     is_3d = len(datasets[out_dataset].shape) == 3
     # Save the result if necessary
-    print(method_name)
+    print_once(method_name, comm)
     if out_dir is not None and is_3d:
         intermediate_dataset(datasets[out_dataset], out_dir,
                             comm, task_no, package_name, method_name,

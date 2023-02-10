@@ -22,7 +22,7 @@ def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.nd
     comm: int
         the MPI communicator.
     data : ndarray
-        A CuPy data array.
+        A numpy data array.
 
     Returns
     -------
@@ -31,6 +31,5 @@ def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.nd
     del params["ncore"]
     
     module = getattr(misc, 'images')
-    comm_rank = comm.rank
-    data = getattr(module, method_name)(data, out_dir, comm_rank = comm_rank, **params)
+    data = getattr(module, method_name)(data, out_dir, comm_rank = comm.rank, **params)
     return data
