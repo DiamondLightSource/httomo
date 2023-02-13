@@ -34,8 +34,10 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
     ndarray
         A numpy array of normalized projections.
     """
-    cp._default_memory_pool.free_all_blocks()
+    # as now this function does not require ncore parameter 
+    del params["ncore"]
     
+    cp._default_memory_pool.free_all_blocks()    
     module = getattr(prep, 'normalize')
     # converting arrays to CuPy arrays
     data = getattr(module, method_name)(cp.asarray(data), cp.asarray(flats), cp.asarray(darks), gpu_id=gpu_id, **params)
@@ -62,8 +64,10 @@ def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarra
     ndarray
         A numpy array of projections with the stripes removed.
     """
+    # as now this function does not require ncore parameter 
+    del params["ncore"]
+    
     cp._default_memory_pool.free_all_blocks()
-
     module = getattr(prep, 'stripe')
     data = getattr(module, method_name)(cp.asarray(data), gpu_id=gpu_id, **params)
     return cp.asnumpy(data)
@@ -88,6 +92,9 @@ def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:
     ndarray
         A numpy array of projections with phase-contrast enhancement.
     """
+    # as now this function does not require ncore parameter 
+    del params["ncore"]
+    
     cp._default_memory_pool.free_all_blocks()
     module = getattr(prep, 'phase')
     data = getattr(module, method_name)(cp.asarray(data), **params)

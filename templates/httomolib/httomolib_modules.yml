@@ -1,5 +1,5 @@
 # - httomolib.misc.corr
-# - httomolib.misc.images
+- httomolib.misc.images
 - httomolib.misc.segm
 - httomolib.prep.alignment
 - httomolib.prep.normalize

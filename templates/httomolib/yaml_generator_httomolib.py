@@ -34,6 +34,7 @@ path_to_httomolib_modules = ROOT_DIR + '/httomolib_modules.yml'
 discard_keys = ["data",
                 "glob_stats",
                 "comm_rank",
+                "ncore",
                 "out_dir",
                 "gpu_id",
                 "angles",

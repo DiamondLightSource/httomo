@@ -1,7 +1,8 @@
 import math
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 
 import h5py as h5
+import numpy as np
 from mpi4py import MPI
 from numpy import ndarray
 
@@ -328,8 +329,7 @@ def get_num_chunks(filepath: str, path: str, comm: MPI.Comm) -> int:
     return nchunks
 
 
-def get_angles(file: str, path: str="/entry1/tomo_entry/data/rotation_angle",
-               comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
+def get_angles(file: str, path: str, comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
     """Get angles.
 
     Parameters
@@ -351,16 +351,18 @@ def get_angles(file: str, path: str="/entry1/tomo_entry/data/rotation_angle",
     return angles
 
 
-def get_darks_flats(
+def get_darks_flats_together(
     file: str,
     data_path: str="/entry1/tomo_entry/data/data",
+    darks_path: str=None,
+    flats_path: str=None,
     image_key_path: str="/entry1/instrument/image_key/image_key",
     dim: int=1,
     pad: int=0,
     preview: str=":,:,:",
     comm: MPI.Comm=MPI.COMM_WORLD,
 ) -> Tuple[ndarray, ndarray]:
-    """Get darks and flats.
+    """Get darks and flats from the same NeXuS file.
 
     Parameters
     ----------
@@ -368,6 +370,10 @@ def get_darks_flats(
         Path to file containing the dataset.
     data_path : str
         Path to the dataset within the file.
+    darks_path : optional, str
+        Path to the darks dataset within the file.
+    flats_path : optional, str
+        Path to the flats dataset within the file.
     image_key_path : str
         Path to the image_key within the file.
     dim : int
@@ -386,46 +392,142 @@ def get_darks_flats(
     Tuple[ndarray, ndarray]
         Contains the darks and flats arrays.
     """
-    slice_list = get_slice_list_from_preview(preview)
     with h5.File(file, "r", driver="mpio", comm=comm) as file:
-        darks_indices = []
-        flats_indices = []
-        for i, key in enumerate(file[image_key_path]):
-            if int(key) == 1:
-                flats_indices.append(i)
-            elif int(key) == 2:
-                darks_indices.append(i)
-        dataset = file[data_path]
-
-        if dim == 2:
-            rank = comm.rank
-            nproc = comm.size
-            if slice_list[1] == slice(None):
-                length = dataset.shape[1]
-                offset = 0
-                step = 1
-            else:
-                start = 0 if slice_list[1].start is None else slice_list[1].start
-                stop = (
-                    dataset.shape[1]
-                    if slice_list[1].stop is None
-                    else slice_list[1].stop
-                )
-                step = 1 if slice_list[1].step is None else slice_list[1].step
-                length = (stop - start) // step
-                offset = start
-            i0 = round((length / nproc) * rank) + offset
-            i1 = round((length / nproc) * (rank + 1)) + offset
-            darks = [dataset[x][i0:i1:step][slice_list[2]] for x in darks_indices]
-            flats = [dataset[x][i0:i1:step][slice_list[2]] for x in flats_indices]
+        if darks_path is None and flats_path is None:
+            # Get darks and flats from the same dataset within the same NeXuS
+            # file
+            darks_indices = []
+            flats_indices = []
+            # Collect indices corresponding to darks and flats
+            for i, key in enumerate(file[image_key_path]):
+                if int(key) == 1:
+                    flats_indices.append(i)
+                elif int(key) == 2:
+                    darks_indices.append(i)
+            dataset = file[data_path]
+            darks = \
+                _get_darks_flats(dataset, darks_indices, dim, pad, preview, comm)
+            flats = \
+                _get_darks_flats(dataset, flats_indices, dim, pad, preview, comm)
         else:
-            darks = [
-                file[data_path][x][slice_list[1], slice_list[2]] for x in darks_indices
-            ]
-            flats = [
-                file[data_path][x][slice_list[1], slice_list[2]] for x in flats_indices
-            ]
-        return darks, flats
+            # Get darks and flats from different datasets within the same NeXuS
+            # file
+            darks_dataset = file[darks_path]
+            darks_indices = np.arange(darks_dataset.shape[0])
+            darks = _get_darks_flats(darks_dataset, darks_indices, dim, pad,
+                                     preview, comm)
+            flats_dataset = file[flats_path]
+            flats_indices = np.arange(flats_dataset.shape[0])
+            flats = _get_darks_flats(flats_dataset, flats_indices,
+                                     dim, pad, preview, comm)
+
+    return darks, flats
+
+
+def get_darks_flats_separate(
+    file_path: str,
+    data_path: str,
+    dim: int=1,
+    pad: int=0,
+    preview: str=":,:,:",
+    comm: MPI.Comm=MPI.COMM_WORLD,
+) -> ndarray:
+    """Get darks or flats from a separate dataset and/or separate file from the
+    projection data.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to file containing the dataset.
+    data_path : str
+        Path to the dataset within the file.
+    dim : int
+        Dimension along which data is being split between MPI processes. Only
+        affects darks and flats if dim = 2.
+    pad : int
+        How many slices data is being padded. Only affects darks and flats if
+        dim = 2. (not implemented yet)
+    preview : str
+        Crop the data with a preview:
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    ndarray
+        The darks or flats.
+    """
+    with h5.File(file_path, 'r', driver='mpio', comm=comm) as f:
+        dataset = f[data_path]
+        indices = np.arange(dataset.shape[0])
+        data = _get_darks_flats(dataset, indices, dim, pad, preview, comm)
+    return data
+
+
+def _get_darks_flats(
+    dataset: h5.Dataset,
+    indices: List[int],
+    dim: int=1,
+    pad: int=0,
+    preview: str=":,:,:",
+    comm: MPI.Comm=MPI.COMM_WORLD,
+) -> ndarray:
+    """Get darks or flats array from a given dataset.
+
+    Parameters
+    ----------
+    dataset : h5.Dataset
+        The dataset in which the darks/flats are contained.
+    indices : List[int]
+        A list of ints which describe the indices at which darks/flats are in
+        the dataset.
+    dim : int
+        Dimension along which data is being split between MPI processes. Only
+        affects darks and flats if dim = 2.
+    pad : int
+        How many slices data is being padded. Only affects darks and flats if
+        dim = 2. (not implemented yet)
+    preview : str
+        Crop the data with a preview:
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    ndarray
+        The darks or flats.
+    """
+    slice_list = get_slice_list_from_preview(preview)
+    # If `dim=2`, then the images should be split in the detector_y /
+    # vertical dimension across MPI processes, which means that the
+    # darks/flats should be split along this dimension. Therefore, some
+    # slicing based on the rank of the MPI process needs to be done in order
+    # for an MPI process to get its correct share of the data.
+    if dim == 2:
+        rank = comm.rank
+        nproc = comm.size
+        if slice_list[1] == slice(None):
+            length = dataset.shape[1]
+            offset = 0
+            step = 1
+        else:
+            start = 0 if slice_list[1].start is None else slice_list[1].start
+            stop = (
+                dataset.shape[1]
+                if slice_list[1].stop is None
+                else slice_list[1].stop
+            )
+            step = 1 if slice_list[1].step is None else slice_list[1].step
+            length = (stop - start) // step
+            offset = start
+        i0 = round((length / nproc) * rank) + offset
+        i1 = round((length / nproc) * (rank + 1)) + offset
+        data = [dataset[x][i0:i1:step][slice_list[2]] for x in indices]
+    else:
+        data = [
+            dataset[x][slice_list[1], slice_list[2]] for x in indices
+        ]
+    return data
 
 
 def get_data_indices(

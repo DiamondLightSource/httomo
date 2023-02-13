@@ -1,0 +1,10 @@
+- httomo.data.hdf.loaders:
+    standard_tomo:
+      name: tomo
+      data_path: /entry/imaging/data
+      image_key_path: /entry/instrument/imaging/image_key
+      rotation_angles:
+        data_path: /entry/imaging_sum/gts_theta_value
+      dimension: 1
+      preview: [null, null, null]
+      pad: 0

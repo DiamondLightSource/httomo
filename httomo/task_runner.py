@@ -24,7 +24,7 @@ def run_tasks(
     out_dir: Path,
     dimension: int,
     pad: int = 0,
-    ncores: int = 1,
+    ncore: int = 1,
     save_all: bool = False
 ) -> None:
     """Run the tomopy pipeline defined in the YAML config file
@@ -41,7 +41,7 @@ def run_tasks(
         The dimension to slice in.
     pad : int
         The padding size to use. Defaults to 0.
-    ncores : int
+    ncore : int
         The number of the CPU cores per process.
     save_all : bool
         Specifies if intermediate datasets should be saved for all tasks in the
@@ -54,7 +54,7 @@ def run_tasks(
     if comm.rank == 0:
         mkdir(run_out_dir)
     if comm.size == 1:
-        ncores = multiprocessing.cpu_count() # use all available CPU cores if not an MPI run
+        ncore = multiprocessing.cpu_count() # use all available CPU cores if not an MPI run
 
     # GPU related MPI communicators and indices
     num_GPUs = cp.cuda.runtime.getDeviceCount()
@@ -208,7 +208,10 @@ def run_tasks(
             dataset_params = _check_method_params_for_datasets(params, datasets)
             # Update the relevant parameter values according to the required
             # datasets
-            params.update(dataset_params)            
+            params.update(dataset_params)
+            
+            # adding ncore argument into params
+            params.update({'ncore': ncore})
 
             # Make the input datasets a list if it's not, just to be generic and
             # below loop through all the datasets that the method should be
@@ -498,7 +501,7 @@ def _run_method(func: Callable, task_no: int, package_name: str,
     # saving it
     is_3d = len(datasets[out_dataset].shape) == 3
     # Save the result if necessary
-    print(method_name)
+    print_once(method_name, comm)
     if out_dir is not None and is_3d:
         intermediate_dataset(datasets[out_dataset], out_dir,
                             comm, task_no, package_name, method_name,
@@ -693,11 +696,13 @@ def _check_if_should_reslice(prev_func: Callable,
     # Rules for when and when-not to reslice the data:
     # - If the pattern of the current method to run is `Pattern.all`, then do
     #   not reslice the data
+    # - If the pattern of the previous method was `Pattern.all`, then do not
+    #   reslice the data
     # - If the pattern of the current method to run is DIFFERENT from the
     #   pattern of the previous method, then reslice the data
     # - If the pattern of the current method to run is THE SAME as the pattern
     #   of the previous method, then do not reslice the data
-    if current_func.pattern == Pattern.all:
+    if current_func.pattern == Pattern.all or prev_func.pattern == Pattern.all:
         return False
     else:
         return current_func.pattern != prev_func.pattern

@@ -4,3 +4,4 @@
       data_out: tomo
       center: null
       algorithm: FBP_CUDA
+      proj_type: cuda
