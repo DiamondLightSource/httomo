@@ -85,22 +85,21 @@ add-ignore = [
     "D418", # Ignore missing docstrings in dunder methods; See: https://github.com/PyCQA/pydocstyle/issues/525
 ]
 
-[tool.pytest]
-# Run pytest with all our checkers, and don't spam us with massive tracebacks on error
+[tool.pytest.ini_options]
+minversion = "6.0"
 addopts = [
-    "--tb=native",
-    "-vv",
-    "--cov=httomo",
-    "--cov-report=term",
-    "--cov-report=xml:cov.xml"
+   "-vv",
+   "-ra",
+   "-q",
+   "--tb=native",
+]
+testpaths = [
+    "tests",
 ]
 # https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
 filterwarnings = "error"
 # Doctest python code in docs, python code in src docstrings, test functions in tests
-testpaths = [
-    "src",
-    "tests"
-]
+
 
 [tool.coverage.run]
 data_file = "/tmp/httomo.coverage"
