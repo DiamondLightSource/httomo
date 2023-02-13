@@ -98,3 +98,37 @@ def test_k11_diad_loaded(clean_folder):
     assert "dataset shape is (3201, 22, 26)" in output
     assert "testdata/k11_diad/k11-18014.nxs" in output
     assert "Data shape is (3001, 22, 26) of type uint16" in output
+
+
+def test_diad_pipeline_loaded(clean_folder):
+    cmd = [
+        sys.executable,
+        "-m", "httomo",
+        "--save_all",
+        "testdata/k11_diad/k11-18014.nxs",
+        "samples/pipeline_template_examples/testing_pipeline_diad.yaml",
+        "output_dir/",
+        "task_runner",
+    ]
+    output = subprocess.check_output(cmd).decode().strip()
+    assert "Running task 1 (pattern=projection): standard_tomo..." in output
+    assert "Running task 3 (pattern=projection): minus_log..." in output
+    assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in output
+    assert "Running task 4 (pattern=sinogram): remove_all_stripe..." in output
+    assert "Saving intermediate file: 4-tomopy-remove_all_stripe-tomo.h5" in output
+    assert "Running task 6 (pattern=all): save_to_images..." in output
+
+    files = read_folder("output_dir/")
+    assert len(files) == 7
+
+    #: check the .tif files
+    tif_files = list(filter(lambda x: '.tif' in x, files))
+    assert len(tif_files) == 2
+
+    #: check that the image size is correct
+    imarray = np.array(Image.open(tif_files[0]))
+    assert imarray.shape == (26, 26)
+
+    #: check count of h5 files
+    h5_files = list(filter(lambda x: '.h5' in x, files))
+    assert len(h5_files) == 5
