@@ -61,7 +61,6 @@ def run_tasks(
     gpu_id = int(comm.rank / comm.size * num_GPUs)
     gpu_comm = comm.Split(gpu_id)
     proc_id = f"[{gpu_id}:{gpu_comm.rank}]"
-    cp.cuda.Device(gpu_id).use()
 
     # TODO: Define a list of savers which have no output dataset and so need to
     # be treated differently to other methods. Probably should be handled in a
@@ -90,9 +89,6 @@ def run_tasks(
     # Describes whether a task's input dataset needs to be resliced before being
     # passed to the task
     should_reslice = False
-    # TODO: Hardcoded slciing dimension since we are assuming to be working with
-    # projections, but this needs to be generalised
-    SLICING_DIM = 1
     # Hardcoded string that is used to check if a method is in a reconstruction
     # module or not
     RECON_MODULE_MATCH = 'recon.algorithm'
@@ -101,6 +97,10 @@ def run_tasks(
     reslice_warn_str = f"WARNING: Reslicing is performed more than once in " \
                        f"this pipeline, is there a need for this?"
     has_reslice_warn_printed = False
+    
+    # build a dictionary with all patterns listed and a bool to reslice or not for
+    # a particular method in the given template
+    patterns_reslice_dict = _check_if_should_reslice2(method_funcs)
 
     # Run the methods
     for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
@@ -677,7 +677,7 @@ def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
 
 
 def _check_if_should_reslice(prev_func: Callable,
-                             current_func: Callable) -> bool:
+                             next_func: Callable) -> bool:
     """Determine if the input dataset for the next method function should be
     resliced.
 
@@ -685,24 +685,76 @@ def _check_if_should_reslice(prev_func: Callable,
     ----------
     prev_func : Callable
         The python function for the previously executed task in the pipeline.
-    current_func : Callable
+    next_func : Callable
         The pyhton function for the next task to execute in the pipeline.
+    patterns_all : Dict
+        A dictionary with all patterns available in the pipeline.
 
     Returns
     -------
     bool
         Describes whether the input dataset should be resliced or not.
     """
-    # Rules for when and when-not to reslice the data:
-    # - If the pattern of the current method to run is `Pattern.all`, then do
-    #   not reslice the data
-    # - If the pattern of the previous method was `Pattern.all`, then do not
-    #   reslice the data
-    # - If the pattern of the current method to run is DIFFERENT from the
-    #   pattern of the previous method, then reslice the data
-    # - If the pattern of the current method to run is THE SAME as the pattern
-    #   of the previous method, then do not reslice the data
-    if current_func.pattern == Pattern.all or prev_func.pattern == Pattern.all:
+    # ___________Rules for when and when-not to reslice the data___________
+    # In order to reslice more accurately we need to know about all patterns in
+    # the given pipeline. 
+    # The general rules are the following:
+    # 1. Reslice ONLY if the pattern changes from "projection" to "sinogram" or the other way around
+    # 2. With Pattern.all present one needs to check patterns on the edges of 
+    # the Pattern.all. 
+    # For instance consider the following example (method - pattern):
+    #      1. Normalise - projection
+    #      2. Dezinger - all
+    #      3. Phase retrieval - projection
+    #      4. Median - all
+    #      5. Centering - sinogram
+    # In this case you DON'T reclice between 2 and 3 as 1 and 3 are the same pattern.
+    # You reclice between 4 and 5 as the pattern between 3 and 5 does change.
+
+    if next_func.pattern == Pattern.all or prev_func.pattern == Pattern.all:
         return False
     else:
-        return current_func.pattern != prev_func.pattern
+        return next_func.pattern != prev_func.pattern
+
+
+def _check_if_should_reslice2(method_funcs: List) -> Dict:
+    """Determine if the input dataset for the next method function should be
+    resliced.  Builds the dictionary for all methods in the pipeline
+
+    Parameters
+    ----------
+    prev_func : list
+        List of the python functions needed for the run.
+
+    Returns
+    -------
+    Dict
+        Dictionary with all the patterns listed and the bool to reslice (True) or not (False).
+    """
+    # ___________Rules for when and when-not to reslice the data___________
+    # In order to reslice more accurately we need to know about all patterns in
+    # the given pipeline. 
+    # The general rules are the following:
+    # 1. Reslice ONLY if the pattern changes from "projection" to "sinogram" or the other way around
+    # 2. With Pattern.all present one needs to check patterns on the edges of 
+    # the Pattern.all. 
+    # For instance consider the following example (method - pattern):
+    #      1. Normalise - projection
+    #      2. Dezinger - all
+    #      3. Phase retrieval - projection
+    #      4. Median - all
+    #      5. Centering - sinogram
+    # In this case you DON'T reclice between 2 and 3 as 1 and 3 are the same pattern.
+    # You reclice between 4 and 5 as the pattern between 3 and 5 does change.
+
+    # collect all patterns from the given template into a dictionary
+    patterns_reslice_dict = {}
+    for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
+        patterns_reslice_dict[params['method_name']] = [func.pattern.name, False]
+    
+    for idx, name_method in enumerate(patterns_reslice_dict):        
+        current_pattern = patterns_reslice_dict[name_method][0]
+        if current_pattern == "all":
+            # we need to find other patterns on the edges of the "all"
+            print(idx)
+    return patterns_reslice_dict
