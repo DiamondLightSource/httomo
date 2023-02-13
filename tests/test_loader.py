@@ -82,3 +82,19 @@ def test_tomo_standard_loaded_with_save_all(clean_folder):
     #: check h5 files
     h5_files = list(filter(lambda x: '.h5' in x, files))
     assert len(h5_files) == 5
+
+
+def test_k11_diad_loaded(clean_folder):
+    cmd = [
+        sys.executable,
+        "-m", "httomo",
+        "--save_all", "--ncore", "2",
+        "testdata/k11_diad/k11-18014.nxs",
+        "samples/beamline_loader_configs/diad.yaml",
+        "output_dir/",
+        "task_runner",
+    ]
+    output = subprocess.check_output(cmd).decode().strip()
+    assert "dataset shape is (3201, 22, 26)" in output
+    assert "testdata/k11_diad/k11-18014.nxs" in output
+    assert "Data shape is (3001, 22, 26) of type uint16" in output
