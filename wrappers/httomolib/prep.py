@@ -4,6 +4,7 @@ from inspect import signature
 from numpy import ndarray
 import cupy as cp
 
+
 from httomo.utils import pattern, Pattern
 from httomolib import prep
 
@@ -34,13 +35,15 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
     ndarray
         A numpy array of normalized projections.
     """
+    module = getattr(prep, 'normalize')
+
     # as now this function does not require ncore parameter 
     del params["ncore"]
     
-    cp._default_memory_pool.free_all_blocks()    
-    module = getattr(prep, 'normalize')
-    # converting arrays to CuPy arrays
-    data = getattr(module, method_name)(cp.asarray(data), cp.asarray(flats), cp.asarray(darks), gpu_id=gpu_id, **params)
+    cp._default_memory_pool.free_all_blocks()
+    cp.cuda.Device(gpu_id).use()
+    
+    data = getattr(module, method_name)(cp.asarray(data), cp.asarray(flats), cp.asarray(darks), **params)
     return cp.asnumpy(data)
 
 @pattern(Pattern.sinogram)
@@ -64,17 +67,20 @@ def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarra
     ndarray
         A numpy array of projections with the stripes removed.
     """
+    module = getattr(prep, 'stripe')
+
     # as now this function does not require ncore parameter 
     del params["ncore"]
     
     cp._default_memory_pool.free_all_blocks()
-    module = getattr(prep, 'stripe')
-    data = getattr(module, method_name)(cp.asarray(data), gpu_id=gpu_id, **params)
+    cp.cuda.Device(gpu_id).use()
+    
+    data = getattr(module, method_name)(cp.asarray(data), **params)
     return cp.asnumpy(data)
 
 
 @pattern(Pattern.projection)
-def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:
+def phase(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray:
     """Wrapper for httomolib.prep.phase module.
 
     Parameters
@@ -92,10 +98,13 @@ def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:
     ndarray
         A numpy array of projections with phase-contrast enhancement.
     """
+    module = getattr(prep, 'phase')
+    
     # as now this function does not require ncore parameter 
     del params["ncore"]
     
     cp._default_memory_pool.free_all_blocks()
-    module = getattr(prep, 'phase')
+    cp.cuda.Device(gpu_id).use()
+    
     data = getattr(module, method_name)(cp.asarray(data), **params)
     return cp.asnumpy(data)
