@@ -11,14 +11,6 @@ if not os.path.exists("output_dir"):
     os.mkdir("output_dir/")
 
 
-def clean_folder():
-    for path in Path("output_dir").iterdir():
-        if path.is_file():
-            path.unlink()
-        elif path.is_dir():
-            rmtree(path)
-
-
 def read_folder(folder):
     files = []
     for f in os.listdir(folder):
@@ -30,8 +22,7 @@ def read_folder(folder):
     return files
 
 
-def test_tomo_standard_loaded():
-    clean_folder()
+def test_tomo_standard_loaded(clean_folder):
     cmd = [
         sys.executable,
         "-m", "httomo",
@@ -65,8 +56,7 @@ def test_tomo_standard_loaded():
     assert len(h5_files) == 2
 
 
-def test_tomo_standard_loaded_with_save_all():
-    clean_folder()
+def test_tomo_standard_loaded_with_save_all(clean_folder):
     cmd = [
         sys.executable,
         "-m", "httomo",
