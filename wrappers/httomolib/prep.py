@@ -38,7 +38,11 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
     module = getattr(prep, 'normalize')
 
     # as now this function does not require ncore parameter 
-    del params["ncore"]
+    # TODO: not elegant, needs rethinking
+    try:
+        del params["ncore"]
+    except:
+        pass
     
     cp._default_memory_pool.free_all_blocks()
     cp.cuda.Device(gpu_id).use()
@@ -70,7 +74,11 @@ def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarra
     module = getattr(prep, 'stripe')
 
     # as now this function does not require ncore parameter 
-    del params["ncore"]
+    # TODO: not elegant, needs rethinking
+    try:
+        del params["ncore"]
+    except:
+        pass
     
     cp._default_memory_pool.free_all_blocks()
     cp.cuda.Device(gpu_id).use()
@@ -101,7 +109,11 @@ def phase(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray
     module = getattr(prep, 'phase')
     
     # as now this function does not require ncore parameter 
-    del params["ncore"]
+    # TODO: not elegant, needs rethinking
+    try:
+        del params["ncore"]
+    except:
+        pass
     
     cp._default_memory_pool.free_all_blocks()
     cp.cuda.Device(gpu_id).use()

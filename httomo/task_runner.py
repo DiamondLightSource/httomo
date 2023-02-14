@@ -98,9 +98,8 @@ def run_tasks(
                        f"this pipeline, is there a need for this?"
     has_reslice_warn_printed = False
     
-    # build a dictionary with all patterns listed and a bool to reslice or not for
-    # a particular method in the given template
-    patterns_reslice_dict = _check_if_should_reslice2(method_funcs)
+    # get a list with booleans to identify when reslicing needed (True) or not (False).
+    reslice_bool_list = _check_if_should_reslice(method_funcs)
 
     # Run the methods
     for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
@@ -167,8 +166,7 @@ def run_tasks(
                 save_result = params.pop('save_result')
 
             # Check if the input dataset should be resliced before the task runs
-            should_reslice = \
-                _check_if_should_reslice(method_funcs[idx-1][1], func)
+            should_reslice = reslice_bool_list[idx]
             if should_reslice:
                 reslice_counter += 1
                 current_slice_dim = \
@@ -675,61 +673,19 @@ def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
     """
     return min_max_mean_std(data, comm)
 
-
-def _check_if_should_reslice(prev_func: Callable,
-                             next_func: Callable) -> bool:
+def _check_if_should_reslice(method_funcs: List) -> List:
     """Determine if the input dataset for the next method function should be
-    resliced.
+    resliced. Builds the list of booleans
 
     Parameters
     ----------
-    prev_func : Callable
-        The python function for the previously executed task in the pipeline.
-    next_func : Callable
-        The pyhton function for the next task to execute in the pipeline.
-    patterns_all : Dict
-        A dictionary with all patterns available in the pipeline.
-
-    Returns
-    -------
-    bool
-        Describes whether the input dataset should be resliced or not.
-    """
-    # ___________Rules for when and when-not to reslice the data___________
-    # In order to reslice more accurately we need to know about all patterns in
-    # the given pipeline. 
-    # The general rules are the following:
-    # 1. Reslice ONLY if the pattern changes from "projection" to "sinogram" or the other way around
-    # 2. With Pattern.all present one needs to check patterns on the edges of 
-    # the Pattern.all. 
-    # For instance consider the following example (method - pattern):
-    #      1. Normalise - projection
-    #      2. Dezinger - all
-    #      3. Phase retrieval - projection
-    #      4. Median - all
-    #      5. Centering - sinogram
-    # In this case you DON'T reclice between 2 and 3 as 1 and 3 are the same pattern.
-    # You reclice between 4 and 5 as the pattern between 3 and 5 does change.
-
-    if next_func.pattern == Pattern.all or prev_func.pattern == Pattern.all:
-        return False
-    else:
-        return next_func.pattern != prev_func.pattern
-
-
-def _check_if_should_reslice2(method_funcs: List) -> Dict:
-    """Determine if the input dataset for the next method function should be
-    resliced.  Builds the dictionary for all methods in the pipeline
-
-    Parameters
-    ----------
-    prev_func : list
+    method_funcs : list
         List of the python functions needed for the run.
 
     Returns
     -------
-    Dict
-        Dictionary with all the patterns listed and the bool to reslice (True) or not (False).
+    List
+        list with booleans which methods need reslicing (True) or not (False).
     """
     # ___________Rules for when and when-not to reslice the data___________
     # In order to reslice more accurately we need to know about all patterns in
@@ -747,14 +703,21 @@ def _check_if_should_reslice2(method_funcs: List) -> Dict:
     # In this case you DON'T reclice between 2 and 3 as 1 and 3 are the same pattern.
     # You reclice between 4 and 5 as the pattern between 3 and 5 does change.
 
-    # collect all patterns from the given template into a dictionary
-    patterns_reslice_dict = {}
+    methods_list = []
+    patterns_list = []
+    reslice_bool_list = []
     for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
-        patterns_reslice_dict[params['method_name']] = [func.pattern.name, False]
+        methods_list.append(params['method_name'])
+        patterns_list.append(func.pattern.name)
+        reslice_bool_list.append(False)
     
-    for idx, name_method in enumerate(patterns_reslice_dict):        
-        current_pattern = patterns_reslice_dict[name_method][0]
-        if current_pattern == "all":
-            # we need to find other patterns on the edges of the "all"
-            print(idx)
-    return patterns_reslice_dict
+    total_number_of_methods = len(methods_list)
+
+    current_pattern = patterns_list[0]
+    for x in range(0, total_number_of_methods):
+         if ((patterns_list[x] != current_pattern) and (patterns_list[x] != "all")):
+             # skipping "all" pattern and look for different pattern from  the current pattern
+             current_pattern = patterns_list[x]
+             reslice_bool_list[x] = True
+
+    return reslice_bool_list

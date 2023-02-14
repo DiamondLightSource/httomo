@@ -29,7 +29,11 @@ def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.nd
     -------
     """
     # as now this function does not require ncore parameter 
-    del params["ncore"]
+    # TODO: not elegant, needs rethinking
+    try:
+        del params["ncore"]
+    except:
+        pass
     
     module = getattr(misc, 'images')
     data = getattr(module, method_name)(data, out_dir, comm_rank = comm.rank, **params)
@@ -60,7 +64,11 @@ def corr(params: Dict, method_name: str, data: np.ndarray, gpu_id: int) -> np.nd
     module = getattr(misc, 'corr')
 
     # as now this function does not require ncore parameter 
-    del params["ncore"]
+    # TODO: not elegant, needs rethinking
+    try:
+        del params["ncore"]
+    except:
+        pass
 
     cp._default_memory_pool.free_all_blocks()
     cp.cuda.Device(gpu_id).use()
