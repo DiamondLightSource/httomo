@@ -3,9 +3,9 @@
       name: tomo
       data_path: entry1/tomo_entry/data/data
       image_key_path: entry1/tomo_entry/instrument/detector/image_key
-- httomo.misc.corr:
-    dezinger_filter3d:
+- httomolib.misc.corr:
+    remove_outlier3d_cupy:
       data_in_multi: [tomo, flats, darks]
       data_out_multi: [tomo, flats, darks]
-      radius_kernel: 1
-      mu_dezinger: 0.1
+      kernel_size: 3
+      dif: 0.1
