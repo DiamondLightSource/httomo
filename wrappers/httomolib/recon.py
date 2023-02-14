@@ -40,13 +40,19 @@ def algorithm(params: Dict,
     ndarray
         A CuPy array of projections with stripes removed.
     """
-    cp._default_memory_pool.free_all_blocks()    
     module = getattr(recon, 'algorithm')
+
+    cp._default_memory_pool.free_all_blocks()
+    cp.cuda.Device(gpu_id).use()    
     
     # TODO: possibly change this clumsy way of operating with numpy/cupy arrays depending on the methods choice
     if method_name == "reconstruct_tomobar":
-        # this function does not require ncore parameter
-        del params["ncore"]
+        # as now this function does not require ncore parameter 
+        # TODO: not elegant, needs rethinking
+        try:
+            del params["ncore"]
+        except:
+            pass
         if params["algorithm"] == "FBP3D_device":            
             data = getattr(module, method_name)(cp.asarray(data), angles=angles_radians, gpu_id=gpu_id, **params)
             return cp.asnumpy(data)            
@@ -60,7 +66,7 @@ def algorithm(params: Dict,
 
 
 @pattern(Pattern.sinogram)
-def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray) -> float:
+def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray, gpu_id: int) -> float:
     """Wrapper for the httomolib.recon.rotation module.
 
     Parameters
@@ -80,12 +86,19 @@ def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray) -> flo
     float
         The center of rotation.
     """
-    # this function does not require ncore parameter
-    del params["ncore"]
+    module = getattr(recon, 'rotation')
+
+    # as now this function does not require ncore parameter 
+    # TODO: not elegant, needs rethinking
+    try:
+        del params["ncore"]
+    except:
+        pass
     
     cp._default_memory_pool.free_all_blocks()
+    cp.cuda.Device(gpu_id).use()        
    
-    module = getattr(recon, 'rotation')
+
     method_func = getattr(module, method_name)
     rot_center = 0
     mid_rank = int(round(comm.size / 2) + 0.1)

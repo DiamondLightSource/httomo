@@ -61,7 +61,6 @@ def run_tasks(
     gpu_id = int(comm.rank / comm.size * num_GPUs)
     gpu_comm = comm.Split(gpu_id)
     proc_id = f"[{gpu_id}:{gpu_comm.rank}]"
-    cp.cuda.Device(gpu_id).use()
 
     # TODO: Define a list of savers which have no output dataset and so need to
     # be treated differently to other methods. Probably should be handled in a
@@ -87,12 +86,6 @@ def run_tasks(
         'comm': comm
     }
 
-    # Describes whether a task's input dataset needs to be resliced before being
-    # passed to the task
-    should_reslice = False
-    # TODO: Hardcoded slciing dimension since we are assuming to be working with
-    # projections, but this needs to be generalised
-    SLICING_DIM = 1
     # Hardcoded string that is used to check if a method is in a reconstruction
     # module or not
     RECON_MODULE_MATCH = 'recon.algorithm'
@@ -101,6 +94,11 @@ def run_tasks(
     reslice_warn_str = f"WARNING: Reslicing is performed more than once in " \
                        f"this pipeline, is there a need for this?"
     has_reslice_warn_printed = False
+    
+    # get a list with booleans to identify when reslicing needed (True) or not
+    # (False).
+    patterns = [f.pattern for (_, f, _, _) in method_funcs]
+    reslice_bool_list = _check_if_should_reslice(patterns)
 
     # Run the methods
     for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
@@ -167,8 +165,7 @@ def run_tasks(
                 save_result = params.pop('save_result')
 
             # Check if the input dataset should be resliced before the task runs
-            should_reslice = \
-                _check_if_should_reslice(method_funcs[idx-1][1], func)
+            should_reslice = reslice_bool_list[idx]
             if should_reslice:
                 reslice_counter += 1
                 current_slice_dim = \
@@ -676,33 +673,44 @@ def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
     return min_max_mean_std(data, comm)
 
 
-def _check_if_should_reslice(prev_func: Callable,
-                             current_func: Callable) -> bool:
-    """Determine if the input dataset for the next method function should be
-    resliced.
+def _check_if_should_reslice(patterns: List[Pattern]) -> List[bool]:
+    """Determine if the input dataset for the method functions in the pipeline
+    should be resliced. Builds the list of booleans.
 
     Parameters
     ----------
-    prev_func : Callable
-        The python function for the previously executed task in the pipeline.
-    current_func : Callable
-        The pyhton function for the next task to execute in the pipeline.
+    patterns : List[Pattern]
+        List of the patterns associated with the python functions needed for the
+        run.
 
     Returns
     -------
-    bool
-        Describes whether the input dataset should be resliced or not.
+    List[bool]
+        List with booleans which methods need reslicing (True) or not (False).
     """
-    # Rules for when and when-not to reslice the data:
-    # - If the pattern of the current method to run is `Pattern.all`, then do
-    #   not reslice the data
-    # - If the pattern of the previous method was `Pattern.all`, then do not
-    #   reslice the data
-    # - If the pattern of the current method to run is DIFFERENT from the
-    #   pattern of the previous method, then reslice the data
-    # - If the pattern of the current method to run is THE SAME as the pattern
-    #   of the previous method, then do not reslice the data
-    if current_func.pattern == Pattern.all or prev_func.pattern == Pattern.all:
-        return False
-    else:
-        return current_func.pattern != prev_func.pattern
+    # ___________Rules for when and when-not to reslice the data___________
+    # In order to reslice more accurately we need to know about all patterns in
+    # the given pipeline. 
+    # The general rules are the following:
+    # 1. Reslice ONLY if the pattern changes from "projection" to "sinogram" or the other way around
+    # 2. With Pattern.all present one needs to check patterns on the edges of 
+    # the Pattern.all. 
+    # For instance consider the following example (method - pattern):
+    #      1. Normalise - projection
+    #      2. Dezinger - all
+    #      3. Phase retrieval - projection
+    #      4. Median - all
+    #      5. Centering - sinogram
+    # In this case you DON'T reclice between 2 and 3 as 1 and 3 are the same pattern.
+    # You reclice between 4 and 5 as the pattern between 3 and 5 does change.
+    total_number_of_methods = len(patterns)
+    reslice_bool_list = [False] * total_number_of_methods
+
+    current_pattern = patterns[0]
+    for x in range(total_number_of_methods):
+         if ((patterns[x] != current_pattern) and (patterns[x] != Pattern.all)):
+             # skipping "all" pattern and look for different pattern from the
+             # current pattern
+             current_pattern = patterns[x]
+             reslice_bool_list[x] = True
+    return reslice_bool_list
