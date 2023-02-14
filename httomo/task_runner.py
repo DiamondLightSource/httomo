@@ -95,8 +95,10 @@ def run_tasks(
                        f"this pipeline, is there a need for this?"
     has_reslice_warn_printed = False
     
-    # get a list with booleans to identify when reslicing needed (True) or not (False).
-    reslice_bool_list = _check_if_should_reslice(method_funcs)
+    # get a list with booleans to identify when reslicing needed (True) or not
+    # (False).
+    patterns = [f.pattern for (_, f, _, _) in method_funcs]
+    reslice_bool_list = _check_if_should_reslice(patterns)
 
     # Run the methods
     for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
@@ -670,19 +672,21 @@ def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
     """
     return min_max_mean_std(data, comm)
 
-def _check_if_should_reslice(method_funcs: List) -> List:
-    """Determine if the input dataset for the next method function should be
-    resliced. Builds the list of booleans
+
+def _check_if_should_reslice(patterns: List[Pattern]) -> List[bool]:
+    """Determine if the input dataset for the method functions in the pipeline
+    should be resliced. Builds the list of booleans.
 
     Parameters
     ----------
-    method_funcs : list
-        List of the python functions needed for the run.
+    patterns : List[Pattern]
+        List of the patterns associated with the python functions needed for the
+        run.
 
     Returns
     -------
-    List
-        list with booleans which methods need reslicing (True) or not (False).
+    List[bool]
+        List with booleans which methods need reslicing (True) or not (False).
     """
     # ___________Rules for when and when-not to reslice the data___________
     # In order to reslice more accurately we need to know about all patterns in
@@ -699,21 +703,14 @@ def _check_if_should_reslice(method_funcs: List) -> List:
     #      5. Centering - sinogram
     # In this case you DON'T reclice between 2 and 3 as 1 and 3 are the same pattern.
     # You reclice between 4 and 5 as the pattern between 3 and 5 does change.
+    total_number_of_methods = len(patterns)
+    reslice_bool_list = [False] * total_number_of_methods
 
-    methods_list = []
-    patterns_list = []
-    reslice_bool_list = []
-    for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
-        methods_list.append(params['method_name'])
-        patterns_list.append(func.pattern.name)
-        reslice_bool_list.append(False)
-    
-    total_number_of_methods = len(methods_list)
-
-    current_pattern = patterns_list[0]
-    for x in range(0, total_number_of_methods):
-         if ((patterns_list[x] != current_pattern) and (patterns_list[x] != "all")):
-             # skipping "all" pattern and look for different pattern from  the current pattern
-             current_pattern = patterns_list[x]
+    current_pattern = patterns[0]
+    for x in range(total_number_of_methods):
+         if ((patterns[x] != current_pattern) and (patterns[x] != Pattern.all)):
+             # skipping "all" pattern and look for different pattern from the
+             # current pattern
+             current_pattern = patterns[x]
              reslice_bool_list[x] = True
     return reslice_bool_list
