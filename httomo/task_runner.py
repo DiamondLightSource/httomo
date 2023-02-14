@@ -521,13 +521,15 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                     out.append(res)
                 datasets[data_out[0]] = out
             else:
-                # TODO: If the data is a list of arrays, then it was the result
-                # of a parameter sweep from a previous method, so the next
-                # method must be applied to all arrays in the list
+                # If the data is a list of arrays, then it was the result of a
+                # parameter sweep from a previous method, so the next method
+                # must be applied to all arrays in the list
                 if type(datasets[data_in[0]]) is list:
-                    err_str = f'Applying methods to the output of a ' \
-                              f'parameter sweep is not yet implemented.'
-                    raise ValueError(err_str)
+                    for i, arr in enumerate(datasets[data_in[0]]):
+                        httomo_params['data'] = arr
+                        res = _run_method_wrapper(current_func, method_name,
+                                                  params, httomo_params)
+                        datasets[data_out[0]][i] = res
                 else:
                     # Add the appropriate dataset to the method function's dict
                     # of parameters based on the parameter name for the method's

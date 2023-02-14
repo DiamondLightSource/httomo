@@ -4,6 +4,8 @@ from inspect import signature
 from numpy import ndarray
 from tomopy import prep
 
+from httomo.utils import Pattern, pattern
+
 
 def stripe(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for tomopy.prep.stripe module.
@@ -28,6 +30,7 @@ def stripe(params: Dict, method_name: str, data: ndarray) -> ndarray:
     return data
 
 
+@pattern(Pattern.projection)
 def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
               darks: ndarray) -> ndarray:
     """Wrapper for tomopy.prep.normalize module.
