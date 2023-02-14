@@ -86,9 +86,6 @@ def run_tasks(
         'comm': comm
     }
 
-    # Describes whether a task's input dataset needs to be resliced before being
-    # passed to the task
-    should_reslice = False
     # Hardcoded string that is used to check if a method is in a reconstruction
     # module or not
     RECON_MODULE_MATCH = 'recon.algorithm'
@@ -719,5 +716,4 @@ def _check_if_should_reslice(method_funcs: List) -> List:
              # skipping "all" pattern and look for different pattern from  the current pattern
              current_pattern = patterns_list[x]
              reslice_bool_list[x] = True
-
     return reslice_bool_list
