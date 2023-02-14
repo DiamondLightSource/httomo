@@ -1,8 +1,9 @@
 # Defines common fixtures and makes them available to all tests
 
-import pytest
 from pathlib import Path
 from shutil import rmtree
+
+import pytest
 
 
 @pytest.fixture
