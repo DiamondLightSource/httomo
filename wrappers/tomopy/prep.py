@@ -7,6 +7,7 @@ from tomopy import prep
 from httomo.utils import Pattern, pattern
 
 
+@pattern(Pattern.sinogram)
 def stripe(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for tomopy.prep.stripe module.
 

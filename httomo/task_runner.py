@@ -482,24 +482,26 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
         out = []
 
     for in_dataset, out_dataset in zip(data_in, data_out):
-        if should_reslice:
-            resliced_data, _ = reslice(datasets[in_dataset],
-                                        out_dir, current_slice_dim,
-                                        next_slice_dim, comm)
-            datasets[in_dataset] = resliced_data
-
-        if req_glob_stats is True:
-            stats = _fetch_glob_stats(datasets[in_dataset], comm)
-            glob_stats[task_idx][in_dataset] = stats
-            params.update({'glob_stats': stats})
-
-        # Add the appropriate dataset to the method function's dict of
-        # parameters based on the parameter name for the method's python
-        # function
-        if package_name in ['httomolib', 'tomopy']:
-            httomo_params['data'] = datasets[in_dataset]
-
         if method_name in SAVERS_NO_DATA_OUT_PARAM:
+            # Perform a reslice of the data if necessary
+            if should_reslice:
+                resliced_data, _ = reslice(datasets[in_dataset],
+                                           out_dir, current_slice_dim,
+                                           next_slice_dim, comm)
+                datasets[in_dataset] = resliced_data
+
+            # Add the appropriate dataset to the method function's dict of
+            # parameters based on the parameter name for the method's python
+            # function
+            if package_name in ['httomolib', 'tomopy']:
+                httomo_params['data'] = datasets[in_dataset]
+
+            # Add global stats if necessary
+            if req_glob_stats is True:
+                stats = _fetch_glob_stats(datasets[in_dataset], comm)
+                glob_stats[task_idx][in_dataset] = stats
+                params.update({'glob_stats': stats})
+
             _run_method_wrapper(current_func, method_name, params,
                                 httomo_params)
             # Nothing more to do if the saver has a special kind of output which
@@ -514,6 +516,28 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                               f'single input/output dataset'
                     raise ValueError(err_str)
 
+                # Perform a reslice of the data if necessary
+                if should_reslice:
+                    resliced_data, _ = reslice(datasets[in_dataset],
+                                               out_dir, current_slice_dim,
+                                               next_slice_dim, comm)
+                    datasets[in_dataset] = resliced_data
+
+                # Add the appropriate dataset to the method function's dict of
+                # parameters based on the parameter name for the method's python
+                # function
+                if package_name in ['httomolib', 'tomopy']:
+                    httomo_params['data'] = datasets[in_dataset]
+
+                # Add global stats if necessary
+                if req_glob_stats is True:
+                    stats = _fetch_glob_stats(datasets[in_dataset], comm)
+                    # TODO: The `glob_stats` dict is not yet implemented to
+                    # contain the stats for the different arrays resulting from
+                    # a parameter sweep
+                    #glob_stats[task_idx][in_dataset] = stats
+                    params.update({'glob_stats': stats})
+
                 for val in param_sweep_vals:
                     params[param_sweep_name] = val
                     res = _run_method_wrapper(current_func, method_name, params,
@@ -526,16 +550,47 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                 # must be applied to all arrays in the list
                 if type(datasets[data_in[0]]) is list:
                     for i, arr in enumerate(datasets[data_in[0]]):
+                        # Perform a reslice of the data if necessary
+                        if should_reslice:
+                            resliced_data, _ = reslice(datasets[data_in[0]][i],
+                                                       out_dir,
+                                                       current_slice_dim,
+                                                       next_slice_dim, comm)
+                            datasets[data_in[0]][i] = resliced_data
+                            arr = resliced_data
+
                         httomo_params['data'] = arr
+
+                        # TODO: Add global stats if necessary
+                        if req_glob_stats is True:
+                            err_str = f'Methods requiring global stats are ' \
+                                      f'not yet implemented to run after a ' \
+                                      f'parameter sweep.'
+                            raise ValueError(err_str)
+
                         res = _run_method_wrapper(current_func, method_name,
                                                   params, httomo_params)
                         datasets[data_out[0]][i] = res
                 else:
+                    # Perform a reslice of the data if necessary
+                    if should_reslice:
+                        resliced_data, _ = reslice(datasets[in_dataset],
+                                                   out_dir, current_slice_dim,
+                                                   next_slice_dim, comm)
+                        datasets[in_dataset] = resliced_data
+
                     # Add the appropriate dataset to the method function's dict
                     # of parameters based on the parameter name for the method's
                     # python function
                     if package_name in ['httomolib', 'tomopy']:
                         httomo_params['data'] = datasets[in_dataset]
+
+                    # Add global stats if necessary
+                    if req_glob_stats is True:
+                        stats = _fetch_glob_stats(datasets[in_dataset], comm)
+                        glob_stats[task_idx][in_dataset] = stats
+                        params.update({'glob_stats': stats})
+
                     # Run the method, then return the result for storage in the
                     # appropriate dataset in the `datasets` dict
                     res = _run_method_wrapper(current_func, method_name, params,
