@@ -19,11 +19,9 @@ def test_cli_help_shows_help():
     )
 
 
-def test_cli_noargs_shows_help():
+def test_cli_noargs_raises_error():
     cmd = [sys.executable, "-m", "httomo"]
-    assert (
+    try:
         subprocess.check_output(cmd)
-        .decode()
-        .strip()
-        .startswith("Usage: python -m httomo")
-    )
+    except subprocess.CalledProcessError as e:
+        assert e.returncode == 2
