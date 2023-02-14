@@ -1,5 +1,6 @@
 from typing import Dict
 import numpy as np
+import cupy as cp
 from mpi4py.MPI import Comm
 
 from httomo.utils import pattern, Pattern
@@ -22,13 +23,55 @@ def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.nd
     comm: int
         the MPI communicator.
     data : ndarray
-        A CuPy data array.
+        A numpy data array.
 
     Returns
     -------
     """
+    # as now this function does not require ncore parameter 
+    # TODO: not elegant, needs rethinking
+    try:
+        del params["ncore"]
+    except:
+        pass
     
     module = getattr(misc, 'images')
-    comm_rank = comm.rank
-    data = getattr(module, method_name)(data, out_dir, comm_rank = comm_rank, **params)
+    data = getattr(module, method_name)(data, out_dir, comm_rank = comm.rank, **params)
     return data
+
+
+@pattern(Pattern.all)
+def corr(params: Dict, method_name: str, data: np.ndarray, gpu_id: int) -> np.ndarray:
+    """Wrapper for httomolib.misc.corr module.
+
+    Parameters
+    ----------
+    params : Dict
+        A dict containing all params of the wrapped httomolib function that are
+        independent of httomo.
+    method_name : str
+        The name of the method to use in  httomolib.prep.phase.
+    data : ndarray
+        A numpy array of projections.
+    gpu_id : int
+        A GPU device index to execute operation on.        
+
+    Returns
+    -------
+    ndarray
+        A numpy array of corrected data.
+    """
+    module = getattr(misc, 'corr')
+
+    # as now this function does not require ncore parameter 
+    # TODO: not elegant, needs rethinking
+    try:
+        del params["ncore"]
+    except:
+        pass
+
+    cp._default_memory_pool.free_all_blocks()
+    cp.cuda.Device(gpu_id).use()
+    
+    data = getattr(module, method_name)(cp.asarray(data), **params)
+    return cp.asnumpy(data)

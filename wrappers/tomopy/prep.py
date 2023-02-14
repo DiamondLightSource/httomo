@@ -4,7 +4,7 @@ from inspect import signature
 from numpy import ndarray
 from tomopy import prep
 
-from httomo.utils import Pattern, pattern
+from httomo.utils import pattern, Pattern
 
 
 @pattern(Pattern.sinogram)
@@ -66,3 +66,27 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
     else:
         data = getattr(module, method_name)(data, **params)
     return data
+
+@pattern(Pattern.projection)
+def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:
+    """Wrapper for tomopy.prep.phase module.
+
+    Parameters
+    ----------
+    params : Dict
+        A dict containing all params of the wrapped tomopy function that are
+        independent of httomo.
+    method_name : str
+        The name of the method to use in  tomopy.prep.phase.
+    data : ndarray
+        A numpy array of projections.
+
+    Returns
+    -------
+    ndarray
+        A numpy array of projections with phase-contrast enhancement.
+    """
+    module = getattr(prep, 'phase')
+    data = getattr(module, method_name)(data, **params)
+    return data
+

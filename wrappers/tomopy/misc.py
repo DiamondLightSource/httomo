@@ -3,10 +3,10 @@ from typing import Dict
 from numpy import ndarray
 from tomopy import misc
 
-from httomo.utils import Pattern, pattern
+from httomo.utils import pattern, Pattern
 
 
-@pattern(Pattern.projection)
+@pattern(Pattern.all)
 def corr(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for tomopy.misc.corr module.
 

@@ -8,7 +8,7 @@ from mpi4py.MPI import Comm
 from importlib import import_module
 recon = import_module('tomopy.recon')
 
-from httomo.utils import Pattern, pattern
+from httomo.utils import pattern, Pattern
 
 
 @pattern(Pattern.sinogram)
@@ -40,7 +40,7 @@ def algorithm(params: Dict, method_name: str, data: ndarray,
         **params
     )
 
-
+@pattern(Pattern.sinogram)
 def rotation(params: Dict, method_name:str, comm: Comm, data: ndarray) -> float:
     """Wrapper for the tomopy.recon.rotation module.
 

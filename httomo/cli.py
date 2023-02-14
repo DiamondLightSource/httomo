@@ -18,7 +18,7 @@ class GlobalOptions:
     out_dir: Path
     dimension: int
     pad: int
-    ncores: int
+    ncore: int
     save_all: bool
 
 
@@ -46,7 +46,7 @@ class GlobalOptions:
     help="The number of slices to pad each block of data.",
 )
 @click.option(
-    "--ncores",
+    "--ncore",
     type=click.INT,
     default=1,
     help=" The number of the CPU cores per process.",
@@ -65,12 +65,12 @@ def main(
     out_dir: Path,
     dimension: int,
     pad: int,
-    ncores: int,
+    ncore: int,
     save_all: bool
 ):
     """httomo: High Throughput Tomography."""
     ctx.obj = GlobalOptions(
-        in_file, yaml_config, out_dir, dimension, pad, ncores, save_all
+        in_file, yaml_config, out_dir, dimension, pad, ncore, save_all
     )
 
     if ctx.invoked_subcommand is None:
@@ -88,6 +88,6 @@ def task_runner(global_options: GlobalOptions):
         global_options.out_dir,
         global_options.dimension,
         global_options.pad,
-        global_options.ncores,
+        global_options.ncore,
         global_options.save_all
     )

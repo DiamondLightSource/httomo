@@ -37,7 +37,7 @@ def run_tasks(
     out_dir: Path,
     dimension: int,
     pad: int = 0,
-    ncores: int = 1,
+    ncore: int = 1,
     save_all: bool = False
 ) -> None:
     """Run the tomopy pipeline defined in the YAML config file
@@ -54,7 +54,7 @@ def run_tasks(
         The dimension to slice in.
     pad : int
         The padding size to use. Defaults to 0.
-    ncores : int
+    ncore : int
         The number of the CPU cores per process.
     save_all : bool
         Specifies if intermediate datasets should be saved for all tasks in the
@@ -67,14 +67,13 @@ def run_tasks(
     if comm.rank == 0:
         mkdir(run_out_dir)
     if comm.size == 1:
-        ncores = multiprocessing.cpu_count() # use all available CPU cores if not an MPI run
+        ncore = multiprocessing.cpu_count() # use all available CPU cores if not an MPI run
 
     # GPU related MPI communicators and indices
     num_GPUs = cp.cuda.runtime.getDeviceCount()
     gpu_id = int(comm.rank / comm.size * num_GPUs)
     gpu_comm = comm.Split(gpu_id)
     proc_id = f"[{gpu_id}:{gpu_comm.rank}]"
-    cp.cuda.Device(gpu_id).use()
 
     # Define dict to store arrays that are specified as datasets in the user
     # config YAML
@@ -95,12 +94,17 @@ def run_tasks(
         'comm': comm
     }
 
-    # TODO: Hardcoded slciing dimension since we are assuming to be working with
-    # projections, but this needs to be generalised
-    SLICING_DIM = 1
+    # Hardcoded string that is used to check if a method is in a reconstruction
+    # module or not
+    RECON_MODULE_MATCH = 'recon.algorithm'
     # A counter to track how many reslices occur in the processing pipeline
     reslice_counter = 0
     has_reslice_warn_printed = False
+    
+    # get a list with booleans to identify when reslicing needed (True) or not
+    # (False).
+    patterns = [f.pattern for (_, f, _, _) in method_funcs]
+    reslice_bool_list = _check_if_should_reslice(patterns)
 
     # Run the methods
     for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
@@ -137,12 +141,16 @@ def run_tasks(
                 (['out_dir'], run_out_dir)
             ]
         else:
+            # adding ncore argument into params
+            params.update({'ncore': ncore})
+
             reslice_counter, has_reslice_warn_printed = \
                  _run_method(idx, save_all, module_path, package, method_name,
                              params, possible_extra_params, len(method_funcs),
                              method_funcs[idx][1], method_funcs[idx-1][1],
                              datasets, run_out_dir, glob_stats, comm,
-                             reslice_counter, has_reslice_warn_printed)
+                             reslice_counter, has_reslice_warn_printed,
+                             reslice_bool_list)
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
@@ -343,7 +351,8 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                 misc_params: Dict, no_of_tasks: int, current_func: Callable,
                 prev_func: Callable, datasets: Dict, out_dir: str,
                 glob_stats: List, comm: MPI.Comm, reslice_counter: int,
-                has_reslice_warn_printed: bool) -> Tuple[bool, bool]:
+                has_reslice_warn_printed: bool,
+                reslice_bool_list: List[bool]) -> Tuple[bool, bool]:
     """Run a method function in the processing pipeline.
 
     Parameters
@@ -379,6 +388,9 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
         A counter for how many times reslicing has occurred in the pipeline.
     has_reslice_warn_printed : bool
         A flag to describe if the reslice warning has been printed or not.
+    reslice_bool_list : List[bool]
+        A list of boolens to describe which methods need reslicing of their
+        input data prior to running.
 
     Returns
     -------
@@ -416,7 +428,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
         save_result = params.pop('save_result')
 
     # Check if the input dataset should be resliced before the task runs
-    should_reslice = _check_if_should_reslice(prev_func, current_func)
+    should_reslice = reslice_bool_list[task_idx]
     if should_reslice:
         reslice_counter += 1
         current_slice_dim = _get_slicing_dim(prev_func.pattern)
@@ -506,7 +518,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                                 httomo_params)
             # Nothing more to do if the saver has a special kind of output which
             # handles saving the result
-            return
+            return reslice_counter, has_reslice_warn_printed
         else:
             if current_param_sweep:
                 # TODO: Assumes that only one input and output dataset have been
@@ -597,6 +609,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                                               httomo_params)
                     datasets[out_dataset] = res
 
+        print_once(method_name, comm)
         # TODO: The dataset saving functionality only supports 3D data
         # currently, so check that the dimension of the data is 3 before
         # saving it
@@ -794,31 +807,44 @@ def _fetch_glob_stats(data: ndarray, comm: MPI.Comm) -> Tuple[float, float,
     return min_max_mean_std(data, comm)
 
 
-def _check_if_should_reslice(prev_func: Callable,
-                             current_func: Callable) -> bool:
-    """Determine if the input dataset for the next method function should be
-    resliced.
+def _check_if_should_reslice(patterns: List[Pattern]) -> List[bool]:
+    """Determine if the input dataset for the method functions in the pipeline
+    should be resliced. Builds the list of booleans.
 
     Parameters
     ----------
-    prev_func : Callable
-        The python function for the previously executed task in the pipeline.
-    current_func : Callable
-        The pyhton function for the next task to execute in the pipeline.
+    patterns : List[Pattern]
+        List of the patterns associated with the python functions needed for the
+        run.
 
     Returns
     -------
-    bool
-        Describes whether the input dataset should be resliced or not.
+    List[bool]
+        List with booleans which methods need reslicing (True) or not (False).
     """
-    # Rules for when and when-not to reslice the data:
-    # - If the pattern of the current method to run is `Pattern.all`, then do
-    #   not reslice the data
-    # - If the pattern of the current method to run is DIFFERENT from the
-    #   pattern of the previous method, then reslice the data
-    # - If the pattern of the current method to run is THE SAME as the pattern
-    #   of the previous method, then do not reslice the data
-    if current_func.pattern == Pattern.all:
-        return False
-    else:
-        return current_func.pattern != prev_func.pattern
+    # ___________Rules for when and when-not to reslice the data___________
+    # In order to reslice more accurately we need to know about all patterns in
+    # the given pipeline. 
+    # The general rules are the following:
+    # 1. Reslice ONLY if the pattern changes from "projection" to "sinogram" or the other way around
+    # 2. With Pattern.all present one needs to check patterns on the edges of 
+    # the Pattern.all. 
+    # For instance consider the following example (method - pattern):
+    #      1. Normalise - projection
+    #      2. Dezinger - all
+    #      3. Phase retrieval - projection
+    #      4. Median - all
+    #      5. Centering - sinogram
+    # In this case you DON'T reclice between 2 and 3 as 1 and 3 are the same pattern.
+    # You reclice between 4 and 5 as the pattern between 3 and 5 does change.
+    total_number_of_methods = len(patterns)
+    reslice_bool_list = [False] * total_number_of_methods
+
+    current_pattern = patterns[0]
+    for x in range(total_number_of_methods):
+         if ((patterns[x] != current_pattern) and (patterns[x] != Pattern.all)):
+             # skipping "all" pattern and look for different pattern from the
+             # current pattern
+             current_pattern = patterns[x]
+             reslice_bool_list[x] = True
+    return reslice_bool_list
