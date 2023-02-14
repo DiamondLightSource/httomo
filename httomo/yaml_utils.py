@@ -61,7 +61,7 @@ def open_yaml_config(filepath: Path) -> List[Dict]:
     """
 
     with open(filepath, 'r') as f:
-        conf = yaml.safe_load(f)
+        conf = yaml.load(f, Loader=_get_loader())
 
     # TODO: validate the YAML to ensure there are no missing fields that are
     # required

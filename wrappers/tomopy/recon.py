@@ -8,7 +8,10 @@ from mpi4py.MPI import Comm
 from importlib import import_module
 recon = import_module('tomopy.recon')
 
+from httomo.utils import Pattern, pattern
 
+
+@pattern(Pattern.sinogram)
 def algorithm(params: Dict, method_name: str, data: ndarray,
               angles_radians: ndarray) -> ndarray:
     """Wrapper for tomopy.recon.algorithm module.

@@ -15,6 +15,7 @@ from httomo.utils import print_once, Pattern, _get_slicing_dim
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.reslice import reslice
+from httomo.data.hdf._utils.chunk import save_dataset, get_data_shape
 from httomo._stats.globals import min_max_mean_std
 
 
@@ -466,6 +467,20 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
     # Check if method type signature requires global statistics
     req_glob_stats = 'glob_stats' in signature(current_func).parameters
 
+    # Check if a parameter sweep is defined for any of the method's
+    # parameters
+    current_param_sweep = False
+    for k, v in params.items():
+        if type(v) is tuple:
+            param_sweep_name = k
+            param_sweep_vals = v
+            current_param_sweep = True
+            break
+
+    # Create a list to store the result of the different parameter values
+    if current_param_sweep:
+        out = []
+
     for in_dataset, out_dataset in zip(data_in, data_out):
         if should_reslice:
             resliced_data, _ = reslice(datasets[in_dataset],
@@ -491,25 +506,66 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
             # handles saving the result
             return
         else:
-            # Run the method, then return the result for storage in the appropriate
-            # dataset in the `datasets` dict
-            res = _run_method_wrapper(current_func, method_name, params,
-                                      httomo_params)
+            if current_param_sweep:
+                # TODO: Assumes that only one input and output dataset have been
+                # specified when doing a parameter sweep
+                if len(data_in) > 1 and len(data_out) > 1:
+                    err_str = f'Parameter sweeps are only implemented for a ' \
+                              f'single input/output dataset'
+                    raise ValueError(err_str)
 
-        # Store result in `datasets` dict for subsequent methods
-        datasets[out_dataset] = res
+                for val in param_sweep_vals:
+                    params[param_sweep_name] = val
+                    res = _run_method_wrapper(current_func, method_name, params,
+                                              httomo_params)
+                    out.append(res)
+                datasets[data_out[0]] = out
+            else:
+                # TODO: If the data is a list of arrays, then it was the result
+                # of a parameter sweep from a previous method, so the next
+                # method must be applied to all arrays in the list
+                if type(datasets[data_in[0]]) is list:
+                    err_str = f'Applying methods to the output of a ' \
+                              f'parameter sweep is not yet implemented.'
+                    raise ValueError(err_str)
+                else:
+                    # Add the appropriate dataset to the method function's dict
+                    # of parameters based on the parameter name for the method's
+                    # python function
+                    if package_name in ['httomolib', 'tomopy']:
+                        httomo_params['data'] = datasets[in_dataset]
+                    # Run the method, then return the result for storage in the
+                    # appropriate dataset in the `datasets` dict
+                    res = _run_method_wrapper(current_func, method_name, params,
+                                              httomo_params)
+                    datasets[out_dataset] = res
 
         # TODO: The dataset saving functionality only supports 3D data
         # currently, so check that the dimension of the data is 3 before
         # saving it
         is_3d = len(res.shape) == 3
         # Save the result if necessary
-        if save_result and is_3d:
+        any_param_sweep = type(datasets[data_out[0]]) is list
+        if save_result and is_3d and not any_param_sweep:
             intermediate_dataset(datasets[out_dataset], out_dir,
                                  comm, task_idx+1,
                                  package_name, method_name,
                                  out_dataset,
                                  recon_algorithm=params.pop('algorithm', None))
+        elif save_result and any_param_sweep:
+            # Save the result of each value in the parameter sweep as a
+            # different dataset within the same hdf5 file
+            param_sweep_datasets = datasets[data_out[0]]
+            slice_dim = _get_slicing_dim(current_func.pattern)
+            data_shape = get_data_shape(param_sweep_datasets[0], slice_dim -1)
+            file_name = \
+                f"{task_idx}-{package_name}-{method_name}-{data_out[0]}.h5"
+            for i in range(len(param_sweep_datasets)):
+                dataset_name = f"/data/param_sweep_{i}"
+                save_dataset(out_dir, file_name, param_sweep_datasets[i],
+                             slice_dim=slice_dim,
+                             chunks=(1, data_shape[1], data_shape[2]),
+                             path=dataset_name, comm=comm)
 
     return reslice_counter, has_reslice_warn_printed
 
