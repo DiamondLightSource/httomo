@@ -588,12 +588,12 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
 
                         httomo_params['data'] = arr
 
-                        # TODO: Add global stats if necessary
+                        # Add global stats if necessary
                         if req_glob_stats is True:
-                            err_str = f'Methods requiring global stats are ' \
-                                      f'not yet implemented to run after a ' \
-                                      f'parameter sweep.'
-                            raise ValueError(err_str)
+                            stats = _fetch_glob_stats(datasets[data_in[0]][i],
+                                                      comm)
+                            glob_stats[data_in[0]].append(stats)
+                            params.update({'glob_stats': stats})
 
                         res = _run_method_wrapper(current_func, method_name,
                                                   params, httomo_params)
