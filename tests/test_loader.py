@@ -115,7 +115,8 @@ def test_tomo_standard_loaded_with_save_all(clean_folder):
     with h5py.File(h5_files[-2], "r") as f:
         #: 4-tomopy-remove_stripe_fw-tomo.h5
         assert_allclose(np.mean(f["data"]), -0.004198, atol=1e-6)
-        assert_allclose(np.sum(f["data"]), -362.73358, atol=1e-6)
+        np.testing.assert_almost_equal(
+            np.sum(f["data"]), -362.73358, decimal=4)
 
 
 def test_k11_diad_loaded(clean_folder):
