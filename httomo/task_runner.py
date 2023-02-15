@@ -471,30 +471,69 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
 
     for in_dataset, out_dataset in zip(data_in, data_out):
         if method_name in SAVERS_NO_DATA_OUT_PARAM:
-            # Perform a reslice of the data if necessary
-            if should_reslice:
-                resliced_data, _ = reslice(datasets[in_dataset],
-                                           out_dir, current_slice_dim,
-                                           next_slice_dim, comm)
-                datasets[in_dataset] = resliced_data
+            if current_param_sweep:
+                err_str = f'Parameters sweeps on savers is not supported'
+                raise ValueError(err_str)
+            else:
+                if type(datasets[data_in[0]]) is list:
+                    for i, arr in enumerate(datasets[data_in[0]]):
+                        # TODO: Assuming that the `save_to_images()` method is
+                        # being used when defining the `subfolder_name`
+                        # parameter value, as it is currently the only method in
+                        # `SAVERS_NO_DATA_OUT_PARAM`, not good...
+                        #
+                        # Define `subfolder_name` for `save_to_images()`
+                        subfolder_name = f"images_{i}"
+                        params.update({'subfolder_name': subfolder_name})
 
-            # Add the appropriate dataset to the method function's dict of
-            # parameters based on the parameter name for the method's python
-            # function
-            if package_name in ['httomolib', 'tomopy']:
-                httomo_params['data'] = datasets[in_dataset]
+                        # Perform a reslice of the data if necessary
+                        if should_reslice:
+                            resliced_data, _ = reslice(datasets[data_in[0]][i],
+                                                       out_dir,
+                                                       current_slice_dim,
+                                                       next_slice_dim, comm)
+                            datasets[data_in[0]][i] = resliced_data
+                            arr = resliced_data
 
-            # Add global stats if necessary
-            if req_glob_stats is True:
-                stats = _fetch_glob_stats(datasets[in_dataset], comm)
-                glob_stats[in_dataset].append(stats)
-                params.update({'glob_stats': stats})
+                        httomo_params['data'] = arr
 
-            _run_method_wrapper(current_func, method_name, params,
-                                httomo_params)
-            # Nothing more to do if the saver has a special kind of output which
-            # handles saving the result
-            return reslice_counter, has_reslice_warn_printed, glob_stats
+                        # Add global stats if necessary
+                        if req_glob_stats is True:
+                            stats = _fetch_glob_stats(datasets[data_in[0]][i],
+                                                      comm)
+                            glob_stats[data_in[0]].append(stats)
+                            params.update({'glob_stats': stats})
+
+                        _run_method_wrapper(current_func, method_name, params,
+                                            httomo_params)
+                    # Nothing more to do if the saver has a special kind of
+                    # output which handles saving the result
+                    return reslice_counter, has_reslice_warn_printed, glob_stats
+                else:
+                    # Perform a reslice of the data if necessary
+                    if should_reslice:
+                        resliced_data, _ = reslice(datasets[in_dataset],
+                                                out_dir, current_slice_dim,
+                                                next_slice_dim, comm)
+                        datasets[in_dataset] = resliced_data
+
+                    # Add the appropriate dataset to the method function's dict
+                    # of parameters based on the parameter name for the method's
+                    # python function
+                    if package_name in ['httomolib', 'tomopy']:
+                        httomo_params['data'] = datasets[in_dataset]
+
+                    # Add global stats if necessary
+                    if req_glob_stats is True:
+                        stats = _fetch_glob_stats(datasets[in_dataset], comm)
+                        glob_stats[in_dataset].append(stats)
+                        params.update({'glob_stats': stats})
+
+                    _run_method_wrapper(current_func, method_name, params,
+                                        httomo_params)
+                    # Nothing more to do if the saver has a special kind of
+                    # output which handles saving the result
+                    return reslice_counter, has_reslice_warn_printed, glob_stats
         else:
             if current_param_sweep:
                 # TODO: Assumes that only one input and output dataset have been
