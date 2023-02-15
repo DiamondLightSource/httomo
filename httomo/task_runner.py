@@ -144,11 +144,11 @@ def run_tasks(
             # adding ncore argument into params
             params.update({'ncore': ncore})
 
-            reslice_counter, has_reslice_warn_printed = \
+            reslice_counter, has_reslice_warn_printed, glob_stats[idx] = \
                  _run_method(idx, save_all, module_path, package, method_name,
                              params, possible_extra_params, len(method_funcs),
                              method_funcs[idx][1], method_funcs[idx-1][1],
-                             datasets, run_out_dir, glob_stats, comm,
+                             datasets, run_out_dir, glob_stats[idx], comm,
                              reslice_counter, has_reslice_warn_printed,
                              reslice_bool_list)
 
@@ -265,9 +265,9 @@ def _initialise_stats(yaml_config: Path) -> List[Dict]:
         # Check if there are multiple input datasets to account for
         if type(method_conf[dataset_param]) is list:
             for dataset_name in method_conf[dataset_param]:
-                method_stats[dataset_name] = None
+                method_stats[dataset_name] = []
         else:
-            method_stats[method_conf[dataset_param]] = None
+            method_stats[method_conf[dataset_param]] = []
 
         stats.append(method_stats)
 
@@ -350,7 +350,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                 package_name: str, method_name: str, params: Dict,
                 misc_params: Dict, no_of_tasks: int, current_func: Callable,
                 prev_func: Callable, datasets: Dict, out_dir: str,
-                glob_stats: List, comm: MPI.Comm, reslice_counter: int,
+                glob_stats: Dict, comm: MPI.Comm, reslice_counter: int,
                 has_reslice_warn_printed: bool,
                 reslice_bool_list: List[bool]) -> Tuple[bool, bool]:
     """Run a method function in the processing pipeline.
@@ -381,7 +381,9 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
         A dict of all the datasets involved in the pipeline.
     out_dir : str
         The path to the output directory of the run.
-    glob_stats : List
+    glob_stats : Dict
+        A dict of the dataset names to store their associated global stats if
+        necessary.
     comm : MPI.Comm
         The MPI communicator used for the run.
     reslice_counter : int
@@ -485,14 +487,14 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
             # Add global stats if necessary
             if req_glob_stats is True:
                 stats = _fetch_glob_stats(datasets[in_dataset], comm)
-                glob_stats[task_idx][in_dataset] = stats
+                glob_stats[in_dataset].append(stats)
                 params.update({'glob_stats': stats})
 
             _run_method_wrapper(current_func, method_name, params,
                                 httomo_params)
             # Nothing more to do if the saver has a special kind of output which
             # handles saving the result
-            return reslice_counter, has_reslice_warn_printed
+            return reslice_counter, has_reslice_warn_printed, glob_stats
         else:
             if current_param_sweep:
                 # TODO: Assumes that only one input and output dataset have been
@@ -574,7 +576,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                     # Add global stats if necessary
                     if req_glob_stats is True:
                         stats = _fetch_glob_stats(datasets[in_dataset], comm)
-                        glob_stats[task_idx][in_dataset] = stats
+                        glob_stats[in_dataset].append(stats)
                         params.update({'glob_stats': stats})
 
                     # Run the method, then return the result for storage in the
@@ -611,7 +613,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                              chunks=(1, data_shape[1], data_shape[2]),
                              path=dataset_name, comm=comm)
 
-    return reslice_counter, has_reslice_warn_printed
+    return reslice_counter, has_reslice_warn_printed, glob_stats
 
 
 def _run_loader(func: Callable, params: Dict) -> Tuple[ndarray, ndarray,
