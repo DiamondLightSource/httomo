@@ -1,6 +1,5 @@
 import os
 import subprocess
-import sys
 from pathlib import Path
 from shutil import rmtree
 
@@ -8,9 +7,6 @@ import h5py
 import numpy as np
 from numpy.testing import assert_allclose
 from PIL import Image
-
-if not os.path.exists("output_dir"):
-    os.mkdir("output_dir/")
 
 
 def read_folder(folder):
@@ -24,15 +20,16 @@ def read_folder(folder):
     return files
 
 
-def test_tomo_standard_loaded(clean_folder):
-    cmd = [
-        sys.executable,
-        "-m", "httomo",
-        "testdata/tomo_standard.nxs",
-        "samples/pipeline_template_examples/testing_pipeline.yaml",
-        "output_dir/",
-        "task_runner",
-    ]
+def test_tomo_standard_loaded(
+    output_folder,
+    cmd,
+    standard_data,
+    testing_pipeline,
+):
+    cmd.pop(3) #: don't save all
+    cmd.insert(5, standard_data)
+    cmd.insert(6, testing_pipeline)
+
     output = subprocess.check_output(cmd).decode().strip()
     assert "Running task 1 (pattern=projection): standard_tomo" in output
     assert "Running task 2 (pattern=projection): normalize" in output
@@ -72,16 +69,15 @@ def test_tomo_standard_loaded(clean_folder):
         assert_allclose(np.sum(f["data"]), -0.617307, atol=1e-6)
 
 
-def test_tomo_standard_loaded_with_save_all(clean_folder):
-    cmd = [
-        sys.executable,
-        "-m", "httomo",
-        "--save_all",
-        "testdata/tomo_standard.nxs",
-        "samples/pipeline_template_examples/testing_pipeline.yaml",
-        "output_dir/",
-        "task_runner",
-    ]
+def test_tomo_standard_loaded_with_save_all(
+    output_folder,
+    cmd,
+    standard_data,
+    testing_pipeline,
+):
+    cmd.insert(6, standard_data)
+    cmd.insert(7, testing_pipeline)
+
     output = subprocess.check_output(cmd).decode().strip()
     assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in output
     assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in output
@@ -119,32 +115,27 @@ def test_tomo_standard_loaded_with_save_all(clean_folder):
             np.sum(f["data"]), -362.73358, decimal=4)
 
 
-def test_k11_diad_loaded(clean_folder):
-    cmd = [
-        sys.executable,
-        "-m", "httomo",
-        "--save_all", "--ncore", "2",
-        "testdata/k11_diad/k11-18014.nxs",
-        "samples/beamline_loader_configs/diad.yaml",
-        "output_dir/",
-        "task_runner",
-    ]
+def test_k11_diad_loaded(
+    cmd,
+    diad_data,
+    diad_loader,
+):
+    cmd.insert(6, diad_data)
+    cmd.insert(7, diad_loader)
     output = subprocess.check_output(cmd).decode().strip()
     assert "dataset shape is (3201, 22, 26)" in output
-    assert "testdata/k11_diad/k11-18014.nxs" in output
+    assert diad_data in output
     assert "Data shape is (3001, 22, 26) of type uint16" in output
 
 
-def test_diad_pipeline_loaded(clean_folder):
-    cmd = [
-        sys.executable,
-        "-m", "httomo",
-        "--save_all",
-        "testdata/k11_diad/k11-18014.nxs",
-        "samples/pipeline_template_examples/testing_pipeline_diad.yaml",
-        "output_dir/",
-        "task_runner",
-    ]
+def test_diad_pipeline_loaded(
+    output_folder,
+    cmd,
+    diad_data,
+    diad_testing_pipeline,
+):
+    cmd.insert(6, diad_data)
+    cmd.insert(7, diad_testing_pipeline)
     output = subprocess.check_output(cmd).decode().strip()
     assert "Running task 1 (pattern=projection): standard_tomo..." in output
     assert "Running task 3 (pattern=projection): minus_log..." in output

@@ -30,7 +30,7 @@ Running the code:
 An example of running the code with test data:
 =================
 
-* Go to the home directory and run: :code:`httomo testdata/tomo_standard.nxs . cpu`
+* Go to the home directory and run: :code:`httomo tests/testdata/tomo_standard.nxs /samples/pipeline_template_examples/01_basic_cpu_pipeline_tomo_standard.yaml . task_runner`
 
 
 Release Tagging Scheme
