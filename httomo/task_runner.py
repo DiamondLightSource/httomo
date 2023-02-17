@@ -587,8 +587,15 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
             # Save the result of each value in the parameter sweep as a
             # different dataset within the same hdf5 file
             param_sweep_datasets = datasets[data_out[0]]
-            slice_dim = _get_slicing_dim(current_func.pattern)
-            data_shape = get_data_shape(param_sweep_datasets[0], slice_dim -1)
+            # For the output of a recon, fix the dimension that data is gathered
+            # along to be the first one (ie, the vertical dim in volume space).
+            # For all other types of methods, use the same dim associated to the
+            # pattern for their input data.
+            if RECON_MODULE_MATCH in module_path:
+                slice_dim = 1
+            else:
+                slice_dim = _get_slicing_dim(current_func.pattern)
+            data_shape = get_data_shape(param_sweep_datasets[0], slice_dim - 1)
             file_name = \
                 f"{task_idx}-{package_name}-{method_name}-{data_out[0]}.h5"
             for i in range(len(param_sweep_datasets)):
