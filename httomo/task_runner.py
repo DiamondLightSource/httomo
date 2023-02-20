@@ -478,30 +478,20 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                 raise ValueError(err_str)
             else:
                 if type(datasets[in_dataset]) is list:
-                    in_dataset_name = in_dataset
-                    out_dataset_name = out_dataset
-                    arrs = datasets[in_dataset_name]
+                    arrs = datasets[in_dataset]
                 else:
-                    in_dataset_name = in_dataset
-                    out_dataset_name = out_dataset
-                    arrs = [datasets[in_dataset_name]]
+                    arrs = [datasets[in_dataset]]
         else:
             if current_param_sweep:
-                in_dataset_name = in_dataset
-                out_dataset_name = out_dataset
-                arrs = [datasets[in_dataset_name]]
+                arrs = [datasets[in_dataset]]
             else:
                 # If the data is a list of arrays, then it was the result of a
                 # parameter sweep from a previous method, so the next method
                 # must be applied to all arrays in the list
                 if type(datasets[in_dataset]) is list:
-                    in_dataset_name = in_dataset
-                    out_dataset_name = out_dataset
-                    arrs = datasets[in_dataset_name]
+                    arrs = datasets[in_dataset]
                 else:
-                    in_dataset_name = in_dataset
-                    out_dataset_name = out_dataset
-                    arrs = [datasets[in_dataset_name]]
+                    arrs = [datasets[in_dataset]]
 
         # Create a list to store the result of the different parameter values
         if current_param_sweep:
@@ -530,10 +520,10 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                 resliced_data, _ = reslice(arr, out_dir, current_slice_dim,
                                            next_slice_dim, comm)
                 # Store the resliced input
-                if type(datasets[in_dataset_name]) is list:
-                    datasets[in_dataset_name][i] = resliced_data
+                if type(datasets[in_dataset]) is list:
+                    datasets[in_dataset][i] = resliced_data
                 else:
-                    datasets[in_dataset_name] = resliced_data
+                    datasets[in_dataset] = resliced_data
                 arr = resliced_data
 
             httomo_params['data'] = arr
@@ -541,7 +531,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
             # Add global stats if necessary
             if req_glob_stats is True:
                 stats = _fetch_glob_stats(arr, comm)
-                glob_stats[in_dataset_name].append(stats)
+                glob_stats[in_dataset].append(stats)
                 params.update({'glob_stats': stats})
 
             # Run the method
@@ -555,15 +545,15 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                         res = _run_method_wrapper(current_func, method_name,
                                                   params, httomo_params)
                         out.append(res)
-                    datasets[out_dataset_name] = out
+                    datasets[out_dataset] = out
                 else:
                     res = _run_method_wrapper(current_func, method_name,
                                               params, httomo_params)
                     # Store the result
-                    if type(datasets[out_dataset_name]) is list:
-                        datasets[out_dataset_name][i] = res
+                    if type(datasets[out_dataset]) is list:
+                        datasets[out_dataset][i] = res
                     else:
-                        datasets[out_dataset_name] = res
+                        datasets[out_dataset] = res
 
         if method_name in SAVERS_NO_DATA_OUT_PARAM:
             # Nothing more to do if the saver has a special kind of
@@ -576,7 +566,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
         # saving it
         is_3d = len(res.shape) == 3
         # Save the result if necessary
-        any_param_sweep = type(datasets[out_dataset_name]) is list
+        any_param_sweep = type(datasets[out_dataset]) is list
         if save_result and is_3d and not any_param_sweep:
             intermediate_dataset(datasets[out_dataset], out_dir,
                                  comm, task_idx+1,
@@ -586,7 +576,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
         elif save_result and any_param_sweep:
             # Save the result of each value in the parameter sweep as a
             # different dataset within the same hdf5 file
-            param_sweep_datasets = datasets[out_dataset_name]
+            param_sweep_datasets = datasets[out_dataset]
             # For the output of a recon, fix the dimension that data is gathered
             # along to be the first one (ie, the vertical dim in volume space).
             # For all other types of methods, use the same dim associated to the
@@ -597,7 +587,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                 slice_dim = _get_slicing_dim(current_func.pattern)
             data_shape = get_data_shape(param_sweep_datasets[0], slice_dim - 1)
             file_name = \
-                f"{task_idx}-{package_name}-{method_name}-{out_dataset_name}.h5"
+                f"{task_idx}-{package_name}-{method_name}-{out_dataset}.h5"
             for i in range(len(param_sweep_datasets)):
                 dataset_name = f"/data/param_sweep_{i}"
                 save_dataset(out_dir, file_name, param_sweep_datasets[i],
