@@ -1,11 +1,11 @@
 # Defines common fixtures and makes them available to all tests
 
+import os
+import sys
 from pathlib import Path
 from shutil import rmtree
 
-import os
 import pytest
-import sys
 
 
 @pytest.fixture
