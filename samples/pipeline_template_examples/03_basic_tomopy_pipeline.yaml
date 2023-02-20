@@ -8,7 +8,7 @@
         - start: 30
           stop: 60
         - 
-      pad: 0      
+      pad: 0
 - tomopy.misc.corr:
     median_filter:
       data_in: tomo
