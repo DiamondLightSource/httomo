@@ -31,7 +31,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #ROOT_DIR = os.path.dirname(os.path.abspath("tomopy_main_modules.yml"))
 path_to_tomopy_modules = ROOT_DIR + '/tomopy_main_modules.yml'
 
-discard_keys = ["tomo", "arr", "prj", "ncore", 
+discard_keys = ["tomo", "arr", "prj", "data", "ncore", 
                 "nchunk", "flats", "flat", "dark",
                 "darks", "theta", "out",
                 "ang"] # discard from parameters list

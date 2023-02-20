@@ -496,7 +496,11 @@ def _run_method(func: Callable, task_no: int, package_name: str,
     # TODO: The dataset saving functionality only supports 3D data
     # currently, so check that the dimension of the data is 3 before
     # saving it
-    is_3d = len(datasets[out_dataset].shape) == 3
+    # We're checking if the output dataset is an array to avoid
+    # the problem when it is a tuple 
+    is_3d = False
+    if isinstance(datasets[out_dataset], ndarray):
+        is_3d = len(datasets[out_dataset].shape) == 3
     # Save the result if necessary
     print_once(method_name, comm)
     if out_dir is not None and is_3d:
