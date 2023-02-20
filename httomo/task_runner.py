@@ -465,10 +465,6 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
             current_param_sweep = True
             break
 
-    # Create a list to store the result of the different parameter values
-    if current_param_sweep:
-        out = []
-
     for in_dataset, out_dataset in zip(data_in, data_out):
         # First, setup the datasets and arrays needed for the method, based on
         # two factors:
@@ -481,9 +477,9 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                 err_str = f'Parameters sweeps on savers is not supported'
                 raise ValueError(err_str)
             else:
-                if type(datasets[data_in[0]]) is list:
-                    in_dataset_name = data_in[0]
-                    out_dataset_name = data_out[0]
+                if type(datasets[in_dataset]) is list:
+                    in_dataset_name = in_dataset
+                    out_dataset_name = out_dataset
                     arrs = datasets[in_dataset_name]
                 else:
                     in_dataset_name = in_dataset
@@ -498,14 +494,18 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                 # If the data is a list of arrays, then it was the result of a
                 # parameter sweep from a previous method, so the next method
                 # must be applied to all arrays in the list
-                if type(datasets[data_in[0]]) is list:
-                    in_dataset_name = data_in[0]
-                    out_dataset_name = data_out[0]
+                if type(datasets[in_dataset]) is list:
+                    in_dataset_name = in_dataset
+                    out_dataset_name = out_dataset
                     arrs = datasets[in_dataset_name]
                 else:
                     in_dataset_name = in_dataset
                     out_dataset_name = out_dataset
                     arrs = [datasets[in_dataset_name]]
+
+        # Create a list to store the result of the different parameter values
+        if current_param_sweep:
+            out = []
 
         # Now, loop through all the arrays involved in the current method's
         # processing, taking into account several things:
@@ -576,7 +576,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
         # saving it
         is_3d = len(res.shape) == 3
         # Save the result if necessary
-        any_param_sweep = type(datasets[data_out[0]]) is list
+        any_param_sweep = type(datasets[out_dataset_name]) is list
         if save_result and is_3d and not any_param_sweep:
             intermediate_dataset(datasets[out_dataset], out_dir,
                                  comm, task_idx+1,
@@ -586,7 +586,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
         elif save_result and any_param_sweep:
             # Save the result of each value in the parameter sweep as a
             # different dataset within the same hdf5 file
-            param_sweep_datasets = datasets[data_out[0]]
+            param_sweep_datasets = datasets[out_dataset_name]
             # For the output of a recon, fix the dimension that data is gathered
             # along to be the first one (ie, the vertical dim in volume space).
             # For all other types of methods, use the same dim associated to the
@@ -597,7 +597,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                 slice_dim = _get_slicing_dim(current_func.pattern)
             data_shape = get_data_shape(param_sweep_datasets[0], slice_dim - 1)
             file_name = \
-                f"{task_idx}-{package_name}-{method_name}-{data_out[0]}.h5"
+                f"{task_idx}-{package_name}-{method_name}-{out_dataset_name}.h5"
             for i in range(len(param_sweep_datasets)):
                 dataset_name = f"/data/param_sweep_{i}"
                 save_dataset(out_dir, file_name, param_sweep_datasets[i],
