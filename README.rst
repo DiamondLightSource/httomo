@@ -30,8 +30,8 @@ Running the code:
 An example of running the code with test data:
 =================
 
-* Go to the home directory and run: :code:`httomo tests/testdata/tomo_standard.nxs /samples/pipeline_template_examples/01_basic_cpu_pipeline_tomo_standard.yaml . task_runner`
-
+* Create an output directory :code:`mkdir output_dir/`
+* Go to the home directory and run: :code:`httomo tests/test_data/tomo_standard.nxs samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml output_dir/ task_runner`
 
 Release Tagging Scheme
 ======================
