@@ -1,6 +1,21 @@
 import subprocess
 
 
+def test_tomo_standard_loaded(
+    cmd,
+    standard_data,
+    standard_loader,
+):
+    cmd.pop(3) #: don't save all
+    cmd.insert(5, standard_data)
+    cmd.insert(6, standard_loader)
+    output = subprocess.check_output(cmd).decode().strip()
+
+    assert "dataset shape is (220, 128, 160)" in output
+    assert standard_data in output
+    assert "Data shape is (180, 128, 160) of type uint16" in output
+
+
 def test_tomo_standard_testing_pipeline_loaded(
     cmd,
     standard_data,
