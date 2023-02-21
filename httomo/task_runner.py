@@ -31,6 +31,7 @@ reslice_warn_str = f"WARNING: Reslicing is performed more than once in this " \
 # Hardcoded string that is used to check if a method is in a reconstruction
 # module or not
 RECON_MODULE_MATCH = 'recon.algorithm'
+MAX_SWEEPS = 1
 
 
 def run_tasks(
@@ -107,6 +108,17 @@ def run_tasks(
     # (False).
     patterns = [f.pattern for (_, f, _, _) in method_funcs]
     reslice_bool_list = _check_if_should_reslice(patterns)
+
+    # Check pipeline for the number of parameter sweeps present. If more than
+    # one is defined, raise an error, due to not supporting multiple parameter
+    # sweeps
+    params = [param_dict for (_, _, param_dict, _) in method_funcs]
+    no_of_sweeps = sum(map(_check_params_for_sweep, params))
+
+    if no_of_sweeps > MAX_SWEEPS:
+        err_str = f"There are {no_of_sweeps} parameter sweeps in the " \
+                  f"pipeline, but a maximum of {MAX_SWEEPS} is supported."
+        raise ValueError(err_str)
 
     # Run the methods
     for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
@@ -907,3 +919,14 @@ def _check_if_should_reslice(patterns: List[Pattern]) -> List[bool]:
              current_pattern = patterns[x]
              reslice_bool_list[x] = True
     return reslice_bool_list
+
+
+def _check_params_for_sweep(params: Dict) -> int:
+    """Check the parameter dict of a method for the number of parameter sweeps
+    that occur.
+    """
+    count = 0
+    for k, v in params.items():
+        if type(v) is tuple:
+            count += 1
+    return count
