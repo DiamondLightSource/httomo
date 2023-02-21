@@ -8,6 +8,7 @@ from inspect import signature
 from importlib import import_module
 
 from numpy import ndarray
+import numpy as np
 import cupy as cp
 from mpi4py import MPI
 
@@ -17,6 +18,7 @@ from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.reslice import reslice
 from httomo.data.hdf._utils.chunk import save_dataset, get_data_shape
 from httomo._stats.globals import min_max_mean_std
+from httomolib.misc.images import save_to_images
 
 
 # TODO: Define a list of savers which have no output dataset and so need to
@@ -575,7 +577,8 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
                                  recon_algorithm=params.pop('algorithm', None))
         elif save_result and any_param_sweep:
             # Save the result of each value in the parameter sweep as a
-            # different dataset within the same hdf5 file
+            # different dataset within the same hdf5 file, and also save the
+            # middle slice of each parameter sweep result as a tiff file
             param_sweep_datasets = datasets[out_dataset]
             # For the output of a recon, fix the dimension that data is gathered
             # along to be the first one (ie, the vertical dim in volume space).
@@ -588,12 +591,53 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
             data_shape = get_data_shape(param_sweep_datasets[0], slice_dim - 1)
             file_name = \
                 f"{task_idx}-{package_name}-{method_name}-{out_dataset}.h5"
+            # For each MPI process, send all the other processes the size of the
+            # slice dimension of the parameter sweep arrays (note that the list
+            # returned by `allgather()` is ordered by the rank of the process)
+            all_proc_info = comm.allgather(param_sweep_datasets[i].shape[0])
+            # Check if the current MPI process has the subset of data containing
+            # the middle slice or not
+            start_idx = 0
+            for i in range(comm.rank):
+                start_idx += all_proc_info[i]
+            glob_mid_slice_idx = data_shape[slice_dim - 1] // 2
+            has_mid_slice = start_idx <= glob_mid_slice_idx and \
+                glob_mid_slice_idx < start_idx + param_sweep_datasets[0].shape[0]
+
+            # For the single MPI process that has access to the middle slices,
+            # create an array to hold these middle slices
+            if has_mid_slice:
+                tiff_stack_shape = (len(param_sweep_datasets), data_shape[1],
+                                    data_shape[2])
+                middle_slices = np.empty(tiff_stack_shape)
+                # Calculate the index relative to the subset of the data that
+                # the MPI process has which corresponds to the middle slice of
+                # the "global" data
+                rel_mid_slice_idx = glob_mid_slice_idx - start_idx
+
             for i in range(len(param_sweep_datasets)):
+                # Save hdf5 dataset
                 dataset_name = f"/data/param_sweep_{i}"
                 save_dataset(out_dir, file_name, param_sweep_datasets[i],
                              slice_dim=slice_dim,
                              chunks=(1, data_shape[1], data_shape[2]),
                              path=dataset_name, comm=comm)
+                # Get the middle slice of the parameter-swept array
+                if has_mid_slice:
+                    if slice_dim == 1:
+                        middle_slices[i] = \
+                            param_sweep_datasets[i][rel_mid_slice_idx,:,:]
+                    elif slice_dim == 2:
+                        middle_slices[i] = \
+                            param_sweep_datasets[i][:, rel_mid_slice_idx, :]
+                    elif slice_dim == 3:
+                        middle_slices[i] = \
+                            param_sweep_datasets[i][:,:, rel_mid_slice_idx]
+
+            if has_mid_slice:
+                # Save tiffs of the middle slices
+                save_to_images(middle_slices, out_dir,
+                               subfolder_name='middle_slices')
 
     return reslice_counter, has_reslice_warn_printed, glob_stats
 
