@@ -649,7 +649,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
             if has_mid_slice:
                 # Save tiffs of the middle slices
                 save_to_images(middle_slices, out_dir,
-                               subfolder_name='middle_slices')
+                               subfolder_name=f"middle_slices_{out_dataset}")
 
     return reslice_counter, has_reslice_warn_printed, glob_stats
 
