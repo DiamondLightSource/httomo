@@ -3,6 +3,7 @@ import subprocess
 
 import h5py
 import numpy as np
+import yaml
 from numpy.testing import assert_allclose
 from PIL import Image
 
@@ -18,15 +19,27 @@ def read_folder(folder):
     return files
 
 
+def merge_yamls(*yamls) -> None:
+    '''Merge multiple yaml files into one'''
+    data = []
+    for y in yamls:
+        with open(y, "r") as file_descriptor:
+            data.extend(yaml.load(file_descriptor, Loader=yaml.SafeLoader))
+    with open("temp.yaml", "w") as file_descriptor:
+        yaml.dump(data, file_descriptor)
+
+
 def test_tomo_standard_testing_pipeline_output(
     cmd,
     standard_data,
+    standard_loader,
     testing_pipeline,
     output_folder,
 ):
     cmd.pop(3) #: don't save all
     cmd.insert(5, standard_data)
-    cmd.insert(6, testing_pipeline)
+    merge_yamls(standard_loader, testing_pipeline)
+    cmd.insert(6, "temp.yaml")
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
@@ -62,11 +75,13 @@ def test_tomo_standard_testing_pipeline_output(
 def test_tomo_standard_testing_pipeline_output_with_save_all(
     cmd,
     standard_data,
+    standard_loader,
     testing_pipeline,
     output_folder,
 ):
     cmd.insert(6, standard_data)
-    cmd.insert(7, testing_pipeline)
+    merge_yamls(standard_loader, testing_pipeline)
+    cmd.insert(7, "temp.yaml")
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
@@ -103,11 +118,13 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
 def test_diad_testing_pipeline_output(
     cmd,
     diad_data,
-    diad_testing_pipeline,
+    diad_loader,
+    testing_pipeline,
     output_folder,
 ):
     cmd.insert(6, diad_data)
-    cmd.insert(7, diad_testing_pipeline)
+    merge_yamls(diad_loader, testing_pipeline)
+    cmd.insert(7, "temp.yaml")
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
@@ -141,5 +158,5 @@ def test_diad_testing_pipeline_output(
     with h5py.File(h5_files[-1], "r") as f:
         #: 5-tomopy-recon-tomo-gridrec.h5
         assert f["data"].shape == (2, 26, 26)
-        assert_allclose(np.mean(f["data"]), 0.0025187093, atol=1e-6)
-        assert_allclose(np.sum(f["data"]), 3.405295, atol=1e-6)
+        assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6)
