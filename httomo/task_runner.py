@@ -601,7 +601,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
             else:
                 slice_dim = _get_slicing_dim(current_func.pattern)
             data_shape = get_data_shape(param_sweep_datasets[0], slice_dim - 1)
-            file_name = \
+            hdf5_file_name = \
                 f"{task_idx}-{package_name}-{method_name}-{out_dataset}.h5"
             # For each MPI process, send all the other processes the size of the
             # slice dimension of the parameter sweep arrays (note that the list
@@ -630,7 +630,7 @@ def _run_method(task_idx: int, save_all: bool, module_path: str,
             for i in range(len(param_sweep_datasets)):
                 # Save hdf5 dataset
                 dataset_name = f"/data/param_sweep_{i}"
-                save_dataset(out_dir, file_name, param_sweep_datasets[i],
+                save_dataset(out_dir, hdf5_file_name, param_sweep_datasets[i],
                              slice_dim=slice_dim,
                              chunks=(1, data_shape[1], data_shape[2]),
                              path=dataset_name, comm=comm)
