@@ -45,6 +45,12 @@ def algorithm(params: Dict,
     cp._default_memory_pool.free_all_blocks()
     cp.cuda.Device(gpu_id).use()    
     
+    # for 360 degrees data the angular dimension will be truncated while angles are not.
+    # Truncating angles if the angular dimension has got a different size
+    angular_dim_size = np.size(data, 0)
+    if np.size(data, 0) != len(angles_radians):
+        angles_radians = angles_radians[0:angular_dim_size]
+    
     # TODO: possibly change this clumsy way of operating with numpy/cupy arrays depending on the methods choice
     if method_name == "reconstruct_tomobar":
         # as now this function does not require ncore parameter 
@@ -96,8 +102,7 @@ def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray, gpu_id
         pass
     
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()
-   
+    cp.cuda.Device(gpu_id).use()   
 
     method_func = getattr(module, method_name)
     rot_center = 0

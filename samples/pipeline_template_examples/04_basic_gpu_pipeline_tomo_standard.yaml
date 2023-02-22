@@ -6,7 +6,8 @@
       dimension: 1
       preview:
         - 
-        - 
+        - start: 1000
+          stop: 1020
         - 
       pad: 0
 - httomolib.misc.corr:

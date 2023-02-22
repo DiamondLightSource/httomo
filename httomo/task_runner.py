@@ -213,9 +213,15 @@ def run_tasks(
             # Make the input datasets a list if it's not, just to be generic and
             # below loop through all the datasets that the method should be
             # applied to
-            if type(data_in) is str and type(data_out) is str:
+            if type(data_in) is str:
                 data_in = [data_in]
+            if type(data_out) is str:
                 data_out = [data_out]
+            # Dealing with the case when data_out consists of multiple scalar items
+            multiple_out_datasets_names = None
+            if len(data_out) > 1:
+                multiple_out_datasets_names = data_out # save the list to fix datasets names
+                data_out = ["multiple_params"] # create a field in dictionary that holds a tuple with multiple entries
 
             # Check if method type signature requires global statistics
             req_glob_stats = 'glob_stats' in signature(func).parameters
@@ -239,7 +245,8 @@ def run_tasks(
 
                 _run_method(func, idx+1, package, method_name, in_dataset,
                             out_dataset, datasets, params, httomo_params,
-                            SAVERS_NO_DATA_OUT_PARAM, comm, out_dir=out_dir)
+                            SAVERS_NO_DATA_OUT_PARAM, multiple_out_datasets_names,
+                            comm, out_dir=out_dir)
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
@@ -439,6 +446,7 @@ def _run_method(func: Callable, task_no: int, package_name: str,
                 method_name: str, in_dataset: str, out_dataset: str,
                 datasets: Dict[str, ndarray], method_params: Dict,
                 httomo_params: Dict, savers_no_data_out_param: List[str],
+                multiple_out_datasets_names: List[str],
                 comm: MPI.Comm, out_dir: str=None) -> ndarray:
     """Run a method function in the processing pipeline.
 
@@ -462,6 +470,8 @@ def _run_method(func: Callable, task_no: int, package_name: str,
         A dict of parameters for the method.
     httomo_params : Dict, optional
         A dict of parameters related to HTTomo.
+    multiple_out_datasets_names : List[str]
+        A list that contains the multiple output variable names for a given method.
     savers_no_data_out_param : List[str]
         A list of savers which have neither `data_out` nor `data_out_multi` as
         their output.
@@ -493,6 +503,15 @@ def _run_method(func: Callable, task_no: int, package_name: str,
         datasets[out_dataset] = \
             _run_method_wrapper(func, method_name, method_params, httomo_params)
 
+    # for multi scalar output we carry a list "multiple_out_datasets_names" with 
+    # the outdata variables names. If such list exists then we need to do the reassignment
+    # of values in datasets according to "multiple_out_datasets_names"
+    if multiple_out_datasets_names is not None:
+        for index in range(len(multiple_out_datasets_names)):
+            datasetname = multiple_out_datasets_names[index]
+            if datasetname in datasets:
+                datasets[datasetname] = datasets[out_dataset][index]       
+        
     # TODO: The dataset saving functionality only supports 3D data
     # currently, so check that the dimension of the data is 3 before
     # saving it

@@ -6,16 +6,10 @@
       dimension: 1
       preview:
         - 
-        - start: 1000
-          stop: 1020
+        - start: 30
+          stop: 60
         - 
       pad: 0
-# - httomolib.misc.corr:
-#     remove_outlier3d_cupy:
-#       data_in_multi: [tomo, flats, darks]
-#       data_out_multi: [tomo, flats, darks]
-#       kernel_size: 3
-#       dif: 0.1
 - httomolib.prep.normalize:
     normalize_raw_cuda:
       data_in: tomo
@@ -26,7 +20,7 @@
 - httomolib.recon.rotation:
     find_center_360:
       data_in: tomo
-      data_out: cor, overlap, side, overlap_position
+      data_out: [cor, overlap, side, overlap_position]
       ind: mid
       win_width: 10
       side: null
@@ -39,20 +33,20 @@
       data_out: tomo
       overlap: overlap
       rotation: right
-# - httomolib.recon.algorithm:
-#     reconstruct_tomobar:
-#       data_in: tomo
-#       data_out: tomo
-#       center: cor
-#       objsize: null
-#       algorithm: FBP3D_device
-# - httomolib.misc.images:
-#     save_to_images:
-#       data_in: tomo
-#       subfolder_name: images
-#       axis: 0
-#       file_format: tif
-#       bits: 8
-#       perc_range_min: 0.0
-#       perc_range_max: 100.0
-#       jpeg_quality: 95
+- httomolib.recon.algorithm:
+     reconstruct_tomobar:
+       data_in: tomo
+       data_out: tomo
+       center: cor
+       objsize: null
+       algorithm: FBP3D_host
+- httomolib.misc.images:
+    save_to_images:
+      data_in: tomo
+      subfolder_name: images
+      axis: 0
+      file_format: tif
+      bits: 8
+      perc_range_min: 0.0
+      perc_range_max: 100.0
+      jpeg_quality: 95
