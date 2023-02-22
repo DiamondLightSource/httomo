@@ -3,7 +3,6 @@ import subprocess
 
 import h5py
 import numpy as np
-import yaml
 from numpy.testing import assert_allclose
 from PIL import Image
 
@@ -19,22 +18,13 @@ def read_folder(folder):
     return files
 
 
-def merge_yamls(*yamls) -> None:
-    '''Merge multiple yaml files into one'''
-    data = []
-    for y in yamls:
-        with open(y, "r") as file_descriptor:
-            data.extend(yaml.load(file_descriptor, Loader=yaml.SafeLoader))
-    with open("temp.yaml", "w") as file_descriptor:
-        yaml.dump(data, file_descriptor)
-
-
 def test_tomo_standard_testing_pipeline_output(
     cmd,
     standard_data,
     standard_loader,
     testing_pipeline,
     output_folder,
+    merge_yamls
 ):
     cmd.pop(3) #: don't save all
     cmd.insert(5, standard_data)
@@ -78,6 +68,7 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     standard_loader,
     testing_pipeline,
     output_folder,
+    merge_yamls
 ):
     cmd.insert(6, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
@@ -121,6 +112,7 @@ def test_diad_testing_pipeline_output(
     diad_loader,
     testing_pipeline,
     output_folder,
+    merge_yamls
 ):
     cmd.insert(6, diad_data)
     merge_yamls(diad_loader, testing_pipeline)
