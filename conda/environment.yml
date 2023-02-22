@@ -11,10 +11,11 @@ dependencies:
   - conda-forge::h5py[build=*openmpi*]
   - conda-forge::hdf5plugin
   - conda-forge::mpi4py
+  - conda-forge::pyyaml
   - conda-forge::numpy
   - conda-forge::nvtx
   - conda-forge::python
-  - anaconda:: ipython 
+  - anaconda::ipython
   - conda-forge::tomopy
   - savu-dep::larix
   - savu-dep::tomobar
