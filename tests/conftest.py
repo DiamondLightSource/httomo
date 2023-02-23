@@ -6,6 +6,7 @@ from pathlib import Path
 from shutil import rmtree
 
 import pytest
+import yaml
 
 
 @pytest.fixture
@@ -58,5 +59,14 @@ def standard_loader():
 
 
 @pytest.fixture
-def diad_testing_pipeline():
-    return "samples/pipeline_template_examples/testing/testing_pipeline_diad.yaml"
+def merge_yamls():
+    def _merge_yamls(*yamls) -> None:
+        '''Merge multiple yaml files into one'''
+        data = []
+        for y in yamls:
+            with open(y, "r") as file_descriptor:
+                data.extend(yaml.load(file_descriptor, Loader=yaml.SafeLoader))
+        with open("temp.yaml", "w") as file_descriptor:
+            yaml.dump(data, file_descriptor)
+
+    return _merge_yamls
