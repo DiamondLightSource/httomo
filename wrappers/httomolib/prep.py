@@ -11,7 +11,7 @@ from httomolib import prep
 
 @pattern(Pattern.projection)
 def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
-              darks: ndarray, gpu_id: int) -> ndarray:
+              darks: ndarray) -> ndarray:
     """Wrapper for httomolib.prep.normalize module.
 
     Parameters
@@ -27,8 +27,6 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
         A numpy array containing the flatfield projections.
     darks : ndarray
         A numpy array containing the dark projections.
-    gpu_id : int
-        A GPU device index to execute operation on.
 
     Returns
     -------
@@ -45,13 +43,12 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
         pass
     
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()
     
     data = getattr(module, method_name)(cp.asarray(data), cp.asarray(flats), cp.asarray(darks), **params)
     return cp.asnumpy(data)
 
 @pattern(Pattern.sinogram)
-def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray:
+def stripe(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for httomolib.prep.stripe module.
 
     Parameters
@@ -63,8 +60,6 @@ def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarra
         The name of the method to use in  httomolib.prep.phase.
     data : ndarray
         A numpy array of projections.
-    gpu_id : int
-        A GPU device index to execute operation on.        
 
     Returns
     -------
@@ -81,14 +76,13 @@ def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarra
         pass
     
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()
     
     data = getattr(module, method_name)(cp.asarray(data), **params)
     return cp.asnumpy(data)
 
 
 @pattern(Pattern.projection)
-def phase(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray:
+def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for httomolib.prep.phase module.
 
     Parameters
@@ -116,7 +110,6 @@ def phase(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray
         pass
     
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()
     
     data = getattr(module, method_name)(cp.asarray(data), **params)
     return cp.asnumpy(data)

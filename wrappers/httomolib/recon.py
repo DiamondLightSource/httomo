@@ -14,11 +14,12 @@ from httomolib import recon
 
 
 @pattern(Pattern.sinogram)
-def algorithm(params: Dict,
-              method_name: str, 
-              data: np.ndarray,
-              angles_radians: np.ndarray,
-              gpu_id: int) -> np.ndarray:
+def algorithm(
+    params: Dict,
+    method_name: str,
+    data: np.ndarray,
+    angles_radians: np.ndarray,
+) -> np.ndarray:
     """Wrapper for httomolib.recon.algorithm module.
 
     Parameters
@@ -32,8 +33,6 @@ def algorithm(params: Dict,
         A numpy array of projections.
     angles_radians : ndarray
         A numpy array of angles in radians.
-    gpu_id : int
-        A GPU device index to execute operation on.        
 
     Returns
     -------
@@ -43,7 +42,6 @@ def algorithm(params: Dict,
     module = getattr(recon, 'algorithm')
 
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()    
     
     # TODO: possibly change this clumsy way of operating with numpy/cupy arrays depending on the methods choice
     if method_name == "reconstruct_tomobar":
@@ -54,19 +52,19 @@ def algorithm(params: Dict,
         except:
             pass
         if params["algorithm"] == "FBP3D_device":            
-            data = getattr(module, method_name)(cp.asarray(data), angles=angles_radians, gpu_id=gpu_id, **params)
+            data = getattr(module, method_name)(cp.asarray(data), angles=angles_radians, **params)
             return cp.asnumpy(data)            
         else:
-            data = getattr(module, method_name)(data, angles=angles_radians, gpu_id=gpu_id, **params)
+            data = getattr(module, method_name)(data, angles=angles_radians, **params)
             return data
         
     if method_name == "reconstruct_tomopy":
-        data = getattr(module, method_name)(data, angles=angles_radians, gpu_id=gpu_id, **params)
+        data = getattr(module, method_name)(data, angles=angles_radians, **params)
         return data   
 
 
 @pattern(Pattern.sinogram)
-def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray, gpu_id: int) -> float:
+def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray) -> float:
     """Wrapper for the httomolib.recon.rotation module.
 
     Parameters
@@ -96,8 +94,6 @@ def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray, gpu_id
         pass
     
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()        
-   
 
     method_func = getattr(module, method_name)
     rot_center = 0

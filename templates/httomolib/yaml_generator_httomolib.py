@@ -36,7 +36,6 @@ discard_keys = ["data",
                 "comm_rank",
                 "ncore",
                 "out_dir",
-                "gpu_id",
                 "angles",
                 "flats",
                 "darks"] # discard from parameters list

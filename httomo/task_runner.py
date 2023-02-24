@@ -8,7 +8,6 @@ from inspect import signature
 from importlib import import_module
 
 from numpy import ndarray
-import cupy as cp
 from mpi4py import MPI
 
 from httomo.utils import print_once, Pattern, _get_slicing_dim
@@ -55,12 +54,6 @@ def run_tasks(
         mkdir(run_out_dir)
     if comm.size == 1:
         ncore = multiprocessing.cpu_count() # use all available CPU cores if not an MPI run
-
-    # GPU related MPI communicators and indices
-    num_GPUs = cp.cuda.runtime.getDeviceCount()
-    gpu_id = int(comm.rank / comm.size * num_GPUs)
-    gpu_comm = comm.Split(gpu_id)
-    proc_id = f"[{gpu_id}:{gpu_comm.rank}]"
 
     # TODO: Define a list of savers which have no output dataset and so need to
     # be treated differently to other methods. Probably should be handled in a
@@ -131,7 +124,6 @@ def run_tasks(
                 (['flats'], flats),
                 (['angles', 'angles_radians'], angles),
                 (['comm'], comm),
-                (['gpu_id'], gpu_id),
                 (['out_dir'], run_out_dir)
             ]
         else:
