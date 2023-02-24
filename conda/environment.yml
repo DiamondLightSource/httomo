@@ -8,7 +8,6 @@ dependencies:
   - astra-toolbox::astra-toolbox
   - conda-forge::click
   - conda-forge::cupy
-  - conda-forge::cudatoolkit=11.0
   - conda-forge::h5py[build=*openmpi*]
   - conda-forge::hdf5plugin
   - conda-forge::mpi4py
