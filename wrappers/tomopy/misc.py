@@ -25,6 +25,6 @@ def corr(params: Dict, method_name: str, data: ndarray) -> ndarray:
     ndarray
         A numpy array of projections with the correction method applied.
     """
-    module = getattr(misc, 'corr')
+    module = getattr(misc, "corr")
     data = getattr(module, method_name)(data, **params)
     return data

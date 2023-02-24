@@ -7,8 +7,14 @@ from mpi4py import MPI
 from numpy import ndarray
 
 
-def load_data(file: str, dim: int, path: str, preview: str=":,:,:",
-              pad: Tuple=(0, 0), comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
+def load_data(
+    file: str,
+    dim: int,
+    path: str,
+    preview: str = ":,:,:",
+    pad: Tuple = (0, 0),
+    comm: MPI.Comm = MPI.COMM_WORLD,
+) -> ndarray:
     """Load data in parallel, slicing it through a certain dimension.
 
     Parameters
@@ -34,7 +40,7 @@ def load_data(file: str, dim: int, path: str, preview: str=":,:,:",
     """
     print(file)
     print(path)
-    print(preview)    
+    print(preview)
     if dim == 1:
         data = read_through_dim1(file, path, preview=preview, pad=pad, comm=comm)
     elif dim == 2:
@@ -46,9 +52,13 @@ def load_data(file: str, dim: int, path: str, preview: str=":,:,:",
     return data
 
 
-def read_through_dim3(file: str, path: str, preview: str=":,:,:",
-                      pad: Tuple=(0, 0),
-                      comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
+def read_through_dim3(
+    file: str,
+    path: str,
+    preview: str = ":,:,:",
+    pad: Tuple = (0, 0),
+    comm: MPI.Comm = MPI.COMM_WORLD,
+) -> ndarray:
     """Read a dataset in parallel, with each MPI process loading a block.
 
     Parameters
@@ -104,9 +114,13 @@ def read_through_dim3(file: str, path: str, preview: str=":,:,:",
         return data
 
 
-def read_through_dim2(file: str, path: str, preview: str=":,:,:",
-                      pad: Tuple=(0, 0),
-                      comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
+def read_through_dim2(
+    file: str,
+    path: str,
+    preview: str = ":,:,:",
+    pad: Tuple = (0, 0),
+    comm: MPI.Comm = MPI.COMM_WORLD,
+) -> ndarray:
     """Read a dataset in parallel, with each MPI process loading a block.
 
     Parameters
@@ -162,9 +176,13 @@ def read_through_dim2(file: str, path: str, preview: str=":,:,:",
         return data
 
 
-def read_through_dim1(file: str, path: str, preview: str=":,:,:",
-                      pad: Tuple=(0, 0),
-                      comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
+def read_through_dim1(
+    file: str,
+    path: str,
+    preview: str = ":,:,:",
+    pad: Tuple = (0, 0),
+    comm: MPI.Comm = MPI.COMM_WORLD,
+) -> ndarray:
     """Read a dataset in parallel, with each MPI process loading a block.
 
     Parameters
@@ -221,8 +239,12 @@ def read_through_dim1(file: str, path: str, preview: str=":,:,:",
 
 
 def get_pad_values(
-    pad: int, dim: int, dim_length: int, data_indices: List[int]=None,
-    preview: str=":,:,:", comm: MPI.Comm=MPI.COMM_WORLD
+    pad: int,
+    dim: int,
+    dim_length: int,
+    data_indices: List[int] = None,
+    preview: str = ":,:,:",
+    comm: MPI.Comm = MPI.COMM_WORLD,
 ) -> Tuple[int, int]:
     """Get number of slices the block of data is padded either side.
 
@@ -329,7 +351,7 @@ def get_num_chunks(filepath: str, path: str, comm: MPI.Comm) -> int:
     return nchunks
 
 
-def get_angles(file: str, path: str, comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
+def get_angles(file: str, path: str, comm: MPI.Comm = MPI.COMM_WORLD) -> ndarray:
     """Get angles.
 
     Parameters
@@ -353,14 +375,14 @@ def get_angles(file: str, path: str, comm: MPI.Comm=MPI.COMM_WORLD) -> ndarray:
 
 def get_darks_flats_together(
     file: str,
-    data_path: str="/entry1/tomo_entry/data/data",
-    darks_path: str=None,
-    flats_path: str=None,
-    image_key_path: str="/entry1/instrument/image_key/image_key",
-    dim: int=1,
-    pad: int=0,
-    preview: str=":,:,:",
-    comm: MPI.Comm=MPI.COMM_WORLD,
+    data_path: str = "/entry1/tomo_entry/data/data",
+    darks_path: str = None,
+    flats_path: str = None,
+    image_key_path: str = "/entry1/instrument/image_key/image_key",
+    dim: int = 1,
+    pad: int = 0,
+    preview: str = ":,:,:",
+    comm: MPI.Comm = MPI.COMM_WORLD,
 ) -> Tuple[ndarray, ndarray]:
     """Get darks and flats from the same NeXuS file.
 
@@ -405,21 +427,21 @@ def get_darks_flats_together(
                 elif int(key) == 2:
                     darks_indices.append(i)
             dataset = file[data_path]
-            darks = \
-                _get_darks_flats(dataset, darks_indices, dim, pad, preview, comm)
-            flats = \
-                _get_darks_flats(dataset, flats_indices, dim, pad, preview, comm)
+            darks = _get_darks_flats(dataset, darks_indices, dim, pad, preview, comm)
+            flats = _get_darks_flats(dataset, flats_indices, dim, pad, preview, comm)
         else:
             # Get darks and flats from different datasets within the same NeXuS
             # file
             darks_dataset = file[darks_path]
             darks_indices = np.arange(darks_dataset.shape[0])
-            darks = _get_darks_flats(darks_dataset, darks_indices, dim, pad,
-                                     preview, comm)
+            darks = _get_darks_flats(
+                darks_dataset, darks_indices, dim, pad, preview, comm
+            )
             flats_dataset = file[flats_path]
             flats_indices = np.arange(flats_dataset.shape[0])
-            flats = _get_darks_flats(flats_dataset, flats_indices,
-                                     dim, pad, preview, comm)
+            flats = _get_darks_flats(
+                flats_dataset, flats_indices, dim, pad, preview, comm
+            )
 
     return darks, flats
 
@@ -427,10 +449,10 @@ def get_darks_flats_together(
 def get_darks_flats_separate(
     file_path: str,
     data_path: str,
-    dim: int=1,
-    pad: int=0,
-    preview: str=":,:,:",
-    comm: MPI.Comm=MPI.COMM_WORLD,
+    dim: int = 1,
+    pad: int = 0,
+    preview: str = ":,:,:",
+    comm: MPI.Comm = MPI.COMM_WORLD,
 ) -> ndarray:
     """Get darks or flats from a separate dataset and/or separate file from the
     projection data.
@@ -457,7 +479,7 @@ def get_darks_flats_separate(
     ndarray
         The darks or flats.
     """
-    with h5.File(file_path, 'r', driver='mpio', comm=comm) as f:
+    with h5.File(file_path, "r", driver="mpio", comm=comm) as f:
         dataset = f[data_path]
         indices = np.arange(dataset.shape[0])
         data = _get_darks_flats(dataset, indices, dim, pad, preview, comm)
@@ -467,10 +489,10 @@ def get_darks_flats_separate(
 def _get_darks_flats(
     dataset: h5.Dataset,
     indices: List[int],
-    dim: int=1,
-    pad: int=0,
-    preview: str=":,:,:",
-    comm: MPI.Comm=MPI.COMM_WORLD,
+    dim: int = 1,
+    pad: int = 0,
+    preview: str = ":,:,:",
+    comm: MPI.Comm = MPI.COMM_WORLD,
 ) -> ndarray:
     """Get darks or flats array from a given dataset.
 
@@ -513,9 +535,7 @@ def _get_darks_flats(
         else:
             start = 0 if slice_list[1].start is None else slice_list[1].start
             stop = (
-                dataset.shape[1]
-                if slice_list[1].stop is None
-                else slice_list[1].stop
+                dataset.shape[1] if slice_list[1].stop is None else slice_list[1].stop
             )
             step = 1 if slice_list[1].step is None else slice_list[1].step
             length = (stop - start) // step
@@ -524,15 +544,15 @@ def _get_darks_flats(
         i1 = round((length / nproc) * (rank + 1)) + offset
         data = [dataset[x][i0:i1:step][slice_list[2]] for x in indices]
     else:
-        data = [
-            dataset[x][slice_list[1], slice_list[2]] for x in indices
-        ]
+        data = [dataset[x][slice_list[1], slice_list[2]] for x in indices]
     return data
 
 
 def get_data_indices(
-    filepath: str, image_key_path: str="/entry1/instrument/image_key/image_key",
-    comm: MPI.Comm=MPI.COMM_WORLD) -> List[int]:
+    filepath: str,
+    image_key_path: str = "/entry1/instrument/image_key/image_key",
+    comm: MPI.Comm = MPI.COMM_WORLD,
+) -> List[int]:
     """Get the indices of where the data is in a dataset.
 
     Parameters

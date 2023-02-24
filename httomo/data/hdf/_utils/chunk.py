@@ -10,10 +10,10 @@ def save_dataset(
     file_name: str,
     data: ndarray,
     slice_dim: int = 1,
-    chunks: Tuple=(150, 150, 10),
-    path: str="/data",
-    reslice: bool=False,
-    comm: MPI.Comm=MPI.COMM_WORLD,
+    chunks: Tuple = (150, 150, 10),
+    path: str = "/data",
+    reslice: bool = False,
+    comm: MPI.Comm = MPI.COMM_WORLD,
 ) -> None:
     """Save dataset in parallel.
 
@@ -44,8 +44,10 @@ def save_dataset(
     dtype = data.dtype
     # If reslicing, can overwrite the intermediate file contents by first
     # truncating the file
-    file_mode = 'w' if reslice else 'a'
-    with h5.File(f"{out_folder}/{file_name}", file_mode, driver="mpio", comm=comm) as file:
+    file_mode = "w" if reslice else "a"
+    with h5.File(
+        f"{out_folder}/{file_name}", file_mode, driver="mpio", comm=comm
+    ) as file:
         dataset = file.create_dataset(path, shape, dtype, chunks=chunks)
         save_data_parallel(dataset, data, slice_dim)
 
@@ -54,7 +56,7 @@ def save_data_parallel(
     dataset: h5.Dataset,
     data: ndarray,
     slice_dim: int,
-    comm: MPI.Comm=MPI.COMM_WORLD,
+    comm: MPI.Comm = MPI.COMM_WORLD,
 ) -> None:
     """Save data to dataset in parallel.
 
@@ -84,8 +86,7 @@ def save_data_parallel(
         dataset[:, :, i0:i1] = data[...]
 
 
-def get_data_shape(data: ndarray, dim: int,
-                   comm: MPI.Comm=MPI.COMM_WORLD) -> Tuple:
+def get_data_shape(data: ndarray, dim: int, comm: MPI.Comm = MPI.COMM_WORLD) -> Tuple:
     """Gets the shape of a distributed dataset.
 
     Parameters

@@ -7,7 +7,9 @@ from httomolib import misc
 
 
 @pattern(Pattern.all)
-def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.ndarray) -> np.ndarray:
+def images(
+    params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.ndarray
+) -> np.ndarray:
     """Wrapper for httomolib.misc.images module.
 
     Parameters
@@ -27,15 +29,15 @@ def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.nd
     Returns
     -------
     """
-    # as now this function does not require ncore parameter 
+    # as now this function does not require ncore parameter
     # TODO: not elegant, needs rethinking
     try:
         del params["ncore"]
     except:
         pass
-    
-    module = getattr(misc, 'images')
-    data = getattr(module, method_name)(data, out_dir, comm_rank = comm.rank, **params)
+
+    module = getattr(misc, "images")
+    data = getattr(module, method_name)(data, out_dir, comm_rank=comm.rank, **params)
     return data
 
 
@@ -61,9 +63,9 @@ def corr(params: Dict, method_name: str, data: np.ndarray) -> np.ndarray:
     #: images wrapper doesn't work with cupy
     import cupy as cp
 
-    module = getattr(misc, 'corr')
+    module = getattr(misc, "corr")
 
-    # as now this function does not require ncore parameter 
+    # as now this function does not require ncore parameter
     # TODO: not elegant, needs rethinking
     try:
         del params["ncore"]
@@ -71,6 +73,6 @@ def corr(params: Dict, method_name: str, data: np.ndarray) -> np.ndarray:
         pass
 
     cp._default_memory_pool.free_all_blocks()
-    
+
     data = getattr(module, method_name)(cp.asarray(data), **params)
     return cp.asnumpy(data)

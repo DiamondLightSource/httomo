@@ -1,13 +1,8 @@
 import subprocess
 
 
-def test_tomo_standard_loaded(
-    cmd,
-    standard_data,
-    standard_loader,
-    output_folder
-):
-    cmd.pop(3) #: don't save all
+def test_tomo_standard_loaded(cmd, standard_data, standard_loader, output_folder):
+    cmd.pop(3)  #: don't save all
     cmd.insert(5, standard_data)
     cmd.insert(6, standard_loader)
     output = subprocess.check_output(cmd).decode().strip()
@@ -18,14 +13,9 @@ def test_tomo_standard_loaded(
 
 
 def test_tomo_standard_testing_pipeline_loaded(
-    cmd,
-    standard_data,
-    standard_loader,
-    testing_pipeline,
-    merge_yamls,
-    output_folder
+    cmd, standard_data, standard_loader, testing_pipeline, merge_yamls, output_folder
 ):
-    cmd.pop(3) #: don't save all
+    cmd.pop(3)  #: don't save all
     cmd.insert(5, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
     cmd.insert(6, "temp.yaml")
@@ -41,12 +31,7 @@ def test_tomo_standard_testing_pipeline_loaded(
 
 
 def test_tomo_standard_testing_pipeline_loaded_with_save_all(
-    cmd,
-    standard_data,
-    standard_loader,
-    testing_pipeline,
-    merge_yamls,
-    output_folder
+    cmd, standard_data, standard_loader, testing_pipeline, merge_yamls, output_folder
 ):
     cmd.insert(6, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
@@ -59,12 +44,7 @@ def test_tomo_standard_testing_pipeline_loaded_with_save_all(
     assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in output
 
 
-def test_k11_diad_loaded(
-    cmd,
-    diad_data,
-    diad_loader,
-    output_folder
-):
+def test_k11_diad_loaded(cmd, diad_data, diad_loader, output_folder):
     cmd.insert(6, diad_data)
     cmd.insert(7, diad_loader)
     output = subprocess.check_output(cmd).decode().strip()
@@ -75,12 +55,7 @@ def test_k11_diad_loaded(
 
 
 def test_diad_testing_pipeline_loaded(
-    cmd,
-    diad_data,
-    diad_loader,
-    testing_pipeline,
-    merge_yamls,
-    output_folder
+    cmd, diad_data, diad_loader, testing_pipeline, merge_yamls, output_folder
 ):
     cmd.insert(6, diad_data)
     merge_yamls(diad_loader, testing_pipeline)

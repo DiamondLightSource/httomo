@@ -7,10 +7,16 @@ from httomo.utils import print_once
 from httomo.data.hdf._utils.chunk import save_dataset
 
 
-def intermediate_dataset(data: numpy.ndarray, run_out_dir: Path,
-                         comm: Comm, task_no: int, package_name: str,
-                         method_name: str, dataset_name: str,
-                         recon_algorithm: str=None) -> None:
+def intermediate_dataset(
+    data: numpy.ndarray,
+    run_out_dir: Path,
+    comm: Comm,
+    task_no: int,
+    package_name: str,
+    method_name: str,
+    dataset_name: str,
+    recon_algorithm: str = None,
+) -> None:
     """Save an intermediate dataset as an hdf file.
 
     Parameters
