@@ -1,14 +1,13 @@
 import yaml
 from pathlib import Path
-from typing import Dict
 
 
 YAML_DIR = Path(__file__).parent / 'packages/'
 
 
-def get_method_info(module_path: str, method_name: str) -> Dict:
-    """Get the information about the given method that is stored in the relevant
-    YAML file in `httomo/methods_database/packages/`
+def get_method_info(module_path: str, method_name: str, attr: str):
+    """Get the information about the given method associated with `attr` that
+    is stored in the relevant YAML file in `httomo/methods_database/packages/`
 
     Parameters
     ----------
@@ -19,11 +18,15 @@ def get_method_info(module_path: str, method_name: str) -> Dict:
     method_name : str
         The name of the method function.
 
+    attr : str
+        The name of the piece of information about the method being requested
+        (for example, "pattern").
+
     Returns
     -------
-    Dict
-        A dict containing all the relevant information about the method that the
-        httomo frameworks needs.
+    TODO: Needs a "generic" type to represent anything that could be stored in
+    the YAML files in the methods database?
+        The requested piece of information about the method.
     """
     method_path = f"{module_path}.{method_name}"
     split_method_path = method_path.split('.')
@@ -39,4 +42,4 @@ def get_method_info(module_path: str, method_name: str) -> Dict:
         for key in split_method_path[1:]:
             info = info[key]
 
-    return info
+    return info[attr]

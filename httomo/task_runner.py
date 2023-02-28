@@ -746,8 +746,7 @@ def _assign_pattern_to_method(func: Callable, module_path: str,
         The function object with a `.pattern` attribute it corresponding to the
         pattern that the method requires its input data to have.
     """
-    method_info = get_method_info(module_path, method_name)
-    pattern_str = method_info['pattern']
+    pattern_str = get_method_info(module_path, method_name, 'pattern')
     if pattern_str == 'projection':
         pattern = Pattern.projection
     elif pattern_str == 'sinogram':
