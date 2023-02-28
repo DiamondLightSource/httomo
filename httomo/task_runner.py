@@ -16,6 +16,7 @@ from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.reslice import reslice
 from httomo._stats.globals import min_max_mean_std
+from httomo.methods_database.query import get_method_info
 
 
 def run_tasks(
@@ -95,6 +96,12 @@ def run_tasks(
                        f"this pipeline, is there a need for this?"
     has_reslice_warn_printed = False
     
+    # Associate patterns to method function objects
+    for i, (module_path, func, params, is_loader) in enumerate(method_funcs):
+        func = \
+            _assign_pattern_to_method(func, module_path, params['method_name'])
+        method_funcs[i] = (module_path, func, params, is_loader)
+
     # get a list with booleans to identify when reslicing needed (True) or not
     # (False).
     patterns = [f.pattern for (_, f, _, _) in method_funcs]
@@ -714,3 +721,43 @@ def _check_if_should_reslice(patterns: List[Pattern]) -> List[bool]:
              current_pattern = patterns[x]
              reslice_bool_list[x] = True
     return reslice_bool_list
+
+
+def _assign_pattern_to_method(func: Callable, module_path: str,
+                              method_name: str) -> Callable:
+    """Fetch the pattern information from the methods database in
+    `httomo/methods_database/packages` for the given method and associate that
+    pattern with the function object.
+
+    Parameters
+    ----------
+    func : Callable
+        The method function whose pattern information will be fetched.
+
+    module_path : str
+        The module path to the method function.
+
+    method_name : str
+        The name of the method function.
+
+    Returns
+    -------
+    Callable
+        The function object with a `.pattern` attribute it corresponding to the
+        pattern that the method requires its input data to have.
+    """
+    method_info = get_method_info(module_path, method_name)
+    pattern_str = method_info['pattern']
+    if pattern_str == 'projection':
+        pattern = Pattern.projection
+    elif pattern_str == 'sinogram':
+        pattern = Pattern.sinogram
+    elif pattern_str == 'all':
+        pattern = Pattern.all
+    else:
+        err_str = f"The pattern {pattern_str} that is listed for the method " \
+                  f"{module_path} is invalid."
+        raise ValueError(err_str)
+
+    func.pattern = pattern
+    return func
