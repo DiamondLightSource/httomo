@@ -8,7 +8,6 @@ from inspect import signature
 from importlib import import_module
 
 from numpy import ndarray
-import cupy as cp
 from mpi4py import MPI
 
 from httomo.utils import print_once, Pattern, _get_slicing_dim
@@ -17,6 +16,8 @@ from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.reslice import reslice
 from httomo._stats.globals import min_max_mean_std
 
+from httomo.wrappers_class import tomopy_wrapper
+from httomo.wrappers_class import httomolib_wrapper
 
 def run_tasks(
     in_file: Path,
@@ -55,12 +56,6 @@ def run_tasks(
         mkdir(run_out_dir)
     if comm.size == 1:
         ncore = multiprocessing.cpu_count() # use all available CPU cores if not an MPI run
-
-    # GPU related MPI communicators and indices
-    num_GPUs = cp.cuda.runtime.getDeviceCount()
-    gpu_id = int(comm.rank / comm.size * num_GPUs)
-    gpu_comm = comm.Split(gpu_id)
-    proc_id = f"[{gpu_id}:{gpu_comm.rank}]"
 
     # TODO: Define a list of savers which have no output dataset and so need to
     # be treated differently to other methods. Probably should be handled in a
@@ -131,7 +126,6 @@ def run_tasks(
                 (['flats'], flats),
                 (['angles', 'angles_radians'], angles),
                 (['comm'], comm),
-                (['gpu_id'], gpu_id),
                 (['out_dir'], run_out_dir)
             ]
         else:
@@ -414,6 +408,13 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
             # `tomopy.misc.corr` module are then exposed in httomo by passing a
             # `method_name` parameter to the corr() function via the YAML config
             # file.
+            
+            
+            ## USING THE WRAPPER CLASS INSTEAD
+            # TODO: needs to get the pattern without the decorators
+            wrapper_module2 = tomopy_wrapper(module_name=split_module_name[1], function_name=split_module_name[2])
+            ##
+            
             wrapper_module_name = '.'.join(split_module_name[:-1])
             wrapper_module_name = f"wrappers.{wrapper_module_name}"
             wrapper_module = import_module(wrapper_module_name)
