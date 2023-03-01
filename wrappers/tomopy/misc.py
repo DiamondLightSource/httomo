@@ -50,13 +50,13 @@ def morph(params: Dict, method_name: str, data: ndarray) -> ndarray:
         A numpy array of projections with the correction method applied.
     """
 
-    # as now this function does not require ncore parameter 
+    # as now this function does not require ncore parameter
     # TODO: not elegant, needs rethinking
     try:
         del params["ncore"]
     except:
         pass
- 
-    module = getattr(misc, 'morph')
+
+    module = getattr(misc, "morph")
     data = getattr(module, method_name)(data, **params)
     return data
