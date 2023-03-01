@@ -18,4 +18,5 @@ dependencies:
   - anaconda::ipython
   - conda-forge::tomopy
   - savu-dep::larix
+  - savu-dep::httomolib
   - savu-dep::tomobar
