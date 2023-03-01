@@ -1,5 +1,5 @@
 from typing import Dict
-
+import numpy as np
 from numpy import ndarray, swapaxes
 from mpi4py.MPI import Comm
 # TODO: Doing `from tomopy import recon` imports the function
@@ -32,6 +32,12 @@ def algorithm(params: Dict, method_name: str, data: ndarray,
     ndarray
         A numpy array containing the reconstructed volume.
     """
+    # for 360 degrees data the angular dimension will be truncated while angles are not.
+    # Truncating angles if the angular dimension has got a different size
+    angular_dim_size = np.size(data, 0)
+    if np.size(data, 0) != len(angles_radians):
+        angles_radians = angles_radians[0:angular_dim_size]
+
     module = getattr(recon, 'algorithm')
     return getattr(module,method_name)(
         data,
