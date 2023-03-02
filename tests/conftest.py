@@ -25,9 +25,11 @@ def output_folder():
 def cmd():
     return [
         sys.executable,
-        "-m", "httomo",
+        "-m",
+        "httomo",
         "--save_all",
-        "--ncore", "2",
+        "--ncore",
+        "2",
         "output_dir/",
         "task_runner",
     ]
@@ -61,7 +63,7 @@ def standard_loader():
 @pytest.fixture
 def merge_yamls():
     def _merge_yamls(*yamls) -> None:
-        '''Merge multiple yaml files into one'''
+        """Merge multiple yaml files into one"""
         data = []
         for y in yamls:
             with open(y, "r") as file_descriptor:

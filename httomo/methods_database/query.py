@@ -2,7 +2,7 @@ import yaml
 from pathlib import Path
 
 
-YAML_DIR = Path(__file__).parent / 'packages/'
+YAML_DIR = Path(__file__).parent / "packages/"
 
 
 def get_method_info(module_path: str, method_name: str, attr: str):
@@ -29,7 +29,7 @@ def get_method_info(module_path: str, method_name: str, attr: str):
         The requested piece of information about the method.
     """
     method_path = f"{module_path}.{method_name}"
-    split_method_path = method_path.split('.')
+    split_method_path = method_path.split(".")
     package_name = split_method_path[0]
     yaml_info_path = Path(YAML_DIR, f"{package_name}.yaml")
 
@@ -37,7 +37,7 @@ def get_method_info(module_path: str, method_name: str, attr: str):
         err_str = f"The YAML file {yaml_info_path} doesn't exist."
         raise ValueError(err_str)
 
-    with open(yaml_info_path, 'r') as f:
+    with open(yaml_info_path, "r") as f:
         info = yaml.safe_load(f)
         for key in split_method_path[1:]:
             info = info[key]

@@ -19,14 +19,9 @@ def read_folder(folder):
 
 
 def test_tomo_standard_testing_pipeline_output(
-    cmd,
-    standard_data,
-    standard_loader,
-    testing_pipeline,
-    output_folder,
-    merge_yamls
+    cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
 ):
-    cmd.pop(3) #: don't save all
+    cmd.pop(3)  #: don't save all
     cmd.insert(5, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
     cmd.insert(6, "temp.yaml")
@@ -37,14 +32,14 @@ def test_tomo_standard_testing_pipeline_output(
     assert len(files) == 5
 
     # check the .tif files
-    tif_files = list(filter(lambda x: '.tif' in x, files))
+    tif_files = list(filter(lambda x: ".tif" in x, files))
     assert len(tif_files) == 3
     #: check that the image size is correct
     imarray = np.array(Image.open(tif_files[0]))
     assert imarray.shape == (160, 160)
 
     #: check the generated h5 files
-    h5_files = list(filter(lambda x: '.h5' in x, files))
+    h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 2
 
     with h5py.File(h5_files[0], "r") as f:
@@ -63,12 +58,7 @@ def test_tomo_standard_testing_pipeline_output(
 
 
 def test_tomo_standard_testing_pipeline_output_with_save_all(
-    cmd,
-    standard_data,
-    standard_loader,
-    testing_pipeline,
-    output_folder,
-    merge_yamls
+    cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
 ):
     cmd.insert(6, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
@@ -79,11 +69,11 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     assert len(files) == 8
 
     # check the .tif files
-    tif_files = list(filter(lambda x: '.tif' in x, files))
+    tif_files = list(filter(lambda x: ".tif" in x, files))
     assert len(tif_files) == 3
 
     #: check the generated h5 files
-    h5_files = list(filter(lambda x: '.h5' in x, files))
+    h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 5
 
     with h5py.File(h5_files[0], "r") as f:
@@ -102,17 +92,11 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     with h5py.File(h5_files[-2], "r") as f:
         #: 4-tomopy-remove_stripe_fw-tomo.h5
         assert_allclose(np.mean(f["data"]), -0.004198, atol=1e-6)
-        np.testing.assert_almost_equal(
-            np.sum(f["data"]), -362.73358, decimal=4)
+        np.testing.assert_almost_equal(np.sum(f["data"]), -362.73358, decimal=4)
 
 
 def test_diad_testing_pipeline_output(
-    cmd,
-    diad_data,
-    diad_loader,
-    testing_pipeline,
-    output_folder,
-    merge_yamls
+    cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
 ):
     cmd.insert(6, diad_data)
     merge_yamls(diad_loader, testing_pipeline)
@@ -123,7 +107,7 @@ def test_diad_testing_pipeline_output(
     assert len(files) == 7
 
     #: check the .tif files
-    tif_files = list(filter(lambda x: '.tif' in x, files))
+    tif_files = list(filter(lambda x: ".tif" in x, files))
     assert len(tif_files) == 2
 
     #: check that the image size is correct
@@ -131,7 +115,7 @@ def test_diad_testing_pipeline_output(
     assert imarray.shape == (26, 26)
 
     #: check the generated h5 files
-    h5_files = list(filter(lambda x: '.h5' in x, files))
+    h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 5
 
     with h5py.File(h5_files[0], "r") as f:

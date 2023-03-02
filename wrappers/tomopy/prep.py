@@ -23,13 +23,14 @@ def stripe(params: Dict, method_name: str, data: ndarray) -> ndarray:
     ndarray
         A numpy array of projections with stripes removed.
     """
-    module = getattr(prep, 'stripe')
+    module = getattr(prep, "stripe")
     data = getattr(module, method_name)(data, **params)
     return data
 
 
-def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
-              darks: ndarray) -> ndarray:
+def normalize(
+    params: Dict, method_name: str, data: ndarray, flats: ndarray, darks: ndarray
+) -> ndarray:
     """Wrapper for tomopy.prep.normalize module.
 
     Parameters
@@ -51,13 +52,13 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
     ndarray
         A numpy array of normalized projections.
     """
-    module = getattr(prep, 'normalize')
+    module = getattr(prep, "normalize")
     # Some functions in `tomopy.prep.normalize` need the flats and darks, but
     # others do not, so this needs to be checked prior to passing the parameters
     # to the wrapped tomopy function
     func = getattr(module, method_name)
     sig_params = signature(func).parameters
-    if 'dark' in sig_params and 'flat' in sig_params:
+    if "dark" in sig_params and "flat" in sig_params:
         data = getattr(module, method_name)(data, flats, darks, **params)
     else:
         data = getattr(module, method_name)(data, **params)
@@ -82,7 +83,6 @@ def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:
     ndarray
         A numpy array of projections with phase-contrast enhancement.
     """
-    module = getattr(prep, 'phase')
+    module = getattr(prep, "phase")
     data = getattr(module, method_name)(data, **params)
     return data
-
