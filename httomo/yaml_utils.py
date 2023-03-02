@@ -18,7 +18,7 @@ def open_yaml_config(filepath: Path) -> List[Dict]:
         YAML file.
     """
 
-    with open(filepath, 'r') as f:
+    with open(filepath, "r") as f:
         conf = yaml.safe_load(f)
 
     # TODO: validate the YAML to ensure there are no missing fields that are
