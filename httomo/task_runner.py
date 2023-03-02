@@ -2,7 +2,7 @@ import multiprocessing
 from datetime import datetime
 from os import mkdir
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 from collections.abc import Callable
 from inspect import signature
 from importlib import import_module
@@ -15,6 +15,7 @@ from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.reslice import reslice
 from httomo._stats.globals import min_max_mean_std
+from httomo.methods_database.query import get_method_info
 
 from httomo.wrappers_class import tomopy_wrapper
 from httomo.wrappers_class import httomolib_wrapper
@@ -90,6 +91,12 @@ def run_tasks(
                        f"this pipeline, is there a need for this?"
     has_reslice_warn_printed = False
     
+    # Associate patterns to method function objects
+    for i, (module_path, func, params, is_loader) in enumerate(method_funcs):
+        func = \
+            _assign_pattern_to_method(func, module_path, params['method_name'])
+        method_funcs[i] = (module_path, func, params, is_loader)
+
     # get a list with booleans to identify when reslicing needed (True) or not
     # (False).
     patterns = [f.pattern for (_, f, _, _) in method_funcs]
@@ -177,9 +184,13 @@ def run_tasks(
             
             # Get the information describing if the method is being run only
             # once, or multiple times with different input datasets
+            #
+            # Make the input and output datasets always be lists just to be
+            # generic, and further down loop through all the datasets that the
+            # method should be applied to
             if 'data_in' in params.keys() and 'data_out' in params.keys():
-                data_in = params.pop('data_in')
-                data_out = params.pop('data_out')
+                data_in = [params.pop('data_in')]
+                data_out = [params.pop('data_out')]
             elif 'data_in_multi' in params.keys() and \
                 'data_out_multi' in params.keys():
                 data_in = params.pop('data_in_multi')
@@ -204,17 +215,10 @@ def run_tasks(
             # adding ncore argument into params
             params.update({'ncore': ncore})
 
-            # Make the input datasets a list if it's not, just to be generic and
-            # below loop through all the datasets that the method should be
-            # applied to
-            if type(data_in) is str and type(data_out) is str:
-                data_in = [data_in]
-                data_out = [data_out]
-
             # Check if method type signature requires global statistics
             req_glob_stats = 'glob_stats' in signature(func).parameters
 
-            for in_dataset, out_dataset in zip(data_in, data_out):
+            for i, in_dataset in enumerate(data_in):
                 if save_result:
                     out_dir = run_out_dir
                 else:
@@ -232,7 +236,7 @@ def run_tasks(
                     params.update({'glob_stats': stats})
 
                 _run_method(func, idx+1, package, method_name, in_dataset,
-                            out_dataset, datasets, params, httomo_params,
+                            data_out[i], datasets, params, httomo_params,
                             SAVERS_NO_DATA_OUT_PARAM, comm, out_dir=out_dir)
 
     # Print the number of reslice operations peformed in the pipeline
@@ -437,7 +441,8 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
 
 
 def _run_method(func: Callable, task_no: int, package_name: str,
-                method_name: str, in_dataset: str, out_dataset: str,
+                method_name: str, in_dataset: str,
+                out_dataset: Union[str, List[str]],
                 datasets: Dict[str, ndarray], method_params: Dict,
                 httomo_params: Dict, savers_no_data_out_param: List[str],
                 comm: MPI.Comm, out_dir: str=None) -> ndarray:
@@ -455,8 +460,8 @@ def _run_method(func: Callable, task_no: int, package_name: str,
         The name of the method to apply.
     in_dataset : str
         The name of the input dataset.
-    out_dataset : str
-        The name of the output dataset.
+    out_dataset : Union[str, List[str]]
+        The name(s) of the output dataset(s).
     datasets : Dict[str, ndarray]
         A dict containing all available datasets in the given pipeline.
     method_params : Dict
@@ -489,15 +494,28 @@ def _run_method(func: Callable, task_no: int, package_name: str,
         # kind of output
         return
     else:
-        # Run the method, then store the result in the appropriate
-        # dataset in the `datasets` dict    
-        datasets[out_dataset] = \
+        res = \
             _run_method_wrapper(func, method_name, method_params, httomo_params)
 
+    # Store the output(s) of the method in the appropriate dataset in the
+    # `datasets` dict
+    if type(res) in [list, tuple]:
+        for val, dataset in zip(res, out_dataset):
+            datasets[dataset] = val
+    else:
+        datasets[out_dataset] = res
+        
     # TODO: The dataset saving functionality only supports 3D data
     # currently, so check that the dimension of the data is 3 before
     # saving it
-    is_3d = len(datasets[out_dataset].shape) == 3
+    is_3d = False
+    # If `out_dataset` is a list, then this was a method which had a single
+    # input and multiple outputs.
+    #
+    # TODO: For now, in this case, assume that none of the results need to be
+    # saved, and instead will purely be used as inputs to other methods.
+    if not isinstance(out_dataset, list):
+        is_3d = len(datasets[out_dataset].shape) == 3
     # Save the result if necessary
     print_once(method_name, comm)
     if out_dir is not None and is_3d:
@@ -715,3 +733,42 @@ def _check_if_should_reslice(patterns: List[Pattern]) -> List[bool]:
              current_pattern = patterns[x]
              reslice_bool_list[x] = True
     return reslice_bool_list
+
+
+def _assign_pattern_to_method(func: Callable, module_path: str,
+                              method_name: str) -> Callable:
+    """Fetch the pattern information from the methods database in
+    `httomo/methods_database/packages` for the given method and associate that
+    pattern with the function object.
+
+    Parameters
+    ----------
+    func : Callable
+        The method function whose pattern information will be fetched.
+
+    module_path : str
+        The module path to the method function.
+
+    method_name : str
+        The name of the method function.
+
+    Returns
+    -------
+    Callable
+        The function object with a `.pattern` attribute it corresponding to the
+        pattern that the method requires its input data to have.
+    """
+    pattern_str = get_method_info(module_path, method_name, 'pattern')
+    if pattern_str == 'projection':
+        pattern = Pattern.projection
+    elif pattern_str == 'sinogram':
+        pattern = Pattern.sinogram
+    elif pattern_str == 'all':
+        pattern = Pattern.all
+    else:
+        err_str = f"The pattern {pattern_str} that is listed for the method " \
+                  f"{module_path} is invalid."
+        raise ValueError(err_str)
+
+    func.pattern = pattern
+    return func

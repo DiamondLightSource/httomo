@@ -6,11 +6,9 @@ from mpi4py.MPI import Comm
 from numpy import asarray, deg2rad, ndarray, arange, linspace
 
 from httomo.data.hdf._utils import load
-from httomo.utils import _parse_preview, print_once, print_rank, pattern, \
-    Pattern
+from httomo.utils import _parse_preview, print_once, print_rank
 
 
-@pattern(Pattern.projection)
 def standard_tomo(name: str, in_file: Path, data_path: str, dimension: int,
                   preview: List[Dict[str, int]], pad: int, comm: Comm,
                   image_key_path: str=None,

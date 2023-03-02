@@ -1,0 +1,20 @@
+prep:
+  phase:
+    retrieve_phase:
+      pattern: projection
+  normalize:
+    minus_log:
+      pattern: projection
+    normalize:
+      pattern: projection
+recon:
+  algorithm:
+    recon:
+      pattern: sinogram
+  rotation:
+    find_center_vo:
+      pattern: sinogram
+misc:
+  corr:
+    median_filter:
+      pattern: all
