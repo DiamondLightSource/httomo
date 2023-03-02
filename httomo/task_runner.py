@@ -72,7 +72,7 @@ def run_tasks(
 
     # Get a list of the python functions associated to the methods defined in
     # user config YAML
-    method_funcs = _get_method_funcs(yaml_config)
+    method_funcs = _get_method_funcs(yaml_config, comm)
 
     # Define dict of params that are needed by loader functions
     loader_extra_params = {
@@ -92,18 +92,18 @@ def run_tasks(
     has_reslice_warn_printed = False
     
     # Associate patterns to method function objects
-    for i, (module_path, func, params, is_loader) in enumerate(method_funcs):
+    for i, (module_path, func, func_runner, params, is_loader) in enumerate(method_funcs):
         func = \
             _assign_pattern_to_method(func, module_path, params['method_name'])
-        method_funcs[i] = (module_path, func, params, is_loader)
+        method_funcs[i] = (module_path, func, func_runner, params, is_loader)
 
     # get a list with booleans to identify when reslicing needed (True) or not
     # (False).
-    patterns = [f.pattern for (_, f, _, _) in method_funcs]
+    patterns = [f.pattern for (_, f, _, _, _) in method_funcs]
     reslice_bool_list = _check_if_should_reslice(patterns)
 
     # Run the methods
-    for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
+    for idx, (module_path, func, func_runner, params, is_loader) in enumerate(method_funcs):
         package = module_path.split('.')[0]
         method_name = params.pop('method_name')
         task_no_str = f"Running task {idx+1}"
@@ -180,7 +180,7 @@ def run_tasks(
             # Check for any extra params unrelated to tomopy but related to
             # HTTomo that should be added in
             httomo_params = \
-                _check_signature_for_httomo_params(func, possible_extra_params)            
+                _check_signature_for_httomo_params(func_runner, method_name, possible_extra_params)            
             
             # Get the information describing if the method is being run only
             # once, or multiple times with different input datasets
@@ -216,7 +216,7 @@ def run_tasks(
             params.update({'ncore': ncore})
 
             # Check if method type signature requires global statistics
-            req_glob_stats = 'glob_stats' in signature(func).parameters
+            req_glob_stats = 'glob_stats' in signature(func_runner).parameters
 
             for i, in_dataset in enumerate(data_in):
                 if save_result:
@@ -235,7 +235,7 @@ def run_tasks(
                     glob_stats[idx][in_dataset] = stats
                     params.update({'glob_stats': stats})
 
-                _run_method(func, idx+1, package, method_name, in_dataset,
+                _run_method(func_runner, idx+1, package, method_name, in_dataset,
                             data_out[i], datasets, params, httomo_params,
                             SAVERS_NO_DATA_OUT_PARAM, comm, out_dir=out_dir)
 
@@ -361,7 +361,7 @@ def _initialise_stats(yaml_config: Path) -> List[Dict]:
     return stats
 
 
-def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool]]:
+def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[Tuple[str, Callable, Dict, bool]]:
     """Gather all the python functions needed to run the defined processing
     pipeline.
 
@@ -369,7 +369,8 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
     ----------
     yaml_config : Path
         The file containing the processing pipeline info as YAML
-
+    comm : MPI.Comm
+        MPI communicator object.        
     Returns
     -------
     List[Tuple[Callable, Dict, bool]]
@@ -397,6 +398,7 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
             method_funcs.append((
                 module_name,
                 method_func,
+                None,
                 method_conf,
                 is_loader
             ))
@@ -411,24 +413,27 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
             # Different method functions that are available in the
             # `tomopy.misc.corr` module are then exposed in httomo by passing a
             # `method_name` parameter to the corr() function via the YAML config
-            # file.
+            # file.          
+                       
             
-            
-            ## USING THE WRAPPER CLASS INSTEAD
-            # TODO: needs to get the pattern without the decorators
-            wrapper_module2 = tomopy_wrapper(module_name=split_module_name[1], function_name=split_module_name[2])
+            # wrapper_module = httomolib_wrapper(split_module_name[1], split_module_name[2], comm)
             ##
             
-            wrapper_module_name = '.'.join(split_module_name[:-1])
-            wrapper_module_name = f"wrappers.{wrapper_module_name}"
-            wrapper_module = import_module(wrapper_module_name)
-            wrapper_func_name = split_module_name[-1]
-            wrapper_func = getattr(wrapper_module, wrapper_func_name)
+            #wrapper_module_name = '.'.join(split_module_name[:-1])
+            #wrapper_module_name = f"wrappers.{wrapper_module_name}"
+            #wrapper_module = import_module(wrapper_module_name)
+            
+            #wrapper_func_name = split_module_name[-1]
             method_name, method_conf = module_conf.popitem()
             method_conf['method_name'] = method_name
+            
+            wrapper_init_module = tomopy_wrapper(split_module_name[1], split_module_name[2], method_name)
+            wrapper_func = getattr(wrapper_init_module.module, method_name)
+            wrapper_method = wrapper_init_module.wrapper_method
             method_funcs.append((
                 module_name,
                 wrapper_func,
+                wrapper_method,
                 method_conf,
                 False
             ))
@@ -440,7 +445,7 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
     return method_funcs
 
 
-def _run_method(func: Callable, task_no: int, package_name: str,
+def _run_method(func_runner: Callable, task_no: int, package_name: str,
                 method_name: str, in_dataset: str,
                 out_dataset: Union[str, List[str]],
                 datasets: Dict[str, ndarray], method_params: Dict,
@@ -450,7 +455,7 @@ def _run_method(func: Callable, task_no: int, package_name: str,
 
     Parameters
     ----------
-    func : Callable
+    func_runner : Callable
         The python function that performs the method.
     task_no : int
         The number of the given task, starting at index 1.
@@ -489,13 +494,14 @@ def _run_method(func: Callable, task_no: int, package_name: str,
         httomo_params['data'] = datasets[in_dataset]
 
     if method_name in savers_no_data_out_param:
-        _run_method_wrapper(func, method_name, method_params, httomo_params)
+        _run_method_wrapper(func_runner, method_name, method_params, httomo_params)
         # Nothing more to do with output data if the saver has a special
         # kind of output
         return
     else:
         res = \
-            _run_method_wrapper(func, method_name, method_params, httomo_params)
+            _run_method_wrapper(func_runner, method_name, method_params, httomo_params)
+
 
     # Store the output(s) of the method in the appropriate dataset in the
     # `datasets` dict
@@ -545,13 +551,13 @@ def _run_loader(func: Callable, params: Dict) -> Tuple[ndarray, ndarray,
     return func(**params)
 
 
-def _run_method_wrapper(func: Callable, method_name:str, method_params: Dict,
+def _run_method_wrapper(func_runner: Callable, method_name:str, method_params: Dict,
                        httomo_params: Dict) -> ndarray:
     """Run a wrapper method function (httomolib/tomopy) in the processing pipeline.
 
     Parameters
     ----------
-    func : Callable
+    func_runner : Callable
         The python function that performs the method.
     method_name : str
         The name of the method to apply.
@@ -565,9 +571,10 @@ def _run_method_wrapper(func: Callable, method_name:str, method_params: Dict,
     ndarray
         An array containing the result of the method function.
     """
-    return func(method_params, method_name, **httomo_params)
+    return func_runner(method_name, method_params, **httomo_params)
 
 def _check_signature_for_httomo_params(func: Callable,
+                                       method_name:str,
                                        params: List[Tuple[List[str], object]]) -> Dict:
     """Check if the given method requires any parameters related to HTTomo.
 
@@ -575,6 +582,8 @@ def _check_signature_for_httomo_params(func: Callable,
     ----------
     func : Callable
         Function whose type signature is to be inspected
+    method_name : str
+        The name of the method to apply.        
 
     params : List[Tuple[List[str], object]]
         Each tuples contains a parameter name and the associated value that

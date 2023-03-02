@@ -27,7 +27,6 @@ def corr(params: Dict, method_name: str, data: ndarray) -> ndarray:
     return data
 
 
-@pattern(Pattern.sinogram)
 def morph(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for tomopy.misc.morph module.
 
