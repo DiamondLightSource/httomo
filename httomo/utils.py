@@ -141,37 +141,3 @@ def _get_slicing_dim(pattern: Pattern) -> int:
     else:
         err_str = f"An unknown pattern has been encountered {pattern}"
         raise ValueError(err_str)
-
-
-def pattern(pattern: Pattern) -> Callable:
-    """Decorator factory function for creating a decorator that takes a single
-    argument, the `pattern` to associate with the decorated function.
-
-    Parameters
-    ----------
-    pattern : Pattern
-        The `pattern` to associate with the given method function's data.
-
-    Returns
-    -------
-    Callable
-        The decorated method function with the `pattern` attribute set
-        accordingly.
-    """
-    def decorate(fn: Callable) -> Callable:
-        """Decorator for method functions to specify the `pattern` that the
-        method function expects for its input data.
-
-        Parameters
-        ----------
-        fn : Callable
-            The method function to set/mark the `pattern`.
-
-        Returns
-        -------
-        Callable
-            The decorated function with the `pattern` attribute set accordingly.
-        """
-        fn.pattern = pattern
-        return fn
-    return decorate

@@ -5,11 +5,9 @@ from numpy import ndarray
 import cupy as cp
 
 
-from httomo.utils import pattern, Pattern
 from httomolib import prep
 
 
-@pattern(Pattern.projection)
 def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
               darks: ndarray, gpu_id: int) -> ndarray:
     """Wrapper for httomolib.prep.normalize module.
@@ -50,7 +48,7 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
     data = getattr(module, method_name)(cp.asarray(data), cp.asarray(flats), cp.asarray(darks), **params)
     return cp.asnumpy(data)
 
-@pattern(Pattern.sinogram)
+
 def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray:
     """Wrapper for httomolib.prep.stripe module.
 
@@ -87,7 +85,6 @@ def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarra
     return cp.asnumpy(data)
 
 
-@pattern(Pattern.projection)
 def phase(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray:
     """Wrapper for httomolib.prep.phase module.
 

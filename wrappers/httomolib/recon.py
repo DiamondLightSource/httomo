@@ -4,16 +4,12 @@ from inspect import signature
 import numpy as np
 import cupy as cp
 from cupy import ndarray
-
-from httomo.utils import print_once
-
 from mpi4py.MPI import Comm
 
-from httomo.utils import pattern, Pattern
+from httomo.utils import print_once
 from httomolib import recon
 
 
-@pattern(Pattern.sinogram)
 def algorithm(params: Dict,
               method_name: str, 
               data: np.ndarray,
@@ -71,7 +67,6 @@ def algorithm(params: Dict,
         return data   
 
 
-@pattern(Pattern.sinogram)
 def rotation(params: Dict, method_name:str, comm: Comm, data: np.ndarray, gpu_id: int) -> float:
     """Wrapper for the httomolib.recon.rotation module.
 

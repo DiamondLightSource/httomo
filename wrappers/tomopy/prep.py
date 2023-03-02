@@ -4,9 +4,7 @@ from inspect import signature
 from numpy import ndarray
 from tomopy import prep
 
-from httomo.utils import pattern, Pattern
 
-@pattern(Pattern.sinogram)
 def stripe(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for tomopy.prep.stripe module.
 
@@ -29,7 +27,7 @@ def stripe(params: Dict, method_name: str, data: ndarray) -> ndarray:
     data = getattr(module, method_name)(data, **params)
     return data
 
-@pattern(Pattern.projection)
+
 def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
               darks: ndarray) -> ndarray:
     """Wrapper for tomopy.prep.normalize module.
@@ -65,7 +63,7 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
         data = getattr(module, method_name)(data, **params)
     return data
 
-@pattern(Pattern.projection)
+
 def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for tomopy.prep.phase module.
 

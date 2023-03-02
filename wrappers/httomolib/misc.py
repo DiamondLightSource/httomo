@@ -3,11 +3,9 @@ import numpy as np
 import cupy as cp
 from mpi4py.MPI import Comm
 
-from httomo.utils import pattern, Pattern
 from httomolib import misc
 
 
-@pattern(Pattern.all)
 def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.ndarray) -> np.ndarray:
     """Wrapper for httomolib.misc.images module.
 
@@ -40,7 +38,6 @@ def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.nd
     return data
 
 
-@pattern(Pattern.all)
 def corr(params: Dict, method_name: str, data: np.ndarray, gpu_id: int) -> np.ndarray:
     """Wrapper for httomolib.misc.corr module.
 
