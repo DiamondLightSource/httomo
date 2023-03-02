@@ -31,6 +31,7 @@ jobs:
         run: |
           conda env create httomo --file conda/environment.yml
           conda run -n httomo pip install -e .
+          conda list
 
       # run tests
       - name: Run CPU tests
