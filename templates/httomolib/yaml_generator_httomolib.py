@@ -37,7 +37,6 @@ discard_keys = [
     "comm_rank",
     "ncore",
     "out_dir",
-    "gpu_id",
     "angles",
     "flats",
     "darks",
