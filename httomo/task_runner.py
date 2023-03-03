@@ -17,8 +17,8 @@ from httomo.data.hdf._utils.reslice import reslice
 from httomo._stats.globals import min_max_mean_std
 from httomo.methods_database.query import get_method_info
 
-from httomo.wrappers_class import tomopy_wrapper
-from httomo.wrappers_class import httomolib_wrapper
+from httomo.wrappers_class import TomoPyWrapper
+#from httomo.wrappers_class import httomolib_wrapper
 
 def run_tasks(
     in_file: Path,
@@ -427,7 +427,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[Tuple[str, Call
             method_name, method_conf = module_conf.popitem()
             method_conf['method_name'] = method_name
             
-            wrapper_init_module = tomopy_wrapper(split_module_name[1], split_module_name[2], method_name)
+            wrapper_init_module = TomoPyWrapper(split_module_name[1], split_module_name[2], method_name, comm)
             wrapper_func = getattr(wrapper_init_module.module, method_name)
             wrapper_method = wrapper_init_module.wrapper_method
             method_funcs.append((

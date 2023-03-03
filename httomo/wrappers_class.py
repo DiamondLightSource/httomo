@@ -12,20 +12,24 @@ try:
         gpu_enabled = True
     except xp.cuda.runtime.CUDARuntimeError:
         import numpy as xp
-        print("CuPy is installed but GPU device inaccessible")        
+        print("CuPy is installed but GPU device inaccessible")
 except ImportError:
     import numpy as xp
     print("CuPy is not installed")
     
-class wrappers:
+class BaseWrapper:
     """A parent class for all wrappers in httomo that use external modules.
     """
     def __init__(self,
-                 module_name: str = None,
-                 function_name: str = None,
-                 method_name: str = None):
-        self.function_name = function_name
-        
+                 module_name: str,
+                 function_name: str,
+                 method_name: str,
+                 comm: Comm):
+        self.comm = comm
+        if gpu_enabled:
+            self.num_GPUs = xp.cuda.runtime.getDeviceCount()
+            self.gpu_id = int(comm.rank / comm.size * self.num_GPUs)
+
     def _execute_generic(self,
                          method_name: str,
                          params: Dict,
@@ -33,12 +37,12 @@ class wrappers:
         """The generic wrapper to execute functions for external packages.
 
         Args:
-            method_name (str): The name of the method to use
-            params (Dict): A dict containing independent of httomo params        
-            data (xp.ndarray): a numpy or cupy data array
+            method_name (str): The name of the method to use.
+            params (Dict): A dict containing independent of httomo params.
+            data (xp.ndarray): a numpy or cupy data array.
 
         Returns:
-            xp.ndarray: A numpy or cupy array containing processed data.           
+            xp.ndarray: A numpy or cupy array containing processed data.
         """
         # gets module executed
         data = getattr(self.module, method_name)(data, **params)
@@ -53,14 +57,14 @@ class wrappers:
         """For normalisation function we also require flats and darks.
 
         Args:
-            method_name (str): The name of the method to use
-            params (Dict): A dict containing independent of httomo params
-            data (xp.ndarray): a numpy or cupy data array
-            flats (xp.ndarray): a numpy or cupy flats array
-            darks (xp.ndarray): a numpy or darks flats array
+            method_name (str): The name of the method to use.
+            params (Dict): A dict containing independent of httomo params.
+            data (xp.ndarray): a numpy or cupy data array.
+            flats (xp.ndarray): a numpy or cupy flats array.
+            darks (xp.ndarray): a numpy or darks flats array.
 
         Returns:
-            xp.ndarray: a numpy or cupy array of normalised data
+            xp.ndarray: a numpy or cupy array of the normalised data.
         """
         data = getattr(self.module, method_name)(data, flats, darks, **params)
         return data
@@ -73,13 +77,13 @@ class wrappers:
         """The reconstruction wrapper.
 
         Args:
-            method_name (str): The name of the method to use
-            params (Dict): A dict containing independent of httomo params
-            data (xp.ndarray): a numpy or cupy data array
-            angles_radians (np.ndarray): a numpy array of projection angles
+            method_name (str): The name of the method to use.
+            params (Dict): A dict containing independent of httomo params.
+            data (xp.ndarray): a numpy or cupy data array.
+            angles_radians (np.ndarray): a numpy array of projection angles.
 
         Returns:
-            xp.ndarray: a numpy or cupy array of the reconstructed data
+            xp.ndarray: a numpy or cupy array of the reconstructed data.
         """
         # for 360 degrees data the angular dimension will be truncated while angles are not.
         # Truncating angles if the angular dimension has got a different size
@@ -88,70 +92,86 @@ class wrappers:
             angles_radians = angles_radians[0:angular_dim_size]
                 
         data = getattr(self.module, method_name)(data, angles_radians, **params)
-        return data   
+        return data
+
+    def _execute_rotation(self, 
+                          method_name: str,
+                          params: Dict,
+                          data: xp.ndarray) -> float:
+        """The center of rotation wrapper.
+
+        Args:
+            method_name (str): The name of the method to use.
+            params (Dict): A dict containing independent of httomo params.
+            data (xp.ndarray): a numpy or cupy data array.
+
+        Returns:
+            float: The center of rotation.
+        """
+        rot_center = 0
+        mid_rank = int(round(self.comm.size / 2) + 0.1)
+        if self.comm.rank == mid_rank:
+            if params['ind'] == 'mid':
+                params['ind'] = data.shape[1] // 2 # get the middle slice
+            rot_center = getattr(self.module, method_name)(data, **params)
+        rot_center = self.comm.bcast(rot_center, root=mid_rank)
+        return rot_center
     
-class tomopy_wrapper(wrappers):
+class TomoPyWrapper(BaseWrapper):
     """A class that wraps TomoPy functions for httomo
     """
     def __init__(self,
-                 module_name: str = None,
-                 function_name: str = None,
-                 method_name: str = None):      
-        super().__init__(module_name, function_name, method_name)
+                 module_name: str,
+                 function_name: str,
+                 method_name: str,
+                 comm: Comm):
+        super().__init__(module_name, function_name, method_name, comm)
         
-        self.wrapper_method = super(tomopy_wrapper, self)._execute_generic
-        self.function_name = function_name
-        self.method_name = method_name
-        if module_name == "misc":
-            from tomopy import misc
-            self.module = getattr(misc, function_name)
-        if module_name == "prep":
-            from tomopy import prep
-            self.module = getattr(prep, function_name)
+        # if not changed bellow the generic wrapper will be executed
+        self.wrapper_method = super(TomoPyWrapper, self)._execute_generic
+
+        if module_name in ["misc", "prep", "recon"]:
+            from importlib import import_module
+            self.module = getattr(import_module("tomopy." + module_name), function_name)
             if function_name == "normalize":
                 func = getattr(self.module, method_name)
                 sig_params = signature(func).parameters
                 if 'dark' in sig_params and 'flat' in sig_params:
-                    self.wrapper_method = super(tomopy_wrapper, self)._execute_normalize
-        if module_name == "recon":
-            from tomopy import recon
-            # a workaround to get the correct module, TomoPy incosistency?
-            from importlib import import_module
-            recon = import_module('tomopy.recon')
-            self.module = getattr(recon, function_name)
+                    self.wrapper_method = super(TomoPyWrapper, self)._execute_normalize                
             if function_name == "algorithm":
-                self.wrapper_method = super(tomopy_wrapper, self)._execute_reconstruction
+                self.wrapper_method = super(TomoPyWrapper, self)._execute_reconstruction
+            if function_name == "rotation":
+                self.wrapper_method = super(TomoPyWrapper, self)._execute_rotation
 
-class httomolib_wrapper:
+#TODO: generilise HttomolibWrapper wrappers for GPU runs
+
+class HttomolibWrapper(BaseWrapper):
     """A class that wraps httomolib functions for httomo
     """
     def __init__(self,
                  module_name: str,
                  function_name: str,
+                 method_name: str,
                  comm: Comm):
-        # set the GPU id
-        self.comm = comm
-        if gpu_enabled:
-            self.num_GPUs = xp.cuda.runtime.getDeviceCount()
-            self.gpu_id = int(comm.rank / comm.size * self.num_GPUs)
-        if module_name == "misc":
-            from httomolib import misc
-            self.module = getattr(misc, function_name) # imports the module
-        elif module_name == "prep":
-            from httomolib import prep
-            self.module = getattr(prep, function_name) # imports the module
-        elif module_name == "recon":
-            from httomolib import recon
-            self.module = getattr(recon, function_name) # imports the module
-        else:
-            err_str = f"An unknown module name was encountered: " \
-                      f"{module_name}"
-            raise ValueError(err_str)
+        super().__init__(module_name, function_name, method_name, comm)
 
-# TODO: execute method accepts only numpy arrays but it should be CPU/GPU agnostic
-# OR there should be two separate methods execute_numpy and execute_cupy
-# Any advice? 
+        # if not changed bellow the generic wrapper will be executed
+        self.wrapper_method = super(HttomolibWrapper, self)._execute_generic
 
+        if module_name in ["misc", "prep", "recon"]:
+            from importlib import import_module
+            self.module = getattr(import_module("httomolib." + module_name), function_name)
+            if function_name == "normalize":
+                func = getattr(self.module, method_name)
+                sig_params = signature(func).parameters
+                if 'dark' in sig_params and 'flat' in sig_params:
+                    self.wrapper_method = super(HttomolibWrapper, self)._execute_normalize                
+            if function_name == "algorithm":
+                self.wrapper_method = super(HttomolibWrapper, self)._execute_reconstruction
+            if function_name == "rotation":
+                self.wrapper_method = super(HttomolibWrapper, self)._execute_rotation
+
+"""
     def execute(self,
                 method_name: str,
                 params: Dict,
@@ -168,3 +188,4 @@ class httomolib_wrapper:
         # excute the method
         data = getattr(self.module, method_name)(data, **params)
         return data
+"""
