@@ -15,7 +15,6 @@ def algorithm(
     method_name: str,
     data: np.ndarray,
     angles_radians: np.ndarray,
-    gpu_id: int,
 ) -> np.ndarray:
     """Wrapper for httomolib.recon.algorithm module.
 
@@ -30,8 +29,6 @@ def algorithm(
         A numpy array of projections.
     angles_radians : ndarray
         A numpy array of angles in radians.
-    gpu_id : int
-        A GPU device index to execute operation on.
 
     Returns
     -------
@@ -41,7 +38,6 @@ def algorithm(
     module = getattr(recon, "algorithm")
 
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()
 
     # for 360 degrees data the angular dimension will be truncated while angles are not.
     # Truncating angles if the angular dimension has got a different size
@@ -59,24 +55,24 @@ def algorithm(
             pass
         if params["algorithm"] == "FBP3D_device":
             data = getattr(module, method_name)(
-                cp.asarray(data), angles=angles_radians, gpu_id=gpu_id, **params
+                cp.asarray(data), angles=angles_radians, **params
             )
             return cp.asnumpy(data)
         else:
             data = getattr(module, method_name)(
-                data, angles=angles_radians, gpu_id=gpu_id, **params
+                data, angles=angles_radians, **params
             )
             return data
 
     if method_name == "reconstruct_tomopy":
         data = getattr(module, method_name)(
-            data, angles=angles_radians, gpu_id=gpu_id, **params
+            data, angles=angles_radians, **params
         )
         return data
 
 
 def rotation(
-    params: Dict, method_name: str, comm: Comm, data: np.ndarray, gpu_id: int
+    params: Dict, method_name: str, comm: Comm, data: np.ndarray
 ) -> float:
     """Wrapper for the httomolib.recon.rotation module.
 
@@ -107,7 +103,6 @@ def rotation(
         pass
 
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()
 
     method_func = getattr(module, method_name)
     rot_center = 0
