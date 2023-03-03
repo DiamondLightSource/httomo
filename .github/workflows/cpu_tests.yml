@@ -1,0 +1,40 @@
+name: httomo CPU tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v2
+
+      # setup Python 3.9
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      # install dependencies with conda
+      - name: Install dependencies with Conda
+        run: |
+          conda env create httomo --file conda/environment.yml
+          conda run -n httomo pip install -e .
+          conda list
+
+      # run tests
+      - name: Run CPU tests
+        run: |
+          conda run -n httomo pip install pytest
+          conda run -n httomo pytest
