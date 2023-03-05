@@ -27,10 +27,13 @@ jobs:
           python-version: 3.9
 
       # install dependencies with conda
-      - name: Install dependencies with Conda
+      - name: Install dependencies with mamba
         run: |
-          conda env create httomo --file conda/environment.yml
+          conda install -c conda-forge mamba
+          mamba env create --name httomo --file conda/environment.yml
+          mamba activate httomo
           conda run -n httomo pip install -e .
+          conda run -n httomo pip install httomolib
           conda list
 
       # run tests
