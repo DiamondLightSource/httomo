@@ -8,8 +8,13 @@ import cupy as cp
 from httomolib import prep
 
 
-def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
-              darks: ndarray, gpu_id: int) -> ndarray:
+def normalize(
+    params: Dict,
+    method_name: str,
+    data: ndarray,
+    flats: ndarray,
+    darks: ndarray,
+) -> ndarray:
     """Wrapper for httomolib.prep.normalize module.
 
     Parameters
@@ -25,31 +30,30 @@ def normalize(params: Dict, method_name: str, data: ndarray, flats: ndarray,
         A numpy array containing the flatfield projections.
     darks : ndarray
         A numpy array containing the dark projections.
-    gpu_id : int
-        A GPU device index to execute operation on.
 
     Returns
     -------
     ndarray
         A numpy array of normalized projections.
     """
-    module = getattr(prep, 'normalize')
+    module = getattr(prep, "normalize")
 
-    # as now this function does not require ncore parameter 
+    # as now this function does not require ncore parameter
     # TODO: not elegant, needs rethinking
     try:
         del params["ncore"]
     except:
         pass
-    
+
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()
-    
-    data = getattr(module, method_name)(cp.asarray(data), cp.asarray(flats), cp.asarray(darks), **params)
+
+    data = getattr(module, method_name)(
+        cp.asarray(data), cp.asarray(flats), cp.asarray(darks), **params
+    )
     return cp.asnumpy(data)
 
 
-def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray:
+def stripe(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for httomolib.prep.stripe module.
 
     Parameters
@@ -61,31 +65,28 @@ def stripe(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarra
         The name of the method to use in  httomolib.prep.phase.
     data : ndarray
         A numpy array of projections.
-    gpu_id : int
-        A GPU device index to execute operation on.        
 
     Returns
     -------
     ndarray
         A numpy array of projections with the stripes removed.
     """
-    module = getattr(prep, 'stripe')
+    module = getattr(prep, "stripe")
 
-    # as now this function does not require ncore parameter 
+    # as now this function does not require ncore parameter
     # TODO: not elegant, needs rethinking
     try:
         del params["ncore"]
     except:
         pass
-    
+
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()
-    
+
     data = getattr(module, method_name)(cp.asarray(data), **params)
     return cp.asnumpy(data)
 
 
-def phase(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray:
+def phase(params: Dict, method_name: str, data: ndarray) -> ndarray:
     """Wrapper for httomolib.prep.phase module.
 
     Parameters
@@ -103,17 +104,16 @@ def phase(params: Dict, method_name: str, data: ndarray, gpu_id: int) -> ndarray
     ndarray
         A numpy array of projections with phase-contrast enhancement.
     """
-    module = getattr(prep, 'phase')
-    
-    # as now this function does not require ncore parameter 
+    module = getattr(prep, "phase")
+
+    # as now this function does not require ncore parameter
     # TODO: not elegant, needs rethinking
     try:
         del params["ncore"]
     except:
         pass
-    
+
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()
-    
+
     data = getattr(module, method_name)(cp.asarray(data), **params)
     return cp.asnumpy(data)

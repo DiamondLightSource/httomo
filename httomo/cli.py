@@ -25,8 +25,7 @@ class GlobalOptions:
 @click.group(invoke_without_command=True)
 @click.argument("in_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument(
-    "yaml_config",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path)
+    "yaml_config", type=click.Path(exists=True, dir_okay=False, path_type=Path)
 )
 @click.argument(
     "out_dir",
@@ -54,7 +53,7 @@ class GlobalOptions:
 @click.option(
     "--save_all",
     is_flag=True,
-    help="Save intermediate datasets for all tasks in the pipeline."
+    help="Save intermediate datasets for all tasks in the pipeline.",
 )
 @click.version_option(version=__version__, message="%(version)s")
 @click.pass_context
@@ -66,7 +65,7 @@ def main(
     dimension: int,
     pad: int,
     ncore: int,
-    save_all: bool
+    save_all: bool,
 ):
     """httomo: High Throughput Tomography."""
     ctx.obj = GlobalOptions(
@@ -77,11 +76,10 @@ def main(
         click.echo(main.get_help(ctx))
 
 
-@main.command('task_runner')
+@main.command("task_runner")
 @click.pass_obj
 def task_runner(global_options: GlobalOptions):
-    """Run the processing pipeline defined in the given YAML config file.
-    """
+    """Run the processing pipeline defined in the given YAML config file."""
     run_tasks(
         global_options.in_file,
         global_options.yaml_config,
@@ -89,5 +87,5 @@ def task_runner(global_options: GlobalOptions):
         global_options.dimension,
         global_options.pad,
         global_options.ncore,
-        global_options.save_all
+        global_options.save_all,
     )

@@ -1,12 +1,13 @@
 from typing import Dict
 import numpy as np
-import cupy as cp
 from mpi4py.MPI import Comm
 
 from httomolib import misc
 
 
-def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.ndarray) -> np.ndarray:
+def images(
+    params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.ndarray
+) -> np.ndarray:
     """Wrapper for httomolib.misc.images module.
 
     Parameters
@@ -26,19 +27,19 @@ def images(params: Dict, method_name: str, out_dir: str, comm: Comm, data: np.nd
     Returns
     -------
     """
-    # as now this function does not require ncore parameter 
+    # as now this function does not require ncore parameter
     # TODO: not elegant, needs rethinking
     try:
         del params["ncore"]
     except:
         pass
-    
-    module = getattr(misc, 'images')
-    data = getattr(module, method_name)(data, out_dir, comm_rank = comm.rank, **params)
+
+    module = getattr(misc, "images")
+    data = getattr(module, method_name)(data, out_dir, comm_rank=comm.rank, **params)
     return data
 
 
-def corr(params: Dict, method_name: str, data: np.ndarray, gpu_id: int) -> np.ndarray:
+def corr(params: Dict, method_name: str, data: np.ndarray) -> np.ndarray:
     """Wrapper for httomolib.misc.corr module.
 
     Parameters
@@ -50,17 +51,16 @@ def corr(params: Dict, method_name: str, data: np.ndarray, gpu_id: int) -> np.nd
         The name of the method to use in  httomolib.prep.phase.
     data : ndarray
         A numpy array of projections.
-    gpu_id : int
-        A GPU device index to execute operation on.        
 
     Returns
     -------
     ndarray
         A numpy array of corrected data.
     """
-    module = getattr(misc, 'corr')
+    import cupy as cp
+    module = getattr(misc, "corr")
 
-    # as now this function does not require ncore parameter 
+    # as now this function does not require ncore parameter
     # TODO: not elegant, needs rethinking
     try:
         del params["ncore"]
@@ -68,7 +68,6 @@ def corr(params: Dict, method_name: str, data: np.ndarray, gpu_id: int) -> np.nd
         pass
 
     cp._default_memory_pool.free_all_blocks()
-    cp.cuda.Device(gpu_id).use()
-    
+
     data = getattr(module, method_name)(cp.asarray(data), **params)
     return cp.asnumpy(data)
