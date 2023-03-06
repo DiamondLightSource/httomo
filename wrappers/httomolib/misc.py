@@ -58,6 +58,7 @@ def corr(params: Dict, method_name: str, data: np.ndarray) -> np.ndarray:
         A numpy array of corrected data.
     """
     import cupy as cp
+
     module = getattr(misc, "corr")
 
     # as now this function does not require ncore parameter

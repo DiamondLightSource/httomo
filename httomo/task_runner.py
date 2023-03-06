@@ -18,7 +18,8 @@ from httomo._stats.globals import min_max_mean_std
 from httomo.methods_database.query import get_method_info
 
 from httomo.wrappers_class import TomoPyWrapper
-#from httomo.wrappers_class import httomolib_wrapper
+from httomo.wrappers_class import HttomolibWrapper
+
 
 def run_tasks(
     in_file: Path,
@@ -96,9 +97,10 @@ def run_tasks(
     has_reslice_warn_printed = False
 
     # Associate patterns to method function objects
-    for i, (module_path, func, func_runner, params, is_loader) in enumerate(method_funcs):
-        func = \
-            _assign_pattern_to_method(func, module_path, params['method_name'])
+    for i, (module_path, func, func_runner, params, is_loader) in enumerate(
+        method_funcs
+    ):
+        func = _assign_pattern_to_method(func, module_path, params["method_name"])
         method_funcs[i] = (module_path, func, func_runner, params, is_loader)
 
     # get a list with booleans to identify when reslicing needed (True) or not
@@ -107,9 +109,11 @@ def run_tasks(
     reslice_bool_list = _check_if_should_reslice(patterns)
 
     # Run the methods
-    for idx, (module_path, func, func_runner, params, is_loader) in enumerate(method_funcs):
-        package = module_path.split('.')[0]
-        method_name = params.pop('method_name')
+    for idx, (module_path, func, func_runner, params, is_loader) in enumerate(
+        method_funcs
+    ):
+        package = module_path.split(".")[0]
+        method_name = params.pop("method_name")
         task_no_str = f"Running task {idx+1}"
         pattern_str = f"(pattern={func.pattern.name})"
         print_once(f"{task_no_str} {pattern_str}: {method_name}...", comm)
@@ -140,11 +144,11 @@ def run_tasks(
             # Define all params relevant to httomo that a wrapper function might
             # need
             possible_extra_params = [
-                (['darks'], darks),
-                (['flats'], flats),
-                (['angles', 'angles_radians'], angles),
-                (['comm'], comm),
-                (['out_dir'], run_out_dir)
+                (["darks"], darks),
+                (["flats"], flats),
+                (["angles", "angles_radians"], angles),
+                (["comm"], comm),
+                (["out_dir"], run_out_dir),
             ]
         else:
             save_result = False
@@ -189,8 +193,9 @@ def run_tasks(
 
             # Check for any extra params unrelated to tomopy but related to
             # HTTomo that should be added in
-            httomo_params = \
-                _check_signature_for_httomo_params(func_runner, method_name, possible_extra_params)            
+            httomo_params = _check_signature_for_httomo_params(
+                func_runner, method_name, possible_extra_params
+            )
 
             # Get the information describing if the method is being run only
             # once, or multiple times with different input datasets
@@ -225,7 +230,7 @@ def run_tasks(
             params.update({"ncore": ncore})
 
             # Check if method type signature requires global statistics
-            req_glob_stats = 'glob_stats' in signature(func_runner).parameters
+            req_glob_stats = "glob_stats" in signature(func_runner).parameters
 
             for i, in_dataset in enumerate(data_in):
                 if save_result:
@@ -388,7 +393,9 @@ def _initialise_stats(yaml_config: Path) -> List[Dict]:
     return stats
 
 
-def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[Tuple[str, Callable, Dict, bool]]:
+def _get_method_funcs(
+    yaml_config: Path, comm: MPI.Comm
+) -> List[Tuple[str, Callable, Dict, bool]]:
     """Gather all the python functions needed to run the defined processing
     pipeline.
 
@@ -397,7 +404,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[Tuple[str, Call
     yaml_config : Path
         The file containing the processing pipeline info as YAML
     comm : MPI.Comm
-        MPI communicator object.        
+        MPI communicator object.
     Returns
     -------
     List[Tuple[Callable, Dict, bool]]
@@ -413,57 +420,38 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[Tuple[str, Call
     for task_conf in yaml_conf:
         module_name, module_conf = task_conf.popitem()
         split_module_name = module_name.split(".")
+        method_name, method_conf = module_conf.popitem()
+        method_conf["method_name"] = method_name
+
         if split_module_name[0] == "httomo":
+            # deal with httomo loaders
             if "loaders" in module_name:
                 is_loader = True
             else:
                 is_loader = False
             module = import_module(module_name)
-            method_name, method_conf = module_conf.popitem()
-            method_conf["method_name"] = method_name
             method_func = getattr(module, method_name)
-
-            method_funcs.append((
-                module_name,
-                method_func,
-                None,
-                method_conf,
-                is_loader
-            ))
-        elif (split_module_name[0] == 'tomopy') or (split_module_name[0] == 'httomolib'):
-            # The structure of wrapper functions for tomopy and httomolib is that 
-            # each module in tomopy/httomolib is represented by a function in httomo.
-            #
-            # For example, the module `tomopy.misc.corr` module (which contains
-            # the `median_filter()` method function) is represented in httomo in
-            # the `wrappers.tomopy.misc` module as the `corr()` function.
-            #
-            # Different method functions that are available in the
-            # `tomopy.misc.corr` module are then exposed in httomo by passing a
-            # `method_name` parameter to the corr() function via the YAML config
-            # file.   
-            
-            # wrapper_module = httomolib_wrapper(split_module_name[1], split_module_name[2], comm)
-            ##
-            
-            #wrapper_module_name = '.'.join(split_module_name[:-1])
-            #wrapper_module_name = f"wrappers.{wrapper_module_name}"
-            #wrapper_module = import_module(wrapper_module_name)
-            
-            #wrapper_func_name = split_module_name[-1]
-            method_name, method_conf = module_conf.popitem()
-            method_conf['method_name'] = method_name
-            
-            wrapper_init_module = TomoPyWrapper(split_module_name[1], split_module_name[2], method_name, comm)
+            method_funcs.append(
+                (module_name, method_func, None, method_conf, is_loader)
+            )
+        elif (split_module_name[0] == "tomopy") or (
+            split_module_name[0] == "httomolib"
+        ):
+            if split_module_name[0] == "tomopy":
+                # initialise the TomoPy wrapper class
+                wrapper_init_module = TomoPyWrapper(
+                    split_module_name[1], split_module_name[2], method_name, comm
+                )
+            if split_module_name[0] == "httomolib":
+                # initialise the httomolib wrapper class
+                wrapper_init_module = HttomolibWrapper(
+                    split_module_name[1], split_module_name[2], method_name, comm
+                )
             wrapper_func = getattr(wrapper_init_module.module, method_name)
             wrapper_method = wrapper_init_module.wrapper_method
-            method_funcs.append((
-                module_name,
-                wrapper_func,
-                wrapper_method,
-                method_conf,
-                False
-            ))
+            method_funcs.append(
+                (module_name, wrapper_func, wrapper_method, method_conf, False)
+            )
         else:
             err_str = (
                 f"An unknown module name was encountered: " f"{split_module_name[0]}"
@@ -535,8 +523,9 @@ def _run_method(
         # kind of output
         return
     else:
-        res = \
-            _run_method_wrapper(func_runner, method_name, method_params, httomo_params)
+        res = _run_method_wrapper(
+            func_runner, method_name, method_params, httomo_params
+        )
 
     # Store the output(s) of the method in the appropriate dataset in the
     # `datasets` dict
@@ -592,8 +581,9 @@ def _run_loader(
     return func(**params)
 
 
-def _run_method_wrapper(func_runner: Callable, method_name:str, method_params: Dict,
-                       httomo_params: Dict) -> ndarray:
+def _run_method_wrapper(
+    func_runner: Callable, method_name: str, method_params: Dict, httomo_params: Dict
+) -> ndarray:
     """Run a wrapper method function (httomolib/tomopy) in the processing pipeline.
 
     Parameters
@@ -615,17 +605,17 @@ def _run_method_wrapper(func_runner: Callable, method_name:str, method_params: D
     return func_runner(method_name, method_params, **httomo_params)
 
 
-def _check_signature_for_httomo_params(func_runner: Callable,
-                                       method_name:str,
-                                       params: List[Tuple[List[str], object]]) -> Dict:
+def _check_signature_for_httomo_params(
+    func_runner: Callable, method_name: str, params: List[Tuple[List[str], object]]
+) -> Dict:
     """Check if the given method requires any parameters related to HTTomo.
 
     Parameters
     ----------
-    func : Callable
+    func_runner : Callable
         Function whose type signature is to be inspected
     method_name : str
-        The name of the method to apply.        
+        The name of the method to apply.
 
     params : List[Tuple[List[str], object]]
         Each tuples contains a parameter name and the associated value that
@@ -640,7 +630,7 @@ def _check_signature_for_httomo_params(func_runner: Callable,
         method function
     """
     extra_params = {}
-    sig_params = signature(func).parameters
+    sig_params = signature(func_runner).parameters
     for names, val in params:
         for name in names:
             if name in sig_params:
