@@ -59,7 +59,6 @@ def open_yaml_config(filepath: Path) -> List[Dict]:
         A list of dicts, where each dict represents a task in the user config
         YAML file.
     """
-
     with open(filepath, 'r') as f:
         conf = yaml.load(f, Loader=_get_loader())
 

@@ -44,3 +44,5 @@ coverage.xml
 cov.xml
 .pytest_cache/
 .mypy_cache/
+output_dir/
+temp.yaml

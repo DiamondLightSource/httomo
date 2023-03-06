@@ -2,10 +2,9 @@ from typing import Any
 from mpi4py.MPI import Comm
 from typing import Tuple, List, Dict, Callable
 from enum import Enum
- 
-def print_once(output: Any,
-               comm: Comm,
-               colour: str="green") -> None:
+
+
+def print_once(output: Any, comm: Comm, colour: str = "green") -> None:
     """Print an output from rank zero only.
 
     Parameters
@@ -18,25 +17,26 @@ def print_once(output: Any,
         The colour of the output.
     """
     if colour == "blue":
-        CSTART = '\33[94m'
-        CEND = '\033[0m'
+        CSTART = "\33[94m"
+        CEND = "\033[0m"
     elif colour == "cyan":
-        CSTART = '\33[96m'
-        CEND = '\033[0m'      
+        CSTART = "\33[96m"
+        CEND = "\033[0m"
     elif colour == "green":
-        CSTART = '\33[92m'
-        CEND = '\033[0m'
+        CSTART = "\33[92m"
+        CEND = "\033[0m"
     elif colour == "yellow":
-        CSTART = '\33[93m'
-        CEND = '\033[0m'
+        CSTART = "\33[93m"
+        CEND = "\033[0m"
     elif colour == "red":
-        CSTART = '\33[91m'
-        CEND = '\033[0m'        
+        CSTART = "\33[91m"
+        CEND = "\033[0m"
     else:
-        CSTART = '\33[92m'
-        CEND = '\033[0m'
+        CSTART = "\33[92m"
+        CEND = "\033[0m"
     if comm.rank == 0:
         print(CSTART + output + CEND)
+
 
 def print_rank(output: Any, comm: Comm) -> None:
     """Print an output with rank prefix.
@@ -50,8 +50,10 @@ def print_rank(output: Any, comm: Comm) -> None:
     """
     print(f"[{comm.rank}] {output}")
 
-def _parse_preview(preview: List[Dict[str, int]],
-                   data_shape: Tuple[int], data_indices: List[int]) -> str:
+
+def _parse_preview(
+    preview: List[Dict[str, int]], data_shape: Tuple[int], data_indices: List[int]
+) -> str:
     """Parse the python list that represents the preview parameter in the loader
     into a string that the helper loader functions in
     `httomo.data.hdf._utils.load` can understand.
@@ -73,7 +75,7 @@ def _parse_preview(preview: List[Dict[str, int]],
     str
         A string that represents the preview parameter from the YAML config.
     """
-    preview_str = ''
+    preview_str = ""
 
     # Pad the `preview` list with None until it is the same length as the number
     # of dimensions in the data, since the user may not have specified a preview
@@ -95,11 +97,11 @@ def _parse_preview(preview: List[Dict[str, int]],
                 # function more generic.
                 preview_str += f"{data_indices[0]}:{data_indices[-1]+1}"
             else:
-                preview_str += ':'
+                preview_str += ":"
         else:
-            start = slice_info['start'] if 'start' in slice_info.keys() else None
-            stop = slice_info['stop'] if 'stop' in slice_info.keys() else None
-            step = slice_info['step'] if 'step' in slice_info.keys() else None
+            start = slice_info["start"] if "start" in slice_info.keys() else None
+            stop = slice_info["stop"] if "stop" in slice_info.keys() else None
+            step = slice_info["step"] if "step" in slice_info.keys() else None
             start_str = f"{start if start is not None else ''}"
             stop_str = f"{stop if stop is not None else ''}"
             step_str = f"{step if step is not None else ''}"
@@ -108,7 +110,7 @@ def _parse_preview(preview: List[Dict[str, int]],
         # Depending on if this is the last dimension in the data or not, a comma
         # may or may not be needed
         if idx < len(preview) - 1:
-            preview_str += ', '
+            preview_str += ", "
 
     return preview_str
 
@@ -117,6 +119,7 @@ class Pattern(Enum):
     """Enum for the different slicing-orientations/"patterns" that tomographic
     data can have.
     """
+
     projection = 0
     sinogram = 1
     all = 2
@@ -141,37 +144,3 @@ def _get_slicing_dim(pattern: Pattern) -> int:
     else:
         err_str = f"An unknown pattern has been encountered {pattern}"
         raise ValueError(err_str)
-
-
-def pattern(pattern: Pattern) -> Callable:
-    """Decorator factory function for creating a decorator that takes a single
-    argument, the `pattern` to associate with the decorated function.
-
-    Parameters
-    ----------
-    pattern : Pattern
-        The `pattern` to associate with the given method function's data.
-
-    Returns
-    -------
-    Callable
-        The decorated method function with the `pattern` attribute set
-        accordingly.
-    """
-    def decorate(fn: Callable) -> Callable:
-        """Decorator for method functions to specify the `pattern` that the
-        method function expects for its input data.
-
-        Parameters
-        ----------
-        fn : Callable
-            The method function to set/mark the `pattern`.
-
-        Returns
-        -------
-        Callable
-            The decorated function with the `pattern` attribute set accordingly.
-        """
-        fn.pattern = pattern
-        return fn
-    return decorate

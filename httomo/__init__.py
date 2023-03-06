@@ -7,5 +7,3 @@ try:
 except PackageNotFoundError:
     # package not installed
     pass
-
-

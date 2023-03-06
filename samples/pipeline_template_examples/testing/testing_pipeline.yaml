@@ -1,20 +1,3 @@
-- httomo.data.hdf.loaders:
-    standard_tomo:
-      name: tomo
-      data_path: entry1/tomo_entry/data/data
-      image_key_path: entry1/tomo_entry/instrument/detector/image_key
-      preview:
-        - 
-        - start: 30
-          stop: 60
-        - 
-      pad: 0
-- tomopy.misc.corr:
-    median_filter:
-      data_in: tomo
-      data_out: tomo
-      size: 3
-      axis: 0
 - tomopy.prep.normalize:
     normalize:
       data_in: tomo
@@ -24,17 +7,6 @@
     minus_log:
       data_in: tomo
       data_out: tomo
-- tomopy.recon.rotation:
-    find_center_vo:
-      data_in: tomo
-      data_out: cor
-      ind: null
-      smin: -50
-      smax: 50
-      srad: 6
-      step: 0.25
-      ratio: 0.5
-      drop: 20
 - tomopy.prep.stripe:
     remove_stripe_fw:
       data_in: tomo
@@ -43,6 +15,17 @@
       wname: db5
       sigma: 2
       pad: true
+- tomopy.recon.rotation:
+    find_center_vo:
+      data_in: tomo
+      data_out: cor
+      ind: mid
+      smin: -50
+      smax: 50
+      srad: 6
+      step: 0.25
+      ratio: 0.5
+      drop: 20
 - tomopy.recon.algorithm:
     recon:
       data_in: tomo
@@ -52,13 +35,6 @@
       algorithm: gridrec
       init_recon: null
       #additional parameters': AVAILABLE
-# - httomolib.recon.algorithm:
-#     reconstruct_tomopy:
-#       data_in: tomo
-#       data_out: tomo
-#       center: cor
-#       algorithm: FBP
-#       proj_type: strip      
 - httomolib.misc.images:
     save_to_images:
       data_in: tomo
