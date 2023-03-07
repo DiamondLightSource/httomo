@@ -8,6 +8,11 @@ from shutil import rmtree
 import pytest
 import yaml
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "mpi: mark test to run in an MPI environment"
+    )
+
 
 @pytest.fixture
 def output_folder():
@@ -72,3 +77,4 @@ def merge_yamls():
             yaml.dump(data, file_descriptor)
 
     return _merge_yamls
+
