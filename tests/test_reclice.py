@@ -11,12 +11,12 @@ import pytest
     "current_slice_dim, next_slice_dim",
     [(1, 2), (2, 1), (1, 3), (2, 3), (3, 1), (3, 2)],
     ids=[
-        "sino2proj",
         "proj2sino",
-        "sino2third",
+        "sino2proj",
         "proj2third",
-        "third2sino",
+        "sino2third",
         "third2proj",
+        "third2sino",
     ],
 )
 @pytest.mark.parametrize(
