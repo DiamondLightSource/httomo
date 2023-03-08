@@ -9,6 +9,7 @@ from httomo.utils import print_once
 gpu_enabled = False
 try:
     import cupy as xp
+
     try:
         xp.cuda.Device(0).compute_capability
         gpu_enabled = True  # CuPy is installed and GPU is available
@@ -33,13 +34,10 @@ class BaseWrapper:
             self.num_GPUs = xp.cuda.runtime.getDeviceCount()
             self.gpu_id = int(comm.rank / comm.size * self.num_GPUs)
             xp._default_memory_pool.free_all_blocks()
-            xp.cuda.Device(self.gpu_id).use() # use a particular GPU by its id
+            xp.cuda.Device(self.gpu_id).use()  # use a particular GPU by its id
 
     def _execute_generic(
-        self,
-        method_name: str,
-        params: Dict,
-        data: xp.ndarray
+        self, method_name: str, params: Dict, data: xp.ndarray
     ) -> xp.ndarray:
         """The generic wrapper to execute functions for external packages.
 
@@ -51,9 +49,9 @@ class BaseWrapper:
         Returns:
             xp.ndarray: A numpy or cupy array containing processed data.
         """
-        #TODO: deal with ncore more accurately 
+        # TODO: deal with ncore more accurately
         params.pop("ncore", None)  #: silently remove `ncore` param.
-        
+
         if gpu_enabled:
             if self.cupyrun:
                 # the method accepts CuPy arrays for the GPU processing
@@ -73,7 +71,7 @@ class BaseWrapper:
         params: Dict,
         data: xp.ndarray,
         flats: xp.ndarray,
-        darks: xp.ndarray
+        darks: xp.ndarray,
     ) -> xp.ndarray:
         """Normalisation-specific wrapper when flats and darks are required.
 
@@ -87,9 +85,9 @@ class BaseWrapper:
         Returns:
             xp.ndarray: a numpy or cupy array of the normalised data.
         """
-        #TODO: deal with ncore more accurately 
+        # TODO: deal with ncore more accurately
         params.pop("ncore", None)  #: silently remove `ncore` param.
-                
+
         if gpu_enabled:
             if self.cupyrun:
                 # the method accepts CuPy arrays for the GPU processing
@@ -103,8 +101,8 @@ class BaseWrapper:
                 data = xp.asnumpy(data)
                 flats = xp.asnumpy(flats)
                 darks = xp.asnumpy(darks)
-                
-        data = getattr(self.module, method_name)(data, flats, darks, **params)            
+
+        data = getattr(self.module, method_name)(data, flats, darks, **params)
         return data
 
     def _execute_reconstruction(
@@ -112,7 +110,7 @@ class BaseWrapper:
         method_name: str,
         params: Dict,
         data: xp.ndarray,
-        angles_radians: np.ndarray
+        angles_radians: np.ndarray,
     ) -> xp.ndarray:
         """The reconstruction wrapper.
 
@@ -124,10 +122,10 @@ class BaseWrapper:
 
         Returns:
             xp.ndarray: a numpy or cupy array of the reconstructed data.
-        """        
-        #TODO: deal with ncore more accurately 
+        """
+        # TODO: deal with ncore more accurately
         params.pop("ncore", None)  #: silently remove `ncore` param.
-        
+
         if gpu_enabled:
             if self.cupyrun:
                 # the method accepts CuPy arrays for the GPU processing
@@ -136,13 +134,13 @@ class BaseWrapper:
                     data = xp.asarray(data)
             else:
                 # the method doesn't accept CuPy arrays
-                data = xp.asnumpy(data)        
-       
+                data = xp.asnumpy(data)
+
         # for 360 degrees data the angular dimension will be truncated while angles are not.
         # Truncating angles if the angular dimension has got a different size
         if data.shape[0] != len(angles_radians):
-            angles_radians = angles_radians[0:data.shape[0]]
-            
+            angles_radians = angles_radians[0 : data.shape[0]]
+
         data = getattr(self.module, method_name)(data, angles_radians, **params)
         return data
 
@@ -159,9 +157,9 @@ class BaseWrapper:
         Returns:
             float: The center of rotation.
         """
-        #TODO: deal with ncore more accurately 
+        # TODO: deal with ncore more accurately
         params.pop("ncore", None)  #: silently remove `ncore` param.
-        
+
         if gpu_enabled:
             if self.cupyrun:
                 # the method accepts CuPy arrays for the GPU processing
@@ -171,7 +169,7 @@ class BaseWrapper:
             else:
                 # the method doesn't accept CuPy arrays
                 data = xp.asnumpy(data)
-        
+
         method_func = getattr(self.module, method_name)
         rot_center = 0
         overlap = 0
@@ -182,7 +180,9 @@ class BaseWrapper:
             if params["ind"] == "mid":
                 params["ind"] = data.shape[1] // 2  # get the middle slice
             if method_name == "find_center_360":
-                (rot_center, overlap, side, overlap_position) = method_func(data, **params)
+                (rot_center, overlap, side, overlap_position) = method_func(
+                    data, **params
+                )
             else:
                 rot_center = method_func(data, **params)
 
@@ -194,6 +194,7 @@ class BaseWrapper:
         )
         return rot_center
 
+
 class TomoPyWrapper(BaseWrapper):
     """A class that wraps TomoPy functions for httomo"""
 
@@ -202,7 +203,7 @@ class TomoPyWrapper(BaseWrapper):
     ):
         super().__init__(module_name, function_name, method_name, comm)
 
-        # if not changed bellow the generic wrapper will be executed        
+        # if not changed bellow the generic wrapper will be executed
         self.wrapper_method = super()._execute_generic
 
         if module_name in ["misc", "prep", "recon"]:
@@ -218,7 +219,7 @@ class TomoPyWrapper(BaseWrapper):
                 self.wrapper_method = super()._execute_reconstruction
             if function_name == "rotation":
                 self.wrapper_method = super()._execute_rotation
-        
+
         # As for TomoPy ver. 1.13 it is not possible to pass a CuPy array to the function
         # directly, therefore we set the flag explicitly
         self.cupyrun = False
@@ -255,7 +256,7 @@ class HttomolibWrapper(BaseWrapper):
 
         # httomolib can include GPU/CuPy methods as as well as CPU ones. Here
         # we check if the method can accept CuPy arrays.
-        
+
         # get the docstring of a method in order to check the I/O requirements
         get_method_docs = inspect.getdoc(getattr(self.module, method_name))
         # if the CuPy array mentioned in the docstring then we will enable
@@ -280,7 +281,7 @@ class HttomolibWrapper(BaseWrapper):
             None: returns None.
         """
         params.pop("ncore", None)  #: silently remove `ncore` param.
-        
+
         if gpu_enabled:
             data = getattr(self.module, method_name)(
                 xp.asnumpy(data), out_dir, comm_rank=comm.rank, **params
@@ -290,23 +291,3 @@ class HttomolibWrapper(BaseWrapper):
                 data, out_dir, comm_rank=comm.rank, **params
             )
         return None
-
-
-"""
-    def execute(self,
-                method_name: str,
-                params: Dict,
-                data: xp.ndarray):
-        # get the docstring in order to check the CuPy dependency
-        get_method_docs = inspect.getdoc(getattr(self.module, method_name))
-        # if GPU is enabled and we need the method to be run on the GPU
-        if gpu_enabled and "cp.ndarray" in get_method_docs:
-            xp._default_memory_pool.free_all_blocks()
-            xp.cuda.Device(self.gpu_id).use() # use a particular GPU by its id
-            with xp.cuda.Device(self.gpu_id):
-                data = xp.asarray(data) # move the data to a particular device
-                        
-        # excute the method
-        data = getattr(self.module, method_name)(data, **params)
-        return data
-"""
