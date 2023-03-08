@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from mpi4py import MPI
 from httomo.data.hdf._utils.chunk import get_data_shape
@@ -73,3 +74,31 @@ def test_reslice(tmp_path, full_shape, current_slice_dim, next_slice_dim):
         elif current_slice_dim == 3:
             expected[:, :, start:stop] *= r
     np.testing.assert_array_equal(expected, newdata)
+
+
+@pytest.mark.mpi
+@pytest.mark.perf
+def test_reslice_performance(tmp_path):
+    comm = MPI.COMM_WORLD
+
+    # make sure all instances use the same directory
+    dirname = str(tmp_path)
+    dirname = comm.bcast(dirname)
+
+    full_shape = (1801, 5, 2560)
+    current_slice_dim = 1
+    next_slice_dim = 2
+    start = round(full_shape[current_slice_dim - 1] / comm.size * comm.rank)
+    stop = round(full_shape[current_slice_dim - 1] / comm.size * (comm.rank + 1))
+    in_shape = np.copy(full_shape)
+    in_shape[current_slice_dim - 1] = stop - start
+    data = np.ones(in_shape, dtype=np.float32) * comm.rank
+
+    # reslice 
+    start = time.perf_counter_ns()
+    for _ in range(3):
+        reslice(data, dirname, current_slice_dim, next_slice_dim, comm)
+    stop = time.perf_counter_ns()
+    duration_ms = float(time.perf_counter_ns() - start) * 1e-6 / 3
+
+    assert "performance in ms" == duration_ms
