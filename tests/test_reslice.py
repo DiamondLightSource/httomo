@@ -85,20 +85,16 @@ def test_reslice_performance(tmp_path):
     dirname = str(tmp_path)
     dirname = comm.bcast(dirname)
 
-    full_shape = (1801, 5, 2560)
+    process_shape = (1801, 15, 2560)
     current_slice_dim = 1
     next_slice_dim = 2
-    start = round(full_shape[current_slice_dim - 1] / comm.size * comm.rank)
-    stop = round(full_shape[current_slice_dim - 1] / comm.size * (comm.rank + 1))
-    in_shape = np.copy(full_shape)
-    in_shape[current_slice_dim - 1] = stop - start
-    data = np.ones(in_shape, dtype=np.float32) * comm.rank
+    data = np.ones(process_shape, dtype=np.float32) * comm.rank
 
     # reslice 
     start = time.perf_counter_ns()
-    for _ in range(3):
+    for _ in range(10):
         reslice(data, dirname, current_slice_dim, next_slice_dim, comm)
-    stop = time.perf_counter_ns()
-    duration_ms = float(time.perf_counter_ns() - start) * 1e-6 / 3
+
+    duration_ms = float(time.perf_counter_ns() - start) * 1e-6 / 10
 
     assert "performance in ms" == duration_ms
