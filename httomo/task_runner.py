@@ -234,7 +234,6 @@ def run_tasks(
                 if should_reslice:
                     resliced_data, _ = reslice(
                         datasets[in_dataset],
-                        run_out_dir,
                         current_slice_dim,
                         next_slice_dim,
                         comm,

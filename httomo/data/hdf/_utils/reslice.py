@@ -9,7 +9,6 @@ from httomo.utils import print_once
 
 def reslice(
     data: numpy.ndarray,
-    run_out_dir: Path,
     current_slice_dim: int,
     next_slice_dim: int,
     comm: Comm,
@@ -21,8 +20,6 @@ def reslice(
     ----------
     data : numpy.ndarray
         The data to be re-sliced.
-    run_out_dir : Path
-        The output directory to write the hdf5 file to.
     current_slice_dim : int
         The dimension along which the data is currently sliced.
     next_slice_dim : int
