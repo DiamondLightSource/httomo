@@ -37,7 +37,10 @@ class BaseWrapper:
             xp.cuda.Device(self.gpu_id).use()  # use a particular GPU by its id
 
     def _execute_generic(
-        self, method_name: str, params: Dict, data: xp.ndarray
+        self, method_name: str,
+        params: Dict,
+        data: xp.ndarray,
+        reslice_ahead: bool
     ) -> xp.ndarray:
         """The generic wrapper to execute functions for external packages.
 
@@ -45,6 +48,7 @@ class BaseWrapper:
             method_name (str): The name of the method to use.
             params (Dict): A dict containing independent of httomo params.
             data (xp.ndarray): a numpy or cupy data array.
+            reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
 
         Returns:
             xp.ndarray: A numpy or cupy array containing processed data.
@@ -62,8 +66,12 @@ class BaseWrapper:
                 # the method doesn't accept CuPy arrays
                 data = xp.asnumpy(data)
 
-        data = getattr(self.module, method_name)(data, **params)
-        return data
+        data = getattr(self.module, method_name)(data, **params)        
+        if reslice_ahead and gpu_enabled:
+            # reslice ahead, bring data back to numpy array
+            return xp.asnumpy(data)
+        else:
+            return data        
 
     def _execute_normalize(
         self,
@@ -72,6 +80,7 @@ class BaseWrapper:
         data: xp.ndarray,
         flats: xp.ndarray,
         darks: xp.ndarray,
+        reslice_ahead: bool
     ) -> xp.ndarray:
         """Normalisation-specific wrapper when flats and darks are required.
 
@@ -81,6 +90,7 @@ class BaseWrapper:
             data (xp.ndarray): a numpy or cupy data array.
             flats (xp.ndarray): a numpy or cupy flats array.
             darks (xp.ndarray): a numpy or darks flats array.
+            reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
 
         Returns:
             xp.ndarray: a numpy or cupy array of the normalised data.
@@ -101,9 +111,13 @@ class BaseWrapper:
                 data = xp.asnumpy(data)
                 flats = xp.asnumpy(flats)
                 darks = xp.asnumpy(darks)
-
+        
         data = getattr(self.module, method_name)(data, flats, darks, **params)
-        return data
+        if reslice_ahead and gpu_enabled:
+            # reslice ahead, bring data back to numpy array
+            return xp.asnumpy(data)
+        else:
+            return data
 
     def _execute_reconstruction(
         self,
@@ -111,6 +125,7 @@ class BaseWrapper:
         params: Dict,
         data: xp.ndarray,
         angles_radians: np.ndarray,
+        reslice_ahead: bool       
     ) -> xp.ndarray:
         """The reconstruction wrapper.
 
@@ -119,6 +134,7 @@ class BaseWrapper:
             params (Dict): A dict containing independent of httomo params.
             data (xp.ndarray): a numpy or cupy data array.
             angles_radians (np.ndarray): a numpy array of projection angles.
+            reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
 
         Returns:
             xp.ndarray: a numpy or cupy array of the reconstructed data.
@@ -142,10 +158,17 @@ class BaseWrapper:
             angles_radians = angles_radians[0 : data.shape[0]]
 
         data = getattr(self.module, method_name)(data, angles_radians, **params)
-        return data
-
+        if reslice_ahead and gpu_enabled:
+            # reslice ahead, bring data back to numpy array
+            return xp.asnumpy(data)
+        else:
+            return data
+        
     def _execute_rotation(
-        self, method_name: str, params: Dict, data: xp.ndarray
+        self, 
+        method_name: str, 
+        params: Dict, 
+        data: xp.ndarray,
     ) -> float:
         """The center of rotation wrapper.
 
@@ -254,8 +277,8 @@ class HttomolibWrapper(BaseWrapper):
             if function_name == "rotation":
                 self.wrapper_method = super()._execute_rotation
 
-        # httomolib can include GPU/CuPy methods as as well as CPU ones. Here
-        # we check if the method can accept CuPy arrays.
+        # httomolib can include GPU/CuPy methods as as well as the CPU ones. Here
+        # we check if the method can accept CuPy arrays by looking into docstrings.
 
         # get the docstring of a method in order to check the I/O requirements
         get_method_docs = inspect.getdoc(getattr(self.module, method_name))

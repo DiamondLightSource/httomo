@@ -40,7 +40,6 @@
       data_out: tomo
       center: cor
       objsize: null
-      algorithm: FBP3D_host
 - httomolib.misc.corr:
     median_filter3d_cupy:
       data_in: tomo
