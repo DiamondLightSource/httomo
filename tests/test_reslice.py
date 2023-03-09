@@ -97,4 +97,7 @@ def test_reslice_performance(tmp_path):
 
     duration_ms = float(time.perf_counter_ns() - start) * 1e-6 / 10
 
-    assert "performance in ms" == duration_ms
+    duration_ms = comm.reduce(duration_ms, MPI.MAX)
+
+    if comm.rank == 0:
+        assert "performance in ms" == duration_ms
