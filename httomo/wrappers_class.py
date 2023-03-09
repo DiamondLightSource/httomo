@@ -37,10 +37,7 @@ class BaseWrapper:
             xp.cuda.Device(self.gpu_id).use()  # use a particular GPU by its id
 
     def _execute_generic(
-        self, method_name: str,
-        params: Dict,
-        data: xp.ndarray,
-        reslice_ahead: bool
+        self, method_name: str, params: Dict, data: xp.ndarray, reslice_ahead: bool
     ) -> xp.ndarray:
         """The generic wrapper to execute functions for external packages.
 
@@ -66,12 +63,12 @@ class BaseWrapper:
                 # the method doesn't accept CuPy arrays
                 data = xp.asnumpy(data)
 
-        data = getattr(self.module, method_name)(data, **params)        
+        data = getattr(self.module, method_name)(data, **params)
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
         else:
-            return data        
+            return data
 
     def _execute_normalize(
         self,
@@ -80,7 +77,7 @@ class BaseWrapper:
         data: xp.ndarray,
         flats: xp.ndarray,
         darks: xp.ndarray,
-        reslice_ahead: bool
+        reslice_ahead: bool,
     ) -> xp.ndarray:
         """Normalisation-specific wrapper when flats and darks are required.
 
@@ -111,7 +108,7 @@ class BaseWrapper:
                 data = xp.asnumpy(data)
                 flats = xp.asnumpy(flats)
                 darks = xp.asnumpy(darks)
-        
+
         data = getattr(self.module, method_name)(data, flats, darks, **params)
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
@@ -125,7 +122,7 @@ class BaseWrapper:
         params: Dict,
         data: xp.ndarray,
         angles_radians: np.ndarray,
-        reslice_ahead: bool       
+        reslice_ahead: bool,
     ) -> xp.ndarray:
         """The reconstruction wrapper.
 
@@ -163,11 +160,11 @@ class BaseWrapper:
             return xp.asnumpy(data)
         else:
             return data
-        
+
     def _execute_rotation(
-        self, 
-        method_name: str, 
-        params: Dict, 
+        self,
+        method_name: str,
+        params: Dict,
         data: xp.ndarray,
     ) -> float:
         """The center of rotation wrapper.

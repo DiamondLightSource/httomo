@@ -186,14 +186,18 @@ def run_tasks(
                 reslice_counter += 1
                 current_slice_dim = _get_slicing_dim(method_funcs[idx - 1][1].pattern)
                 next_slice_dim = _get_slicing_dim(func.pattern)
-            
+
             # the GPU wrapper should be aware if the reslice is needed to convert the result to numpy
-            reslice_ahead = reslice_bool_list[idx+1] if idx < len(reslice_bool_list)-1 else 'False'
+            reslice_ahead = (
+                reslice_bool_list[idx + 1]
+                if idx < len(reslice_bool_list) - 1
+                else "False"
+            )
             if idx == 1:
                 possible_extra_params.append((["reslice_ahead"], reslice_ahead))
             else:
                 possible_extra_params[-1] = (["reslice_ahead"], reslice_ahead)
-            
+
             if reslice_counter > 1 and not has_reslice_warn_printed:
                 print_once(reslice_warn_str, comm=comm, colour="red")
                 has_reslice_warn_printed = True
@@ -554,7 +558,7 @@ def _run_method(
     if not isinstance(out_dataset, list):
         is_3d = len(datasets[out_dataset].shape) == 3
     # Save the result if necessary
-    #print_once(method_name, comm)
+    # print_once(method_name, comm)
     if out_dir is not None and is_3d:
         intermediate_dataset(
             datasets[out_dataset],
