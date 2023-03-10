@@ -209,7 +209,7 @@ class BaseWrapper:
             self.comm,
             colour="cyan",
         )
-        return np.float32(rot_center)
+        return rot_center
 
 
 class TomoPyWrapper(BaseWrapper):
