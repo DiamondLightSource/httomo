@@ -2,7 +2,7 @@
     find_center_360:
       data_in: tomo
       data_out: cor, overlap, side, overlap_position
-      ind: null
+      sino_360: REQUIRED
       win_width: 10
       side: null
       denoise: true

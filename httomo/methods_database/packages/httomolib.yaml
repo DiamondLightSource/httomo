@@ -42,5 +42,5 @@ recon:
   algorithm:
     reconstruct_tomobar:
       pattern: sinogram
-    reconstruct_tomopy:
+    reconstruct_tomopy_astra:
       pattern: sinogram

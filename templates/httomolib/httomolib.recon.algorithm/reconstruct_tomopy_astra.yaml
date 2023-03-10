@@ -1,0 +1,8 @@
+- httomolib.recon.algorithm:
+    reconstruct_tomopy_astra:
+      data_in: tomo
+      data_out: tomo
+      center: null
+      algorithm: FBP_CUDA
+      iterations: 1
+      proj_type: cuda

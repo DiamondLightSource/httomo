@@ -40,6 +40,7 @@ discard_keys = [
     "angles",
     "flats",
     "darks",
+    "gpu_id",
 ]  # discard from parameters list
 no_data_out_modules = ["save_to_images"]  # discard data_out from certain modules
 # change_data_out_modules = ['find_center_vo_cupy'] # change the data_out to cor

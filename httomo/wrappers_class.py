@@ -50,8 +50,9 @@ class BaseWrapper:
         Returns:
             xp.ndarray: A numpy or cupy array containing processed data.
         """
-        # TODO: deal with ncore more accurately
-        params.pop("ncore", None)  #: silently remove `ncore` param.
+        # set the correct GPU ID if it is required
+        if "gpu_id" in params:
+            params["gpu_id"] = self.gpu_id
 
         if gpu_enabled:
             if self.cupyrun:
@@ -92,9 +93,6 @@ class BaseWrapper:
         Returns:
             xp.ndarray: a numpy or cupy array of the normalised data.
         """
-        # TODO: deal with ncore more accurately
-        params.pop("ncore", None)  #: silently remove `ncore` param.
-
         if gpu_enabled:
             if self.cupyrun:
                 # the method accepts CuPy arrays for the GPU processing
@@ -136,8 +134,9 @@ class BaseWrapper:
         Returns:
             xp.ndarray: a numpy or cupy array of the reconstructed data.
         """
-        # TODO: deal with ncore more accurately
-        params.pop("ncore", None)  #: silently remove `ncore` param.
+        # set the correct GPU ID if it is required
+        if "gpu_id" in params:
+            params["gpu_id"] = self.gpu_id
 
         if gpu_enabled:
             if self.cupyrun:
@@ -177,8 +176,6 @@ class BaseWrapper:
         Returns:
             float: The center of rotation.
         """
-        # TODO: deal with ncore more accurately
-        params.pop("ncore", None)  #: silently remove `ncore` param.
 
         if gpu_enabled:
             if self.cupyrun:
@@ -212,7 +209,7 @@ class BaseWrapper:
             self.comm,
             colour="cyan",
         )
-        return rot_center
+        return np.float32(rot_center)
 
 
 class TomoPyWrapper(BaseWrapper):
@@ -300,8 +297,6 @@ class HttomolibWrapper(BaseWrapper):
         Returns:
             None: returns None.
         """
-        params.pop("ncore", None)  #: silently remove `ncore` param.
-
         if gpu_enabled:
             data = getattr(self.module, method_name)(
                 xp.asnumpy(data), out_dir, comm_rank=comm.rank, **params

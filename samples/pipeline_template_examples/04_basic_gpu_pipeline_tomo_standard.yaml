@@ -40,12 +40,6 @@
       data_out: tomo
       center: cor
       objsize: null
-- httomolib.misc.corr:
-    median_filter3d_cupy:
-      data_in: tomo
-      data_out: tomo
-      kernel_size: 3
-      dif: 0.0
 - httomolib.misc.images:
     save_to_images:
       data_in: tomo

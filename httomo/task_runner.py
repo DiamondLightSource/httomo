@@ -116,7 +116,7 @@ def run_tasks(
         method_name = params.pop("method_name")
         task_no_str = f"Running task {idx+1}"
         pattern_str = f"(pattern={func.pattern.name})"
-        print_once(f"{task_no_str} {pattern_str}: {method_name}...", comm)
+        print_once(f"{task_no_str} {pattern_str}: {method_name} ({package})...", comm)
         if is_loader:
             params.update(loader_extra_params)
 
@@ -237,8 +237,13 @@ def run_tasks(
             # datasets
             params.update(dataset_params)
 
-            # adding ncore argument into params
-            params.update({"ncore": ncore})
+            # check if the module needs the ncore parameter and add it
+            if "ncore" in signature(func).parameters:
+                params.update({"ncore": ncore})
+            # check if the module needs the gpu_id parameter and flag it to add in the wrapper
+            gpu_id_par = "gpu_id" in signature(func).parameters
+            if gpu_id_par:
+                params.update({"gpu_id": gpu_id_par})
 
             # Check if method type signature requires global statistics
             req_glob_stats = "glob_stats" in signature(func_runner).parameters
