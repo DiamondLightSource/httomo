@@ -36,6 +36,8 @@ prep:
     retrieve_phase:
       pattern: projection
   stripe:
+    remove_all_stripe:
+      pattern: sinogram  
     remove_stripe_fw:
       pattern: sinogram
     remove_stripe_ti:

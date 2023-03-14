@@ -1,6 +1,7 @@
 from typing import Dict
 import numpy as np
 import inspect
+from mpi4py import MPI
 from mpi4py.MPI import Comm
 from inspect import signature
 from httomo.utils import print_once
@@ -30,9 +31,10 @@ class BaseWrapper:
         self, module_name: str, function_name: str, method_name: str, comm: Comm
     ):
         self.comm = comm
+        local_comm = comm.Split_type(MPI.COMM_TYPE_SHARED)
         if gpu_enabled:
             self.num_GPUs = xp.cuda.runtime.getDeviceCount()
-            self.gpu_id = int(comm.rank / comm.size * self.num_GPUs)
+            self.gpu_id = local_comm.rank % self.num_GPUs
             xp._default_memory_pool.free_all_blocks()
             xp.cuda.Device(self.gpu_id).use()  # use a particular GPU by its id
 
@@ -165,7 +167,7 @@ class BaseWrapper:
         method_name: str,
         params: Dict,
         data: xp.ndarray,
-    ) -> float:
+    ) -> tuple:
         """The center of rotation wrapper.
 
         Args:
@@ -174,7 +176,7 @@ class BaseWrapper:
             data (xp.ndarray): a numpy or cupy data array.
 
         Returns:
-            float: The center of rotation.
+            tuple: The center of rotation and other parameters if it is 360 sinogram.
         """
 
         if gpu_enabled:
@@ -203,14 +205,28 @@ class BaseWrapper:
             else:
                 rot_center = method_func(data, **params)
 
-        rot_center = self.comm.bcast(rot_center, root=mid_rank)
-        print_once(
-            "The center of rotation for 180 degrees sinogram is {}".format(rot_center),
-            self.comm,
-            colour="cyan",
-        )
-        return rot_center
-
+        if method_name == "find_center_vo_cupy":
+            rot_center = self.comm.bcast(rot_center, root=mid_rank)
+            print_once(
+                "The center of rotation for 180 degrees sinogram is {}".format(
+                    rot_center
+                ),
+                self.comm,
+                colour="cyan",
+            )
+            return rot_center
+        if method_name == "find_center_360":
+            (rot_center, overlap, side, overlap_position) = self.comm.bcast(
+                (rot_center, overlap, side, overlap_position), root=mid_rank
+            )
+            print_once(
+                "The center of rotation for 360 degrees sinogram is {}, overlap {}, side {} and overlap position {}".format(
+                    rot_center, overlap, side, overlap_position
+                ),
+                self.comm,
+                colour="cyan",
+            )
+            return (rot_center, overlap, side, overlap_position)
 
 class TomoPyWrapper(BaseWrapper):
     """A class that wraps TomoPy functions for httomo"""
