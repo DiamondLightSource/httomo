@@ -24,13 +24,15 @@ from httomolib.misc.images import save_to_images
 # TODO: Define a list of savers which have no output dataset and so need to
 # be treated differently to other methods. Probably should be handled in a
 # more robust way than this workaround.
-SAVERS_NO_DATA_OUT_PARAM = ['save_to_images']
+SAVERS_NO_DATA_OUT_PARAM = ["save_to_images"]
 
-reslice_warn_str = f"WARNING: Reslicing is performed more than once in this " \
-                   f"pipeline, is there a need for this?"
+reslice_warn_str = (
+    f"WARNING: Reslicing is performed more than once in this "
+    f"pipeline, is there a need for this?"
+)
 # Hardcoded string that is used to check if a method is in a reconstruction
 # module or not
-RECON_MODULE_MATCH = 'recon.algorithm'
+RECON_MODULE_MATCH = "recon.algorithm"
 MAX_SWEEPS = 1
 
 
@@ -114,8 +116,10 @@ def run_tasks(
     no_of_sweeps = sum(map(_check_params_for_sweep, params))
 
     if no_of_sweeps > MAX_SWEEPS:
-        err_str = f"There are {no_of_sweeps} parameter sweeps in the " \
-                  f"pipeline, but a maximum of {MAX_SWEEPS} is supported."
+        err_str = (
+            f"There are {no_of_sweeps} parameter sweeps in the "
+            f"pipeline, but a maximum of {MAX_SWEEPS} is supported."
+        )
         raise ValueError(err_str)
 
     # Run the methods
@@ -160,15 +164,27 @@ def run_tasks(
             ]
         else:
             # adding ncore argument into params
-            params.update({'ncore': ncore})
+            params.update({"ncore": ncore})
 
-            reslice_counter, has_reslice_warn_printed, glob_stats[idx] = \
-                 _run_method(idx, save_all, module_path, package, method_name,
-                             params, possible_extra_params, len(method_funcs),
-                             method_funcs[idx][1], method_funcs[idx-1][1],
-                             datasets, run_out_dir, glob_stats[idx], comm,
-                             reslice_counter, has_reslice_warn_printed,
-                             reslice_bool_list)
+            reslice_counter, has_reslice_warn_printed, glob_stats[idx] = _run_method(
+                idx,
+                save_all,
+                module_path,
+                package,
+                method_name,
+                params,
+                possible_extra_params,
+                len(method_funcs),
+                method_funcs[idx][1],
+                method_funcs[idx - 1][1],
+                datasets,
+                run_out_dir,
+                glob_stats[idx],
+                comm,
+                reslice_counter,
+                has_reslice_warn_printed,
+                reslice_bool_list,
+            )
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
@@ -377,7 +393,7 @@ def _run_method(
     comm: MPI.Comm,
     reslice_counter: int,
     has_reslice_warn_printed: bool,
-    reslice_bool_list: List[bool]
+    reslice_bool_list: List[bool],
 ) -> Tuple[bool, bool]:
     """Run a method function in the processing pipeline.
 
@@ -426,8 +442,9 @@ def _run_method(
         Contains the `reslice_counter` and `has_reslice_warn_printed` values to
         enable the information to persist across method executions.
     """
-    save_result = _check_save_result(task_idx, no_of_tasks, module_path,
-                                     save_all, params.pop('save_result', None))
+    save_result = _check_save_result(
+        task_idx, no_of_tasks, module_path, save_all, params.pop("save_result", None)
+    )
 
     # Check if the input dataset should be resliced before the task runs
     should_reslice = reslice_bool_list[task_idx]
@@ -437,23 +454,21 @@ def _run_method(
         next_slice_dim = _get_slicing_dim(current_func.pattern)
 
     if reslice_counter > 1 and not has_reslice_warn_printed:
-        print_once(reslice_warn_str, comm=comm, colour='red')
+        print_once(reslice_warn_str, comm=comm, colour="red")
         has_reslice_warn_printed = True
 
     # Check for any extra params unrelated to tomopy but related to
     # HTTomo that should be added in
-    httomo_params = \
-        _check_signature_for_httomo_params(current_func, misc_params)
+    httomo_params = _check_signature_for_httomo_params(current_func, misc_params)
 
     # Get the information describing if the method is being run only
     # once, or multiple times with different input datasets
-    if 'data_in' in params.keys() and 'data_out' in params.keys():
-        data_in = [params.pop('data_in')]
-        data_out = [params.pop('data_out')]
-    elif 'data_in_multi' in params.keys() and \
-        'data_out_multi' in params.keys():
-        data_in = params.pop('data_in_multi')
-        data_out = params.pop('data_out_multi')
+    if "data_in" in params.keys() and "data_out" in params.keys():
+        data_in = [params.pop("data_in")]
+        data_out = [params.pop("data_out")]
+    elif "data_in_multi" in params.keys() and "data_out_multi" in params.keys():
+        data_in = params.pop("data_in_multi")
+        data_out = params.pop("data_out_multi")
     else:
         # TODO: This error reporting is possibly better handled by
         # schema validation of the user config YAML
@@ -461,7 +476,7 @@ def _run_method(
             err_str = "Invalid in/out dataset parameters"
             raise ValueError(err_str)
         else:
-            data_in = [params.pop('data_in')]
+            data_in = [params.pop("data_in")]
             data_out = [None]
 
     # Check if the method function's params require any datasets stored
@@ -472,7 +487,7 @@ def _run_method(
     params.update(dataset_params)
 
     # Check if method type signature requires global statistics
-    req_glob_stats = 'glob_stats' in signature(current_func).parameters
+    req_glob_stats = "glob_stats" in signature(current_func).parameters
 
     # Check if a parameter sweep is defined for any of the method's
     # parameters
@@ -493,7 +508,7 @@ def _run_method(
         #   sweep from a previous method in the pipeline
         if method_name in SAVERS_NO_DATA_OUT_PARAM:
             if current_param_sweep:
-                err_str = f'Parameters sweeps on savers is not supported'
+                err_str = f"Parameters sweeps on savers is not supported"
                 raise ValueError(err_str)
             else:
                 if type(datasets[in_dataset]) is list:
@@ -527,16 +542,20 @@ def _run_method(
         # TODO: Not yet able to run parameter sweeps on a method that also
         # produces mutliple output datasets
         if type(out_dataset) is list and current_param_sweep:
-            err_str = f"Parameter sweeps on methods with multiple output " \
-                      f"datasets is not supported"
+            err_str = (
+                f"Parameter sweeps on methods with multiple output "
+                f"datasets is not supported"
+            )
             raise ValueError(err_str)
-        
+
         # TODO: Not yet able to run a method that produces multiple output
         # datasets on input data that was the result of a paremeter sweep
         # earlier in the pipeline
         if type(out_dataset) is list and type(datasets[in_dataset]) is list:
-            err_str = f"Running a method that produces mutliple outputs on " \
-                      f"the result of a parameter sweep is not supported"
+            err_str = (
+                f"Running a method that produces mutliple outputs on "
+                f"the result of a parameter sweep is not supported"
+            )
             raise ValueError(err_str)
 
         # Create a list to store the result of the different parameter values
@@ -559,12 +578,13 @@ def _run_method(
                 #
                 # Define `subfolder_name` for `save_to_images()`
                 subfolder_name = f"images_{i}"
-                params.update({'subfolder_name': subfolder_name})
+                params.update({"subfolder_name": subfolder_name})
 
             # Perform a reslice of the data if necessary
             if should_reslice:
-                resliced_data, _ = reslice(arr, out_dir, current_slice_dim,
-                                           next_slice_dim, comm)
+                resliced_data, _ = reslice(
+                    arr, out_dir, current_slice_dim, next_slice_dim, comm
+                )
                 # Store the resliced input
                 if type(datasets[in_dataset]) is list:
                     datasets[in_dataset][i] = resliced_data
@@ -572,29 +592,30 @@ def _run_method(
                     datasets[in_dataset] = resliced_data
                 arr = resliced_data
 
-            httomo_params['data'] = arr
+            httomo_params["data"] = arr
 
             # Add global stats if necessary
             if req_glob_stats is True:
                 stats = _fetch_glob_stats(arr, comm)
                 glob_stats[in_dataset].append(stats)
-                params.update({'glob_stats': stats})
+                params.update({"glob_stats": stats})
 
             # Run the method
             if method_name in SAVERS_NO_DATA_OUT_PARAM:
-                _run_method_wrapper(current_func, method_name, params,
-                                    httomo_params)
+                _run_method_wrapper(current_func, method_name, params, httomo_params)
             else:
                 if current_param_sweep:
                     for val in param_sweep_vals:
                         params[param_sweep_name] = val
-                        res = _run_method_wrapper(current_func, method_name,
-                                                  params, httomo_params)
+                        res = _run_method_wrapper(
+                            current_func, method_name, params, httomo_params
+                        )
                         out.append(res)
                     datasets[out_dataset] = out
                 else:
-                    res = _run_method_wrapper(current_func, method_name,
-                                              params, httomo_params)
+                    res = _run_method_wrapper(
+                        current_func, method_name, params, httomo_params
+                    )
                     # Store the output(s) of the method in the appropriate
                     # dataset in the `datasets` dict
                     if type(res) in [list, tuple]:
@@ -641,11 +662,16 @@ def _run_method(
 
         # Save the result if necessary
         if save_result and is_3d and not any_param_sweep:
-            intermediate_dataset(datasets[out_dataset], out_dir,
-                                 comm, task_idx+1,
-                                 package_name, method_name,
-                                 out_dataset,
-                                 recon_algorithm=params.pop('algorithm', None))
+            intermediate_dataset(
+                datasets[out_dataset],
+                out_dir,
+                comm,
+                task_idx + 1,
+                package_name,
+                method_name,
+                out_dataset,
+                recon_algorithm=params.pop("algorithm", None),
+            )
         elif save_result and any_param_sweep:
             # Save the result of each value in the parameter sweep as a
             # different dataset within the same hdf5 file, and also save the
@@ -660,8 +686,7 @@ def _run_method(
             else:
                 slice_dim = _get_slicing_dim(current_func.pattern)
             data_shape = get_data_shape(param_sweep_datasets[0], slice_dim - 1)
-            hdf5_file_name = \
-                f"{task_idx}-{package_name}-{method_name}-{out_dataset}.h5"
+            hdf5_file_name = f"{task_idx}-{package_name}-{method_name}-{out_dataset}.h5"
             # For each MPI process, send all the other processes the size of the
             # slice dimension of the parameter sweep arrays (note that the list
             # returned by `allgather()` is ordered by the rank of the process)
@@ -672,14 +697,19 @@ def _run_method(
             for i in range(comm.rank):
                 start_idx += all_proc_info[i]
             glob_mid_slice_idx = data_shape[slice_dim - 1] // 2
-            has_mid_slice = start_idx <= glob_mid_slice_idx and \
-                glob_mid_slice_idx < start_idx + param_sweep_datasets[0].shape[0]
+            has_mid_slice = (
+                start_idx <= glob_mid_slice_idx
+                and glob_mid_slice_idx < start_idx + param_sweep_datasets[0].shape[0]
+            )
 
             # For the single MPI process that has access to the middle slices,
             # create an array to hold these middle slices
             if has_mid_slice:
-                tiff_stack_shape = (len(param_sweep_datasets), data_shape[1],
-                                    data_shape[2])
+                tiff_stack_shape = (
+                    len(param_sweep_datasets),
+                    data_shape[1],
+                    data_shape[2],
+                )
                 middle_slices = np.empty(tiff_stack_shape)
                 # Calculate the index relative to the subset of the data that
                 # the MPI process has which corresponds to the middle slice of
@@ -689,26 +719,37 @@ def _run_method(
             for i in range(len(param_sweep_datasets)):
                 # Save hdf5 dataset
                 dataset_name = f"/data/param_sweep_{i}"
-                save_dataset(out_dir, hdf5_file_name, param_sweep_datasets[i],
-                             slice_dim=slice_dim,
-                             chunks=(1, data_shape[1], data_shape[2]),
-                             path=dataset_name, comm=comm)
+                save_dataset(
+                    out_dir,
+                    hdf5_file_name,
+                    param_sweep_datasets[i],
+                    slice_dim=slice_dim,
+                    chunks=(1, data_shape[1], data_shape[2]),
+                    path=dataset_name,
+                    comm=comm,
+                )
                 # Get the middle slice of the parameter-swept array
                 if has_mid_slice:
                     if slice_dim == 1:
-                        middle_slices[i] = \
-                            param_sweep_datasets[i][rel_mid_slice_idx,:,:]
+                        middle_slices[i] = param_sweep_datasets[i][
+                            rel_mid_slice_idx, :, :
+                        ]
                     elif slice_dim == 2:
-                        middle_slices[i] = \
-                            param_sweep_datasets[i][:, rel_mid_slice_idx, :]
+                        middle_slices[i] = param_sweep_datasets[i][
+                            :, rel_mid_slice_idx, :
+                        ]
                     elif slice_dim == 3:
-                        middle_slices[i] = \
-                            param_sweep_datasets[i][:,:, rel_mid_slice_idx]
+                        middle_slices[i] = param_sweep_datasets[i][
+                            :, :, rel_mid_slice_idx
+                        ]
 
             if has_mid_slice:
                 # Save tiffs of the middle slices
-                save_to_images(middle_slices, out_dir,
-                               subfolder_name=f"middle_slices_{out_dataset}")
+                save_to_images(
+                    middle_slices,
+                    out_dir,
+                    subfolder_name=f"middle_slices_{out_dataset}",
+                )
 
     return reslice_counter, has_reslice_warn_printed, glob_stats
 
@@ -757,8 +798,13 @@ def _run_method_wrapper(
     return func(method_params, method_name, **httomo_params)
 
 
-def _check_save_result(task_idx: int, no_of_tasks: int, module_path: str,
-                       save_all: bool, save_result_param: bool) -> bool:
+def _check_save_result(
+    task_idx: int,
+    no_of_tasks: int,
+    module_path: str,
+    save_all: bool,
+    save_result_param: bool,
+) -> bool:
     """Check if the result of the current method should be saved.
 
     Parameters

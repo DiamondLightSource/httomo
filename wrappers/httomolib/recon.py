@@ -59,21 +59,15 @@ def algorithm(
             )
             return cp.asnumpy(data)
         else:
-            data = getattr(module, method_name)(
-                data, angles=angles_radians, **params
-            )
+            data = getattr(module, method_name)(data, angles=angles_radians, **params)
             return data
 
     if method_name == "reconstruct_tomopy":
-        data = getattr(module, method_name)(
-            data, angles=angles_radians, **params
-        )
+        data = getattr(module, method_name)(data, angles=angles_radians, **params)
         return data
 
 
-def rotation(
-    params: Dict, method_name: str, comm: Comm, data: np.ndarray
-) -> float:
+def rotation(params: Dict, method_name: str, comm: Comm, data: np.ndarray) -> float:
     """Wrapper for the httomolib.recon.rotation module.
 
     Parameters
