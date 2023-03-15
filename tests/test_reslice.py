@@ -25,19 +25,19 @@ import pytest
     [(15, 13, 9), (12, 3, 10), (1, 4, 12), (10, 1, 12), (1, 1, 4), (4, 5, 1)],
 )
 @pytest.mark.mpi
-def test_reslice( full_shape, current_slice_dim, next_slice_dim):
-    """This test checks the reclice function in all possible dimensions and 
-       reslicing parameters. It should work without MPI (in which case the
-       output data is just the same as the input data) and with MPI for any
-       number of processes.
+def test_reslice(full_shape, current_slice_dim, next_slice_dim):
+    """This test checks the reclice function in all possible dimensions and
+    reslicing parameters. It should work without MPI (in which case the
+    output data is just the same as the input data) and with MPI for any
+    number of processes.
 
-       To run with MPI, run:
+    To run with MPI, run:
 
-       mpirun -np 2 pytest -m mpi
+    mpirun -np 2 pytest -m mpi
 
-       (the marker makes sure only tests that are relevant for MPI are run)
+    (the marker makes sure only tests that are relevant for MPI are run)
     """
-    
+
     comm = MPI.COMM_WORLD
 
     # every process creates a slice of the full shape in current_slice_dim,
@@ -48,7 +48,7 @@ def test_reslice( full_shape, current_slice_dim, next_slice_dim):
     in_shape[current_slice_dim - 1] = stop - start
     data = np.ones(in_shape, dtype=np.float32) * comm.rank
 
-    # reslice 
+    # reslice
     newdata, _ = reslice(data, current_slice_dim, next_slice_dim, comm)
 
     # check expected dimensions
@@ -82,7 +82,7 @@ def test_reslice_performance():
     next_slice_dim = 2
     data = np.ones(process_shape, dtype=np.float32) * comm.rank
 
-    # reslice 
+    # reslice
     start = time.perf_counter_ns()
     for _ in range(10):
         reslice(data, current_slice_dim, next_slice_dim, comm)

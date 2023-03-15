@@ -8,9 +8,11 @@ from shutil import rmtree
 import pytest
 import yaml
 
+
 def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
     config.addinivalue_line("markers", "perf: mark test as performance test")
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -28,7 +30,9 @@ def pytest_collection_modifyitems(config, items):
             if "perf" not in item.keywords:
                 item.add_marker(skip_other)
     else:
-        skip_perf = pytest.mark.skip(reason="performance test - use '--performance' to run")
+        skip_perf = pytest.mark.skip(
+            reason="performance test - use '--performance' to run"
+        )
         for item in items:
             if "perf" in item.keywords:
                 item.add_marker(skip_perf)
@@ -97,4 +101,3 @@ def merge_yamls():
             yaml.dump(data, file_descriptor)
 
     return _merge_yamls
-

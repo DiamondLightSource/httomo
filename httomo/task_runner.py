@@ -29,7 +29,7 @@ def run_tasks(
     pad: int = 0,
     ncore: int = 1,
     save_all: bool = False,
-    reslice_dir: Optional[Path] = None
+    reslice_dir: Optional[Path] = None,
 ) -> None:
     """Run the tomopy pipeline defined in the YAML config file
 
@@ -272,7 +272,7 @@ def run_tasks(
                             current_slice_dim,
                             next_slice_dim,
                             comm,
-                            reslice_dir
+                            reslice_dir,
                         )
                     datasets[in_dataset] = resliced_data
 
