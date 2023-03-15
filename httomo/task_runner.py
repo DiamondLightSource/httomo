@@ -2,7 +2,7 @@ import multiprocessing
 from datetime import datetime
 from os import mkdir
 from pathlib import Path
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Optional, Tuple, Union
 from collections.abc import Callable
 from inspect import signature
 from importlib import import_module
@@ -13,7 +13,7 @@ from mpi4py import MPI
 from httomo.utils import print_once, Pattern, _get_slicing_dim
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
-from httomo.data.hdf._utils.reslice import reslice
+from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
 from httomo._stats.globals import min_max_mean_std
 from httomo.methods_database.query import get_method_info
 
@@ -26,6 +26,7 @@ def run_tasks(
     pad: int = 0,
     ncore: int = 1,
     save_all: bool = False,
+    reslice_dir: Optional[Path] = None
 ) -> None:
     """Run the tomopy pipeline defined in the YAML config file
 
@@ -46,6 +47,9 @@ def run_tasks(
     save_all : bool
         Specifies if intermediate datasets should be saved for all tasks in the
         pipeline.
+    reslice_dir : Optional[Path]
+        Path where to store the reslice intermediate files, or None if reslicing
+        should be done in-memory.
     """
     comm = MPI.COMM_WORLD
     run_out_dir = out_dir.joinpath(
@@ -232,13 +236,21 @@ def run_tasks(
                     out_dir = None
 
                 if should_reslice:
-                    resliced_data, _ = reslice(
-                        datasets[in_dataset],
-                        run_out_dir,
-                        current_slice_dim,
-                        next_slice_dim,
-                        comm,
-                    )
+                    if reslice_dir is None:
+                        resliced_data, _ = reslice(
+                            datasets[in_dataset],
+                            current_slice_dim,
+                            next_slice_dim,
+                            comm,
+                        )
+                    else:
+                        resliced_data, _ = reslice_filebased(
+                            datasets[in_dataset],
+                            current_slice_dim,
+                            next_slice_dim,
+                            comm,
+                            reslice_dir
+                        )
                     datasets[in_dataset] = resliced_data
 
                 if req_glob_stats is True:

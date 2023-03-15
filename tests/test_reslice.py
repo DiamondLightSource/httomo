@@ -25,7 +25,7 @@ import pytest
     [(15, 13, 9), (12, 3, 10), (1, 4, 12), (10, 1, 12), (1, 1, 4), (4, 5, 1)],
 )
 @pytest.mark.mpi
-def test_reslice(tmp_path, full_shape, current_slice_dim, next_slice_dim):
+def test_reslice( full_shape, current_slice_dim, next_slice_dim):
     """This test checks the reclice function in all possible dimensions and 
        reslicing parameters. It should work without MPI (in which case the
        output data is just the same as the input data) and with MPI for any
@@ -40,10 +40,6 @@ def test_reslice(tmp_path, full_shape, current_slice_dim, next_slice_dim):
     
     comm = MPI.COMM_WORLD
 
-    # make sure all instances use the same directory
-    dirname = str(tmp_path)
-    dirname = comm.bcast(dirname)
-
     # every process creates a slice of the full shape in current_slice_dim,
     # and we set all the values to the rank index to ease assertions
     start = round(full_shape[current_slice_dim - 1] / comm.size * comm.rank)
@@ -53,7 +49,7 @@ def test_reslice(tmp_path, full_shape, current_slice_dim, next_slice_dim):
     data = np.ones(in_shape, dtype=np.float32) * comm.rank
 
     # reslice 
-    newdata, _ = reslice(data, dirname, current_slice_dim, next_slice_dim, comm)
+    newdata, _ = reslice(data, current_slice_dim, next_slice_dim, comm)
 
     # check expected dimensions
     start = round((full_shape[next_slice_dim - 1] / comm.size) * comm.rank)
@@ -78,12 +74,8 @@ def test_reslice(tmp_path, full_shape, current_slice_dim, next_slice_dim):
 
 @pytest.mark.mpi
 @pytest.mark.perf
-def test_reslice_performance(tmp_path):
+def test_reslice_performance():
     comm = MPI.COMM_WORLD
-
-    # make sure all instances use the same directory
-    dirname = str(tmp_path)
-    dirname = comm.bcast(dirname)
 
     process_shape = (1801, 15, 2560)
     current_slice_dim = 1
@@ -93,8 +85,11 @@ def test_reslice_performance(tmp_path):
     # reslice 
     start = time.perf_counter_ns()
     for _ in range(10):
-        reslice(data, dirname, current_slice_dim, next_slice_dim, comm)
+        reslice(data, current_slice_dim, next_slice_dim, comm)
 
     duration_ms = float(time.perf_counter_ns() - start) * 1e-6 / 10
 
-    assert "performance in ms" == duration_ms
+    duration_ms = comm.reduce(duration_ms, MPI.MAX)
+
+    if comm.rank == 0:
+        assert "performance in ms" == duration_ms
