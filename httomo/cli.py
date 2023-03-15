@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import click
 
@@ -20,6 +21,7 @@ class GlobalOptions:
     pad: int
     ncore: int
     save_all: bool
+    reslice: Optional[Path]
 
 
 @click.group(invoke_without_command=True)
@@ -55,6 +57,19 @@ class GlobalOptions:
     is_flag=True,
     help="Save intermediate datasets for all tasks in the pipeline.",
 )
+@click.option(
+    "--file-based-reslice",
+    default=None,
+    is_flag=True,
+    help="Reslice using intermediate files (default is in-memory)."
+)
+@click.option(
+    "--reslice-dir",
+    type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
+    default=None,
+    callback=lambda context, param, value: value if value else context.params['out_dir'],
+    help="Directory for reslice intermediate files (defaults to out_dir, only relevant if --reslice is also given)"
+)
 @click.version_option(version=__version__, message="%(version)s")
 @click.pass_context
 def main(
@@ -66,10 +81,13 @@ def main(
     pad: int,
     ncore: int,
     save_all: bool,
+    file_based_reslice: bool,
+    reslice_dir: Path,
 ):
     """httomo: High Throughput Tomography."""
     ctx.obj = GlobalOptions(
-        in_file, yaml_config, out_dir, dimension, pad, ncore, save_all
+        in_file, yaml_config, out_dir, dimension, pad, ncore, save_all, 
+        reslice_dir if file_based_reslice else None
     )
 
     if ctx.invoked_subcommand is None:
@@ -80,7 +98,7 @@ def main(
 @click.pass_obj
 def task_runner(global_options: GlobalOptions):
     """Run the processing pipeline defined in the given YAML config file."""
-    run_tasks(
+    return run_tasks(
         global_options.in_file,
         global_options.yaml_config,
         global_options.out_dir,
@@ -88,4 +106,5 @@ def task_runner(global_options: GlobalOptions):
         global_options.pad,
         global_options.ncore,
         global_options.save_all,
+        global_options.reslice
     )
