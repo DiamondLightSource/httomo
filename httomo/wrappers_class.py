@@ -228,6 +228,7 @@ class BaseWrapper:
             )
             return (rot_center, overlap, side, overlap_position)
 
+
 class TomoPyWrapper(BaseWrapper):
     """A class that wraps TomoPy functions for httomo"""
 
