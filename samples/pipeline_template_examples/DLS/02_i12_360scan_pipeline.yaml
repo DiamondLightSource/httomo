@@ -10,8 +10,14 @@
           stop: 60
         - 
       pad: 0
+- httomolib.misc.corr:
+    remove_outlier3d:
+      data_in_multi: [tomo, flats, darks]
+      data_out_multi: [tomo, flats, darks]
+      kernel_size: 3
+      dif: 0.1      
 - httomolib.prep.normalize:
-    normalize_raw_cuda:
+    normalize:
       data_in: tomo
       data_out: tomo
       cutoff: 10.0
@@ -26,7 +32,13 @@
       side: null
       denoise: true
       norm: false
-      use_overlap: false
+      use_overlap: true
+- httomolib.prep.stripe:
+    remove_stripe_based_sorting:
+      data_in: tomo
+      data_out: tomo
+      size: 11
+      dim: 1
 - tomopy.misc.morph:
     sino_360_to_180:
       data_in: tomo
@@ -39,7 +51,6 @@
        data_out: tomo
        center: cor
        objsize: null
-       algorithm: FBP3D_host
 - httomolib.misc.images:
     save_to_images:
       data_in: tomo
