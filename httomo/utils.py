@@ -102,6 +102,18 @@ def _parse_preview(
             start = slice_info["start"] if "start" in slice_info.keys() else None
             stop = slice_info["stop"] if "stop" in slice_info.keys() else None
             step = slice_info["step"] if "step" in slice_info.keys() else None
+            if start < 0 or start >= data_shape[idx]:
+                str_warn = "The 'start' preview {} is outside the data dimension range from 0 to {}".format(start, data_shape[idx])
+                print('\x1b[6;37;41m' + str_warn + '\x1b[0m')
+                raise ValueError("preview error")
+            if stop < 0 or stop >= data_shape[idx]:
+                str_warn = "The 'stop' preview {} is outside the data dimension range from 0 to {}".format(start, data_shape[idx])
+                print('\x1b[6;37;41m' + str_warn + '\x1b[0m')                
+                raise ValueError("preview error")
+            if step < 0:
+                str_warn = "The 'step' in preview cannot be negative"
+                print('\x1b[6;37;41m' + str_warn + '\x1b[0m')        
+                raise ValueError("preview error")            
             start_str = f"{start if start is not None else ''}"
             stop_str = f"{stop if stop is not None else ''}"
             step_str = f"{step if step is not None else ''}"
