@@ -6,25 +6,25 @@
       dimension: 1
       preview:
         - 
-        - start: 1000
-          stop: 1020
+        - start: 50
+          stop: 60
         - 
       pad: 0
 - httomolib.misc.corr:
-    remove_outlier3d_cupy:
+    remove_outlier3d:
       data_in_multi: [tomo, flats, darks]
       data_out_multi: [tomo, flats, darks]
       kernel_size: 3
       dif: 0.1
 - httomolib.prep.normalize:
-    normalize_raw_cuda:
+    normalize:
       data_in: tomo
       data_out: tomo
       cutoff: 10.0
       minus_log: true
       nonnegativity: false 
 - httomolib.recon.rotation:
-    find_center_vo_cupy:
+    find_center_vo:
       data_in: tomo
       data_out: cor
       ind: mid

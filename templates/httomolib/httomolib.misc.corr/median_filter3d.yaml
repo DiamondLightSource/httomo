@@ -1,5 +1,5 @@
 - httomolib.misc.corr:
-    median_filter3d_cupy:
+    median_filter3d:
       data_in: tomo
       data_out: tomo
       kernel_size: 3

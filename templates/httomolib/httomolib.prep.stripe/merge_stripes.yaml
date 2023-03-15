@@ -1,8 +1,0 @@
-- httomolib.prep.stripe:
-    merge_stripes:
-      data_in: tomo
-      data_out: tomo
-      stripe_width_max_perc: 5.0
-      mask_dilate: 2
-      threshold_stripes: 0.1
-      ncore: 1

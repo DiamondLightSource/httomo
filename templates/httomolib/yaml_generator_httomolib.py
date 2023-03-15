@@ -73,7 +73,7 @@ for i in range(modules_no):
         # ! dealing with special cases for data_out !
         if method_name not in no_data_out_modules:
             params_dict["data_out"] = "tomo"
-        if method_name in "find_center_vo_cupy":
+        if method_name in "find_center_vo":
             params_dict["data_out"] = "cor"
         if method_name in "find_center_360":
             params_dict["data_out"] = "[cor, overlap, side, overlap_position]"

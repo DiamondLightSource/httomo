@@ -1,5 +1,5 @@
 - httomolib.recon.rotation:
-    find_center_vo_cupy:
+    find_center_vo:
       data_in: tomo
       data_out: cor
       ind: null

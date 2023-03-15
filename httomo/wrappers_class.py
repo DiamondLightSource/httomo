@@ -205,7 +205,7 @@ class BaseWrapper:
             else:
                 rot_center = method_func(data, **params)
 
-        if method_name == "find_center_vo_cupy":
+        if method_name == "find_center_vo":
             rot_center = self.comm.bcast(rot_center, root=mid_rank)
             print_once(
                 "The center of rotation for 180 degrees sinogram is {}".format(
