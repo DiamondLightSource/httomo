@@ -299,8 +299,10 @@ def run_tasks(
                     out_dir=out_dir,
                 )
         stop = time.perf_counter_ns()
-        print_once(f"{task_end_str} {pattern_str}: {method_name} ({package}): Took {float(stop-start)*1e-6:.2f}ms", comm)
-        
+        print_once(
+            f"{task_end_str} {pattern_str}: {method_name} ({package}): Took {float(stop-start)*1e-6:.2f}ms",
+            comm,
+        )
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"

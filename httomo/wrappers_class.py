@@ -38,7 +38,7 @@ class BaseWrapper:
             xp._default_memory_pool.free_all_blocks()
 
     def _transfer_data(self, *args) -> tuple:
-        """transfers data between the host and device 
+        """transfers data between the host and device
         Returns:
             tuple: converted datasets
         """
@@ -53,8 +53,8 @@ class BaseWrapper:
                 else:
                     # the method doesn't accept CuPy arrays
                     ret = ret + (xp.asnumpy(datasets),)
-        return ret            
-    
+        return ret
+
     def _execute_generic(
         self, method_name: str, params: Dict, data: xp.ndarray, reslice_ahead: bool
     ) -> xp.ndarray:
@@ -72,10 +72,10 @@ class BaseWrapper:
         # set the correct GPU ID if it is required
         if "gpu_id" in params:
             params["gpu_id"] = self.gpu_id
-        
+
         # check where data needs to be transfered host <-> device
         data = self._transfer_data(data)
-                       
+
         data = getattr(self.module, method_name)(data[0], **params)
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
@@ -105,7 +105,7 @@ class BaseWrapper:
         Returns:
             xp.ndarray: a numpy or cupy array of the normalised data.
         """
-        
+
         # check where data needs to be transfered host <-> device
         data, flats, darks = self._transfer_data(data, flats, darks)
 
@@ -147,7 +147,7 @@ class BaseWrapper:
         # Truncating angles if the angular dimension has got a different size
         datashape0 = data[0].shape[0]
         if datashape0 != len(angles_radians):
-            angles_radians = angles_radians[0 : datashape0]
+            angles_radians = angles_radians[0:datashape0]
 
         data = getattr(self.module, method_name)(data[0], angles_radians, **params)
         if reslice_ahead and gpu_enabled:
@@ -175,7 +175,7 @@ class BaseWrapper:
 
         # check where data needs to be transfered host <-> device
         data = self._transfer_data(data)
-        
+
         method_func = getattr(self.module, method_name)
         rot_center = 0
         overlap = 0
