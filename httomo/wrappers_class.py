@@ -42,18 +42,13 @@ class BaseWrapper:
         Returns:
             tuple: converted datasets
         """
-        ret = tuple()
-        for datasets in args:
-            if gpu_enabled:
-                xp.cuda.Device(self.gpu_id).use()
-                if self.cupyrun:
-                    # the method accepts CuPy arrays for the GPU processing
-                    # move the data to the current device
-                    ret = ret + (xp.asarray(datasets),)
-                else:
-                    # the method doesn't accept CuPy arrays
-                    ret = ret + (xp.asnumpy(datasets),)
-        return ret
+        if not gpu_enabled:
+            return args
+        xp.cuda.Device(self.gpu_id).use()
+        if self.cupyrun:
+            return tuple(xp.asarray(d) for d in args)
+        else:
+            return tuple(xp.asnumpy(d) for d in args)
 
     def _execute_generic(
         self, method_name: str, params: Dict, data: xp.ndarray, reslice_ahead: bool
