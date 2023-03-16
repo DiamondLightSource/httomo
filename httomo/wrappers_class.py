@@ -36,8 +36,25 @@ class BaseWrapper:
             self.num_GPUs = xp.cuda.runtime.getDeviceCount()
             self.gpu_id = local_comm.rank % self.num_GPUs
             xp._default_memory_pool.free_all_blocks()
-            xp.cuda.Device(self.gpu_id).use()  # use a particular GPU by its id
 
+    def _transfer_data(self, *args) -> tuple:
+        """transfers data between the host and device 
+        Returns:
+            tuple: converted datasets
+        """
+        ret = tuple()
+        for datasets in args:
+            if gpu_enabled:
+                xp.cuda.Device(self.gpu_id).use()
+                if self.cupyrun:
+                    # the method accepts CuPy arrays for the GPU processing
+                    # move the data to the current device
+                    ret = ret + (xp.asarray(datasets),)
+                else:
+                    # the method doesn't accept CuPy arrays
+                    ret = ret + (xp.asnumpy(datasets),)
+        return ret            
+    
     def _execute_generic(
         self, method_name: str, params: Dict, data: xp.ndarray, reslice_ahead: bool
     ) -> xp.ndarray:
@@ -55,18 +72,11 @@ class BaseWrapper:
         # set the correct GPU ID if it is required
         if "gpu_id" in params:
             params["gpu_id"] = self.gpu_id
-
-        if gpu_enabled:
-            xp.cuda.Device(self.gpu_id).use()
-            if self.cupyrun:
-                # the method accepts CuPy arrays for the GPU processing
-                # move the data to the current device
-                data = xp.asarray(data)
-            else:
-                # the method doesn't accept CuPy arrays
-                data = xp.asnumpy(data)
-
-        data = getattr(self.module, method_name)(data, **params)
+        
+        # check where data needs to be transfered host <-> device
+        data = self._transfer_data(data)
+                       
+        data = getattr(self.module, method_name)(data[0], **params)
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
@@ -95,19 +105,9 @@ class BaseWrapper:
         Returns:
             xp.ndarray: a numpy or cupy array of the normalised data.
         """
-        if gpu_enabled:
-            xp.cuda.Device(self.gpu_id).use()
-            if self.cupyrun:
-                # the method accepts CuPy arrays for the GPU processing
-                # move the data to the current device
-                data = xp.asarray(data)
-                flats = xp.asarray(flats)
-                darks = xp.asarray(darks)
-            else:
-                # the method doesn't accept CuPy arrays
-                data = xp.asnumpy(data)
-                flats = xp.asnumpy(flats)
-                darks = xp.asnumpy(darks)
+        
+        # check where data needs to be transfered host <-> device
+        data, flats, darks = self._transfer_data(data, flats, darks)
 
         data = getattr(self.module, method_name)(data, flats, darks, **params)
         if reslice_ahead and gpu_enabled:
@@ -140,22 +140,16 @@ class BaseWrapper:
         if "gpu_id" in params:
             params["gpu_id"] = self.gpu_id
 
-        if gpu_enabled:
-            xp.cuda.Device(self.gpu_id).use()
-            if self.cupyrun:
-                # the method accepts CuPy arrays for the GPU processing
-                # move the data to the current device
-                data = xp.asarray(data)
-            else:
-                # the method doesn't accept CuPy arrays
-                data = xp.asnumpy(data)
+        # check where data needs to be transfered host <-> device
+        data = self._transfer_data(data)
 
         # for 360 degrees data the angular dimension will be truncated while angles are not.
         # Truncating angles if the angular dimension has got a different size
-        if data.shape[0] != len(angles_radians):
-            angles_radians = angles_radians[0 : data.shape[0]]
+        datashape0 = data[0].shape[0]
+        if datashape0 != len(angles_radians):
+            angles_radians = angles_radians[0 : datashape0]
 
-        data = getattr(self.module, method_name)(data, angles_radians, **params)
+        data = getattr(self.module, method_name)(data[0], angles_radians, **params)
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
@@ -179,16 +173,9 @@ class BaseWrapper:
             tuple: The center of rotation and other parameters if it is 360 sinogram.
         """
 
-        if gpu_enabled:
-            xp.cuda.Device(self.gpu_id).use()
-            if self.cupyrun:
-                # the method accepts CuPy arrays for the GPU processing
-                # move the data to the current device
-                data = xp.asarray(data)
-            else:
-                # the method doesn't accept CuPy arrays
-                data = xp.asnumpy(data)
-
+        # check where data needs to be transfered host <-> device
+        data = self._transfer_data(data)
+        
         method_func = getattr(self.module, method_name)
         rot_center = 0
         overlap = 0
@@ -197,13 +184,13 @@ class BaseWrapper:
         mid_rank = int(round(self.comm.size / 2) + 0.1)
         if self.comm.rank == mid_rank:
             if params["ind"] == "mid":
-                params["ind"] = data.shape[1] // 2  # get the middle slice
+                params["ind"] = data[0].shape[1] // 2  # get the middle slice
             if method_name == "find_center_360":
                 (rot_center, overlap, side, overlap_position) = method_func(
-                    data, **params
+                    data[0], **params
                 )
             else:
-                rot_center = method_func(data, **params)
+                rot_center = method_func(data[0], **params)
 
         if method_name == "find_center_vo":
             rot_center = self.comm.bcast(rot_center, root=mid_rank)

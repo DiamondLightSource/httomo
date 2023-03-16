@@ -75,8 +75,8 @@ for i in range(modules_no):
             params_dict["data_out"] = "tomo"
         if method_name in "find_center_vo":
             params_dict["data_out"] = "cor"
-        if method_name in "find_center_360":
-            params_dict["data_out"] = "[cor, overlap, side, overlap_position]"
+        if method_name in "find_center_360":            
+            params_dict["data_out"] = ['cor', 'overlap', 'side', 'overlap_position']
         for k, v in get_method_params.parameters.items():
             if v is not None:
                 append = True
