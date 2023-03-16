@@ -10,7 +10,7 @@ from importlib import import_module
 from numpy import ndarray
 from mpi4py import MPI
 
-from httomo.utils import print_once, Pattern, _get_slicing_dim
+from httomo.utils import print_once, Pattern, _get_slicing_dim, Colour
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
@@ -107,6 +107,10 @@ def run_tasks(
     patterns = [f.pattern for (_, f, _, _) in method_funcs]
     reslice_bool_list = _check_if_should_reslice(patterns)
 
+    # start MPI timer for rank 0
+    if comm.rank == 0:
+        start_time = MPI.Wtime()
+
     # Run the methods
     for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
         package = module_path.split(".")[0]
@@ -185,7 +189,7 @@ def run_tasks(
                 next_slice_dim = _get_slicing_dim(func.pattern)
 
             if reslice_counter > 1 and not has_reslice_warn_printed:
-                print_once(reslice_warn_str, comm=comm, colour="red")
+                print_once(reslice_warn_str, comm=comm, colour=Colour.RED)
                 has_reslice_warn_printed = True
 
             # Check for any extra params unrelated to tomopy but related to
@@ -275,8 +279,14 @@ def run_tasks(
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
-    reslice_summary_colour = "blue" if reslice_counter <= 1 else "red"
+    reslice_summary_colour = Colour.BLUE if reslice_counter <= 1 else Colour.RED
     print_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour)
+
+    if comm.rank == 0:
+        elapsed_time = MPI.Wtime() - start_time
+
+    end_str = f"\n\n~~~ Pipeline finished ~~~\nTook {elapsed_time} sec to run!"
+    print_once(end_str, comm=comm, colour=Colour.BVIOLET)
 
 
 def _initialise_datasets(
