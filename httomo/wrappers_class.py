@@ -57,11 +57,11 @@ class BaseWrapper:
             params["gpu_id"] = self.gpu_id
 
         if gpu_enabled:
+            xp.cuda.Device(self.gpu_id).use()
             if self.cupyrun:
                 # the method accepts CuPy arrays for the GPU processing
-                with xp.cuda.Device(self.gpu_id):
-                    # move the data to a particular device
-                    data = xp.asarray(data)
+                # move the data to the current device
+                data = xp.asarray(data)
             else:
                 # the method doesn't accept CuPy arrays
                 data = xp.asnumpy(data)
@@ -96,13 +96,13 @@ class BaseWrapper:
             xp.ndarray: a numpy or cupy array of the normalised data.
         """
         if gpu_enabled:
+            xp.cuda.Device(self.gpu_id).use()
             if self.cupyrun:
                 # the method accepts CuPy arrays for the GPU processing
-                with xp.cuda.Device(self.gpu_id):
-                    # move the data to a particular device
-                    data = xp.asarray(data)
-                    flats = xp.asarray(flats)
-                    darks = xp.asarray(darks)
+                # move the data to the current device
+                data = xp.asarray(data)
+                flats = xp.asarray(flats)
+                darks = xp.asarray(darks)
             else:
                 # the method doesn't accept CuPy arrays
                 data = xp.asnumpy(data)
@@ -141,11 +141,11 @@ class BaseWrapper:
             params["gpu_id"] = self.gpu_id
 
         if gpu_enabled:
+            xp.cuda.Device(self.gpu_id).use()
             if self.cupyrun:
                 # the method accepts CuPy arrays for the GPU processing
-                with xp.cuda.Device(self.gpu_id):
-                    # move the data to a particular device
-                    data = xp.asarray(data)
+                # move the data to the current device
+                data = xp.asarray(data)
             else:
                 # the method doesn't accept CuPy arrays
                 data = xp.asnumpy(data)
@@ -180,11 +180,11 @@ class BaseWrapper:
         """
 
         if gpu_enabled:
+            xp.cuda.Device(self.gpu_id).use()
             if self.cupyrun:
                 # the method accepts CuPy arrays for the GPU processing
-                with xp.cuda.Device(self.gpu_id):
-                    # move the data to a particular device
-                    data = xp.asarray(data)
+                # move the data to the current device
+                data = xp.asarray(data)
             else:
                 # the method doesn't accept CuPy arrays
                 data = xp.asnumpy(data)

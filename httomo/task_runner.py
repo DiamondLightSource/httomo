@@ -2,6 +2,7 @@ import multiprocessing
 from datetime import datetime
 from os import mkdir
 from pathlib import Path
+import time
 from typing import List, Dict, Optional, Tuple, Union
 from collections.abc import Callable
 from inspect import signature
@@ -119,8 +120,10 @@ def run_tasks(
         package = module_path.split(".")[0]
         method_name = params.pop("method_name")
         task_no_str = f"Running task {idx+1}"
+        task_end_str = task_no_str.replace("Running", "Finished")
         pattern_str = f"(pattern={func.pattern.name})"
         print_once(f"{task_no_str} {pattern_str}: {method_name} ({package})...", comm)
+        start = time.perf_counter_ns()
         if is_loader:
             params.update(loader_extra_params)
 
@@ -295,6 +298,9 @@ def run_tasks(
                     comm,
                     out_dir=out_dir,
                 )
+        stop = time.perf_counter_ns()
+        print_once(f"{task_end_str} {pattern_str}: {method_name} ({package}): Took {float(stop-start)*1e-6:.2f}ms", comm)
+        
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
