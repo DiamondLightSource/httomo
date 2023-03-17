@@ -2,7 +2,7 @@ import multiprocessing
 from datetime import datetime
 from os import mkdir
 from pathlib import Path
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Optional, Tuple, Union
 from collections.abc import Callable
 from inspect import signature
 from importlib import import_module
@@ -14,8 +14,8 @@ from mpi4py import MPI
 from httomo.utils import print_once, Pattern, _get_slicing_dim
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
-from httomo.data.hdf._utils.reslice import reslice
 from httomo.data.hdf._utils.chunk import save_dataset, get_data_shape
+from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
 from httomo._stats.globals import min_max_mean_std
 from httomo.methods_database.query import get_method_info
 from httomolib.misc.images import save_to_images
@@ -44,6 +44,7 @@ def run_tasks(
     pad: int = 0,
     ncore: int = 1,
     save_all: bool = False,
+    reslice_dir: Optional[Path] = None
 ) -> None:
     """Run the tomopy pipeline defined in the YAML config file
 
@@ -64,6 +65,9 @@ def run_tasks(
     save_all : bool
         Specifies if intermediate datasets should be saved for all tasks in the
         pipeline.
+    reslice_dir : Optional[Path]
+        Path where to store the reslice intermediate files, or None if reslicing
+        should be done in-memory.
     """
     comm = MPI.COMM_WORLD
     run_out_dir = out_dir.joinpath(
@@ -184,6 +188,7 @@ def run_tasks(
                 reslice_counter,
                 has_reslice_warn_printed,
                 reslice_bool_list,
+                reslice_dir
             )
 
     # Print the number of reslice operations peformed in the pipeline
@@ -394,6 +399,7 @@ def _run_method(
     reslice_counter: int,
     has_reslice_warn_printed: bool,
     reslice_bool_list: List[bool],
+    reslice_dir: Optional[Path] = None
 ) -> Tuple[bool, bool]:
     """Run a method function in the processing pipeline.
 
@@ -435,6 +441,9 @@ def _run_method(
     reslice_bool_list : List[bool]
         A list of boolens to describe which methods need reslicing of their
         input data prior to running.
+    reslice_dir : Optional[Path]
+        Path where to store the reslice intermediate files, or None if reslicing
+        should be done in-memory.
 
     Returns
     -------
@@ -582,9 +591,21 @@ def _run_method(
 
             # Perform a reslice of the data if necessary
             if should_reslice:
-                resliced_data, _ = reslice(
-                    arr, out_dir, current_slice_dim, next_slice_dim, comm
-                )
+                if reslice_dir is None:
+                    resliced_data, _ = reslice(
+                        datasets[in_dataset],
+                        current_slice_dim,
+                        next_slice_dim,
+                        comm,
+                    )
+                else:
+                    resliced_data, _ = reslice_filebased(
+                        datasets[in_dataset],
+                        current_slice_dim,
+                        next_slice_dim,
+                        comm,
+                        reslice_dir
+                    )
                 # Store the resliced input
                 if type(datasets[in_dataset]) is list:
                     datasets[in_dataset][i] = resliced_data
