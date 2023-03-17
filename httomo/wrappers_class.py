@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict,Union
 import numpy as np
 import inspect
 from mpi4py import MPI
@@ -37,18 +37,25 @@ class BaseWrapper:
             self.gpu_id = local_comm.rank % self.num_GPUs
             xp._default_memory_pool.free_all_blocks()
 
-    def _transfer_data(self, *args) -> tuple:
-        """transfers data between the host and device
+    def _transfer_data(self, *args) -> Union[tuple, xp.ndarray, np.ndarray]:
+        """Transfer the data between the host and device for the GPU-enabled method
+
         Returns:
-            tuple: converted datasets
+            Union[tuple, xp.ndarray, np.ndarray]: transferred datasets
         """
         if not gpu_enabled:
             return args
         xp.cuda.Device(self.gpu_id).use()
         if self.cupyrun:
-            return tuple(xp.asarray(d) for d in args)
+            if len(args) == 1:
+                return tuple(xp.asarray(d) for d in args)[0]
+            else:
+                return tuple(xp.asarray(d) for d in args)
         else:
-            return tuple(xp.asnumpy(d) for d in args)
+            if len(args) == 1:
+                return tuple(xp.asnumpy(d) for d in args)[0]
+            else:
+                return tuple(xp.asnumpy(d) for d in args)
 
     def _execute_generic(
         self, method_name: str, params: Dict, data: xp.ndarray, reslice_ahead: bool
@@ -68,10 +75,10 @@ class BaseWrapper:
         if "gpu_id" in params:
             params["gpu_id"] = self.gpu_id
 
-        # check where data needs to be transfered host <-> device
+        # check if data needs to be transfered host <-> device
         data = self._transfer_data(data)
 
-        data = getattr(self.module, method_name)(data[0], **params)
+        data = getattr(self.module, method_name)(data, **params)
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
@@ -135,16 +142,16 @@ class BaseWrapper:
         if "gpu_id" in params:
             params["gpu_id"] = self.gpu_id
 
-        # check where data needs to be transfered host <-> device
+        # check if data needs to be transfered host <-> device
         data = self._transfer_data(data)
 
         # for 360 degrees data the angular dimension will be truncated while angles are not.
         # Truncating angles if the angular dimension has got a different size
-        datashape0 = data[0].shape[0]
+        datashape0 = data.shape[0]
         if datashape0 != len(angles_radians):
             angles_radians = angles_radians[0:datashape0]
 
-        data = getattr(self.module, method_name)(data[0], angles_radians, **params)
+        data = getattr(self.module, method_name)(data, angles_radians, **params)
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
@@ -179,13 +186,13 @@ class BaseWrapper:
         mid_rank = int(round(self.comm.size / 2) + 0.1)
         if self.comm.rank == mid_rank:
             if params["ind"] == "mid":
-                params["ind"] = data[0].shape[1] // 2  # get the middle slice
+                params["ind"] = data.shape[1] // 2  # get the middle slice
             if method_name == "find_center_360":
                 (rot_center, overlap, side, overlap_position) = method_func(
-                    data[0], **params
+                    data, **params
                 )
             else:
-                rot_center = method_func(data[0], **params)
+                rot_center = method_func(data, **params)
 
         if method_name == "find_center_vo":
             rot_center = self.comm.bcast(rot_center, root=mid_rank)
