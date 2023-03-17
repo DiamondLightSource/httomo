@@ -2,6 +2,7 @@ import multiprocessing
 from datetime import datetime
 from os import mkdir
 from pathlib import Path
+import time
 from typing import List, Dict, Optional, Tuple, Union
 from collections.abc import Callable
 from inspect import signature
@@ -116,8 +117,14 @@ def run_tasks(
         package = module_path.split(".")[0]
         method_name = params.pop("method_name")
         task_no_str = f"Running task {idx+1}"
+        task_end_str = task_no_str.replace("Running", "Finished")
         pattern_str = f"(pattern={func.pattern.name})"
-        print_once(f"{task_no_str} {pattern_str}: {method_name}...", comm)
+        print_once(
+            f"{task_no_str} {pattern_str}: {method_name}...",
+            comm,
+            colour=Colour.LIGHT_BLUE
+        )
+        start = time.perf_counter_ns()
         if is_loader:
             params.update(loader_extra_params)
 
@@ -276,6 +283,15 @@ def run_tasks(
                     comm,
                     out_dir=out_dir,
                 )
+
+        stop = time.perf_counter_ns()
+        output_str_list = [
+            f"{task_end_str} {pattern_str}: {method_name} (",
+            package,
+            f") Took {float(stop-start)*1e-6:.2f}ms",
+        ]
+        output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
+        print_once(output_str_list, comm=comm, colour=output_colour_list)
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
@@ -557,7 +573,6 @@ def _run_method(
     if not isinstance(out_dataset, list):
         is_3d = len(datasets[out_dataset].shape) == 3
     # Save the result if necessary
-    print_once(method_name, comm)
     if out_dir is not None and is_3d:
         intermediate_dataset(
             datasets[out_dataset],

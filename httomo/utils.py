@@ -8,18 +8,19 @@ class Colour:
     """
     Class for storing the ANSI escape codes for different colours.
     """
-
+    LIGHT_BLUE = "\033[1;34m"
     BLUE = "\33[94m"
     CYAN = "\33[96m"
     GREEN = "\33[92m"
     YELLOW = "\33[93m"
+    MAGENTA = "\33[95m"
     RED = "\33[91m"
     END = "\033[0m"
     BVIOLET = "\033[1;35m"
 
 
 def print_once(
-    output: Any, comm: Comm, colour: str = Colour.GREEN
+    output: Any, comm: Comm, colour: Any = Colour.GREEN
 ) -> None:
     """
     Print an output from rank zero only.
@@ -34,7 +35,16 @@ def print_once(
         The colour of the output.
     """
     if comm.rank == 0:
-        print(colour + output + Colour.END)
+        if isinstance(output, list):
+            output = "".join(
+                [
+                    f"{colour}{out}{Colour.END}"
+                    for out, colour in zip(output, colour)
+                ]
+            )
+            print(output)
+        else:
+            print(colour + output + Colour.END)
 
 
 def print_rank(output: Any, comm: Comm) -> None:
