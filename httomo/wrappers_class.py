@@ -1,4 +1,4 @@
-from typing import Dict,Union
+from typing import Dict, Union
 import numpy as np
 import inspect
 from mpi4py import MPI
