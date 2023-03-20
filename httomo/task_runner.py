@@ -11,7 +11,7 @@ from importlib import import_module
 from numpy import ndarray
 from mpi4py import MPI
 
-from httomo.utils import print_once, Pattern, _get_slicing_dim
+from httomo.utils import print_once, Pattern, _get_slicing_dim, Colour
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
@@ -113,6 +113,10 @@ def run_tasks(
     patterns = [f.pattern for (_, f, _, _, _) in method_funcs]
     reslice_bool_list = _check_if_should_reslice(patterns)
 
+    # start MPI timer for rank 0
+    if comm.rank == 0:
+        start_time = MPI.Wtime()
+
     # Run the methods
     for idx, (module_path, func, func_runner, params, is_loader) in enumerate(
         method_funcs
@@ -122,7 +126,11 @@ def run_tasks(
         task_no_str = f"Running task {idx+1}"
         task_end_str = task_no_str.replace("Running", "Finished")
         pattern_str = f"(pattern={func.pattern.name})"
-        print_once(f"{task_no_str} {pattern_str}: {method_name} ({package})...", comm)
+        print_once(
+            f"{task_no_str} {pattern_str}: {method_name}...",
+            comm,
+            colour=Colour.LIGHT_BLUE
+        )
         start = time.perf_counter_ns()
         if is_loader:
             params.update(loader_extra_params)
@@ -206,7 +214,7 @@ def run_tasks(
                 possible_extra_params[-1] = (["reslice_ahead"], reslice_ahead)
 
             if reslice_counter > 1 and not has_reslice_warn_printed:
-                print_once(reslice_warn_str, comm=comm, colour="red")
+                print_once(reslice_warn_str, comm=comm, colour=Colour.RED)
                 has_reslice_warn_printed = True
 
             # Check for any extra params unrelated to wrapped packages but related to
@@ -304,10 +312,25 @@ def run_tasks(
             comm,
         )
 
+        stop = time.perf_counter_ns()
+        output_str_list = [
+            f"{task_end_str} {pattern_str}: {method_name} (",
+            package,
+            f") Took {float(stop-start)*1e-6:.2f}ms",
+        ]
+        output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
+        print_once(output_str_list, comm=comm, colour=output_colour_list)
+
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
-    reslice_summary_colour = "blue" if reslice_counter <= 1 else "red"
+    reslice_summary_colour = Colour.BLUE if reslice_counter <= 1 else Colour.RED
     print_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour)
+
+    if comm.rank == 0:
+        elapsed_time = MPI.Wtime() - start_time
+
+    end_str = f"\n\n~~~ Pipeline finished ~~~\nTook {elapsed_time} sec to run!"
+    print_once(end_str, comm=comm, colour=Colour.BVIOLET)
 
 
 def _initialise_datasets(
@@ -583,7 +606,6 @@ def _run_method(
     if not isinstance(out_dataset, list):
         is_3d = len(datasets[out_dataset].shape) == 3
     # Save the result if necessary
-    # print_once(method_name, comm)
     if out_dir is not None and is_3d:
         intermediate_dataset(
             datasets[out_dataset],

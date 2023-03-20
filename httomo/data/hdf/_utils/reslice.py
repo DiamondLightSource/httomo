@@ -4,7 +4,7 @@ import numpy
 from mpi4py.MPI import Comm
 
 from httomo.data.hdf._utils import chunk, load
-from httomo.utils import print_once
+from httomo.utils import print_once, Colour
 
 
 def reslice(
@@ -32,7 +32,7 @@ def reslice(
         A tuple containing the resliced data and the dimension along which it is
         now sliced.
     """
-    print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour="blue")
+    print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE)
 
     # No need to reclice anything if there is only one process
     if comm.size == 1:
@@ -102,7 +102,7 @@ def reslice_filebased(
         # Chunk along detector x dimension
         chunks_data = (data_shape[0], data_shape[1], slices_no_in_chunks)
 
-    print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour="blue")
+    print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE)
     # Pass the current slicing dim so then data can be gathered and assembled
     # correctly, and the new chunk shape to save the data in an hdf5 file with
     # the new chunking
