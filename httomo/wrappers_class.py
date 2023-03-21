@@ -1,11 +1,11 @@
 from typing import Dict, Union
 import numpy as np
 import inspect
-from mpi4py import MPI
-from mpi4py.MPI import Comm
 from inspect import signature
 from httomo.utils import print_once
+from httomo.data import mpiutil
 
+from mpi4py.MPI import Comm
 
 gpu_enabled = False
 try:
@@ -31,10 +31,9 @@ class BaseWrapper:
         self, module_name: str, function_name: str, method_name: str, comm: Comm
     ):
         self.comm = comm
-        local_comm = comm.Split_type(MPI.COMM_TYPE_SHARED)
         if gpu_enabled:
             self.num_GPUs = xp.cuda.runtime.getDeviceCount()
-            self.gpu_id = local_comm.rank % self.num_GPUs
+            self.gpu_id = mpiutil.local_rank % self.num_GPUs
             xp._default_memory_pool.free_all_blocks()
 
     def _transfer_data(self, *args) -> Union[tuple, xp.ndarray, np.ndarray]:

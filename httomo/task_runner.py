@@ -326,9 +326,10 @@ def run_tasks(
     reslice_summary_colour = Colour.BLUE if reslice_counter <= 1 else Colour.RED
     print_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour)
 
+    elapsed_time = 0
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
-
+    
     end_str = f"\n\n~~~ Pipeline finished ~~~\nTook {elapsed_time} sec to run!"
     print_once(end_str, comm=comm, colour=Colour.BVIOLET)
 
