@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy
 from mpi4py.MPI import Comm
+from httomo.data import mpiutil
 
 from httomo.data.hdf._utils import chunk, load
 from httomo.utils import print_once, Colour
@@ -43,19 +44,16 @@ def reslice(
     # the dims of the full data rather than of the split data
     data_shape = chunk.get_data_shape(data, current_slice_dim - 1)
 
-    # build a list of what each process has to scatter to others, and make it
-    # contiguous in memory (much faster to scatter, at the expense
-    # of more CPU memory used for a copy)
+    # build a list of what each process has to scatter to others
     nprocs = comm.size
     length = data_shape[next_slice_dim - 1]
     split_indices = [round((length / nprocs) * r) for r in range(1, nprocs)]
-    to_scatter = numpy.split(data, split_indices, axis=next_slice_dim-1)
-    to_scatter = [numpy.ascontiguousarray(s) for s in to_scatter]
+    to_scatter = numpy.split(data, split_indices, axis=next_slice_dim - 1)
 
     # all-to-all MPI call distributes every processes list to every other process, 
     # and we concatenate them again across the resliced dimension
-    new_data = numpy.concatenate(comm.alltoall(to_scatter), axis=current_slice_dim-1)
-    
+    new_data = numpy.concatenate(mpiutil.alltoall(to_scatter), axis=current_slice_dim - 1)
+
     return new_data, next_slice_dim
 
 
