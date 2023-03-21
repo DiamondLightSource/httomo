@@ -36,7 +36,7 @@ def reslice(
     print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE)
 
     # No need to reclice anything if there is only one process
-    if comm.size == 1:
+    if mpiutil.size == 1:
         print("Reslicing not necessary, as there is only one process")
         return data, next_slice_dim
     
@@ -45,7 +45,7 @@ def reslice(
     data_shape = chunk.get_data_shape(data, current_slice_dim - 1)
 
     # build a list of what each process has to scatter to others
-    nprocs = comm.size
+    nprocs = mpiutil.size
     length = data_shape[next_slice_dim - 1]
     split_indices = [round((length / nprocs) * r) for r in range(1, nprocs)]
     to_scatter = numpy.split(data, split_indices, axis=next_slice_dim - 1)

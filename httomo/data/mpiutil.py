@@ -78,7 +78,7 @@ def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
     shapes_send = [a.shape for a in arrays]
 
     # create a single contiguous array with all the arrays flattened and stacked up, 
-    # so that we can use MPI's Alltoallv (with buffer point + offsets)
+    # so that we can use MPI's Alltoallv (with buffer pointer + offsets)
     # Note: the returned array from concatenate appears to always be C-contiguous
     fullinput = np.concatenate([a.reshape(a.size) for a in arrays])
     assert fullinput.flags.c_contiguous, "C-contigous array is required"
