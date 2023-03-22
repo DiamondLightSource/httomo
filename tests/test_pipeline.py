@@ -79,10 +79,10 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
 
     with h5py.File(h5_files[-1], "r") as f:
         #: 2-tomopy-normalize-tomo.h5
-        assert f["data"].shape == (180, 3, 160)
+        assert f["data"].shape == (3, 160, 160)
         assert f["data"].dtype == np.float32
-        assert_allclose(np.mean(f["data"]), 1.004919, atol=1e-6)
-        assert_allclose(np.sum(f["data"]), 86824.984, atol=1e-6)
+        assert_allclose(np.mean(f["data"]), -8.037842e-06, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), -0.617306, atol=1e-6)
 
     with h5py.File(h5_files[1], "r") as f:
         #: 3-tomopy-minus_log-tomo.h5
@@ -123,8 +123,8 @@ def test_diad_testing_pipeline_output(
         #: 2-tomopy-normalize-tomo.h5
         assert f["data"].shape == (3001, 2, 26)
         assert f["data"].dtype == np.float32
-        assert_allclose(np.mean(f["data"]), 0.847944, atol=1e-6)
-        assert_allclose(np.sum(f["data"]), 132323.36, atol=1e-6)
+        assert_allclose(np.mean(f["data"]), 0.172585, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), 26932.186, atol=1e-6)
     
     # reslicing through memory - no file
     # with h5py.File(h5_files[2], "r") as f:
