@@ -22,6 +22,7 @@ class Colour:
     END = "\033[0m"
     BVIOLET = "\033[1;35m"
     LYELLOW = "\033[33m"
+    BACKG_RED = "\x1b[6;37;41m"
 
 
 def log_once(
@@ -134,9 +135,27 @@ def _parse_preview(
                 # the size of the dimension is less than 4 so all data can be taken
                 preview_str += ":"
         else:
-            start = slice_info["start"] if "start" in slice_info.keys() else None
-            stop = slice_info["stop"] if "stop" in slice_info.keys() else None
-            step = slice_info["step"] if "step" in slice_info.keys() else None
+            start = slice_info.get("start", None)
+            stop = slice_info.get("stop", None)
+            step = slice_info.get("step", None)
+
+            warn_on = False
+            if start is not None and start < 0 or start >= data_shape[idx]:
+                warn_on = True
+                str_warn = f"The 'start' preview {start} is outside the data dimension range" \
+                            + f" from 0 to {data_shape[idx]}"
+            if stop is not None and stop < 0 or stop >= data_shape[idx]:
+                warn_on = True
+                str_warn = f"The 'stop' preview {start} is outside the data dimension range" \
+                            + f" from 0 to {data_shape[idx]}"
+            if step is not None and step < 0:
+                warn_on = True
+                str_warn = "The 'step' in preview cannot be negative"
+
+            if warn_on:
+                log_exception(str_warn, comm=comm, colour=Colour.BACKG_RED, level=1)
+                raise ValueError("Preview error: " + str_warn)
+
             start_str = f"{start if start is not None else ''}"
             stop_str = f"{stop if stop is not None else ''}"
             step_str = f"{step if step is not None else ''}"

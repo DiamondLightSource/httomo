@@ -210,7 +210,7 @@ class BaseWrapper:
             log_once(
                 f"The center of rotation for 180 degrees sinogram is {rot_center}",
                 comm=self.comm,
-                colour=Colour.CYAN,
+                colour=Colour.LYELLOW,
                 level=1,
             )
             return rot_center
@@ -222,7 +222,7 @@ class BaseWrapper:
                 f"The center of rotation for 360 degrees sinogram is {rot_center},"
                 + f" overlap {overlap}, side {side} and overlap position {overlap_position}",
                 self.comm,
-                colour=Colour.CYAN,
+                colour=Colour.LYELLOW,
                 level=1,
             )
             return (rot_center, overlap, side, overlap_position)
