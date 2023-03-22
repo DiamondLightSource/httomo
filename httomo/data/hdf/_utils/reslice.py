@@ -5,7 +5,7 @@ from mpi4py.MPI import Comm
 from httomo.data import mpiutil
 
 from httomo.data.hdf._utils import chunk, load
-from httomo.utils import print_once, Colour
+from httomo.utils import log_once, Colour
 
 
 def reslice(
@@ -33,13 +33,18 @@ def reslice(
         A tuple containing the resliced data and the dimension along which it is
         now sliced.
     """
-    print_once(
-        f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE
+    log_once(
+        f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE, level=1
     )
 
     # No need to reclice anything if there is only one process
     if mpiutil.size == 1:
-        print("Reslicing not necessary, as there is only one process")
+        log_once(
+            "Reslicing not necessary, as there is only one process",
+            comm=comm,
+            colour=Colour.BLUE,
+            level=1,
+        )
         return data, next_slice_dim
 
     # Get shape of full/unsplit data, in order to set the chunk shape based on
@@ -104,8 +109,8 @@ def reslice_filebased(
         # Chunk along detector x dimension
         chunks_data = (data_shape[0], data_shape[1], slices_no_in_chunks)
 
-    print_once(
-        f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE
+    log_once(
+        f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE, level=1
     )
     # Pass the current slicing dim so then data can be gathered and assembled
     # correctly, and the new chunk shape to save the data in an hdf5 file with

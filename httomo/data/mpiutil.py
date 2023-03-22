@@ -56,9 +56,8 @@ def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
     """
 
     if len(arrays) != size:
-        raise ValueError(
-            "list of arrays for MPI alltoall call must match global communicator size"
-        )
+        err_str = "list of arrays for MPI alltoall call must match global communicator size"
+        raise ValueError(err_str)
 
     assert all(type(a) == np.ndarray for a in arrays), "All arrays must be numpy arrays"
     assert all(
