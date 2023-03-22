@@ -300,9 +300,8 @@ def run_tasks(
 
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
-
-    end_str = f"\n\n~~~ Pipeline finished ~~~\nTook {elapsed_time} sec to run!"
-    print_once(end_str, comm=comm, colour=Colour.BVIOLET)
+        end_str = f"\n\n~~~ Pipeline finished ~~~\nTook {elapsed_time} sec to run!"
+        print_once(end_str, comm=comm, colour=Colour.BVIOLET)
 
 
 def _initialise_datasets(
