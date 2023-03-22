@@ -77,7 +77,7 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 4
 
-    with h5py.File(h5_files[0], "r") as f:
+    with h5py.File(h5_files[-1], "r") as f:
         #: 2-tomopy-normalize-tomo.h5
         assert f["data"].shape == (180, 3, 160)
         assert f["data"].dtype == np.float32
@@ -119,8 +119,7 @@ def test_diad_testing_pipeline_output(
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 4
 
-    print(h5_files)
-    with h5py.File(h5_files[0], "r") as f:
+    with h5py.File(h5_files[1], "r") as f:
         #: 2-tomopy-normalize-tomo.h5
         assert f["data"].shape == (3001, 2, 26)
         assert f["data"].dtype == np.float32
@@ -134,7 +133,7 @@ def test_diad_testing_pipeline_output(
     #     assert_allclose(np.mean(f["data"]), 0.17258468, atol=1e-6)
     #     assert_allclose(np.sum(f["data"]), 26932.186, atol=1e-6)
 
-    with h5py.File(h5_files[-1], "r") as f:
+    with h5py.File(h5_files[3], "r") as f:
         #: 6-tomopy-recon-tomo-gridrec.h5
         assert f["data"].shape == (2, 26, 26)
         assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6)
