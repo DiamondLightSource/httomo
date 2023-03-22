@@ -3,6 +3,9 @@ from mpi4py.MPI import Comm
 from typing import Tuple, List, Dict, Callable
 from enum import Enum
 
+from httomo.data import mpiutil
+from httomo.logger import user_logger
+
 
 class Colour:
     """
@@ -18,11 +21,14 @@ class Colour:
     RED = "\33[91m"
     END = "\033[0m"
     BVIOLET = "\033[1;35m"
+    LYELLOW = "\033[33m"
 
 
-def print_once(output: Any, comm: Comm, colour: Any = Colour.GREEN) -> None:
+def log_once(
+    output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0
+) -> None:
     """
-    Print an output from rank zero only.
+    Log output to console and log file if the process is rank zero.
 
     Parameters
     ----------
@@ -32,19 +38,23 @@ def print_once(output: Any, comm: Comm, colour: Any = Colour.GREEN) -> None:
         The comm used to determine the rank zero process.
     colour : str, optional
         The colour of the output.
+    level : int, optional
+        The level of the log message. 0 is info, 1 is debug.
     """
-    if comm.rank == 0:
+    if mpiutil.rank == 0:
         if isinstance(output, list):
             output = "".join(
                 [f"{colour}{out}{Colour.END}" for out, colour in zip(output, colour)]
             )
-            print(output)
         else:
-            print(colour + output + Colour.END)
+            output = f"{colour}{output}{Colour.END}"
+
+        user_logger.debug(output) if level == 1 else user_logger.info(output)
 
 
-def print_rank(output: Any, comm: Comm) -> None:
-    """Print an output with rank prefix.
+def log_rank(output: Any, comm: Comm) -> None:
+    """
+    Log output to log file with the process rank.
 
     Parameters
     ----------
@@ -53,7 +63,19 @@ def print_rank(output: Any, comm: Comm) -> None:
     comm : Comm
         The comm used to determine the process rank.
     """
-    print(f"RANK: [{comm.rank}], {output}")
+    user_logger.debug(f"RANK: [{comm.rank}], {output}")
+
+
+def log_exception(output: str) -> None:
+    """
+    Log an exception to the log file.
+
+    Parameters
+    ----------
+    output : str
+        The exception to be logged.
+    """
+    user_logger.error(output)
 
 
 def _parse_preview(
@@ -148,4 +170,5 @@ def _get_slicing_dim(pattern: Pattern) -> int:
         return 1
     else:
         err_str = f"An unknown pattern has been encountered {pattern}"
+        log_exception(err_str)
         raise ValueError(err_str)

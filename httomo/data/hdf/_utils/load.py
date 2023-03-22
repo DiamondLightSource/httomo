@@ -6,6 +6,8 @@ import numpy as np
 from mpi4py import MPI
 from numpy import ndarray
 
+from httomo.utils import Colour, log_once
+
 
 def load_data(
     file: str,
@@ -38,9 +40,9 @@ def load_data(
     ndarray
         The numpy array that has been loaded.
     """
-    print(file)
-    print(path)
-    print(preview)
+    log_once(f"Loading data: {file}", colour=Colour.LYELLOW, comm=comm, level=1)
+    log_once(f"Path to data: {path}", colour=Colour.LYELLOW, comm=comm, level=1)
+    log_once(f"Preview: ({preview})", colour=Colour.LYELLOW, comm=comm, level=1)
     if dim == 1:
         data = read_through_dim1(file, path, preview=preview, pad=pad, comm=comm)
     elif dim == 2:
