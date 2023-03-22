@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy
 from mpi4py.MPI import Comm
 
-from httomo.utils import print_once, Colour
+from httomo.utils import log_once, Colour
 from httomo.data.hdf._utils.chunk import save_dataset
 
 
@@ -54,5 +54,5 @@ def intermediate_dataset(
     else:
         filename = f"{filename}.h5"
 
-    print_once(f"Saving intermediate file: {filename}", comm, colour=Colour.YELLOW)
+    log_once(f"Saving intermediate file: {filename}", comm, colour=Colour.LYELLOW, level=1)
     save_dataset(run_out_dir, filename, data, slice_dim, chunks_recon, comm=comm)

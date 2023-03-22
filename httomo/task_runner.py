@@ -12,7 +12,9 @@ from numpy import ndarray
 import numpy as np
 from mpi4py import MPI
 
-from httomo.utils import print_once, Pattern, _get_slicing_dim, Colour
+from httomo.utils import (
+    log_once, Pattern, _get_slicing_dim, Colour, log_exception
+)
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.chunk import save_dataset, get_data_shape
@@ -158,10 +160,11 @@ def run_tasks(
         task_no_str = f"Running task {idx+1}"
         task_end_str = task_no_str.replace("Running", "Finished")
         pattern_str = f"(pattern={func_method.pattern.name})"
-        print_once(
+        log_once(
             f"{task_no_str} {pattern_str}: {method_name}...",
             comm,
             colour=Colour.LIGHT_BLUE,
+            level=0,
         )
         start = time.perf_counter_ns()
         if is_loader:
@@ -226,23 +229,23 @@ def run_tasks(
 
         stop = time.perf_counter_ns()
         output_str_list = [
-            f"{task_end_str} {pattern_str}: {method_name} (",
+            f"    {task_end_str} {pattern_str}: {method_name} (",
             package,
             f") Took {float(stop-start)*1e-6:.2f}ms",
         ]
         output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
-        print_once(output_str_list, comm=comm, colour=output_colour_list)
+        log_once(output_str_list, comm=comm, colour=output_colour_list)
 
-    # Print the number of reslice operations peformed in the pipeline
+    # Log the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
     reslice_summary_colour = Colour.BLUE if reslice_counter <= 1 else Colour.RED
-    print_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour)
+    log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
 
     elapsed_time = 0
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
-        end_str = f"\n\n~~~ Pipeline finished ~~~\nTook {elapsed_time} sec to run!"
-        print_once(end_str, comm=comm, colour=Colour.BVIOLET)
+        end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
+        log_once(end_str, comm=comm, colour=Colour.BVIOLET)
 
 
 def _initialise_datasets(
@@ -427,6 +430,7 @@ def _get_method_funcs(
             err_str = (
                 f"An unknown module name was encountered: " f"{split_module_name[0]}"
             )
+            log_exception(err_str)
             raise ValueError(err_str)
 
     return method_funcs
@@ -1208,6 +1212,7 @@ def _assign_pattern_to_method(
             f"The pattern {pattern_str} that is listed for the method "
             f"{module_path} is invalid."
         )
+        log_exception(err_str)
         raise ValueError(err_str)
 
     func_method.pattern = pattern

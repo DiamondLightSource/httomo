@@ -1,6 +1,7 @@
 import yaml
 from pathlib import Path
 
+from httomo.utils import log_exception
 
 YAML_DIR = Path(__file__).parent / "packages/"
 
@@ -35,6 +36,7 @@ def get_method_info(module_path: str, method_name: str, attr: str):
 
     if not yaml_info_path.exists():
         err_str = f"The YAML file {yaml_info_path} doesn't exist."
+        log_exception(err_str)
         raise ValueError(err_str)
 
     with open(yaml_info_path, "r") as f:
