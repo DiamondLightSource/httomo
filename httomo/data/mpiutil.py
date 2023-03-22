@@ -77,7 +77,7 @@ def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
     sizes_send = [a.size for a in arrays]
     shapes_send = [a.shape for a in arrays]
 
-    # create a single contiguous array with all the arrays flattened and stacked up, 
+    # create a single contiguous array with all the arrays flattened and stacked up,
     # so that we can use MPI's Alltoallv (with buffer pointer + offsets)
     # Note: the returned array from concatenate appears to always be C-contiguous
     fullinput = np.concatenate([a.reshape(a.size) for a in arrays])
@@ -89,9 +89,9 @@ def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
     sizes_rec = [np.prod(sh) for sh in shapes_rec]
     fulloutput = np.empty((np.sum(sizes_rec),), dtype=arrays[0].dtype)
 
-    if any(s >= _mpi_max_elements for s in sizes_send) or \
-       any(s >= _mpi_max_elements for s in sizes_rec):
-        
+    if any(s >= _mpi_max_elements for s in sizes_send) or any(
+        s >= _mpi_max_elements for s in sizes_rec
+    ):
         # find the dim which is equal in all arrays to send/receive
         dim0s = [s[0] for s in shapes_send] + [s[0] for s in shapes_rec]
         dim1s = [s[1] for s in shapes_send] + [s[1] for s in shapes_rec]

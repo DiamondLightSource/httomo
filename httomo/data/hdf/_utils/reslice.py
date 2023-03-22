@@ -33,7 +33,9 @@ def reslice(
         A tuple containing the resliced data and the dimension along which it is
         now sliced.
     """
-    print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE)
+    print_once(
+        f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE
+    )
 
     # No need to reclice anything if there is only one process
     if mpiutil.size == 1:
@@ -52,7 +54,9 @@ def reslice(
 
     # all-to-all MPI call distributes every processes list to every other process,
     # and we concatenate them again across the resliced dimension
-    new_data = numpy.concatenate(mpiutil.alltoall(to_scatter), axis=current_slice_dim - 1)
+    new_data = numpy.concatenate(
+        mpiutil.alltoall(to_scatter), axis=current_slice_dim - 1
+    )
 
     return new_data, next_slice_dim
 
@@ -100,7 +104,9 @@ def reslice_filebased(
         # Chunk along detector x dimension
         chunks_data = (data_shape[0], data_shape[1], slices_no_in_chunks)
 
-    print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE)
+    print_once(
+        f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE
+    )
     # Pass the current slicing dim so then data can be gathered and assembled
     # correctly, and the new chunk shape to save the data in an hdf5 file with
     # the new chunking

@@ -129,7 +129,7 @@ def run_tasks(
         print_once(
             f"{task_no_str} {pattern_str}: {method_name}...",
             comm,
-            colour=Colour.LIGHT_BLUE
+            colour=Colour.LIGHT_BLUE,
         )
         start = time.perf_counter_ns()
         if is_loader:
@@ -329,7 +329,7 @@ def run_tasks(
     elapsed_time = 0
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
-    
+
     end_str = f"\n\n~~~ Pipeline finished ~~~\nTook {elapsed_time} sec to run!"
     print_once(end_str, comm=comm, colour=Colour.BVIOLET)
 
