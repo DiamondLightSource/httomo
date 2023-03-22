@@ -40,9 +40,9 @@ discard_keys = [
     "angles",
     "flats",
     "darks",
+    "gpu_id",
 ]  # discard from parameters list
 no_data_out_modules = ["save_to_images"]  # discard data_out from certain modules
-# change_data_out_modules = ['find_center_vo_cupy'] # change the data_out to cor
 
 # open YAML file with httomolib modules exposed
 with open(path_to_httomolib_modules, "r") as stream:
@@ -73,10 +73,10 @@ for i in range(modules_no):
         # ! dealing with special cases for data_out !
         if method_name not in no_data_out_modules:
             params_dict["data_out"] = "tomo"
-        if method_name in "find_center_vo_cupy":
+        if method_name in "find_center_vo":
             params_dict["data_out"] = "cor"
         if method_name in "find_center_360":
-            params_dict["data_out"] = "cor, overlap, side, overlap_position"
+            params_dict["data_out"] = ["cor", "overlap", "side", "overlap_position"]
         for k, v in get_method_params.parameters.items():
             if v is not None:
                 append = True

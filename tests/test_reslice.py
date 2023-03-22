@@ -41,13 +41,13 @@ def test_reslice(full_shape, current_slice_dim, next_slice_dim, dtype):
     output data is just the same as the input data) and with MPI for any
     number of processes.
 
-       To run with MPI, run:
+    To run with MPI, run:
 
-       mpirun -np 2 pytest -m mpi
+    mpirun -np 2 pytest -m mpi
 
-       (the marker makes sure only tests that are relevant for MPI are run)
+    (the marker makes sure only tests that are relevant for MPI are run)
     """
-    
+
     comm = MPI.COMM_WORLD
 
     # every process creates a slice of the full shape in current_slice_dim,
@@ -94,7 +94,7 @@ def test_reslice_performance():
     next_slice_dim = 2
     data = np.ones(process_shape, dtype=np.float32) * comm.rank
 
-    # reslice 
+    # reslice
     start = time.perf_counter_ns()
     for _ in range(10):
         reslice(data, current_slice_dim, next_slice_dim, comm)

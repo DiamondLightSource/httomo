@@ -61,14 +61,16 @@ class GlobalOptions:
     "--file-based-reslice",
     default=None,
     is_flag=True,
-    help="Reslice using intermediate files (default is in-memory)."
+    help="Reslice using intermediate files (default is in-memory).",
 )
 @click.option(
     "--reslice-dir",
     type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
     default=None,
-    callback=lambda context, param, value: value if value else context.params['out_dir'],
-    help="Directory for reslice intermediate files (defaults to out_dir, only relevant if --reslice is also given)"
+    callback=lambda context, param, value: value
+    if value
+    else context.params["out_dir"],
+    help="Directory for reslice intermediate files (defaults to out_dir, only relevant if --reslice is also given)",
 )
 @click.version_option(version=__version__, message="%(version)s")
 @click.pass_context
@@ -86,8 +88,14 @@ def main(
 ):
     """httomo: High Throughput Tomography."""
     ctx.obj = GlobalOptions(
-        in_file, yaml_config, out_dir, dimension, pad, ncore, save_all, 
-        reslice_dir if file_based_reslice else None
+        in_file,
+        yaml_config,
+        out_dir,
+        dimension,
+        pad,
+        ncore,
+        save_all,
+        reslice_dir if file_based_reslice else None,
     )
 
     if ctx.invoked_subcommand is None:
@@ -106,5 +114,5 @@ def task_runner(global_options: GlobalOptions):
         global_options.pad,
         global_options.ncore,
         global_options.save_all,
-        global_options.reslice
+        global_options.reslice,
     )

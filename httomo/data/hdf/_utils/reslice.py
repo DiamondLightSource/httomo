@@ -33,13 +33,15 @@ def reslice(
         A tuple containing the resliced data and the dimension along which it is
         now sliced.
     """
-    print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE)
+    print_once(
+        f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE
+    )
 
     # No need to reclice anything if there is only one process
     if mpiutil.size == 1:
         print("Reslicing not necessary, as there is only one process")
         return data, next_slice_dim
-    
+
     # Get shape of full/unsplit data, in order to set the chunk shape based on
     # the dims of the full data rather than of the split data
     data_shape = chunk.get_data_shape(data, current_slice_dim - 1)
@@ -50,9 +52,11 @@ def reslice(
     split_indices = [round((length / nprocs) * r) for r in range(1, nprocs)]
     to_scatter = numpy.split(data, split_indices, axis=next_slice_dim - 1)
 
-    # all-to-all MPI call distributes every processes list to every other process, 
+    # all-to-all MPI call distributes every processes list to every other process,
     # and we concatenate them again across the resliced dimension
-    new_data = numpy.concatenate(mpiutil.alltoall(to_scatter), axis=current_slice_dim - 1)
+    new_data = numpy.concatenate(
+        mpiutil.alltoall(to_scatter), axis=current_slice_dim - 1
+    )
 
     return new_data, next_slice_dim
 
@@ -62,7 +66,7 @@ def reslice_filebased(
     current_slice_dim: int,
     next_slice_dim: int,
     comm: Comm,
-    reslice_dir: Path
+    reslice_dir: Path,
 ) -> tuple[numpy.ndarray, int]:
     """Reslice data by writing to hdf5 store with data chunked along a different
     dimension, and reading back along the new chunking dimension.
@@ -100,7 +104,9 @@ def reslice_filebased(
         # Chunk along detector x dimension
         chunks_data = (data_shape[0], data_shape[1], slices_no_in_chunks)
 
-    print_once(f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE)
+    print_once(
+        f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE
+    )
     # Pass the current slicing dim so then data can be gathered and assembled
     # correctly, and the new chunk shape to save the data in an hdf5 file with
     # the new chunking

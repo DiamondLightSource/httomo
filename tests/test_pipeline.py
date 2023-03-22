@@ -29,7 +29,7 @@ def test_tomo_standard_testing_pipeline_output(
 
     # recurse through output_dir and check that all files are there
     files = read_folder("output_dir/")
-    assert len(files) == 5
+    assert len(files) == 4
 
     # check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -40,16 +40,17 @@ def test_tomo_standard_testing_pipeline_output(
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 2
+    assert len(h5_files) == 1
+
+    # reslicing through memory - no file
+    # with h5py.File(h5_files[0], "r") as f:
+    #     #: intermediate.h5
+    #     assert f["data"].shape == (180, 3, 160)
+    #     assert f["data"].dtype == np.float32
+    #     assert_allclose(np.mean(f["data"]), -0.004374, atol=1e-6)
+    #     assert_allclose(np.sum(f["data"]), -377.88608, atol=1e-6)
 
     with h5py.File(h5_files[0], "r") as f:
-        #: intermediate.h5
-        assert f["data"].shape == (180, 3, 160)
-        assert f["data"].dtype == np.float32
-        assert_allclose(np.mean(f["data"]), -0.004374, atol=1e-6)
-        assert_allclose(np.sum(f["data"]), -377.88608, atol=1e-6)
-
-    with h5py.File(h5_files[1], "r") as f:
         #: 6-tomopy-recon-tomo-gridrec.h5
         assert f["data"].shape == (3, 160, 160)
         assert f["data"].dtype == np.float32
@@ -66,7 +67,7 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
-    assert len(files) == 8
+    assert len(files) == 7
 
     # check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -74,14 +75,14 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 5
+    assert len(h5_files) == 4
 
-    with h5py.File(h5_files[0], "r") as f:
+    with h5py.File(h5_files[-1], "r") as f:
         #: 2-tomopy-normalize-tomo.h5
-        assert f["data"].shape == (180, 3, 160)
+        assert f["data"].shape == (3, 160, 160)
         assert f["data"].dtype == np.float32
-        assert_allclose(np.mean(f["data"]), 1.004919, atol=1e-6)
-        assert_allclose(np.sum(f["data"]), 86824.984, atol=1e-6)
+        assert_allclose(np.mean(f["data"]), -8.037842e-06, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), -0.617306, atol=1e-6)
 
     with h5py.File(h5_files[1], "r") as f:
         #: 3-tomopy-minus_log-tomo.h5
@@ -104,7 +105,7 @@ def test_diad_testing_pipeline_output(
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
-    assert len(files) == 7
+    assert len(files) == 6
 
     #: check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -116,23 +117,24 @@ def test_diad_testing_pipeline_output(
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 5
+    assert len(h5_files) == 4
 
-    with h5py.File(h5_files[0], "r") as f:
+    with h5py.File(h5_files[1], "r") as f:
         #: 2-tomopy-normalize-tomo.h5
         assert f["data"].shape == (3001, 2, 26)
         assert f["data"].dtype == np.float32
-        assert_allclose(np.mean(f["data"]), 0.847944, atol=1e-6)
-        assert_allclose(np.sum(f["data"]), 132323.36, atol=1e-6)
-
-    with h5py.File(h5_files[2], "r") as f:
-        #: intermediate.h5
-        assert f["data"].shape == (3001, 2, 26)
-        assert_allclose(np.mean(f["data"]), 0.17258468, atol=1e-6)
+        assert_allclose(np.mean(f["data"]), 0.172585, atol=1e-6)
         assert_allclose(np.sum(f["data"]), 26932.186, atol=1e-6)
+    
+    # reslicing through memory - no file
+    # with h5py.File(h5_files[2], "r") as f:
+    #     #: intermediate.h5
+    #     assert f["data"].shape == (3001, 2, 26)
+    #     assert_allclose(np.mean(f["data"]), 0.17258468, atol=1e-6)
+    #     assert_allclose(np.sum(f["data"]), 26932.186, atol=1e-6)
 
-    with h5py.File(h5_files[-1], "r") as f:
-        #: 5-tomopy-recon-tomo-gridrec.h5
+    with h5py.File(h5_files[3], "r") as f:
+        #: 6-tomopy-recon-tomo-gridrec.h5
         assert f["data"].shape == (2, 26, 26)
         assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6)
         assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6)
