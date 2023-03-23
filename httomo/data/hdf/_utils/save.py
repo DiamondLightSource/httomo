@@ -15,6 +15,7 @@ def intermediate_dataset(
     package_name: str,
     method_name: str,
     dataset_name: str,
+    slice_dim: int,
     recon_algorithm: str = None,
 ) -> None:
     """Save an intermediate dataset as an hdf file.
@@ -37,6 +38,9 @@ def intermediate_dataset(
         The method that was used in `package_name` to produce the given dataset.
     dataset_name : str
         The name of the output dataset given in the YAML config.
+    slice_dim : int
+        The dimension along which the data has been split between MPI processes
+        (using 1-based indexing)
     recon_algorithm : str
         If the dataset contains a reconstructions, this is the reconstruction
         algorithm name that was used.
@@ -51,4 +55,4 @@ def intermediate_dataset(
         filename = f"{filename}.h5"
 
     print_once(f"Saving intermediate file: {filename}", comm, colour=Colour.YELLOW)
-    save_dataset(run_out_dir, filename, data, 1, chunks_recon, comm=comm)
+    save_dataset(run_out_dir, filename, data, slice_dim, chunks_recon, comm=comm)

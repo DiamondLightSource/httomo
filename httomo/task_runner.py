@@ -602,6 +602,15 @@ def _run_method(
         is_3d = len(dict_datasets_pipeline[out_dataset].shape) == 3
     # Save the result if necessary
     if out_dir is not None and is_3d:
+        # Check the slice dim for the method, so then the data from the
+        # different MPI processes can be gathered along the correct axis when
+        # saving to an intermediate file
+        recon_algorithm = method_params.pop("algorithm", None)
+        if recon_algorithm is not None:
+            slice_dim = 1
+        else:
+            slice_dim = _get_slicing_dim(func.pattern)
+
         intermediate_dataset(
             dict_datasets_pipeline[out_dataset],
             out_dir,
@@ -610,7 +619,8 @@ def _run_method(
             package_name,
             method_name,
             out_dataset,
-            recon_algorithm=dict_params_method.pop("algorithm", None),
+            slice_dim,
+            recon_algorithm=recon_algorithm,
         )
 
 
