@@ -280,7 +280,7 @@ def run_tasks(
                 dict_params_method.update({"gpu_id": gpu_id_par})
 
             # Check if method type signature requires global statistics
-            req_glob_stats = "glob_stats" in signature(func_wrapper).parameters
+            req_glob_stats = "glob_stats" in signature(func_method).parameters
 
             for i, in_dataset in enumerate(data_in):
                 if save_result:
