@@ -289,6 +289,7 @@ def run_tasks(
 
                 _run_method(
                     func_wrapper,
+                    func_method,
                     idx + 1,
                     package,
                     method_name,
@@ -517,6 +518,7 @@ def _get_method_funcs(
 
 def _run_method(
     func_wrapper: Callable,
+    func_method:  Callable,
     task_no: int,
     package_name: str,
     method_name: str,
@@ -534,7 +536,9 @@ def _run_method(
     Parameters
     ----------
     func_wrapper : Callable
-        The python function that performs the method.
+        The object of wrapper function that exacutes the method from a different package.
+    func_method : Callable
+        The object of a method from different package.        
     task_no : int
         The number of the given task, starting at index 1.
     package_name : str
@@ -605,11 +609,11 @@ def _run_method(
         # Check the slice dim for the method, so then the data from the
         # different MPI processes can be gathered along the correct axis when
         # saving to an intermediate file
-        recon_algorithm = method_params.pop("algorithm", None)
+        recon_algorithm = dict_params_method.pop("algorithm", None)
         if recon_algorithm is not None:
             slice_dim = 1
         else:
-            slice_dim = _get_slicing_dim(func.pattern)
+            slice_dim = _get_slicing_dim(func_method.pattern)
 
         intermediate_dataset(
             dict_datasets_pipeline[out_dataset],
