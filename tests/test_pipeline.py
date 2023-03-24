@@ -125,7 +125,7 @@ def test_diad_testing_pipeline_output(
         assert f["data"].dtype == np.float32
         assert_allclose(np.mean(f["data"]), 0.172585, atol=1e-6)
         assert_allclose(np.sum(f["data"]), 26932.186, atol=1e-6)
-    
+
     # reslicing through memory - no file
     # with h5py.File(h5_files[2], "r") as f:
     #     #: intermediate.h5
