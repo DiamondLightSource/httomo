@@ -101,13 +101,25 @@ def run_tasks(
     has_reslice_warn_printed = False
 
     # Associate patterns to method function objects
-    for i, (module_path, func_method, func_wrapper, dict_params_method, is_loader) in enumerate(
-        method_funcs
-    ):
-        func_method = _assign_pattern_to_method(func_method, module_path, dict_params_method["method_name"])
-        method_funcs[i] = (module_path, func_method, func_wrapper, dict_params_method, is_loader)
+    for i, (
+        module_path,
+        func_method,
+        func_wrapper,
+        dict_params_method,
+        is_loader,
+    ) in enumerate(method_funcs):
+        func_method = _assign_pattern_to_method(
+            func_method, module_path, dict_params_method["method_name"]
+        )
+        method_funcs[i] = (
+            module_path,
+            func_method,
+            func_wrapper,
+            dict_params_method,
+            is_loader,
+        )
 
-    # get a list with booleans to identify when reslicing needed 
+    # get a list with booleans to identify when reslicing needed
     patterns = [f.pattern for (_, f, _, _, _) in method_funcs]
     reslice_bool_list = _check_if_should_reslice(patterns)
 
@@ -116,9 +128,13 @@ def run_tasks(
         start_time = MPI.Wtime()
 
     # Run the methods
-    for idx, (module_path, func_method, func_wrapper, dict_params_method, is_loader) in enumerate(
-        method_funcs
-    ):
+    for idx, (
+        module_path,
+        func_method,
+        func_wrapper,
+        dict_params_method,
+        is_loader,
+    ) in enumerate(method_funcs):
         package = module_path.split(".")[0]
         method_name = dict_params_method.pop("method_name")
         task_no_str = f"Running task {idx+1}"
@@ -207,7 +223,7 @@ def run_tasks(
                 else "False"
             )
             # reslice_ahead must be the last item in the list
-            possible_extra_params[-1] = (["reslice_ahead"], reslice_ahead) 
+            possible_extra_params[-1] = (["reslice_ahead"], reslice_ahead)
 
             if reslice_counter > 1 and not has_reslice_warn_printed:
                 print_once(reslice_warn_str, comm=comm, colour=Colour.RED)
@@ -224,10 +240,16 @@ def run_tasks(
             # Make the input and output datasets always be lists just to be
             # generic, and further down loop through all the datasets that the
             # method should be applied to
-            if "data_in" in dict_params_method.keys() and "data_out" in dict_params_method.keys():
+            if (
+                "data_in" in dict_params_method.keys()
+                and "data_out" in dict_params_method.keys()
+            ):
                 data_in = [dict_params_method.pop("data_in")]
                 data_out = [dict_params_method.pop("data_out")]
-            elif "data_in_multi" in dict_params_method.keys() and "data_out_multi" in dict_params_method.keys():
+            elif (
+                "data_in_multi" in dict_params_method.keys()
+                and "data_out_multi" in dict_params_method.keys()
+            ):
                 data_in = dict_params_method.pop("data_in_multi")
                 data_out = dict_params_method.pop("data_out_multi")
             else:
@@ -242,7 +264,9 @@ def run_tasks(
 
             # Check if the method function's params require any datasets stored
             # in the `dict_datasets_pipeline` dict
-            dataset_params = _check_method_params_for_datasets(dict_params_method, dict_datasets_pipeline)
+            dataset_params = _check_method_params_for_datasets(
+                dict_params_method, dict_datasets_pipeline
+            )
             # Update the relevant parameter values according to the required
             # datasets
             dict_params_method.update(dataset_params)
@@ -518,7 +542,7 @@ def _get_method_funcs(
 
 def _run_method(
     func_wrapper: Callable,
-    func_method:  Callable,
+    func_method: Callable,
     task_no: int,
     package_name: str,
     method_name: str,
@@ -538,7 +562,7 @@ def _run_method(
     func_wrapper : Callable
         The object of wrapper function that exacutes the method from a different package.
     func_method : Callable
-        The object of a method from different package.        
+        The object of a method from different package.
     task_no : int
         The number of the given task, starting at index 1.
     package_name : str
@@ -576,7 +600,9 @@ def _run_method(
         dict_httomo_params["data"] = dict_datasets_pipeline[in_dataset]
 
     if method_name in savers_no_data_out_param:
-        _run_method_wrapper(func_wrapper, method_name, dict_params_method, dict_httomo_params)
+        _run_method_wrapper(
+            func_wrapper, method_name, dict_params_method, dict_httomo_params
+        )
         # Nothing more to do with output data if the saver has a special
         # kind of output
         return
@@ -649,7 +675,10 @@ def _run_loader(
 
 
 def _run_method_wrapper(
-    func_wrapper: Callable, method_name: str, dict_params_method: Dict, dict_httomo_params: Dict
+    func_wrapper: Callable,
+    method_name: str,
+    dict_params_method: Dict,
+    dict_httomo_params: Dict,
 ) -> ndarray:
     """Run a wrapper method function (httomolib/tomopy) in the processing pipeline.
 
@@ -673,7 +702,9 @@ def _run_method_wrapper(
 
 
 def _check_signature_for_httomo_params(
-    func_wrapper: Callable, method_name: str, possible_extra_params: List[Tuple[List[str], object]]
+    func_wrapper: Callable,
+    method_name: str,
+    possible_extra_params: List[Tuple[List[str], object]],
 ) -> Dict:
     """Check if the given method requires any parameters related to HTTomo.
 

@@ -57,7 +57,11 @@ class BaseWrapper:
                 return tuple(xp.asnumpy(d) for d in args)
 
     def _execute_generic(
-        self, method_name: str, dict_params_method: Dict, data: xp.ndarray, reslice_ahead: bool
+        self,
+        method_name: str,
+        dict_params_method: Dict,
+        data: xp.ndarray,
+        reslice_ahead: bool,
     ) -> xp.ndarray:
         """The generic wrapper to execute functions for external packages.
 
@@ -110,7 +114,9 @@ class BaseWrapper:
         # check where data needs to be transfered host <-> device
         data, flats, darks = self._transfer_data(data, flats, darks)
 
-        data = getattr(self.module, method_name)(data, flats, darks, **dict_params_method)
+        data = getattr(self.module, method_name)(
+            data, flats, darks, **dict_params_method
+        )
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
@@ -150,7 +156,9 @@ class BaseWrapper:
         if datashape0 != len(angles_radians):
             angles_radians = angles_radians[0:datashape0]
 
-        data = getattr(self.module, method_name)(data, angles_radians, **dict_params_method)
+        data = getattr(self.module, method_name)(
+            data, angles_radians, **dict_params_method
+        )
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
@@ -288,7 +296,12 @@ class HttomolibWrapper(BaseWrapper):
             self.cupyrun = True
 
     def _execute_images(
-        self, method_name: str, dict_params_method: Dict, out_dir: str, comm: Comm, data: xp.ndarray
+        self,
+        method_name: str,
+        dict_params_method: Dict,
+        out_dir: str,
+        comm: Comm,
+        data: xp.ndarray,
     ) -> None:
         """httomolib wrapper for save images function.
 
