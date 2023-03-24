@@ -12,6 +12,7 @@ from numpy import ndarray
 import numpy as np
 from mpi4py import MPI
 
+from httomo.common import remove_ansi_escape_sequences
 from httomo.utils import (
     log_once, Pattern, _get_slicing_dim, Colour, log_exception
 )
@@ -246,6 +247,8 @@ def run_tasks(
         elapsed_time = MPI.Wtime() - start_time
         end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
         log_once(end_str, comm=comm, colour=Colour.BVIOLET)
+        #: remove ansi escape sequences from the log file
+        remove_ansi_escape_sequences("user.log")
 
 
 def _initialise_datasets(
