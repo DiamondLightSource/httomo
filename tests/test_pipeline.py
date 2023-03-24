@@ -43,9 +43,8 @@ def test_tomo_standard_testing_pipeline_output(
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 1
 
-    for name in h5_files:
-        if "tomopy-recon-tomo-gridrec.h5" in name:
-            file_to_open = name
+    for file_to_open in h5_files:
+        if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (3, 160, 160)
                 assert f["data"].dtype == np.float32
@@ -72,22 +71,19 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 4
 
-    for name in h5_files:
-        if "tomopy-normalize-tomo.h5" in name:
-            file_to_open = name
+    for file_to_open in h5_files:
+        if "tomopy-normalize-tomo.h5" in file_to_open:
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (180, 3, 160)
                 assert f["data"].dtype == np.float32
                 assert_allclose(np.mean(f["data"]), 1.004919, atol=1e-6)
                 assert_allclose(np.sum(f["data"]), 86824.984, atol=1e-6)
-        if "tomopy-minus_log-tomo.h5" in name:
-            file_to_open = name
+        if "tomopy-minus_log-tomo.h5" in file_to_open:
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (180, 3, 160)
                 assert_allclose(np.mean(f["data"]), -0.004374, atol=1e-6)
                 assert_allclose(np.sum(f["data"]), -377.88608, atol=1e-6)
-        if "tomopy-remove_stripe_fw-tomo.h5" in name:
-            file_to_open = name
+        if "tomopy-remove_stripe_fw-tomo.h5" in file_to_open:
             with h5py.File(file_to_open, "r") as f:
                 assert_allclose(np.mean(f["data"]), -0.004198, atol=1e-6)
                 np.testing.assert_almost_equal(np.sum(f["data"]), -362.73358, decimal=4)
@@ -116,19 +112,15 @@ def test_diad_testing_pipeline_output(
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 4
 
-    for name in h5_files:
-        if "tomopy-normalize-tomo.h5" in name:
-            file_to_open = name
-    with h5py.File(file_to_open, "r") as f:
-        assert f["data"].shape == (3001, 2, 26)
-        assert f["data"].dtype == np.float32
-        assert_allclose(np.mean(f["data"]), 0.847944, atol=1e-6)
-        assert_allclose(np.sum(f["data"]), 132323.36, atol=1e-6)
-
-    for name in h5_files:
-        if "tomopy-recon-tomo-gridrec.h5" in name:
-            file_to_open = name
-    with h5py.File(file_to_open, "r") as f:
-        assert f["data"].shape == (2, 26, 26)
-        assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6)
-        assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6)
+    for file_to_open in h5_files:
+        if "tomopy-normalize-tomo.h5" in file_to_open:
+            with h5py.File(file_to_open, "r") as f:
+                assert f["data"].shape == (3001, 2, 26)
+                assert f["data"].dtype == np.float32
+                assert_allclose(np.mean(f["data"]), 0.847944, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), 132323.36, atol=1e-6)
+        if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
+            with h5py.File(file_to_open, "r") as f:
+                assert f["data"].shape == (2, 26, 26)
+                assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6)
