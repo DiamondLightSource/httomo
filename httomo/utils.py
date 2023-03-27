@@ -4,8 +4,25 @@ from typing import Tuple, List, Dict, Callable
 from enum import Enum
 
 
-def print_once(output: Any, comm: Comm, colour: str = "green") -> None:
-    """Print an output from rank zero only.
+class Colour:
+    """
+    Class for storing the ANSI escape codes for different colours.
+    """
+
+    LIGHT_BLUE = "\033[1;34m"
+    BLUE = "\33[94m"
+    CYAN = "\33[96m"
+    GREEN = "\33[92m"
+    YELLOW = "\33[93m"
+    MAGENTA = "\33[95m"
+    RED = "\33[91m"
+    END = "\033[0m"
+    BVIOLET = "\033[1;35m"
+
+
+def print_once(output: Any, comm: Comm, colour: Any = Colour.GREEN) -> None:
+    """
+    Print an output from rank zero only.
 
     Parameters
     ----------
@@ -16,26 +33,14 @@ def print_once(output: Any, comm: Comm, colour: str = "green") -> None:
     colour : str, optional
         The colour of the output.
     """
-    if colour == "blue":
-        CSTART = "\33[94m"
-        CEND = "\033[0m"
-    elif colour == "cyan":
-        CSTART = "\33[96m"
-        CEND = "\033[0m"
-    elif colour == "green":
-        CSTART = "\33[92m"
-        CEND = "\033[0m"
-    elif colour == "yellow":
-        CSTART = "\33[93m"
-        CEND = "\033[0m"
-    elif colour == "red":
-        CSTART = "\33[91m"
-        CEND = "\033[0m"
-    else:
-        CSTART = "\33[92m"
-        CEND = "\033[0m"
     if comm.rank == 0:
-        print(CSTART + output + CEND)
+        if isinstance(output, list):
+            output = "".join(
+                [f"{colour}{out}{Colour.END}" for out, colour in zip(output, colour)]
+            )
+            print(output)
+        else:
+            print(colour + output + Colour.END)
 
 
 def print_rank(output: Any, comm: Comm) -> None:
@@ -48,7 +53,7 @@ def print_rank(output: Any, comm: Comm) -> None:
     comm : Comm
         The comm used to determine the process rank.
     """
-    print(f"[{comm.rank}] {output}")
+    print(f"RANK: [{comm.rank}], {output}")
 
 
 def _parse_preview(

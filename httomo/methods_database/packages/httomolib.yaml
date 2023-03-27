@@ -1,8 +1,8 @@
 misc:
   corr:
-    remove_outlier3d_cupy:
+    remove_outlier3d:
       pattern: all
-    median_filter3d_cupy:
+    median_filter3d:
       pattern: all
     inpainting_filter3d:
       pattern: all
@@ -14,12 +14,10 @@ misc:
       pattern: all
 prep:
   normalize:
-    normalize_cupy:
-      pattern: projection
-    normalize_raw_cuda:
+    normalize:
       pattern: projection
   alignment:
-    distortion_correction_proj_cupy:
+    distortion_correction_proj:
       pattern: projection
   phase:
     fresnel_filter:
@@ -35,12 +33,12 @@ prep:
       pattern: sinogram
 recon:
   rotation:
-    find_center_vo_cupy:
+    find_center_vo:
       pattern: sinogram
     find_center_360:
       pattern: sinogram
   algorithm:
     reconstruct_tomobar:
       pattern: sinogram
-    reconstruct_tomopy:
+    reconstruct_tomopy_astra:
       pattern: sinogram

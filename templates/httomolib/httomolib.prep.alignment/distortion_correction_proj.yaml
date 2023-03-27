@@ -1,5 +1,5 @@
 - httomolib.prep.alignment:
-    distortion_correction_proj_cupy:
+    distortion_correction_proj:
       data_in: tomo
       data_out: tomo
       metadata_path: REQUIRED

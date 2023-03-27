@@ -2,6 +2,7 @@ import multiprocessing
 from datetime import datetime
 from os import mkdir
 from pathlib import Path
+import time
 from typing import List, Dict, Optional, Tuple, Union
 from collections.abc import Callable
 from inspect import signature
@@ -11,7 +12,7 @@ from numpy import ndarray
 import numpy as np
 from mpi4py import MPI
 
-from httomo.utils import print_once, Pattern, _get_slicing_dim
+from httomo.utils import print_once, Pattern, _get_slicing_dim, Colour
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.chunk import save_dataset, get_data_shape
@@ -35,6 +36,9 @@ reslice_warn_str = (
 RECON_MODULE_MATCH = "recon.algorithm"
 MAX_SWEEPS = 1
 
+from httomo.wrappers_class import TomoPyWrapper
+from httomo.wrappers_class import HttomolibWrapper
+
 
 def run_tasks(
     in_file: Path,
@@ -44,7 +48,7 @@ def run_tasks(
     pad: int = 0,
     ncore: int = 1,
     save_all: bool = False,
-    reslice_dir: Optional[Path] = None
+    reslice_dir: Optional[Path] = None,
 ) -> None:
     """Run the tomopy pipeline defined in the YAML config file
 
@@ -76,9 +80,8 @@ def run_tasks(
     if comm.rank == 0:
         mkdir(run_out_dir)
     if comm.size == 1:
-        ncore = (
-            multiprocessing.cpu_count()
-        )  # use all available CPU cores if not an MPI run
+        # use all available CPU cores if not an MPI run
+        ncore = multiprocessing.cpu_count()
 
     # Define dict to store arrays that are specified as datasets in the user
     # config YAML
@@ -89,7 +92,7 @@ def run_tasks(
 
     # Get a list of the python functions associated to the methods defined in
     # user config YAML
-    method_funcs = _get_method_funcs(yaml_config)
+    method_funcs = _get_method_funcs(yaml_config, comm)
 
     # Define dict of params that are needed by loader functions
     loader_extra_params = {
@@ -104,19 +107,21 @@ def run_tasks(
     has_reslice_warn_printed = False
 
     # Associate patterns to method function objects
-    for i, (module_path, func, params, is_loader) in enumerate(method_funcs):
+    for i, (module_path, func, func_runner, params, is_loader) in enumerate(
+        method_funcs
+    ):
         func = _assign_pattern_to_method(func, module_path, params["method_name"])
-        method_funcs[i] = (module_path, func, params, is_loader)
+        method_funcs[i] = (module_path, func, func_runner, params, is_loader)
 
     # get a list with booleans to identify when reslicing needed (True) or not
     # (False).
-    patterns = [f.pattern for (_, f, _, _) in method_funcs]
+    patterns = [f.pattern for (_, f, _, _, _) in method_funcs]
     reslice_bool_list = _check_if_should_reslice(patterns)
 
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
     # sweeps
-    params = [param_dict for (_, _, param_dict, _) in method_funcs]
+    params = [param_dict for (_, _, _, param_dict, _) in method_funcs]
     no_of_sweeps = sum(map(_check_params_for_sweep, params))
 
     if no_of_sweeps > MAX_SWEEPS:
@@ -126,13 +131,25 @@ def run_tasks(
         )
         raise ValueError(err_str)
 
+    # start MPI timer for rank 0
+    if comm.rank == 0:
+        start_time = MPI.Wtime()
+
     # Run the methods
-    for idx, (module_path, func, params, is_loader) in enumerate(method_funcs):
+    for idx, (module_path, func, func_runner, params, is_loader) in enumerate(
+        method_funcs
+    ):
         package = module_path.split(".")[0]
         method_name = params.pop("method_name")
         task_no_str = f"Running task {idx+1}"
+        task_end_str = task_no_str.replace("Running", "Finished")
         pattern_str = f"(pattern={func.pattern.name})"
-        print_once(f"{task_no_str} {pattern_str}: {method_name}...", comm)
+        print_once(
+            f"{task_no_str} {pattern_str}: {method_name}...",
+            comm,
+            colour=Colour.LIGHT_BLUE,
+        )
+        start = time.perf_counter_ns()
         if is_loader:
             params.update(loader_extra_params)
 
@@ -167,8 +184,9 @@ def run_tasks(
                 (["out_dir"], run_out_dir),
             ]
         else:
-            # adding ncore argument into params
-            params.update({"ncore": ncore})
+            # check if the module needs the ncore parameter and add it
+            if "ncore" in signature(func).parameters:
+                params.update({"ncore": ncore})
 
             reslice_counter, has_reslice_warn_printed, glob_stats[idx] = _run_method(
                 idx,
@@ -179,6 +197,7 @@ def run_tasks(
                 params,
                 possible_extra_params,
                 len(method_funcs),
+                func_runner,
                 method_funcs[idx][1],
                 method_funcs[idx - 1][1],
                 datasets,
@@ -191,10 +210,31 @@ def run_tasks(
                 reslice_dir
             )
 
+        stop = time.perf_counter_ns()
+        print_once(
+            f"{task_end_str} {pattern_str}: {method_name} ({package}): Took {float(stop-start)*1e-6:.2f}ms",
+            comm,
+        )
+
+        stop = time.perf_counter_ns()
+        output_str_list = [
+            f"{task_end_str} {pattern_str}: {method_name} (",
+            package,
+            f") Took {float(stop-start)*1e-6:.2f}ms",
+        ]
+        output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
+        print_once(output_str_list, comm=comm, colour=output_colour_list)
+
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
-    reslice_summary_colour = "blue" if reslice_counter <= 1 else "red"
+    reslice_summary_colour = Colour.BLUE if reslice_counter <= 1 else Colour.RED
     print_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour)
+
+    elapsed_time = 0
+    if comm.rank == 0:
+        elapsed_time = MPI.Wtime() - start_time
+        end_str = f"\n\n~~~ Pipeline finished ~~~\nTook {elapsed_time} sec to run!"
+        print_once(end_str, comm=comm, colour=Colour.BVIOLET)
 
 
 def _initialise_datasets(
@@ -316,7 +356,9 @@ def _initialise_stats(yaml_config: Path) -> List[Dict]:
     return stats
 
 
-def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool]]:
+def _get_method_funcs(
+    yaml_config: Path, comm: MPI.Comm
+) -> List[Tuple[str, Callable, Dict, bool]]:
     """Gather all the python functions needed to run the defined processing
     pipeline.
 
@@ -324,7 +366,8 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
     ----------
     yaml_config : Path
         The file containing the processing pipeline info as YAML
-
+    comm : MPI.Comm
+        MPI communicator object.
     Returns
     -------
     List[Tuple[Callable, Dict, bool]]
@@ -340,38 +383,38 @@ def _get_method_funcs(yaml_config: Path) -> List[Tuple[str, Callable, Dict, bool
     for task_conf in yaml_conf:
         module_name, module_conf = task_conf.popitem()
         split_module_name = module_name.split(".")
+        method_name, method_conf = module_conf.popitem()
+        method_conf["method_name"] = method_name
+
         if split_module_name[0] == "httomo":
+            # deal with httomo loaders
             if "loaders" in module_name:
                 is_loader = True
             else:
                 is_loader = False
             module = import_module(module_name)
-            method_name, method_conf = module_conf.popitem()
-            method_conf["method_name"] = method_name
             method_func = getattr(module, method_name)
-            method_funcs.append((module_name, method_func, method_conf, is_loader))
+            method_funcs.append(
+                (module_name, method_func, None, method_conf, is_loader)
+            )
         elif (split_module_name[0] == "tomopy") or (
             split_module_name[0] == "httomolib"
         ):
-            # The structure of wrapper functions for tomopy and httomolib is that
-            # each module in tomopy/httomolib is represented by a function in httomo.
-            #
-            # For example, the module `tomopy.misc.corr` module (which contains
-            # the `median_filter()` method function) is represented in httomo in
-            # the `wrappers.tomopy.misc` module as the `corr()` function.
-            #
-            # Different method functions that are available in the
-            # `tomopy.misc.corr` module are then exposed in httomo by passing a
-            # `method_name` parameter to the corr() function via the YAML config
-            # file.
-            wrapper_module_name = ".".join(split_module_name[:-1])
-            wrapper_module_name = f"wrappers.{wrapper_module_name}"
-            wrapper_module = import_module(wrapper_module_name)
-            wrapper_func_name = split_module_name[-1]
-            wrapper_func = getattr(wrapper_module, wrapper_func_name)
-            method_name, method_conf = module_conf.popitem()
-            method_conf["method_name"] = method_name
-            method_funcs.append((module_name, wrapper_func, method_conf, False))
+            if split_module_name[0] == "tomopy":
+                # initialise the TomoPy wrapper class
+                wrapper_init_module = TomoPyWrapper(
+                    split_module_name[1], split_module_name[2], method_name, comm
+                )
+            if split_module_name[0] == "httomolib":
+                # initialise the httomolib wrapper class
+                wrapper_init_module = HttomolibWrapper(
+                    split_module_name[1], split_module_name[2], method_name, comm
+                )
+            wrapper_func = getattr(wrapper_init_module.module, method_name)
+            wrapper_method = wrapper_init_module.wrapper_method
+            method_funcs.append(
+                (module_name, wrapper_func, wrapper_method, method_conf, False)
+            )
         else:
             err_str = (
                 f"An unknown module name was encountered: " f"{split_module_name[0]}"
@@ -388,8 +431,9 @@ def _run_method(
     package_name: str,
     method_name: str,
     params: Dict,
-    misc_params: Dict,
+    misc_params: List[Tuple],
     no_of_tasks: int,
+    func_runner: Callable,
     current_func: Callable,
     prev_func: Callable,
     datasets: Dict,
@@ -417,10 +461,13 @@ def _run_method(
         The name of the method to apply.
     params : Dict
         A dict of parameters for the method.
-    misc_params : Dict
+    misc_params : List[Tuple]
         A list of possible extra params that may be needed by a method.
     no_of_tasks : int
         The number of tasks in the pipeline.
+    func_runner : Callable
+        The method defined on `BaseWrapper` that handles execution of the
+        method.
     current_func : Callable
         The python function that performs the method.
     prev_func : Callable
@@ -462,16 +509,34 @@ def _run_method(
         current_slice_dim = _get_slicing_dim(prev_func.pattern)
         next_slice_dim = _get_slicing_dim(current_func.pattern)
 
+    # The GPU wrapper should be aware if the reslice is needed to convert the
+    # result to numpy
+    reslice_ahead = (
+        reslice_bool_list[task_idx + 1]
+        if task_idx < len(reslice_bool_list) - 1
+        else "False"
+    )
+    if task_idx == 1:
+        misc_params.append((["reslice_ahead"], reslice_ahead))
+    else:
+        misc_params[-1] = (["reslice_ahead"], reslice_ahead)
+
     if reslice_counter > 1 and not has_reslice_warn_printed:
-        print_once(reslice_warn_str, comm=comm, colour="red")
+        print_once(reslice_warn_str, comm=comm, colour=Colour.RED)
         has_reslice_warn_printed = True
 
     # Check for any extra params unrelated to tomopy but related to
     # HTTomo that should be added in
-    httomo_params = _check_signature_for_httomo_params(current_func, misc_params)
+    httomo_params = _check_signature_for_httomo_params(
+        func_runner, current_func, misc_params
+    )
 
     # Get the information describing if the method is being run only
     # once, or multiple times with different input datasets
+    #
+    # Make the input and output datasets always be lists just to be
+    # generic, and further down loop through all the datasets that the
+    # method should be applied to
     if "data_in" in params.keys() and "data_out" in params.keys():
         data_in = [params.pop("data_in")]
         data_out = [params.pop("data_out")]
@@ -494,6 +559,12 @@ def _run_method(
     # Update the relevant parameter values according to the required
     # datasets
     params.update(dataset_params)
+
+    # check if the module needs the gpu_id parameter and flag it to add in the
+    # wrapper
+    gpu_id_par = "gpu_id" in signature(current_func).parameters
+    if gpu_id_par:
+        params.update({"gpu_id": gpu_id_par})
 
     # Check if method type signature requires global statistics
     req_glob_stats = "glob_stats" in signature(current_func).parameters
@@ -593,14 +664,14 @@ def _run_method(
             if should_reslice:
                 if reslice_dir is None:
                     resliced_data, _ = reslice(
-                        datasets[in_dataset],
+                        arr,
                         current_slice_dim,
                         next_slice_dim,
                         comm,
                     )
                 else:
                     resliced_data, _ = reslice_filebased(
-                        datasets[in_dataset],
+                        arr,
                         current_slice_dim,
                         next_slice_dim,
                         comm,
@@ -623,19 +694,19 @@ def _run_method(
 
             # Run the method
             if method_name in SAVERS_NO_DATA_OUT_PARAM:
-                _run_method_wrapper(current_func, method_name, params, httomo_params)
+                _run_method_wrapper(func_runner, method_name, params, httomo_params)
             else:
                 if current_param_sweep:
                     for val in param_sweep_vals:
                         params[param_sweep_name] = val
                         res = _run_method_wrapper(
-                            current_func, method_name, params, httomo_params
+                            func_runner, method_name, params, httomo_params
                         )
                         out.append(res)
                     datasets[out_dataset] = out
                 else:
                     res = _run_method_wrapper(
-                        current_func, method_name, params, httomo_params
+                        func_runner, method_name, params, httomo_params
                     )
                     # Store the output(s) of the method in the appropriate
                     # dataset in the `datasets` dict
@@ -796,13 +867,13 @@ def _run_loader(
 
 
 def _run_method_wrapper(
-    func: Callable, method_name: str, method_params: Dict, httomo_params: Dict
+    func_runner: Callable, method_name: str, method_params: Dict, httomo_params: Dict
 ) -> ndarray:
     """Run a wrapper method function (httomolib/tomopy) in the processing pipeline.
 
     Parameters
     ----------
-    func : Callable
+    func_runner : Callable
         The python function that performs the method.
     method_name : str
         The name of the method to apply.
@@ -816,7 +887,7 @@ def _run_method_wrapper(
     ndarray
         An array containing the result of the method function.
     """
-    return func(method_params, method_name, **httomo_params)
+    return func_runner(method_name, method_params, **httomo_params)
 
 
 def _check_save_result(
@@ -881,14 +952,16 @@ def _check_save_result(
 
 
 def _check_signature_for_httomo_params(
-    func: Callable, params: List[Tuple[List[str], object]]
+    func_runner: Callable, method_name: str, params: List[Tuple[List[str], object]]
 ) -> Dict:
     """Check if the given method requires any parameters related to HTTomo.
 
     Parameters
     ----------
-    func : Callable
+    func_runner : Callable
         Function whose type signature is to be inspected
+    method_name : str
+        The name of the method to apply.
 
     params : List[Tuple[List[str], object]]
         Each tuples contains a parameter name and the associated value that
@@ -903,7 +976,7 @@ def _check_signature_for_httomo_params(
         method function
     """
     extra_params = {}
-    sig_params = signature(func).parameters
+    sig_params = signature(func_runner).parameters
     for names, val in params:
         for name in names:
             if name in sig_params:

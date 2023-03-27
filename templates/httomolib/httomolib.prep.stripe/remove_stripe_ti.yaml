@@ -1,5 +1,5 @@
 - httomolib.prep.stripe:
-    remove_stripes_titarenko_cupy:
+    remove_stripe_ti:
       data_in: tomo
       data_out: tomo
       beta: 0.1

@@ -5,6 +5,7 @@ def test_tomo_standard_loaded(
     cmd,
     standard_data,
     standard_loader,
+    output_folder,
 ):
     cmd.pop(3)  #: don't save all
     cmd.insert(5, standard_data)
@@ -17,7 +18,7 @@ def test_tomo_standard_loaded(
 
 
 def test_tomo_standard_testing_pipeline_loaded(
-    cmd, standard_data, standard_loader, testing_pipeline, merge_yamls
+    cmd, standard_data, standard_loader, output_folder, testing_pipeline, merge_yamls
 ):
     cmd.pop(3)  #: don't save all
     cmd.insert(5, standard_data)
@@ -35,7 +36,7 @@ def test_tomo_standard_testing_pipeline_loaded(
 
 
 def test_tomo_standard_testing_pipeline_loaded_with_save_all(
-    cmd, standard_data, standard_loader, testing_pipeline, merge_yamls
+    cmd, standard_data, standard_loader, output_folder, testing_pipeline, merge_yamls
 ):
     cmd.insert(6, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
@@ -52,6 +53,7 @@ def test_k11_diad_loaded(
     cmd,
     diad_data,
     diad_loader,
+    output_folder,
 ):
     cmd.insert(6, diad_data)
     cmd.insert(7, diad_loader)
@@ -63,7 +65,7 @@ def test_k11_diad_loaded(
 
 
 def test_diad_testing_pipeline_loaded(
-    cmd, diad_data, diad_loader, testing_pipeline, merge_yamls
+    cmd, diad_data, diad_loader, output_folder, testing_pipeline, merge_yamls
 ):
     cmd.insert(6, diad_data)
     merge_yamls(diad_loader, testing_pipeline)

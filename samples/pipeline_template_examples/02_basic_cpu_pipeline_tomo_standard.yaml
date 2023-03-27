@@ -9,12 +9,6 @@
         - 
         - 
       pad: 0
-#- httomo.misc.corr:
-#    dezinger_filter3d:
-#      data_in_multi: [tomo, flats, darks]
-#      data_out_multi: [tomo, flats, darks]
-#      radius_kernel: 1
-#      mu_dezinger: 0.1
 - tomopy.prep.normalize:
     normalize:
       data_in: tomo
