@@ -83,9 +83,8 @@ def run_tasks(
         # use all available CPU cores if not an MPI run
         ncore = multiprocessing.cpu_count()
 
-    # Define dict to store arrays that are specified as datasets in the user
-    # config YAML
-    datasets = _initialise_datasets(yaml_config, SAVERS_NO_DATA_OUT_PARAM)
+    # Define dict to store arrays of the whole pipeline using provided YAML
+    dict_datasets_pipeline = _initialise_datasets(yaml_config, SAVERS_NO_DATA_OUT_PARAM)
 
     # Define list to store dataset stats for each task in the user config YAML
     glob_stats = _initialise_stats(yaml_config)
@@ -95,7 +94,7 @@ def run_tasks(
     method_funcs = _get_method_funcs(yaml_config, comm)
 
     # Define dict of params that are needed by loader functions
-    loader_extra_params = {
+    dict_loader_extra_params = {
         "in_file": in_file,
         "dimension": dimension,
         "pad": pad,
@@ -107,14 +106,25 @@ def run_tasks(
     has_reslice_warn_printed = False
 
     # Associate patterns to method function objects
-    for i, (module_path, func, func_runner, params, is_loader) in enumerate(
-        method_funcs
-    ):
-        func = _assign_pattern_to_method(func, module_path, params["method_name"])
-        method_funcs[i] = (module_path, func, func_runner, params, is_loader)
+    for i, (
+        module_path,
+        func_method,
+        func_wrapper,
+        dict_params_method,
+        is_loader,
+    ) in enumerate(method_funcs):
+        func_method = _assign_pattern_to_method(
+            func_method, module_path, dict_params_method["method_name"]
+        )
+        method_funcs[i] = (
+            module_path,
+            func_method,
+            func_wrapper,
+            dict_params_method,
+            is_loader,
+        )
 
-    # get a list with booleans to identify when reslicing needed (True) or not
-    # (False).
+    # get a list with booleans to identify when reslicing needed
     patterns = [f.pattern for (_, f, _, _, _) in method_funcs]
     reslice_bool_list = _check_if_should_reslice(patterns)
 
@@ -136,14 +146,18 @@ def run_tasks(
         start_time = MPI.Wtime()
 
     # Run the methods
-    for idx, (module_path, func, func_runner, params, is_loader) in enumerate(
-        method_funcs
-    ):
+    for idx, (
+        module_path,
+        func_method,
+        func_wrapper,
+        dict_params_method,
+        is_loader,
+    ) in enumerate(method_funcs):
         package = module_path.split(".")[0]
-        method_name = params.pop("method_name")
+        method_name = dict_params_method.pop("method_name")
         task_no_str = f"Running task {idx+1}"
         task_end_str = task_no_str.replace("Running", "Finished")
-        pattern_str = f"(pattern={func.pattern.name})"
+        pattern_str = f"(pattern={func_method.pattern.name})"
         print_once(
             f"{task_no_str} {pattern_str}: {method_name}...",
             comm,
@@ -151,12 +165,12 @@ def run_tasks(
         )
         start = time.perf_counter_ns()
         if is_loader:
-            params.update(loader_extra_params)
+            dict_params_method.update(dict_loader_extra_params)
 
             # Check if a value for the `preview` parameter of the loader has
             # been provided
-            if "preview" not in params.keys():
-                params["preview"] = [None]
+            if "preview" not in dict_params_method.keys():
+                dict_params_method["preview"] = [None]
 
             (
                 data,
@@ -166,27 +180,27 @@ def run_tasks(
                 angles_total,
                 detector_y,
                 detector_x,
-            ) = _run_loader(func, params)
+            ) = _run_loader(func_method, dict_params_method)
 
-            # Update `datasets` dict with the data that has been loaded by the
-            # loader
-            datasets[params["name"]] = data
-            datasets["flats"] = flats
-            datasets["darks"] = darks
+            # Update `dict_datasets_pipeline` dict with the data that has been
+            # loaded by the loader
+            dict_datasets_pipeline[dict_params_method["name"]] = data
+            dict_datasets_pipeline["flats"] = flats
+            dict_datasets_pipeline["darks"] = darks
 
-            # Define all params relevant to httomo that a wrapper function might
-            # need
+            # Extra params relevant to httomo that a wrapper function might need
             possible_extra_params = [
                 (["darks"], darks),
                 (["flats"], flats),
                 (["angles", "angles_radians"], angles),
                 (["comm"], comm),
                 (["out_dir"], run_out_dir),
+                (["reslice_ahead"], "False"),
             ]
         else:
             # check if the module needs the ncore parameter and add it
-            if "ncore" in signature(func).parameters:
-                params.update({"ncore": ncore})
+            if "ncore" in signature(func_method).parameters:
+                dict_params_method.update({"ncore": ncore})
 
             reslice_counter, has_reslice_warn_printed, glob_stats[idx] = _run_method(
                 idx,
@@ -194,13 +208,13 @@ def run_tasks(
                 module_path,
                 package,
                 method_name,
-                params,
+                dict_params_method,
                 possible_extra_params,
                 len(method_funcs),
-                func_runner,
+                func_wrapper,
                 method_funcs[idx][1],
                 method_funcs[idx - 1][1],
-                datasets,
+                dict_datasets_pipeline,
                 run_out_dir,
                 glob_stats[idx],
                 comm,
@@ -430,13 +444,13 @@ def _run_method(
     module_path: str,
     package_name: str,
     method_name: str,
-    params: Dict,
+    dict_params_method: Dict,
     misc_params: List[Tuple],
     no_of_tasks: int,
-    func_runner: Callable,
+    func_wrapper: Callable,
     current_func: Callable,
     prev_func: Callable,
-    datasets: Dict,
+    dict_datasets_pipeline: Dict[str, ndarray],
     out_dir: str,
     glob_stats: Dict,
     comm: MPI.Comm,
@@ -459,21 +473,21 @@ def _run_method(
         The name of the package that the method function comes from.
     method_name : str
         The name of the method to apply.
-    params : Dict
+    dict_params_method : Dict
         A dict of parameters for the method.
     misc_params : List[Tuple]
         A list of possible extra params that may be needed by a method.
     no_of_tasks : int
         The number of tasks in the pipeline.
-    func_runner : Callable
-        The method defined on `BaseWrapper` that handles execution of the
-        method.
+    func_wrapper : Callable
+        The object of wrapper function that exacutes the method from a different
+        package.
     current_func : Callable
         The python function that performs the method.
     prev_func : Callable
         The python function that performed the previous method in the pipeline.
-    datasets : Dict
-        A dict of all the datasets involved in the pipeline.
+    dict_datasets_pipeline : Dict[str, ndarray]
+        A dict containing all available datasets in the given pipeline.
     out_dir : str
         The path to the output directory of the run.
     glob_stats : Dict
@@ -499,7 +513,8 @@ def _run_method(
         enable the information to persist across method executions.
     """
     save_result = _check_save_result(
-        task_idx, no_of_tasks, module_path, save_all, params.pop("save_result", None)
+        task_idx, no_of_tasks, module_path, save_all,
+        dict_params_method.pop("save_result", None)
     )
 
     # Check if the input dataset should be resliced before the task runs
@@ -509,26 +524,23 @@ def _run_method(
         current_slice_dim = _get_slicing_dim(prev_func.pattern)
         next_slice_dim = _get_slicing_dim(current_func.pattern)
 
-    # The GPU wrapper should be aware if the reslice is needed to convert the
-    # result to numpy
+    # the GPU wrapper should know if the reslice is needed to convert the result
+    # to numpy from cupy array
     reslice_ahead = (
         reslice_bool_list[task_idx + 1]
         if task_idx < len(reslice_bool_list) - 1
         else "False"
     )
-    if task_idx == 1:
-        misc_params.append((["reslice_ahead"], reslice_ahead))
-    else:
-        misc_params[-1] = (["reslice_ahead"], reslice_ahead)
+    # reslice_ahead must be the last item in the list
+    misc_params[-1] = (["reslice_ahead"], reslice_ahead)
 
     if reslice_counter > 1 and not has_reslice_warn_printed:
         print_once(reslice_warn_str, comm=comm, colour=Colour.RED)
         has_reslice_warn_printed = True
 
-    # Check for any extra params unrelated to tomopy but related to
-    # HTTomo that should be added in
-    httomo_params = _check_signature_for_httomo_params(
-        func_runner, current_func, misc_params
+    # extra params unrelated to wrapped packages but related to httomo added
+    dict_httomo_params = _check_signature_for_httomo_params(
+        func_wrapper, current_func, misc_params
     )
 
     # Get the information describing if the method is being run only
@@ -537,12 +549,18 @@ def _run_method(
     # Make the input and output datasets always be lists just to be
     # generic, and further down loop through all the datasets that the
     # method should be applied to
-    if "data_in" in params.keys() and "data_out" in params.keys():
-        data_in = [params.pop("data_in")]
-        data_out = [params.pop("data_out")]
-    elif "data_in_multi" in params.keys() and "data_out_multi" in params.keys():
-        data_in = params.pop("data_in_multi")
-        data_out = params.pop("data_out_multi")
+    if (
+        "data_in" in dict_params_method.keys()
+        and "data_out" in dict_params_method.keys()
+    ):
+        data_in = [dict_params_method.pop("data_in")]
+        data_out = [dict_params_method.pop("data_out")]
+    elif (
+        "data_in_multi" in dict_params_method.keys()
+        and "data_out_multi" in dict_params_method.keys()
+    ):
+        data_in = dict_params_method.pop("data_in_multi")
+        data_out = dict_params_method.pop("data_out_multi")
     else:
         # TODO: This error reporting is possibly better handled by
         # schema validation of the user config YAML
@@ -550,21 +568,23 @@ def _run_method(
             err_str = "Invalid in/out dataset parameters"
             raise ValueError(err_str)
         else:
-            data_in = [params.pop("data_in")]
+            data_in = [dict_params_method.pop("data_in")]
             data_out = [None]
 
     # Check if the method function's params require any datasets stored
     # in the `datasets` dict
-    dataset_params = _check_method_params_for_datasets(params, datasets)
+    dataset_params = _check_method_params_for_datasets(
+        dict_params_method, dict_datasets_pipeline
+    )
     # Update the relevant parameter values according to the required
     # datasets
-    params.update(dataset_params)
+    dict_params_method.update(dataset_params)
 
     # check if the module needs the gpu_id parameter and flag it to add in the
     # wrapper
     gpu_id_par = "gpu_id" in signature(current_func).parameters
     if gpu_id_par:
-        params.update({"gpu_id": gpu_id_par})
+        dict_params_method.update({"gpu_id": gpu_id_par})
 
     # Check if method type signature requires global statistics
     req_glob_stats = "glob_stats" in signature(current_func).parameters
@@ -572,7 +592,7 @@ def _run_method(
     # Check if a parameter sweep is defined for any of the method's
     # parameters
     current_param_sweep = False
-    for k, v in params.items():
+    for k, v in dict_params_method.items():
         if type(v) is tuple:
             param_sweep_name = k
             param_sweep_vals = v
@@ -591,21 +611,21 @@ def _run_method(
                 err_str = f"Parameters sweeps on savers is not supported"
                 raise ValueError(err_str)
             else:
-                if type(datasets[in_dataset]) is list:
-                    arrs = datasets[in_dataset]
+                if type(dict_datasets_pipeline[in_dataset]) is list:
+                    arrs = dict_datasets_pipeline[in_dataset]
                 else:
-                    arrs = [datasets[in_dataset]]
+                    arrs = [dict_datasets_pipeline[in_dataset]]
         else:
             if current_param_sweep:
-                arrs = [datasets[in_dataset]]
+                arrs = [dict_datasets_pipeline[in_dataset]]
             else:
                 # If the data is a list of arrays, then it was the result of a
                 # parameter sweep from a previous method, so the next method
                 # must be applied to all arrays in the list
-                if type(datasets[in_dataset]) is list:
-                    arrs = datasets[in_dataset]
+                if type(dict_datasets_pipeline[in_dataset]) is list:
+                    arrs = dict_datasets_pipeline[in_dataset]
                 else:
-                    arrs = [datasets[in_dataset]]
+                    arrs = [dict_datasets_pipeline[in_dataset]]
 
         # Both `data_in` and `data_out` are lists. However, `data_out` for a
         # method can be such that there are multiple output datasets produced by
@@ -631,7 +651,10 @@ def _run_method(
         # TODO: Not yet able to run a method that produces multiple output
         # datasets on input data that was the result of a paremeter sweep
         # earlier in the pipeline
-        if type(out_dataset) is list and type(datasets[in_dataset]) is list:
+        if (
+            type(out_dataset) is list
+            and type(dict_datasets_pipeline[in_dataset]) is list
+        ):
             err_str = (
                 f"Running a method that produces mutliple outputs on "
                 f"the result of a parameter sweep is not supported"
@@ -658,7 +681,7 @@ def _run_method(
                 #
                 # Define `subfolder_name` for `save_to_images()`
                 subfolder_name = f"images_{i}"
-                params.update({"subfolder_name": subfolder_name})
+                dict_params_method.update({"subfolder_name": subfolder_name})
 
             # Perform a reslice of the data if necessary
             if should_reslice:
@@ -678,49 +701,54 @@ def _run_method(
                         reslice_dir
                     )
                 # Store the resliced input
-                if type(datasets[in_dataset]) is list:
-                    datasets[in_dataset][i] = resliced_data
+                if type(dict_datasets_pipeline[in_dataset]) is list:
+                    dict_datasets_pipeline[in_dataset][i] = resliced_data
                 else:
-                    datasets[in_dataset] = resliced_data
+                    dict_datasets_pipeline[in_dataset] = resliced_data
                 arr = resliced_data
 
-            httomo_params["data"] = arr
+            dict_httomo_params["data"] = arr
 
             # Add global stats if necessary
             if req_glob_stats is True:
                 stats = _fetch_glob_stats(arr, comm)
                 glob_stats[in_dataset].append(stats)
-                params.update({"glob_stats": stats})
+                dict_params_method.update({"glob_stats": stats})
 
             # Run the method
             if method_name in SAVERS_NO_DATA_OUT_PARAM:
-                _run_method_wrapper(func_runner, method_name, params, httomo_params)
+                _run_method_wrapper(
+                    func_wrapper, method_name, dict_params_method,
+                    dict_httomo_params
+                )
             else:
                 if current_param_sweep:
                     for val in param_sweep_vals:
-                        params[param_sweep_name] = val
+                        dict_params_method[param_sweep_name] = val
                         res = _run_method_wrapper(
-                            func_runner, method_name, params, httomo_params
+                            func_wrapper, method_name, dict_params_method,
+                            dict_httomo_params
                         )
                         out.append(res)
-                    datasets[out_dataset] = out
+                    dict_datasets_pipeline[out_dataset] = out
                 else:
                     res = _run_method_wrapper(
-                        func_runner, method_name, params, httomo_params
+                        func_wrapper, method_name, dict_params_method,
+                        dict_httomo_params
                     )
                     # Store the output(s) of the method in the appropriate
-                    # dataset in the `datasets` dict
+                    # dataset in the `dict_datasets_pipeline` dict
                     if type(res) in [list, tuple]:
                         # The method produced multiple outputs
                         for val, dataset in zip(res, out_dataset):
-                            datasets[dataset] = val
+                            dict_datasets_pipeline[dataset] = val
                     else:
-                        if type(datasets[out_dataset]) is list:
+                        if type(dict_datasets_pipeline[out_dataset]) is list:
                             # Method has been run on an array that was part of a
                             # parameter sweep
-                            datasets[out_dataset][i] = res
+                            dict_datasets_pipeline[out_dataset][i] = res
                         else:
-                            datasets[out_dataset] = res
+                            dict_datasets_pipeline[out_dataset] = res
 
         if method_name in SAVERS_NO_DATA_OUT_PARAM:
             # Nothing more to do if the saver has a special kind of
@@ -742,33 +770,40 @@ def _run_method(
             # multiple outputs, so can assume that if `out_datasets` is a list,
             # then no parameter sweep exists in the pipeline
             any_param_sweep = False
-        elif type(datasets[out_dataset]) is list:
+        elif type(dict_datasets_pipeline[out_dataset]) is list:
             # Either the method has had a parameter sweep, or been run on
             # parameter sweep input
             any_param_sweep = True
         else:
             # No parameter sweep is invovled, nor multiple output datasets, just
             # the simple case
-            is_3d = len(datasets[out_dataset].shape) == 3
+            is_3d = len(dict_datasets_pipeline[out_dataset].shape) == 3
             any_param_sweep = False
 
         # Save the result if necessary
         if save_result and is_3d and not any_param_sweep:
+            recon_algorithm = dict_params_method.pop("algorithm", None)
+            if recon_algorithm is not None:
+                slice_dim = 1
+            else:
+                slice_dim = _get_slicing_dim(current_func.pattern)
+
             intermediate_dataset(
-                datasets[out_dataset],
+                dict_datasets_pipeline[out_dataset],
                 out_dir,
                 comm,
                 task_idx + 1,
                 package_name,
                 method_name,
                 out_dataset,
-                recon_algorithm=params.pop("algorithm", None),
+                slice_dim,
+                recon_algorithm=recon_algorithm,
             )
         elif save_result and any_param_sweep:
             # Save the result of each value in the parameter sweep as a
             # different dataset within the same hdf5 file, and also save the
             # middle slice of each parameter sweep result as a tiff file
-            param_sweep_datasets = datasets[out_dataset]
+            param_sweep_datasets = dict_datasets_pipeline[out_dataset]
             # For the output of a recon, fix the dimension that data is gathered
             # along to be the first one (ie, the vertical dim in volume space).
             # For all other types of methods, use the same dim associated to the
@@ -847,15 +882,15 @@ def _run_method(
 
 
 def _run_loader(
-    func: Callable, params: Dict
+    func_method: Callable, dict_params_method: Dict
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int, int, int]:
     """Run a loader function in the processing pipeline.
 
     Parameters
     ----------
-    func : Callable
+    func_method : Callable
         The python function that performs the loading.
-    params : Dict
+    dict_params_method : Dict
         A dict of parameters for the loader.
 
     Returns
@@ -863,23 +898,26 @@ def _run_loader(
     Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int, int, int]
         A tuple of 8 values that all loader functions return.
     """
-    return func(**params)
+    return func_method(**dict_params_method)
 
 
 def _run_method_wrapper(
-    func_runner: Callable, method_name: str, method_params: Dict, httomo_params: Dict
+    func_wrapper: Callable,
+    method_name: str,
+    dict_params_method: Dict,
+    dict_httomo_params: Dict,
 ) -> ndarray:
     """Run a wrapper method function (httomolib/tomopy) in the processing pipeline.
 
     Parameters
     ----------
-    func_runner : Callable
-        The python function that performs the method.
+    func_wrapper : Callable
+        The wrapper function of the wrapper class that executes the method.
     method_name : str
         The name of the method to apply.
-    method_params : Dict
+    dict_params_method : Dict
         A dict of parameters for the tomopy method.
-    httomo_params : Dict
+    dict_httomo_params : Dict
         A dict of parameters related to httomo.
 
     Returns
@@ -887,7 +925,7 @@ def _run_method_wrapper(
     ndarray
         An array containing the result of the method function.
     """
-    return func_runner(method_name, method_params, **httomo_params)
+    return func_wrapper(method_name, dict_params_method, **dict_httomo_params)
 
 
 def _check_save_result(
@@ -952,18 +990,20 @@ def _check_save_result(
 
 
 def _check_signature_for_httomo_params(
-    func_runner: Callable, method_name: str, params: List[Tuple[List[str], object]]
+    func_wrapper: Callable,
+    method_name: str,
+    possible_extra_params: List[Tuple[List[str], object]],
 ) -> Dict:
     """Check if the given method requires any parameters related to HTTomo.
 
     Parameters
     ----------
-    func_runner : Callable
-        Function whose type signature is to be inspected
+    func_wrapper : Callable
+        Function of a wrapper whose type signature is to be inspected
     method_name : str
         The name of the method to apply.
 
-    params : List[Tuple[List[str], object]]
+    possible_extra_params : List[Tuple[List[str], object]]
         Each tuples contains a parameter name and the associated value that
         should be added if a method requires that parameter (note: multiple
         parameter names can be given in case the parameter isn't consistently
@@ -976,8 +1016,8 @@ def _check_signature_for_httomo_params(
         method function
     """
     extra_params = {}
-    sig_params = signature(func_runner).parameters
-    for names, val in params:
+    sig_params = signature(func_wrapper).parameters
+    for names, val in possible_extra_params:
         for name in names:
             if name in sig_params:
                 extra_params[name] = val
@@ -985,14 +1025,14 @@ def _check_signature_for_httomo_params(
 
 
 def _check_method_params_for_datasets(
-    params: Dict, datasets: Dict[str, ndarray]
+    dict_params_method: Dict, datasets: Dict[str, ndarray]
 ) -> Dict:
     """Check a given method function's parameter values to see if any of them
     are a dataset.
 
     Parameters
     ----------
-    params : Dict
+    dict_params_method : Dict
         The dict of param names and their values for a given method function.
 
     datasets: Dict[str, ndarray]
@@ -1007,7 +1047,7 @@ def _check_method_params_for_datasets(
         method function requires.
     """
     dataset_params = {}
-    for name, val in params.items():
+    for name, val in dict_params_method.items():
         # If the value of this parameter is a dataset, then replace the
         # parameter value with the dataset value
         if val in datasets:
@@ -1016,7 +1056,7 @@ def _check_method_params_for_datasets(
 
 
 def _set_method_data_param(
-    func: Callable, dataset_name: str, datasets: Dict[str, ndarray]
+    func_method: Callable, dataset_name: str, datasets: Dict[str, ndarray]
 ) -> Dict[str, ndarray]:
     """Set a key in the param dict whose value is the array associated with the
     input dataset name given in the YAML config. The name of this key must be
@@ -1042,7 +1082,7 @@ def _set_method_data_param(
 
     Parameters
     ----------
-    func : Callable
+    func_method : Callable
         The method function whose data parameters will be inspected.
     dataset_name : str
         The name of the input dataset name from the user config YAML.
@@ -1055,7 +1095,7 @@ def _set_method_data_param(
         A dict containing the input data parameter key and value needed for the
         given method function.
     """
-    sig_params = list(signature(func).parameters.keys())
+    sig_params = list(signature(func_method).parameters.keys())
     # For httomo functions, the input data paramater will always be the first
     # parameter
     data_param = sig_params[0]
@@ -1137,7 +1177,7 @@ def _check_params_for_sweep(params: Dict) -> int:
 
 
 def _assign_pattern_to_method(
-    func: Callable, module_path: str, method_name: str
+    func_method: Callable, module_path: str, method_name: str
 ) -> Callable:
     """Fetch the pattern information from the methods database in
     `httomo/methods_database/packages` for the given method and associate that
@@ -1145,7 +1185,7 @@ def _assign_pattern_to_method(
 
     Parameters
     ----------
-    func : Callable
+    func_method : Callable
         The method function whose pattern information will be fetched.
 
     module_path : str
@@ -1174,5 +1214,5 @@ def _assign_pattern_to_method(
         )
         raise ValueError(err_str)
 
-    func.pattern = pattern
-    return func
+    func_method.pattern = pattern
+    return func_method

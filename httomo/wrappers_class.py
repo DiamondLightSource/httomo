@@ -57,13 +57,17 @@ class BaseWrapper:
                 return tuple(xp.asnumpy(d) for d in args)
 
     def _execute_generic(
-        self, method_name: str, params: Dict, data: xp.ndarray, reslice_ahead: bool
+        self,
+        method_name: str,
+        dict_params_method: Dict,
+        data: xp.ndarray,
+        reslice_ahead: bool,
     ) -> xp.ndarray:
         """The generic wrapper to execute functions for external packages.
 
         Args:
             method_name (str): The name of the method to use.
-            params (Dict): A dict containing independent of httomo params.
+            dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
             reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
 
@@ -71,13 +75,13 @@ class BaseWrapper:
             xp.ndarray: A numpy or cupy array containing processed data.
         """
         # set the correct GPU ID if it is required
-        if "gpu_id" in params:
-            params["gpu_id"] = self.gpu_id
+        if "gpu_id" in dict_params_method:
+            dict_params_method["gpu_id"] = self.gpu_id
 
         # check if data needs to be transfered host <-> device
         data = self._transfer_data(data)
 
-        data = getattr(self.module, method_name)(data, **params)
+        data = getattr(self.module, method_name)(data, **dict_params_method)
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
@@ -87,7 +91,7 @@ class BaseWrapper:
     def _execute_normalize(
         self,
         method_name: str,
-        params: Dict,
+        dict_params_method: Dict,
         data: xp.ndarray,
         flats: xp.ndarray,
         darks: xp.ndarray,
@@ -97,7 +101,7 @@ class BaseWrapper:
 
         Args:
             method_name (str): The name of the method to use.
-            params (Dict): A dict containing independent of httomo params.
+            dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
             flats (xp.ndarray): a numpy or cupy flats array.
             darks (xp.ndarray): a numpy or darks flats array.
@@ -110,7 +114,9 @@ class BaseWrapper:
         # check where data needs to be transfered host <-> device
         data, flats, darks = self._transfer_data(data, flats, darks)
 
-        data = getattr(self.module, method_name)(data, flats, darks, **params)
+        data = getattr(self.module, method_name)(
+            data, flats, darks, **dict_params_method
+        )
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
@@ -120,7 +126,7 @@ class BaseWrapper:
     def _execute_reconstruction(
         self,
         method_name: str,
-        params: Dict,
+        dict_params_method: Dict,
         data: xp.ndarray,
         angles_radians: np.ndarray,
         reslice_ahead: bool,
@@ -129,7 +135,7 @@ class BaseWrapper:
 
         Args:
             method_name (str): The name of the method to use.
-            params (Dict): A dict containing independent of httomo params.
+            dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
             angles_radians (np.ndarray): a numpy array of projection angles.
             reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
@@ -138,8 +144,8 @@ class BaseWrapper:
             xp.ndarray: a numpy or cupy array of the reconstructed data.
         """
         # set the correct GPU ID if it is required
-        if "gpu_id" in params:
-            params["gpu_id"] = self.gpu_id
+        if "gpu_id" in dict_params_method:
+            dict_params_method["gpu_id"] = self.gpu_id
 
         # check if data needs to be transfered host <-> device
         data = self._transfer_data(data)
@@ -150,7 +156,9 @@ class BaseWrapper:
         if datashape0 != len(angles_radians):
             angles_radians = angles_radians[0:datashape0]
 
-        data = getattr(self.module, method_name)(data, angles_radians, **params)
+        data = getattr(self.module, method_name)(
+            data, angles_radians, **dict_params_method
+        )
         if reslice_ahead and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
@@ -160,14 +168,14 @@ class BaseWrapper:
     def _execute_rotation(
         self,
         method_name: str,
-        params: Dict,
+        dict_params_method: Dict,
         data: xp.ndarray,
     ) -> tuple:
         """The center of rotation wrapper.
 
         Args:
             method_name (str): The name of the method to use.
-            params (Dict): A dict containing independent of httomo params.
+            dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
 
         Returns:
@@ -184,14 +192,14 @@ class BaseWrapper:
         overlap_position = 0
         mid_rank = int(round(self.comm.size / 2) + 0.1)
         if self.comm.rank == mid_rank:
-            if params["ind"] == "mid":
-                params["ind"] = data.shape[1] // 2  # get the middle slice
+            if dict_params_method["ind"] == "mid":
+                dict_params_method["ind"] = data.shape[1] // 2  # get the middle slice
             if method_name == "find_center_360":
                 (rot_center, overlap, side, overlap_position) = method_func(
-                    data, **params
+                    data, **dict_params_method
                 )
             else:
-                rot_center = method_func(data, **params)
+                rot_center = method_func(data, **dict_params_method)
 
         if method_name == "find_center_vo":
             rot_center = self.comm.bcast(rot_center, root=mid_rank)
@@ -288,13 +296,18 @@ class HttomolibWrapper(BaseWrapper):
             self.cupyrun = True
 
     def _execute_images(
-        self, method_name: str, params: Dict, out_dir: str, comm: Comm, data: xp.ndarray
+        self,
+        method_name: str,
+        dict_params_method: Dict,
+        out_dir: str,
+        comm: Comm,
+        data: xp.ndarray,
     ) -> None:
         """httomolib wrapper for save images function.
 
         Args:
             method_name (str): The name of the method to use.
-            params (Dict): A dict containing independent of httomo params.
+            dict_params_method (Dict): A dict containing parameters of the executed method.
             out_dir (str): The output directory.
             comm (Comm): The MPI communicator.
             data (xp.ndarray): a numpy or cupy data array.
@@ -304,10 +317,10 @@ class HttomolibWrapper(BaseWrapper):
         """
         if gpu_enabled:
             data = getattr(self.module, method_name)(
-                xp.asnumpy(data), out_dir, comm_rank=comm.rank, **params
+                xp.asnumpy(data), out_dir, comm_rank=comm.rank, **dict_params_method
             )
         else:
             data = getattr(self.module, method_name)(
-                data, out_dir, comm_rank=comm.rank, **params
+                data, out_dir, comm_rank=comm.rank, **dict_params_method
             )
         return None
