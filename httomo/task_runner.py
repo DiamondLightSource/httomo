@@ -225,12 +225,6 @@ def run_tasks(
             )
 
         stop = time.perf_counter_ns()
-        print_once(
-            f"{task_end_str} {pattern_str}: {method_name} ({package}): Took {float(stop-start)*1e-6:.2f}ms",
-            comm,
-        )
-
-        stop = time.perf_counter_ns()
         output_str_list = [
             f"{task_end_str} {pattern_str}: {method_name} (",
             package,
