@@ -1,5 +1,5 @@
-- tomopy.misc.morph:
-    sino_360_t0_180:
+- httomolib.misc.morph:
+    sino_360_to_180:
       data_in: tomo
       data_out: tomo
       overlap: 0
