@@ -1,6 +1,7 @@
 - httomolib.misc.corr
 - httomolib.misc.images
 - httomolib.misc.segm
+- httomolib.misc.morph
 - httomolib.prep.alignment
 - httomolib.prep.normalize
 - httomolib.prep.phase
