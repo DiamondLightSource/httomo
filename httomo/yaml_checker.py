@@ -18,7 +18,7 @@ def sanity_check(yaml_file):
     """
     with open(yaml_file, "r") as file:
         try:
-            yaml_data = open_yaml_config(yaml_file)
+            return open_yaml_config(yaml_file)
         except yaml.parser.ParserError as e:
             line = e.problem_mark.line
             print(
@@ -41,8 +41,6 @@ def sanity_check(yaml_file):
                     f"Error in the YAML_CONFIG file at line {e.problem_mark.line}. "
                     "Please recheck the file."
                 )
-
-    return yaml_data
 
 
 def check_one_method_per_module(yaml_file):
@@ -70,6 +68,7 @@ def check_one_method_per_module(yaml_file):
                 f" module '{next(iter(yaml_data[i]))}'. "
                 "Please recheck the yaml file."
             )
+            return False
 
     return yaml_data
 
@@ -160,5 +159,6 @@ def validate_yaml_config(yaml_file) -> bool:
                         f"Value assigned to parameter '{parameter}' in the '{modules[i]}' method"
                         f" is not correct. It should be of type {type(d2[key][parameter])}."
                     )
+                    return False
 
     return True
