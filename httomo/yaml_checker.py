@@ -74,7 +74,7 @@ def check_one_method_per_module(yaml_file):
     return yaml_data
 
 
-def validate_yaml_config(yaml_file):
+def validate_yaml_config(yaml_file) -> bool:
     """
     Check that the modules, methods, and parameters in the `YAML_CONFIG` file
     are valid, and adhere to the same structure as in each corresponding
@@ -110,7 +110,7 @@ def validate_yaml_config(yaml_file):
         if not os.path.exists(f):
             print(
                 f"'{modules[i] + '/' + next(iter(methods[i]))}' is not a valid"
-                 " path to a method. Please recheck the yaml file."
+                " path to a method. Please recheck the yaml file."
             )
             return False
 
@@ -127,13 +127,32 @@ def validate_yaml_config(yaml_file):
         for key in d1.keys():
             for parameter in d1[key].keys():
                 assert isinstance(parameter, str)
+
+                # handle `data_in_multi` and `data_out_multi` as special cases
+                if parameter in ["data_in_multi", "data_out_multi"]:
+                    if not (
+                        isinstance(d1[key][parameter], list)
+                        and all(isinstance(x, str) for x in d1[key][parameter])
+                    ):
+                        print(
+                            f"Value assigned to parameter '{parameter}' in the '{modules[i]}' method"
+                            f" is not correct."
+                        )
+                        return False
+
+                    continue
+
                 if parameter not in d2[key].keys():
                     print(
                         f"Parameter '{parameter}' in the '{modules[i]}' method is not valid."
                     )
                     return False
 
-                if None in (d1[key][parameter], d2[key][parameter]):
+                # skip tuples for !Sweep and !SweepRange
+                if isinstance(d1[key][parameter], tuple) or None in (
+                    d1[key][parameter],
+                    d2[key][parameter],
+                ):
                     continue
 
                 if not isinstance(d1[key][parameter], type(d2[key][parameter])):
@@ -141,3 +160,5 @@ def validate_yaml_config(yaml_file):
                         f"Value assigned to parameter '{parameter}' in the '{modules[i]}' method"
                         f" is not correct. It should be of type {type(d2[key][parameter])}."
                     )
+
+    return True
