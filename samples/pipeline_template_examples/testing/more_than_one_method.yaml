@@ -3,9 +3,11 @@
       name: tomo
       data_path: entry1/tomo_entry/data/data
       image_key_path: entry1/tomo_entry/instrument/detector/image_key
-- httomolib.misc.corr:
-    remove_outlier3d:
-      data_in_multi: [tomo, flats, darks]
-      data_out_multi: [tomo, flats, darks]
-      kernel_size: 3
-      dif: 0.1
+- tomopy.prep.normalize:
+    normalize:
+      data_in: tomo
+      data_out: tomo
+      cutoff: null
+    minus_log:
+      data_in: tomo
+      data_out: tomo
