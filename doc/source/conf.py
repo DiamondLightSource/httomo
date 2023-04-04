@@ -62,7 +62,7 @@ extensions = [
     #'IPython.sphinxext.ipython_console_highlighting'
 ]
 
-exclude_patterns = []
+autosummary_generate = True
 
 template_patterns = ['_templates']
 

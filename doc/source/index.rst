@@ -5,3 +5,4 @@
 
     about
     method_api
+    examples
