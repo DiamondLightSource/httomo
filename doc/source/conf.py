@@ -57,6 +57,9 @@ extensions = [
     "sphinx_panels",
     # copy to clipboard button
     'sphinx_copybutton',
+    # use jupyter notebooks
+    'nbsphinx',
+    #'IPython.sphinxext.ipython_console_highlighting'
 ]
 
 exclude_patterns = []
@@ -65,23 +68,6 @@ template_patterns = ['_templates']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
-
-# -- Options for Napoleon -----------------------------------------------------
-
-napoleon_google_docstring = True
-napoleon_numpy_docstring = True
-napoleon_include_private_with_doc = False
-napoleon_include_special_with_doc = False
-napoleon_use_admonition_for_examples = False
-napoleon_use_admonition_for_notes = False
-napoleon_use_admonition_for_references = False
-napoleon_use_ivar = False
-napoleon_use_param = False
-napoleon_use_rtype = False
-
-# -- Options for TODO ---------------------------------------------------------
-
-todo_include_todos = True
 
 # -- Options for HTML output --------------------------------------------------
 

@@ -11,3 +11,6 @@
 # jinja2<3.1.0
 # sphinx-panels
 # sphinx-copybutton
+nbsphinx
+#ipykernel
+pandoc
