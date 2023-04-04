@@ -5,18 +5,26 @@
       image_key_path: entry1/tomo_entry/instrument/detector/image_key
       dimension: 1
       preview:
-        - 
-        - 
-        - 
+        -
+        -
+        -
       pad: 0
+- httomolib.misc.corr:
+    median_filter3d:
+      data_in: tomo
+      data_out: tomo
+      kernel_size: 3
+      dif: 0.0
 - httomolib.prep.normalize:
-    normalize_cupy:
+    normalize:
       data_in: tomo
       data_out: tomo
       cutoff: 10.0
-      minus_log: true
+      minus_log: false
+      nonnegativity: false
+      remove_nans: false
 - httomolib.recon.rotation:
-    find_center_vo_cupy:
+    find_center_vo:
       data_in: tomo
       data_out: cor
       ind: mid
@@ -25,21 +33,10 @@
       srad: 6
       step: 0.25
       ratio: 0.5
-      drop: 20      
+      drop: 20
 - httomolib.recon.algorithm:
     reconstruct_tomobar:
       data_in: tomo
       data_out: tomo
       center: cor
       objsize: null
-      algorithm: FBP3D_device
-- httomolib.misc.images:
-    save_to_images:
-      data_in: tomo
-      subfolder_name: images
-      axis: 0
-      file_format: tif
-      bits: 8
-      perc_range_min: 0.0
-      perc_range_max: 100.0
-      jpeg_quality: 95
