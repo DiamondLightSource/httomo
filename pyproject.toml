@@ -1,0 +1,112 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "setuptools-git-versioning"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["httomo", "wrappers"]
+
+[tool.setuptools-git-versioning]
+enabled = true
+tag_filter = "v(?P<tag>[0-9].*)"
+
+[project]
+name = "httomo"
+description = "High Throughput Tomography framework."
+readme = "README.rst"
+license = {text = "BSD-3-Clause"}
+authors = [
+    {name = "Daniil Kazantsev", email = "daniil.kazantsev@diamond.ac.uk"},
+    {name = "Jacob Williamson"},
+    {name = "Yousef Moazzam", email = "yousef.moazzam@diamond.ac.uk"},
+    {name = "Garry ODonnell"},
+    {email = "scientificsoftware@diamond.ac.uk"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: BSD 3-clause",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.9",
+]
+requires-python = ">=3.9"
+dynamic = ["version"]
+dependencies = [
+    "click",
+    "numpy",
+    "cupy",
+    "mpi4py",
+    "h5py",
+]
+
+[project.scripts]
+httomo = "httomo.cli:main"
+
+[project.urls]
+repository = "https://github.com/DiamondLightSource/HTTomo"
+
+[project.optional-dependencies]
+tomopy = [ "tomopy" ]
+httomolib = [ "httomolib" ]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "pytest-xdist",
+  "flake8",
+  "pyproject-flake8",
+  "pydocstyle",
+  "toml",
+  "httomolib[dev]",
+  "tomopy"
+]
+
+[tool.mypy]
+# Ignore missing stubs for modules we use
+ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"
+float_to_top = true
+
+[tool.flake8]
+# Make flake8 respect black's line length (default 88),
+max-line-length = 88
+extend-ignore = [
+    "E203",  
+    "F811"  
+]
+per-file-ignores = [
+    "*pyi:E302"
+]
+
+[tool.pydocstyle]
+convention = "google"
+add-ignore = [
+    "D100", # Ignore missing docstrings in public modules
+    "D104", # Ignore missing docstrings in public packages
+    "D418", # Ignore missing docstrings in dunder methods; See: https://github.com/PyCQA/pydocstyle/issues/525
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+   "-vv",
+   "-ra",
+   "-q",
+   "--tb=native",
+]
+testpaths = [
+    "tests",
+]
+# https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
+filterwarnings = "error"
+# Doctest python code in docs, python code in src docstrings, test functions in tests
+
+
+[tool.coverage.run]
+data_file = "/tmp/httomo.coverage"
+
+[tool.coverage.paths]
+# Tests are run from installed location, map back to the src directory
+source = [
+    "httomo",
+    "**/site-packages/"
+]

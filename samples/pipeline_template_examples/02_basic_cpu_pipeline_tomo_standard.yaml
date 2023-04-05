@@ -9,12 +9,6 @@
         - 
         - 
       pad: 0
-- httomo.misc.corr:
-    dezinger_filter3d:
-      data_in_multi: [tomo, flats, darks]
-      data_out_multi: [tomo, flats, darks]
-      radius_kernel: 1
-      mu_dezinger: 0.1
 - tomopy.prep.normalize:
     normalize:
       data_in: tomo
@@ -36,7 +30,7 @@
     find_center_vo:
       data_in: tomo
       data_out: cor
-      ind: null
+      ind: mid
       smin: -50
       smax: 50
       srad: 6
@@ -52,12 +46,13 @@
       algorithm: gridrec
       init_recon: null
       #additional parameters': AVAILABLE
-- httomo.misc.images:
+- httomolib.misc.images:
     save_to_images:
-      data_in: tomo      
-      out_folder_name: recon
+      data_in: tomo
+      subfolder_name: images
       axis: 0
-      file_format: 'tif'
+      file_format: tif
       bits: 8
+      perc_range_min: 0.0
+      perc_range_max: 100.0
       jpeg_quality: 95
-

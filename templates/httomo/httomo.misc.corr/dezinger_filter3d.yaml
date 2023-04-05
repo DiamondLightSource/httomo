@@ -1,6 +1,0 @@
-- httomo.misc.corr:
-    dezinger_filter3d:
-      data_in: tomo
-      data_out: tomo
-      radius_kernel: 1
-      mu_dezinger: 0.1

@@ -1,0 +1,78 @@
+misc:
+  corr:
+    median_filter:
+      pattern: all
+    remove_outlier:
+      pattern: all
+    gaussian_filter:
+      pattern: all
+  morph:
+    downsample:
+      pattern: all
+    upsample:
+      pattern: all
+    sino_360_to_180:
+      pattern: sinogram
+    trim_sinogram:
+      pattern: sinogram
+prep:
+  alignment:
+    distortion_correction_proj:
+      pattern: projection
+    distortion_correction_sino:
+      pattern: sinogram
+  normalize:
+    minus_log:
+      pattern: projection
+    normalize:
+      pattern: projection
+    normalize_roi:
+      pattern: projection
+    normalize_bg:
+      pattern: projection
+    normalize_nf:
+      pattern: projection
+  phase:
+    retrieve_phase:
+      pattern: projection
+  stripe:
+    remove_all_stripe:
+      pattern: sinogram  
+    remove_stripe_fw:
+      pattern: sinogram
+    remove_stripe_ti:
+      pattern: sinogram
+    remove_stripe_sf:
+      pattern: sinogram
+    remove_stripe_based_sorting:
+      pattern: sinogram
+    remove_stripe_based_filtering:
+      pattern: sinogram
+    remove_stripe_based_fitting:
+      pattern: sinogram
+    remove_large_stripe:
+      pattern: sinogram
+    remove_dead_stripe:
+      pattern: sinogram
+    remove_stripe_based_interpolation:
+      pattern: sinogram
+recon:
+  algorithm:
+    recon:
+      pattern: sinogram
+  rotation:
+    find_center:
+      pattern: sinogram
+    find_center_vo:
+      pattern: sinogram
+    write_center:
+      pattern: sinogram
+  wrappers:
+    astra:
+      pattern: sinogram
+    ufo_fbp:
+      pattern: sinogram
+    ufo_dfi:
+      pattern: sinogram
+    lprec:
+      pattern: sinogram

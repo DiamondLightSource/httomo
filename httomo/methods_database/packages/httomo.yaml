@@ -1,0 +1,5 @@
+data:
+  hdf:
+    loaders:
+      standard_tomo:
+        pattern: projection
