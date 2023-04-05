@@ -7,6 +7,7 @@ HTTOmo (High Throughput Tomography pipeline)
 
 Setup a Development Environment:
 ================================
+
 * Clone the repository from GitHub using :code:`git clone git@github.com:DiamondLightSource/HTTomo.git`
 * Install dependencies from the environment file :code:`conda env create httomo --file conda/environment.yml` (SLOW)
 * Alternatively you can install from the existing explicit file :code:`conda create --name httomo --file conda/explicit/latest.txt`
@@ -29,9 +30,11 @@ Running the code:
 
 Am example of running the code with test data:
 ==============================================
+
 * Go to the home directory and run: :code:`python -m httomo testdata/tomo_standard.nxs . cpu`
+
 An example of running the code with test data:
-=================
+==============================================
 
 * Create an output directory :code:`mkdir output_dir/`
 * Go to the home directory and run: :code:`httomo tests/test_data/tomo_standard.nxs samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml output_dir/ task_runner`
