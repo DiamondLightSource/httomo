@@ -3,6 +3,8 @@ Module for checking the validity of yaml files.
 """
 import os
 import yaml
+from typing import Any
+from httomo.utils import Colour
 from httomo.yaml_utils import open_yaml_config
 
 __all__ = [
@@ -16,28 +18,39 @@ def sanity_check(yaml_file):
     """
     Check if the yaml file is properly indented, has valid mapping and tags.
     """
+    _print_with_colour(
+        "Checking that the YAML_CONFIG is properly indented and has valid mappings and tags...",
+        colour=Colour.GREEN,
+    )
     with open(yaml_file, "r") as file:
         try:
-            return open_yaml_config(yaml_file)
+            yaml_data = open_yaml_config(yaml_file)
+            _print_with_colour(
+                "Sanity check of the YAML_CONFIG was successfully done...\n",
+                colour=Colour.GREEN,
+            )
+            return yaml_data
         except yaml.parser.ParserError as e:
             line = e.problem_mark.line
-            print(
+            _print_with_colour(
                 f"Incorrect indentation in the YAML_CONFIG file at line {line}. "
                 "Please recheck the indentation of the file."
             )
         except yaml.scanner.ScannerError as e:
-            print(
+            _print_with_colour(
                 f"Incorrect mapping in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
             )
         except yaml.constructor.ConstructorError as e:
-            print(
+            _print_with_colour(
                 f"Invalid tag in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
             )
         except yaml.reader.ReaderError as e:
-            print(f"Failed to parse YAML file at line {e.problem_mark.line + 1}: {e}")
+            _print_with_colour(
+                f"Failed to parse YAML file at line {e.problem_mark.line + 1}: {e}"
+            )
         except yaml.YAMLError as e:
             if hasattr(e, "problem_mark"):
-                print(
+                _print_with_colour(
                     f"Error in the YAML_CONFIG file at line {e.problem_mark.line}. "
                     "Please recheck the file."
                 )
@@ -57,20 +70,39 @@ def check_one_method_per_module(yaml_file):
           data_in: tomo
           data_out: tomo
     """
+    _print_with_colour(
+        "Checking that YAML_CONFIG includes only one method from each module...\n"
+        "\nDoing a sanity check first...",
+        colour=Colour.GREEN,
+    )
     yaml_data = sanity_check(yaml_file)
 
     lvalues = [value for d in yaml_data for value in d.values()]
     for i, d in enumerate(lvalues):
         assert isinstance(d, dict)
         if len(d) != 1:
-            print(
+            _print_with_colour(
                 f"More than one method is being called from the"
                 f" module '{next(iter(yaml_data[i]))}'. "
                 "Please recheck the yaml file."
             )
             return False
 
+    _print_with_colour(
+        "'One method per module' check was also successfully done...\n",
+        colour=Colour.GREEN,
+    )
     return yaml_data
+
+
+def _print_with_colour(end_str: Any, colour: Any = Colour.RED) -> None:
+    if isinstance(end_str, list):
+        output = "".join(
+            [f"{colour}{out}{Colour.END}" for out, colour in zip(end_str, colour)]
+        )
+        print(output)
+    else:
+        print(colour + end_str + Colour.END)
 
 
 def validate_yaml_config(yaml_file) -> bool:
@@ -87,12 +119,17 @@ def validate_yaml_config(yaml_file) -> bool:
 
     #: the first method is always a loader
     #: so `testing_pipeline.yaml` should not pass.
-    if next(iter(methods[0])) != "standard_tomo":
-        print(
-            "The first method in the YAML_CONFIG file must be a loader. "
-            "Please recheck the yaml file."
+    _print_with_colour(
+        "Checking that the first method in the pipeline is a loader...",
+        colour=Colour.GREEN,
+    )
+    if modules[0] != "httomo.data.hdf.loaders":
+        _print_with_colour(
+            "The first method in the YAML_CONFIG file is not a loader from "
+            "'httomo.data.hdf.loaders'. Please recheck the yaml file."
         )
         return False
+    _print_with_colour("Loader check successful!!\n", colour=Colour.GREEN)
 
     parent_dir = os.path.dirname(os.path.abspath("__file__"))
     templates_dir = os.path.join(parent_dir, "templates")
@@ -107,7 +144,7 @@ def validate_yaml_config(yaml_file) -> bool:
 
     for i, f in enumerate(_template_yaml_files):
         if not os.path.exists(f):
-            print(
+            _print_with_colour(
                 f"'{modules[i] + '/' + next(iter(methods[i]))}' is not a valid"
                 " path to a method. Please recheck the yaml file."
             )
@@ -120,6 +157,9 @@ def validate_yaml_config(yaml_file) -> bool:
     ]
 
     for i, _ in enumerate(modules):
+        end_str_list = ["Checking '", next(iter(methods[i])), "' and its parameters..."]
+        colours = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
+        _print_with_colour(end_str_list, colours)
         d1 = methods[i]
         d2 = _template_yaml_data_list[i]
 
@@ -133,7 +173,7 @@ def validate_yaml_config(yaml_file) -> bool:
                         isinstance(d1[key][parameter], list)
                         and all(isinstance(x, str) for x in d1[key][parameter])
                     ):
-                        print(
+                        _print_with_colour(
                             f"Value assigned to parameter '{parameter}' in the '{modules[i]}' method"
                             f" is not correct."
                         )
@@ -142,7 +182,7 @@ def validate_yaml_config(yaml_file) -> bool:
                     continue
 
                 if parameter not in d2[key].keys():
-                    print(
+                    _print_with_colour(
                         f"Parameter '{parameter}' in the '{modules[i]}' method is not valid."
                     )
                     return False
@@ -155,10 +195,12 @@ def validate_yaml_config(yaml_file) -> bool:
                     continue
 
                 if not isinstance(d1[key][parameter], type(d2[key][parameter])):
-                    print(
-                        f"Value assigned to parameter '{parameter}' in the '{modules[i]}' method"
+                    _print_with_colour(
+                        f"Value assigned to parameter '{parameter}' in the '{next(iter(methods[i]))}' method"
                         f" is not correct. It should be of type {type(d2[key][parameter])}."
                     )
                     return False
 
+    end_str = "\nYAML validation successful!! Please feel free to use the `run` command to run the pipeline."
+    _print_with_colour(end_str, colour=Colour.BVIOLET)
     return True
