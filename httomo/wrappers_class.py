@@ -349,7 +349,7 @@ class HttomolibWrapper(BaseWrapper):
 
         Returns:
             None: returns None.
-        """
+        """        
         if gpu_enabled:
             _gpumem_cleanup()
             data = getattr(self.module, method_name)(
