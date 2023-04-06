@@ -13,7 +13,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export SPHINX_APIDOC_OPTIONS='members,show-inheritance,undoc-members'
 
 # Remove directory for api so that there are no obsolete files
-rm -rf $DIR/source/method_api/
+rm -rf $DIR/source/api/
 rm -rf $DIR/build/
 
 # sphinx-apidoc [options] -o <outputdir> <sourcedir> [pathnames to exclude]
@@ -25,7 +25,7 @@ rm -rf $DIR/build/
 # add -Q to suppress warnings
 
 # sphinx-apidoc generates source files that use sphinx.ext.autodoc to document all found modules
-sphinx-apidoc -feT -t=$DIR/source/_templates -o $DIR/source/method_api $DIR/../src/httomo
+sphinx-apidoc -feT -t=$DIR/source/_templates -o $DIR/source/api $DIR/../httomo
 
 # Append yaml link to rst files
 python -m source.yaml_doc_generator

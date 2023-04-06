@@ -6,12 +6,13 @@
 import sys
 import os
 
+from datetime import date
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-sys.path.insert(0, os.path.abspath('../../src/httomo'))
-sys.path.insert(0, os.path.abspath('../../src'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Mock imports -------------------------------------------------------------
 
@@ -38,9 +39,13 @@ for mod_name in MOCK_MODULES:
 # ------------------------------------------------------------------------------
 
 project = 'HTTomo'
-copyright = '2022, Diamond Light Source'
+copyright = f'{date.today().year}, Diamond Light Source'
 
+# Save the commit hash, this is displayed in the page title
 release = os.popen('git log -1 --format="%H"').read().strip()
+
+# Set version as the latest tag in the current branch
+version = os.popen('git describe --tags --abbrev=0').read().strip()
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.

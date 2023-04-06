@@ -21,7 +21,7 @@ import os
 
 def add_function_summary(dirs, root, files):
     rst_name = root.split("/")[-1]
-    doc_rst_file = f"{doc_source_dir}/method_api/{rst_name}.rst"
+    doc_rst_file = f"{doc_source_dir}/api/{rst_name}.rst"
     with open(doc_rst_file, "a") as edit_doc:
         if os.stat(doc_rst_file).st_size == 0:
             add_title(edit_doc, rst_name)
@@ -35,7 +35,7 @@ def add_function_summary(dirs, root, files):
 
 def create_module_doc(doc_source_dir, root, files):
     rst_name = root.split("/")[-1]
-    doc_rst_file = f"{doc_source_dir}/method_api/{rst_name}.rst"
+    doc_rst_file = f"{doc_source_dir}/api/{rst_name}.rst"
     for fi in files:
         t_name = root.split("source")[-1]
         t_name = f"{t_name}/{fi}"

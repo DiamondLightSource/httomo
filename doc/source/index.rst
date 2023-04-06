@@ -4,5 +4,5 @@
     :maxdepth: 4
 
     about
-    method_api
+    api
     examples
