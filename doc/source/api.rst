@@ -27,4 +27,4 @@ HTTomo
    :glob:
    :maxdepth: 1
 
-   api/httomo.*
+   api/*load*
