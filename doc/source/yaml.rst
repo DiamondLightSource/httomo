@@ -24,4 +24,6 @@ Multi Inputs
 DLS Specific
 -------------------------------------
 
-.. literalinclude:: ../../samples/pipeline_template_examples/DLS_specific/01_sino360_to180covert_inpainting.yaml
+.. literalinclude:: ../../samples/pipeline_template_examples/DLS/01_diad_pipeline.yaml
+
+.. literalinclude:: ../../samples/pipeline_template_examples/DLS/02_i12_360scan_pipeline.yaml
