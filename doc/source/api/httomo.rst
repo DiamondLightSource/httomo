@@ -8,9 +8,6 @@ Subpackages
    :maxdepth: 4
 
    httomo.data
-   httomo.misc
-   httomo.prep
-   httomo.recon
 
 Submodules
 ----------
@@ -22,6 +19,7 @@ Submodules
    httomo.common
    httomo.task_runner
    httomo.utils
+   httomo.wrappers_class
    httomo.yaml_utils
 
 Module contents

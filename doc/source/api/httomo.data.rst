@@ -1,5 +1,13 @@
-httomo.misc package
+httomo.data package
 ===================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   httomo.data.hdf
 
 Submodules
 ----------
@@ -7,14 +15,12 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   httomo.misc.corr
-   httomo.misc.images
-   httomo.misc.segm
+   httomo.data.mpiutil
 
 Module contents
 ---------------
 
-.. automodule:: httomo.misc
+.. automodule:: httomo.data
    :members:
    :show-inheritance:
    :undoc-members:
