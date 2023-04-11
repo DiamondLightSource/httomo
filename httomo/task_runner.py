@@ -239,7 +239,7 @@ def run_tasks(
     reslice_summary_colour = Colour.BLUE if reslice_counter <= 1 else Colour.RED
     log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
 
-    elapsed_time = 0
+    elapsed_time = 0.
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
         end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
@@ -269,7 +269,7 @@ def _initialise_datasets(
         values will eventually be arrays (but initialised to None in this
         function)
     """
-    datasets = {}
+    datasets: Dict[str, None] = {}
     # Define the params related to dataset names in the given function, whether
     # it's a loader or a method function
     loader_dataset_params = ["name"]
@@ -318,7 +318,7 @@ def _initialise_datasets(
 # TODO: There's a lot of overlap with the `_initialise_datasets()` function, the
 # only difference is that this function doesn't need to inspect the output
 # datasets of a method, so perhaps the two functions can be nicely merged?
-def _initialise_stats(yaml_config: Path) -> List[Dict]:
+def _initialise_stats(yaml_config: Path) -> List[Dict[str, List]]:
     """Generate a list of dicts that will hold the stats for the datasets in all
     the methods in the pipeline.
 
@@ -333,7 +333,7 @@ def _initialise_stats(yaml_config: Path) -> List[Dict]:
         A list containing the stats of all datasets of all methods in the
         pipeline.
     """
-    stats = []
+    stats: List[Dict[str, List]] = []
     # Define the params related to dataset names in the given function, whether
     # it's a loader or a method function
     loader_dataset_param = "name"
@@ -353,7 +353,7 @@ def _initialise_stats(yaml_config: Path) -> List[Dict]:
             dataset_param = method_dataset_param
 
         # Dict to hold the stats for each dataset associated with the method
-        method_stats = {}
+        method_stats: Dict[str, List]= {}
 
         # Check if there are multiple input datasets to account for
         if type(method_conf[dataset_param]) is list:
@@ -369,7 +369,7 @@ def _initialise_stats(yaml_config: Path) -> List[Dict]:
 
 def _get_method_funcs(
     yaml_config: Path, comm: MPI.Comm
-) -> List[Tuple[str, Callable, Dict, bool]]:
+) -> List[Tuple[str, Callable, Optional[Callable], Dict, bool]]:
     """Gather all the python functions needed to run the defined processing
     pipeline.
 
@@ -381,14 +381,15 @@ def _get_method_funcs(
         MPI communicator object.
     Returns
     -------
-    List[Tuple[Callable, Dict, bool]]
+    List[Tuple[str, Callable, Optional[Callable], Dict, bool]]
         A list, each element being a tuple containing four elements:
         - a package name
         - a method function
+        - optionally a wrapper function to use (httomo loaders set this to None)
         - a dict of parameters for the method function
         - a boolean describing if it is a loader function or not
     """
-    method_funcs = []
+    method_funcs: List[Tuple[str, Callable, Optional[Callable], Dict, bool]] = []
     yaml_conf = open_yaml_config(yaml_config)
 
     for task_conf in yaml_conf:
@@ -396,31 +397,30 @@ def _get_method_funcs(
         split_module_name = module_name.split(".")
         method_name, method_conf = module_conf.popitem()
         method_conf["method_name"] = method_name
-
+        
         if split_module_name[0] == "httomo":
             # deal with httomo loaders
-            if "loaders" in module_name:
-                is_loader = True
-            else:
-                is_loader = False
+            is_loader = "loaders" in module_name
             module = import_module(module_name)
-            method_func = getattr(module, method_name)
+            method_func: Callable = getattr(module, method_name)
             method_funcs.append(
                 (module_name, method_func, None, method_conf, is_loader)
             )
-        elif (split_module_name[0] == "tomopy") or (
-            split_module_name[0] == "httomolib"
-        ):
-            if split_module_name[0] == "tomopy":
-                # initialise the TomoPy wrapper class
-                wrapper_init_module = TomoPyWrapper(
-                    split_module_name[1], split_module_name[2], method_name, comm
-                )
-            if split_module_name[0] == "httomolib":
-                # initialise the httomolib wrapper class
-                wrapper_init_module = HttomolibWrapper(
-                    split_module_name[1], split_module_name[2], method_name, comm
-                )
+        elif split_module_name[0] == "tomopy":
+            # initialise the TomoPy wrapper class
+            wrapper_init_module = TomoPyWrapper(
+                split_module_name[1], split_module_name[2], method_name, comm
+            )
+            wrapper_func: Callable = getattr(wrapper_init_module.module, method_name)
+            wrapper_method = wrapper_init_module.wrapper_method
+            method_funcs.append(
+                (module_name, wrapper_func, wrapper_method, method_conf, False)
+            )
+        elif split_module_name[0] == "httomolib":
+            # initialise the httomolib wrapper class
+            wrapper_init_module = HttomolibWrapper(
+                split_module_name[1], split_module_name[2], method_name, comm
+            )
             wrapper_func = getattr(wrapper_init_module.module, method_name)
             wrapper_method = wrapper_init_module.wrapper_method
             method_funcs.append(
