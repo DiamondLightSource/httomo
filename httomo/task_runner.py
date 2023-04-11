@@ -300,7 +300,7 @@ def run_tasks(
     reslice_summary_colour = Colour.BLUE if reslice_info.count <= 1 else Colour.RED
     log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
 
-    elapsed_time = 0
+    elapsed_time = 0.
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
         end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
@@ -356,7 +356,7 @@ def _initialise_datasets_and_stats(
             )
 
         # Dict to hold the stats for each dataset associated with the method
-        method_stats = {}
+        method_stats: Dict[str, List]= {}
 
         # Check if there are multiple input datasets to account for
         if type(method_conf[dataset_param]) is list:
