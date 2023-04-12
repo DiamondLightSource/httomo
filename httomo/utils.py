@@ -3,8 +3,8 @@ from mpi4py.MPI import Comm
 from typing import Tuple, List, Dict, Callable
 from enum import Enum
 
+import httomo.globals
 from httomo.data import mpiutil
-from httomo.logger import user_logger
 
 
 class Colour:
@@ -25,9 +25,7 @@ class Colour:
     BACKG_RED = "\x1b[6;37;41m"
 
 
-def log_once(
-    output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0
-) -> None:
+def log_once(output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0) -> None:
     """
     Log output to console and log file if the process is rank zero.
 
@@ -50,7 +48,12 @@ def log_once(
         else:
             output = f"{colour}{output}{Colour.END}"
 
-        user_logger.debug(output) if level == 1 else user_logger.info(output)
+        if httomo.globals.logger is not None:
+            (
+                httomo.globals.logger.debug(output)
+                if level == 1
+                else httomo.globals.logger.info(output)
+            )
 
 
 def log_rank(output: Any, comm: Comm) -> None:
@@ -64,7 +67,8 @@ def log_rank(output: Any, comm: Comm) -> None:
     comm : Comm
         The comm used to determine the process rank.
     """
-    user_logger.debug(f"RANK: [{comm.rank}], {output}")
+    if httomo.globals.logger is not None:
+        httomo.globals.logger.debug(f"RANK: [{comm.rank}], {output}")
 
 
 def log_exception(output: str) -> None:
@@ -76,7 +80,8 @@ def log_exception(output: str) -> None:
     output : str
         The exception to be logged.
     """
-    user_logger.error(output)
+    if httomo.globals.logger is not None:
+        httomo.globals.logger.error(output)
 
 
 def _parse_preview(
@@ -134,12 +139,16 @@ def _parse_preview(
             warn_on = False
             if start is not None and start < 0 or start >= data_shape[idx]:
                 warn_on = True
-                str_warn = f"The 'start' preview {start} is outside the data dimension range" \
-                            + f" from 0 to {data_shape[idx]}"
+                str_warn = (
+                    f"The 'start' preview {start} is outside the data dimension range"
+                    + f" from 0 to {data_shape[idx]}"
+                )
             if stop is not None and stop < 0 or stop >= data_shape[idx]:
                 warn_on = True
-                str_warn = f"The 'stop' preview {start} is outside the data dimension range" \
-                            + f" from 0 to {data_shape[idx]}"
+                str_warn = (
+                    f"The 'stop' preview {start} is outside the data dimension range"
+                    + f" from 0 to {data_shape[idx]}"
+                )
             if step is not None and step < 0:
                 warn_on = True
                 str_warn = "The 'step' in preview cannot be negative"

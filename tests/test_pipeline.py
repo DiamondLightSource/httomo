@@ -30,7 +30,7 @@ def test_tomo_standard_testing_pipeline_output(
 
     # recurse through output_dir and check that all files are there
     files = read_folder("output_dir/")
-    assert len(files) == 4
+    assert len(files) == 5
 
     # check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -61,7 +61,7 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
-    assert len(files) == 7
+    assert len(files) == 8
 
     # check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -98,7 +98,7 @@ def test_diad_testing_pipeline_output(
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
-    assert len(files) == 6
+    assert len(files) == 7
 
     #: check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))

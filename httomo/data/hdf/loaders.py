@@ -68,7 +68,7 @@ def standard_tomo(
             f"The full dataset shape is {shape}",
             comm=comm,
             colour=Colour.LYELLOW,
-            level=1
+            level=1,
         )
 
     # Get indices in data which contain projections
