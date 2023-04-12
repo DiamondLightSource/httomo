@@ -34,7 +34,10 @@ def reslice(
         now sliced.
     """
     log_once(
-        f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE, level=1
+        f"<-------Reslicing/rechunking the data-------->",
+        comm,
+        colour=Colour.BLUE,
+        level=1,
     )
 
     # No need to reclice anything if there is only one process
@@ -110,7 +113,10 @@ def reslice_filebased(
         chunks_data = (data_shape[0], data_shape[1], slices_no_in_chunks)
 
     log_once(
-        f"<-------Reslicing/rechunking the data-------->", comm, colour=Colour.BLUE, level=1
+        f"<-------Reslicing/rechunking the data-------->",
+        comm,
+        colour=Colour.BLUE,
+        level=1,
     )
     # Pass the current slicing dim so then data can be gathered and assembled
     # correctly, and the new chunk shape to save the data in an hdf5 file with

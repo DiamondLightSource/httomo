@@ -1,6 +1,4 @@
 import multiprocessing
-from datetime import datetime
-from os import mkdir
 from pathlib import Path
 import time
 from typing import List, Dict, Optional, Tuple, Union
@@ -12,10 +10,9 @@ from numpy import ndarray
 import numpy as np
 from mpi4py import MPI
 
+import httomo.globals
 from httomo.common import remove_ansi_escape_sequences
-from httomo.utils import (
-    log_once, Pattern, _get_slicing_dim, Colour, log_exception
-)
+from httomo.utils import log_once, Pattern, _get_slicing_dim, Colour, log_exception
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.chunk import save_dataset, get_data_shape
@@ -46,7 +43,6 @@ from httomo.wrappers_class import HttomolibWrapper
 def run_tasks(
     in_file: Path,
     yaml_config: Path,
-    out_dir: Path,
     dimension: int,
     pad: int = 0,
     ncore: int = 1,
@@ -61,8 +57,6 @@ def run_tasks(
         The file to read data from.
     yaml_config : Path
         The file containing the processing pipeline info as YAML.
-    out_dir : Path
-        The directory to write data to.
     dimension : int
         The dimension to slice in.
     pad : int
@@ -77,11 +71,6 @@ def run_tasks(
         should be done in-memory.
     """
     comm = MPI.COMM_WORLD
-    run_out_dir = out_dir.joinpath(
-        f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
-    )
-    if comm.rank == 0:
-        mkdir(run_out_dir)
     if comm.size == 1:
         # use all available CPU cores if not an MPI run
         ncore = multiprocessing.cpu_count()
@@ -148,6 +137,14 @@ def run_tasks(
     if comm.rank == 0:
         start_time = MPI.Wtime()
 
+    #: add to the console and log file, the full path to the user.log file
+    log_once(
+        f"See the full log file at: {httomo.globals.run_out_dir}/user.log",
+        comm,
+        colour=Colour.CYAN,
+        level=0,
+    )
+
     # Run the methods
     for idx, (
         module_path,
@@ -198,7 +195,7 @@ def run_tasks(
                 (["flats"], flats),
                 (["angles", "angles_radians"], angles),
                 (["comm"], comm),
-                (["out_dir"], run_out_dir),
+                (["out_dir"], httomo.globals.run_out_dir),
                 (["reslice_ahead"], "False"),
             ]
         else:
@@ -219,7 +216,7 @@ def run_tasks(
                 method_funcs[idx][1],
                 method_funcs[idx - 1][1],
                 dict_datasets_pipeline,
-                run_out_dir,
+                httomo.globals.run_out_dir,
                 glob_stats[idx],
                 comm,
                 reslice_counter,
@@ -248,7 +245,7 @@ def run_tasks(
         end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
         log_once(end_str, comm=comm, colour=Colour.BVIOLET)
         #: remove ansi escape sequences from the log file
-        remove_ansi_escape_sequences("user.log")
+        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
 
 
 def _initialise_datasets(
@@ -539,7 +536,7 @@ def _run_method(
     misc_params[-1] = (["reslice_ahead"], reslice_ahead)
 
     if reslice_counter > 1 and not has_reslice_warn_printed:
-        print_once(reslice_warn_str, comm=comm, colour=Colour.RED)
+        log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
         has_reslice_warn_printed = True
 
     # extra params unrelated to wrapped packages but related to httomo added
@@ -758,7 +755,6 @@ def _run_method(
             # output which handles saving the result
             return reslice_counter, has_reslice_warn_printed, glob_stats
 
-        print_once(method_name, comm)
         # TODO: The dataset saving functionality only supports 3D data
         # currently, so check that the dimension of the data is 3 before
         # saving it

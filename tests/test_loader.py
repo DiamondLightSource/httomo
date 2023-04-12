@@ -9,7 +9,9 @@ def test_tomo_standard_testing_pipeline_loaded(
     merge_yamls(standard_loader, testing_pipeline)
     cmd.insert(6, "temp.yaml")
 
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    result = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
 
     assert "Running task 1 (pattern=projection): standard_tomo..." in result.stderr
     assert "Running task 2 (pattern=projection): normalize..." in result.stderr
@@ -27,7 +29,9 @@ def test_diad_testing_pipeline_loaded(
     merge_yamls(diad_loader, testing_pipeline)
     cmd.insert(7, "temp.yaml")
 
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    result = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
     assert "Running task 1 (pattern=projection): standard_tomo..." in result.stderr
     assert "Running task 2 (pattern=projection): normalize..." in result.stderr
     assert "Running task 3 (pattern=projection): minus_log.." in result.stderr

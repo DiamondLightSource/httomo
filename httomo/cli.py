@@ -4,9 +4,12 @@ from typing import Optional
 
 import click
 
+import httomo.globals
 from httomo.common import PipelineTasks
 from httomo.task_runner import run_tasks
+from httomo.logger import setup_logger
 
+from mpi4py import MPI
 from . import __version__
 
 
@@ -97,6 +100,10 @@ def main(
         save_all,
         reslice_dir if file_based_reslice else None,
     )
+    comm = MPI.COMM_WORLD
+    if comm.rank == 0:
+        # Setup global logger object
+        httomo.globals.logger = setup_logger(out_dir)
 
     if ctx.invoked_subcommand is None:
         click.echo(main.get_help(ctx))
@@ -109,7 +116,6 @@ def task_runner(global_options: GlobalOptions):
     return run_tasks(
         global_options.in_file,
         global_options.yaml_config,
-        global_options.out_dir,
         global_options.dimension,
         global_options.pad,
         global_options.ncore,
