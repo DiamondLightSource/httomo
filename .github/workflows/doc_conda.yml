@@ -11,17 +11,27 @@ on:
       - main
       - documentation
 jobs:
-  # Test for reusing a workflow
-  call-workflow:
+  build-linux:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
-      - name: Setup
-        uses: jessicavers/HTTomo/.github/workflows/yaml_generator.yml@documentation
+        - name: Checkout repository code
+          uses: actions/checkout@v2
+
+        - name: Setup Python 3.9
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.9
 
       - name: Make conda environment
         uses: conda-incubator/setup-miniconda@v2
         with:
           environment-file: docs/source/doc-conda-requirements.yml
+
+      - name: Generate yml
+        run: python templates/tomopy/yaml_generator_tomopy.py
 
       - name: Build html
         run: docs/sphinx-build.sh
