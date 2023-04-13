@@ -2,7 +2,7 @@ from typing import Dict, Union
 import numpy as np
 import inspect
 from inspect import signature
-from httomo.utils import print_once
+from httomo.utils import log_once, Colour
 from httomo.data import mpiutil
 
 from mpi4py.MPI import Comm
@@ -203,24 +203,23 @@ class BaseWrapper:
 
         if method_name == "find_center_vo":
             rot_center = self.comm.bcast(rot_center, root=mid_rank)
-            print_once(
-                "The center of rotation for 180 degrees sinogram is {}".format(
-                    rot_center
-                ),
-                self.comm,
-                colour="cyan",
+            log_once(
+                f"The center of rotation for 180 degrees sinogram is {rot_center}",
+                comm=self.comm,
+                colour=Colour.LYELLOW,
+                level=1,
             )
             return rot_center
         if method_name == "find_center_360":
             (rot_center, overlap, side, overlap_position) = self.comm.bcast(
                 (rot_center, overlap, side, overlap_position), root=mid_rank
             )
-            print_once(
-                "The center of rotation for 360 degrees sinogram is {}, overlap {}, side {} and overlap position {}".format(
-                    rot_center, overlap, side, overlap_position
-                ),
+            log_once(
+                f"The center of rotation for 360 degrees sinogram is {rot_center},"
+                + f" overlap {overlap}, side {side} and overlap position {overlap_position}",
                 self.comm,
-                colour="cyan",
+                colour=Colour.LYELLOW,
+                level=1,
             )
             return (rot_center, overlap, side, overlap_position)
 
