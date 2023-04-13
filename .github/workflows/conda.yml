@@ -3,7 +3,6 @@ name: conda test
 on:
   workflow_dispatch:
   workflow_call:
-  push: -- Register wf
 
 jobs:
   conda:

@@ -3,7 +3,6 @@ name: HTTomo doc test
 on:
   workflow_dispatch:
   workflow_call:
-  push: -- Register wf
 
 jobs:
   build-linux:
