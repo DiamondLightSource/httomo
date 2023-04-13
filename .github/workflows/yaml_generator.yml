@@ -1,11 +1,16 @@
-name: conda test
+name: HTTomo doc test
 
 on:
   workflow_dispatch:
+  workflow_call:
+  push: -- Register wf
 
 jobs:
-  conda:
+  build-linux:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
         - name: Checkout repository code
           uses: actions/checkout@v2
@@ -15,9 +20,5 @@ jobs:
           with:
             python-version: 3.9
 
-        - name: Installing httomo
-          uses: conda-incubator/setup-miniconda@v2
-          with:
-            auto-update-conda: false
-            activate-environment: httomo
-            environment-file: conda/explicit/latest.txt
+        - name: Generate yml
+          run: python templates/tomopy/yaml_generator_tomopy.py

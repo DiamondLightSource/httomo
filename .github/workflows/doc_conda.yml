@@ -1,0 +1,22 @@
+name: HTTomo doc conda env test
+
+on:
+  workflow_dispatch:
+  push: -- Register wf
+
+jobs:
+  # Test for reusing a workflow
+  call-workflow:
+    - name: Setup
+      uses: yaml_generator.yml@documentation
+
+    - name: Make conda environment
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        environment-file: doc/source/doc-conda-requirements.yml
+
+    - name: Build html
+      run: doc/sphinx-build.sh
+
+    - name: Run ghp-import
+      run: ghp-import -n -p -f doc/build
