@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import dataclasses
 import multiprocessing
 from datetime import datetime
@@ -47,7 +47,7 @@ from httomo.wrappers_class import HttomolibWrapper
 class MethodFunc:
     """
     Class holding information about each tomography pipeline method
-    
+
     Attributes
     ----------
     module_name : str
@@ -55,10 +55,10 @@ class MethodFunc:
     method_function : Callable
         The actual method callable
     wrapper_function: Optional[Callable]
-        The wrapper function to handle the execution. It may be None, 
+        The wrapper function to handle the execution. It may be None,
         for example for loaders.
     parameters : Dict[str, Any]
-        The method parameters that are specified in the pipeline yaml file. 
+        The method parameters that are specified in the pipeline yaml file.
         They are used as kwargs when the method is called.
     is_loader : bool
         Whether the method is a loader function
@@ -72,19 +72,20 @@ class MethodFunc:
 
     module_name: str
     method_function: Callable
-    wrapper_function: Optional[Callable]
-    parameters: Dict[str, Any]
-    is_loader: bool
-    pattern: Pattern
-    cpu: bool
-    gpu: bool
-    reslice_ahead: bool
+    wrapper_function: Optional[Callable] = None
+    parameters: Dict[str, Any] = field(default_factory=dict)
+    is_loader: bool = False
+    pattern: Pattern = Pattern.projection
+    cpu: bool = True
+    gpu: bool = False
+    reslice_ahead: bool = False
+
 
 @dataclass
 class ResliceInfo:
     """
     Class holding information regarding reslicing
-    
+
     Attributes
     ----------
     count : int
@@ -92,13 +93,14 @@ class ResliceInfo:
     has_warn_printed : bool
         Whether the reslicing warning has been printed
     reslice_dir : Optional[Path]
-        The directory to use with file-based reslicing. If None, 
+        The directory to use with file-based reslicing. If None,
         reslicing will be done in-memory.
     """
-    
+
     count: int
     has_warn_printed: bool
     reslice_dir: Optional[Path] = None
+
 
 @dataclass
 class PlatformSection:
@@ -106,9 +108,9 @@ class PlatformSection:
     Data class to represent a section of the pipeline that runs on the same platform.
     That is, all methods contained in this section of the pipeline run either all on CPU
     or all on GPU.
-    
+
     This is used to iterate through GPU memory in chunks.
-    
+
     Attributes
     ----------
     gpu : bool
@@ -121,6 +123,7 @@ class PlatformSection:
     methods : List[MethodFunc]
         List of methods in this section
     """
+
     gpu: bool
     pattern: Pattern
     max_slices: int
@@ -1258,25 +1261,38 @@ def _assign_pattern_to_method(method_func: MethodFunc) -> MethodFunc:
 
 def _determine_gpu_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
     ret: List[PlatformSection] = []
-    current_method = method_funcs[0]
-    current_platform = PlatformSection(
-        gpu=current_method.gpu,
-        pattern=current_method.pattern,
-        max_slices=0,
-        methods=[current_method],
-    )
-    for i in range(1, len(method_funcs)):
-        method = method_funcs[i]
-        if method.gpu != current_platform.gpu or method.reslice_ahead:
-            ret.append(current_platform)
-            current_platform = PlatformSection(
-                gpu=current_method.gpu,
-                pattern=current_method.pattern,
-                max_slices=0,
-                methods=[current_method],
+    current_gpu = method_funcs[0].gpu
+    current_pattern = method_funcs[0].pattern
+    methods: List[MethodFunc] = []
+    for method in method_funcs:
+        if (
+            method.gpu == current_gpu
+            and (
+                method.pattern == current_pattern
+                or method.pattern == Pattern.all
+                or current_pattern == Pattern.all
             )
+        ):
+            methods.append(method)
+            if current_pattern == Pattern.all and method.pattern != Pattern.all:
+                current_pattern = method.pattern
         else:
-            current_platform.methods.append(current_method)
-    ret.append(current_platform)
+            ret.append(
+                PlatformSection(
+                    gpu=current_gpu,
+                    pattern=current_pattern,
+                    max_slices=0,
+                    methods=methods,
+                )
+            )
+            methods = [method]
+            current_pattern = method.pattern
+            current_gpu = method.gpu
+
+    ret.append(
+        PlatformSection(
+            gpu=current_gpu, pattern=current_pattern, max_slices=0, methods=methods
+        )
+    )
 
     return ret
