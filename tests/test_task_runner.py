@@ -2,7 +2,7 @@ from unittest import mock
 import pytest
 import numpy as np
 
-from httomo.task_runner import MethodFunc, PlatformSection, _update_max_slices, _determine_platform_sections
+from httomo.task_runner import MethodFunc, PlatformSection, update_max_slices, determine_platform_sections
 from httomo.utils import Pattern
 
 
@@ -68,7 +68,8 @@ def test_determine_platform_sections_pattern_change() -> None:
     assert s1.gpu is False
     assert s1.methods == [methods[1]]
     assert s1.pattern == methods[1].pattern
-    
+
+
 def test_determine_platform_sections_platform_change() -> None:
     methods = [
         make_test_method(is_loader=True, module_name="testloader"),
@@ -85,7 +86,8 @@ def test_determine_platform_sections_platform_change() -> None:
     assert s1.gpu is True
     assert s1.methods == [methods[1]]
     assert s1.pattern == methods[1].pattern
-    
+
+
 @pytest.mark.parametrize("pattern1, pattern2, expected", [
     (Pattern.projection, Pattern.all, Pattern.projection),
     (Pattern.all, Pattern.projection, Pattern.projection),
@@ -107,8 +109,8 @@ def test_determine_platform_sections_pattern_all_combine(pattern1: Pattern,
     assert s0.gpu is False
     assert s0.methods == methods
     assert s0.pattern == expected
-    
-    
+
+
 def test_platform_section_max_slices():
     max_slices_20 = mock.Mock(return_value=(20, np.float32()))
     max_slices_50 = mock.Mock(return_value=(50, np.float32()))
@@ -126,7 +128,7 @@ def test_platform_section_max_slices():
     )
     with mock.patch('httomo.task_runner._get_available_gpu_memory', return_value=100000):
         dtype = _update_max_slices(section, (1000, 24, 42), np.uint8())
-        
+
     assert section.max_slices == 20
     assert dtype == np.float32()
     # this also checks if the data type is respected - we give uint8 as input, 
@@ -134,6 +136,3 @@ def test_platform_section_max_slices():
     max_slices_20.assert_called_once_with(0, (24, 42), np.uint8(), 100000)
     max_slices_30.assert_called_once_with(0, (24, 42), np.float32(), 100000)
     max_slices_50.assert_called_once_with(0, (24, 42), np.float32(), 100000)
-
-    
-        

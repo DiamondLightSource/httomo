@@ -136,6 +136,7 @@ class PlatformSection:
     methods : List[MethodFunc]
         List of methods in this section
     """
+
     gpu: bool
     pattern: Pattern
     max_slices: int
@@ -1205,7 +1206,7 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
         return int(100e9)  # arbitrarily high number - only used if GPU isn't available
 
 
-def _update_max_slices(section: PlatformSection, 
+def update_max_slices(section: PlatformSection,
                        process_data_shape: Optional[Tuple[int, int, int]],
                        input_data_type: Optional[np.dtype]):
     # section before loader - we don't know these shapes yet
@@ -1233,7 +1234,7 @@ def _update_max_slices(section: PlatformSection,
     else:
         # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
         pass
-    
+
     section.max_slices = max_slices
     # TODO: don't return this - use the actual data's data type in the next section
     return data_type
