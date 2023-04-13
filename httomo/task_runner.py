@@ -137,6 +137,7 @@ class PlatformSection:
     methods : List[MethodFunc]
         List of methods in this section
     """
+
     gpu: bool
     pattern: Pattern
     max_slices: int
@@ -1152,3 +1153,42 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
         raise ValueError(err_str)
 
     return dataclasses.replace(method_function, pattern=pattern)
+
+
+def _determine_gpu_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
+    ret: List[PlatformSection] = []
+    current_gpu = method_funcs[0].gpu
+    current_pattern = method_funcs[0].pattern
+    methods: List[MethodFunc] = []
+    for method in method_funcs:
+        if (
+            method.gpu == current_gpu
+            and (
+                method.pattern == current_pattern
+                or method.pattern == Pattern.all
+                or current_pattern == Pattern.all
+            )
+        ):
+            methods.append(method)
+            if current_pattern == Pattern.all and method.pattern != Pattern.all:
+                current_pattern = method.pattern
+        else:
+            ret.append(
+                PlatformSection(
+                    gpu=current_gpu,
+                    pattern=current_pattern,
+                    max_slices=0,
+                    methods=methods,
+                )
+            )
+            methods = [method]
+            current_pattern = method.pattern
+            current_gpu = method.gpu
+
+    ret.append(
+        PlatformSection(
+            gpu=current_gpu, pattern=current_pattern, max_slices=0, methods=methods
+        )
+    )
+
+    return ret
