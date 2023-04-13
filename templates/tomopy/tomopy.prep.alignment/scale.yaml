@@ -1,4 +1,0 @@
-- tomopy.prep.alignment:
-    scale:
-      data_in: tomo
-      data_out: tomo

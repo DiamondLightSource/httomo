@@ -4,3 +4,4 @@
       data_out: tomo
       flat_loc: REQUIRED
       cutoff: null
+      averaging: mean

@@ -1,7 +1,11 @@
 - tomopy.recon.rotation:
     find_center:
       data_in: tomo
-      data_out: tomo
+      data_out:
+      - cor
+      - overlap
+      - side
+      - overlap_position
       ind: null
       init: null
       tol: 0.5

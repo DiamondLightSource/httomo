@@ -1,3 +1,26 @@
+# TomoPy version 1.14
+sim:
+  project:
+    add_drift:
+      pattern: all
+    add_focal_spot_blur:
+      pattern: all
+    add_gaussian:
+      pattern: all
+    add_poisson:
+      pattern: all
+    add_rings:
+      pattern: all
+    add_salt_pepper:
+      pattern: all
+    add_zingers:
+      pattern: all
+    project:
+      pattern: all
+    project2:
+      pattern: all
+    project3:
+      pattern: all
 misc:
   corr:
     median_filter:
@@ -37,7 +60,7 @@ prep:
       pattern: projection
   stripe:
     remove_all_stripe:
-      pattern: sinogram  
+      pattern: sinogram
     remove_stripe_fw:
       pattern: sinogram
     remove_stripe_ti:
