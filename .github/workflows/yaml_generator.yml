@@ -1,14 +1,7 @@
 name: HTTomo yaml generation
 
-on:
-  workflow_dispatch:
-  workflow_call:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
+on: [workflow_dispatch, workflow_call, pull_request, push]
+
 jobs:
   build-linux:
     runs-on: ubuntu-latest
