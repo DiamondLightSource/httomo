@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+from datetime import datetime
 
 import click
 
@@ -100,10 +101,14 @@ def main(
         save_all,
         reslice_dir if file_based_reslice else None,
     )
+    # Define httomo.globals.run_out_dir in all MPI processes
+    httomo.globals.run_out_dir = out_dir.joinpath(
+        f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
+    )
     comm = MPI.COMM_WORLD
     if comm.rank == 0:
         # Setup global logger object
-        httomo.globals.logger = setup_logger(out_dir)
+        httomo.globals.logger = setup_logger(httomo.globals.run_out_dir)
 
     if ctx.invoked_subcommand is None:
         click.echo(main.get_help(ctx))
