@@ -2,14 +2,17 @@ name: conda test
 
 on:
   workflow_dispatch:
-  workflow_call:
-
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
 jobs:
   conda:
     runs-on: ubuntu-latest
     steps:
-        - name: Checkout repository code
-          uses: actions/checkout@v2
+        uses: actions/checkout@v2
 
         - name: Setup Python 3.9
           uses: actions/setup-python@v2

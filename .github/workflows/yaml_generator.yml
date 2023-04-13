@@ -1,9 +1,14 @@
-name: HTTomo doc test
+name: HTTomo yaml generation
 
 on:
   workflow_dispatch:
   workflow_call:
-
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
 jobs:
   build-linux:
     runs-on: ubuntu-latest
