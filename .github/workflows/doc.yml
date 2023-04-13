@@ -5,9 +5,11 @@ on:
   pull_request:
     branches:
       - main
+      - documentation
   push:
     branches:
       - main
+      - documentation
 jobs:
   build-linux:
     runs-on: ubuntu-latest
