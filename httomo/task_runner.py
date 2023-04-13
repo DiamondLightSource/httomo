@@ -124,9 +124,8 @@ class PlatformSection:
 
     This is used to iterate through GPU memory in chunks.
 
-    Parameters
-    ==========
-
+    Attributes
+    ----------
     gpu : bool
         Whether this section is a GPU section (True) or CPU section (False)
     pattern : Pattern
@@ -137,7 +136,6 @@ class PlatformSection:
     methods : List[MethodFunc]
         List of methods in this section
     """
-
     gpu: bool
     pattern: Pattern
     max_slices: int
