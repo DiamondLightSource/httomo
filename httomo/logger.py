@@ -1,13 +1,12 @@
 import logging
-from datetime import datetime
 from pathlib import Path
 
 import httomo.globals
 
 
 def setup_logger(out_dir: str):
-    # Generate timestamped output directory
-    httomo.globals.run_out_dir = _create_run_out_dir(out_dir)
+    # Create timestamped output directory
+    Path.mkdir(httomo.globals.run_out_dir)
 
     # Create empty `user.log` file
     user_log_path = httomo.globals.run_out_dir / "user.log"
@@ -33,12 +32,3 @@ def setup_logger(out_dir: str):
     user_logger = logging.getLogger(__file__)
     user_logger.setLevel(logging.DEBUG)
     return user_logger
-
-
-def _create_run_out_dir(dir: Path) -> Path:
-    """Create the output directory in which the results of the httomo run are
-    saved.
-    """
-    run_out_dir = dir.joinpath(f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output")
-    Path.mkdir(run_out_dir)
-    return run_out_dir
