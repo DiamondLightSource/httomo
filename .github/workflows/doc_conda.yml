@@ -19,10 +19,10 @@ jobs:
       - name: Make conda environment
         uses: conda-incubator/setup-miniconda@v2
         with:
-          environment-file: doc/source/doc-conda-requirements.yml
+          environment-file: docs/source/doc-conda-requirements.yml
 
       - name: Build html
-        run: doc/sphinx-build.sh
+        run: docs/sphinx-build.sh
 
       - name: Run ghp-import
-        run: ghp-import -n -p -f doc/build
+        run: ghp-import -n -p -f docs/build

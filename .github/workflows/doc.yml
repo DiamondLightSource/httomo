@@ -32,7 +32,7 @@ jobs:
             pip install -r doc/source/doc-requirements.txt
 
         - name: Build html
-          run: doc/sphinx-build.sh
+          run: docs/sphinx-build.sh
 
         - name: Run ghp-import
-          run: ghp-import -n -p -f doc/build
+          run: ghp-import -n -p -f docs/build
