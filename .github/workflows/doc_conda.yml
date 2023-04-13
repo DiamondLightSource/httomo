@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup
-        uses: yaml_generator.yml@documentation
+        uses: jessicavers/HTTomo/.github/workflows/yaml_generator.yml@documentation
 
       - name: Make conda environment
         uses: conda-incubator/setup-miniconda@v2
