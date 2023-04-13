@@ -115,6 +115,34 @@ class ResliceInfo:
     reslice_dir: Optional[Path] = None
 
 
+@dataclass
+class PlatformSection:
+    """
+    Data class to represent a section of the pipeline that runs on the same platform.
+    That is, all methods contained in this section of the pipeline run either all on CPU
+    or all on GPU.
+
+    This is used to iterate through GPU memory in chunks.
+
+    Parameters
+    ==========
+
+    gpu : bool
+        Whether this section is a GPU section (True) or CPU section (False)
+    pattern : Pattern
+        To denote the slicing pattern - sinogram, projection
+    max_slices : int
+        Holds information about how many slices can be fit in one chunk without
+        exhausting memory (relevant on GPU only)
+    methods : List[MethodFunc]
+        List of methods in this section
+    """
+    gpu: bool
+    pattern: Pattern
+    max_slices: int
+    methods: List[MethodFunc]
+
+
 def run_tasks(
     in_file: Path,
     yaml_config: Path,
@@ -179,6 +207,7 @@ def run_tasks(
 
     method_funcs = _check_if_should_reslice(method_funcs)
     reslice_info.reslice_bool_list = [m.reslice_ahead for m in method_funcs]
+    platform_sections = determine_platform_sections(method_funcs)
 
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
@@ -300,7 +329,7 @@ def run_tasks(
     reslice_summary_colour = Colour.BLUE if reslice_info.count <= 1 else Colour.RED
     log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
 
-    elapsed_time = 0.
+    elapsed_time = 0.0
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
         end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
@@ -356,7 +385,7 @@ def _initialise_datasets_and_stats(
             )
 
         # Dict to hold the stats for each dataset associated with the method
-        method_stats: Dict[str, List]= {}
+        method_stats: Dict[str, List] = {}
 
         # Check if there are multiple input datasets to account for
         if type(method_conf[dataset_param]) is list:
@@ -444,15 +473,16 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         )
         wrapper_func = getattr(wrapper_init_module.module, method_name)
         wrapper_method = wrapper_init_module.wrapper_method
+        is_tomopy = split_module_name[0] == "tomopy"
         method_funcs.append(
             MethodFunc(
                 module_name=module_name,
                 method_func=wrapper_func,
                 wrapper_func=wrapper_method,
                 parameters=method_conf,
-                cpu=True, # get cpu/gpu meta data info from httomolib methods
-                gpu=False,
-                calc_max_slices=None, # call calc_max_slices function in wrappers
+                cpu=True if is_tomopy else wrapper_init_module.meta.cpu,
+                gpu=False if is_tomopy else wrapper_init_module.meta.gpu,
+                calc_max_slices=None if is_tomopy else wrapper_init_module.calc_max_slices,
                 reslice_ahead=False,
                 pattern=Pattern.all,
                 is_loader=False,
@@ -550,7 +580,7 @@ def run_method(
 
     # extra params unrelated to wrapped packages but related to httomo added
     dict_httomo_params = _check_signature_for_httomo_params(
-        func_wrapper, current_func, misc_params
+        func_wrapper, current_func.method_function, misc_params
     )
 
     # Get the information describing if the method is being run only

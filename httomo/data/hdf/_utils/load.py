@@ -1,5 +1,5 @@
 import math
-from typing import Dict, List, Tuple
+from typing import Optional, Tuple, List, Dict
 
 import h5py as h5
 import numpy as np
@@ -378,9 +378,9 @@ def get_angles(file: str, path: str, comm: MPI.Comm = MPI.COMM_WORLD) -> ndarray
 def get_darks_flats_together(
     file: str,
     data_path: str = "/entry1/tomo_entry/data/data",
-    darks_path: str = None,
-    flats_path: str = None,
-    image_key_path: str = "/entry1/instrument/image_key/image_key",
+    darks_path: Optional[str] = None,
+    flats_path: Optional[str] = None,
+    image_key_path: Optional[str] = "/entry1/instrument/image_key/image_key",
     dim: int = 1,
     pad: int = 0,
     preview: str = ":,:,:",
