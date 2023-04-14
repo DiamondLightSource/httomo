@@ -1155,19 +1155,16 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
     return dataclasses.replace(method_function, pattern=pattern)
 
 
-def _determine_gpu_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
+def _determine_platform_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
     ret: List[PlatformSection] = []
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
     methods: List[MethodFunc] = []
     for method in method_funcs:
-        if (
-            method.gpu == current_gpu
-            and (
-                method.pattern == current_pattern
-                or method.pattern == Pattern.all
-                or current_pattern == Pattern.all
-            )
+        if method.gpu == current_gpu and (
+            method.pattern == current_pattern
+            or method.pattern == Pattern.all
+            or current_pattern == Pattern.all
         ):
             methods.append(method)
             if current_pattern == Pattern.all and method.pattern != Pattern.all:
@@ -1192,3 +1189,51 @@ def _determine_gpu_sections(method_funcs: List[MethodFunc]) -> List[PlatformSect
     )
 
     return ret
+
+
+def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
+    try:
+        import cupy as cp
+
+        dev = cp.cuda.Device()
+        # first, let's make some space
+        pool = cp.get_default_memory_pool()
+        cp.free_all_blocks()
+        cache = cp.fft.config.get_plan_cache()
+        cache.clear()
+        available_memory = dev.mem_info[0] + pool.free_bytes()
+        return int(available_memory * (1 - safety_margin_percent / 100.0))
+    except:
+        return int(100e9)  # arbitrarily high number - only used if GPU isn't available
+
+
+def _calc_max_slices(section: PlatformSection, 
+                     fulldata_shape: Optional[Tuple[int, int, int]],
+                     input_data_type: Optional[np.dtype]):
+    # section before loader - we don't know these shapes yet
+    # TODO: make sure loader goes into its own section
+    if fulldata_shape is None or input_data_type is None:
+        return
+    if section.pattern == Pattern.sinogram:
+        slice_dim = 1
+        other_dims = (fulldata_shape[0], fulldata_shape[2])
+    elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
+        slice_dim = 0
+        other_dims = (fulldata_shape[1], fulldata_shape[2])
+    else: 
+        # this should not happen if data type is indeed the enum
+        raise ValueError('Invalid pattern {}'.format(section.pattern))
+    max_slices = fulldata_shape[slice_dim]
+    data_type = input_data_type
+    if section.gpu:
+        available_memory = _get_available_gpu_memory(10.0)
+        for m in section.methods:
+            if m.calc_max_slices is not None:
+                slices, data_type = m.calc_max_slices(slice_dim, other_dims, data_type, available_memory)
+                max_slices = min(max_slices, slices)
+    else:
+        # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
+        pass
+    
+    section.max_slices = max_slices
+    return data_type
