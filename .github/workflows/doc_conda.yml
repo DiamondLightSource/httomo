@@ -28,13 +28,13 @@ jobs:
       - name: Make conda environment
         uses: conda-incubator/setup-miniconda@v2
         with:
-          environment-file: docs/source/doc-conda-requirements.yml
+          environment-file: ./docs/source/doc-conda-requirements.yml
 
       - name: Generate yml
-        run: python templates/tomopy/yaml_generator_tomopy.py
+        run: python ./templates/tomopy/yaml_generator_tomopy.py
 
       - name: Build html
-        run: docs/sphinx-build.sh
+        run: ./docs/sphinx-build.sh
 
       - name: Run ghp-import
-        run: ghp-import -n -p -f docs/build
+        run: ghp-import -n -p -f ./docs/build

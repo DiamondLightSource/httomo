@@ -27,4 +27,4 @@ jobs:
           with:
             auto-update-conda: false
             activate-environment: httomo
-            environment-file: conda/explicit/latest.txt
+            environment-file: ./conda/explicit/latest.txt
