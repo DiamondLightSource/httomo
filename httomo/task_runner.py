@@ -232,7 +232,7 @@ def run_tasks(
     idx = 0
     for section in platform_sections:
         # determine the max_slices for the section if we're on GPU and have loaded already
-        data_dtype = _calc_max_slices(section, data_shape, data_dtype)
+        _update_max_slices(section, data_shape, data_dtype)
         # TODO: now iterate through the data shape in section.max_slices chunks    
         for method_func in section.methods:
             package = method_func.module_name.split(".")[0]
@@ -1332,23 +1332,24 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
         return int(100e9)  # arbitrarily high number - only used if GPU isn't available
 
 
-def _calc_max_slices(section: PlatformSection, 
-                     fulldata_shape: Optional[Tuple[int, int, int]],
-                     input_data_type: Optional[np.dtype]):
+def _update_max_slices(section: PlatformSection, 
+                       process_data_shape: Optional[Tuple[int, int, int]],
+                       input_data_type: Optional[np.dtype]):
     # section before loader - we don't know these shapes yet
     # TODO: make sure loader goes into its own section
-    if fulldata_shape is None or input_data_type is None:
+    if process_data_shape is None or input_data_type is None:
         return
     if section.pattern == Pattern.sinogram:
         slice_dim = 1
-        other_dims = (fulldata_shape[0], fulldata_shape[2])
+        other_dims = (process_data_shape[0], process_data_shape[2])
     elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
+        # TODO: what if all methods in a section are pattern.all
         slice_dim = 0
-        other_dims = (fulldata_shape[1], fulldata_shape[2])
+        other_dims = (process_data_shape[1], process_data_shape[2])
     else: 
         # this should not happen if data type is indeed the enum
         raise ValueError('Invalid pattern {}'.format(section.pattern))
-    max_slices = fulldata_shape[slice_dim]
+    max_slices = process_data_shape[slice_dim]
     data_type = input_data_type
     if section.gpu:
         available_memory = _get_available_gpu_memory(10.0)
@@ -1361,4 +1362,5 @@ def _calc_max_slices(section: PlatformSection,
         pass
     
     section.max_slices = max_slices
+    # TODO: don't return this - use the actual data's data type in the next section
     return data_type

@@ -2,7 +2,7 @@ from unittest import mock
 import pytest
 import numpy as np
 
-from httomo.task_runner import MethodFunc, PlatformSection, _calc_max_slices, _determine_platform_sections
+from httomo.task_runner import MethodFunc, PlatformSection, _update_max_slices, _determine_platform_sections
 from httomo.utils import Pattern
 
 
@@ -125,7 +125,7 @@ def test_platform_section_max_slices():
         ]
     )
     with mock.patch('httomo.task_runner._get_available_gpu_memory', return_value=100000):
-        dtype = _calc_max_slices(section, (1000, 24, 42), np.float32())
+        dtype = _update_max_slices(section, (1000, 24, 42), np.uint8())
         
     assert section.max_slices == 20
     assert dtype == np.float32()
