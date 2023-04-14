@@ -57,6 +57,10 @@ class MethodFunc:
     wrapper_function: Optional[Callable]
         The wrapper function to handle the execution. It may be None,
         for example for loaders.
+    calc_max_slices: Optional[Callable]
+        A callable with the signature (slice_dim: int, other_dims: int, dtype: np.dtype, available_memory: int) -> int
+        which determines the maximum number of slices it can fit in the given memory.
+        If it is not present (None), the method is assumed to fit any amount of slices.
     parameters : Dict[str, Any]
         The method parameters that are specified in the pipeline yaml file.
         They are used as kwargs when the method is called.
@@ -73,6 +77,7 @@ class MethodFunc:
     module_name: str
     method_function: Callable
     wrapper_function: Optional[Callable] = None
+    calc_max_slices: Optional[Callable] = None
     parameters: Dict[str, Any] = field(default_factory=dict)
     is_loader: bool = False
     pattern: Pattern = Pattern.projection
@@ -199,8 +204,8 @@ def run_tasks(
         method_funcs[i] = _assign_pattern_to_method(method_func)
 
     method_funcs = _check_if_should_reslice(method_funcs)
-    gpu_sections = _determine_gpu_sections(method_funcs)
-
+    platform_sections = _determine_platform_sections(method_funcs)
+    
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
     # sweeps
@@ -218,73 +223,87 @@ def run_tasks(
     if comm.rank == 0:
         start_time = MPI.Wtime()
 
-    # Run the methods
-    for idx, method_func in enumerate(method_funcs):
-        package = method_func.module_name.split(".")[0]
-        method_name = method_func.method_function.__name__
-        task_no_str = f"Running task {idx+1}"
-        task_end_str = task_no_str.replace("Running", "Finished")
-        pattern_str = f"(pattern={method_func.pattern.name})"
-        print_once(
-            f"{task_no_str} {pattern_str}: {method_name}...",
-            comm,
-            colour=Colour.LIGHT_BLUE,
-        )
-        start = time.perf_counter_ns()
-        if method_func.is_loader:
-            method_func.parameters.update(dict_loader_extra_params)
+    # these will be set by the loader, which is first in the pipeline
+    # we initialise here so that we can detect if data has not been loaded yet
+    data_shape = None
+    data_dtype = None
 
-            # Check if a value for the `preview` parameter of the loader has
-            # been provided
-            if "preview" not in method_func.parameters.keys():
-                method_func.parameters["preview"] = [None]
-
-            loader_data = _run_loader(
-                method_func.method_function, method_func.parameters
-            )
-
-            # Update `dict_datasets_pipeline` dict with the data that has been
-            # loaded by the loader
-            dict_datasets_pipeline[method_func.parameters["name"]] = loader_data.data
-            dict_datasets_pipeline["flats"] = loader_data.flats
-            dict_datasets_pipeline["darks"] = loader_data.darks
-
-            # Extra params relevant to httomo that a wrapper function might need
-            possible_extra_params = [
-                (["darks"], loader_data.darks),
-                (["flats"], loader_data.flats),
-                (["angles", "angles_radians"], loader_data.angles),
-                (["comm"], comm),
-                (["out_dir"], run_out_dir),
-                (["reslice_ahead"], False),
-            ]
-        else:
-            # check if the module needs the ncore parameter and add it
-            if "ncore" in signature(method_func.method_function).parameters:
-                method_func.parameters.update({"ncore": ncore})
-
-            reslice_info, glob_stats[idx] = _run_method(
-                idx,
-                save_all,
-                possible_extra_params,
-                method_func,
-                method_funcs[idx - 1],
-                method_funcs[idx + 1] if idx < len(method_funcs) - 1 else None,
-                dict_datasets_pipeline,
-                str(run_out_dir),
-                glob_stats[idx],
+    # Run the methods by section
+    idx = 0
+    for section in platform_sections:
+        # determine the max_slices for the section if we're on GPU and have loaded already
+        data_dtype = _calc_max_slices(section, data_shape, data_dtype)
+        # TODO: now iterate through the data shape in section.max_slices chunks    
+        for method_func in section.methods:
+            package = method_func.module_name.split(".")[0]
+            method_name = method_func.method_function.__name__
+            task_no_str = f"Running task {idx+1}"
+            task_end_str = task_no_str.replace("Running", "Finished")
+            pattern_str = f"(pattern={method_func.pattern.name})"
+            print_once(
+                f"{task_no_str} {pattern_str}: {method_name}...",
                 comm,
-                reslice_info,
+                colour=Colour.LIGHT_BLUE,
             )
+            start = time.perf_counter_ns()
+            if method_func.is_loader:
+                method_func.parameters.update(dict_loader_extra_params)
 
-        stop = time.perf_counter_ns()
-        output_str_list = [
-            f"{task_end_str} {pattern_str}: {method_name} (",
-            package,
-            f") Took {float(stop-start)*1e-6:.2f}ms",
-        ]
-        output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
-        print_once(output_str_list, comm=comm, colour=output_colour_list)
+                # Check if a value for the `preview` parameter of the loader has
+                # been provided
+                if "preview" not in method_func.parameters.keys():
+                    method_func.parameters["preview"] = [None]
+
+                loader_data = _run_loader(
+                    method_func.method_function, method_func.parameters
+                )
+                
+                data_shape = loader_data.data.shape
+                data_dtype = loader_data.data.dtype
+
+                # Update `dict_datasets_pipeline` dict with the data that has been
+                # loaded by the loader
+                dict_datasets_pipeline[method_func.parameters["name"]] = loader_data.data
+                dict_datasets_pipeline["flats"] = loader_data.flats
+                dict_datasets_pipeline["darks"] = loader_data.darks
+
+                # Extra params relevant to httomo that a wrapper function might need
+                possible_extra_params = [
+                    (["darks"], loader_data.darks),
+                    (["flats"], loader_data.flats),
+                    (["angles", "angles_radians"], loader_data.angles),
+                    (["comm"], comm),
+                    (["out_dir"], run_out_dir),
+                    (["reslice_ahead"], False),
+                ]
+            else:
+                # check if the module needs the ncore parameter and add it
+                if "ncore" in signature(method_func.method_function).parameters:
+                    method_func.parameters.update({"ncore": ncore})
+
+                reslice_info, glob_stats[idx] = _run_method(
+                    idx,
+                    save_all,
+                    possible_extra_params,
+                    method_func,
+                    method_funcs[idx - 1],
+                    method_funcs[idx + 1] if idx < len(method_funcs) - 1 else None,
+                    dict_datasets_pipeline,
+                    str(run_out_dir),
+                    glob_stats[idx],
+                    comm,
+                    reslice_info,
+                )
+
+            stop = time.perf_counter_ns()
+            output_str_list = [
+                f"{task_end_str} {pattern_str}: {method_name} (",
+                package,
+                f") Took {float(stop-start)*1e-6:.2f}ms",
+            ]
+            output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
+            print_once(output_str_list, comm=comm, colour=output_colour_list)
+            idx += 1
 
     # Print the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_info.count}"
@@ -460,11 +479,11 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
             )
         elif split_module_name[0] == "tomopy":
             # initialise the TomoPy wrapper class
-            wrapper_init_module = TomoPyWrapper(
+            tomopy_wrapper = TomoPyWrapper(
                 split_module_name[1], split_module_name[2], method_name, comm
             )
-            wrapper_func: Callable = getattr(wrapper_init_module.module, method_name)
-            wrapper_method = wrapper_init_module.wrapper_method
+            wrapper_func: Callable = getattr(tomopy_wrapper.module, method_name)
+            wrapper_method = tomopy_wrapper.wrapper_method
             method_funcs.append(
                 MethodFunc(
                     module_name=module_name,
@@ -480,11 +499,12 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
             )
         elif split_module_name[0] == "httomolib":
             # initialise the httomolib wrapper class
-            wrapper_init_module = HttomolibWrapper(
+            httomolib_wrapper = HttomolibWrapper(
                 split_module_name[1], split_module_name[2], method_name, comm
             )
-            wrapper_func: Callable = getattr(wrapper_init_module.module, method_name)
-            wrapper_method = wrapper_init_module.wrapper_method
+            httomolib_wrapper.dict_params = method_conf
+            wrapper_func = getattr(httomolib_wrapper.module, method_name)
+            wrapper_method = httomolib_wrapper.wrapper_method
             method_funcs.append(
                 MethodFunc(
                     module_name=module_name,
@@ -492,8 +512,9 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                     wrapper_function=wrapper_method,
                     parameters=method_conf,
                     is_loader=False,
-                    cpu=wrapper_func.meta.cpu,
-                    gpu=wrapper_func.meta.gpu,
+                    cpu=httomolib_wrapper.meta.cpu,
+                    gpu=httomolib_wrapper.meta.gpu,
+                    calc_max_slices=httomolib_wrapper.calc_max_slices,
                     reslice_ahead=False,
                     pattern=Pattern.all,
                 )
@@ -1259,19 +1280,16 @@ def _assign_pattern_to_method(method_func: MethodFunc) -> MethodFunc:
     return dataclasses.replace(method_func, pattern=pattern)
 
 
-def _determine_gpu_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
+def _determine_platform_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
     ret: List[PlatformSection] = []
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
     methods: List[MethodFunc] = []
     for method in method_funcs:
-        if (
-            method.gpu == current_gpu
-            and (
-                method.pattern == current_pattern
-                or method.pattern == Pattern.all
-                or current_pattern == Pattern.all
-            )
+        if method.gpu == current_gpu and (
+            method.pattern == current_pattern
+            or method.pattern == Pattern.all
+            or current_pattern == Pattern.all
         ):
             methods.append(method)
             if current_pattern == Pattern.all and method.pattern != Pattern.all:
@@ -1296,3 +1314,51 @@ def _determine_gpu_sections(method_funcs: List[MethodFunc]) -> List[PlatformSect
     )
 
     return ret
+
+
+def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
+    try:
+        import cupy as cp
+
+        dev = cp.cuda.Device()
+        # first, let's make some space
+        pool = cp.get_default_memory_pool()
+        cp.free_all_blocks()
+        cache = cp.fft.config.get_plan_cache()
+        cache.clear()
+        available_memory = dev.mem_info[0] + pool.free_bytes()
+        return int(available_memory * (1 - safety_margin_percent / 100.0))
+    except:
+        return int(100e9)  # arbitrarily high number - only used if GPU isn't available
+
+
+def _calc_max_slices(section: PlatformSection, 
+                     fulldata_shape: Optional[Tuple[int, int, int]],
+                     input_data_type: Optional[np.dtype]):
+    # section before loader - we don't know these shapes yet
+    # TODO: make sure loader goes into its own section
+    if fulldata_shape is None or input_data_type is None:
+        return
+    if section.pattern == Pattern.sinogram:
+        slice_dim = 1
+        other_dims = (fulldata_shape[0], fulldata_shape[2])
+    elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
+        slice_dim = 0
+        other_dims = (fulldata_shape[1], fulldata_shape[2])
+    else: 
+        # this should not happen if data type is indeed the enum
+        raise ValueError('Invalid pattern {}'.format(section.pattern))
+    max_slices = fulldata_shape[slice_dim]
+    data_type = input_data_type
+    if section.gpu:
+        available_memory = _get_available_gpu_memory(10.0)
+        for m in section.methods:
+            if m.calc_max_slices is not None:
+                slices, data_type = m.calc_max_slices(slice_dim, other_dims, data_type, available_memory)
+                max_slices = min(max_slices, slices)
+    else:
+        # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
+        pass
+    
+    section.max_slices = max_slices
+    return data_type

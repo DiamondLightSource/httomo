@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Union
+from typing import Any, Callable, Dict, Tuple, Union
 import numpy as np
 import inspect
 from inspect import Parameter, signature
@@ -40,6 +40,8 @@ class BaseWrapper:
     ):
         self.comm = comm
         self.cupyrun = False
+        self.module: Any = None
+        self.dict_params: Dict[str, Any] = {}
         if gpu_enabled:
             self.num_GPUs = xp.cuda.runtime.getDeviceCount()
             self.gpu_id = mpiutil.local_rank % self.num_GPUs
@@ -56,12 +58,12 @@ class BaseWrapper:
         _gpumem_cleanup()
         if self.cupyrun:
             if len(args) == 1:
-                return tuple(xp.asarray(d) for d in args)[0]
+                return xp.asarray(args[0])
             else:
                 return tuple(xp.asarray(d) for d in args)
         else:
             if len(args) == 1:
-                return tuple(xp.asnumpy(d) for d in args)[0]
+                return xp.asnumpy(args[0])
             else:
                 return tuple(xp.asnumpy(d) for d in args)
 
@@ -178,7 +180,7 @@ class BaseWrapper:
         method_name: str,
         dict_params_method: Dict,
         data: xp.ndarray,
-    ) -> tuple:
+    ) -> tuple | Any:
         """The center of rotation wrapper.
 
         Args:
@@ -240,7 +242,7 @@ class TomoPyWrapper(BaseWrapper):
         super().__init__(module_name, function_name, method_name, comm)
 
         # if not changed bellow the generic wrapper will be executed
-        self.wrapper_method = super()._execute_generic
+        self.wrapper_method: Callable = super()._execute_generic
 
         if module_name in ["misc", "prep", "recon"]:
             from importlib import import_module
@@ -270,7 +272,7 @@ class HttomolibWrapper(BaseWrapper):
         super().__init__(module_name, function_name, method_name, comm)
 
         # if not changed bellow the generic wrapper will be executed
-        self.wrapper_method = super()._execute_generic
+        self.wrapper_method: Callable = super()._execute_generic
 
         if module_name in ["misc", "prep", "recon"]:
             from importlib import import_module
@@ -295,19 +297,19 @@ class HttomolibWrapper(BaseWrapper):
         func = getattr(self.module, method_name)
         self.meta = func.meta
         self.cupyrun = self.meta.gpu
+        self.dict_params: Dict[str, Any] = {}
 
     def calc_max_slices(
         self,
-        dict_params: Dict,
         slice_dim: int,
         other_dims: Tuple[int, int],
         dtype: np.dtype,
         available_memory: int,
-    ) -> int:
+    ) -> Tuple[int, np.dtype]:
         # if the function does not support GPU, we return a very large value (as we don't
         # care about limiting slices for CPU memory for now)
         if not self.cupyrun:
-            return 1000000000
+            return 1000000000, dtype
         
         # first we need to find the default argument value from the method meta info,
         # before overriding those that are given (from YAML), for the kwargs arguments
@@ -317,7 +319,7 @@ class HttomolibWrapper(BaseWrapper):
         for name, par in sig.parameters.items():
             if par.default != Parameter.empty:
                 default_args[name] = par.default
-        kwargs = {**default_args, **dict_params}
+        kwargs = {**default_args, **self.dict_params}
         return self.meta.calc_max_slices(
             slice_dim, other_dims, dtype, available_memory, **kwargs
         )
