@@ -197,7 +197,7 @@ def run_tasks(
 
     method_funcs = _check_if_should_reslice(method_funcs)
     platform_sections = _determine_platform_sections(method_funcs)
-    
+
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
     # sweeps
@@ -232,8 +232,8 @@ def run_tasks(
     idx = 0
     for section in platform_sections:
         # determine the max_slices for the section if we're on GPU and have loaded already
-        data_dtype = _calc_max_slices(section, data_shape, data_dtype)
-        # TODO: now iterate through the data shape in section.max_slices chunks    
+        _update_max_slices(section, data_shape, data_dtype)
+        # TODO: now iterate through the data shape in section.max_slices chunks
         for method_func in section.methods:
             package = method_func.module_name.split(".")[0]
             method_name = method_func.method_function.__name__
@@ -257,13 +257,15 @@ def run_tasks(
                 loader_data = _run_loader(
                     method_func.method_function, method_func.parameters
                 )
-                
+
                 data_shape = loader_data.data.shape
                 data_dtype = loader_data.data.dtype
 
                 # Update `dict_datasets_pipeline` dict with the data that has been
                 # loaded by the loader
-                dict_datasets_pipeline[method_func.parameters["name"]] = loader_data.data
+                dict_datasets_pipeline[
+                    method_func.parameters["name"]
+                ] = loader_data.data
                 dict_datasets_pipeline["flats"] = loader_data.flats
                 dict_datasets_pipeline["darks"] = loader_data.darks
 
@@ -273,7 +275,7 @@ def run_tasks(
                     (["flats"], loader_data.flats),
                     (["angles", "angles_radians"], loader_data.angles),
                     (["comm"], comm),
-                    (["out_dir"], run_out_dir),
+                    (["out_dir"], httomo.globals.run_out_dir),
                     (["reslice_ahead"], False),
                 ]
             else:
@@ -289,7 +291,7 @@ def run_tasks(
                     method_funcs[idx - 1],
                     method_funcs[idx + 1] if idx < len(method_funcs) - 1 else None,
                     dict_datasets_pipeline,
-                    str(run_out_dir),
+                    str(httomo.globals.run_out_dir),
                     glob_stats[idx],
                     comm,
                     reslice_info,
@@ -297,7 +299,7 @@ def run_tasks(
 
             stop = time.perf_counter_ns()
             output_str_list = [
-                f"{task_end_str} {pattern_str}: {method_name} (",
+                f"    {task_end_str} {pattern_str}: {method_name} (",
                 package,
                 f") Took {float(stop-start)*1e-6:.2f}ms",
             ]
@@ -1283,7 +1285,9 @@ def _assign_pattern_to_method(method_func: MethodFunc) -> MethodFunc:
     return dataclasses.replace(method_func, pattern=pattern)
 
 
-def _determine_platform_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
+def _determine_platform_sections(
+    method_funcs: List[MethodFunc],
+) -> List[PlatformSection]:
     ret: List[PlatformSection] = []
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
@@ -1335,33 +1339,39 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
         return int(100e9)  # arbitrarily high number - only used if GPU isn't available
 
 
-def _calc_max_slices(section: PlatformSection, 
-                     fulldata_shape: Optional[Tuple[int, int, int]],
-                     input_data_type: Optional[np.dtype]):
+def _update_max_slices(
+    section: PlatformSection,
+    process_data_shape: Optional[Tuple[int, int, int]],
+    input_data_type: Optional[np.dtype],
+):
     # section before loader - we don't know these shapes yet
     # TODO: make sure loader goes into its own section
-    if fulldata_shape is None or input_data_type is None:
+    if process_data_shape is None or input_data_type is None:
         return
     if section.pattern == Pattern.sinogram:
         slice_dim = 1
-        other_dims = (fulldata_shape[0], fulldata_shape[2])
+        other_dims = (process_data_shape[0], process_data_shape[2])
     elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
+        # TODO: what if all methods in a section are pattern.all
         slice_dim = 0
-        other_dims = (fulldata_shape[1], fulldata_shape[2])
-    else: 
+        other_dims = (process_data_shape[1], process_data_shape[2])
+    else:
         # this should not happen if data type is indeed the enum
-        raise ValueError('Invalid pattern {}'.format(section.pattern))
-    max_slices = fulldata_shape[slice_dim]
+        raise ValueError("Invalid pattern {}".format(section.pattern))
+    max_slices = process_data_shape[slice_dim]
     data_type = input_data_type
     if section.gpu:
         available_memory = _get_available_gpu_memory(10.0)
         for m in section.methods:
             if m.calc_max_slices is not None:
-                slices, data_type = m.calc_max_slices(slice_dim, other_dims, data_type, available_memory)
+                slices, data_type = m.calc_max_slices(
+                    slice_dim, other_dims, data_type, available_memory
+                )
                 max_slices = min(max_slices, slices)
     else:
         # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
         pass
-    
+
     section.max_slices = max_slices
+    # TODO: don't return this - use the actual data's data type in the next section
     return data_type

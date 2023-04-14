@@ -309,7 +309,7 @@ class HttomolibWrapper(BaseWrapper):
         # care about limiting slices for CPU memory for now)
         if not self.cupyrun:
             return 1000000000, dtype
-        
+
         # first we need to find the default argument value from the method meta info,
         # before overriding those that are given (from YAML), for the kwargs arguments
         # to calc_max_slices

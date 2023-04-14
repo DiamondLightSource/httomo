@@ -10,6 +10,7 @@ from numpy import asarray, deg2rad, ndarray, arange, linspace
 from httomo.data.hdf._utils import load
 from httomo.utils import _parse_preview, log_once, log_rank, Colour
 
+
 @dataclass
 class LoaderData:
     data: ndarray
@@ -30,7 +31,9 @@ def standard_tomo(
     pad: int,
     comm: Comm,
     image_key_path: Optional[str] = None,
-    rotation_angles: Dict[str, Any] = {"data_path": "/entry1/tomo_entry/data/rotation_angle"},
+    rotation_angles: Dict[str, Any] = {
+        "data_path": "/entry1/tomo_entry/data/rotation_angle"
+    },
     darks: Optional[Dict] = None,
     flats: Optional[Dict] = None,
 ) -> LoaderData:
@@ -166,10 +169,12 @@ def standard_tomo(
         comm,
     )
 
-    return LoaderData(data=data, 
-                      flats=asarray(flats_data), 
-                      darks=asarray(darks_data), 
-                      angles=angles, 
-                      angles_total=angles_total, 
-                      detector_y=detector_y, 
-                      detector_x=detector_x)
+    return LoaderData(
+        data=data,
+        flats=asarray(flats_data),
+        darks=asarray(darks_data),
+        angles=angles,
+        angles_total=angles_total,
+        detector_y=detector_y,
+        detector_x=detector_x,
+    )
