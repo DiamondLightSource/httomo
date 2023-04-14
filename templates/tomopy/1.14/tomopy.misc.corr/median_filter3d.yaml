@@ -1,0 +1,5 @@
+- tomopy.misc.corr:
+    median_filter3d:
+      data_in: tomo
+      data_out: tomo
+      size: 3

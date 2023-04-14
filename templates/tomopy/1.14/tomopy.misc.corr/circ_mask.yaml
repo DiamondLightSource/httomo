@@ -1,0 +1,7 @@
+- tomopy.misc.corr:
+    circ_mask:
+      data_in: tomo
+      data_out: tomo
+      axis: REQUIRED
+      ratio: 1
+      val: 0.0

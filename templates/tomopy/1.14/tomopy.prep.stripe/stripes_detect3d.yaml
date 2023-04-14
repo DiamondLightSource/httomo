@@ -1,0 +1,6 @@
+- tomopy.prep.stripe:
+    stripes_detect3d:
+      data_in: tomo
+      data_out: tomo
+      size: 10
+      radius: 3
