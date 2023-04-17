@@ -23,13 +23,14 @@ except ImportError:
 
     print("CuPy is not installed")
 
+
 def _gpumem_cleanup():
-    """cleans up GPU memory and also the FFT plan cache
-    """
+    """cleans up GPU memory and also the FFT plan cache"""
     xp.get_default_memory_pool().free_all_blocks()
     cache = xp.fft.config.get_plan_cache()
     cache.clear()
-    
+
+
 class BaseWrapper:
     """A parent class for all wrappers in httomo that use external modules."""
 
@@ -39,7 +40,7 @@ class BaseWrapper:
         self.comm = comm
         if gpu_enabled:
             self.num_GPUs = xp.cuda.runtime.getDeviceCount()
-            self.gpu_id = mpiutil.local_rank % self.num_GPUs            
+            self.gpu_id = mpiutil.local_rank % self.num_GPUs
 
     def _transfer_data(self, *args) -> Union[tuple, xp.ndarray, np.ndarray]:
         """Transfer the data between the host and device for the GPU-enabled method
@@ -317,7 +318,7 @@ class HttomolibWrapper(BaseWrapper):
 
         Returns:
             None: returns None.
-        """        
+        """
         if gpu_enabled:
             _gpumem_cleanup()
             data = getattr(self.module, method_name)(

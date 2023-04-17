@@ -103,7 +103,7 @@ def _parse_preview(
                 preview_str += f"{data_indices[0]}:{data_indices[-1]+1}"
             else:
                 preview_str += ":"
-        elif slice_info == 'mid':
+        elif slice_info == "mid":
             #  user can simply write 'mid' to get 3 slices around the middle section of a choosen dimension
             mid_slice = data_shape[idx] // 2
             if mid_slice > 1:

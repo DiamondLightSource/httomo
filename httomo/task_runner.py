@@ -221,7 +221,7 @@ def run_tasks(
                 reslice_counter,
                 has_reslice_warn_printed,
                 reslice_bool_list,
-                reslice_dir
+                reslice_dir,
             )
 
         stop = time.perf_counter_ns()
@@ -451,7 +451,7 @@ def _run_method(
     reslice_counter: int,
     has_reslice_warn_printed: bool,
     reslice_bool_list: List[bool],
-    reslice_dir: Optional[Path] = None
+    reslice_dir: Optional[Path] = None,
 ) -> Tuple[bool, bool]:
     """Run a method function in the processing pipeline.
 
@@ -507,8 +507,11 @@ def _run_method(
         enable the information to persist across method executions.
     """
     save_result = _check_save_result(
-        task_idx, no_of_tasks, module_path, save_all,
-        dict_params_method.pop("save_result", None)
+        task_idx,
+        no_of_tasks,
+        module_path,
+        save_all,
+        dict_params_method.pop("save_result", None),
     )
 
     # Check if the input dataset should be resliced before the task runs
@@ -688,11 +691,7 @@ def _run_method(
                     )
                 else:
                     resliced_data, _ = reslice_filebased(
-                        arr,
-                        current_slice_dim,
-                        next_slice_dim,
-                        comm,
-                        reslice_dir
+                        arr, current_slice_dim, next_slice_dim, comm, reslice_dir
                     )
                 # Store the resliced input
                 if type(dict_datasets_pipeline[in_dataset]) is list:
@@ -712,23 +711,26 @@ def _run_method(
             # Run the method
             if method_name in SAVERS_NO_DATA_OUT_PARAM:
                 _run_method_wrapper(
-                    func_wrapper, method_name, dict_params_method,
-                    dict_httomo_params
+                    func_wrapper, method_name, dict_params_method, dict_httomo_params
                 )
             else:
                 if current_param_sweep:
                     for val in param_sweep_vals:
                         dict_params_method[param_sweep_name] = val
                         res = _run_method_wrapper(
-                            func_wrapper, method_name, dict_params_method,
-                            dict_httomo_params
+                            func_wrapper,
+                            method_name,
+                            dict_params_method,
+                            dict_httomo_params,
                         )
                         out.append(res)
                     dict_datasets_pipeline[out_dataset] = out
                 else:
                     res = _run_method_wrapper(
-                        func_wrapper, method_name, dict_params_method,
-                        dict_httomo_params
+                        func_wrapper,
+                        method_name,
+                        dict_params_method,
+                        dict_httomo_params,
                     )
                     # Store the output(s) of the method in the appropriate
                     # dataset in the `dict_datasets_pipeline` dict
