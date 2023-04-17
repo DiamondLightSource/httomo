@@ -1,6 +1,6 @@
 import yaml
 import numpy as np
-from typing import List, Dict
+from typing import Any, List, Dict
 from pathlib import Path
 
 
@@ -49,7 +49,7 @@ def _get_loader():
     return loader
 
 
-def open_yaml_config(filepath: Path) -> List[Dict]:
+def open_yaml_config(filepath: Path) -> List[Dict[str, Dict[str, Dict[str, Any]]]]:
     """Open and read a given YAML config file into a python data structure.
 
     Parameters
@@ -59,7 +59,7 @@ def open_yaml_config(filepath: Path) -> List[Dict]:
 
     Returns
     -------
-    List[Dict]
+    List[Dict[str, Dict[str, Dict[str, Any]]]]
         A list of dicts, where each dict represents a task in the user config
         YAML file.
     """
@@ -84,7 +84,7 @@ def validate_yaml_config() -> bool:
     -------
     bool
     """
-    pass
+    return True
 
 
 def check_param_types() -> bool:
@@ -96,7 +96,7 @@ def check_param_types() -> bool:
     Returns
     -------
     """
-    pass
+    return True
 
 
 def generate_conf_from_prerun() -> None:

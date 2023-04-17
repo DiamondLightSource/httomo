@@ -1,7 +1,7 @@
-from typing import Dict, Union
+from typing import Any, Callable, Dict, Tuple, Union
 import numpy as np
 import inspect
-from inspect import signature
+from inspect import Parameter, signature
 from httomo.utils import print_once
 from httomo.data import mpiutil
 
@@ -23,13 +23,15 @@ except ImportError:
 
     print("CuPy is not installed")
 
+
 def _gpumem_cleanup():
-    """cleans up GPU memory and also the FFT plan cache
-    """
-    xp.get_default_memory_pool().free_all_blocks()
-    cache = xp.fft.config.get_plan_cache()
-    cache.clear()
-    
+    """cleans up GPU memory and also the FFT plan cache"""
+    if gpu_enabled:
+        xp.get_default_memory_pool().free_all_blocks()
+        cache = xp.fft.config.get_plan_cache()
+        cache.clear()
+
+
 class BaseWrapper:
     """A parent class for all wrappers in httomo that use external modules."""
 
@@ -37,9 +39,12 @@ class BaseWrapper:
         self, module_name: str, function_name: str, method_name: str, comm: Comm
     ):
         self.comm = comm
+        self.cupyrun = False
+        self.module: Any = None
+        self.dict_params: Dict[str, Any] = {}
         if gpu_enabled:
             self.num_GPUs = xp.cuda.runtime.getDeviceCount()
-            self.gpu_id = mpiutil.local_rank % self.num_GPUs            
+            self.gpu_id = mpiutil.local_rank % self.num_GPUs
 
     def _transfer_data(self, *args) -> Union[tuple, xp.ndarray, np.ndarray]:
         """Transfer the data between the host and device for the GPU-enabled method
@@ -53,12 +58,12 @@ class BaseWrapper:
         _gpumem_cleanup()
         if self.cupyrun:
             if len(args) == 1:
-                return tuple(xp.asarray(d) for d in args)[0]
+                return xp.asarray(args[0])
             else:
                 return tuple(xp.asarray(d) for d in args)
         else:
             if len(args) == 1:
-                return tuple(xp.asnumpy(d) for d in args)[0]
+                return xp.asnumpy(args[0])
             else:
                 return tuple(xp.asnumpy(d) for d in args)
 
@@ -175,7 +180,7 @@ class BaseWrapper:
         method_name: str,
         dict_params_method: Dict,
         data: xp.ndarray,
-    ) -> tuple:
+    ) -> tuple | Any:
         """The center of rotation wrapper.
 
         Args:
@@ -237,7 +242,7 @@ class TomoPyWrapper(BaseWrapper):
         super().__init__(module_name, function_name, method_name, comm)
 
         # if not changed bellow the generic wrapper will be executed
-        self.wrapper_method = super()._execute_generic
+        self.wrapper_method: Callable = super()._execute_generic
 
         if module_name in ["misc", "prep", "recon"]:
             from importlib import import_module
@@ -267,7 +272,7 @@ class HttomolibWrapper(BaseWrapper):
         super().__init__(module_name, function_name, method_name, comm)
 
         # if not changed bellow the generic wrapper will be executed
-        self.wrapper_method = super()._execute_generic
+        self.wrapper_method: Callable = super()._execute_generic
 
         if module_name in ["misc", "prep", "recon"]:
             from importlib import import_module
@@ -287,16 +292,37 @@ class HttomolibWrapper(BaseWrapper):
             if function_name == "rotation":
                 self.wrapper_method = super()._execute_rotation
 
-        # httomolib can include GPU/CuPy methods as as well as the CPU ones. Here
-        # we check if the method can accept CuPy arrays by looking into docstrings.
+        # httomolib exports metadata from the method decorator, which we can use to
+        # check if we support CuPy
+        func = getattr(self.module, method_name)
+        self.meta = func.meta
+        self.cupyrun = self.meta.gpu
+        self.dict_params: Dict[str, Any] = {}
 
-        # get the docstring of a method in order to check the I/O requirements
-        get_method_docs = inspect.getdoc(getattr(self.module, method_name))
-        # if the CuPy array mentioned in the docstring then we will enable
-        # the GPU run when it is possible
-        self.cupyrun = False
-        if "cp.ndarray" in get_method_docs:
-            self.cupyrun = True
+    def calc_max_slices(
+        self,
+        slice_dim: int,
+        other_dims: Tuple[int, int],
+        dtype: np.dtype,
+        available_memory: int,
+    ) -> Tuple[int, np.dtype]:
+        # if the function does not support GPU, we return a very large value (as we don't
+        # care about limiting slices for CPU memory for now)
+        if not self.cupyrun:
+            return 1000000000, dtype
+        
+        # first we need to find the default argument value from the method meta info,
+        # before overriding those that are given (from YAML), for the kwargs arguments
+        # to calc_max_slices
+        sig: inspect.Signature = self.meta.signature
+        default_args = {}
+        for name, par in sig.parameters.items():
+            if par.default != Parameter.empty:
+                default_args[name] = par.default
+        kwargs = {**default_args, **self.dict_params}
+        return self.meta.calc_max_slices(
+            slice_dim, other_dims, dtype, available_memory, **kwargs
+        )
 
     def _execute_images(
         self,
@@ -317,7 +343,7 @@ class HttomolibWrapper(BaseWrapper):
 
         Returns:
             None: returns None.
-        """        
+        """
         if gpu_enabled:
             _gpumem_cleanup()
             data = getattr(self.module, method_name)(
