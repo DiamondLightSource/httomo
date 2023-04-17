@@ -69,6 +69,7 @@ class BaseWrapper:
         dict_params_method: Dict,
         data: xp.ndarray,
         reslice_ahead: bool,
+        save_result: bool,
     ) -> xp.ndarray:
         """The generic wrapper to execute functions for external packages.
 
@@ -77,6 +78,7 @@ class BaseWrapper:
             dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
             reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
+            save_result (bool): if data is saved then the conversion to numpy required.
 
         Returns:
             xp.ndarray: A numpy or cupy array containing processed data.
@@ -89,7 +91,7 @@ class BaseWrapper:
         data = self._transfer_data(data)
 
         data = getattr(self.module, method_name)(data, **dict_params_method)
-        if reslice_ahead and gpu_enabled:
+        if reslice_ahead or save_result and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
         else:
@@ -103,6 +105,7 @@ class BaseWrapper:
         flats: xp.ndarray,
         darks: xp.ndarray,
         reslice_ahead: bool,
+        save_result: bool,
     ) -> xp.ndarray:
         """Normalisation-specific wrapper when flats and darks are required.
 
@@ -113,7 +116,8 @@ class BaseWrapper:
             flats (xp.ndarray): a numpy or cupy flats array.
             darks (xp.ndarray): a numpy or darks flats array.
             reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
-
+            save_result (bool): if data is saved then the conversion to numpy required.
+            
         Returns:
             xp.ndarray: a numpy or cupy array of the normalised data.
         """
@@ -123,7 +127,7 @@ class BaseWrapper:
         data = getattr(self.module, method_name)(
             data, flats, darks, **dict_params_method
         )
-        if reslice_ahead and gpu_enabled:
+        if reslice_ahead or save_result and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
         else:
@@ -136,6 +140,7 @@ class BaseWrapper:
         data: xp.ndarray,
         angles_radians: np.ndarray,
         reslice_ahead: bool,
+        save_result: bool,
     ) -> xp.ndarray:
         """The reconstruction wrapper.
 
@@ -145,6 +150,7 @@ class BaseWrapper:
             data (xp.ndarray): a numpy or cupy data array.
             angles_radians (np.ndarray): a numpy array of projection angles.
             reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
+            save_result (bool): if data is saved then the conversion to numpy required.            
 
         Returns:
             xp.ndarray: a numpy or cupy array of the reconstructed data.
@@ -165,7 +171,7 @@ class BaseWrapper:
         data = getattr(self.module, method_name)(
             data, angles_radians, **dict_params_method
         )
-        if reslice_ahead and gpu_enabled:
+        if reslice_ahead or save_result and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
         else:
