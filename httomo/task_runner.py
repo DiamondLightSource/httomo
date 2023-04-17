@@ -533,8 +533,8 @@ def _run_method(
         if task_idx < len(reslice_bool_list) - 1
         else "False"
     )
-    misc_params[-2] = (["save_result"], save_result)    
-    # reslice_ahead must be the last item in the list    
+    misc_params[-2] = (["save_result"], save_result)
+    # reslice_ahead must be the last item in the list
     misc_params[-1] = (["reslice_ahead"], reslice_ahead)
 
     if reslice_counter > 1 and not has_reslice_warn_printed:

@@ -117,7 +117,7 @@ class BaseWrapper:
             darks (xp.ndarray): a numpy or darks flats array.
             reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
             save_result (bool): if data is saved then the conversion to numpy required.
-            
+
         Returns:
             xp.ndarray: a numpy or cupy array of the normalised data.
         """
@@ -150,7 +150,7 @@ class BaseWrapper:
             data (xp.ndarray): a numpy or cupy data array.
             angles_radians (np.ndarray): a numpy array of projection angles.
             reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
-            save_result (bool): if data is saved then the conversion to numpy required.            
+            save_result (bool): if data is saved then the conversion to numpy required.
 
         Returns:
             xp.ndarray: a numpy or cupy array of the reconstructed data.
