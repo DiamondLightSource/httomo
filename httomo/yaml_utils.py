@@ -3,6 +3,8 @@ import numpy as np
 from typing import List, Dict
 from pathlib import Path
 
+from httomo.utils import log_exception
+
 
 class Sweep(yaml.SafeLoader):
     """Class for representing a parameter sweep when explicitly given the values
@@ -31,6 +33,7 @@ class SweepRange(yaml.SafeLoader):
                 "Please provide `start`, `stop`, `step` values when "
                 "specifying a range to peform a parameter sweep over."
             )
+            log_exception(err_str)
             raise ValueError(err_str)
 
         # Define the range based on the start, stop, step values

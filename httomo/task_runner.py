@@ -131,6 +131,7 @@ def run_tasks(
             f"There are {no_of_sweeps} parameter sweeps in the "
             f"pipeline, but a maximum of {MAX_SWEEPS} is supported."
         )
+        log_exception(err_str)
         raise ValueError(err_str)
 
     # start MPI timer for rank 0
@@ -569,6 +570,7 @@ def _run_method(
         # schema validation of the user config YAML
         if method_name not in SAVERS_NO_DATA_OUT_PARAM:
             err_str = "Invalid in/out dataset parameters"
+            log_exception(err_str)
             raise ValueError(err_str)
         else:
             data_in = [dict_params_method.pop("data_in")]
@@ -612,6 +614,7 @@ def _run_method(
         if method_name in SAVERS_NO_DATA_OUT_PARAM:
             if current_param_sweep:
                 err_str = f"Parameters sweeps on savers is not supported"
+                log_exception(err_str)
                 raise ValueError(err_str)
             else:
                 if type(dict_datasets_pipeline[in_dataset]) is list:
@@ -649,6 +652,7 @@ def _run_method(
                 f"Parameter sweeps on methods with multiple output "
                 f"datasets is not supported"
             )
+            log_exception(err_str)
             raise ValueError(err_str)
 
         # TODO: Not yet able to run a method that produces multiple output
@@ -662,6 +666,7 @@ def _run_method(
                 f"Running a method that produces mutliple outputs on "
                 f"the result of a parameter sweep is not supported"
             )
+            log_exception(err_str)
             raise ValueError(err_str)
 
         # Create a list to store the result of the different parameter values
