@@ -24,6 +24,13 @@ except ImportError:
     print("CuPy is not installed")
 
 
+def _gpumem_cleanup():
+    """cleans up GPU memory and also the FFT plan cache"""
+    xp.get_default_memory_pool().free_all_blocks()
+    cache = xp.fft.config.get_plan_cache()
+    cache.clear()
+
+
 class BaseWrapper:
     """A parent class for all wrappers in httomo that use external modules."""
 
@@ -34,7 +41,6 @@ class BaseWrapper:
         if gpu_enabled:
             self.num_GPUs = xp.cuda.runtime.getDeviceCount()
             self.gpu_id = mpiutil.local_rank % self.num_GPUs
-            xp._default_memory_pool.free_all_blocks()
 
     def _transfer_data(self, *args) -> Union[tuple, xp.ndarray, np.ndarray]:
         """Transfer the data between the host and device for the GPU-enabled method
@@ -45,6 +51,7 @@ class BaseWrapper:
         if not gpu_enabled:
             return args
         xp.cuda.Device(self.gpu_id).use()
+        _gpumem_cleanup()
         if self.cupyrun:
             if len(args) == 1:
                 return tuple(xp.asarray(d) for d in args)[0]
@@ -62,6 +69,7 @@ class BaseWrapper:
         dict_params_method: Dict,
         data: xp.ndarray,
         reslice_ahead: bool,
+        save_result: bool,
     ) -> xp.ndarray:
         """The generic wrapper to execute functions for external packages.
 
@@ -70,6 +78,7 @@ class BaseWrapper:
             dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
             reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
+            save_result (bool): if data is saved then the conversion to numpy required.
 
         Returns:
             xp.ndarray: A numpy or cupy array containing processed data.
@@ -82,7 +91,7 @@ class BaseWrapper:
         data = self._transfer_data(data)
 
         data = getattr(self.module, method_name)(data, **dict_params_method)
-        if reslice_ahead and gpu_enabled:
+        if reslice_ahead or save_result and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
         else:
@@ -96,6 +105,7 @@ class BaseWrapper:
         flats: xp.ndarray,
         darks: xp.ndarray,
         reslice_ahead: bool,
+        save_result: bool,
     ) -> xp.ndarray:
         """Normalisation-specific wrapper when flats and darks are required.
 
@@ -106,18 +116,18 @@ class BaseWrapper:
             flats (xp.ndarray): a numpy or cupy flats array.
             darks (xp.ndarray): a numpy or darks flats array.
             reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
+            save_result (bool): if data is saved then the conversion to numpy required.
 
         Returns:
             xp.ndarray: a numpy or cupy array of the normalised data.
         """
-
         # check where data needs to be transfered host <-> device
         data, flats, darks = self._transfer_data(data, flats, darks)
 
         data = getattr(self.module, method_name)(
             data, flats, darks, **dict_params_method
         )
-        if reslice_ahead and gpu_enabled:
+        if reslice_ahead or save_result and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
         else:
@@ -130,6 +140,7 @@ class BaseWrapper:
         data: xp.ndarray,
         angles_radians: np.ndarray,
         reslice_ahead: bool,
+        save_result: bool,
     ) -> xp.ndarray:
         """The reconstruction wrapper.
 
@@ -139,6 +150,7 @@ class BaseWrapper:
             data (xp.ndarray): a numpy or cupy data array.
             angles_radians (np.ndarray): a numpy array of projection angles.
             reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
+            save_result (bool): if data is saved then the conversion to numpy required.
 
         Returns:
             xp.ndarray: a numpy or cupy array of the reconstructed data.
@@ -159,7 +171,7 @@ class BaseWrapper:
         data = getattr(self.module, method_name)(
             data, angles_radians, **dict_params_method
         )
-        if reslice_ahead and gpu_enabled:
+        if reslice_ahead or save_result and gpu_enabled:
             # reslice ahead, bring data back to numpy array
             return xp.asnumpy(data)
         else:
@@ -181,10 +193,8 @@ class BaseWrapper:
         Returns:
             tuple: The center of rotation and other parameters if it is 360 sinogram.
         """
-
         # check where data needs to be transfered host <-> device
         data = self._transfer_data(data)
-
         method_func = getattr(self.module, method_name)
         rot_center = 0
         overlap = 0
@@ -315,6 +325,7 @@ class HttomolibWrapper(BaseWrapper):
             None: returns None.
         """
         if gpu_enabled:
+            _gpumem_cleanup()
             data = getattr(self.module, method_name)(
                 xp.asnumpy(data), out_dir, comm_rank=comm.rank, **dict_params_method
             )

@@ -3,7 +3,7 @@ requires = ["setuptools>=42", "wheel", "setuptools-git-versioning"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["httomo", "wrappers"]
+packages = ["httomo"]
 
 [tool.setuptools-git-versioning]
 enabled = true

@@ -3,6 +3,7 @@ channels:
   - astra-toolbox
   - conda-forge
   - savu-dep
+  - dkazanc
   - anaconda
 dependencies:
   - astra-toolbox::astra-toolbox
@@ -18,4 +19,4 @@ dependencies:
   - anaconda::ipython
   - conda-forge::tomopy
   - savu-dep::larix
-  - savu-dep::tomobar
+  - dkazanc::tomobar

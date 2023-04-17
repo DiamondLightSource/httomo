@@ -8,7 +8,7 @@ HTTOmo (High Throughput Tomography pipeline)
 Setup a Development Environment:
 ================================
 * Clone the repository from GitHub using :code:`git clone git@github.com:DiamondLightSource/HTTomo.git`
-* Install dependencies from the environment file :code:`conda env create httomo --file conda/environment.yml` (SLOW)
+* Install dependencies from the environment file :code:`conda env create --file conda/environment.yml` (SLOW)
 * Alternatively you can install from the existing explicit file :code:`conda create --name httomo --file conda/explicit/latest.txt`
 * Activate the environment with :code:`conda activate httomo`
 * Install the enviroment in development mode with :code:`pip install -e .[dev]`
