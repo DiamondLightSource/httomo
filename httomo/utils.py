@@ -4,6 +4,7 @@ from typing import Tuple, List, Dict, Callable
 from enum import Enum
 
 import httomo.globals
+from httomo.common import remove_ansi_escape_sequences
 from httomo.data import mpiutil
 
 
@@ -71,7 +72,7 @@ def log_rank(output: Any, comm: Comm) -> None:
         httomo.globals.logger.debug(f"RANK: [{comm.rank}], {output}")
 
 
-def log_exception(output: str) -> None:
+def log_exception(output: str, colour: str = Colour.RED) -> None:
     """
     Log an exception to the log file.
 
@@ -81,7 +82,11 @@ def log_exception(output: str) -> None:
         The exception to be logged.
     """
     if httomo.globals.logger is not None:
-        httomo.globals.logger.error(output)
+        httomo.globals.logger.error(f"{colour}{output}{Colour.END}")
+
+    #: now this will cause the pipeline to crash
+    #: remove ansi escape sequences from the log file
+    remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
 
 
 def _parse_preview(

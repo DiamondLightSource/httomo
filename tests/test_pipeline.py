@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 
 import h5py
@@ -6,6 +7,19 @@ import numpy as np
 from numpy.testing import assert_allclose
 from PIL import Image
 import glob
+
+PATTERN = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
+
+
+def _get_log_contents(file):
+    """ return contents of the user.log file """
+    with open(file, "r") as f:
+        log_contents = f.read()
+
+    #: check that the generated log file has no ansi escape sequence
+    assert not PATTERN.search(log_contents)
+
+    return log_contents
 
 
 def read_folder(folder):
@@ -50,6 +64,26 @@ def test_tomo_standard_testing_pipeline_output(
                 assert f["data"].dtype == np.float32
                 assert_allclose(np.mean(f["data"]), -8.037842e-06, atol=1e-6)
                 assert_allclose(np.sum(f["data"]), -0.617306, atol=1e-6)
+
+
+    #: some basic testing of the generated user.log file, because running the whole pipeline again
+    #: will slow down the execution of the test suite.
+    #: It will be worth moving the unit tests for the logger to a separate file
+    #: once we generate different log files for each MPI process and we can compare them.
+    log_files = list(filter(lambda x: ".log" in x, files))
+    assert len(log_files) == 1
+
+    log_contents = _get_log_contents(log_files[0])
+
+    assert f"INFO | See the full log file at: {log_files[0]}" in log_contents
+    assert "DEBUG | The full dataset shape is (220, 128, 160)" in log_contents
+    assert "DEBUG | Loading data: tests/test_data/tomo_standard.nxs" in log_contents
+    assert "DEBUG | Path to data: entry1/tomo_entry/data/data" in log_contents
+    assert "DEBUG | Preview: (0:180, 0:3:, :)" in log_contents
+    assert "DEBUG | RANK: [0], Data shape is (180, 3, 160) of type uint16" in log_contents
+    assert "DEBUG | <-------Reslicing/rechunking the data-------->" in log_contents
+    assert "DEBUG | Total number of reslices: 1" in log_contents
+    assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
 def test_tomo_standard_testing_pipeline_output_with_save_all(
@@ -124,3 +158,38 @@ def test_diad_testing_pipeline_output(
                 assert f["data"].shape == (2, 26, 26)
                 assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6)
                 assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6)
+
+    log_files = list(filter(lambda x: ".log" in x, files))
+    assert len(log_files) == 1
+
+    log_contents = _get_log_contents(log_files[0])
+
+    assert f"INFO | See the full log file at: {log_files[0]}" in log_contents
+    assert "DEBUG | The full dataset shape is (3201, 22, 26)" in log_contents
+    assert "DEBUG | Loading data: tests/test_data/k11_diad/k11-18014.nxs" in log_contents
+    assert "DEBUG | Path to data: /entry/imaging/data" in log_contents
+    assert "DEBUG | Preview: (100:3101, 5:7:, :)" in log_contents
+    assert "DEBUG | RANK: [0], Data shape is (3001, 2, 26) of type uint16" in log_contents
+    assert "DEBUG | Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
+    assert "DEBUG | Reslicing not necessary, as there is only one process" in log_contents
+    assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
+
+
+def test_sweep_range_pipeline_with_step_absent(
+    cmd, standard_data, sample_pipelines, output_folder
+):
+    cmd.insert(6, standard_data)
+    cmd.insert(7, sample_pipelines + "testing/step_absent.yml")
+    subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+
+    log_files = list(filter(lambda x: ".log" in x, read_folder("output_dir/")))
+    assert len(log_files) == 1
+
+    log_contents = _get_log_contents(log_files[0])
+
+    assert (
+        "ERROR | Please provide `start`, `stop`, `step` values"
+        " when specifying a range to peform a parameter sweep over."
+    ) in log_contents
