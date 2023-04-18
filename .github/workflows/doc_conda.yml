@@ -1,4 +1,4 @@
-name: HTTomo doc conda env test
+name: HTTomo doc test
 
 on:
   workflow_dispatch:
@@ -18,23 +18,37 @@ jobs:
         shell: bash -el {0}
     steps:
         - name: Checkout repository code
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
 
         - name: Setup Python 3.9
-          uses: actions/setup-python@v2
+          uses: actions/setup-python@v3
           with:
             python-version: 3.9
 
-      - name: Make conda environment
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          environment-file: ./docs/source/doc-conda-requirements.yml
+        - name: httomo
+          uses: conda-incubator/setup-miniconda@v2
+          with:
+            auto-update-conda: false
+            activate-environment: httomo
+            environment-file: ./docs/source/doc-conda-requirements.yml
 
-      - name: Generate yml
-        run: python ./templates/tomopy/yaml_generator_tomopy.py
+        - name: Generate yml
+          run: python ./yaml_generator_tomopy.py
 
-      - name: Build html
-        run: ./docs/sphinx-build.sh
+        - name: rm api
+          run: rm -rf ./source/api/
 
-      - name: Run ghp-import
-        run: ghp-import -n -p -f ./docs/build
+        - name: rm build
+          run: rm -rf ./build/
+
+        - name: Build api docs
+          run: sphinx-apidoc -feT -t=./source/_templates -o ./source/api ./../httomo
+
+        - name: Generate yml docs
+          run: python ./source/yaml_doc_generator.py
+
+        - name: Build html
+          run: sphinx-build -a -E -b html ./source/ ./build/
+
+        - name: Run ghp-import
+          run: ghp-import -n -p -f ./docs/build

@@ -1,4 +1,4 @@
-name: doc
+name: httomo
 
 channels:
   - conda-forge
@@ -14,3 +14,5 @@ dependencies:
   - jinja2
   - sphinx-panels
   - sphinx-copybutton
+  - tomopy
+  - pyyaml
