@@ -33,22 +33,22 @@ jobs:
             environment-file: ./docs/source/doc-conda-requirements.yml
 
         - name: Generate yml
-          run: python ./yaml_generator_tomopy.py
+          run: python ./templates/tomopy/yaml_generator_tomopy.py
 
         - name: rm api
-          run: rm -rf ./source/api/
+          run: rm -rf ./docs/source/api/
 
         - name: rm build
-          run: rm -rf ./build/
+          run: rm -rf ./docs/build/
 
         - name: Build api docs
-          run: sphinx-apidoc -feT -t=./source/_templates -o ./source/api ./../httomo
+          run: sphinx-apidoc -feT -t=./docs/source/_templates -o ./docs/source/api ./httomo
 
         - name: Generate yml docs
-          run: python ./source/yaml_doc_generator.py
+          run: python ./docs/source/yaml_doc_generator.py
 
         - name: Build html
-          run: sphinx-build -a -E -b html ./source/ ./build/
+          run: sphinx-build -a -E -b html ./docs/source/ ./docs/build/
 
         - name: Run ghp-import
           run: ghp-import -n -p -f ./docs/build
