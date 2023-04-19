@@ -16,3 +16,5 @@ dependencies:
   - sphinx-copybutton
   - tomopy
   - pyyaml
+  - ipython
+  - ghp-import
