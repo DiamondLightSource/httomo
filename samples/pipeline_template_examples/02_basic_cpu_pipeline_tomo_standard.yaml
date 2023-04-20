@@ -14,6 +14,7 @@
       data_in: tomo
       data_out: tomo
       cutoff: null
+      averaging: mean
 - tomopy.prep.normalize:
     minus_log:
       data_in: tomo
