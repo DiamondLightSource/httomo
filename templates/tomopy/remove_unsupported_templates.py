@@ -32,10 +32,9 @@ import argparse
 from pathlib import Path
 
 
-def templates_filter(path_to_modules: str,
-                     library_file: str) -> int:
+def templates_filter(path_to_modules: str, library_file: str) -> int:
     """function that removes unsupported by httomo YAML templates in TomoPy
-    
+
     Args:
         path_to_modules (str): path to the list of modules yaml file
         library_file (str): path to the library with the supported functions of TomoPy
@@ -48,41 +47,53 @@ def templates_filter(path_to_modules: str,
     if not yaml_info_path.exists():
         err_str = f"The YAML file {yaml_info_path} doesn't exist."
         raise ValueError(err_str)
-    
+
     with open(yaml_info_path, "r") as f:
         yaml_library = yaml.safe_load(f)
-    
+
     methods_list: list = []
     for module, module_dict in yaml_library.items():
         for module2, module_dict2 in module_dict.items():
             for method_name in module_dict2:
                 methods_list.append(method_name)
 
-    subfolders = [f.path for f in os.scandir(path_to_modules) if f.is_dir() ]
-    for folder in subfolders:        
+    subfolders = [f.path for f in os.scandir(path_to_modules) if f.is_dir()]
+    for folder in subfolders:
         for filename in os.listdir(folder):
             filename_short = filename.split(".")
             if filename_short[0] not in methods_list:
-                print(f"Removed template: {filename_short[0]}")                
+                print(f"Removed template: {filename_short[0]}")
                 file_path = os.path.join(folder, filename)
                 try:
                     if os.path.isfile(file_path) or os.path.islink(file_path):
                         os.unlink(file_path)
                 except Exception as e:
-                    print('Failed to delete %s. Reason: %s' % (file_path, e))                
+                    print("Failed to delete %s. Reason: %s" % (file_path, e))
     return 0
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description="Removes unsupported by httomo"
-                                                 "templates in TomoPy.")
-    parser.add_argument('-m', '--modules', type=str, default=None,
-                        help="A path to the folder where modules stored.")
-    parser.add_argument('-l', '--library', type=str, default=None,
-                        help="A path to the library YAML file with the supported functions.")
+    parser = argparse.ArgumentParser(
+        description="Removes unsupported by httomo" "templates in TomoPy."
+    )
+    parser.add_argument(
+        "-m",
+        "--modules",
+        type=str,
+        default=None,
+        help="A path to the folder where modules stored.",
+    )
+    parser.add_argument(
+        "-l",
+        "--library",
+        type=str,
+        default=None,
+        help="A path to the library YAML file with the supported functions.",
+    )
     return parser.parse_args()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     current_dir = os.path.basename(os.path.abspath(os.curdir))
     args = get_args()
     path_to_modules = args.modules
@@ -90,4 +101,3 @@ if __name__ == '__main__':
     return_val = templates_filter(path_to_modules, library_file)
     if return_val == 0:
         print("The templates have been filtered!")
-              

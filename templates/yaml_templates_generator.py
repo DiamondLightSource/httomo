@@ -31,10 +31,10 @@ import os
 import importlib
 import argparse
 
-def yaml_generator(path_to_modules: str,
-                   output_folder: str) -> int:
+
+def yaml_generator(path_to_modules: str, output_folder: str) -> int:
     """function that exposes all method of a given software package as YAML templates
-    
+
     Args:
         path_to_modules (str): path to the list of modules yaml file
         output_folder (str): path to output folder with saved templates
@@ -42,7 +42,7 @@ def yaml_generator(path_to_modules: str,
     Returns:
         int: returns zero if the processing is succesfull
     """
-    # Can work with any software in principle, 
+    # Can work with any software in principle,
     # but for TomoPy and httomolib there are additional keys
     # that needed to be discarded in templates in order to let
     # httomo work smoothly.
@@ -64,11 +64,11 @@ def yaml_generator(path_to_modules: str,
         "comm_rank",
         "out_dir",
         "angles",
-        "gpu_id",        
+        "gpu_id",
     ]  # discard from parameters list
 
     no_data_out_modules = ["save_to_images"]  # discard data_out from certain modules
-    
+
     # open YAML file with modules to inspect
     with open(path_to_modules, "r") as stream:
         try:
@@ -90,7 +90,9 @@ def yaml_generator(path_to_modules: str,
         # a loop over all methods in the module
         for m in range(methods_no):
             method_name = methods_list[m]
-            get_method_params = inspect.signature(getattr(imported_module, methods_list[m]))
+            get_method_params = inspect.signature(
+                getattr(imported_module, methods_list[m])
+            )
             # get method docstrings
             get_method_docs = inspect.getdoc(getattr(imported_module, methods_list[m]))
 
@@ -98,13 +100,13 @@ def yaml_generator(path_to_modules: str,
             params_list: list = []
             params_dict: dict = {}
             params_dict["data_in"] = "tomo"  # default dataset names
-            # dealing with special cases for "data_out" 
+            # dealing with special cases for "data_out"
             if method_name not in no_data_out_modules:
                 params_dict["data_out"] = "tomo"
             if method_name in "find_center_vo":
                 params_dict["data_out"] = "cor"
             if method_name in "find_center_360":
-                params_dict["data_out"] = ['cor', 'overlap', 'side', 'overlap_position']
+                params_dict["data_out"] = ["cor", "overlap", "side", "overlap_position"]
             for k, v in get_method_params.parameters.items():
                 if v is not None:
                     append = True
@@ -130,21 +132,34 @@ def yaml_generator(path_to_modules: str,
                 os.makedirs(path_dir)
 
             with open(path_file, "w") as file:
-                outputs = yaml.dump(params_list, file, sort_keys=False)        
+                outputs = yaml.dump(params_list, file, sort_keys=False)
     return 0
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description="Script that exposes all functions "
-                                                 "of a given software package as YAML templates.")
-    parser.add_argument('-m', '--modules', type=str, default=None,
-                        help="A path to the list of modules yaml file"
-                        "which is needed to be inspected and functions extracted.")
-    parser.add_argument('-o', '--output', type=str, default='./',
-                        help="Directory to save the yaml templates in.")
+    parser = argparse.ArgumentParser(
+        description="Script that exposes all functions "
+        "of a given software package as YAML templates."
+    )
+    parser.add_argument(
+        "-m",
+        "--modules",
+        type=str,
+        default=None,
+        help="A path to the list of modules yaml file"
+        "which is needed to be inspected and functions extracted.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        default="./",
+        help="Directory to save the yaml templates in.",
+    )
     return parser.parse_args()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     current_dir = os.path.basename(os.path.abspath(os.curdir))
     args = get_args()
     path_to_modules = args.modules
