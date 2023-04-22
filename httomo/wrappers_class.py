@@ -225,7 +225,7 @@ class BaseWrapper:
                 level=1,
             )
             return rot_center
-        if method_name == "find_center_360":
+        elif method_name == "find_center_360":
             (rot_center, overlap, side, overlap_position) = self.comm.bcast(
                 (rot_center, overlap, side, overlap_position), root=mid_rank
             )
@@ -237,7 +237,9 @@ class BaseWrapper:
                 level=1,
             )
             return (rot_center, overlap, side, overlap_position)
-
+        else:
+            raise ValueError(("Invalid method name {}".format(method_name)))
+            return rot_center
 
 class TomoPyWrapper(BaseWrapper):
     """A class that wraps TomoPy functions for httomo"""

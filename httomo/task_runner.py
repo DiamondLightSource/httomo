@@ -555,7 +555,8 @@ def run_method(
         RECON_MODULE_MATCH in module_path
         or dict_params_method.pop("save_result", None)
     )
-
+    misc_params[-2] = (["save_result"], save_result)
+    
     # Check if the input dataset should be resliced before the task runs
     should_reslice = reslice_info.reslice_bool_list[task_idx]
     if should_reslice:
@@ -563,6 +564,7 @@ def run_method(
         current_slice_dim = _get_slicing_dim(prev_func.pattern)
         next_slice_dim = _get_slicing_dim(current_func.pattern)
 
+    
     # the GPU wrapper should know if the reslice is needed to convert the result
     # to numpy from cupy array
     reslice_ahead = next_func.reslice_ahead if next_func is not None else False
