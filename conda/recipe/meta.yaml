@@ -1,0 +1,46 @@
+{% set name = "httomo" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ environ['VERSION'] }}
+
+source:
+  path: ../../
+
+build:
+  preserve_egg_dir: False
+  number: 0
+
+test:
+  requires:
+    - pip
+    - pytest
+  imports:
+    - httomo
+    - httomo.data
+  source_files:
+    - tests/*
+  commands:
+    - pip check
+    - pytest 
+requirements:
+  host:
+    - python>=3.9
+    - pip
+    - setuptools
+  run:
+    - python>=3.9
+    - numpy
+    - cupy
+    - openmpi
+    - h5py
+    - mpi4py
+    - click
+    - setuptools
+    - pytest
+
+about:
+  home: https://github.com/dkazanc/HTTO
+  license: BSD 3-clause
+  license_file: LICENSE
+  summary: 'High Throughput Tomography framework'

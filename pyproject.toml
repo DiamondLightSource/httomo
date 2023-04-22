@@ -3,7 +3,13 @@ requires = ["setuptools>=42", "wheel", "setuptools-git-versioning"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["httomo"]
+packages = ["httomo",
+            "httomo.data",
+            "httomo.methods_database",
+            "httomo._stats"]
+
+[tool.setuptools.package-data]
+httomo = ["*.yaml", "*.yml"]    # include yaml files
 
 [tool.setuptools-git-versioning]
 enabled = true
@@ -31,10 +37,12 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 dependencies = [
     "click",
-    "numpy",
     "cupy",
+    "numpy",
+    "openmpi",
     "mpi4py",
     "h5py",
+    "hdf5",
 ]
 
 [project.scripts]

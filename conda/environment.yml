@@ -2,8 +2,7 @@ name: httomo
 channels:
   - astra-toolbox
   - conda-forge
-  - savu-dep
-  - dkazanc
+  - httomo
   - anaconda
 dependencies:
   - astra-toolbox::astra-toolbox
@@ -18,5 +17,5 @@ dependencies:
   - conda-forge::python
   - anaconda::ipython
   - conda-forge::tomopy
-  - savu-dep::larix
-  - dkazanc::tomobar
+  - httomo::larix
+  - httomo::tomobar
