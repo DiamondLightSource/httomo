@@ -83,7 +83,7 @@ class MethodFunc:
     pattern: Pattern = Pattern.projection
     cpu: bool = True
     gpu: bool = False
-    reslice_ahead: bool = False
+    reslice_ahead: bool = False    
 
 
 @dataclass
@@ -276,6 +276,7 @@ def run_tasks(
                     (["angles", "angles_radians"], loader_data.angles),
                     (["comm"], comm),
                     (["out_dir"], httomo.globals.run_out_dir),
+                    (["save_result"], False),
                     (["reslice_ahead"], False),
                 ]
             else:
@@ -299,7 +300,7 @@ def run_tasks(
 
             stop = time.perf_counter_ns()
             output_str_list = [
-                f"    {task_end_str} {pattern_str}: {method_name} (",
+                f"    {task_end_str} {method_name} (",
                 package,
                 f") Took {float(stop-start)*1e-6:.2f}ms",
             ]
@@ -594,7 +595,8 @@ def _run_method(
         save_all,
         dict_params_method.pop("save_result", None),
     )
-
+    misc_params[-2] = (["save_result"], save_result)
+    
     # Check if the input dataset should be resliced before the task runs
     should_reslice = current_func.reslice_ahead
     if should_reslice:
@@ -602,6 +604,7 @@ def _run_method(
         current_slice_dim = _get_slicing_dim(prev_func.pattern)
         next_slice_dim = _get_slicing_dim(current_func.pattern)
 
+    
     # the GPU wrapper should know if the reslice is needed to convert the result
     # to numpy from cupy array
     reslice_ahead = next_func.reslice_ahead if next_func is not None else False
