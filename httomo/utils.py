@@ -3,6 +3,9 @@ from mpi4py.MPI import Comm
 from typing import Tuple, List, Dict, Callable
 from enum import Enum
 
+import httomo.globals
+from httomo.data import mpiutil
+
 
 class Colour:
     """
@@ -10,6 +13,7 @@ class Colour:
     """
 
     LIGHT_BLUE = "\033[1;34m"
+    LIGHT_BLUE_BCKGR = '\033[1;44m'
     BLUE = "\33[94m"
     CYAN = "\33[96m"
     GREEN = "\33[92m"
@@ -18,11 +22,13 @@ class Colour:
     RED = "\33[91m"
     END = "\033[0m"
     BVIOLET = "\033[1;35m"
+    LYELLOW = "\033[33m"
+    BACKG_RED = "\x1b[6;37;41m"
 
 
-def print_once(output: Any, comm: Comm, colour: Any = Colour.GREEN) -> None:
+def log_once(output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0) -> None:
     """
-    Print an output from rank zero only.
+    Log output to console and log file if the process is rank zero.
 
     Parameters
     ----------
@@ -32,19 +38,28 @@ def print_once(output: Any, comm: Comm, colour: Any = Colour.GREEN) -> None:
         The comm used to determine the rank zero process.
     colour : str, optional
         The colour of the output.
+    level : int, optional
+        The level of the log message. 0 is info, 1 is debug.
     """
-    if comm.rank == 0:
+    if mpiutil.rank == 0:
         if isinstance(output, list):
             output = "".join(
                 [f"{colour}{out}{Colour.END}" for out, colour in zip(output, colour)]
             )
-            print(output)
         else:
-            print(colour + output + Colour.END)
+            output = f"{colour}{output}{Colour.END}"
+
+        if httomo.globals.logger is not None:
+            (
+                httomo.globals.logger.debug(output)
+                if level == 1
+                else httomo.globals.logger.info(output)
+            )
 
 
-def print_rank(output: Any, comm: Comm) -> None:
-    """Print an output with rank prefix.
+def log_rank(output: Any, comm: Comm) -> None:
+    """
+    Log output to log file with the process rank.
 
     Parameters
     ----------
@@ -53,7 +68,21 @@ def print_rank(output: Any, comm: Comm) -> None:
     comm : Comm
         The comm used to determine the process rank.
     """
-    print(f"RANK: [{comm.rank}], {output}")
+    if httomo.globals.logger is not None:
+        httomo.globals.logger.debug(f"RANK: [{comm.rank}], {output}")
+
+
+def log_exception(output: str) -> None:
+    """
+    Log an exception to the log file.
+
+    Parameters
+    ----------
+    output : str
+        The exception to be logged.
+    """
+    if httomo.globals.logger is not None:
+        httomo.globals.logger.error(output)
 
 
 def _parse_preview(
@@ -104,9 +133,31 @@ def _parse_preview(
             else:
                 preview_str += ":"
         else:
-            start = slice_info["start"] if "start" in slice_info.keys() else None
-            stop = slice_info["stop"] if "stop" in slice_info.keys() else None
-            step = slice_info["step"] if "step" in slice_info.keys() else None
+            start = slice_info.get("start", None)
+            stop = slice_info.get("stop", None)
+            step = slice_info.get("step", None)
+
+            warn_on = False
+            if start is not None and start < 0 or start >= data_shape[idx]:
+                warn_on = True
+                str_warn = (
+                    f"The 'start' preview {start} is outside the data dimension range"
+                    + f" from 0 to {data_shape[idx]}"
+                )
+            if stop is not None and stop < 0 or stop >= data_shape[idx]:
+                warn_on = True
+                str_warn = (
+                    f"The 'stop' preview {start} is outside the data dimension range"
+                    + f" from 0 to {data_shape[idx]}"
+                )
+            if step is not None and step < 0:
+                warn_on = True
+                str_warn = "The 'step' in preview cannot be negative"
+
+            if warn_on:
+                log_exception(str_warn, comm=comm, colour=Colour.BACKG_RED, level=1)
+                raise ValueError("Preview error: " + str_warn)
+
             start_str = f"{start if start is not None else ''}"
             stop_str = f"{stop if stop is not None else ''}"
             step_str = f"{step if step is not None else ''}"
@@ -148,4 +199,5 @@ def _get_slicing_dim(pattern: Pattern) -> int:
         return 1
     else:
         err_str = f"An unknown pattern has been encountered {pattern}"
+        log_exception(err_str)
         raise ValueError(err_str)

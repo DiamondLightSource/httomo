@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 import dataclasses
 import multiprocessing
-from datetime import datetime
-from os import mkdir
 from pathlib import Path
 import time
 from typing import Any, List, Dict, Literal, Optional, Tuple, Union
@@ -15,7 +13,9 @@ import numpy as np
 from mpi4py import MPI
 from httomo.data.hdf.loaders import LoaderData
 
-from httomo.utils import print_once, Pattern, _get_slicing_dim, Colour
+import httomo.globals
+from httomo.common import remove_ansi_escape_sequences
+from httomo.utils import log_once, Pattern, _get_slicing_dim, Colour, log_exception
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.chunk import save_dataset, get_data_shape
@@ -138,7 +138,6 @@ class PlatformSection:
 def run_tasks(
     in_file: Path,
     yaml_config: Path,
-    out_dir: Path,
     dimension: int,
     pad: int = 0,
     ncore: int = 1,
@@ -153,8 +152,6 @@ def run_tasks(
         The file to read data from.
     yaml_config : Path
         The file containing the processing pipeline info as YAML.
-    out_dir : Path
-        The directory to write data to.
     dimension : int
         The dimension to slice in.
     pad : int
@@ -169,11 +166,6 @@ def run_tasks(
         should be done in-memory.
     """
     comm = MPI.COMM_WORLD
-    run_out_dir = out_dir.joinpath(
-        f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
-    )
-    if comm.rank == 0:
-        mkdir(run_out_dir)
     if comm.size == 1:
         # use all available CPU cores if not an MPI run
         ncore = multiprocessing.cpu_count()
@@ -223,6 +215,14 @@ def run_tasks(
     if comm.rank == 0:
         start_time = MPI.Wtime()
 
+    #: add to the console and log file, the full path to the user.log file
+    log_once(
+        f"See the full log file at: {httomo.globals.run_out_dir}/user.log",
+        comm,
+        colour=Colour.CYAN,
+        level=0,
+    )
+
     # these will be set by the loader, which is first in the pipeline
     # we initialise here so that we can detect if data has not been loaded yet
     data_shape = None
@@ -233,17 +233,17 @@ def run_tasks(
     for section in platform_sections:
         # determine the max_slices for the section if we're on GPU and have loaded already
         _update_max_slices(section, data_shape, data_dtype)
-        # TODO: now iterate through the data shape in section.max_slices chunks    
+        # TODO: now iterate through the data shape in section.max_slices chunks
         for method_func in section.methods:
             package = method_func.module_name.split(".")[0]
             method_name = method_func.method_function.__name__
             task_no_str = f"Running task {idx+1}"
             task_end_str = task_no_str.replace("Running", "Finished")
             pattern_str = f"(pattern={method_func.pattern.name})"
-            print_once(
+            log_once(
                 f"{task_no_str} {pattern_str}: {method_name}...",
                 comm,
-                colour=Colour.LIGHT_BLUE,
+                colour=Colour.LIGHT_BLUE_BCKGR,
             )
             start = time.perf_counter_ns()
             if method_func.is_loader:
@@ -257,13 +257,15 @@ def run_tasks(
                 loader_data = _run_loader(
                     method_func.method_function, method_func.parameters
                 )
-                
+
                 data_shape = loader_data.data.shape
                 data_dtype = loader_data.data.dtype
 
                 # Update `dict_datasets_pipeline` dict with the data that has been
                 # loaded by the loader
-                dict_datasets_pipeline[method_func.parameters["name"]] = loader_data.data
+                dict_datasets_pipeline[
+                    method_func.parameters["name"]
+                ] = loader_data.data
                 dict_datasets_pipeline["flats"] = loader_data.flats
                 dict_datasets_pipeline["darks"] = loader_data.darks
 
@@ -273,7 +275,7 @@ def run_tasks(
                     (["flats"], loader_data.flats),
                     (["angles", "angles_radians"], loader_data.angles),
                     (["comm"], comm),
-                    (["out_dir"], run_out_dir),
+                    (["out_dir"], httomo.globals.run_out_dir),
                     (["reslice_ahead"], False),
                 ]
             else:
@@ -289,7 +291,7 @@ def run_tasks(
                     method_funcs[idx - 1],
                     method_funcs[idx + 1] if idx < len(method_funcs) - 1 else None,
                     dict_datasets_pipeline,
-                    str(run_out_dir),
+                    str(httomo.globals.run_out_dir),
                     glob_stats[idx],
                     comm,
                     reslice_info,
@@ -297,24 +299,26 @@ def run_tasks(
 
             stop = time.perf_counter_ns()
             output_str_list = [
-                f"{task_end_str} {pattern_str}: {method_name} (",
+                f"    {task_end_str} {pattern_str}: {method_name} (",
                 package,
                 f") Took {float(stop-start)*1e-6:.2f}ms",
             ]
             output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
-            print_once(output_str_list, comm=comm, colour=output_colour_list)
+            log_once(output_str_list, comm=comm, colour=output_colour_list)
             idx += 1
 
-    # Print the number of reslice operations peformed in the pipeline
+    # Log the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_info.count}"
     reslice_summary_colour = Colour.BLUE if reslice_info.count <= 1 else Colour.RED
-    print_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour)
+    log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
 
     elapsed_time = 0.0
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
-        end_str = f"\n\n~~~ Pipeline finished ~~~\nTook {elapsed_time} sec to run!"
-        print_once(end_str, comm=comm, colour=Colour.BVIOLET)
+        end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
+        log_once(end_str, comm=comm, colour=Colour.BVIOLET)
+        #: remove ansi escape sequences from the log file
+        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
 
 
 def _initialise_datasets(
@@ -523,6 +527,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
             err_str = (
                 f"An unknown module name was encountered: " f"{split_module_name[0]}"
             )
+            log_exception(err_str)
             raise ValueError(err_str)
 
     return method_funcs
@@ -604,7 +609,7 @@ def _run_method(
     misc_params[-1] = (["reslice_ahead"], reslice_ahead)
 
     if reslice_info.count > 1 and not reslice_info.has_warn_printed:
-        print_once(reslice_warn_str, comm=comm, colour=Colour.RED)
+        log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
         reslice_info.has_warn_printed = True
 
     # extra params unrelated to wrapped packages but related to httomo added
@@ -827,7 +832,6 @@ def _run_method(
             # output which handles saving the result
             return reslice_info, glob_stats
 
-        print_once(method_name, comm)
         # TODO: The dataset saving functionality only supports 3D data
         # currently, so check that the dimension of the data is 3 before
         # saving it
@@ -1275,12 +1279,15 @@ def _assign_pattern_to_method(method_func: MethodFunc) -> MethodFunc:
             f"The pattern {pattern_str} that is listed for the method "
             f"{method_func.module_name} is invalid."
         )
+        log_exception(err_str)
         raise ValueError(err_str)
 
     return dataclasses.replace(method_func, pattern=pattern)
 
 
-def _determine_platform_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
+def _determine_platform_sections(
+    method_funcs: List[MethodFunc],
+) -> List[PlatformSection]:
     ret: List[PlatformSection] = []
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
@@ -1332,9 +1339,11 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
         return int(100e9)  # arbitrarily high number - only used if GPU isn't available
 
 
-def _update_max_slices(section: PlatformSection, 
-                       process_data_shape: Optional[Tuple[int, int, int]],
-                       input_data_type: Optional[np.dtype]):
+def _update_max_slices(
+    section: PlatformSection,
+    process_data_shape: Optional[Tuple[int, int, int]],
+    input_data_type: Optional[np.dtype],
+):
     # section before loader - we don't know these shapes yet
     # TODO: make sure loader goes into its own section
     if process_data_shape is None or input_data_type is None:
@@ -1346,21 +1355,23 @@ def _update_max_slices(section: PlatformSection,
         # TODO: what if all methods in a section are pattern.all
         slice_dim = 0
         other_dims = (process_data_shape[1], process_data_shape[2])
-    else: 
+    else:
         # this should not happen if data type is indeed the enum
-        raise ValueError('Invalid pattern {}'.format(section.pattern))
+        raise ValueError("Invalid pattern {}".format(section.pattern))
     max_slices = process_data_shape[slice_dim]
     data_type = input_data_type
     if section.gpu:
         available_memory = _get_available_gpu_memory(10.0)
         for m in section.methods:
             if m.calc_max_slices is not None:
-                slices, data_type = m.calc_max_slices(slice_dim, other_dims, data_type, available_memory)
+                slices, data_type = m.calc_max_slices(
+                    slice_dim, other_dims, data_type, available_memory
+                )
                 max_slices = min(max_slices, slices)
     else:
         # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
         pass
-    
+
     section.max_slices = max_slices
     # TODO: don't return this - use the actual data's data type in the next section
     return data_type

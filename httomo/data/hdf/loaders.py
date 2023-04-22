@@ -8,7 +8,18 @@ from mpi4py.MPI import Comm
 from numpy import asarray, deg2rad, ndarray, arange, linspace
 
 from httomo.data.hdf._utils import load
-from httomo.utils import _parse_preview, print_once, print_rank
+from httomo.utils import _parse_preview, log_once, log_rank, Colour
+
+
+@dataclass
+class LoaderData:
+    data: ndarray
+    flats: ndarray
+    darks: ndarray
+    angles: ndarray
+    angles_total: int
+    detector_x: int
+    detector_y: int
 
 @dataclass
 class LoaderData:
@@ -30,7 +41,9 @@ def standard_tomo(
     pad: int,
     comm: Comm,
     image_key_path: Optional[str] = None,
-    rotation_angles: Dict[str, Any] = {"data_path": "/entry1/tomo_entry/data/rotation_angle"},
+    rotation_angles: Dict[str, Any] = {
+        "data_path": "/entry1/tomo_entry/data/rotation_angle"
+    },
     darks: Optional[Dict] = None,
     flats: Optional[Dict] = None,
 ) -> LoaderData:
@@ -76,7 +89,12 @@ def standard_tomo(
         shape = dataset.shape
 
     if comm.rank == 0:
-        print("\033[33m" + f"The full dataset shape is {shape}" + "\033[0m")
+        log_once(
+            f"The full dataset shape is {shape}",
+            comm=comm,
+            colour=Colour.LYELLOW,
+            level=1,
+        )
 
     # Get indices in data which contain projections
     if image_key_path is not None:
@@ -116,7 +134,7 @@ def standard_tomo(
         preview=preview_str,
         comm=comm,
     )
-    print_rank(f"Pad values are {pad_values}.", comm)
+    log_rank(f"Pad values are {pad_values}.", comm)
     data = load.load_data(
         str(in_file), dim, data_path, preview=preview_str, pad=pad_values, comm=comm
     )
@@ -155,16 +173,18 @@ def standard_tomo(
         )
 
     (angles_total, detector_y, detector_x) = data.shape
-    print_rank(
+    log_rank(
         f"Data shape is {(angles_total, detector_y, detector_x)}"
         + f" of type {data.dtype}",
         comm,
     )
 
-    return LoaderData(data=data, 
-                      flats=asarray(flats_data), 
-                      darks=asarray(darks_data), 
-                      angles=angles, 
-                      angles_total=angles_total, 
-                      detector_y=detector_y, 
-                      detector_x=detector_x)
+    return LoaderData(
+        data=data,
+        flats=asarray(flats_data),
+        darks=asarray(darks_data),
+        angles=angles,
+        angles_total=angles_total,
+        detector_y=detector_y,
+        detector_x=detector_x,
+    )
