@@ -30,11 +30,10 @@ requirements:
     - setuptools
   run:
     - python>=3.9
-    - numpy
-    - cupy
-    - openmpi
-    - h5py
-    - mpi4py
+    - numpy>= 1.20, <= 1.23
+    - cupy>=12.0
+    - mpi4py>=3.1
+    - h5py>=3.8    
     - click
     - setuptools
     - pytest

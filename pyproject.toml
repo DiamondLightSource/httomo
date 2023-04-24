@@ -33,16 +33,13 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.9",
 ]
+
 requires-python = ">=3.9"
 dynamic = ["version"]
 dependencies = [
     "click",
     "cupy",
     "numpy",
-    "openmpi",
-    "mpi4py",
-    "h5py",
-    "hdf5",
 ]
 
 [project.scripts]

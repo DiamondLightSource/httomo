@@ -20,6 +20,13 @@ Install as a Python module
 * You should choose which backend(s) you'd like to use - either :code:`tomopy` or :code:`httomolib`, or both
 * Install the module + backend(s) with :code:`pip install .[httomolib,tomopy]`
 
+Install as a conda Python package
+==========================
+
+* :code:`export VERSION=1.0`
+* :code:`conda build conda/recipe/ --python 3.10 --numpy 1.23 -c conda-forge`
+
+
 Running the code:
 =================
 
