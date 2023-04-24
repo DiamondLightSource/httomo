@@ -21,7 +21,6 @@ from httomo._stats.globals import min_max_mean_std
 from httomo.methods_database.query import get_method_info
 from httomolib.misc.images import save_to_images
 
-
 # TODO: Define a list of savers which have no output dataset and so need to
 # be treated differently to other methods. Probably should be handled in a
 # more robust way than this workaround.
@@ -49,7 +48,7 @@ def run_tasks(
     save_all: bool = False,
     reslice_dir: Optional[Path] = None,
 ) -> None:
-    """Run the tomopy pipeline defined in the YAML config file
+    """Run the pipeline defined in the YAML config file
 
     Parameters
     ----------

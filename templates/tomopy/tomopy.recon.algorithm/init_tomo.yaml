@@ -1,6 +1,0 @@
-- tomopy.recon.algorithm:
-    init_tomo:
-      data_in: tomo
-      data_out: tomo
-      sinogram_order: REQUIRED
-      sharedmem: true
