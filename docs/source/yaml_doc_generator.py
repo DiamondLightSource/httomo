@@ -18,10 +18,11 @@
 """Script that appends yaml information to documentation pages"""
 
 import os
+import yaml
 
-def add_function_summary(dirs, root, files):
-    rst_name = root.split("/")[-1]
-    doc_rst_file = f"{doc_source_dir}/api/{rst_name}.rst"
+
+def add_function_summary(doc_dir, name, files):
+    doc_rst_file = f"{doc_dir}/api/{name}.rst"
     with open(doc_rst_file, "a") as edit_doc:
         if os.stat(doc_rst_file).st_size == 0:
             add_title(edit_doc, rst_name)
@@ -33,9 +34,8 @@ def add_function_summary(dirs, root, files):
                 edit_doc.write(f"\n       {yml_title}")
 
 
-def create_module_doc(doc_source_dir, root, files):
-    rst_name = root.split("/")[-1]
-    doc_rst_file = f"{doc_source_dir}/api/{rst_name}.rst"
+def create_module_doc(doc_dir, name, files):
+    doc_rst_file = f"{doc_dir}/api/{name}.rst"
     for fi in files:
         t_name = root.split("source")[-1]
         t_name = f"{t_name}/{fi}"
@@ -51,6 +51,9 @@ def add_title(edit_doc, rst_name):
     edit_doc.write(f"{title}\n")
     underline = len(title) * "="
     edit_doc.write(f"{underline}\n")
+    if "tomopy" in title:
+        url = "https://tomopy.readthedocs.io/en/stable/api/"
+        edit_doc.write(f"\n{url}{rst_name}.html\n\n")
 
 
 if __name__ == "__main__":
@@ -59,7 +62,8 @@ if __name__ == "__main__":
     path_to_templates = doc_source_dir + '/../../templates/'
     for root, dirs, files in os.walk(path_to_templates, topdown=True):
         dirs[:] = [d for d in dirs]
-        files[:] = [fi for fi in files]
+        files[:] = [fi for fi in files if ".yaml" in fi]
         if files:
-            add_function_summary(doc_source_dir, root, files)
-            create_module_doc(doc_source_dir, root, files)
+            rst_name = root.split("/")[-1]
+            add_function_summary(doc_source_dir, rst_name, files)
+            create_module_doc(doc_source_dir, rst_name, files)
