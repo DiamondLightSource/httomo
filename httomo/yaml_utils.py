@@ -3,6 +3,8 @@ import numpy as np
 from typing import List, Dict
 from pathlib import Path
 
+from httomo.utils import log_exception
+
 
 class Sweep(yaml.SafeLoader):
     """Class for representing a parameter sweep when explicitly given the values
@@ -31,6 +33,7 @@ class SweepRange(yaml.SafeLoader):
                 "Please provide `start`, `stop`, `step` values when "
                 "specifying a range to peform a parameter sweep over."
             )
+            log_exception(err_str)
             raise ValueError(err_str)
 
         # Define the range based on the start, stop, step values
@@ -47,6 +50,20 @@ def _get_loader():
     loader.add_constructor("!Sweep", Sweep.__init__)
     loader.add_constructor("!SweepRange", SweepRange.__init__)
     return loader
+
+
+def get_external_package_current_version(package: str) -> str:
+    """
+    Get current version of the external package
+    from httomo/methods_database/packages/external/versions.yaml
+    """
+    versions_file = (
+        Path(__file__).parent / "methods_database/packages/external/versions.yaml"
+    )
+    with open(versions_file, "r") as f:
+        versions = yaml.safe_load(f)
+
+    return str(versions[package]["current"][0])
 
 
 def open_yaml_config(filepath: Path) -> List[Dict]:

@@ -1,7 +1,0 @@
-- tomopy.sim.project:
-    angles:
-      data_in: tomo
-      data_out: tomo
-      nang: REQUIRED
-      ang1: 0.0
-      ang2: 180.0
