@@ -15,21 +15,14 @@ from mpi4py import MPI
 from . import __version__
 
 
-@dataclass(frozen=True)
-class GlobalOptions:
-    """An immutable store of global program options."""
-
-    in_file: Path
-    yaml_config: Path
-    out_dir: Path
-    dimension: int
-    pad: int
-    ncore: int
-    save_all: bool
-    reslice: Optional[Path]
+@click.group
+@click.version_option(version=__version__, message="%(version)s")
+def main():
+    """httomo: High Throughput Tomography."""
+    pass
 
 
-@click.group(invoke_without_command=True)
+@main.command()
 @click.argument("in_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument(
     "yaml_config", type=click.Path(exists=True, dir_okay=False, path_type=Path)
@@ -77,10 +70,7 @@ class GlobalOptions:
     else context.params["out_dir"],
     help="Directory for reslice intermediate files (defaults to out_dir, only relevant if --reslice is also given)",
 )
-@click.version_option(version=__version__, message="%(version)s")
-@click.pass_context
-def main(
-    ctx: click.Context,
+def run(
     in_file: Path,
     yaml_config: Path,
     out_dir: Path,
@@ -91,17 +81,7 @@ def main(
     file_based_reslice: bool,
     reslice_dir: Path,
 ):
-    """httomo: High Throughput Tomography."""
-    ctx.obj = GlobalOptions(
-        in_file,
-        yaml_config,
-        out_dir,
-        dimension,
-        pad,
-        ncore,
-        save_all,
-        reslice_dir if file_based_reslice else None,
-    )
+    """Run a processing pipeline defined in YAML on input data."""
     # Define httomo.globals.run_out_dir in all MPI processes
     httomo.globals.run_out_dir = out_dir.joinpath(
         f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
@@ -114,20 +94,12 @@ def main(
         # Copy YAML pipeline file to output directory
         copy(yaml_config, httomo.globals.run_out_dir)
 
-    if ctx.invoked_subcommand is None:
-        click.echo(main.get_help(ctx))
-
-
-@main.command("task_runner")
-@click.pass_obj
-def task_runner(global_options: GlobalOptions):
-    """Run the processing pipeline defined in the given YAML config file."""
     return run_tasks(
-        global_options.in_file,
-        global_options.yaml_config,
-        global_options.dimension,
-        global_options.pad,
-        global_options.ncore,
-        global_options.save_all,
-        global_options.reslice,
+        in_file,
+        yaml_config,
+        dimension,
+        pad,
+        ncore,
+        save_all,
+        reslice_dir if file_based_reslice else None,
     )

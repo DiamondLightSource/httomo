@@ -33,14 +33,14 @@ Running the code:
 =================
 
 * Install the module as described in "Install as a Python module"
-* Execute the python module with :code:`httomo <args>`
-* For help with the command line interface, execute :code:`httomo --help`
+* Execute the python module with :code:`python -m httomo <args>`
+* For help with the command line interface, execute :code:`python -m httomo --help`
 
 An example of running the code with test data:
 =================
 
 * Create an output directory :code:`mkdir output_dir/`
-* Go to the home directory and run: :code:`httomo tests/test_data/tomo_standard.nxs samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml output_dir/ task_runner`
+* Go to the home directory and run: :code:`python -m httomo run tests/test_data/tomo_standard.nxs samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml output_dir/`
 
 Release Tagging Scheme
 ======================
