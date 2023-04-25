@@ -5,6 +5,8 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["httomo",
             "httomo.data",
+            "httomo.data.hdf",
+            "httomo.data.hdf._utils",
             "httomo.methods_database",
             "httomo._stats"]
 
