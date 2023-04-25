@@ -10,6 +10,7 @@ import httomo.globals
 from httomo.common import PipelineTasks
 from httomo.task_runner import run_tasks
 from httomo.logger import setup_logger
+from httomo.yaml_checker import validate_yaml_config
 
 from mpi4py import MPI
 from . import __version__
@@ -20,6 +21,22 @@ from . import __version__
 def main():
     """httomo: High Throughput Tomography."""
     pass
+
+
+@main.command()
+@click.argument(
+    "yaml_config", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
+@click.option(
+    "--data-file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=None,
+    help="Optional input NeXuS data file to check data keys in YAML.",
+)
+def check(yaml_config: Path, data_file: Path = None):
+    """Check a YAML pipeline file for errors."""
+    data_file = str(data_file) if type(data_file) is Path else None
+    return validate_yaml_config(yaml_config, data_file)
 
 
 @main.command()

@@ -42,6 +42,10 @@ An example of running the code with test data:
 * Create an output directory :code:`mkdir output_dir/`
 * Go to the home directory and run: :code:`python -m httomo run tests/test_data/tomo_standard.nxs samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml output_dir/`
 
+An example of running validation on a YAML pipeline file
+========================================================
+* :code:`python -m httomo check samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml`
+
 Release Tagging Scheme
 ======================
 
