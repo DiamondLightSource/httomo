@@ -15,13 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ---------------------------------------------------------------------------
-"""Script that appends yaml information to documentation pages"""
 
 import os
-import yaml
 
 
 def add_function_summary(doc_dir, name, files):
+    """Append title and function summary to documentation file.
+
+    Parameters
+    ----------
+    doc_dir : Path
+        Documentation path
+    name : str
+        Module name.
+    files : List
+        List of functions for each module.
+    """
     doc_rst_file = f"{doc_dir}/api/{name}.rst"
     with open(doc_rst_file, "a") as edit_doc:
         if os.stat(doc_rst_file).st_size == 0:
@@ -34,9 +43,20 @@ def add_function_summary(doc_dir, name, files):
                 edit_doc.write(f"\n       {yml_title}")
 
 
-def create_module_doc(doc_dir, name, files):
+def create_yaml_dropdown(doc_dir, name, files):
+    """Create dropdown panels to allow yaml functions to be downloaded.
+
+    Parameters
+    ----------
+    doc_dir : Path
+        Documentation path
+    name : str
+        Module name.
+    files : List
+        List of functions for each module.
+    """
     doc_rst_file = f"{doc_dir}/api/{name}.rst"
-    for fi in files:
+    for fi in reversed(files):
         t_name = root.split("source")[-1]
         t_name = f"{t_name}/{fi}"
         with open(doc_rst_file, "a") as edit_doc:
@@ -46,7 +66,16 @@ def create_module_doc(doc_dir, name, files):
 
 
 def add_title(edit_doc, rst_name):
-    """Add a title to rst file"""
+    """Add a title to rst file.
+    If it is a tomopy module, insert a link.
+
+    Parameters
+    ----------
+    edit_doc : File
+        Document to write to.
+    rst_name : str
+        Module name.
+    """
     title = f":mod:`{rst_name}`"
     edit_doc.write(f"{title}\n")
     underline = len(title) * "="
@@ -56,8 +85,27 @@ def add_title(edit_doc, rst_name):
         edit_doc.write(f"\n{url}{rst_name}.html\n\n")
 
 
+def all_yaml(root, files):
+    """Create a file with all yaml function definitions.
+
+    Parameters
+    ----------
+    root : Path
+        Path to the yaml template directory.
+    files : list
+        List of individual yaml template method files.
+    """
+    filepath = f"{root}/download_all.yaml"
+    if len(files) > 1:
+        with open(filepath, 'w') as outfile:
+            for f in files:
+                with open(f"{root}/{f}") as infile:
+                    outfile.write(infile.read())
+
+
 if __name__ == "__main__":
-    # Create a file for each tomopy
+    # Create documentation for each module.
+    # Append yaml information to documentation pages.
     doc_source_dir = os.path.dirname(os.path.abspath(__file__))
     path_to_templates = doc_source_dir + '/../../templates/'
     for root, dirs, files in os.walk(path_to_templates, topdown=True):
@@ -66,4 +114,7 @@ if __name__ == "__main__":
         if files:
             rst_name = root.split("/")[-1]
             add_function_summary(doc_source_dir, rst_name, files)
-            create_module_doc(doc_source_dir, rst_name, files)
+            all_yaml(root, files)
+            create_yaml_dropdown(doc_source_dir, rst_name, files)
+
+
