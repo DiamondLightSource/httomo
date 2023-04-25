@@ -30,6 +30,7 @@ def test_one_method_per_module(more_than_one_method):
         ("multi_inputs/01_dezing_multi_inputs.yaml", True),
         ("parameter_sweeps/02_median_filter_kernel_sweep.yaml", True),
         ("testing/incorrect_path.yaml", False),
+        ("testing/required_param.yaml", False),
     ],
     ids=[
         "no_loader_pipeline",
@@ -38,7 +39,8 @@ def test_one_method_per_module(more_than_one_method):
         "gpu_pipeline",
         "multi_input_pipeline",
         "sweep_pipeline",
-        "incorrect_path"
+        "incorrect_path",
+        "required_param",
     ],
 )
 def test_validate_yaml_config(sample_pipelines, yaml_file, standard_data, expected):
