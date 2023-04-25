@@ -225,6 +225,15 @@ def validate_yaml_config(yaml_file, in_file: str = None) -> bool:
                     )
                     return False
 
+                # there should be no REQUIRED parameters in the YAML_CONFIG file
+                if d1[key][parameter] == "REQUIRED":
+                    _print_with_colour(
+                        f"A value is needed for the parameter '{parameter}' in the '{modules[i]}' method."
+                        " Please specify a value instead of 'REQUIRED'."
+                        " Refer to the method docstring for more information."
+                    )
+                    return False
+
                 # skip tuples for !Sweep and !SweepRange
                 if isinstance(d1[key][parameter], tuple) or None in (
                     d1[key][parameter],
