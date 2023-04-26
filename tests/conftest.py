@@ -71,6 +71,16 @@ def standard_data():
 
 
 @pytest.fixture
+def standard_data_path():
+    return "/entry1/tomo_entry/data/data"
+
+
+@pytest.fixture
+def standard_image_key_path():
+    return "/entry1/tomo_entry/instrument/detector/image_key"
+
+
+@pytest.fixture
 def testing_pipeline():
     return "samples/pipeline_template_examples/testing/testing_pipeline.yaml"
 
