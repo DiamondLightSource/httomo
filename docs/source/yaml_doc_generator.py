@@ -111,6 +111,7 @@ if __name__ == "__main__":
     for root, dirs, files in os.walk(path_to_templates, topdown=True):
         dirs[:] = [d for d in dirs]
         files[:] = [fi for fi in files if ".yaml" in fi]
+        files[:] = [fi for fi in files if "modules" not in fi]
         if files:
             rst_name = root.split("/")[-1]
             add_function_summary(doc_source_dir, rst_name, files)
