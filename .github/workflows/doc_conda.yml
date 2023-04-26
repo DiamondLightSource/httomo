@@ -32,9 +32,6 @@ jobs:
             activate-environment: httomo
             environment-file: ./docs/source/doc-conda-requirements.yml
 
-        - name: Generate yml
-          run: python ./templates/tomopy/yaml_generator_tomopy.py
-
         - name: rm api
           run: rm -rf ./docs/source/api/
 
