@@ -6,6 +6,8 @@ This section contains the API reference and usage information for Methods.
 
 TomoPy Modules
 ---------------
+1.14
+''''
 
 .. toctree::
    :glob:
@@ -14,6 +16,8 @@ TomoPy Modules
 
 HTTomoLib Modules
 ------------------
+1.0
+'''
 
 .. toctree::
    :glob:
