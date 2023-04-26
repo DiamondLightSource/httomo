@@ -43,20 +43,16 @@ def load_data(
     log_once(f"Loading data: {file}", colour=Colour.LYELLOW, comm=comm, level=1)
     log_once(f"Path to data: {path}", colour=Colour.LYELLOW, comm=comm, level=1)
     log_once(f"Preview: ({preview})", colour=Colour.LYELLOW, comm=comm, level=1)
-    if dim == 1:
-        data = read_through_dim1(file, path, preview=preview, pad=pad, comm=comm)
-    elif dim == 2:
-        data = read_through_dim2(file, path, preview=preview, pad=pad, comm=comm)
-    elif dim == 3:
-        data = read_through_dim3(file, path, preview=preview, pad=pad, comm=comm)
+    if dim in [1, 2, 3]:
+        return read_through_dim(file, path, dim, preview, pad, comm)
     else:
         raise Exception("Invalid dimension. Choose 1, 2 or 3.")
-    return data
 
 
-def read_through_dim3(
+def read_through_dim(
     file: str,
     path: str,
+    dim: int,
     preview: str = ":,:,:",
     pad: Tuple = (0, 0),
     comm: MPI.Comm = MPI.COMM_WORLD,
@@ -69,8 +65,10 @@ def read_through_dim3(
         Path to file containing the dataset.
     path : str
         Path to dataset within the file.
+    dim : int
+        Dimension to read through (1 for dim1, 2 for dim2, 3 for dim3).
     preview : str
-        Crop the data with a preview:
+        Crop the data with a preview.
     pad : Tuple
         Pad the data by this number of slices.
     comm : MPI.Comm
@@ -79,164 +77,44 @@ def read_through_dim3(
     Returns
     -------
     ndarray
-        ADD DESC
+        The numpy array that has been read in.
     """
     rank = comm.rank
     nproc = comm.size
     slice_list = get_slice_list_from_preview(preview)
+
     with h5.File(file, "r", driver="mpio", comm=comm) as in_file:
         dataset = in_file[path]
         # Turning the preview into a length and offset. Data will be read from
         # data[offset] to data[offset + length].
-        if slice_list[2] == slice(None):
-            length = dataset.shape[2]
-            offset = 0
-            step = 1
+
+        _dim = dim - 1  # Convert to 0-indexing.
+        offset, step = 0, 1
+        if slice_list[_dim] == slice(None):
+            length = dataset.shape[_dim]
         else:
-            start = 0 if slice_list[2].start is None else slice_list[1].start
-            stop = (
-                dataset.shape[2] if slice_list[2].stop is None else slice_list[2].stop
-            )
-            step = 1 if slice_list[2].step is None else slice_list[2].step
-            length = (
-                stop - start
-            ) // step  # Total length of the section of the dataset being read.
+            start = slice_list[_dim].start or 0
+            stop = slice_list[_dim].stop or dataset.shape[_dim]
+            step = slice_list[_dim].step or 1
+            # Total length of the section of the dataset being read.
+            length = (stop - start) // step
             offset = start  # Offset where the dataset will start being read.
+
         # Bounds of the data this process will load. Length is split between number of
         # processes.
         i0 = round((length / nproc) * rank) + offset - pad[0]
         i1 = round((length / nproc) * (rank + 1)) + offset + pad[1]
         # Checking that i0 and i1 are still within the bounds of the dataset after
         # padding.
-        if i0 < 0:
-            i0 = 0
-        if i1 > dataset.shape[2]:
-            i1 = dataset.shape[2]
-        data = dataset[:, :, i0:i1:step]
-        return data
+        i0, i1 = max(i0, 0), min(i1, dataset.shape[_dim])
 
-
-def read_through_dim2(
-    file: str,
-    path: str,
-    preview: str = ":,:,:",
-    pad: Tuple = (0, 0),
-    comm: MPI.Comm = MPI.COMM_WORLD,
-) -> ndarray:
-    """Read a dataset in parallel, with each MPI process loading a block.
-
-    Parameters
-    ----------
-    file : str
-        Path to file containing the dataset.
-    path : str
-        Path to dataset within the file.
-    preview : str
-        Crop the data with a preview:
-    pad : Tuple
-        Pad the data by this number of slices.
-    comm : MPI.Comm
-        MPI communicator object.
-
-    Returns
-    -------
-    ndarray
-        ADD DESC
-    """
-    rank = comm.rank
-    nproc = comm.size
-    slice_list = get_slice_list_from_preview(preview)
-    with h5.File(file, "r", driver="mpio", comm=comm) as in_file:
-        dataset = in_file[path]
-        # Turning the preview into a length and offset. Data will be read from
-        # data[offset] to data[offset + length].
-        if slice_list[1] == slice(None):
-            length = dataset.shape[1]
-            offset = 0
-            step = 1
+        if dim == 3:
+            data = dataset[:, :, i0:i1:step]
+        elif dim == 2:
+            data = dataset[slice_list[0], i0:i1:step, :]
         else:
-            start = 0 if slice_list[1].start is None else slice_list[1].start
-            stop = (
-                dataset.shape[1] if slice_list[1].stop is None else slice_list[1].stop
-            )
-            step = 1 if slice_list[1].step is None else slice_list[1].step
-            length = (
-                stop - start
-            ) // step  # Total length of the section of the dataset being read.
-            offset = start  # Offset where the dataset will start being read.
-        # Bounds of the data this process will load. Length is split between number of
-        # processes.
-        i0 = round((length / nproc) * rank) + offset - pad[0]
-        i1 = round((length / nproc) * (rank + 1)) + offset + pad[1]
-        # Checking that i0 and i1 are still within the bounds of the dataset after
-        # padding.
-        if i0 < 0:
-            i0 = 0
-        if i1 > dataset.shape[1]:
-            i1 = dataset.shape[1]
-        data = dataset[slice_list[0], i0:i1:step, :]
-        return data
+            data = dataset[i0:i1:step, slice_list[1], slice_list[2]]
 
-
-def read_through_dim1(
-    file: str,
-    path: str,
-    preview: str = ":,:,:",
-    pad: Tuple = (0, 0),
-    comm: MPI.Comm = MPI.COMM_WORLD,
-) -> ndarray:
-    """Read a dataset in parallel, with each MPI process loading a block.
-
-    Parameters
-    ----------
-    file : str
-        Path to file containing the dataset.
-    path : str
-        Path to dataset within the file.
-    preview : str
-        Crop the data with a preview:
-    pad : Tuple
-        Pad the data by this number of slices.
-    comm : MPI.Comm
-        MPI communicator object.
-
-    Returns
-    -------
-    ndarray
-        ADD DESC
-    """
-    rank = comm.rank
-    nproc = comm.size
-    slice_list = get_slice_list_from_preview(preview)
-    with h5.File(file, "r", driver="mpio", comm=comm) as in_file:
-        dataset = in_file[path]
-        # Turning the preview into a length and offset. Data will be read from
-        # data[offset] to data[offset + length].
-        if slice_list[0] == slice(None):
-            length = dataset.shape[0]
-            offset = 0
-            step = 1
-        else:
-            start = 0 if slice_list[0].start is None else slice_list[0].start
-            stop = (
-                dataset.shape[0] if slice_list[0].stop is None else slice_list[0].stop
-            )
-            step = 1 if slice_list[0].step is None else slice_list[0].step
-            length = (
-                stop - start
-            ) // step  # Total length of the section of the dataset being read.
-            offset = start  # Offset where the dataset will start being read.
-        # Bounds of the data this process will load. Length is split between number of
-        # processes.
-        i0 = round((length / nproc) * rank) + offset - pad[0]
-        i1 = round((length / nproc) * (rank + 1)) + offset + pad[1]
-        # Checking that i0 and i1 are still within the bounds of the dataset after
-        # padding.
-        if i0 < 0:
-            i0 = 0
-        if i1 > dataset.shape[0]:
-            i1 = dataset.shape[0]
-        data = dataset[i0:i1:step, slice_list[1], slice_list[2]]
         return data
 
 
