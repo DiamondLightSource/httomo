@@ -1,6 +1,6 @@
-====================
+=============
 API reference
-====================
+=============
 
 This section contains the API reference and usage information for Methods.
 
