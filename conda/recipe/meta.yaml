@@ -12,6 +12,9 @@ build:
   number: 0
 
 test:
+  files:
+    - samples/*
+    - templates/*
   requires:
     - pip
     - pytest
