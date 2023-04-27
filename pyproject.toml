@@ -3,6 +3,7 @@ requires = ["setuptools>=42", "wheel", "setuptools-git-versioning"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
+include-package-data = true
 packages = ["httomo",
             "httomo.data",
             "httomo.data.hdf",
@@ -11,7 +12,7 @@ packages = ["httomo",
             "httomo._stats"]
 
 [tool.setuptools.package-data]
-httomo = ["*.yaml", "*.yml"]    # include yaml files
+httomo = ["*.yaml", "*.yml"]    # include yaml files from methods database
 
 [tool.setuptools-git-versioning]
 enabled = true
