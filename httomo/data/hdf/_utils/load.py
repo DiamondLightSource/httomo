@@ -433,7 +433,8 @@ def get_data_indices(
     image_key_path: str = "/entry1/instrument/image_key/image_key",
     comm: MPI.Comm = MPI.COMM_WORLD,
 ) -> List[int]:
-    """Get the indices of where the data is in a dataset.
+    """
+    Get the indices of where the data is in a dataset.
 
     Parameters
     ----------
@@ -451,11 +452,9 @@ def get_data_indices(
         indices where darks and flats are).
     """
     with h5.File(filepath, "r", driver="mpio", comm=comm) as f:
-        data_indices = []
-        for i, key in enumerate(f[image_key_path]):
-            if int(key) == 0:
-                data_indices.append(i)
-    return data_indices
+        data_indices = np.where(f[image_key_path][:] == 0)[0]
+
+    return data_indices.tolist()
 
 
 def get_slice_list_from_preview(preview: str) -> List[slice]:
