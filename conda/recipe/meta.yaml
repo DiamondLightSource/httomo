@@ -49,7 +49,7 @@ requirements:
     - pytest
 
 about:
-  home: https://github.com/dkazanc/HTTO
+  home: https://github.com/DiamondLightSource/httomo
   license: BSD 3-clause
   license_file: LICENSE
   summary: 'High Throughput Tomography framework'
