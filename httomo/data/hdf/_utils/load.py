@@ -110,13 +110,11 @@ def read_through_dim(
         i0, i1 = max(i0, 0), min(i1, dataset.shape[_dim])
 
         if dim == 3:
-            data = dataset[:, :, i0:i1:step]
+            return dataset[..., range(i0, i1, step)]
         elif dim == 2:
-            data = dataset[slice_list[0], i0:i1:step, :]
-        else:
-            data = dataset[i0:i1:step, slice_list[1], slice_list[2]]
+            return dataset[slice_list[0], range(i0, i1, step), :]
 
-        return data
+        return dataset[range(i0, i1, step), slice_list[1], slice_list[2]]
 
 
 def get_pad_values(
@@ -206,8 +204,7 @@ def get_angles(file: str, path: str, comm: MPI.Comm = MPI.COMM_WORLD) -> ndarray
         A numpy array containing the angles within the give dataset.
     """
     with h5.File(file, "r", driver="mpio", comm=comm) as file:
-        angles = file[path][...]
-    return angles
+        return file[path][...]
 
 
 def get_darks_flats_together(
@@ -255,14 +252,8 @@ def get_darks_flats_together(
         if darks_path is None and flats_path is None:
             # Get darks and flats from the same dataset within the same NeXuS
             # file
-            darks_indices = []
-            flats_indices = []
-            # Collect indices corresponding to darks and flats
-            for i, key in enumerate(file[image_key_path]):
-                if int(key) == 1:
-                    flats_indices.append(i)
-                elif int(key) == 2:
-                    darks_indices.append(i)
+            darks_indices = np.where(file[image_key_path][:] == 2)[0]
+            flats_indices = np.where(file[image_key_path][:] == 1)[0]
             dataset = file[data_path]
             darks = _get_darks_flats(dataset, darks_indices, dim, pad, preview, comm)
             flats = _get_darks_flats(dataset, flats_indices, dim, pad, preview, comm)
