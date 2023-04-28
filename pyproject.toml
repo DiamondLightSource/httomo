@@ -38,7 +38,7 @@ classifiers = [
 ]
 
 requires-python = ">=3.9"
-dynamic = ["version"]
+version = "0.0.1"
 dependencies = [
     "click",
     "cupy",

@@ -1,8 +1,11 @@
-{% set name = "httomo" %}
+{% set pyproject = load_file_data("../../pyproject.toml", from_recipe_dir=True) %}
+{% set proj = pyproject.get("project") %}
+{% set name = proj.get("name") %}
+{% set version = proj.get("version") %}
 
 package:
   name: {{ name|lower }}
-  version: {{ environ['VERSION'] }}
+  version: {{ version }}
 
 source:
   path: ../../
