@@ -102,8 +102,9 @@ def read_through_dim(
 
         # Bounds of the data this process will load. Length is split between number of
         # processes.
-        i0 = round((length / nproc) * rank) + offset - pad[0]
-        i1 = round((length / nproc) * (rank + 1)) + offset + pad[1]
+        term = length // nproc
+        i0 = (term * rank) + offset - pad[0]
+        i1 = (term * (rank + 1)) + offset + pad[1]
         # Checking that i0 and i1 are still within the bounds of the dataset after
         # padding.
         i0, i1 = max(i0, 0), min(i1, dataset.shape[_dim])
@@ -166,16 +167,15 @@ def get_pad_values(
         offset = 0
         step = 1
     else:
-        start = 0 if slice_list[0].start is None else slice_list[0].start
-        stop = dim_length if slice_list[0].stop is None else slice_list[0].stop
-        step = 1 if slice_list[0].step is None else slice_list[0].step
-        length = (
-            stop - start
-        ) // step  # Total length of the section of the dataset being read.
+        start = slice_list[0].start or 0
+        stop = slice_list[0].stop or dim_length
+        step = slice_list[0].step or 1
+        length = (stop - start) // step
         offset = start  # Offset where the dataset will start being read.
     # i0, i1 = range of the data this process will load..
-    i0 = round((length / nproc) * rank) + offset - pad
-    i1 = round((length / nproc) * (rank + 1)) + offset + pad
+    term = length // nproc
+    i0 = term * rank + offset - pad
+    i1 = term * (rank + 1) + offset + pad
     # Checking that after padding, the range is still within the bounds it should be.
     if i0 < bound0:
         pad0 = pad - (bound0 - i0)
@@ -186,49 +186,6 @@ def get_pad_values(
     else:
         pad1 = pad
     return pad0, pad1
-
-
-def get_num_chunks(filepath: str, path: str, comm: MPI.Comm) -> int:
-    """Gets the number of chunks in a file.
-
-    Parameters
-    ----------
-    filepath : str
-        The hdf5 file to read from.
-    path : str
-        The key of the dataset within the file.
-    comm : MPI.Comm
-        The MPI communicator.
-
-    Returns
-    -------
-    int
-        ADD DESC
-    """
-    with h5.File(filepath, "r", driver="mpio", comm=comm) as in_file:
-        dataset = in_file[path]
-        shape = dataset.shape
-        chunks = dataset.chunks
-
-    chunk_boundaries = [
-        [None] * (math.ceil(shape[i] / chunks[i]) + 1) for i in range(len(shape))
-    ]
-
-    # Creating a list of chunk boundaries in each dimension.
-    for dim in range(len(shape)):
-        boundary = 0
-        for i in range(len(chunk_boundaries[dim])):
-            if boundary > shape[dim]:
-                boundary = shape[dim]
-            chunk_boundaries[dim][i] = boundary
-            boundary += chunks[dim]
-
-    # Calculating number of chunks
-    nchunks = 1
-    for dim in range(len(chunk_boundaries)):
-        nchunks *= len(chunk_boundaries[dim]) - 1
-
-    return nchunks
 
 
 def get_angles(file: str, path: str, comm: MPI.Comm = MPI.COMM_WORLD) -> ndarray:
@@ -413,15 +370,15 @@ def _get_darks_flats(
             offset = 0
             step = 1
         else:
-            start = 0 if slice_list[1].start is None else slice_list[1].start
-            stop = (
-                dataset.shape[1] if slice_list[1].stop is None else slice_list[1].stop
-            )
-            step = 1 if slice_list[1].step is None else slice_list[1].step
+            start = slice_list[1].start or 0
+            stop = slice_list[1].stop or dataset.shape[1]
+            step = slice_list[1].step or 1
             length = (stop - start) // step
             offset = start
-        i0 = round((length / nproc) * rank) + offset
-        i1 = round((length / nproc) * (rank + 1)) + offset
+
+        term = length // nproc
+        i0 = term * rank + offset
+        i1 = term * (rank + 1) + offset
         data = [dataset[x][i0:i1:step][slice_list[2]] for x in indices]
     else:
         data = [dataset[x][slice_list[1], slice_list[2]] for x in indices]
