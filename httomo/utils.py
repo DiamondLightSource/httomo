@@ -13,7 +13,7 @@ class Colour:
     """
 
     LIGHT_BLUE = "\033[1;34m"
-    LIGHT_BLUE_BCKGR = '\033[1;44m'
+    LIGHT_BLUE_BCKGR = "\033[1;44m"
     BLUE = "\33[94m"
     CYAN = "\33[96m"
     GREEN = "\33[92m"

@@ -21,6 +21,7 @@ class LoaderData:
     detector_x: int
     detector_y: int
 
+
 @dataclass
 class LoaderData:
     data: ndarray

@@ -83,7 +83,7 @@ class MethodFunc:
     pattern: Pattern = Pattern.projection
     cpu: bool = True
     gpu: bool = False
-    reslice_ahead: bool = False    
+    reslice_ahead: bool = False
 
 
 @dataclass
@@ -197,7 +197,7 @@ def run_tasks(
 
     method_funcs = _check_if_should_reslice(method_funcs)
     platform_sections = _determine_platform_sections(method_funcs)
-    
+
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
     # sweeps
@@ -596,7 +596,7 @@ def _run_method(
         dict_params_method.pop("save_result", None),
     )
     misc_params[-2] = (["save_result"], save_result)
-    
+
     # Check if the input dataset should be resliced before the task runs
     should_reslice = current_func.reslice_ahead
     if should_reslice:
@@ -604,7 +604,6 @@ def _run_method(
         current_slice_dim = _get_slicing_dim(prev_func.pattern)
         next_slice_dim = _get_slicing_dim(current_func.pattern)
 
-    
     # the GPU wrapper should know if the reslice is needed to convert the result
     # to numpy from cupy array
     reslice_ahead = next_func.reslice_ahead if next_func is not None else False
