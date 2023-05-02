@@ -44,9 +44,11 @@ def standard_tomo(
         The path within the hdf/nxs file to the image key data.
     rotation_angles : optional, Dict
         A dict that can contain either
+
         - The path within the hdf/nxs file to the angles data
         - Start, stop, and the total number of angles info to generate a list of
           angles
+
     darks : optional, Dict
         A dict containing filepath and dataset information about the darks if
         they are not in the same dataset as the data.

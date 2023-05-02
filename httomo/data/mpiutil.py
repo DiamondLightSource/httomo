@@ -38,7 +38,7 @@ def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
     - be 3-dimensional
     - One of these dimensions must be the same lengths for all arrays across sent/received arrays
       (reslice maps from current slice dim to next slice dim and leaves the third dimension
-       untouched)
+      untouched)
 
     It picks this consistently-sized dimension and creates a new contiguous MPI data type
     of that length. Then the sizes are divided by this length, which should make it fit in all
