@@ -241,6 +241,7 @@ class BaseWrapper:
             raise ValueError(("Invalid method name {}".format(method_name)))
             return rot_center
 
+
 class TomoPyWrapper(BaseWrapper):
     """A class that wraps TomoPy functions for httomo"""
 
@@ -310,7 +311,8 @@ class HttomolibWrapper(BaseWrapper):
     def calc_max_slices(
         self,
         slice_dim: int,
-        other_dims: Tuple[int, int],
+        non_slice_dims_shape: Tuple[int, int],
+        output_dims: Tuple[int, int],
         dtype: np.dtype,
         available_memory: int,
     ) -> Tuple[int, np.dtype]:
@@ -329,7 +331,12 @@ class HttomolibWrapper(BaseWrapper):
                 default_args[name] = par.default
         kwargs = {**default_args, **self.dict_params}
         return self.meta.calc_max_slices(
-            slice_dim, other_dims, dtype, available_memory, **kwargs
+            slice_dim, 
+            non_slice_dims_shape,
+            output_dims,
+            dtype,
+            available_memory,
+            **kwargs
         )
 
     def _execute_images(
