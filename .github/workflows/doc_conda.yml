@@ -1,0 +1,51 @@
+name: HTTomo doc test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - documentation
+  push:
+    branches:
+      - main
+      - documentation
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+        - name: Checkout repository code
+          uses: actions/checkout@v3
+
+        - name: Setup Python 3.9
+          uses: actions/setup-python@v3
+          with:
+            python-version: 3.9
+
+        - name: httomo
+          uses: conda-incubator/setup-miniconda@v2
+          with:
+            auto-update-conda: false
+            activate-environment: httomo
+            environment-file: ./docs/source/doc-conda-requirements.yml
+
+        - name: rm api
+          run: rm -rf ./docs/source/api/
+
+        - name: rm build
+          run: rm -rf ./docs/build/
+
+        - name: Build api docs
+          run: sphinx-apidoc -feT -t=./docs/source/_templates -o ./docs/source/api ./httomo
+
+        - name: Generate yml docs
+          run: python ./docs/source/yaml_doc_generator.py
+
+        - name: Build html
+          run: sphinx-build -a -E -b html ./docs/source/ ./docs/build/
+
+        - name: Run ghp-import
+          run: ghp-import -n -p -f ./docs/build

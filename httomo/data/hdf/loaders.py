@@ -6,7 +6,7 @@ from mpi4py.MPI import Comm
 from numpy import asarray, deg2rad, ndarray, arange, linspace
 
 from httomo.data.hdf._utils import load
-from httomo.utils import _parse_preview, print_once, print_rank
+from httomo.utils import _parse_preview, log_once, log_rank, Colour
 
 
 def standard_tomo(
@@ -44,9 +44,11 @@ def standard_tomo(
         The path within the hdf/nxs file to the image key data.
     rotation_angles : optional, Dict
         A dict that can contain either
+
         - The path within the hdf/nxs file to the angles data
         - Start, stop, and the total number of angles info to generate a list of
           angles
+
     darks : optional, Dict
         A dict containing filepath and dataset information about the darks if
         they are not in the same dataset as the data.
@@ -64,7 +66,12 @@ def standard_tomo(
         shape = dataset.shape
 
     if comm.rank == 0:
-        print("\033[33m" + f"The full dataset shape is {shape}" + "\033[0m")
+        log_once(
+            f"The full dataset shape is {shape}",
+            comm=comm,
+            colour=Colour.LYELLOW,
+            level=1,
+        )
 
     # Get indices in data which contain projections
     if image_key_path is not None:
@@ -104,7 +111,7 @@ def standard_tomo(
         preview=preview_str,
         comm=comm,
     )
-    print_rank(f"Pad values are {pad_values}.", comm)
+    log_rank(f"Pad values are {pad_values}.", comm)
     data = load.load_data(
         in_file, dim, data_path, preview=preview_str, pad=pad_values, comm=comm
     )
@@ -145,7 +152,7 @@ def standard_tomo(
     flats = asarray(flats)
 
     (angles_total, detector_y, detector_x) = data.shape
-    print_rank(
+    log_rank(
         f"Data shape is {(angles_total, detector_y, detector_x)}"
         + f" of type {data.dtype}",
         comm,

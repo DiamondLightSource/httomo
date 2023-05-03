@@ -1,4 +1,4 @@
-from importlib.metadata import version, PackageNotFoundError
+from importlib_metadata import version, PackageNotFoundError
 
 __all__ = ["__version__"]
 
