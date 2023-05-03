@@ -1,31 +1,33 @@
-HTTOmo (High Throughput Tomography pipeline)
+HTTomo (High Throughput Tomography pipeline)
 ******************************************
 
-* A Python tool for parallel read of HDF5 tomographic data using MPI protocols
-* The data can be re-chunked, saved and re-loaded (e.g. projection or sinogram-wise)
-* All `TomoPy <https://tomopy.readthedocs.io>`_ functions are exposed through YAML templates enabling fast task programming
+* A user interface (UI) written in Python for fast big data processing using MPI protocols
+* HTTomo efficiently deals with I/O data operations while enabling processing on a CPU or a GPU
+* The GPU processing can be performed purely on a device by grouping the methods together
+* HTTomo can use other libraries as a backend. Currently we support `TomoPy <https://tomopy.readthedocs.io>`_ and `HTTomolib <https://github.com/DiamondLightSource/httomolib>`_
+* The methods from the libraries are exposed through `YAML templates <https://github.com/DiamondLightSource/httomo/tree/main/templates>`_ enabling fast task programming
 
-Setup a Development Environment:
-================================
-* Clone the repository from GitHub using :code:`git clone git@github.com:DiamondLightSource/HTTomo.git`
-* Install dependencies from the environment file :code:`conda env create --file conda/environment.yml` (SLOW)
-* Alternatively you can install from the existing explicit file :code:`conda create --name httomo --file conda/explicit/latest.txt`
-* Activate the environment with :code:`conda activate httomo`
-* Install the enviroment in development mode with :code:`pip install -e .[dev]`
-
+Install HTTomo as a pre-built conda Python package
+==========================
+* Create a fresh conda environment with :code:`conda env create --name httomo`
+* This will install all the dependencies required into :code:`conda install -c conda-forge -c https://conda.anaconda.org/httomo/ httomo`
 
 Install as a Python module
 ==========================
-
+* Clone the repository from GitHub using :code:`git clone git@github.com:DiamondLightSource/HTTomo.git`
+* Install dependencies from the environment file :code:`conda env create --name httomo --file conda/environment.yml`. We suggest on using **mamba** in order to accelerate the resolving time, i.e., :code:`conda install -c conda-forge mamba` and then :code:`mamba env create --name httomo --file conda/environment.yml`.
+* Alternatively you can install from the existing explicit file :code:`conda create --name httomo --file conda/explicit/latest.txt`
+* Activate the environment with :code:`conda activate httomo`
 * You should choose which backend(s) you'd like to use - either :code:`tomopy` or :code:`httomolib`, or both
 * Install the module + backend(s) with :code:`pip install .[httomolib,tomopy]`
 
-Install as a conda Python package
+Setup a Development Environment:
+================================
+* working with the package in the development mode with :code:`pip install -e .[dev]`
+
+Build HTTomo as a conda Python package
 ==========================
-
-* :code:`export VERSION=1.0`
-* :code:`conda build conda/recipe/ --python 3.10 --numpy 1.23 -c conda-forge`
-
+* :code:`conda build conda/recipe/ -c conda-forge -c https://conda.anaconda.org/httomo/`
 
 Running the code:
 =================

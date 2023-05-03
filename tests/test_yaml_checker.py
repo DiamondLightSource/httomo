@@ -38,7 +38,7 @@ def test_one_method_per_module(more_than_one_method):
         "gpu_pipeline",
         "multi_input_pipeline",
         "sweep_pipeline",
-        "incorrect_path"
+        "incorrect_path",
     ],
 )
 def test_validate_yaml_config(sample_pipelines, yaml_file, standard_data, expected):
