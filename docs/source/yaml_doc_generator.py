@@ -123,7 +123,7 @@ def add_tomopy_link(edit_doc, rst_name):
     """
     if "tomopy" in rst_name:
         # If it is a tomopy module, insert a link.
-        url = "https://tomopy.readthedocs.io/en/stable/api/"
+        url = "https://tomopy.readthedocs.io/en/v1.14.0/api/"
         edit_doc.write(f"\n{url}{rst_name}.html\n\n")
 
 
