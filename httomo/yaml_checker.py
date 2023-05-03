@@ -161,7 +161,7 @@ def validate_yaml_config(yaml_file, in_file: str = None) -> bool:
         loader_params = next(iter(methods[0].values()))
         _path_keys = [key for key in loader_params if "_path" in key]
         for key in _path_keys:
-            if loader_params[key].strip('/') not in hdf5_members:
+            if loader_params[key].strip("/") not in hdf5_members:
                 _print_with_colour(
                     f"'{loader_params[key]}' is not a valid path to a dataset in YAML_CONFIG. "
                     "Please recheck the yaml file."
