@@ -65,9 +65,15 @@ def create_yaml_dropdown(doc_dir, root, files):
 
     for fi in files:
         t_name = f"{template_dir}/{fi}"
+        f_name = fi.split('.yaml')[0]
+        url = f"https://tomopy.readthedocs.io/en/stable/api/{rst_name}" \
+              f".html#{rst_name}.{f_name}"
         with open(doc_rst_file, "a") as edit_doc:
             edit_doc.write(f"\n\n.. dropdown:: {fi}")
-            edit_doc.write(f"\n\n    :download:`Download <{t_name}>`")
+            edit_doc.write(f"\n\n    :download:`Download <{t_name}>`\n\n")
+            if 'tomopy' in t_name:
+                edit_doc.write(f"    |link_icon| `Link to {f_name}"
+                               f" function description <{url}>`_")
             edit_doc.write(f"\n\n    .. literalinclude:: {t_name}")
 
 
@@ -98,6 +104,7 @@ def add_title(edit_doc, rst_name):
     rst_name : str
         name of rst file.
     """
+    edit_doc.write(f"   .. |link_icon| unicode:: U+1F517\n\n")
     title = f":mod:`{rst_name}`"
     edit_doc.write(f"{title}\n")
     underline = len(title) * "="
