@@ -6,10 +6,12 @@ on:
     branches:
       - main
       - documentation
+      - docs
   push:
     branches:
       - main
       - documentation
+      - docs
 jobs:
   build-linux:
     runs-on: ubuntu-latest
