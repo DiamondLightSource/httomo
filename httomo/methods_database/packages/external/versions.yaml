@@ -1,0 +1,7 @@
+# This file covers the supported and the current versions of external packages
+tomopy:
+  current:
+  - 1.14
+httomolib:
+  current:
+  - 1.0

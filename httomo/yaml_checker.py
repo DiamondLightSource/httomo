@@ -6,7 +6,7 @@ import os
 import yaml
 from typing import Any
 from httomo.utils import Colour
-from httomo.yaml_utils import open_yaml_config
+from httomo.yaml_utils import get_external_package_current_version, open_yaml_config
 
 __all__ = [
     "check_one_method_per_module",
@@ -126,7 +126,12 @@ def validate_yaml_config(yaml_file, in_file: str = None) -> bool:
 
     modules = [next(iter(d)) for d in yaml_data]
     methods = [next(iter(d.values())) for d in yaml_data]
-    packages = [m.split(".")[0] for m in modules]
+    packages = [
+        m.split(".")[0] + "/" + get_external_package_current_version(m.split(".")[0])
+        if m.split(".")[0] != "httomo"
+        else m.split(".")[0]
+        for m in modules
+    ]
 
     #: the first method is always a loader
     #: so `testing_pipeline.yaml` should not pass.
@@ -217,6 +222,15 @@ def validate_yaml_config(yaml_file, in_file: str = None) -> bool:
                 if parameter not in d2[key].keys():
                     _print_with_colour(
                         f"Parameter '{parameter}' in the '{modules[i]}' method is not valid."
+                    )
+                    return False
+
+                # there should be no REQUIRED parameters in the YAML_CONFIG file
+                if d1[key][parameter] == "REQUIRED":
+                    _print_with_colour(
+                        f"A value is needed for the parameter '{parameter}' in the '{modules[i]}' method."
+                        " Please specify a value instead of 'REQUIRED'."
+                        " Refer to the method docstring for more information."
                     )
                     return False
 
