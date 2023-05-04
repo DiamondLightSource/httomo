@@ -1,8 +1,8 @@
-=============
-API reference
-=============
+==========================
+YAML Templates
+==========================
 
-This section contains the API reference and usage information for Methods.
+This section contains YAML templates that HTTomo currently support.
 
 TomoPy Modules
 ---------------
@@ -12,7 +12,7 @@ v.1.14
 .. toctree::
    :glob:
 
-   api/tomopy*
+   ../api/tomopy*
 
 HTTomoLib Modules
 ------------------
@@ -22,7 +22,7 @@ v.1.0
 .. toctree::
    :glob:
 
-   api/httomolib*
+   ../api/httomolib*
 
 HTTomo
 ------------------
@@ -31,4 +31,4 @@ HTTomo
    :glob:
    :maxdepth: 1
 
-   api/*load*
+   ../api/*load*

@@ -1,11 +1,13 @@
 HTTomo (High Throughput Tomography pipeline)
 *******************************************************
 
-* A user interface (UI) written in Python for fast big data processing using MPI protocols
-* HTTomo efficiently deals with I/O data operations while enabling processing on a CPU or a GPU
-* The GPU processing can be performed purely on a device by grouping the methods together
-* HTTomo can use other libraries as a backend. Currently we support `TomoPy <https://tomopy.readthedocs.io>`_ and `HTTomolib <https://github.com/DiamondLightSource/httomolib>`_
-* The methods from the libraries are exposed through `YAML templates <https://github.com/DiamondLightSource/httomo/tree/main/templates>`_ enabling fast task programming
+HTTomo is a user interface (UI) written in Python for fast big data processing using MPI protocols. 
+It orchestrates I/O data operations and enables processing on a CPU and/or a GPU. HTTomo utilises other libraries, such as `TomoPy <https://tomopy.readthedocs.io>`_ and `HTTomolib <https://github.com/DiamondLightSource/httomolib>`_
+as backends for data processing. The methods from the libraries are exposed through `YAML templates <https://github.com/DiamondLightSource/httomo/tree/main/templates>`_ to enable fast task programming.
+
+Documentation
+==============
+Please check the full documentation `here <https://diamondlightsource.github.io/httomo/>`_.
 
 Install HTTomo as a pre-built conda Python package
 ======================================================

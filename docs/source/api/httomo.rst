@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    httomo.data
+   httomo.methods_database
 
 Submodules
 ----------
@@ -17,9 +18,12 @@ Submodules
 
    httomo.cli
    httomo.common
+   httomo.globals
+   httomo.logger
    httomo.task_runner
    httomo.utils
    httomo.wrappers_class
+   httomo.yaml_checker
    httomo.yaml_utils
 
 Module contents
