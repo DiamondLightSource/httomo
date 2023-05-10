@@ -44,7 +44,16 @@ def test_tomo_standard_testing_pipeline_output(
 
     # recurse through output_dir and check that all files are there
     files = read_folder("output_dir/")
-    assert len(files) == 5
+    assert len(files) == 6
+
+    # check that the contents of the copied YAML in the output directory matches
+    # the contents of the input YAML
+    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
+    with open("temp.yaml", "r") as original_yaml:
+        original_text = original_yaml.read()
+    with open(copied_yaml_path, "r") as copied_yaml:
+        copied_text = copied_yaml.read()
+    assert copied_text == original_text
 
     # check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -96,7 +105,16 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
-    assert len(files) == 8
+    assert len(files) == 9
+
+    # check that the contents of the copied YAML in the output directory matches
+    # the contents of the input YAML
+    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
+    with open("temp.yaml", "r") as original_yaml:
+        original_text = original_yaml.read()
+    with open(copied_yaml_path, "r") as copied_yaml:
+        copied_text = copied_yaml.read()
+    assert copied_text == original_text
 
     # check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -133,7 +151,16 @@ def test_diad_testing_pipeline_output(
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
-    assert len(files) == 7
+    assert len(files) == 8
+
+    # check that the contents of the copied YAML in the output directory matches
+    # the contents of the input YAML
+    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
+    with open("temp.yaml", "r") as original_yaml:
+        original_text = original_yaml.read()
+    with open(copied_yaml_path, "r") as copied_yaml:
+        copied_text = copied_yaml.read()
+    assert copied_text == original_text
 
     #: check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))

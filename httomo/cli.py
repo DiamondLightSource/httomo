@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
+from shutil import copy
 
 import click
 
@@ -109,6 +110,9 @@ def main(
     if comm.rank == 0:
         # Setup global logger object
         httomo.globals.logger = setup_logger(httomo.globals.run_out_dir)
+
+        # Copy YAML pipeline file to output directory
+        copy(yaml_config, httomo.globals.run_out_dir)
 
     if ctx.invoked_subcommand is None:
         click.echo(main.get_help(ctx))
