@@ -4,6 +4,7 @@ import subprocess
 
 import h5py
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 from PIL import Image
 import glob
@@ -33,6 +34,7 @@ def read_folder(folder):
     return files
 
 
+@pytest.mark.cupy
 def test_tomo_standard_testing_pipeline_output(
     cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
 ):
@@ -87,6 +89,7 @@ def test_tomo_standard_testing_pipeline_output(
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
+@pytest.mark.cupy
 def test_tomo_standard_testing_pipeline_output_with_save_all(
     cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
 ):
@@ -124,6 +127,7 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
                 np.testing.assert_almost_equal(np.sum(f["data"]), -362.73358, decimal=4)
 
 
+@pytest.mark.cupy
 def test_diad_testing_pipeline_output(
     cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
 ):
@@ -184,6 +188,7 @@ def test_diad_testing_pipeline_output(
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
+@pytest.mark.cupy
 def test_sweep_range_pipeline_with_step_absent(
     cmd, standard_data, sample_pipelines, output_folder
 ):

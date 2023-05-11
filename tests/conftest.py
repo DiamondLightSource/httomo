@@ -12,6 +12,7 @@ import yaml
 def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
     config.addinivalue_line("markers", "perf: mark test as performance test")
+    config.addinivalue_line("markers", "cupy: needs cupy to run")
 
 
 def pytest_addoption(parser):
