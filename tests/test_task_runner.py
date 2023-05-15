@@ -125,9 +125,9 @@ def test_determine_platform_sections_pattern_all_combine(
 
 
 def test_platform_section_max_slices():
-    max_slices_20 = mock.Mock(return_value=(20, np.float32()))
-    max_slices_50 = mock.Mock(return_value=(50, np.float32()))
-    max_slices_30 = mock.Mock(return_value=(30, np.float32()))
+    max_slices_20 = mock.Mock(return_value=(20, np.float32(), (24, 42)))
+    max_slices_50 = mock.Mock(return_value=(50, np.float32(), (24, 42)))
+    max_slices_30 = mock.Mock(return_value=(30, np.float32(), (24, 42)))
     section = PlatformSection(
         gpu=True,
         pattern=Pattern.projection,
@@ -150,7 +150,9 @@ def test_platform_section_max_slices():
     with mock.patch(
         "httomo.task_runner._get_available_gpu_memory", return_value=100000
     ):
-        dtype = _update_max_slices(section, (1000, 24, 42), np.uint8())
+        dtype, output_dims = _update_max_slices(section,
+                                                (1000, 24, 42),
+                                                np.uint8())
 
     assert section.max_slices == 20
     assert dtype == np.float32()

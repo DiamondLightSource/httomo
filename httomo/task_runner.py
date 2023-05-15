@@ -1344,36 +1344,41 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
 def _update_max_slices(
     section: PlatformSection,
     process_data_shape: Optional[Tuple[int, int, int]],
-    input_data_type: Optional[np.dtype],
-):
+    input_data_type: Optional[np.dtype]
+) -> Tuple[np.dtype, Tuple[int, int]]:
     # section before loader - we don't know these shapes yet
     # TODO: make sure loader goes into its own section
     if process_data_shape is None or input_data_type is None:
         return
     if section.pattern == Pattern.sinogram:
         slice_dim = 1
-        other_dims = (process_data_shape[0], process_data_shape[2])
+        non_slice_dims_shape = (process_data_shape[0], process_data_shape[2])
     elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
         # TODO: what if all methods in a section are pattern.all
         slice_dim = 0
-        other_dims = (process_data_shape[1], process_data_shape[2])
+        non_slice_dims_shape = (process_data_shape[1], process_data_shape[2])
     else:
         # this should not happen if data type is indeed the enum
         raise ValueError("Invalid pattern {}".format(section.pattern))
     max_slices = process_data_shape[slice_dim]
     data_type = input_data_type
+    output_dims = non_slice_dims_shape
     if section.gpu:
         available_memory = _get_available_gpu_memory(10.0)
         for m in section.methods:
             if m.calc_max_slices is not None:
-                slices, data_type = m.calc_max_slices(
-                    slice_dim, other_dims, data_type, available_memory
+                (slices, data_type, output_dims) = m.calc_max_slices(
+                    slice_dim,
+                    non_slice_dims_shape,
+                    data_type,
+                    available_memory
                 )
                 max_slices = min(max_slices, slices)
+            non_slice_dims_shape = output_dims # overwrite input dims with estimated output ones
     else:
         # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
         pass
 
     section.max_slices = max_slices
     # TODO: don't return this - use the actual data's data type in the next section
-    return data_type
+    return data_type, output_dims
