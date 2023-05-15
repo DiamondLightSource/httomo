@@ -238,8 +238,9 @@ class BaseWrapper:
             )
             return (rot_center, overlap, side, overlap_position)
         else:
-            raise ValueError(("Invalid method name {}".format(method_name)))
-            return rot_center
+            err_str = f"Invalid method name: {method_name}"
+            log_exception(err_str)
+            raise ValueError(err_str)
 
 
 class TomoPyWrapper(BaseWrapper):
@@ -312,15 +313,13 @@ class HttomolibWrapper(BaseWrapper):
         self,
         slice_dim: int,
         non_slice_dims_shape: Tuple[int, int],
-        output_dims: Tuple[int, int],
         dtype: np.dtype,
         available_memory: int,
-    ) -> Tuple[int, np.dtype]:
+    ) -> Tuple[int, np.dtype, Tuple[int, int]]:
         # if the function does not support GPU, we return a very large value (as we don't
         # care about limiting slices for CPU memory for now)
         if not self.cupyrun:
-            return 1000000000, dtype
-        
+            return 1000000000, dtype, non_slice_dims_shape
         # first we need to find the default argument value from the method meta info,
         # before overriding those that are given (from YAML), for the kwargs arguments
         # to calc_max_slices
@@ -333,7 +332,6 @@ class HttomolibWrapper(BaseWrapper):
         return self.meta.calc_max_slices(
             slice_dim, 
             non_slice_dims_shape,
-            output_dims,
             dtype,
             available_memory,
             **kwargs

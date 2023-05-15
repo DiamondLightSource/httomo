@@ -80,6 +80,7 @@ def get_method_info(module_path: str, method_name: str, attr: str):
 
     if not yaml_versions_path.exists():
         err_str = f"The YAML file {yaml_versions_path} doesn't exist."
+        log_exception(err_str)
         raise ValueError(err_str)
 
     with open(yaml_versions_path, "r") as f:
