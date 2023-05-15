@@ -1,6 +1,4 @@
 import multiprocessing
-from datetime import datetime
-from os import mkdir
 from pathlib import Path
 import time
 from typing import List, Dict, Optional, Tuple, Union
@@ -12,7 +10,9 @@ from numpy import ndarray
 import numpy as np
 from mpi4py import MPI
 
-from httomo.utils import print_once, Pattern, _get_slicing_dim, Colour
+import httomo.globals
+from httomo.common import remove_ansi_escape_sequences
+from httomo.utils import log_once, Pattern, _get_slicing_dim, Colour, log_exception
 from httomo.yaml_utils import open_yaml_config
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf._utils.chunk import save_dataset, get_data_shape
@@ -20,7 +20,6 @@ from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
 from httomo._stats.globals import min_max_mean_std
 from httomo.methods_database.query import get_method_info
 from httomolib.misc.images import save_to_images
-
 
 # TODO: Define a list of savers which have no output dataset and so need to
 # be treated differently to other methods. Probably should be handled in a
@@ -43,14 +42,13 @@ from httomo.wrappers_class import HttomolibWrapper
 def run_tasks(
     in_file: Path,
     yaml_config: Path,
-    out_dir: Path,
     dimension: int,
     pad: int = 0,
     ncore: int = 1,
     save_all: bool = False,
     reslice_dir: Optional[Path] = None,
 ) -> None:
-    """Run the tomopy pipeline defined in the YAML config file
+    """Run the pipeline defined in the YAML config file
 
     Parameters
     ----------
@@ -58,8 +56,6 @@ def run_tasks(
         The file to read data from.
     yaml_config : Path
         The file containing the processing pipeline info as YAML.
-    out_dir : Path
-        The directory to write data to.
     dimension : int
         The dimension to slice in.
     pad : int
@@ -74,11 +70,6 @@ def run_tasks(
         should be done in-memory.
     """
     comm = MPI.COMM_WORLD
-    run_out_dir = out_dir.joinpath(
-        f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
-    )
-    if comm.rank == 0:
-        mkdir(run_out_dir)
     if comm.size == 1:
         # use all available CPU cores if not an MPI run
         ncore = multiprocessing.cpu_count()
@@ -139,11 +130,20 @@ def run_tasks(
             f"There are {no_of_sweeps} parameter sweeps in the "
             f"pipeline, but a maximum of {MAX_SWEEPS} is supported."
         )
+        log_exception(err_str)
         raise ValueError(err_str)
 
     # start MPI timer for rank 0
     if comm.rank == 0:
         start_time = MPI.Wtime()
+
+    #: add to the console and log file, the full path to the user.log file
+    log_once(
+        f"See the full log file at: {httomo.globals.run_out_dir}/user.log",
+        comm,
+        colour=Colour.CYAN,
+        level=0,
+    )
 
     # Run the methods
     for idx, (
@@ -158,10 +158,11 @@ def run_tasks(
         task_no_str = f"Running task {idx+1}"
         task_end_str = task_no_str.replace("Running", "Finished")
         pattern_str = f"(pattern={func_method.pattern.name})"
-        print_once(
+        log_once(
             f"{task_no_str} {pattern_str}: {method_name}...",
             comm,
             colour=Colour.LIGHT_BLUE,
+            level=0,
         )
         start = time.perf_counter_ns()
         if is_loader:
@@ -194,8 +195,9 @@ def run_tasks(
                 (["flats"], flats),
                 (["angles", "angles_radians"], angles),
                 (["comm"], comm),
-                (["out_dir"], run_out_dir),
-                (["reslice_ahead"], "False"),
+                (["out_dir"], httomo.globals.run_out_dir),
+                (["save_result"], False),
+                (["reslice_ahead"], False),
             ]
         else:
             # check if the module needs the ncore parameter and add it
@@ -215,34 +217,36 @@ def run_tasks(
                 method_funcs[idx][1],
                 method_funcs[idx - 1][1],
                 dict_datasets_pipeline,
-                run_out_dir,
+                httomo.globals.run_out_dir,
                 glob_stats[idx],
                 comm,
                 reslice_counter,
                 has_reslice_warn_printed,
                 reslice_bool_list,
-                reslice_dir
+                reslice_dir,
             )
 
         stop = time.perf_counter_ns()
         output_str_list = [
-            f"{task_end_str} {pattern_str}: {method_name} (",
+            f"    {task_end_str} {pattern_str}: {method_name} (",
             package,
             f") Took {float(stop-start)*1e-6:.2f}ms",
         ]
         output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
-        print_once(output_str_list, comm=comm, colour=output_colour_list)
+        log_once(output_str_list, comm=comm, colour=output_colour_list)
 
-    # Print the number of reslice operations peformed in the pipeline
+    # Log the number of reslice operations peformed in the pipeline
     reslice_summary_str = f"Total number of reslices: {reslice_counter}"
     reslice_summary_colour = Colour.BLUE if reslice_counter <= 1 else Colour.RED
-    print_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour)
+    log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
 
     elapsed_time = 0
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
-        end_str = f"\n\n~~~ Pipeline finished ~~~\nTook {elapsed_time} sec to run!"
-        print_once(end_str, comm=comm, colour=Colour.BVIOLET)
+        end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
+        log_once(end_str, comm=comm, colour=Colour.BVIOLET)
+        #: remove ansi escape sequences from the log file
+        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
 
 
 def _initialise_datasets(
@@ -407,6 +411,7 @@ def _get_method_funcs(
             err_str = (
                 f"An unknown module name was encountered: " f"{split_module_name[0]}"
             )
+            log_exception(err_str)
             raise ValueError(err_str)
 
     return method_funcs
@@ -431,7 +436,7 @@ def _run_method(
     reslice_counter: int,
     has_reslice_warn_printed: bool,
     reslice_bool_list: List[bool],
-    reslice_dir: Optional[Path] = None
+    reslice_dir: Optional[Path] = None,
 ) -> Tuple[bool, bool]:
     """Run a method function in the processing pipeline.
 
@@ -487,8 +492,11 @@ def _run_method(
         enable the information to persist across method executions.
     """
     save_result = _check_save_result(
-        task_idx, no_of_tasks, module_path, save_all,
-        dict_params_method.pop("save_result", None)
+        task_idx,
+        no_of_tasks,
+        module_path,
+        save_all,
+        dict_params_method.pop("save_result", None),
     )
 
     # Check if the input dataset should be resliced before the task runs
@@ -505,11 +513,12 @@ def _run_method(
         if task_idx < len(reslice_bool_list) - 1
         else "False"
     )
+    misc_params[-2] = (["save_result"], save_result)
     # reslice_ahead must be the last item in the list
     misc_params[-1] = (["reslice_ahead"], reslice_ahead)
 
     if reslice_counter > 1 and not has_reslice_warn_printed:
-        print_once(reslice_warn_str, comm=comm, colour=Colour.RED)
+        log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
         has_reslice_warn_printed = True
 
     # extra params unrelated to wrapped packages but related to httomo added
@@ -556,7 +565,8 @@ def _run_method(
                 data_out = data_in
             else:
                 err_str = "Invalid in/out dataset parameters"
-                raise ValueError(err_str)
+                log_exception(err_str)
+                raise ValueError(err_s
         else:
             data_in = [dict_params_method.pop("data_in")]
             data_out = [None]
@@ -599,6 +609,7 @@ def _run_method(
         if method_name in SAVERS_NO_DATA_OUT_PARAM:
             if current_param_sweep:
                 err_str = f"Parameters sweeps on savers is not supported"
+                log_exception(err_str)
                 raise ValueError(err_str)
             else:
                 if type(dict_datasets_pipeline[in_dataset]) is list:
@@ -636,6 +647,7 @@ def _run_method(
                 f"Parameter sweeps on methods with multiple output "
                 f"datasets is not supported"
             )
+            log_exception(err_str)
             raise ValueError(err_str)
 
         # TODO: Not yet able to run a method that produces multiple output
@@ -649,6 +661,7 @@ def _run_method(
                 f"Running a method that produces mutliple outputs on "
                 f"the result of a parameter sweep is not supported"
             )
+            log_exception(err_str)
             raise ValueError(err_str)
 
         # Create a list to store the result of the different parameter values
@@ -684,11 +697,7 @@ def _run_method(
                     )
                 else:
                     resliced_data, _ = reslice_filebased(
-                        arr,
-                        current_slice_dim,
-                        next_slice_dim,
-                        comm,
-                        reslice_dir
+                        arr, current_slice_dim, next_slice_dim, comm, reslice_dir
                     )
                 # Store the resliced input
                 if type(dict_datasets_pipeline[in_dataset]) is list:
@@ -708,23 +717,26 @@ def _run_method(
             # Run the method
             if method_name in SAVERS_NO_DATA_OUT_PARAM:
                 _run_method_wrapper(
-                    func_wrapper, method_name, dict_params_method,
-                    dict_httomo_params
+                    func_wrapper, method_name, dict_params_method, dict_httomo_params
                 )
             else:
                 if current_param_sweep:
                     for val in param_sweep_vals:
                         dict_params_method[param_sweep_name] = val
                         res = _run_method_wrapper(
-                            func_wrapper, method_name, dict_params_method,
-                            dict_httomo_params
+                            func_wrapper,
+                            method_name,
+                            dict_params_method,
+                            dict_httomo_params,
                         )
                         out.append(res)
                     dict_datasets_pipeline[out_dataset] = out
                 else:
                     res = _run_method_wrapper(
-                        func_wrapper, method_name, dict_params_method,
-                        dict_httomo_params
+                        func_wrapper,
+                        method_name,
+                        dict_params_method,
+                        dict_httomo_params,
                     )
                     # Store the output(s) of the method in the appropriate
                     # dataset in the `dict_datasets_pipeline` dict
@@ -745,7 +757,6 @@ def _run_method(
             # output which handles saving the result
             return reslice_counter, has_reslice_warn_printed, glob_stats
 
-        print_once(method_name, comm)
         # TODO: The dataset saving functionality only supports 3D data
         # currently, so check that the dimension of the data is 3 before
         # saving it
@@ -1202,6 +1213,7 @@ def _assign_pattern_to_method(
             f"The pattern {pattern_str} that is listed for the method "
             f"{module_path} is invalid."
         )
+        log_exception(err_str)
         raise ValueError(err_str)
 
     func_method.pattern = pattern

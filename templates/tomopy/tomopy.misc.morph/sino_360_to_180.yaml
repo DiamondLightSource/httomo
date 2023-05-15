@@ -1,7 +1,0 @@
-- tomopy.misc.morph:
-    sino_360_to_180:
-      data_in: tomo
-      data_out: tomo
-      data: REQUIRED
-      overlap: 0
-      rotation: left

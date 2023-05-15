@@ -1,5 +1,0 @@
-- tomopy.recon.rotation:
-    mask_empty_slice:
-      data_in: tomo
-      data_out: tomo
-      threshold: 0.25

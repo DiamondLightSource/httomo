@@ -12,6 +12,7 @@ import yaml
 def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
     config.addinivalue_line("markers", "perf: mark test as performance test")
+    config.addinivalue_line("markers", "cupy: needs cupy to run")
 
 
 def pytest_addoption(parser):
@@ -87,6 +88,16 @@ def diad_loader():
 @pytest.fixture
 def standard_loader():
     return "samples/loader_configs/standard_tomo.yaml"
+
+
+@pytest.fixture
+def more_than_one_method():
+    return "samples/pipeline_template_examples/testing/more_than_one_method.yaml"
+
+
+@pytest.fixture
+def sample_pipelines():
+    return "samples/pipeline_template_examples/"
 
 
 @pytest.fixture
