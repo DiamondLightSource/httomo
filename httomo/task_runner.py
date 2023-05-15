@@ -102,7 +102,6 @@ def run_tasks(
         func_method,
         func_wrapper,
         dict_params_method,
-        is_loader,
     ) in enumerate(method_funcs):
         func_method = _assign_pattern_to_method(
             func_method, module_path, dict_params_method["method_name"]
@@ -112,17 +111,16 @@ def run_tasks(
             func_method,
             func_wrapper,
             dict_params_method,
-            is_loader,
         )
 
     # get a list with booleans to identify when reslicing needed
-    patterns = [f.pattern for (_, f, _, _, _) in method_funcs]
+    patterns = [f.pattern for (_, f, _, _) in method_funcs]
     reslice_bool_list = _check_if_should_reslice(patterns)
 
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
     # sweeps
-    params = [param_dict for (_, _, _, param_dict, _) in method_funcs]
+    params = [param_dict for (_, _, _, param_dict) in method_funcs]
     no_of_sweeps = sum(map(_check_params_for_sweep, params))
 
     if no_of_sweeps > MAX_SWEEPS:
@@ -145,17 +143,68 @@ def run_tasks(
         level=0,
     )
 
+    method_funcs[0][3].update(dict_loader_extra_params)
+
+    # Check if a value for the `preview` parameter of the loader has
+    # been provided
+    if "preview" not in method_funcs[0][3].keys():
+        method_funcs[0][3]["preview"] = [None]
+
+    loader_method_name = method_funcs[0][3].pop("method_name")
+    log_once(
+        f"Running task 1 (pattern={method_funcs[0][1].pattern.name}): {loader_method_name}...",
+        comm,
+        colour=Colour.LIGHT_BLUE,
+        level=0,
+    )
+
+    loader_start_time = time.perf_counter_ns()
+
+    (
+        data,
+        flats,
+        darks,
+        angles,
+        angles_total,
+        detector_y,
+        detector_x,
+    ) = _run_loader(method_funcs[0][1], method_funcs[0][3])
+
+    output_str_list = [
+        f"    Finished task 1 (pattern={method_funcs[0][1].pattern.name}): {loader_method_name} (",
+        "httomo",
+        f") Took {float(time.perf_counter_ns() - loader_start_time)*1e-6:.2f}ms",
+    ]
+    output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
+    log_once(output_str_list, comm=comm, colour=output_colour_list)
+
+    # Update `dict_datasets_pipeline` dict with the data that has been
+    # loaded by the loader
+    dict_datasets_pipeline[method_funcs[0][3]["name"]] = data
+    dict_datasets_pipeline["flats"] = flats
+    dict_datasets_pipeline["darks"] = darks
+
+    # Extra params relevant to httomo that a wrapper function might need
+    possible_extra_params = [
+        (["darks"], darks),
+        (["flats"], flats),
+        (["angles", "angles_radians"], angles),
+        (["comm"], comm),
+        (["out_dir"], httomo.globals.run_out_dir),
+        (["save_result"], False),
+        (["reslice_ahead"], False),
+    ]
+
     # Run the methods
     for idx, (
         module_path,
         func_method,
         func_wrapper,
         dict_params_method,
-        is_loader,
-    ) in enumerate(method_funcs):
+    ) in enumerate(method_funcs[1:]):
         package = module_path.split(".")[0]
         method_name = dict_params_method.pop("method_name")
-        task_no_str = f"Running task {idx+1}"
+        task_no_str = f"Running task {idx+2}"
         task_end_str = task_no_str.replace("Running", "Finished")
         pattern_str = f"(pattern={func_method.pattern.name})"
         log_once(
@@ -165,66 +214,33 @@ def run_tasks(
             level=0,
         )
         start = time.perf_counter_ns()
-        if is_loader:
-            dict_params_method.update(dict_loader_extra_params)
 
-            # Check if a value for the `preview` parameter of the loader has
-            # been provided
-            if "preview" not in dict_params_method.keys():
-                dict_params_method["preview"] = [None]
+        # check if the module needs the ncore parameter and add it
+        if "ncore" in signature(func_method).parameters:
+            dict_params_method.update({"ncore": ncore})
 
-            (
-                data,
-                flats,
-                darks,
-                angles,
-                angles_total,
-                detector_y,
-                detector_x,
-            ) = _run_loader(func_method, dict_params_method)
-
-            # Update `dict_datasets_pipeline` dict with the data that has been
-            # loaded by the loader
-            dict_datasets_pipeline[dict_params_method["name"]] = data
-            dict_datasets_pipeline["flats"] = flats
-            dict_datasets_pipeline["darks"] = darks
-
-            # Extra params relevant to httomo that a wrapper function might need
-            possible_extra_params = [
-                (["darks"], darks),
-                (["flats"], flats),
-                (["angles", "angles_radians"], angles),
-                (["comm"], comm),
-                (["out_dir"], httomo.globals.run_out_dir),
-                (["save_result"], False),
-                (["reslice_ahead"], False),
-            ]
-        else:
-            # check if the module needs the ncore parameter and add it
-            if "ncore" in signature(func_method).parameters:
-                dict_params_method.update({"ncore": ncore})
-
-            reslice_counter, has_reslice_warn_printed, glob_stats[idx] = _run_method(
-                idx,
-                save_all,
-                module_path,
-                package,
-                method_name,
-                dict_params_method,
-                possible_extra_params,
-                len(method_funcs),
-                func_wrapper,
-                method_funcs[idx][1],
-                method_funcs[idx - 1][1],
-                dict_datasets_pipeline,
-                httomo.globals.run_out_dir,
-                glob_stats[idx],
-                comm,
-                reslice_counter,
-                has_reslice_warn_printed,
-                reslice_bool_list,
-                reslice_dir,
-            )
+        idx += 1
+        reslice_counter, has_reslice_warn_printed, glob_stats[idx] = _run_method(
+            idx,
+            save_all,
+            module_path,
+            package,
+            method_name,
+            dict_params_method,
+            possible_extra_params,
+            len(method_funcs),
+            func_wrapper,
+            method_funcs[idx][1],
+            method_funcs[idx - 1][1],
+            dict_datasets_pipeline,
+            httomo.globals.run_out_dir,
+            glob_stats[idx],
+            comm,
+            reslice_counter,
+            has_reslice_warn_printed,
+            reslice_bool_list,
+            reslice_dir,
+        )
 
         stop = time.perf_counter_ns()
         output_str_list = [
@@ -392,47 +408,41 @@ def _get_method_funcs(
     method_funcs = []
     yaml_conf = open_yaml_config(yaml_config)
 
-    for task_conf in yaml_conf:
+    # the first task is always the loader
+    # so consider it separately
+    assert next(iter(yaml_conf[0].keys())) == "httomo.data.hdf.loaders"
+    module_name, module_conf = yaml_conf[0].popitem()
+    method_name, method_conf = module_conf.popitem()
+    method_conf["method_name"] = method_name
+    module = import_module(module_name)
+    method_func = getattr(module, method_name)
+    method_funcs.append((module_name, method_func, None, method_conf))
+
+    for task_conf in yaml_conf[1:]:
         module_name, module_conf = task_conf.popitem()
         split_module_name = module_name.split(".")
         method_name, method_conf = module_conf.popitem()
         method_conf["method_name"] = method_name
 
-        if split_module_name[0] == "httomo":
-            # deal with httomo loaders
-            if "loaders" in module_name:
-                is_loader = True
-            else:
-                is_loader = False
-            module = import_module(module_name)
-            method_func = getattr(module, method_name)
-            method_funcs.append(
-                (module_name, method_func, None, method_conf, is_loader)
-            )
-        elif (split_module_name[0] == "tomopy") or (
-            split_module_name[0] == "httomolib"
-        ):
-            if split_module_name[0] == "tomopy":
-                # initialise the TomoPy wrapper class
-                wrapper_init_module = TomoPyWrapper(
-                    split_module_name[1], split_module_name[2], method_name, comm
-                )
-            if split_module_name[0] == "httomolib":
-                # initialise the httomolib wrapper class
-                wrapper_init_module = HttomolibWrapper(
-                    split_module_name[1], split_module_name[2], method_name, comm
-                )
-            wrapper_func = getattr(wrapper_init_module.module, method_name)
-            wrapper_method = wrapper_init_module.wrapper_method
-            method_funcs.append(
-                (module_name, wrapper_func, wrapper_method, method_conf, False)
-            )
-        else:
+        if split_module_name[0] not in ["tomopy", "httomolib"]:
             err_str = (
                 f"An unknown module name was encountered: " f"{split_module_name[0]}"
             )
             log_exception(err_str)
             raise ValueError(err_str)
+
+        module_to_wrapper = {
+            "tomopy": TomoPyWrapper,
+            "httomolib": HttomolibWrapper,
+        }
+        wrapper_init_module = module_to_wrapper[split_module_name[0]](
+            split_module_name[1], split_module_name[2], method_name, comm
+        )
+        wrapper_func = getattr(wrapper_init_module.module, method_name)
+        wrapper_method = wrapper_init_module.wrapper_method
+        method_funcs.append(
+            (module_name, wrapper_func, wrapper_method, method_conf)
+        )
 
     return method_funcs
 
