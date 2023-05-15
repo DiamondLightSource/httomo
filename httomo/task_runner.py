@@ -287,47 +287,27 @@ def _initialise_datasets(
         function)
     """
     datasets = {}
-    # Define the params related to dataset names in the given function, whether
-    # it's a loader or a method function
+    # Define a list of parameter names that refer to a "dataset" that would need
+    # to exist in the `datasets` dict
+    method_dataset_params = ["data_in", "data_out", "data_in_multi", "data_out_multi"]
     loader_dataset_params = ["name"]
-    # TODO: For now, make savers such as `save_to_images` a special case where:
-    # - `data_in` is defined
-    # - but `data_out` is not, since the output of the method is not a dataset
-    # but something else, like a directory containing many subdirectories of
-    # images.
-    # And therefore, don't try to inspect the `data_out` parameter of the method
-    # to then try and initialise a dataset from its value, since it won't exist!
-    savers_no_data_out_params = ["data_in"]
+    dataset_params = method_dataset_params + loader_dataset_params
 
     yaml_conf = open_yaml_config(yaml_config)
     for task_conf in yaml_conf:
         module_name, module_conf = task_conf.popitem()
         method_name, method_conf = module_conf.popitem()
-        if "loaders" in module_name:
-            dataset_params = loader_dataset_params
-        elif method_name in savers_no_data_out_param:
-            dataset_params = savers_no_data_out_params
-        else:
-            if (
-                "data_in_multi" in method_conf.keys()
-                and "data_out_multi" in method_conf.keys()
-            ):
-                method_dataset_params = ["data_in_multi", "data_out_multi"]
-            else:
-                method_dataset_params = ["data_in", "data_out"]
-            dataset_params = method_dataset_params
-
-        # Add dataset param value to the dict of datasets if it doesn't already
-        # exist
-        for dataset_param in dataset_params:
-            # Check if there are multiple input/output datasets to account for
-            if type(method_conf[dataset_param]) is list:
-                for dataset_name in method_conf[dataset_param]:
-                    if dataset_name not in datasets:
-                        datasets[dataset_name] = None
-            else:
-                if method_conf[dataset_param] not in datasets:
-                    datasets[method_conf[dataset_param]] = None
+        # Check parameters of method if it contains any of the parameters which
+        # require a dataset to be defined
+        for param in method_conf.keys():
+            if param in dataset_params:
+                if type(method_conf[param]) is list:
+                    for dataset_name in method_conf[param]:
+                        if dataset_name not in datasets:
+                            datasets[dataset_name] = None
+                else:
+                    if method_conf[param] not in datasets:
+                        datasets[method_conf[param]] = None
 
     return datasets
 
@@ -578,9 +558,25 @@ def _run_method(
         # TODO: This error reporting is possibly better handled by
         # schema validation of the user config YAML
         if method_name not in SAVERS_NO_DATA_OUT_PARAM:
-            err_str = "Invalid in/out dataset parameters"
-            log_exception(err_str)
-            raise ValueError(err_str)
+            if (
+                "data_in" in dict_params_method.keys() and
+                "data_out" not in dict_params_method.keys()
+            ):
+                # Assume "data_out" to be the same as "data_in"
+                data_in = [dict_params_method.pop("data_in")]
+                data_out = data_in
+            elif (
+                "data_in_multi" in dict_params_method.keys()
+                and "data_out_multi" not in dict_params_method.keys()
+            ):
+                # Assume "data_out_multi" to be the same as
+                # "data_in_multi"
+                data_in = dict_params_method.pop("data_in_multi")
+                data_out = data_in
+            else:
+                err_str = "Invalid in/out dataset parameters"
+                log_exception(err_str)
+                raise ValueError(err_s
         else:
             data_in = [dict_params_method.pop("data_in")]
             data_out = [None]
