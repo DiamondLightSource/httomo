@@ -86,7 +86,9 @@ You will get the following output:
 
 
 The Yaml check was successful here because your yaml file was properly indented and had valid mappings and tags.
-It also included valid parameters for each method used from TomoPy, HTTomoLib, etc.
+It also included valid parameters for each method used from TomoPy, HTTomolib, or other `backends <https://diamondlightsource.github.io/httomo/backends/list.html>`_.
+
+
 
 But if you had the following as a :code:`YAML_CONFIG` file saved as :code:`config.yaml`:
 

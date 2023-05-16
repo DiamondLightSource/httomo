@@ -2,10 +2,10 @@
 What is a template?
 ------------------------
 
-A YAML template in HTTomo is an interface to a method which can be used to build a pipeline of tasks that will be run.
-Template provides a communication with a method by setting input/output and also additional parameters if required. 
+A YAML template in HTTomo is an interface to a method which can be used to build a pipeline of tasks or a `process list <https://diamondlightsource.github.io/httomo/explanation/process_list.html>`_ that will be executed.
+Template provides a communication with a method by setting input/output entries and also additional parameters, if required. 
 
-Lets consider this simple template for median filter from `TomoPy <https://tomopy.readthedocs.io/en/stable/api/tomopy.misc.corr.html#tomopy.misc.corr.median_filter3d>`_ package. 
+Lets consider this simple template for a median filter from the `TomoPy <https://tomopy.readthedocs.io/en/stable/api/tomopy.misc.corr.html#tomopy.misc.corr.median_filter3d>`_ package. 
 
 .. code-block:: yaml
     
