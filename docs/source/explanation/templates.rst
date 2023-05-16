@@ -10,10 +10,10 @@ Lets consider this simple template for median filter from `TomoPy <https://tomop
 .. code-block:: yaml
     
     tomopy.misc.corr:
-        median_filter3d:
-         data_in: tomo
-         data_out: tomo
-         size: 3
+      median_filter3d:
+        data_in: tomo
+        data_out: tomo
+        size: 3
 
 The first line :code:`tomopy.misc.corr` specifies the module in TomoPy library and the second :code:`median_filter3d` is the 
 name of the method in that module. HTTomo will interpret this in Python
