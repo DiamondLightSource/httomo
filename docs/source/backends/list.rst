@@ -13,7 +13,7 @@ TomoPy software (CPU)
 `TomoPy <https://tomopy.readthedocs.io>`_ is an open-source Python package for tomographic data processing and image reconstruction developed at `The Advanced Photon Source <https://www.aps.anl.gov/>`_ in Illinois, USA. 
 Being active since 2013 it gained a `large audience <https://github.com/tomopy/tomopy>`_ of users and contributors in tomographic imaging community.
 
-* An open-source package in Python and C for data data processing and reconstruction.  With a few exceptions, TomoPy is mostly CPU processing library. In HTTomo we expose only CPU modules of TomoPy. 
+* An open-source package in Python and C for data processing and reconstruction.  With a few exceptions, TomoPy is mostly CPU processing library. In HTTomo we expose only CPU modules of TomoPy. 
 * It is CPU-multithreaded package. HTTomo controls parallelisation through MPI on a higher level and also supports local CPU multithreading, which TomoPy offers, for every MPI process.
 * It is a library of stand-alone methods which can be easily integrated into HTTomo. Notably not all TomoPy methods are integrated in HTTomo because of the I/O nature of some modules. Please see the list of available TomoPy `templates <https://diamondlightsource.github.io/httomo/reference/templates.html#tomopy-modules>`_.
 
