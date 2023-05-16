@@ -12,7 +12,7 @@ Usage
 .. note::
 
     - Use this :code:`check` command before you use the :code:`run` command to run your pipeline.
-    - The :code:`YAML_CONFIG` is the path to your YAML file and :code:`IN_DATA`` is the path to your input data.
+    - The :code:`YAML_CONFIG` is the path to your YAML file and :code:`IN_DATA` is the path to your input data.
     - :code:`IN_DATA` is optional, but if you provide it, the yaml checker will be checking that the paths
       to the data and keys in the :code:`YAML_CONFIG` file match the paths and keys in the input file (:code:`IN_DATA`).
 
