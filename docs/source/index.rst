@@ -20,15 +20,16 @@
 
     howto/installation
     howto/user_guide
-
+    howto/yaml
 
 .. _reference_content:
 
 .. toctree::
-    :caption: Reference
+    :caption: Reference guides
     :maxdepth: 2
 
     reference/templates
+    explanation/yaml_checker
 
 .. _tutorials_content:
 
