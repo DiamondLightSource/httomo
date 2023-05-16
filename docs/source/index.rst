@@ -20,7 +20,7 @@
 
     howto/installation
     howto/user_guide
-    howto/yaml
+    howto/yaml_checker
 
 .. _reference_content:
 
@@ -29,7 +29,7 @@
     :maxdepth: 2
 
     reference/templates
-    explanation/yaml_checker
+    explanation/yaml
 
 .. _tutorials_content:
 
