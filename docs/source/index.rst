@@ -21,7 +21,6 @@
 
     howto/installation
     howto/user_guide
-    howto/yaml_checker
 
 .. _reference_content:
 
@@ -31,6 +30,14 @@
 
     reference/templates
     explanation/yaml
+
+.. _utilities_content:
+
+.. toctree::
+    :caption: Utilities
+    :maxdepth: 2
+
+    utilities/yaml_checker
 
 .. _backends_content:
 

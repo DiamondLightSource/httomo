@@ -1,5 +1,6 @@
 YAML Checker - Why use it?
 **************************
+YAML checker will help you to validate your `process list <https://diamondlightsource.github.io/httomo/explanation/process_list.html>`_ saved as a `YAML file <https://diamondlightsource.github.io/httomo/explanation/yaml.html>`_. Before running your pipeline with HTTomo, we highly recommend that you validate your process list using this utility. **The checker will help you to identify errors in your process list and avoid problems during the run**.
 
 Usage
 =====
@@ -157,8 +158,7 @@ For example, we have the :code:`!Sweep` functionality in HTTomo. If you make a t
 it will raise an error.
 
 * We check that the first method in the pipeline is always a loader from :code:`'httomo.data.hdf.loaders'`.
-* The following will raise an error because if two methods that are adjacent in a pipeline happen to be from the same package,
-you cannot omit the package name from the second method's config and you must still provide it.
+* The following will raise an error because if two methods that are adjacent in a pipeline happen to be from the same package, you cannot omit the package name from the second method's config and you must still provide it.
 
 .. code-block:: yaml
 
@@ -171,9 +171,7 @@ you cannot omit the package name from the second method's config and you must st
           data_in: tomo
           data_out: tomo
 
-* We check that the parameters for each method are valid. For example, :code:`find_center_vo` method from :code:`tomopy.recon.rotation`
-takes :code:`ratio` as a parameter with a float value. If you pass a string instead, it will raise an error. Again the trick is to
-refer the documentation always.
+* We check that the parameters for each method are valid. For example, :code:`find_center_vo` method from :code:`tomopy.recon.rotation` takes :code:`ratio` as a parameter with a float value. If you pass a string instead, it will raise an error. Again the trick is to refer the documentation always.
 
 * If you pass :code:`IN_DATA` (path to the data) along with the yaml config, as:
 
