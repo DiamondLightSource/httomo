@@ -184,6 +184,7 @@ refer the documentation always.
 That will check that the paths to the data and keys in the :code:`YAML_CONFIG` file match the paths and keys in the input file (:code:`IN_DATA`).
 
 If you have the following loader in your yaml file:
+
 .. code-block:: yaml
 
     - httomo.data.hdf.loaders:
