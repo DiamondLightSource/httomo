@@ -576,7 +576,7 @@ def _run_method(
             else:
                 err_str = "Invalid in/out dataset parameters"
                 log_exception(err_str)
-                raise ValueError(err_s
+                raise ValueError(err_s)
         else:
             data_in = [dict_params_method.pop("data_in")]
             data_out = [None]
