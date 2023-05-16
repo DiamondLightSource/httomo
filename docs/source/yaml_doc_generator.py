@@ -65,15 +65,19 @@ def create_yaml_dropdown(doc_dir, root, files):
 
     for fi in files:
         t_name = f"{template_dir}/{fi}"
-        f_name = fi.split('.yaml')[0]
-        url = f"https://tomopy.readthedocs.io/en/stable/api/{rst_name}" \
-              f".html#{rst_name}.{f_name}"
+        f_name = fi.split(".yaml")[0]
+        url = (
+            f"https://tomopy.readthedocs.io/en/stable/api/{rst_name}"
+            f".html#{rst_name}.{f_name}"
+        )
         with open(doc_rst_file, "a") as edit_doc:
             edit_doc.write(f"\n\n.. dropdown:: {fi}")
             edit_doc.write(f"\n\n    :download:`Download <{t_name}>`\n\n")
-            if 'tomopy' in t_name:
-                edit_doc.write(f"    |link_icon| `Link to {f_name}"
-                               f" function description <{url}>`_")
+            if "tomopy" in t_name:
+                edit_doc.write(
+                    f"    |link_icon| `Link to {f_name}"
+                    f" function description <{url}>`_"
+                )
             edit_doc.write(f"\n\n    .. literalinclude:: {t_name}")
 
 
@@ -112,7 +116,7 @@ def add_title(edit_doc, rst_name):
 
 
 def add_tomopy_link(edit_doc, rst_name):
-    """ Link to tomopy documentation.
+    """Link to tomopy documentation.
 
     Parameters
     ----------
@@ -140,18 +144,18 @@ def save_all_yaml_functions(tmp_dir, yaml_files):
     file_path = f"{tmp_dir}/download_all.yaml"
     # Only merge files when more than one yaml file exists
     if len(yaml_files) > 1:
-        with open(file_path, 'w') as outfile:
+        with open(file_path, "w") as outfile:
             for f in yaml_files:
                 with open(f"{tmp_dir}/{f}") as infile:
                     outfile.write(infile.read())
 
 
 if __name__ == "__main__":
-    """ Create documentation for modules from httomo, tomopy and httomolib.
+    """Create documentation for modules from httomo, tomopy and httomolib.
     Append the yaml information to the documentation pages.
     """
     doc_source_dir = os.path.dirname(os.path.abspath(__file__))
-    path_to_templates = doc_source_dir + '/../../templates/'
+    path_to_templates = doc_source_dir + "/../../templates/"
     for root, dirs, files in os.walk(path_to_templates, topdown=True):
         dirs[:] = [d for d in dirs]
         files[:] = [fi for fi in files if ".yaml" in fi]
@@ -161,5 +165,3 @@ if __name__ == "__main__":
             add_function_summary(doc_source_dir, root, files)
             save_all_yaml_functions(root, files)
             create_yaml_dropdown(doc_source_dir, root, files)
-
-
