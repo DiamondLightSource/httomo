@@ -10,6 +10,7 @@
 
     introduction/about    
     explanation/templates
+    explanation/process_list
     explanation/faq
 
 .. _how_to_content:

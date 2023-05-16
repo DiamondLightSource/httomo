@@ -1,5 +1,5 @@
 
-What is a template
+What is a template?
 ------------------------
 
 A YAML template in HTTomo is an interface to a method which can be used to build a pipeline of tasks that will be run.
