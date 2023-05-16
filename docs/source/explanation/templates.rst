@@ -25,5 +25,5 @@ by importing the method:
 
 After the method's name follows the list of parameters for that method. Parameters :code:`data_in` 
 and :code:`data_out` define the names of the input and the output datasets respectively. Then :code:`size` 
-is a specific to the method parameter. 
+is specific to the method parameter. 
 
