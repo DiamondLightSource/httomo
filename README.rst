@@ -44,11 +44,6 @@ Running the code:
 * Execute the python module with :code:`httomo <args>`
 * For help with the command line interface, execute :code:`httomo --help`
 
-Am example of running the code with test data:
-==============================================
-
-* Go to the home directory and run: :code:`python -m httomo testdata/tomo_standard.nxs . cpu`
-
 An example of running the code with test data:
 ==============================================
 
