@@ -68,3 +68,5 @@ or are new to the specific tools and libraries you are using.
 We have a `YAML checker <https://diamondlightsource.github.io/httomo/utilities/yaml_checker.html>`_ that can help you validate your YAML file.
 Before running your pipeline, we highly recommend that you validate your YAML file using this utility. 
 The checker will help you to identify errors in your YAML file.
+
+We also recommend to use editors that `support <https://ozone.one/top-5-open-source-yaml-editors-for-streamlined-coding/>`_ YAML format naturally, e.g.: Atom, Visual Studio Code, Notepad++, and others.

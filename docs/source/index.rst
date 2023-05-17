@@ -1,6 +1,5 @@
 .. include:: ../../README.rst
 
-
 .. _intro_content:
 
 .. toctree::

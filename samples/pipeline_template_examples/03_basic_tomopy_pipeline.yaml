@@ -51,14 +51,7 @@
       sinogram_order: false
       algorithm: gridrec
       init_recon: null
-      #additional parameters': AVAILABLE
-# - httomolib.recon.algorithm:
-#     reconstruct_tomopy:
-#       data_in: tomo
-#       data_out: tomo
-#       center: cor
-#       algorithm: FBP
-#       proj_type: strip      
+      #additional parameters': AVAILABLE  
 - httomolib.misc.images:
     save_to_images:
       data_in: tomo
