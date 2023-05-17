@@ -18,7 +18,7 @@ HTTomo concept
         HTTomo is tailored to work with 3D data, here 3D parallel-beam tomographic projection data is splitted and sent to a cluster with multiple GPUs for processing and reconstruction. Serial processing of data is also possible.
 
     HTTomo is a User Interface (UI) package and does not contain any data processing methods but rather utilises other libraries as `backends <https://en.wikipedia.org/wiki/Frontend_and_backend>`_.
-    Please see the list of currently supported packages by HTTomo `here <https://diamondlightsource.github.io/httomo/backends/list.html>`_. It should possible to enable any other modular 
+    Please see the list of currently supported packages by HTTomo in :ref:`backends_content`. It should possible to enable any other modular 
     library for data processing methods in HTTomo using YAML `templates <https://diamondlightsource.github.io/httomo/reference/templates.html>`_ as a frontend interface.
     
     A complex data analysis pipelines can be build by stacking together YAML templates which are provided at the documentation page. `Examples <https://diamondlightsource.github.io/httomo/examples.html>`_ 
