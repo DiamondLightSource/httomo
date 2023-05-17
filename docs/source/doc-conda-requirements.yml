@@ -11,7 +11,6 @@ dependencies:
   - jinja2
   - sphinx-panels
   - sphinx-copybutton
-  - tomopy
   - pyyaml
   - ipython
   - ghp-import
