@@ -1,5 +1,5 @@
 HTTomo concept
-*********************************************
+*******************
 
     HTTomo stands for High Throughput Tomography pipeline for processing and reconstruction of parallel-beam tomography data. 
     The `HTTomo project <https://github.com/DiamondLightSource/httomo>`_ initiated in 2022 at `Diamond Light source  <https://www.diamond.ac.uk/>`_ by Data Analysis Group and it is written in Python.

@@ -1,3 +1,5 @@
+.. _howto_process_list:
+
 Configure process list using templates
 ----------------------------------------------------
 

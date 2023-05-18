@@ -36,7 +36,7 @@
     :caption: Utilities
     :maxdepth: 2
 
-    utilities/yaml_checker
+    utilities/yaml_checker   
 
 .. _backends_content:
 
@@ -54,5 +54,11 @@
 
     tutorials/examples
 
-    
+.. _developers_content:
+
+.. toctree::
+    :caption: Developers
+    :maxdepth: 2
+
+    developers/yaml_generator
     

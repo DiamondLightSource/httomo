@@ -1,3 +1,5 @@
+.. _explanation_yaml:
+
 What is YAML?
 -------------
 

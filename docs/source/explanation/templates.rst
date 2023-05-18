@@ -1,9 +1,10 @@
+.. _explanation_templates:
 
 What is a template?
 ------------------------
 
-A YAML template in HTTomo is an interface to a method which can be used to build a pipeline of tasks or a `process list <https://diamondlightsource.github.io/httomo/explanation/process_list.html>`_ that will be executed.
-Template provides a communication with a method by setting input/output entries and also additional parameters, if required. 
+A YAML template (see :ref:`explanation_yaml`) in HTTomo is an interface to a method which can be used to build a pipeline of tasks or a process list that will be executed. See more on :ref:`explanation_process_list`
+The template provides a communication with a method by setting input/output entries and also additional parameters, if required. 
 
 Lets consider this simple template for a median filter from the `TomoPy <https://tomopy.readthedocs.io/en/stable/api/tomopy.misc.corr.html#tomopy.misc.corr.median_filter3d>`_ package. 
 
@@ -25,5 +26,6 @@ by importing the method:
 
 After the method's name follows the list of parameters for that method. Parameters :code:`data_in` 
 and :code:`data_out` define the names of the input and the output datasets respectively. Then :code:`size` 
-is specific to the method parameter. 
+is a specific to the method parameter. 
 
+Please see the list of all supported :ref:`reference_templates`.

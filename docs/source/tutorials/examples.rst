@@ -18,7 +18,7 @@ They show how to load the data using HTTomo loaders and then process and reconst
 
 Process list templates
 ----------------------------
-Ready to be used process templates are given here. See more on :ref:`explanation_process_list`.
+Ready to be used process templates are given here. See more on :ref:`explanation_process_list` and how to :ref:`howto_process_list`. 
 
 .. toctree::
 

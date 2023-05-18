@@ -6,7 +6,8 @@
       dimension: 1
       preview:
         - 
-        - 
+        - start: 30
+          stop: 60
         - 
       pad: 0
 - tomopy.prep.normalize:
@@ -47,6 +48,12 @@
       algorithm: gridrec
       init_recon: null
       #additional parameters': AVAILABLE
+- tomopy.misc.corr:
+    median_filter:
+      data_in: tomo
+      data_out: tomo
+      size: 3
+      axis: 0            
 - httomolib.misc.images:
     save_to_images:
       data_in: tomo

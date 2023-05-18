@@ -1,20 +1,21 @@
+.. _tutorials_pl_templates_cpu:
+
 CPU Pipeline template examples
 ==============================
-
-One
-----
-
+1. A basic TomoPy full data processing pipeline
+--------------------------------------------------------------------
 .. literalinclude:: ../../../samples/pipeline_template_examples/01_basic_cpu_pipeline_tomo_standard.yaml
 
-Two
-----------------------------------
+2. Slightly more advanced TomoPy data processing pipeline with the :ref:`previewing`.
+-------------------------------------------------------------------------------------
 
 .. literalinclude:: ../../../samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml
 
-Three
--------------------------------------
+GPU Pipeline template examples
+==============================
 
-.. literalinclude:: ../../../samples/pipeline_template_examples/03_basic_tomopy_pipeline.yaml
+1. HTTomolib full data processing pipeline on a GPU. Note a multi-input method `remove_outlier3d` which gets to filter multiple input datasets.
+.. literalinclude:: ../../../samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml
 
 Multi Inputs
 -------------------------------------
