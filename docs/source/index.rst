@@ -28,7 +28,8 @@
     :maxdepth: 2
 
     reference/templates
-    explanation/yaml
+    reference/yaml
+    reference/loaders
 
 .. _utilities_content:
 
@@ -49,10 +50,12 @@
 .. _tutorials_content:
 
 .. toctree::
-    :caption: Tutorials
+    :caption: Tutorials/Examples
+    :maxdepth: 2
     :glob:
 
-    tutorials/examples
+    tutorials/yaml
+    tutorials/jn
 
 .. _developers_content:
 

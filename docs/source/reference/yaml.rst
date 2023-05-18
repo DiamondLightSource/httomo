@@ -67,7 +67,7 @@ to define your pipeline, we are providing a user interface that is simple and in
 to use. This can be especially helpful for those who are less familiar with programming in general
 or are new to the specific tools and libraries you are using.
 
-We have a `YAML checker <https://diamondlightsource.github.io/httomo/utilities/yaml_checker.html>`_ that can help you validate your YAML file.
+We have a :ref:`utilities_yamlchecker` that can help you to validate your YAML file.
 Before running your pipeline, we highly recommend that you validate your YAML file using this utility. 
 The checker will help you to identify errors in your YAML file.
 

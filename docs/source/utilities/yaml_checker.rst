@@ -1,6 +1,9 @@
+.. _utilities_yamlchecker:
+
 YAML Checker - Why use it?
 **************************
-YAML checker will help you to validate your `process list <https://diamondlightsource.github.io/httomo/explanation/process_list.html>`_ saved as a `YAML file <https://diamondlightsource.github.io/httomo/explanation/yaml.html>`_. Before running your pipeline with HTTomo, we highly recommend that you validate your process list using this utility. **The checker will help you to identify errors in your process list and avoid problems during the run**.
+YAML checker will help you to validate your process list (see :ref:`explanation_process_list`) 
+saved as a YAML file. Before running your pipeline with HTTomo, we highly recommend that you validate your process list using this utility. **The checker will help you to identify errors in your process list and avoid problems during the run**.
 
 Usage
 =====

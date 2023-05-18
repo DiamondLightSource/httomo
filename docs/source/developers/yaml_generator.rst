@@ -25,3 +25,9 @@ How does it work:
    python -m yaml_templates_generator -m /path/to/modules.yaml -o /path/to/outputfolder/
 
 * Please note that the package (e.g. TomoPy) must be installed into your conda environment and therefore be accessible when importing.
+
+* **For TomoPy templates only.** After templates have been generated for TomoPy we need to remove the ones that are not currently supported by HTTomo. We do that by looking into the library file that exists in HTTomo for TomoPy.
+ 
+.. code-block:: console
+   
+   python -m remove_unsupported_templates -t /path/to/templates/ -l /path/to/library/file

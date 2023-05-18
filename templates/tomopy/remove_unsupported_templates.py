@@ -74,14 +74,14 @@ def templates_filter(path_to_modules: str, library_file: str) -> int:
 
 def get_args():
     parser = argparse.ArgumentParser(
-        description="Removes unsupported by httomo" "templates in TomoPy."
+        description="Removes unsupported by httomo templates in TomoPy."
     )
     parser.add_argument(
-        "-m",
-        "--modules",
+        "-t",
+        "--templates",
         type=str,
         default=None,
-        help="A path to the folder where modules stored.",
+        help="A path to the folder where generated templates stored.",
     )
     parser.add_argument(
         "-l",
@@ -96,7 +96,7 @@ def get_args():
 if __name__ == "__main__":
     current_dir = os.path.basename(os.path.abspath(os.curdir))
     args = get_args()
-    path_to_modules = args.modules
+    path_to_modules = args.templates
     library_file = args.library
     return_val = templates_filter(path_to_modules, library_file)
     if return_val == 0:
