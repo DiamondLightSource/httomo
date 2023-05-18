@@ -104,7 +104,7 @@ But if you had the following as a :code:`YAML_CONFIG` file saved as :code:`confi
             - start: 30
               stop: 60
             -
-        pad: 0
+          pad: 0
     - tomopy.misc.corr:
         median_filters:
           data: tomo
