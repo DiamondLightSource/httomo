@@ -79,8 +79,8 @@ pygments_style = "sphinx"
 # -- Options for HTML output --------------------------------------------------
 
 html_theme = "sphinx_rtd_theme"
-html_logo = 'images/logo/httomo_logo.png'
+html_logo = "images/logo/httomo_logo.png"
 html_theme_options = {
-    'logo_only': True,
-    'display_version': False,
+    "logo_only": True,
+    "display_version": False,
 }
