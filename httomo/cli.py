@@ -27,16 +27,15 @@ def main():
 @click.argument(
     "yaml_config", type=click.Path(exists=True, dir_okay=False, path_type=Path)
 )
-@click.option(
-    "--data-file",
+@click.argument(
+    "in_data",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    default=None,
-    help="Optional input NeXuS data file to check data keys in YAML.",
+    required=False,
 )
-def check(yaml_config: Path, data_file: Path = None):
+def check(yaml_config: Path, in_data: Path = None):
     """Check a YAML pipeline file for errors."""
-    data_file = str(data_file) if type(data_file) is Path else None
-    return validate_yaml_config(yaml_config, data_file)
+    in_data = str(in_data) if type(in_data) is Path else None
+    return validate_yaml_config(yaml_config, in_data)
 
 
 @main.command()
