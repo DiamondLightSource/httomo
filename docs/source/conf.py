@@ -7,7 +7,6 @@ import sys
 from datetime import date
 from unittest import mock
 
-import sphinx_py3doc_enhanced_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -79,8 +78,8 @@ pygments_style = "sphinx"
 
 # -- Options for HTML output --------------------------------------------------
 
-html_theme = "sphinx_py3doc_enhanced_theme"
-html_theme_path = [sphinx_py3doc_enhanced_theme.get_html_theme_path()]
+html_theme = "sphinx_rtd_theme"
+#html_theme_path = [sphinx-rtd-theme.get_html_theme_path()]
 html_logo = "images/logo/httomo_logo.png"
 html_theme_options = {
     "logo_only": True,
