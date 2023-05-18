@@ -2,10 +2,12 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 #!/usr/bin/env python
-import sys
 import os
-
+import sys
 from datetime import date
+from unittest import mock
+
+import sphinx_py3doc_enhanced_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -15,7 +17,6 @@ sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Mock imports -------------------------------------------------------------
 
-from unittest import mock
 
 # Mock imports instead of full environment in readthedocs
 MOCK_MODULES = [
@@ -78,9 +79,13 @@ pygments_style = "sphinx"
 
 # -- Options for HTML output --------------------------------------------------
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "sphinx_py3doc_enhanced_theme"
+html_theme_path = [sphinx_py3doc_enhanced_theme.get_html_theme_path()]
 html_logo = "images/logo/httomo_logo.png"
 html_theme_options = {
     "logo_only": True,
     "display_version": False,
+    "githuburl": "https://github.com/DiamondLightSource/httomo",
 }
+
+html_use_smartypants = True
