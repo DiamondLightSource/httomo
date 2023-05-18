@@ -57,11 +57,11 @@ def cmd():
         sys.executable,
         "-m",
         "httomo",
+        "run",
         "--save_all",
         "--ncore",
         "2",
         "output_dir/",
-        "task_runner",
     ]
 
 

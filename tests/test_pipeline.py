@@ -38,10 +38,10 @@ def read_folder(folder):
 def test_tomo_standard_testing_pipeline_output(
     cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
 ):
-    cmd.pop(3)  #: don't save all
-    cmd.insert(5, standard_data)
+    cmd.pop(4)  #: don't save all
+    cmd.insert(6, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
-    cmd.insert(6, "temp.yaml")
+    cmd.insert(7, "temp.yaml")
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
@@ -102,9 +102,9 @@ def test_tomo_standard_testing_pipeline_output(
 def test_tomo_standard_testing_pipeline_output_with_save_all(
     cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
 ):
-    cmd.insert(6, standard_data)
+    cmd.insert(7, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
-    cmd.insert(7, "temp.yaml")
+    cmd.insert(8, "temp.yaml")
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
@@ -149,9 +149,9 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
 def test_diad_testing_pipeline_output(
     cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
 ):
-    cmd.insert(6, diad_data)
+    cmd.insert(7, diad_data)
     merge_yamls(diad_loader, testing_pipeline)
-    cmd.insert(7, "temp.yaml")
+    cmd.insert(8, "temp.yaml")
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
@@ -219,8 +219,8 @@ def test_diad_testing_pipeline_output(
 def test_sweep_range_pipeline_with_step_absent(
     cmd, standard_data, sample_pipelines, output_folder
 ):
-    cmd.insert(6, standard_data)
-    cmd.insert(7, sample_pipelines + "testing/step_absent.yml")
+    cmd.insert(7, standard_data)
+    cmd.insert(8, sample_pipelines + "testing/step_absent.yml")
     subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     log_files = list(filter(lambda x: ".log" in x, read_folder("output_dir/")))
