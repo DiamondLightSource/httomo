@@ -78,13 +78,34 @@ pygments_style = "sphinx"
 
 # -- Options for HTML output --------------------------------------------------
 
-html_theme = "sphinx_rtd_theme"
-#html_theme_path = [sphinx-rtd-theme.get_html_theme_path()]
-html_logo = "images/logo/httomo_logo.png"
+html_theme = "sphinx_book_theme"
+html_logo = "_static/logo_light.png"
+html_title = "HTTomo Documentation page"
+html_copy_source = True
+html_favicon = "_static/logo_light.png"
+html_last_updated_fmt = ""
+html_static_path = ["_static"]
+html_use_smartypants = True
+
+"""
 html_theme_options = {
     "logo_only": True,
     "display_version": False,
     "githuburl": "https://github.com/DiamondLightSource/httomo",
 }
+"""
 
-html_use_smartypants = True
+html_theme_options = {
+    "logo": {
+        "image_dark": "_static/logo_dark.png",
+    },
+    "show_toc_level": 1,
+    "navbar_align": "left",  # [left, content, right] For testing that the navbar items align properly 
+}
+
+html_context = {
+    "github_user": "HTTomo",
+    "github_repo": "https://github.com/DiamondLightSource/httomo",
+    "github_version": "main",
+    "doc_path": "docs",
+}

@@ -11,7 +11,7 @@ HTTomo concept
     the optimised I/O modules, in-memory reslicing operations using MPI protocols, and a capability of device-to-device GPU processing using `CuPy <https://cupy.dev/>`_ library.  
     HTTomo orchestrates the optimal data splitting driven by the available GPU memory, which makes possible processing and reconstruction of big data on smaller GPU cards. 
     
-    .. figure::  ../images/about/3d_setup.png
+    .. figure::  ../_static/3d_setup.png
         :scale: 40 %
         :alt: Simple tomographic pipeline
 
