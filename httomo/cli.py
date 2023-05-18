@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Optional
 from datetime import datetime
 from shutil import copy
@@ -34,7 +34,7 @@ def main():
 )
 def check(yaml_config: Path, in_data: Path = None):
     """Check a YAML pipeline file for errors."""
-    in_data = str(in_data) if type(in_data) is Path else None
+    in_data = str(in_data) if isinstance(in_data, PurePath) else None
     return validate_yaml_config(yaml_config, in_data)
 
 
