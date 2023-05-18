@@ -1,6 +1,6 @@
-====================================================
+==============================
 The list of supported backends
-====================================================
+==============================
 
 HTTomo currently supports several software packages that are used as backends to perform data processing and reconstruction. The support list of packages will be growing to meet users demands.
 

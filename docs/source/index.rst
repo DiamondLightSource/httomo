@@ -52,7 +52,7 @@
     :caption: Tutorials
     :glob:
 
-    examples
+    tutorials/examples
 
     
     
