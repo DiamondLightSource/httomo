@@ -36,11 +36,24 @@ Note that the result of the reconstruction will be also saved as an HDF5 file.
 
 .. _pl_reslice:
 
-Reslicing
+Re-slicing
 -------------
+The re-slicing of data happens when we need to access a slice which is orthogonal to the current one. 
+In tomography, we normally work in the space of projections or in the space of sinograms. Different methods require different slicing 
+orientation, or, as we call it, a *pattern*. The change of the pattern is the **re-slice** operation or a transformation of the array by 
+re-slicing in a particular direction. For instance, from the projection space to the sinogram space, as in :numref:`fig_reslice`.
 
+.. _fig_reslice:
+.. figure::  ../_static/reslice.png
+    :scale: 40 %
+    :alt: Reslicing procedure
+
+    The re-slicing operation for tomographic data. The transformation from the stack of projections to the stack of sinograms by slicing the 3D array in the direction parallel to the projection angles.
+
+to be continued... 
 
 .. _pl_platform_sections:
 
 Platform Sections
 -----------------
+to be added...

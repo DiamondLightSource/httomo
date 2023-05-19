@@ -70,7 +70,7 @@ extensions = [
 ]
 
 autosummary_generate = True
-
+numfig = True
 template_patterns = ["_templates"]
 
 # The name of the Pygments (syntax highlighting) style to use.
