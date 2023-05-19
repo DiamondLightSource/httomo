@@ -29,7 +29,8 @@ jobs:
       # install dependencies with mamba
       - name: Install dependencies with mamba
         run: |
-          conda install -c conda-forge mamba
+          conda install -n base -c conda-forge mamba
+          which mamba
           mamba env create --name httomo --file conda/environment.yml
           mamba activate httomo
           mamba run -n httomo pip install -e .
