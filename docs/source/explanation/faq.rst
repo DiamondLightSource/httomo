@@ -10,15 +10,15 @@ Frequently Asked Questions
 
 .. dropdown:: How can I use a template?
 
-        TODO
+    Template can be used to build a process list or a pipeline of methods. Normally the content of a template (a YAML file) is copied to build a process list file. Please see :ref:`howto_process_list`.
 
 .. dropdown:: Can I create a template?
 	
-	TODO
+	You can create a template manually if you want to run a method from the external software (see more on :ref:`backends_list`).
 
-.. dropdown:: How can I configure the multi-task pipeline? 
+.. dropdown:: How can I configure a multi-task pipeline? 
 
-	TODO
+	Please see :ref:`howto_process_list`.
 
 .. dropdown:: How can I run HTTomo?
 

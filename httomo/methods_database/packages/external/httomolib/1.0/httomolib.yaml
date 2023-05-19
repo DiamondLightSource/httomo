@@ -39,7 +39,11 @@ recon:
     find_center_360:
       pattern: sinogram
   algorithm:
-    reconstruct_tomobar:
+    FBP_rec:
       pattern: sinogram
+    SIRT_rec:
+      pattern: sinogram
+    CGLS_rec:
+      pattern: sinogram            
     reconstruct_tomopy_astra:
       pattern: sinogram

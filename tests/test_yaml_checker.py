@@ -27,7 +27,7 @@ def test_one_method_per_module(more_than_one_method):
         ("testing/incorrect_method.yaml", False),
         ("02_basic_cpu_pipeline_tomo_standard.yaml", True),
         ("03_basic_gpu_pipeline_tomo_standard.yaml", True),
-        ("multi_inputs/01_dezing_multi_inputs.yaml", True),
+        ("multi_inputs/01_multi_inputs.yaml", True),
         ("parameter_sweeps/02_median_filter_kernel_sweep.yaml", True),
         ("testing/incorrect_path.yaml", False),
         ("testing/required_param.yaml", False),

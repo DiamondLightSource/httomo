@@ -5,7 +5,7 @@ User Guide
    :maxdepth: 3
 
    run_httomo
-   process_list
+   process_list_configure
    special_features
 
 
