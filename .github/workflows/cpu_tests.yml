@@ -26,20 +26,13 @@ jobs:
         with:
           python-version: 3.9
 
-      # install dependencies with mamba
-      - name: Install dependencies with mamba
-        run: |
-          conda install -n base -c conda-forge mamba
-          which mamba
-          mamba env create --name httomo --file conda/environment.yml
-          mamba activate httomo
-          mamba run -n httomo pip install -e .
-          mamba run -n httomo pip install httomolib
-          mamba env list
-          mamba list
-
-      # run tests
-      - name: Run CPU tests (No CUDA drivers needed)
-        run: |
-          mamba run -n httomo pip install pytest
-          mamba run -n httomo pytest -m "not cupy"
+      # set up conda incubator that uses mamba
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: 3.9
+          mamba-version: "*"
+          channels: conda-forge,httomo,astra-toolbox,anaconda
+          channel-priority: false
+          activate-environment: httomo
+          environment-file: conda/environment.yml
