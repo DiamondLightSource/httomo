@@ -478,12 +478,16 @@ def _run_method(
     Tuple[ResliceInfo, bool]
         Returns a tuple containing the reslicing info and glob stats
     """
-    save_result = _check_save_result(
-        task_idx,
-        no_of_tasks,
-        module_path,
-        save_all,
-        dict_params_method.pop("save_result", None),
+    save_result = (
+        # save result for the last task always
+        task_idx == no_of_tasks - 1
+        or
+        # save result if --save_all is specified
+        save_all
+        or
+        # if the method is from a recon module
+        RECON_MODULE_MATCH in module_path
+        or dict_params_method.pop("save_result", None)
     )
 
     # Check if the input dataset should be resliced before the task runs
@@ -919,67 +923,6 @@ def _run_method_wrapper(
         An array containing the result of the method function.
     """
     return func_wrapper(method_name, dict_params_method, **dict_httomo_params)
-
-
-def _check_save_result(
-    task_idx: int,
-    no_of_tasks: int,
-    module_path: str,
-    save_all: bool,
-    save_result_param: bool,
-) -> bool:
-    """Check if the result of the current method should be saved.
-
-    Parameters
-    ----------
-    task_idx : int
-        The index of the current task (zero-based indexing).
-    no_of_tasks : int
-        The number of tasks in the pipeline.
-    module_path : str
-        The path of the module that the method function comes from.
-    save_all : bool
-        Whether to save the result of all methods in the pipeline,
-    save_result_param : bool
-        The value of `save_result` for given method form the YAML (if not
-        defined in the YAML, then this will have a value of `None`).
-
-    Returns
-    -------
-    bool
-        Whether or not to save the result of a method.
-
-    """
-    save_result = False
-
-    # Default behaviour for saving datasets is to save the output of the last
-    # task, and the output of reconstruction methods are always saved unless
-    # specified otherwise.
-    #
-    # The default behaviour can be overridden in two ways:
-    # 1. the flag `--save_all` which affects all tasks
-    # 2. the method param `save_result` which affects individual tasks
-    #
-    # Here, enforce default behaviour.
-    if task_idx == no_of_tasks - 1:
-        save_result = True
-
-    # Now, check if `--save_all` has been specified, as this can override
-    # default behaviour
-    if save_all:
-        save_result = True
-
-    # Now, check if it's a method from a reconstruction module
-    if RECON_MODULE_MATCH in module_path:
-        save_result = True
-
-    # Finally, check if the `save_result` param was specified in the YAML
-    # config, as it can override both default behaviour and the `--save_all`
-    # flag
-    if save_result_param is not None:
-        save_result = save_result_param
-
-    return save_result
 
 
 def _check_signature_for_httomo_params(
