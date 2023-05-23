@@ -54,6 +54,7 @@ class ResliceInfo:
         The directory to use with file-based reslicing. If None,
         reslicing will be done in-memory.
     """
+
     count: int
     has_warn_printed: bool
     reslice_bool_list: List[bool]
@@ -96,10 +97,10 @@ def run_tasks(
         ncore = multiprocessing.cpu_count()
 
     # Define dict to store arrays of the whole pipeline using provided YAML
-    dict_datasets_pipeline = _initialise_datasets(yaml_config, SAVERS_NO_DATA_OUT_PARAM)
-
     # Define list to store dataset stats for each task in the user config YAML
-    glob_stats = _initialise_stats(yaml_config)
+    dict_datasets_pipeline, glob_stats = _initialise_datasets_and_stats(
+        yaml_config, SAVERS_NO_DATA_OUT_PARAM
+    )
 
     # Get a list of the python functions associated to the methods defined in
     # user config YAML
@@ -114,7 +115,9 @@ def run_tasks(
     }
 
     # store info about reslicing with ResliceInfo
-    reslice_info = ResliceInfo(count=0, has_warn_printed=False, reslice_bool_list=None, reslice_dir=reslice_dir)
+    reslice_info = ResliceInfo(
+        count=0, has_warn_printed=False, reslice_bool_list=None, reslice_dir=reslice_dir
+    )
 
     # Associate patterns to method function objects
     for i, (
@@ -281,9 +284,9 @@ def run_tasks(
         remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
 
 
-def _initialise_datasets(
+def _initialise_datasets_and_stats(
     yaml_config: Path, savers_no_data_out_param: List[str]
-) -> Dict[str, None]:
+) -> tuple[Dict[str, None], List[Dict]]:
     """Add keys to dict that will contain all datasets defined in the YAML
     config.
 
@@ -297,16 +300,20 @@ def _initialise_datasets(
 
     Returns
     -------
-    Dict
-        The dict of datasets, whose keys are the names of the datasets, and
+    tuple
+        Returns a tuple containing a dict of datasets and a
+        list containing the stats of all datasets of all methods in the pipeline.
+        The fist element is the dict of datasets, whose keys are the names of the datasets, and
         values will eventually be arrays (but initialised to None in this
         function)
     """
-    datasets = {}
+    datasets, stats = {}, []
     # Define a list of parameter names that refer to a "dataset" that would need
     # to exist in the `datasets` dict
+    loader_dataset_param = "name"
+    loader_dataset_params = [loader_dataset_param]
     method_dataset_params = ["data_in", "data_out", "data_in_multi", "data_out_multi"]
-    loader_dataset_params = ["name"]
+
     dataset_params = method_dataset_params + loader_dataset_params
 
     yaml_conf = open_yaml_config(yaml_config)
@@ -315,55 +322,13 @@ def _initialise_datasets(
         method_name, method_conf = module_conf.popitem()
         # Check parameters of method if it contains any of the parameters which
         # require a dataset to be defined
-        for param in method_conf.keys():
-            if param in dataset_params:
-                if type(method_conf[param]) is list:
-                    for dataset_name in method_conf[param]:
-                        if dataset_name not in datasets:
-                            datasets[dataset_name] = None
-                else:
-                    if method_conf[param] not in datasets:
-                        datasets[method_conf[param]] = None
-
-    return datasets
-
-
-# TODO: There's a lot of overlap with the `_initialise_datasets()` function, the
-# only difference is that this function doesn't need to inspect the output
-# datasets of a method, so perhaps the two functions can be nicely merged?
-def _initialise_stats(yaml_config: Path) -> List[Dict]:
-    """Generate a list of dicts that will hold the stats for the datasets in all
-    the methods in the pipeline.
-
-    Parameters
-    ----------
-    yaml_config : Path
-        The file containing the processing pipeline info as YAML
-
-    Returns
-    -------
-    List[Dict]
-        A list containing the stats of all datasets of all methods in the
-        pipeline.
-    """
-    stats = []
-    # Define the params related to dataset names in the given function, whether
-    # it's a loader or a method function
-    loader_dataset_param = "name"
-
-    yaml_conf = open_yaml_config(yaml_config)
-    for task_conf in yaml_conf:
-        module_name, module_conf = task_conf.popitem()
-        _, method_conf = module_conf.popitem()
 
         if "loaders" in module_name:
             dataset_param = loader_dataset_param
         else:
-            if "data_in_multi" in method_conf.keys():
-                method_dataset_param = "data_in_multi"
-            else:
-                method_dataset_param = "data_in"
-            dataset_param = method_dataset_param
+            dataset_param = (
+                "data_in_multi" if "data_in_multi" in method_conf.keys() else "data_in"
+            )
 
         # Dict to hold the stats for each dataset associated with the method
         method_stats = {}
@@ -377,7 +342,17 @@ def _initialise_stats(yaml_config: Path) -> List[Dict]:
 
         stats.append(method_stats)
 
-    return stats
+        for param in method_conf.keys():
+            if param in dataset_params:
+                if type(method_conf[param]) is list:
+                    for dataset_name in method_conf[param]:
+                        if dataset_name not in datasets:
+                            datasets[dataset_name] = None
+                else:
+                    if method_conf[param] not in datasets:
+                        datasets[method_conf[param]] = None
+
+    return datasets, stats
 
 
 def _get_method_funcs(
