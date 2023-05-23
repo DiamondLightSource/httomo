@@ -3,6 +3,7 @@ from pathlib import Path
 import time
 from typing import List, Dict, Optional, Tuple, Union
 from collections.abc import Callable
+from dataclasses import dataclass
 from inspect import signature
 from importlib import import_module
 
@@ -26,10 +27,6 @@ from httomolib.misc.images import save_to_images
 # more robust way than this workaround.
 SAVERS_NO_DATA_OUT_PARAM = ["save_to_images"]
 
-reslice_warn_str = (
-    f"WARNING: Reslicing is performed more than once in this "
-    f"pipeline, is there a need for this?"
-)
 # Hardcoded string that is used to check if a method is in a reconstruction
 # module or not
 RECON_MODULE_MATCH = "recon.algorithm"
@@ -37,6 +34,30 @@ MAX_SWEEPS = 1
 
 from httomo.wrappers_class import TomoPyWrapper
 from httomo.wrappers_class import HttomolibWrapper
+
+
+@dataclass
+class ResliceInfo:
+    """
+    Class holding information regarding reslicing
+
+    Parameters
+    ==========
+
+    count: int
+        Counter for how many reslices were done so far
+    has_warn_printed : bool
+        Whether the reslicing warning has been printed
+    reslice_bool_list : List[bool]
+        List of booleans to identify when reslicing is needed
+    reslice_dir : Optional[Path]
+        The directory to use with file-based reslicing. If None,
+        reslicing will be done in-memory.
+    """
+    count: int
+    has_warn_printed: bool
+    reslice_bool_list: List[bool]
+    reslice_dir: Optional[Path] = None
 
 
 def run_tasks(
@@ -92,9 +113,8 @@ def run_tasks(
         "comm": comm,
     }
 
-    # A counter to track how many reslices occur in the processing pipeline
-    reslice_counter = 0
-    has_reslice_warn_printed = False
+    # store info about reslicing with ResliceInfo
+    reslice_info = ResliceInfo(count=0, has_warn_printed=False, reslice_bool_list=None, reslice_dir=reslice_dir)
 
     # Associate patterns to method function objects
     for i, (
@@ -115,7 +135,7 @@ def run_tasks(
 
     # get a list with booleans to identify when reslicing needed
     patterns = [f.pattern for (_, f, _, _) in method_funcs]
-    reslice_bool_list = _check_if_should_reslice(patterns)
+    reslice_info.reslice_bool_list = _check_if_should_reslice(patterns)
 
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
@@ -220,7 +240,7 @@ def run_tasks(
             dict_params_method.update({"ncore": ncore})
 
         idx += 1
-        reslice_counter, has_reslice_warn_printed, glob_stats[idx] = _run_method(
+        reslice_info, glob_stats[idx] = _run_method(
             idx,
             save_all,
             module_path,
@@ -236,10 +256,7 @@ def run_tasks(
             httomo.globals.run_out_dir,
             glob_stats[idx],
             comm,
-            reslice_counter,
-            has_reslice_warn_printed,
-            reslice_bool_list,
-            reslice_dir,
+            reslice_info,
         )
 
         stop = time.perf_counter_ns()
@@ -251,9 +268,8 @@ def run_tasks(
         output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
         log_once(output_str_list, comm=comm, colour=output_colour_list)
 
-    # Log the number of reslice operations peformed in the pipeline
-    reslice_summary_str = f"Total number of reslices: {reslice_counter}"
-    reslice_summary_colour = Colour.BLUE if reslice_counter <= 1 else Colour.RED
+    reslice_summary_str = f"Total number of reslices: {reslice_info.count}"
+    reslice_summary_colour = Colour.BLUE if reslice_info.count <= 1 else Colour.RED
     log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
 
     elapsed_time = 0
@@ -420,9 +436,7 @@ def _get_method_funcs(
         )
         wrapper_func = getattr(wrapper_init_module.module, method_name)
         wrapper_method = wrapper_init_module.wrapper_method
-        method_funcs.append(
-            (module_name, wrapper_func, wrapper_method, method_conf)
-        )
+        method_funcs.append((module_name, wrapper_func, wrapper_method, method_conf))
 
     return method_funcs
 
@@ -443,11 +457,8 @@ def _run_method(
     out_dir: str,
     glob_stats: Dict,
     comm: MPI.Comm,
-    reslice_counter: int,
-    has_reslice_warn_printed: bool,
-    reslice_bool_list: List[bool],
-    reslice_dir: Optional[Path] = None,
-) -> Tuple[bool, bool]:
+    reslice_info: ResliceInfo,
+) -> Tuple[ResliceInfo, bool]:
     """Run a method function in the processing pipeline.
 
     Parameters
@@ -484,22 +495,13 @@ def _run_method(
         necessary.
     comm : MPI.Comm
         The MPI communicator used for the run.
-    reslice_counter : int
-        A counter for how many times reslicing has occurred in the pipeline.
-    has_reslice_warn_printed : bool
-        A flag to describe if the reslice warning has been printed or not.
-    reslice_bool_list : List[bool]
-        A list of boolens to describe which methods need reslicing of their
-        input data prior to running.
-    reslice_dir : Optional[Path]
-        Path where to store the reslice intermediate files, or None if reslicing
-        should be done in-memory.
+    reslice_info : ResliceInfo
+        Contains the information about reslicing.
 
     Returns
     -------
-    Tuple[int, bool]
-        Contains the `reslice_counter` and `has_reslice_warn_printed` values to
-        enable the information to persist across method executions.
+    Tuple[ResliceInfo, bool]
+        Returns a tuple containing the reslicing info and glob stats
     """
     save_result = _check_save_result(
         task_idx,
@@ -510,26 +512,30 @@ def _run_method(
     )
 
     # Check if the input dataset should be resliced before the task runs
-    should_reslice = reslice_bool_list[task_idx]
+    should_reslice = reslice_info.reslice_bool_list[task_idx]
     if should_reslice:
-        reslice_counter += 1
+        reslice_info.count += 1
         current_slice_dim = _get_slicing_dim(prev_func.pattern)
         next_slice_dim = _get_slicing_dim(current_func.pattern)
 
     # the GPU wrapper should know if the reslice is needed to convert the result
     # to numpy from cupy array
     reslice_ahead = (
-        reslice_bool_list[task_idx + 1]
-        if task_idx < len(reslice_bool_list) - 1
+        reslice_info.reslice_bool_list[task_idx + 1]
+        if task_idx < len(reslice_info.reslice_bool_list) - 1
         else "False"
     )
     misc_params[-2] = (["save_result"], save_result)
     # reslice_ahead must be the last item in the list
     misc_params[-1] = (["reslice_ahead"], reslice_ahead)
 
-    if reslice_counter > 1 and not has_reslice_warn_printed:
+    if reslice_info.count > 1 and not reslice_info.has_reslice_warn_printed:
+        reslice_warn_str = (
+            "WARNING: Reslicing is performed more than once in this "
+            "pipeline, is there a need for this?"
+        )
         log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
-        has_reslice_warn_printed = True
+        reslice_info.has_reslice_warn_printed = True
 
     # extra params unrelated to wrapped packages but related to httomo added
     dict_httomo_params = _check_signature_for_httomo_params(
@@ -559,8 +565,8 @@ def _run_method(
         # schema validation of the user config YAML
         if method_name not in SAVERS_NO_DATA_OUT_PARAM:
             if (
-                "data_in" in dict_params_method.keys() and
-                "data_out" not in dict_params_method.keys()
+                "data_in" in dict_params_method.keys()
+                and "data_out" not in dict_params_method.keys()
             ):
                 # Assume "data_out" to be the same as "data_in"
                 data_in = [dict_params_method.pop("data_in")]
@@ -653,10 +659,7 @@ def _run_method(
         # TODO: Not yet able to run parameter sweeps on a method that also
         # produces mutliple output datasets
         if type(out_dataset) is list and current_param_sweep:
-            err_str = (
-                f"Parameter sweeps on methods with multiple output "
-                f"datasets is not supported"
-            )
+            err_str = "Parameter sweeps on methods with multiple output datasets is not supported"
             log_exception(err_str)
             raise ValueError(err_str)
 
@@ -698,7 +701,7 @@ def _run_method(
 
             # Perform a reslice of the data if necessary
             if should_reslice:
-                if reslice_dir is None:
+                if reslice_info.reslice_dir is None:
                     resliced_data, _ = reslice(
                         arr,
                         current_slice_dim,
@@ -707,7 +710,11 @@ def _run_method(
                     )
                 else:
                     resliced_data, _ = reslice_filebased(
-                        arr, current_slice_dim, next_slice_dim, comm, reslice_dir
+                        arr,
+                        current_slice_dim,
+                        next_slice_dim,
+                        comm,
+                        reslice_info.reslice_dir,
                     )
                 # Store the resliced input
                 if type(dict_datasets_pipeline[in_dataset]) is list:
@@ -765,7 +772,7 @@ def _run_method(
         if method_name in SAVERS_NO_DATA_OUT_PARAM:
             # Nothing more to do if the saver has a special kind of
             # output which handles saving the result
-            return reslice_counter, has_reslice_warn_printed, glob_stats
+            return reslice_info, glob_stats
 
         # TODO: The dataset saving functionality only supports 3D data
         # currently, so check that the dimension of the data is 3 before
@@ -889,7 +896,7 @@ def _run_method(
                     subfolder_name=f"middle_slices_{out_dataset}",
                 )
 
-    return reslice_counter, has_reslice_warn_printed, glob_stats
+    return reslice_info, glob_stats
 
 
 def _run_loader(
