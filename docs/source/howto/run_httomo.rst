@@ -220,6 +220,8 @@ faster.
 Based on the hardware that HTTomo will be run on, the number of available CPU
 cores can be provided to take advantage of this multi-process capability.
 
+.. _httomo-saving:
+
 :code:`--save_all`
 ~~~~~~~~~~~~~~~~~~
 
@@ -229,8 +231,8 @@ following conditions is satisfied:
 
 - the method is the last one in the processing pipeline
 - the :code:`save_result` parameter has been provided a value of :code:`True` in
-  a method's YAML configuration (see **ADD REFERENCE** for more info on the
-  :code:`save_result` parameter)
+  a method's YAML configuration (see :ref:`save-result-examples` for more info
+  on the :code:`save_result` parameter)
 
 However, there are certain cases such as debugging, where saving the output of
 all methods to files in the output directory is beneficial. This flag is a quick
