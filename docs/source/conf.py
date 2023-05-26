@@ -109,3 +109,7 @@ html_context = {
     "github_version": "main",
     "doc_path": "docs",
 }
+
+
+def setup(app):
+    app.add_css_file("css/general.css")
