@@ -108,7 +108,7 @@ def add_title(edit_doc, rst_name):
     rst_name : str
         name of rst file.
     """
-    edit_doc.write(f"   .. |link_icon| unicode:: U+1F517\n\n")
+    edit_doc.write(f".. |link_icon| unicode:: U+1F517\n\n")
     title = f":mod:`{rst_name}`"
     edit_doc.write(f"{title}\n")
     underline = len(title) * "="
