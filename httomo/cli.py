@@ -86,6 +86,12 @@ def check(yaml_config: Path, in_data: Path = None):
     else context.params["out_dir"],
     help="Directory for reslice intermediate files (defaults to out_dir, only relevant if --reslice is also given)",
 )
+@click.option(
+    "--output-folder",
+    type=click.Path(exists=False, file_okay=False, writable=True, path_type=Path),
+    default=None,
+    help="Optionally define the name of the output folder created by HTTomo",
+)
 def run(
     in_file: Path,
     yaml_config: Path,
@@ -96,12 +102,16 @@ def run(
     save_all: bool,
     file_based_reslice: bool,
     reslice_dir: Path,
+    output_folder: Path,
 ):
     """Run a processing pipeline defined in YAML on input data."""
     # Define httomo.globals.run_out_dir in all MPI processes
-    httomo.globals.run_out_dir = out_dir.joinpath(
-        f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
-    )
+    if output_folder is None:
+        httomo.globals.run_out_dir = out_dir.joinpath(
+            f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
+        )
+    else:
+        httomo.globals.run_out_dir = out_dir.joinpath(output_folder)
     comm = MPI.COMM_WORLD
     if comm.rank == 0:
         # Setup global logger object
