@@ -1,4 +1,5 @@
 import os
+import pytest
 import re
 import subprocess
 
@@ -146,6 +147,7 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
 
 
 @pytest.mark.cupy
+@pytest.mark.slow
 def test_diad_testing_pipeline_output(
     cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
 ):

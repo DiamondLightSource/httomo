@@ -13,6 +13,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
     config.addinivalue_line("markers", "perf: mark test as performance test")
     config.addinivalue_line("markers", "cupy: needs cupy to run")
+    config.addinivalue_line("markers", "slow: mark test as slow")
 
 
 def pytest_addoption(parser):
@@ -68,6 +69,16 @@ def cmd():
 @pytest.fixture
 def standard_data():
     return "tests/test_data/tomo_standard.nxs"
+
+
+@pytest.fixture
+def standard_data_path():
+    return "/entry1/tomo_entry/data/data"
+
+
+@pytest.fixture
+def standard_image_key_path():
+    return "/entry1/tomo_entry/instrument/detector/image_key"
 
 
 @pytest.fixture

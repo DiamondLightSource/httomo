@@ -21,7 +21,7 @@ def standard_tomo(
     rotation_angles: Dict = {"data_path": "/entry1/tomo_entry/data/rotation_angle"},
     darks: Dict = None,
     flats: Dict = None,
-) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int, int, int]:
+) -> Tuple[ndarray, ndarray, ndarray, ndarray, int, int, int]:
     """Loader for standard tomography data.
 
     Parameters
@@ -56,8 +56,8 @@ def standard_tomo(
 
     Returns
     -------
-    Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int, int, int]
-        A tuple of 8 values that all loader functions return.
+    Tuple[ndarray, ndarray, ndarray, ndarray, int, int, int]
+        A tuple of 7 values that all loader functions return.
     """
     with File(in_file, "r", driver="mpio", comm=comm) as file:
         dataset = file[data_path]

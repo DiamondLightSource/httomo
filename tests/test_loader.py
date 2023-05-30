@@ -1,5 +1,12 @@
 import pytest
 import subprocess
+import numpy as np
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+
+from httomo.data.hdf.loaders import standard_tomo
 
 
 @pytest.mark.cupy
@@ -25,6 +32,7 @@ def test_tomo_standard_testing_pipeline_loaded(
 
 
 @pytest.mark.cupy
+@pytest.mark.slow
 def test_diad_testing_pipeline_loaded(
     cmd, diad_data, diad_loader, output_folder, testing_pipeline, merge_yamls
 ):
@@ -42,3 +50,76 @@ def test_diad_testing_pipeline_loaded(
     assert "Running task 5 (pattern=sinogram): find_center_vo..." in result.stderr
     assert "Running task 7 (pattern=all): save_to_images.." in result.stderr
     assert "Pipeline finished" in result.stderr
+
+
+def test_standard_tomo(standard_data, standard_data_path, standard_image_key_path):
+    preview = [None, {"start": 5, "stop": 10}, None]
+
+    output = standard_tomo(
+        "tomo",
+        standard_data,
+        standard_data_path,
+        1,
+        preview,
+        1,
+        comm,
+        image_key_path=standard_image_key_path,
+    )
+
+    assert len(output) == 7
+
+    # data
+    assert output[0].sum() == 141348397
+    np.testing.assert_allclose(output[0].mean(), 981.58574794, rtol=1e-5)
+    assert output[0].shape == (180, 5, 160)
+
+    # flats
+    assert output[1].sum() == 15625259
+    np.testing.assert_allclose(output[1].mean(), 976.5786875, rtol=1e-5)
+    assert output[1].shape == (20, 5, 160)
+
+    # angles
+    assert output[3].shape == (180,)
+    np.testing.assert_allclose(output[3].sum(), 281.1725424962865, rtol=1e-5)
+    np.testing.assert_allclose(output[3].mean(), 1.562069680534925, rtol=1e-5)
+
+    assert output[4] == 180  # angles_total
+    assert output[5] == 5  # detector_y
+    assert output[6] == 160  # detector_x
+
+
+def test_diad_loader():
+    in_file = "tests/test_data/k11_diad/k11-18014.nxs"
+    data_path = "/entry/imaging/data"
+    image_key_path = "/entry/instrument/imaging/image_key"
+    rotation_angles = {"data_path": "/entry/imaging_sum/gts_theta_value"}
+
+    output = standard_tomo(
+        "tomo",
+        in_file,
+        data_path,
+        1,
+        [None, {'start': 5, 'stop': 7}, None],
+        0,
+        comm,
+        image_key_path=image_key_path,
+        rotation_angles=rotation_angles,
+    )
+
+    assert len(output) == 7
+
+    assert output[0].sum() == 6019533062
+    np.testing.assert_allclose(output[0].mean(), 38573.89243329147, rtol=1e-5)
+    assert output[0].shape == (3001, 2, 26)
+
+    assert output[1].sum() == 236484277
+    np.testing.assert_allclose(output[1].mean(), 45477.74557692308, rtol=1e-5)
+    assert output[1].shape == (100, 2, 26)
+
+    assert output[3].shape == (3001,)
+    np.testing.assert_allclose(output[3].sum(), 9427.76925660484, rtol=1e-5)
+    np.testing.assert_allclose(output[3].mean(), 3.1415425713444987, rtol=1e-5)
+
+    assert output[4] == 3001
+    assert output[5] == 2
+    assert output[6] == 26
