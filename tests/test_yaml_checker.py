@@ -2,6 +2,7 @@
 Some unit tests for the yaml checker
 """
 import pytest
+
 from httomo.yaml_checker import (
     check_one_method_per_module,
     sanity_check,

@@ -1,18 +1,18 @@
 from dataclasses import dataclass
-from pathlib import Path, PurePath
-from typing import Optional
 from datetime import datetime
+from pathlib import Path, PurePath
 from shutil import copy
+from typing import Optional
 
 import click
+from mpi4py import MPI
 
 import httomo.globals
 from httomo.common import PipelineTasks
-from httomo.task_runner import run_tasks
 from httomo.logger import setup_logger
+from httomo.task_runner import run_tasks
 from httomo.yaml_checker import validate_yaml_config
 
-from mpi4py import MPI
 from . import __version__
 
 

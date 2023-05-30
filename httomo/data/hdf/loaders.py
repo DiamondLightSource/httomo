@@ -1,14 +1,14 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Tuple, List, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from h5py import File
 from mpi4py.MPI import Comm
-from numpy import asarray, deg2rad, ndarray, arange, linspace
+from numpy import arange, asarray, deg2rad, linspace, ndarray
 
 from httomo.data.hdf._utils import load
-from httomo.utils import _parse_preview, log_once, log_rank, Colour
+from httomo.utils import Colour, _parse_preview, log_once, log_rank
 
 
 @dataclass

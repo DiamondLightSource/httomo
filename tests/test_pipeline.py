@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 import subprocess
@@ -7,7 +8,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from PIL import Image
-import glob
+from plumbum import local
 
 PATTERN = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
 
@@ -282,10 +283,7 @@ def test_sweep_pipeline_with_save_all_using_mpi(
     subprocess.check_output(cmd)
 
     #: - - - - - - - - - -  PARALLEL RUN - - - - - - - - - - -
-    cmd.insert(0, "mpirun")
-    cmd.insert(1, "-n")
-    cmd.insert(2, "4")
-    subprocess.check_output(cmd)
+    local.cmd.mpirun("-n", "4", *cmd)
 
     #: - - - - - - - - - - SERIAL vs PARALLEL OUTPUT - - - - - - -
     files = read_folder("output_dir/")
