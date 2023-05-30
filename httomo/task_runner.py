@@ -183,15 +183,7 @@ def run_tasks(
 
     loader_start_time = time.perf_counter_ns()
 
-    (
-        data,
-        flats,
-        darks,
-        angles,
-        angles_total,
-        detector_y,
-        detector_x,
-    ) = _run_loader(method_funcs[0][1], method_funcs[0][3])
+    loader_info = _run_loader(method_funcs[0][1], method_funcs[0][3])
 
     output_str_list = [
         f"    Finished task 1 (pattern={method_funcs[0][1].pattern.name}): {loader_method_name} (",
@@ -203,15 +195,15 @@ def run_tasks(
 
     # Update `dict_datasets_pipeline` dict with the data that has been
     # loaded by the loader
-    dict_datasets_pipeline[method_funcs[0][3]["name"]] = data
-    dict_datasets_pipeline["flats"] = flats
-    dict_datasets_pipeline["darks"] = darks
+    dict_datasets_pipeline[method_funcs[0][3]["name"]] = loader_info.data
+    dict_datasets_pipeline["flats"] = loader_info.flats
+    dict_datasets_pipeline["darks"] = loader_info.darks
 
     # Extra params relevant to httomo that a wrapper function might need
     possible_extra_params = [
-        (["darks"], darks),
-        (["flats"], flats),
-        (["angles", "angles_radians"], angles),
+        (["darks"], loader_info.darks),
+        (["flats"], loader_info.flats),
+        (["angles", "angles_radians"], loader_info.angles),
         (["comm"], comm),
         (["out_dir"], httomo.globals.run_out_dir),
         (["save_result"], False),
