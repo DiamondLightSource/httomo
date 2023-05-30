@@ -4,15 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 include-package-data = true
-packages = ["httomo",
-            "httomo.data",
-            "httomo.data.hdf",
-            "httomo.data.hdf._utils",
-            "httomo.methods_database",
-            "httomo._stats"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["httomo*"]
 
 [tool.setuptools.package-data]
-httomo = ["*.yaml", "*.yml"]    # include yaml files from methods database
+httomo = ["methods_database/packages/*.yaml",
+          "methods_database/packages/external/*.yaml",
+          "methods_database/packages/external/httomolib/*/*.yaml",
+          "methods_database/packages/external/tomopy/*/*.yaml"]
 
 [tool.setuptools-git-versioning]
 enabled = true
