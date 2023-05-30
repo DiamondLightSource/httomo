@@ -21,7 +21,14 @@ try:
 except ImportError:
     import numpy as xp
 
-    print("CuPy is not installed")
+    log_once(
+        "CuPy is not installed",
+        # The `comm` parameter for `log_once()` isn't used in the function body,
+        # so any value is fine to pass
+        comm="comm",
+        colour=Colour.LYELLOW,
+        level=1,
+    )
 
 
 def _gpumem_cleanup():
@@ -49,7 +56,13 @@ class BaseWrapper:
             Union[tuple, xp.ndarray, np.ndarray]: transferred datasets
         """
         if not gpu_enabled:
-            return args
+            # Apply the same logic as the `if self.cupyrun` block later on, to
+            # return either a single array or a tuple of arrays based on the
+            # number of args
+            if len(args) == 1:
+                return args[0]
+            else:
+                return args
         xp.cuda.Device(self.gpu_id).use()
         _gpumem_cleanup()
         if self.cupyrun:
@@ -93,7 +106,13 @@ class BaseWrapper:
         data = getattr(self.module, method_name)(data, **dict_params_method)
         if reslice_ahead or save_result and gpu_enabled:
             # reslice ahead, bring data back to numpy array
-            return xp.asnumpy(data)
+            try:
+                return xp.asnumpy(data)
+            except AttributeError:
+                # Getting this error indicates that `xp` is `np`, where `np`
+                # does not have the `asnumpy()` function. This means that `data`
+                # is a numpy array, so return it as is.
+                return data
         else:
             return data
 
