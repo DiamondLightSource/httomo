@@ -42,7 +42,6 @@ requires-python = ">=3.9"
 version = "0.0.1"
 dependencies = [
     "click",
-    "cupy",
     "numpy",
 ]
 
@@ -54,7 +53,7 @@ repository = "https://github.com/DiamondLightSource/HTTomo"
 
 [project.optional-dependencies]
 tomopy = [ "tomopy" ]
-httomolib = [ "httomolib" ]
+httomolib = [ "httomolib", "cupy" ]
 dev = [
   "pytest",
   "pytest-cov",
