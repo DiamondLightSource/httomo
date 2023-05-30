@@ -29,10 +29,9 @@ jobs:
       # install dependencies with conda
       - name: Install dependencies with conda
         run: |
-          conda env create --name httomo --file conda/environment.yml
-          conda activate httomo
+          conda env create --name httomo --file conda/environment-cpu.yml
           conda run -n httomo pip install -e .
-          conda run -n httomo pip install httomolib
+          conda run -n httomo pip install git+https://github.com/DiamondLightSource/httomolib.git@httomo-cpu
           conda env list
           conda list
 
@@ -40,4 +39,4 @@ jobs:
       - name: Run CPU tests (No CUDA drivers needed)
         run: |
           conda run -n httomo pip install pytest
-          conda run -n httomo pytest -m "not cupy"
+          conda run -n httomo pytest
