@@ -63,7 +63,8 @@ dev = [
   "pydocstyle",
   "toml",
   "httomolib[dev]",
-  "tomopy"
+  "tomopy",
+  "plumbum",
 ]
 
 [tool.mypy]
