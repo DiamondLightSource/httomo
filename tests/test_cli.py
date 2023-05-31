@@ -1,6 +1,7 @@
 import pytest
 import subprocess
 import sys
+from pathlib import Path
 
 from httomo import __version__
 
@@ -39,3 +40,26 @@ def test_cli_check_pass_data_file(standard_loader, standard_data):
         "match the paths and keys in the input file (IN_DATA)..."
     )
     assert check_data_str in subprocess.check_output(cmd).decode().strip()
+
+
+@pytest.mark.cupy
+def test_cli_pass_output_folder(
+    standard_data, standard_loader, testing_pipeline, merge_yamls, output_folder
+):
+    merge_yamls(standard_loader, testing_pipeline)
+    output_dir = "output_dir"  # dir created by the `output_folder` fixture
+    httomo_output_dir = "test-output"  # subdir that should be created by httomo
+    custom_output_dir = Path(output_dir, httomo_output_dir)
+    cmd = [
+        sys.executable,
+        "-m",
+        "httomo",
+        "run",
+        "--output-folder",
+        httomo_output_dir,
+        standard_data,
+        "temp.yaml",
+        output_dir,
+    ]
+    subprocess.check_output(cmd)
+    assert Path(custom_output_dir, "user.log").exists()
