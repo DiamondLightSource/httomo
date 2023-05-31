@@ -1,11 +1,12 @@
-from typing import Dict, Union
-import numpy as np
 import inspect
 from inspect import signature
-from httomo.utils import log_once, Colour
-from httomo.data import mpiutil
+from typing import Dict, Union
 
+import numpy as np
 from mpi4py.MPI import Comm
+
+from httomo.data import mpiutil
+from httomo.utils import Colour, log_once
 
 gpu_enabled = False
 try:

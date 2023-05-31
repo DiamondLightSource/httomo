@@ -1,42 +1,118 @@
+import dataclasses
 import multiprocessing
-from pathlib import Path
 import time
-from typing import List, Dict, Optional, Tuple, Union
 from collections.abc import Callable
-from inspect import signature
+from dataclasses import dataclass, field
 from importlib import import_module
+from inspect import signature
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from numpy import ndarray
 import numpy as np
+from httomolib.misc.images import save_to_images
 from mpi4py import MPI
+from numpy import ndarray
 
 import httomo.globals
-from httomo.common import remove_ansi_escape_sequences
-from httomo.utils import log_once, Pattern, _get_slicing_dim, Colour, log_exception
-from httomo.yaml_utils import open_yaml_config
-from httomo.data.hdf._utils.save import intermediate_dataset
-from httomo.data.hdf._utils.chunk import save_dataset, get_data_shape
-from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
 from httomo._stats.globals import min_max_mean_std
+from httomo.common import remove_ansi_escape_sequences
+from httomo.data.hdf._utils.chunk import get_data_shape, save_dataset
+from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
+from httomo.data.hdf._utils.save import intermediate_dataset
+from httomo.data.hdf.loaders import LoaderData
 from httomo.methods_database.query import get_method_info
-from httomolib.misc.images import save_to_images
+from httomo.utils import (
+    Colour,
+    Pattern,
+    _get_slicing_dim,
+    get_data_in_data_out,
+    log_exception,
+    log_once,
+)
+from httomo.wrappers_class import HttomolibWrapper, TomoPyWrapper
+from httomo.yaml_utils import open_yaml_config
 
 # TODO: Define a list of savers which have no output dataset and so need to
 # be treated differently to other methods. Probably should be handled in a
 # more robust way than this workaround.
 SAVERS_NO_DATA_OUT_PARAM = ["save_to_images"]
 
-reslice_warn_str = (
-    f"WARNING: Reslicing is performed more than once in this "
-    f"pipeline, is there a need for this?"
-)
 # Hardcoded string that is used to check if a method is in a reconstruction
 # module or not
 RECON_MODULE_MATCH = "recon.algorithm"
 MAX_SWEEPS = 1
 
-from httomo.wrappers_class import TomoPyWrapper
-from httomo.wrappers_class import HttomolibWrapper
+
+
+@dataclass
+class MethodFunc:
+    """
+    Class holding information about each tomography pipeline method
+
+    Parameters
+    ==========
+
+    module_name : str
+        Fully qualified name of the module where the method is. E.g. httomolib.prep.normalize
+    method_func : Callable
+        The actual method callable
+    wrapper_func: Optional[Callable]
+        The wrapper function to handle the execution. It may be None,
+        for example for loaders.
+    calc_max_slices: Optional[Callable]
+        A callable with the signature
+        (slice_dim: int, other_dims: int, dtype: np.dtype, available_memory: int) -> int
+        which determines the maximum number of slices it can fit in the given memory.
+        If it is not present (None), the method is assumed to fit any amount of slices.
+    parameters : Dict[str, Any]
+        The method parameters that are specified in the pipeline yaml file.
+        They are used as kwargs when the method is called.
+    cpu : bool
+        Whether CPU execution is supported.
+    gpu : bool
+        Whether GPU execution is supported.
+    reslice_ahead : bool
+        Whether a reslice needs to be done due to a pattern change in the pipeline
+    is_last_method : bool
+        True if it is the last method in the pipeline
+    """
+
+    module_name: str
+    method_func: Callable
+    wrapper_func: Optional[Callable] = None
+    calc_max_slices: Optional[Callable] = None
+    parameters: Dict[str, Any] = field(default_factory=dict)
+    pattern: Pattern = Pattern.projection
+    cpu: bool = True
+    gpu: bool = False
+    reslice_ahead: bool = False
+    is_loader: bool = False
+    is_last_method: bool = False
+
+
+@dataclass
+class ResliceInfo:
+    """
+    Class holding information regarding reslicing
+
+    Parameters
+    ==========
+
+    count: int
+        Counter for how many reslices were done so far
+    has_warn_printed : bool
+        Whether the reslicing warning has been printed
+    reslice_bool_list : List[bool]
+        List of booleans to identify when reslicing is needed
+    reslice_dir : Optional[Path]
+        The directory to use with file-based reslicing. If None,
+        reslicing will be done in-memory.
+    """
+
+    count: int
+    has_warn_printed: bool
+    reslice_bool_list: List[bool]
+    reslice_dir: Optional[Path] = None
 
 
 def run_tasks(
@@ -75,10 +151,10 @@ def run_tasks(
         ncore = multiprocessing.cpu_count()
 
     # Define dict to store arrays of the whole pipeline using provided YAML
-    dict_datasets_pipeline = _initialise_datasets(yaml_config, SAVERS_NO_DATA_OUT_PARAM)
-
     # Define list to store dataset stats for each task in the user config YAML
-    glob_stats = _initialise_stats(yaml_config)
+    dict_datasets_pipeline, glob_stats = _initialise_datasets_and_stats(
+        yaml_config, SAVERS_NO_DATA_OUT_PARAM
+    )
 
     # Get a list of the python functions associated to the methods defined in
     # user config YAML
@@ -92,35 +168,22 @@ def run_tasks(
         "comm": comm,
     }
 
-    # A counter to track how many reslices occur in the processing pipeline
-    reslice_counter = 0
-    has_reslice_warn_printed = False
+    # store info about reslicing with ResliceInfo
+    reslice_info = ResliceInfo(
+        count=0, has_warn_printed=False, reslice_bool_list=None, reslice_dir=reslice_dir
+    )
 
     # Associate patterns to method function objects
-    for i, (
-        module_path,
-        func_method,
-        func_wrapper,
-        dict_params_method,
-    ) in enumerate(method_funcs):
-        func_method = _assign_pattern_to_method(
-            func_method, module_path, dict_params_method["method_name"]
-        )
-        method_funcs[i] = (
-            module_path,
-            func_method,
-            func_wrapper,
-            dict_params_method,
-        )
+    for i, method_func in enumerate(method_funcs):
+        method_funcs[i] = _assign_pattern_to_method(method_func)
 
-    # get a list with booleans to identify when reslicing needed
-    patterns = [f.pattern for (_, f, _, _) in method_funcs]
-    reslice_bool_list = _check_if_should_reslice(patterns)
+    method_funcs = _check_if_should_reslice(method_funcs)
+    reslice_info.reslice_bool_list = [m.reslice_ahead for m in method_funcs]
 
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
     # sweeps
-    params = [param_dict for (_, _, _, param_dict) in method_funcs]
+    params = [m.parameters for m in method_funcs]
     no_of_sweeps = sum(map(_check_params_for_sweep, params))
 
     if no_of_sweeps > MAX_SWEEPS:
@@ -142,17 +205,16 @@ def run_tasks(
         colour=Colour.CYAN,
         level=0,
     )
-
-    method_funcs[0][3].update(dict_loader_extra_params)
+    method_funcs[0].parameters.update(dict_loader_extra_params)
 
     # Check if a value for the `preview` parameter of the loader has
     # been provided
-    if "preview" not in method_funcs[0][3].keys():
-        method_funcs[0][3]["preview"] = [None]
+    if "preview" not in method_funcs[0].parameters.keys():
+        method_funcs[0].parameters["preview"] = [None]
 
-    loader_method_name = method_funcs[0][3].pop("method_name")
+    loader_method_name = method_funcs[0].parameters.pop("method_name")
     log_once(
-        f"Running task 1 (pattern={method_funcs[0][1].pattern.name}): {loader_method_name}...",
+        f"Running task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name}...",
         comm,
         colour=Colour.LIGHT_BLUE,
         level=0,
@@ -160,18 +222,11 @@ def run_tasks(
 
     loader_start_time = time.perf_counter_ns()
 
-    (
-        data,
-        flats,
-        darks,
-        angles,
-        angles_total,
-        detector_y,
-        detector_x,
-    ) = _run_loader(method_funcs[0][1], method_funcs[0][3])
+    loader_func = method_funcs[0].method_func # function to be called from httomo.data.hdf.loaders
+    loader_info = loader_func(**method_funcs[0].parameters) # collect meta data from LoaderData.
 
     output_str_list = [
-        f"    Finished task 1 (pattern={method_funcs[0][1].pattern.name}): {loader_method_name} (",
+        f"    Finished task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name} (",
         "httomo",
         f") Took {float(time.perf_counter_ns() - loader_start_time)*1e-6:.2f}ms",
     ]
@@ -180,33 +235,32 @@ def run_tasks(
 
     # Update `dict_datasets_pipeline` dict with the data that has been
     # loaded by the loader
-    dict_datasets_pipeline[method_funcs[0][3]["name"]] = data
-    dict_datasets_pipeline["flats"] = flats
-    dict_datasets_pipeline["darks"] = darks
+    dict_datasets_pipeline[method_funcs[0].parameters["name"]] = loader_info.data
+    dict_datasets_pipeline["flats"] = loader_info.flats
+    dict_datasets_pipeline["darks"] = loader_info.darks
 
     # Extra params relevant to httomo that a wrapper function might need
     possible_extra_params = [
-        (["darks"], darks),
-        (["flats"], flats),
-        (["angles", "angles_radians"], angles),
+        (["darks"], loader_info.darks),
+        (["flats"], loader_info.flats),
+        (["angles", "angles_radians"], loader_info.angles),
         (["comm"], comm),
         (["out_dir"], httomo.globals.run_out_dir),
         (["save_result"], False),
         (["reslice_ahead"], False),
     ]
 
+    # data shape and dtype are useful when calculating max slices
+    data_shape = loader_info.data.shape
+    data_dtype = loader_info.data.dtype
+
     # Run the methods
-    for idx, (
-        module_path,
-        func_method,
-        func_wrapper,
-        dict_params_method,
-    ) in enumerate(method_funcs[1:]):
-        package = module_path.split(".")[0]
-        method_name = dict_params_method.pop("method_name")
+    for idx, method_func in enumerate(method_funcs[1:]):
+        package = method_func.module_name.split(".")[0]
+        method_name = method_func.parameters.pop("method_name")
         task_no_str = f"Running task {idx+2}"
         task_end_str = task_no_str.replace("Running", "Finished")
-        pattern_str = f"(pattern={func_method.pattern.name})"
+        pattern_str = f"(pattern={method_func.pattern.name})"
         log_once(
             f"{task_no_str} {pattern_str}: {method_name}...",
             comm,
@@ -216,30 +270,21 @@ def run_tasks(
         start = time.perf_counter_ns()
 
         # check if the module needs the ncore parameter and add it
-        if "ncore" in signature(func_method).parameters:
-            dict_params_method.update({"ncore": ncore})
+        if "ncore" in signature(method_func.method_func).parameters:
+            method_func.parameters.update({"ncore": ncore})
 
         idx += 1
-        reslice_counter, has_reslice_warn_printed, glob_stats[idx] = _run_method(
+        reslice_info, glob_stats[idx] = run_method(
             idx,
             save_all,
-            module_path,
-            package,
-            method_name,
-            dict_params_method,
             possible_extra_params,
-            len(method_funcs),
-            func_wrapper,
-            method_funcs[idx][1],
-            method_funcs[idx - 1][1],
+            method_func,
+            method_funcs[idx - 1],
+            method_funcs[idx + 1] if idx < len(method_funcs) - 1 else None,
             dict_datasets_pipeline,
-            httomo.globals.run_out_dir,
             glob_stats[idx],
             comm,
-            reslice_counter,
-            has_reslice_warn_printed,
-            reslice_bool_list,
-            reslice_dir,
+            reslice_info,
         )
 
         stop = time.perf_counter_ns()
@@ -251,9 +296,8 @@ def run_tasks(
         output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
         log_once(output_str_list, comm=comm, colour=output_colour_list)
 
-    # Log the number of reslice operations peformed in the pipeline
-    reslice_summary_str = f"Total number of reslices: {reslice_counter}"
-    reslice_summary_colour = Colour.BLUE if reslice_counter <= 1 else Colour.RED
+    reslice_summary_str = f"Total number of reslices: {reslice_info.count}"
+    reslice_summary_colour = Colour.BLUE if reslice_info.count <= 1 else Colour.RED
     log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
 
     elapsed_time = 0
@@ -265,9 +309,9 @@ def run_tasks(
         remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
 
 
-def _initialise_datasets(
+def _initialise_datasets_and_stats(
     yaml_config: Path, savers_no_data_out_param: List[str]
-) -> Dict[str, None]:
+) -> tuple[Dict[str, None], List[Dict]]:
     """Add keys to dict that will contain all datasets defined in the YAML
     config.
 
@@ -281,16 +325,20 @@ def _initialise_datasets(
 
     Returns
     -------
-    Dict
-        The dict of datasets, whose keys are the names of the datasets, and
+    tuple
+        Returns a tuple containing a dict of datasets and a
+        list containing the stats of all datasets of all methods in the pipeline.
+        The fist element is the dict of datasets, whose keys are the names of the datasets, and
         values will eventually be arrays (but initialised to None in this
         function)
     """
-    datasets = {}
+    datasets, stats = {}, []
     # Define a list of parameter names that refer to a "dataset" that would need
     # to exist in the `datasets` dict
+    loader_dataset_param = "name"
+    loader_dataset_params = [loader_dataset_param]
     method_dataset_params = ["data_in", "data_out", "data_in_multi", "data_out_multi"]
-    loader_dataset_params = ["name"]
+
     dataset_params = method_dataset_params + loader_dataset_params
 
     yaml_conf = open_yaml_config(yaml_config)
@@ -299,55 +347,13 @@ def _initialise_datasets(
         method_name, method_conf = module_conf.popitem()
         # Check parameters of method if it contains any of the parameters which
         # require a dataset to be defined
-        for param in method_conf.keys():
-            if param in dataset_params:
-                if type(method_conf[param]) is list:
-                    for dataset_name in method_conf[param]:
-                        if dataset_name not in datasets:
-                            datasets[dataset_name] = None
-                else:
-                    if method_conf[param] not in datasets:
-                        datasets[method_conf[param]] = None
-
-    return datasets
-
-
-# TODO: There's a lot of overlap with the `_initialise_datasets()` function, the
-# only difference is that this function doesn't need to inspect the output
-# datasets of a method, so perhaps the two functions can be nicely merged?
-def _initialise_stats(yaml_config: Path) -> List[Dict]:
-    """Generate a list of dicts that will hold the stats for the datasets in all
-    the methods in the pipeline.
-
-    Parameters
-    ----------
-    yaml_config : Path
-        The file containing the processing pipeline info as YAML
-
-    Returns
-    -------
-    List[Dict]
-        A list containing the stats of all datasets of all methods in the
-        pipeline.
-    """
-    stats = []
-    # Define the params related to dataset names in the given function, whether
-    # it's a loader or a method function
-    loader_dataset_param = "name"
-
-    yaml_conf = open_yaml_config(yaml_config)
-    for task_conf in yaml_conf:
-        module_name, module_conf = task_conf.popitem()
-        _, method_conf = module_conf.popitem()
 
         if "loaders" in module_name:
             dataset_param = loader_dataset_param
         else:
-            if "data_in_multi" in method_conf.keys():
-                method_dataset_param = "data_in_multi"
-            else:
-                method_dataset_param = "data_in"
-            dataset_param = method_dataset_param
+            dataset_param = (
+                "data_in_multi" if "data_in_multi" in method_conf.keys() else "data_in"
+            )
 
         # Dict to hold the stats for each dataset associated with the method
         method_stats = {}
@@ -361,32 +367,38 @@ def _initialise_stats(yaml_config: Path) -> List[Dict]:
 
         stats.append(method_stats)
 
-    return stats
+        for param in method_conf.keys():
+            if param in dataset_params:
+                if type(method_conf[param]) is list:
+                    for dataset_name in method_conf[param]:
+                        if dataset_name not in datasets:
+                            datasets[dataset_name] = None
+                else:
+                    if method_conf[param] not in datasets:
+                        datasets[method_conf[param]] = None
+
+    return datasets, stats
 
 
-def _get_method_funcs(
-    yaml_config: Path, comm: MPI.Comm
-) -> List[Tuple[str, Callable, Dict, bool]]:
+def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
     """Gather all the python functions needed to run the defined processing
     pipeline.
 
     Parameters
-    ----------
+    ==========
+
     yaml_config : Path
         The file containing the processing pipeline info as YAML
-    comm : MPI.Comm
-        MPI communicator object.
+
     Returns
-    -------
-    List[Tuple[Callable, Dict, bool]]
-        A list, each element being a tuple containing four elements:
-        - a package name
-        - a method function
-        - a dict of parameters for the method function
-        - a boolean describing if it is a loader function or not
+    =======
+
+    List[MethodFunc]
+        A list describing each method function with its properties
     """
-    method_funcs = []
+    method_funcs: List[MethodFunc] = []
     yaml_conf = open_yaml_config(yaml_config)
+    methods_count = len(yaml_conf)
 
     # the first task is always the loader
     # so consider it separately
@@ -396,9 +408,21 @@ def _get_method_funcs(
     method_conf["method_name"] = method_name
     module = import_module(module_name)
     method_func = getattr(module, method_name)
-    method_funcs.append((module_name, method_func, None, method_conf))
+    method_funcs.append(
+        MethodFunc(
+            module_name=module_name,
+            method_func=method_func,
+            wrapper_func=None,
+            parameters=method_conf,
+            is_loader=True,
+            cpu=True,
+            gpu=False,
+            reslice_ahead=False,
+            pattern=Pattern.all,
+        )
+    )
 
-    for task_conf in yaml_conf[1:]:
+    for i, task_conf in enumerate(yaml_conf[1:]):
         module_name, module_conf = task_conf.popitem()
         split_module_name = module_name.split(".")
         method_name, method_conf = module_conf.popitem()
@@ -421,115 +445,108 @@ def _get_method_funcs(
         wrapper_func = getattr(wrapper_init_module.module, method_name)
         wrapper_method = wrapper_init_module.wrapper_method
         method_funcs.append(
-            (module_name, wrapper_func, wrapper_method, method_conf)
+            MethodFunc(
+                module_name=module_name,
+                method_func=wrapper_func,
+                wrapper_func=wrapper_method,
+                parameters=method_conf,
+                cpu=True, # get cpu/gpu meta data info from httomolib methods
+                gpu=False,
+                calc_max_slices=None, # call calc_max_slices function in wrappers
+                reslice_ahead=False,
+                pattern=Pattern.all,
+                is_loader=False,
+                is_last_method=True if i == methods_count - 2 else False,
+            )
         )
 
     return method_funcs
 
 
-def _run_method(
+def run_method(
     task_idx: int,
     save_all: bool,
-    module_path: str,
-    package_name: str,
-    method_name: str,
-    dict_params_method: Dict,
-    misc_params: List[Tuple],
-    no_of_tasks: int,
-    func_wrapper: Callable,
-    current_func: Callable,
-    prev_func: Callable,
-    dict_datasets_pipeline: Dict[str, ndarray],
-    out_dir: str,
+    misc_params: List[Tuple[List[str], object]],
+    current_func: MethodFunc,
+    prev_func: MethodFunc,
+    next_func: Optional[MethodFunc],
+    dict_datasets_pipeline: Dict[str, Optional[ndarray]],
     glob_stats: Dict,
     comm: MPI.Comm,
-    reslice_counter: int,
-    has_reslice_warn_printed: bool,
-    reslice_bool_list: List[bool],
-    reslice_dir: Optional[Path] = None,
-) -> Tuple[bool, bool]:
-    """Run a method function in the processing pipeline.
+    reslice_info: ResliceInfo,
+) -> Tuple[ResliceInfo, bool]:
+    """
+    Run a method function in the processing pipeline.
 
     Parameters
     ----------
     task_idx : int
         The index of the current task (zero-based indexing).
     save_all : bool
-        Whether to save the result of all methods in the pipeline,
-    module_path : str
-        The path of the module that the method function comes from.
-    package_name : str
-        The name of the package that the method function comes from.
-    method_name : str
-        The name of the method to apply.
-    dict_params_method : Dict
-        A dict of parameters for the method.
-    misc_params : List[Tuple]
+        Whether to save the result of all methods in the pipeline.
+    misc_params : List[Tuple[List[str], object]]
         A list of possible extra params that may be needed by a method.
-    no_of_tasks : int
-        The number of tasks in the pipeline.
-    func_wrapper : Callable
-        The object of wrapper function that exacutes the method from a different
-        package.
-    current_func : Callable
-        The python function that performs the method.
-    prev_func : Callable
-        The python function that performed the previous method in the pipeline.
+    current_func : MethodFunc
+        Object describing the python function that performs the method.
+    prev_func : MethodFunc
+        Object describing the python function that performed the previous method in the pipeline.
+    next_func: Optional[MethodFunc]
+        Object describing the python function that is next in the pipeline,
+        unless the current method is the last one.
     dict_datasets_pipeline : Dict[str, ndarray]
         A dict containing all available datasets in the given pipeline.
-    out_dir : str
-        The path to the output directory of the run.
     glob_stats : Dict
         A dict of the dataset names to store their associated global stats if
         necessary.
     comm : MPI.Comm
         The MPI communicator used for the run.
-    reslice_counter : int
-        A counter for how many times reslicing has occurred in the pipeline.
-    has_reslice_warn_printed : bool
-        A flag to describe if the reslice warning has been printed or not.
-    reslice_bool_list : List[bool]
-        A list of boolens to describe which methods need reslicing of their
-        input data prior to running.
-    reslice_dir : Optional[Path]
-        Path where to store the reslice intermediate files, or None if reslicing
-        should be done in-memory.
+    reslice_info : ResliceInfo
+        Contains the information about reslicing.
 
     Returns
     -------
-    Tuple[int, bool]
-        Contains the `reslice_counter` and `has_reslice_warn_printed` values to
-        enable the information to persist across method executions.
+    Tuple[ResliceInfo, bool]
+        Returns a tuple containing the reslicing info and glob stats
     """
-    save_result = _check_save_result(
-        task_idx,
-        no_of_tasks,
-        module_path,
-        save_all,
-        dict_params_method.pop("save_result", None),
+    module_path = current_func.module_name
+    package_name = current_func.module_name.split(".")[0]
+    dict_params_method = current_func.parameters
+    method_name = current_func.method_func.__name__
+    func_wrapper = current_func.wrapper_func
+
+    save_result = (
+        # save result for the last task always
+        current_func.is_last_method
+        or
+        # save result if --save_all is specified
+        save_all
+        or
+        # if the method is from a recon module
+        RECON_MODULE_MATCH in module_path
+        or dict_params_method.pop("save_result", None)
     )
 
     # Check if the input dataset should be resliced before the task runs
-    should_reslice = reslice_bool_list[task_idx]
+    should_reslice = reslice_info.reslice_bool_list[task_idx]
     if should_reslice:
-        reslice_counter += 1
+        reslice_info.count += 1
         current_slice_dim = _get_slicing_dim(prev_func.pattern)
         next_slice_dim = _get_slicing_dim(current_func.pattern)
 
     # the GPU wrapper should know if the reslice is needed to convert the result
     # to numpy from cupy array
-    reslice_ahead = (
-        reslice_bool_list[task_idx + 1]
-        if task_idx < len(reslice_bool_list) - 1
-        else "False"
-    )
+    reslice_ahead = next_func.reslice_ahead if next_func is not None else False
     misc_params[-2] = (["save_result"], save_result)
     # reslice_ahead must be the last item in the list
     misc_params[-1] = (["reslice_ahead"], reslice_ahead)
 
-    if reslice_counter > 1 and not has_reslice_warn_printed:
+    if reslice_info.count > 1 and not reslice_info.has_reslice_warn_printed:
+        reslice_warn_str = (
+            "WARNING: Reslicing is performed more than once in this "
+            "pipeline, is there a need for this?"
+        )
         log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
-        has_reslice_warn_printed = True
+        reslice_info.has_reslice_warn_printed = True
 
     # extra params unrelated to wrapped packages but related to httomo added
     dict_httomo_params = _check_signature_for_httomo_params(
@@ -542,44 +559,7 @@ def _run_method(
     # Make the input and output datasets always be lists just to be
     # generic, and further down loop through all the datasets that the
     # method should be applied to
-    if (
-        "data_in" in dict_params_method.keys()
-        and "data_out" in dict_params_method.keys()
-    ):
-        data_in = [dict_params_method.pop("data_in")]
-        data_out = [dict_params_method.pop("data_out")]
-    elif (
-        "data_in_multi" in dict_params_method.keys()
-        and "data_out_multi" in dict_params_method.keys()
-    ):
-        data_in = dict_params_method.pop("data_in_multi")
-        data_out = dict_params_method.pop("data_out_multi")
-    else:
-        # TODO: This error reporting is possibly better handled by
-        # schema validation of the user config YAML
-        if method_name not in SAVERS_NO_DATA_OUT_PARAM:
-            if (
-                "data_in" in dict_params_method.keys() and
-                "data_out" not in dict_params_method.keys()
-            ):
-                # Assume "data_out" to be the same as "data_in"
-                data_in = [dict_params_method.pop("data_in")]
-                data_out = data_in
-            elif (
-                "data_in_multi" in dict_params_method.keys()
-                and "data_out_multi" not in dict_params_method.keys()
-            ):
-                # Assume "data_out_multi" to be the same as
-                # "data_in_multi"
-                data_in = dict_params_method.pop("data_in_multi")
-                data_out = data_in
-            else:
-                err_str = "Invalid in/out dataset parameters"
-                log_exception(err_str)
-                raise ValueError(err_str)
-        else:
-            data_in = [dict_params_method.pop("data_in")]
-            data_out = [None]
+    data_in, data_out = get_data_in_data_out(method_name, dict_params_method)
 
     # Check if the method function's params require any datasets stored
     # in the `datasets` dict
@@ -592,12 +572,12 @@ def _run_method(
 
     # check if the module needs the gpu_id parameter and flag it to add in the
     # wrapper
-    gpu_id_par = "gpu_id" in signature(current_func).parameters
+    gpu_id_par = "gpu_id" in signature(current_func.method_func).parameters
     if gpu_id_par:
         dict_params_method.update({"gpu_id": gpu_id_par})
 
     # Check if method type signature requires global statistics
-    req_glob_stats = "glob_stats" in signature(current_func).parameters
+    req_glob_stats = "glob_stats" in signature(current_func.method_func).parameters
 
     # Check if a parameter sweep is defined for any of the method's
     # parameters
@@ -618,7 +598,7 @@ def _run_method(
         #   sweep from a previous method in the pipeline
         if method_name in SAVERS_NO_DATA_OUT_PARAM:
             if current_param_sweep:
-                err_str = f"Parameters sweeps on savers is not supported"
+                err_str = "Parameters sweeps on savers is not supported"
                 log_exception(err_str)
                 raise ValueError(err_str)
             else:
@@ -653,10 +633,7 @@ def _run_method(
         # TODO: Not yet able to run parameter sweeps on a method that also
         # produces mutliple output datasets
         if type(out_dataset) is list and current_param_sweep:
-            err_str = (
-                f"Parameter sweeps on methods with multiple output "
-                f"datasets is not supported"
-            )
+            err_str = "Parameter sweeps on methods with multiple output datasets is not supported"
             log_exception(err_str)
             raise ValueError(err_str)
 
@@ -668,8 +645,8 @@ def _run_method(
             and type(dict_datasets_pipeline[in_dataset]) is list
         ):
             err_str = (
-                f"Running a method that produces mutliple outputs on "
-                f"the result of a parameter sweep is not supported"
+                "Running a method that produces mutliple outputs on "
+                "the result of a parameter sweep is not supported"
             )
             log_exception(err_str)
             raise ValueError(err_str)
@@ -698,7 +675,7 @@ def _run_method(
 
             # Perform a reslice of the data if necessary
             if should_reslice:
-                if reslice_dir is None:
+                if reslice_info.reslice_dir is None:
                     resliced_data, _ = reslice(
                         arr,
                         current_slice_dim,
@@ -707,7 +684,11 @@ def _run_method(
                     )
                 else:
                     resliced_data, _ = reslice_filebased(
-                        arr, current_slice_dim, next_slice_dim, comm, reslice_dir
+                        arr,
+                        current_slice_dim,
+                        next_slice_dim,
+                        comm,
+                        reslice_info.reslice_dir,
                     )
                 # Store the resliced input
                 if type(dict_datasets_pipeline[in_dataset]) is list:
@@ -750,12 +731,12 @@ def _run_method(
                     )
                     # Store the output(s) of the method in the appropriate
                     # dataset in the `dict_datasets_pipeline` dict
-                    if type(res) in [list, tuple]:
+                    if isinstance(res, (tuple, list)):
                         # The method produced multiple outputs
                         for val, dataset in zip(res, out_dataset):
                             dict_datasets_pipeline[dataset] = val
                     else:
-                        if type(dict_datasets_pipeline[out_dataset]) is list:
+                        if isinstance(dict_datasets_pipeline[out_dataset], list):
                             # Method has been run on an array that was part of a
                             # parameter sweep
                             dict_datasets_pipeline[out_dataset][i] = res
@@ -765,7 +746,7 @@ def _run_method(
         if method_name in SAVERS_NO_DATA_OUT_PARAM:
             # Nothing more to do if the saver has a special kind of
             # output which handles saving the result
-            return reslice_counter, has_reslice_warn_printed, glob_stats
+            return reslice_info, glob_stats
 
         # TODO: The dataset saving functionality only supports 3D data
         # currently, so check that the dimension of the data is 3 before
@@ -776,12 +757,12 @@ def _run_method(
         #
         # TODO: For now, in this case, assume that none of the results need to
         # be saved, and instead will purely be used as inputs to other methods.
-        if type(out_dataset) is list:
+        if isinstance(out_dataset, list):
             # TODO: Not yet supporting parameter sweeps for methods that produce
             # multiple outputs, so can assume that if `out_datasets` is a list,
             # then no parameter sweep exists in the pipeline
             any_param_sweep = False
-        elif type(dict_datasets_pipeline[out_dataset]) is list:
+        elif isinstance(dict_datasets_pipeline[out_dataset], list):
             # Either the method has had a parameter sweep, or been run on
             # parameter sweep input
             any_param_sweep = True
@@ -801,7 +782,7 @@ def _run_method(
 
             intermediate_dataset(
                 dict_datasets_pipeline[out_dataset],
-                out_dir,
+                httomo.globals.run_out_dir,
                 comm,
                 task_idx + 1,
                 package_name,
@@ -858,7 +839,7 @@ def _run_method(
                 # Save hdf5 dataset
                 dataset_name = f"/data/param_sweep_{i}"
                 save_dataset(
-                    out_dir,
+                    httomo.globals.run_out_dir,
                     hdf5_file_name,
                     param_sweep_datasets[i],
                     slice_dim=slice_dim,
@@ -885,31 +866,11 @@ def _run_method(
                 # Save tiffs of the middle slices
                 save_to_images(
                     middle_slices,
-                    out_dir,
+                    httomo.globals.run_out_dir,
                     subfolder_name=f"middle_slices_{out_dataset}",
                 )
 
-    return reslice_counter, has_reslice_warn_printed, glob_stats
-
-
-def _run_loader(
-    func_method: Callable, dict_params_method: Dict
-) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int, int, int]:
-    """Run a loader function in the processing pipeline.
-
-    Parameters
-    ----------
-    func_method : Callable
-        The python function that performs the loading.
-    dict_params_method : Dict
-        A dict of parameters for the loader.
-
-    Returns
-    -------
-    Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, int, int, int]
-        A tuple of 8 values that all loader functions return.
-    """
-    return func_method(**dict_params_method)
+    return reslice_info, glob_stats
 
 
 def _run_method_wrapper(
@@ -937,67 +898,6 @@ def _run_method_wrapper(
         An array containing the result of the method function.
     """
     return func_wrapper(method_name, dict_params_method, **dict_httomo_params)
-
-
-def _check_save_result(
-    task_idx: int,
-    no_of_tasks: int,
-    module_path: str,
-    save_all: bool,
-    save_result_param: bool,
-) -> bool:
-    """Check if the result of the current method should be saved.
-
-    Parameters
-    ----------
-    task_idx : int
-        The index of the current task (zero-based indexing).
-    no_of_tasks : int
-        The number of tasks in the pipeline.
-    module_path : str
-        The path of the module that the method function comes from.
-    save_all : bool
-        Whether to save the result of all methods in the pipeline,
-    save_result_param : bool
-        The value of `save_result` for given method form the YAML (if not
-        defined in the YAML, then this will have a value of `None`).
-
-    Returns
-    -------
-    bool
-        Whether or not to save the result of a method.
-
-    """
-    save_result = False
-
-    # Default behaviour for saving datasets is to save the output of the last
-    # task, and the output of reconstruction methods are always saved unless
-    # specified otherwise.
-    #
-    # The default behaviour can be overridden in two ways:
-    # 1. the flag `--save_all` which affects all tasks
-    # 2. the method param `save_result` which affects individual tasks
-    #
-    # Here, enforce default behaviour.
-    if task_idx == no_of_tasks - 1:
-        save_result = True
-
-    # Now, check if `--save_all` has been specified, as this can override
-    # default behaviour
-    if save_all:
-        save_result = True
-
-    # Now, check if it's a method from a reconstruction module
-    if RECON_MODULE_MATCH in module_path:
-        save_result = True
-
-    # Finally, check if the `save_result` param was specified in the YAML
-    # config, as it can override both default behaviour and the `--save_all`
-    # flag
-    if save_result_param is not None:
-        save_result = save_result_param
-
-    return save_result
 
 
 def _check_signature_for_httomo_params(
@@ -1133,20 +1033,19 @@ def _fetch_glob_stats(
     return min_max_mean_std(data, comm)
 
 
-def _check_if_should_reslice(patterns: List[Pattern]) -> List[bool]:
+def _check_if_should_reslice(methods: List[MethodFunc]) -> List[MethodFunc]:
     """Determine if the input dataset for the method functions in the pipeline
     should be resliced. Builds the list of booleans.
 
     Parameters
     ----------
-    patterns : List[Pattern]
-        List of the patterns associated with the python functions needed for the
-        run.
+    methods : List[MethodFunc]
+        List of the methods in the pipeline, associated with the patterns.
 
     Returns
     -------
-    List[bool]
-        List with booleans which methods need reslicing (True) or not (False).
+    List[MethodFunc]
+        Modified list of methods, with the ``reslice_ahead`` field set
     """
     # ___________Rules for when and when-not to reslice the data___________
     # In order to reslice more accurately we need to know about all patterns in
@@ -1163,17 +1062,19 @@ def _check_if_should_reslice(patterns: List[Pattern]) -> List[bool]:
     #      5. Centering - sinogram
     # In this case you DON'T reclice between 2 and 3 as 1 and 3 are the same pattern.
     # You reclice between 4 and 5 as the pattern between 3 and 5 does change.
-    total_number_of_methods = len(patterns)
-    reslice_bool_list = [False] * total_number_of_methods
+    ret_methods = [*methods]
 
-    current_pattern = patterns[0]
-    for x in range(total_number_of_methods):
-        if (patterns[x] != current_pattern) and (patterns[x] != Pattern.all):
+    current_pattern = methods[0].pattern
+    for x, _ in enumerate(methods):
+        if (methods[x].pattern != current_pattern) and (
+            methods[x].pattern != Pattern.all
+        ):
             # skipping "all" pattern and look for different pattern from the
             # current pattern
-            current_pattern = patterns[x]
-            reslice_bool_list[x] = True
-    return reslice_bool_list
+            current_pattern = methods[x].pattern
+            ret_methods[x] = dataclasses.replace(methods[x], reslice_ahead=True)
+
+    return ret_methods
 
 
 def _check_params_for_sweep(params: Dict) -> int:
@@ -1187,31 +1088,25 @@ def _check_params_for_sweep(params: Dict) -> int:
     return count
 
 
-def _assign_pattern_to_method(
-    func_method: Callable, module_path: str, method_name: str
-) -> Callable:
+def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
     """Fetch the pattern information from the methods database in
     `httomo/methods_database/packages` for the given method and associate that
     pattern with the function object.
 
     Parameters
     ----------
-    func_method : Callable
-        The method function whose pattern information will be fetched.
-
-    module_path : str
-        The module path to the method function.
-
-    method_name : str
-        The name of the method function.
+    method_function : MethodFunc
+        The method function information whose pattern information will be fetched and populated.
 
     Returns
     -------
-    Callable
-        The function object with a `.pattern` attribute it corresponding to the
+    MethodFunc
+        The function information `pattern` attribute set, corresponding to the
         pattern that the method requires its input data to have.
     """
-    pattern_str = get_method_info(module_path, method_name, "pattern")
+    pattern_str = get_method_info(
+        method_function.module_name, method_function.method_func.__name__, "pattern"
+    )
     if pattern_str == "projection":
         pattern = Pattern.projection
     elif pattern_str == "sinogram":
@@ -1221,10 +1116,9 @@ def _assign_pattern_to_method(
     else:
         err_str = (
             f"The pattern {pattern_str} that is listed for the method "
-            f"{module_path} is invalid."
+            f"{method_function.module_name} is invalid."
         )
         log_exception(err_str)
         raise ValueError(err_str)
 
-    func_method.pattern = pattern
-    return func_method
+    return dataclasses.replace(method_function, pattern=pattern)

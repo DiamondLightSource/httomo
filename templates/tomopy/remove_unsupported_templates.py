@@ -23,13 +23,15 @@
 that are not currently supported by httomo. We do that by looking into
 the library file for TomoPy."""
 
-import re
-import inspect
-import yaml
-import os, shutil
-import importlib
 import argparse
+import importlib
+import inspect
+import os
+import re
+import shutil
 from pathlib import Path
+
+import yaml
 
 
 def templates_filter(path_to_modules: str, library_file: str) -> int:

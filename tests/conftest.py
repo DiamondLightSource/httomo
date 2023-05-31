@@ -86,6 +86,16 @@ def diad_loader():
 
 
 @pytest.fixture
+def i12_data():
+    return "tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
+
+
+@pytest.fixture
+def i12_loader():
+    return "samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
+
+
+@pytest.fixture
 def standard_loader():
     return "samples/loader_configs/standard_tomo.yaml"
 

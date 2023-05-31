@@ -1,7 +1,8 @@
-from httomo.data import mpiutil
+import numpy as np
 import pytest
 from mpi4py import MPI
-import numpy as np
+
+from httomo.data import mpiutil
 
 
 @pytest.mark.mpi

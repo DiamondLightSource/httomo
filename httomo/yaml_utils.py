@@ -1,7 +1,8 @@
-import yaml
-import numpy as np
-from typing import List, Dict
 from pathlib import Path
+from typing import Dict, List
+
+import numpy as np
+import yaml
 
 from httomo.utils import log_exception
 

@@ -1,7 +1,7 @@
-from typing import Any
-from mpi4py.MPI import Comm
-from typing import Tuple, List, Dict, Callable
 from enum import Enum
+from typing import Any, Callable, Dict, List, Tuple
+
+from mpi4py.MPI import Comm
 
 import httomo.globals
 from httomo.common import remove_ansi_escape_sequences
@@ -213,3 +213,49 @@ def _get_slicing_dim(pattern: Pattern) -> int:
         err_str = f"An unknown pattern has been encountered {pattern}"
         log_exception(err_str)
         raise ValueError(err_str)
+
+
+def get_data_in_data_out(method_name: str, dict_params_method: Dict[str, Any]) -> tuple:
+    """
+    Get the input and output datasets in a list
+    """
+    if (
+        "data_in" in dict_params_method.keys()
+        and "data_out" in dict_params_method.keys()
+    ):
+        data_in = [dict_params_method.pop("data_in")]
+        data_out = [dict_params_method.pop("data_out")]
+    elif (
+        "data_in_multi" in dict_params_method.keys()
+        and "data_out_multi" in dict_params_method.keys()
+    ):
+        data_in = dict_params_method.pop("data_in_multi")
+        data_out = dict_params_method.pop("data_out_multi")
+    else:
+        # TODO: This error reporting is possibly better handled by
+        # schema validation of the user config YAML
+        if method_name != "save_to_images":
+            if (
+                "data_in" in dict_params_method.keys()
+                and "data_out" not in dict_params_method.keys()
+            ):
+                # Assume "data_out" to be the same as "data_in"
+                data_in = [dict_params_method.pop("data_in")]
+                data_out = data_in
+            elif (
+                "data_in_multi" in dict_params_method.keys()
+                and "data_out_multi" not in dict_params_method.keys()
+            ):
+                # Assume "data_out_multi" to be the same as
+                # "data_in_multi"
+                data_in = dict_params_method.pop("data_in_multi")
+                data_out = data_in
+            else:
+                err_str = "Invalid in/out dataset parameters"
+                log_exception(err_str)
+                raise ValueError(err_str)
+        else:
+            data_in = [dict_params_method.pop("data_in")]
+            data_out = [None]
+
+    return data_in, data_out

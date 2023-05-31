@@ -39,5 +39,5 @@ jobs:
       # run tests
       - name: Run CPU tests (No CUDA drivers needed)
         run: |
-          conda run -n httomo pip install pytest
+          conda run -n httomo pip install pytest plumbum
           conda run -n httomo pytest -m "not cupy"

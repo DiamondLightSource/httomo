@@ -1,12 +1,13 @@
 import time
 from unittest import mock
+
 import numpy as np
+import pytest
 from mpi4py import MPI
+
 from httomo.data.hdf._utils.chunk import get_data_shape
 from httomo.data.hdf._utils.load import get_slice_list_from_preview
-
 from httomo.data.hdf._utils.reslice import reslice
-import pytest
 
 
 @pytest.mark.parametrize(
