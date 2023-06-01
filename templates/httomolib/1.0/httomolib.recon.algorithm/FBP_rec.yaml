@@ -1,5 +1,5 @@
 - httomolib.recon.algorithm:
-    reconstruct_tomobar:
+    FBP_rec:
       data_in: tomo
       data_out: tomo
       center: null

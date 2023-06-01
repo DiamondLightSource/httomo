@@ -2,7 +2,7 @@ from typing import Any, Callable, Dict, Tuple, Union
 import numpy as np
 import inspect
 from inspect import Parameter, signature
-from httomo.utils import Colour, log_once
+from httomo.utils import Colour, log_exception, log_once
 from httomo.data import mpiutil
 
 from mpi4py.MPI import Comm

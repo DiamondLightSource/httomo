@@ -40,7 +40,6 @@ def compare_two_yamls(original_yaml, copied_yaml):
         return oy.read() == cy.read()
 
 
-@pytest.mark.cupy
 def test_tomo_standard_testing_pipeline_output(
     cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
 ):
@@ -100,7 +99,6 @@ def test_tomo_standard_testing_pipeline_output(
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
-@pytest.mark.cupy
 def test_tomo_standard_testing_pipeline_output_with_save_all(
     cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
 ):
@@ -180,7 +178,6 @@ def test_gpu_pipeline_output_with_save_all(
         assert f["data"].shape == (10, 160, 160)
 
 
-@pytest.mark.cupy
 def test_i12_testing_pipeline_output(
     cmd, i12_data, i12_loader, testing_pipeline, output_folder, merge_yamls
 ):
@@ -243,7 +240,6 @@ def test_i12_testing_pipeline_output(
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
-@pytest.mark.cupy
 def test_diad_testing_pipeline_output(
     cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
 ):
@@ -309,7 +305,6 @@ def test_diad_testing_pipeline_output(
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
-@pytest.mark.cupy
 def test_sweep_pipeline_with_save_all_using_mpi(
     cmd, standard_data, sample_pipelines, standard_loader, output_folder
 ):
@@ -406,7 +401,6 @@ def test_sweep_pipeline_with_save_all_using_mpi(
     )
 
 
-@pytest.mark.cupy
 def test_sweep_range_pipeline_with_step_absent(
     cmd, standard_data, sample_pipelines, output_folder
 ):

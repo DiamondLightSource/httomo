@@ -107,6 +107,13 @@ def test_determine_platform_sections_platform_change() -> None:
         (Pattern.all, Pattern.sinogram, Pattern.sinogram),
         (Pattern.all, Pattern.all, Pattern.all),
     ],
+    ids=[
+        "proj-all-proj",
+        "all-proj-proj",
+        "sino-all-sino",
+        "all-sino-sino",
+        "all-all-all",
+    ]
 )
 def test_determine_platform_sections_pattern_all_combine(
     pattern1: Pattern, pattern2: Pattern, expected: Pattern

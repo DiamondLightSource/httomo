@@ -3,7 +3,6 @@ import subprocess
 import pytest
 
 
-@pytest.mark.cupy
 def test_tomo_standard_testing_pipeline_loaded(
     cmd, standard_data, standard_loader, output_folder, testing_pipeline, merge_yamls
 ):
@@ -25,7 +24,6 @@ def test_tomo_standard_testing_pipeline_loaded(
     assert "Pipeline finished" in result.stderr
 
 
-@pytest.mark.cupy
 def test_diad_testing_pipeline_loaded(
     cmd, diad_data, diad_loader, output_folder, testing_pipeline, merge_yamls
 ):
