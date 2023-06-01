@@ -144,6 +144,43 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
 
 
 @pytest.mark.cupy
+def test_gpu_pipeline_output_with_save_all(
+    cmd, standard_data, gpu_pipeline, output_folder
+):
+    cmd.insert(7, standard_data)
+    cmd.insert(8, gpu_pipeline)
+    subprocess.check_output(cmd)
+
+    files = read_folder("output_dir/")
+    assert len(files) == 15
+
+    tif_files = list(filter(lambda x: ".tif" in x, files))
+    assert len(tif_files) == 10
+    total_sum = 0
+    for i in range(10):
+        arr = np.array(Image.open(tif_files[i]))
+        assert arr.dtype == np.uint8
+        assert arr.shape == (160, 160)
+        total_sum += arr.sum()
+
+    assert total_sum == 17871073.0
+
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 3
+    with h5py.File(h5_files[0], "r") as f:
+        assert f["data"].shape == (180, 10, 160)
+        assert_allclose(np.sum(f["data"]), 84874.38, atol=1e-6)
+        assert_allclose(np.mean(f["data"]), 0.2947027, atol=1e-6)
+    with h5py.File(h5_files[1], "r") as f:
+        assert_allclose(np.sum(f["data"]), 84127.195, atol=1e-6)
+        assert_allclose(np.mean(f["data"]), 0.29210833, atol=1e-6)
+    with h5py.File(h5_files[2], "r") as f:
+        assert_allclose(np.sum(f["data"]), 210.13103, atol=1e-6)
+        assert_allclose(np.mean(f["data"]), 0.00082082435, atol=1e-6)
+        assert f["data"].shape == (10, 160, 160)
+
+
+@pytest.mark.cupy
 def test_i12_testing_pipeline_output(
     cmd, i12_data, i12_loader, testing_pipeline, output_folder, merge_yamls
 ):

@@ -41,7 +41,7 @@
       size: 11
       dim: 1
 - httomolib.recon.algorithm:
-    reconstruct_tomobar:
+    FBP_rec:
       data_in: tomo
       data_out: tomo
       center: cor
