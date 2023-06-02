@@ -207,7 +207,8 @@ def run_tasks(
 
     method_funcs = _check_if_should_reslice(method_funcs)
     reslice_info.reslice_bool_list = [m.reslice_ahead for m in method_funcs]
-    platform_sections = determine_platform_sections(method_funcs)
+    #: no need to add loader into a platform section
+    platform_sections = determine_platform_sections(method_funcs[1:])
 
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
