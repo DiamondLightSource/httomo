@@ -458,7 +458,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         method_name, method_conf = module_conf.popitem()
         method_conf["method_name"] = method_name
 
-        if split_module_name[0] not in ["tomopy", "httomolib"]:
+        if split_module_name[0] not in ["tomopy", "httomolib", "httomolibgpu"]:
             err_str = (
                 f"An unknown module name was encountered: " f"{split_module_name[0]}"
             )

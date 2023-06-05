@@ -283,7 +283,7 @@ class HttomolibWrapper(BaseWrapper):
         # if not changed bellow the generic wrapper will be executed
         self.wrapper_method: Callable = super()._execute_generic
 
-        if module_name in ["misc", "prep", "recon"]:
+        if module_name in ["misc"]:
             from importlib import import_module
 
             self.module = getattr(
