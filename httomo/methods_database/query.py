@@ -52,7 +52,7 @@ def get_method_info(module_path: str, method_name: str, attr: str):
     ----------
     module_path : str
         The full module path of the method, including the top-level package
-        name. Ie, `httomolibgpu.misc.images.save_to_images`.
+        name. Ie, `httomolib.misc.images.save_to_images`.
 
     method_name : str
         The name of the method function.
