@@ -12,6 +12,7 @@ import yaml
 def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
     config.addinivalue_line("markers", "perf: mark test as performance test")
+    config.addinivalue_line("markers", "cupy: needs cupy to run")
 
 
 def pytest_addoption(parser):
@@ -56,11 +57,11 @@ def cmd():
         sys.executable,
         "-m",
         "httomo",
+        "run",
         "--save_all",
         "--ncore",
         "2",
         "output_dir/",
-        "task_runner",
     ]
 
 
@@ -82,6 +83,16 @@ def diad_data():
 @pytest.fixture
 def diad_loader():
     return "samples/loader_configs/diad.yaml"
+
+
+@pytest.fixture
+def i12_data():
+    return "tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
+
+
+@pytest.fixture
+def i12_loader():
+    return "samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
 
 
 @pytest.fixture

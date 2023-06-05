@@ -1,5 +1,5 @@
 import math
-from typing import Tuple, List, Dict
+from typing import Dict, List, Tuple
 
 import h5py as h5
 import numpy as np

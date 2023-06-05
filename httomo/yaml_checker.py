@@ -1,10 +1,12 @@
 """
 Module for checking the validity of yaml files.
 """
-import h5py
 import os
-import yaml
 from typing import Any
+
+import h5py
+import yaml
+
 from httomo.utils import Colour
 from httomo.yaml_utils import get_external_package_current_version, open_yaml_config
 

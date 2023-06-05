@@ -1,13 +1,16 @@
 import subprocess
 
+import pytest
 
+
+@pytest.mark.cupy
 def test_tomo_standard_testing_pipeline_loaded(
     cmd, standard_data, standard_loader, output_folder, testing_pipeline, merge_yamls
 ):
-    cmd.pop(3)  #: don't save all
-    cmd.insert(5, standard_data)
+    cmd.pop(4)  #: don't save all
+    cmd.insert(6, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
-    cmd.insert(6, "temp.yaml")
+    cmd.insert(7, "temp.yaml")
 
     result = subprocess.run(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
@@ -22,12 +25,13 @@ def test_tomo_standard_testing_pipeline_loaded(
     assert "Pipeline finished" in result.stderr
 
 
+@pytest.mark.cupy
 def test_diad_testing_pipeline_loaded(
     cmd, diad_data, diad_loader, output_folder, testing_pipeline, merge_yamls
 ):
-    cmd.insert(6, diad_data)
+    cmd.insert(7, diad_data)
     merge_yamls(diad_loader, testing_pipeline)
-    cmd.insert(7, "temp.yaml")
+    cmd.insert(8, "temp.yaml")
 
     result = subprocess.run(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True

@@ -24,12 +24,13 @@
 Please run the generator as:
 python -m yaml_templates_generator -m /path/to/modules.yml -o /path/to/output/
 """
-import re
-import inspect
-import yaml
-import os
-import importlib
 import argparse
+import importlib
+import inspect
+import os
+import re
+
+import yaml
 
 
 def yaml_generator(path_to_modules: str, output_folder: str) -> int:

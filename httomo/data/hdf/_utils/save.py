@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy
 from mpi4py.MPI import Comm
 
-from httomo.utils import log_once, Colour
 from httomo.data.hdf._utils.chunk import save_dataset
+from httomo.utils import Colour, log_once
 
 
 def intermediate_dataset(

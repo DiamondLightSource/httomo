@@ -1,0 +1,43 @@
+name: httomo CPU tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v2
+
+      # setup Python 3.9
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      # install dependencies with conda
+      - name: Install dependencies with conda
+        run: |
+          conda env create --name httomo --file conda/environment.yml
+          conda activate httomo
+          conda run -n httomo pip install -e .
+          conda run -n httomo pip install httomolib
+          conda env list
+          conda list
+
+      # run tests
+      - name: Run CPU tests (No CUDA drivers needed)
+        run: |
+          conda run -n httomo pip install pytest plumbum
+          conda run -n httomo pytest -m "not cupy"

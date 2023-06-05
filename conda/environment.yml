@@ -19,3 +19,4 @@ dependencies:
   - conda-forge::tomopy
   - httomo::larix
   - httomo::tomobar
+  - httomo::httomolib

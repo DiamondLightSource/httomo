@@ -2,10 +2,10 @@ from pathlib import Path
 
 import numpy
 from mpi4py.MPI import Comm
-from httomo.data import mpiutil
 
+from httomo.data import mpiutil
 from httomo.data.hdf._utils import chunk, load
-from httomo.utils import log_once, Colour
+from httomo.utils import Colour, log_once
 
 from typing import Tuple
 
