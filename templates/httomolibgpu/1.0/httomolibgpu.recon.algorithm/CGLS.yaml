@@ -1,5 +1,5 @@
-- httomolib.recon.algorithm:
-    CGLS_rec:
+- httomolibgpu.recon.algorithm:
+    CGLS:
       data_in: tomo
       data_out: tomo
       center: null

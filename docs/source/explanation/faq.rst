@@ -14,23 +14,23 @@ Frequently Asked Questions
 
 .. dropdown:: Can I create a template?
 	
-	You can create a template manually if you want to run a method from the external software (see more on :ref:`backends_list`).
+	You can create a template manually if you want to run a method from the external software. See more on :ref:`backends_list`.
 
 .. dropdown:: How can I configure a multi-task pipeline? 
 
-	Please see :ref:`howto_process_list`.
+	The multi-task pipeline is build from the available :ref:`reference_templates` by stacking them together. Please see :ref:`howto_process_list`.
 
 .. dropdown:: How can I run HTTomo?
 
-	TODO
+	Please see :ref:`howto_run`.
 
 .. dropdown:: I have a Python method, can it be used with HTTomo?
-
-	TODO
+    
+    There is a high chance that it can be used. The method needs to be accessible in your Python environment and you will need a YAML template for it. See more on what kind of :ref:`backends_list` can be used with HTTomo. It is also recommended if you integrate your method there first.
 	
 .. dropdown:: How can I contribute to HTTomo?
 
-	TODO
+	You can contribute by adding new methods to :ref:`backends_list` or by contributing to source base of the `HTTomo project <https://github.com/DiamondLightSource/httomo>`_.
 
 Working from a workstation at Diamond Light Source
 **************************************************

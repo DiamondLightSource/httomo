@@ -1,4 +1,4 @@
-- httomolib.prep.alignment:
+- httomolibgpu.prep.alignment:
     distortion_correction_proj:
       data_in: tomo
       data_out: tomo

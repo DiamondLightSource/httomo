@@ -1,12 +1,8 @@
-User Guide
+Process Lists Guide
 **********************
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
-   run_httomo
    process_list_configure
    editing_process_lists
-   special_features
-
-

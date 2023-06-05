@@ -4,7 +4,7 @@
 YAML Templates
 ==========================
 
-This section contains YAML templates that HTTomo currently support.
+This section contains YAML templates from :ref:`backends_list`.
 
 TomoPy Modules
 ---------------
@@ -16,7 +16,17 @@ v.1.14
 
    ../api/tomopy*
 
-HTTomoLib Modules
+HTTomolibgpu Modules
+-------------------- 
+v.1.0
+'''''
+
+.. toctree::
+   :glob:
+
+   ../api/httomolibgpu*
+
+HTTomolib Modules
 ------------------
 v.1.0
 '''''
@@ -24,7 +34,9 @@ v.1.0
 .. toctree::
    :glob:
 
-   ../api/httomolib*
+   ../api/httomolib.misc.corr
+   ../api/httomolib.misc.images
+   ../api/httomolib.misc.segm
 
 HTTomo
 ------------------

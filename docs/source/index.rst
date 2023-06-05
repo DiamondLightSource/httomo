@@ -19,7 +19,9 @@
     :maxdepth: 2
 
     howto/installation
-    howto/user_guide
+    howto/run_httomo
+    howto/process_lists_guide
+    howto/httomo_features
 
 .. _reference_content:
 

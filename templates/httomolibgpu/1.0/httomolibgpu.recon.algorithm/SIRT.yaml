@@ -1,5 +1,5 @@
-- httomolib.recon.algorithm:
-    SIRT_rec:
+- httomolibgpu.recon.algorithm:
+    SIRT:
       data_in: tomo
       data_out: tomo
       center: null

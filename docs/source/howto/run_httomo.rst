@@ -1,3 +1,5 @@
+.. _howto_run:
+
 How to run HTTomo
 -----------------
 
