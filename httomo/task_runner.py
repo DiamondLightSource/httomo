@@ -29,7 +29,7 @@ from httomo.utils import (
     log_exception,
     log_once,
 )
-from httomo.wrappers_class import HttomolibWrapper, TomoPyWrapper
+from httomo.wrappers_class import HttomolibWrapper, HttomolibgpuWrapper, TomoPyWrapper
 from httomo.yaml_utils import open_yaml_config
 
 # TODO: Define a list of savers which have no output dataset and so need to
@@ -468,6 +468,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         module_to_wrapper = {
             "tomopy": TomoPyWrapper,
             "httomolib": HttomolibWrapper,
+            "httomolibgpu": HttomolibgpuWrapper,
         }
         wrapper_init_module = module_to_wrapper[split_module_name[0]](
             split_module_name[1], split_module_name[2], method_name, comm
@@ -475,15 +476,16 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         wrapper_func = getattr(wrapper_init_module.module, method_name)
         wrapper_method = wrapper_init_module.wrapper_method
         is_tomopy = split_module_name[0] == "tomopy"
+        is_httomolib = split_module_name[0] == "httomolib"
         method_funcs.append(
             MethodFunc(
                 module_name=module_name,
                 method_func=wrapper_func,
                 wrapper_func=wrapper_method,
                 parameters=method_conf,
-                cpu=True if is_tomopy else wrapper_init_module.meta.cpu,
-                gpu=False if is_tomopy else wrapper_init_module.meta.gpu,
-                calc_max_slices=None if is_tomopy else wrapper_init_module.calc_max_slices,
+                cpu=True if is_tomopy or is_httomolib else wrapper_init_module.meta.cpu,
+                gpu=False if is_tomopy or is_httomolib else wrapper_init_module.meta.gpu,
+                calc_max_slices=None if is_tomopy or is_httomolib else wrapper_init_module.calc_max_slices,
                 reslice_ahead=False,
                 pattern=Pattern.all,
                 is_loader=False,

@@ -8,9 +8,9 @@ from httomo.utils import log_exception
 YAML_DIR = Path(__file__).parent / "packages/"
 
 
-def get_httomolib_method_meta(method_path: Union[List[str], str]):
+def get_httomolibgpu_method_meta(method_path: Union[List[str], str]):
     """
-    Get full method meta information for a httomolib method.
+    Get full method meta information for a httomolibgpu method.
 
     Parameters
     ----------
@@ -19,21 +19,21 @@ def get_httomolib_method_meta(method_path: Union[List[str], str]):
 
     Returns
     -------
-    httomolib.MethodMeta
-        Full method meta information as exported from httomolib
+    httomolibgpu.MethodMeta
+        Full method meta information as exported from httomolibgpu
     """
     if isinstance(method_path, str):
         method_path = method_path.split(".")
 
-    from httomolib import method_registry, MethodMeta
+    from httomolibgpu import method_registry, MethodMeta
 
-    info = method_registry["httomolib"]
+    info = method_registry["httomolibgpu"]
     for key in method_path:
         try:
             info = info[key]
         except KeyError:
             raise KeyError(
-                f"Method {'.'.join(method_path)} not found in httomolib registry"
+                f"Method {'.'.join(method_path)} not found in httomolibgpu registry"
             )
 
     if not isinstance(info, MethodMeta):
@@ -52,7 +52,7 @@ def get_method_info(module_path: str, method_name: str, attr: str):
     ----------
     module_path : str
         The full module path of the method, including the top-level package
-        name. Ie, `httomolib.misc.images.save_to_images`.
+        name. Ie, `httomolibgpu.misc.images.save_to_images`.
 
     method_name : str
         The name of the method function.
@@ -70,8 +70,8 @@ def get_method_info(module_path: str, method_name: str, attr: str):
     method_path = f"{module_path}.{method_name}"
     split_method_path = method_path.split(".")
     package_name = split_method_path[0]
-    if package_name == "httomolib":
-        return _get_method_info_httomolib(split_method_path[1:], attr)
+    if package_name == "httomolibgpu":
+        return _get_method_info_httomolibgpu(split_method_path[1:], attr)
 
     yaml_info_path = Path(YAML_DIR, f"{package_name}.yaml")
 
@@ -115,12 +115,12 @@ def get_method_info(module_path: str, method_name: str, attr: str):
         raise KeyError(f"The attribute {attr} is not present on {method_path}")
 
 
-def _get_method_info_httomolib(method_path: List[str], attr: str):
-    meta = get_httomolib_method_meta(method_path)
+def _get_method_info_httomolibgpu(method_path: List[str], attr: str):
+    meta = get_httomolibgpu_method_meta(method_path)
 
     try:
         return getattr(meta, attr)
     except KeyError:
         raise KeyError(
-            f"The attribute {attr} is not present on httomolib.{'.'.join(method_path)}"
+            f"The attribute {attr} is not present on httomolibgpu.{'.'.join(method_path)}"
         )
