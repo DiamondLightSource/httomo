@@ -1,0 +1,8 @@
+- httomolibgpu.recon.algorithm:
+    CGLS:
+      data_in: tomo
+      data_out: tomo
+      center: null
+      objsize: null
+      iterations: 20
+      nonnegativity: true

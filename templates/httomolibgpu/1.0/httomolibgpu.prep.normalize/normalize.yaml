@@ -1,4 +1,4 @@
-- httomolib.prep.normalize:
+- httomolibgpu.prep.normalize:
     normalize:
       data_in: tomo
       data_out: tomo

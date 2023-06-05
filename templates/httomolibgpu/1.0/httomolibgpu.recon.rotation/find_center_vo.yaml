@@ -1,4 +1,4 @@
-- httomolib.recon.rotation:
+- httomolibgpu.recon.rotation:
     find_center_vo:
       data_in: tomo
       data_out: cor

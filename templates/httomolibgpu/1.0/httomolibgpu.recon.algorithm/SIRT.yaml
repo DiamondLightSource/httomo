@@ -1,0 +1,8 @@
+- httomolibgpu.recon.algorithm:
+    SIRT:
+      data_in: tomo
+      data_out: tomo
+      center: null
+      objsize: null
+      iterations: 300
+      nonnegativity: true

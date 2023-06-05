@@ -1,4 +1,4 @@
-- httomolib.prep.phase:
+- httomolibgpu.prep.phase:
     retrieve_phase:
       data_in: tomo
       data_out: tomo
