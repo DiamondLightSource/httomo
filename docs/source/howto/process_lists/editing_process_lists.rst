@@ -145,7 +145,7 @@ A snippet take from an example pipeline in the HTTomo repo shows
 :code:`median_filter` from TomoPy being applied to three datasets: projections,
 darks, and flats:
 
-.. literalinclude:: ../../../samples/pipeline_template_examples/multi_inputs/01_multi_inputs.yaml
+.. literalinclude:: ../../../../samples/pipeline_template_examples/multi_inputs/01_multi_inputs.yaml
   :language: yaml
   :lines: 6-11
   :emphasize-lines: 3-4
@@ -201,7 +201,7 @@ repo, where the :code:`find_center_vo` method is generating an output dataset
 called :code:`cor`, which is then being used as the value of the :code:`center`
 parameter for the :code:`recon` method:
 
-.. literalinclude:: ../../../samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml
+.. literalinclude:: ../../../../samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml
   :language: yaml
   :lines: 31-50
   :emphasize-lines: 4,16

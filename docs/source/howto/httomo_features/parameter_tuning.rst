@@ -18,6 +18,7 @@ difficult to guess a reasonable value of a method's parameter. There could be
 many reasons for this situation, such as being unfamiliar with the method, or
 working with unfamiliar data, etc.
 
+.. _parameter_tuning_range:
 
 How are parameter sweeps defined in the process list YAML file?
 ===============================================================

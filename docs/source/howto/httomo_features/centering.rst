@@ -1,13 +1,16 @@
 .. _centering:
 
-Sinogram centering
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Centre of rotation (CoR)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+An important procedure to ensure the correctness of reconstruction is to find the CoR of a sinogram. 
 
 Automatic calculation OR manual input of the centre of rotation are possible in Httomo.
 
 
+.. _centering_auto:
+
 Auto-centering
-====================================================
+===============
 
 RE-WRITE!
 
@@ -26,16 +29,18 @@ and/or
 .. note:: If you have applied previewing in the loader and again in the centering plugin you will be
           applying previewing to the previewed (reduced size) data.
 
-See :ref:`autocentering`
-
+.. _centering_manual:
 
 Manual Centering
-======================================================
+=================
+In case when :ref:`centering_auto` does not work (e.g. the data is corrupted, incomplete or/and not within the field of view), 
+one can use the manual centering with :ref:`parameter_tuning`.
 
-RE-WRITE!
+For manual centering you need to do the following steps:
 
-Ensure the VoCentering algorithm is not in the process list (remove or comment it).  Modify the centre_of_rotation value in the reconstruction plugin, see
-:ref:`manualcentering`.  If the manual centering value is approximate you can apply parameter
-tuning, see :ref:`cor_parameter_tuning`
+1. Ensure that the auto centering estimation method is not in the process list (remove or comment it). 
+2. Modify the centre of rotation value :code:`center` in the reconstruction plugin by substituting a number.
+3. If you would like to sweep across multiple CoR values, you can do that with a special phrase in your template :code:`!Sweep` or ::code:`!SweepRange`. Please see more on :ref:`parameter_tuning_range`.
+
 
 

@@ -27,7 +27,7 @@ For example, for tomographic processing, we can build the following process list
 
 .. dropdown:: A basic TomoPy full data processing pipeline
 
-    .. literalinclude:: ../../../samples/pipeline_template_examples/01_basic_cpu_pipeline_tomo_standard.yaml
+    .. literalinclude:: ../../../../samples/pipeline_template_examples/01_basic_cpu_pipeline_tomo_standard.yaml
 
 In this process list the data will be loaded using the standard HTTomo loader to read `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`_ dataset. 
 Then the loaded data is normalised, the centre of rotation estimated and provided to the reconstruction. 
@@ -44,7 +44,7 @@ orientations, or, as we call it, a *pattern*. The change of the pattern is a **r
 re-slicing in a particular direction. For instance, from the projection space/pattern to the sinogram space/patterns, as in :numref:`fig_reslice`.
 
 .. _fig_reslice:
-.. figure::  ../_static/reslice.png
+.. figure::  ../../_static/reslice.png
     :scale: 40 %
     :alt: Reslicing procedure
 

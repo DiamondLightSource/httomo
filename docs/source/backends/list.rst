@@ -1,7 +1,6 @@
 .. _backends_list:
 
-==============================
-The list of supported backends
+Supported backends
 ==============================
 
 HTTomo currently supports several software packages that are used as 
