@@ -16,6 +16,8 @@ v.1.14
 
    ../api/tomopy*
 
+.. _reference_templates_httomolibgpu:
+
 HTTomolibgpu Modules
 -------------------- 
 v.1.0
