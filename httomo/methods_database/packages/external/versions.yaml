@@ -5,3 +5,6 @@ tomopy:
 httomolib:
   current:
   - 1.0
+httomolibgpu:
+  current:
+  - 1.0

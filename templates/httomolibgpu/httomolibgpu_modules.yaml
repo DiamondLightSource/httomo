@@ -1,0 +1,8 @@
+- httomolibgpu.misc.corr
+- httomolibgpu.misc.morph
+- httomolibgpu.prep.alignment
+- httomolibgpu.prep.normalize
+- httomolibgpu.prep.phase
+- httomolibgpu.prep.stripe
+- httomolibgpu.recon.rotation
+- httomolibgpu.recon.algorithm

@@ -272,9 +272,63 @@ class TomoPyWrapper(BaseWrapper):
         # directly, therefore we set the flag explicitly
         self.cupyrun = False
 
-
 class HttomolibWrapper(BaseWrapper):
     """A class that wraps httomolib functions for httomo"""
+
+    def __init__(
+        self, module_name: str, function_name: str, method_name: str, comm: Comm
+    ):
+        super().__init__(module_name, function_name, method_name, comm)
+
+        # if not changed bellow the generic wrapper will be executed
+        self.wrapper_method: Callable = super()._execute_generic
+
+        if module_name in ["misc"]:
+            from importlib import import_module
+
+            self.module = getattr(
+                import_module("httomolib." + module_name), function_name
+            )
+            if function_name == "images":
+                self.wrapper_method = self._execute_images
+
+        # httomolib methods run on the CPU only
+        self.cupyrun = False
+
+    def _execute_images(
+        self,
+        method_name: str,
+        dict_params_method: Dict,
+        out_dir: str,
+        comm: Comm,
+        data: xp.ndarray,
+    ) -> None:
+        """httomolib wrapper for save images function.
+
+        Args:
+            method_name (str): The name of the method to use.
+            dict_params_method (Dict): A dict containing parameters of the executed method.
+            out_dir (str): The output directory.
+            comm (Comm): The MPI communicator.
+            data (xp.ndarray): a numpy or cupy data array.
+
+        Returns:
+            None: returns None.
+        """
+        if gpu_enabled:
+            _gpumem_cleanup()
+            data = getattr(self.module, method_name)(
+                xp.asnumpy(data), out_dir, comm_rank=comm.rank, **dict_params_method
+            )
+        else:
+            data = getattr(self.module, method_name)(
+                data, out_dir, comm_rank=comm.rank, **dict_params_method
+            )
+        return None
+
+
+class HttomolibgpuWrapper(BaseWrapper):
+    """A class that wraps httomolibgpu functions for httomo"""
 
     def __init__(
         self, module_name: str, function_name: str, method_name: str, comm: Comm
@@ -288,10 +342,8 @@ class HttomolibWrapper(BaseWrapper):
             from importlib import import_module
 
             self.module = getattr(
-                import_module("httomolib." + module_name), function_name
+                import_module("httomolibgpu." + module_name), function_name
             )
-            if function_name == "images":
-                self.wrapper_method = self._execute_images
             if function_name == "normalize":
                 func = getattr(self.module, method_name)
                 sig_params = signature(func).parameters
@@ -302,7 +354,7 @@ class HttomolibWrapper(BaseWrapper):
             if function_name == "rotation":
                 self.wrapper_method = super()._execute_rotation
 
-        # httomolib exports metadata from the method decorator, which we can use to
+        # httomolibgpu exports metadata from the method decorator, which we can use to
         # check if we support CuPy
         func = getattr(self.module, method_name)
         self.meta = func.meta
@@ -335,35 +387,5 @@ class HttomolibWrapper(BaseWrapper):
             dtype,
             available_memory,
             **kwargs
-        )
+        )        
 
-    def _execute_images(
-        self,
-        method_name: str,
-        dict_params_method: Dict,
-        out_dir: str,
-        comm: Comm,
-        data: xp.ndarray,
-    ) -> None:
-        """httomolib wrapper for save images function.
-
-        Args:
-            method_name (str): The name of the method to use.
-            dict_params_method (Dict): A dict containing parameters of the executed method.
-            out_dir (str): The output directory.
-            comm (Comm): The MPI communicator.
-            data (xp.ndarray): a numpy or cupy data array.
-
-        Returns:
-            None: returns None.
-        """
-        if gpu_enabled:
-            _gpumem_cleanup()
-            data = getattr(self.module, method_name)(
-                xp.asnumpy(data), out_dir, comm_rank=comm.rank, **dict_params_method
-            )
-        else:
-            data = getattr(self.module, method_name)(
-                data, out_dir, comm_rank=comm.rank, **dict_params_method
-            )
-        return None

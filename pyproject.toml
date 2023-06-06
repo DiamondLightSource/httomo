@@ -55,6 +55,7 @@ repository = "https://github.com/DiamondLightSource/HTTomo"
 [project.optional-dependencies]
 tomopy = [ "tomopy" ]
 httomolib = [ "httomolib" ]
+httomolibgpu = ["httomolibgpu", "cupy"]
 dev = [
   "pytest",
   "pytest-cov",
@@ -64,6 +65,7 @@ dev = [
   "pydocstyle",
   "toml",
   "httomolib[dev]",
+  "httomolibgpu[dev]",
   "tomopy",
   "plumbum",
 ]

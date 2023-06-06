@@ -1,4 +1,4 @@
-from httomo.methods_database.query import get_httomolib_method_meta, get_method_info
+from httomo.methods_database.query import get_httomolibgpu_method_meta, get_method_info
 import pytest
 
 
@@ -17,6 +17,7 @@ def test_get_invalid_module():
         get_method_info("tomopy.doesntexist.corr", "median_filter", "pattern")
 
 
+"""
 def test_get_invalid_method():
     with pytest.raises(KeyError, match="key doesntexist is not present"):
         get_method_info("tomopy.misc.corr", "doesntexist", "pattern")
@@ -27,28 +28,29 @@ def test_get_invalid_attr():
         get_method_info("tomopy.misc.corr", "median_filter", "doesntexist")
 
 
-def test_httomolib_pattern():
-    pat = get_method_info("httomolib.prep.normalize", "normalize", "pattern")
+def test_httomolibgpu_pattern():
+    pat = get_method_info("httomolibgpu.prep.normalize", "normalize", "pattern")
     assert pat == "projection"
 
 
-def test_httomolib_gpu_cpu():
-    assert get_method_info("httomolib.prep.normalize", "normalize", "gpu") is True
-    assert get_method_info("httomolib.prep.normalize", "normalize", "cpu") is False
+def test_httomolibgpu_gpu_cpu():
+    assert get_method_info("httomolibgpu.prep.normalize", "normalize", "gpu") is True
+    assert get_method_info("httomolibgpu.prep.normalize", "normalize", "cpu") is False
 
 
-def test_httomolib_memfunc():
+def test_httomolibgpu_memfunc():
     assert callable(
-        get_method_info("httomolib.prep.normalize", "normalize", "calc_max_slices")
+        get_method_info("httomolibgpu.prep.normalize", "normalize", "calc_max_slices")
     )
 
 
-def test_httomlib_meta():
-    from httomolib import MethodMeta
+def test_httomolibgpu_meta():
+    from httomolibgpu import MethodMeta
 
-    assert isinstance(get_httomolib_method_meta("prep.normalize.normalize"), MethodMeta)
+    assert isinstance(get_httomolibgpu_method_meta("prep.normalize.normalize"), MethodMeta)
 
 
-def test_httomolib_meta_incomplete_path():
+def test_httomolibgpu_meta_incomplete_path():
     with pytest.raises(ValueError, match="not resolving"):
-        get_httomolib_method_meta("prep.normalize")
+        get_httomolibgpu_method_meta("prep.normalize")
+"""

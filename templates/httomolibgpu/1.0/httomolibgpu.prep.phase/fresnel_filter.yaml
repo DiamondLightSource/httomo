@@ -1,4 +1,4 @@
-- httomolib.prep.phase:
+- httomolibgpu.prep.phase:
     fresnel_filter:
       data_in: tomo
       data_out: tomo
