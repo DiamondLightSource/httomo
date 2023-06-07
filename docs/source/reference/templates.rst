@@ -28,6 +28,8 @@ v.1.0
 
    ../api/httomolibgpu*
 
+.. _reference_templates_httomolib:
+
 HTTomolib Modules
 ------------------
 v.1.0
@@ -39,6 +41,8 @@ v.1.0
    ../api/httomolib.misc.corr
    ../api/httomolib.misc.images
    ../api/httomolib.misc.segm
+
+.. _reference_templates_httomo:
 
 HTTomo
 ------------------

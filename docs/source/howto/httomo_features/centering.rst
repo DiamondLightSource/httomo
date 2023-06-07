@@ -1,24 +1,34 @@
 .. default-role:: math
 .. _centering:
 
-Centre of rotation (CoR)
-^^^^^^^^^^^^^^^^^^^^^^^^^
-An important procedure to ensure the correctness of the reconstruction is 
-the validity of the CoR parameter. This parameter is present in any reconstruction template as 
-the :code:`center` parameter and can be configured either automatically (see :ref:`centering_auto`)
-or manually (see :ref:`centering_manual`).
+Centre of Rotation (CoR)
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-The correct CoR parameter places the object (sample) in a valid coordinate system for reconstruction, see :numref:`fig_centerscheme`.
-This is equivalent for the sinogram is being centered. If the sinogram is not centered and there is an offset `d`,
-then the reconstruction will have strong arching artefacts, see :numref:`fig_center_find`. Further from the correct center value (here `d=0`),
-one should expect more pronounced arching on the boundaries of the reconstructed object. 
+What is it?
+===========
+Identifying the optimal Centre of Rotation (CoR) parameter is an important 
+procedure to ensure the correctness of the reconstruction. It is crucial to find it 
+precisely as the incorrect value can lead to distortions in reconstructions, therefore making post processing and 
+quantification incorrect.  
+
+The required CoR parameter places the object (a scanned sample) into a coordinate system of the scanning device to ensure
+that the object is centered and rotates around its axis in this system, see :numref:`fig_centerscheme`. This is essential for
+valid reconstruction as the backprojection model assumes a central placing of a sample with respect to one detector's axis 
+(usually horizontal for synchrotrons).
+
+The CoR estimation problem is also sometimes referred to the centered sinogram. 
+If the sinogram is not centered and there is an offset (`d` in :numref:`fig_centerscheme`), the reconstruction 
+will result in strong arching artefacts at the boundaries of reconstructed objects, see :numref:`fig_center_find`. 
+Further from the optimal CoR value (here `d=0`), one should expect more pronounced arching. 
+Therefore the optimisation problem usually involves minimising the artefacts in the reconstructed images
+by varying the CoR value.
 
 .. _fig_centerscheme:
 .. figure::  ../../_static/CoR.svg
     :scale: 55 %
     :alt: CoR scheme for tomography
 
-    The CoR parameter can be defined as a distance `d` that translates the coordinate system of the object `(x,y)` to the cordinate system `(s,p)` of the acquisition device. This consists in a simple linear mapping `(s = x + d, p = y)`.
+    The CoR parameter can be defined as a distance `d` that translates the coordinate system  `(x,y)` of the scanned object to the cordinate system `(s,p)` of the acquisition device. This consists in a simple linear mapping `(s = x + d, p = y)`.
 
 .. _fig_center_find:
 .. figure::  ../../_static/cor/corr_select.png
@@ -27,6 +37,12 @@ one should expect more pronounced arching on the boundaries of the reconstructed
 
     The reconstructions using different CoR values. Incorrectly centered sinogram results in strong arching artefacts on the boundaries of the reconstructed object. Note how the arching is being reduced when closer to the correct value. 
 
+CoR in HTTomo
+=============
+
+The CoR parameter is present in any reconstruction template as 
+the :code:`center` parameter and can be configured either automatically (see :ref:`centering_auto`)
+or manually (see :ref:`centering_manual`).
 
 .. _centering_auto:
 
@@ -68,7 +84,7 @@ Here are the steps to enable the auto-centering:
          algorithm: gridrec
          init_recon: null
 
-.. note:: The auto-centering plugin is computationally expensive and therefore one can specify :code:`ind: mid` to be calculated only for a middle slice of your previewed data, see :ref:`previewing`. 
+.. note:: The auto-centering plugin is computationally expensive and therefore one can specify :code:`ind: mid` to have it calculated only for a middle slice of your previewed data, see :ref:`previewing`. 
 
 .. _centering_manual:
 
