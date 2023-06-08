@@ -5,6 +5,7 @@ from typing import Dict, Union
 import numpy as np
 from mpi4py.MPI import Comm
 
+import httomo.globals
 from httomo.data import mpiutil
 from httomo.utils import Colour, log_once
 
@@ -41,7 +42,9 @@ class BaseWrapper:
         self.comm = comm
         if gpu_enabled:
             self.num_GPUs = xp.cuda.runtime.getDeviceCount()
-            self.gpu_id = mpiutil.local_rank % self.num_GPUs
+            _id = httomo.globals.gpu_id
+            # if gpu-id was specified in the CLI, use that
+            self.gpu_id = mpiutil.local_rank % self.num_GPUs if _id == -1 else _id
 
     def _transfer_data(self, *args) -> Union[tuple, xp.ndarray, np.ndarray]:
         """Transfer the data between the host and device for the GPU-enabled method

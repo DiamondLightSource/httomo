@@ -43,7 +43,6 @@ RECON_MODULE_MATCH = "recon.algorithm"
 MAX_SWEEPS = 1
 
 
-
 @dataclass
 class MethodFunc:
     """
@@ -450,9 +449,9 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 method_func=wrapper_func,
                 wrapper_func=wrapper_method,
                 parameters=method_conf,
-                cpu=True, # get cpu/gpu meta data info from httomolib methods
+                cpu=True,  # get cpu/gpu meta data info from httomolib methods
                 gpu=False,
-                calc_max_slices=None, # call calc_max_slices function in wrappers
+                calc_max_slices=None,  # call calc_max_slices function in wrappers
                 reslice_ahead=False,
                 pattern=Pattern.all,
                 is_loader=False,

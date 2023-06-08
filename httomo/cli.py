@@ -67,6 +67,12 @@ def check(yaml_config: Path, in_data: Path = None):
     help=" The number of the CPU cores per process.",
 )
 @click.option(
+    "--gpu-id",
+    type=click.INT,
+    default=-1,
+    help="The GPU ID of the device to use.",
+)
+@click.option(
     "--save-all",
     is_flag=True,
     help="Save intermediate datasets for all tasks in the pipeline.",
@@ -99,6 +105,7 @@ def run(
     dimension: int,
     pad: int,
     ncore: int,
+    gpu_id: int,
     save_all: bool,
     file_based_reslice: bool,
     reslice_dir: Path,
@@ -119,6 +126,25 @@ def run(
 
         # Copy YAML pipeline file to output directory
         copy(yaml_config, httomo.globals.run_out_dir)
+
+    # try to access the GPU with the ID given
+    try:
+        import cupy as cp
+
+        gpu_count = cp.cuda.runtime.getDeviceCount()
+
+        if gpu_id != -1:
+            if gpu_id not in range(0, gpu_count):
+                raise ValueError(
+                    f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
+                )
+
+            cp.cuda.Device(gpu_id).use()
+
+        httomo.globals.gpu_id = gpu_id
+
+    except ImportError:
+        pass  # silently pass and run the CPU pipeline
 
     return run_tasks(
         in_file,

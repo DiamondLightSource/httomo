@@ -64,3 +64,16 @@ def test_cli_pass_output_folder(
     ]
     subprocess.check_output(cmd)
     assert Path(custom_output_dir, "user.log").exists()
+
+
+@pytest.mark.cupy
+def test_cli_pass_gpu_id(cmd, standard_data, standard_loader, output_folder):
+    cmd.insert(7, standard_data)
+    cmd.insert(8, standard_loader)
+    cmd.insert(4, "--gpu-id")
+    cmd.insert(5, "10")
+
+    result = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    assert "GPU Device not available for access." in result.stderr
