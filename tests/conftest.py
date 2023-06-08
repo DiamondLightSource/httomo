@@ -58,7 +58,7 @@ def cmd():
         "-m",
         "httomo",
         "run",
-        "--save_all",
+        "--save-all",
         "--ncore",
         "2",
         "output_dir/",

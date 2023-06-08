@@ -67,7 +67,7 @@ def check(yaml_config: Path, in_data: Path = None):
     help=" The number of the CPU cores per process.",
 )
 @click.option(
-    "--save_all",
+    "--save-all",
     is_flag=True,
     help="Save intermediate datasets for all tasks in the pipeline.",
 )
