@@ -332,12 +332,12 @@ def test_sweep_pipeline_with_save_all_using_mpi(
     imarray = np.array(Image.open(tif_files[0]))
     mpi_imarray = np.array(Image.open(tif_files[2]))
     assert imarray.shape == (128, 160) == mpi_imarray.shape
-    assert imarray.sum() == 3856477 == mpi_imarray.sum()
+    assert imarray.sum() == 3855857 == mpi_imarray.sum()
 
     imarray = np.array(Image.open(tif_files[1]))
     mpi_imarray = np.array(Image.open(tif_files[3]))
     assert imarray.shape == (128, 160) == mpi_imarray.shape
-    assert imarray.sum() == 3855857 == mpi_imarray.sum()
+    assert imarray.sum() == 3856477 == mpi_imarray.sum()
 
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 4
