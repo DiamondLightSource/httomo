@@ -268,9 +268,6 @@ class TomoPyWrapper(BaseWrapper):
             if function_name == "rotation":
                 self.wrapper_method = super()._execute_rotation
 
-        # As for TomoPy ver. 1.13 it is not possible to pass a CuPy array to the function
-        # directly, therefore we set the flag explicitly
-        self.cupyrun = False
 
 class HttomolibWrapper(BaseWrapper):
     """A class that wraps httomolib functions for httomo"""
@@ -291,9 +288,6 @@ class HttomolibWrapper(BaseWrapper):
             )
             if function_name == "images":
                 self.wrapper_method = self._execute_images
-
-        # httomolib methods run on the CPU only
-        self.cupyrun = False
 
     def _execute_images(
         self,
@@ -388,4 +382,3 @@ class HttomolibgpuWrapper(BaseWrapper):
             available_memory,
             **kwargs
         )        
-
