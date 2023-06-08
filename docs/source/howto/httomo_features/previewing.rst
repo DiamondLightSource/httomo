@@ -58,7 +58,17 @@ Enabling data preview
 In order to change the input data dimensions and accelerate the processing 
 pipeline one can do two of the following operations. *Although this is optional, by doing
 this you reduce the size of the reconstructed volume which can have a
-significant impact on the post-processing time.*
+significant impact on the post-processing time.* In the figure bellow the projections 
+have been cropped vertically and horizontally. 
+
+Before cropping |pic1| and after |pic2|
+
+.. |pic1| image:: ../../_static/preview/uncropped.gif
+   :width: 44%
+
+.. |pic2| image:: ../../_static/preview/cropped.gif
+   :width: 27%
+
 
 1. Reduce the size of the vertical dimension (detector- `Y`) by removing blank regions in your data (top and bottom cropping),
    see :numref:`fig_dimsdataY`. The blank areas, if any, can be established by looking through the sequence of raw projections. 
@@ -104,3 +114,14 @@ significant impact on the post-processing time.*
     :alt: 3D data, X slicing
 
     Cropping detector- `X` dimension of 3D projection data
+
+One can combine vertical and horizontal cropping with:
+
+   .. code-block:: yaml
+
+        preview:
+            -  
+            - start: 200
+              stop: 1800
+            - start: 100
+              stop: 2000 
