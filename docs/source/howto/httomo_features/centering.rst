@@ -8,12 +8,12 @@ What is it?
 ===========
 Identifying the optimal Centre of Rotation (CoR) parameter is an important 
 procedure to ensure the correctness of the reconstruction. It is crucial to find it 
-precisely as the incorrect value can lead to distortions in reconstructions, therefore making post processing and 
+precisely, as the incorrect value can lead to distortions in reconstructions, therefore making post processing and
 quantification incorrect.  
 
 The required CoR parameter places the object (a scanned sample) into a coordinate system of the scanning device to ensure
 that the object is centered and rotates around its axis in this system, see :numref:`fig_centerscheme`. This is essential for
-valid reconstruction as the backprojection model assumes a central placing of a sample with respect to one detector's axis 
+valid reconstruction as the back projection model assumes a central placing of a sample with respect to one detector's axis
 (usually horizontal for synchrotrons).
 
 The CoR estimation problem is also sometimes referred to the centered sinogram. 
@@ -28,7 +28,7 @@ by varying the CoR value.
     :scale: 55 %
     :alt: CoR scheme for tomography
 
-    The CoR parameter can be defined as a distance `d` that translates the coordinate system  `(x,y)` of the scanned object to the cordinate system `(s,p)` of the acquisition device. This consists in a simple linear mapping `(s = x + d, p = y)`.
+    The CoR parameter can be defined as a distance `d` that translates the coordinate system `(x,y)` of the scanned object to the coordinate system `(s,p)` of the acquisition device. This leads to a simple linear mapping `(s = x + d, p = y)`.
 
 .. _fig_center_find:
 .. figure::  ../../_static/cor/corr_select.png
@@ -90,14 +90,14 @@ Here are the steps to enable the auto-centering:
 
 Manual Centering
 =================
-In case when :ref:`centering_auto` does not work (e.g. the data is corrupted, incomplete or/and not within the field of view of the detector), 
+In the case when :ref:`centering_auto` does not work (e.g. the data is corrupted, incomplete or/and not within the field of view of the detector),
 one can use manual centering with :ref:`parameter_tuning` enabled.
 
 For manual centering you need to do the following steps:
 
 1. Ensure that the auto centering estimation method is not in the process list (remove or comment it). 
 2. Modify the centre of rotation value :code:`center` in the reconstruction plugin by substituting a number instead of the :code:`cor` parameter.
-3. If you would like to sweep across multiple CoR values, you can do that with a special phrase in your template :code:`!Sweep` or :code:`!SweepRange`. Please see more on :ref:`parameter_tuning_range`.
+3. If you would like to sweep across multiple CoR values, you can do that with a special phrase in your template :code:`!Sweep` or :code:`!SweepRange`. Please see more at :ref:`parameter_tuning_range`.
 
 
 
