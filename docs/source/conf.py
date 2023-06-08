@@ -100,7 +100,7 @@ html_theme_options = {
         "image_dark": "_static/logo_dark.png",
     },
     "show_toc_level": 1,
-    "navbar_align": "left",  # [left, content, right] For testing that the navbar items align properly 
+    "navbar_align": "left",  # [left, content, right] For testing that the navbar items align properly
 }
 
 html_context = {
