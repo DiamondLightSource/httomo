@@ -1,0 +1,10 @@
+- httomolibgpu.prep.alignment:
+    distortion_correction_proj:
+      data_in: tomo
+      data_out: tomo
+      metadata_path: REQUIRED
+      preview: REQUIRED
+      center_from_left: null
+      center_from_top: null
+      polynomial_coeffs: null
+      crop: 0

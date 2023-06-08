@@ -7,13 +7,15 @@ from httomo.data import mpiutil
 from httomo.data.hdf._utils import chunk, load
 from httomo.utils import Colour, log_once
 
+from typing import Tuple
+
 
 def reslice(
     data: numpy.ndarray,
     current_slice_dim: int,
     next_slice_dim: int,
     comm: Comm,
-) -> tuple[numpy.ndarray, int]:
+) -> Tuple[numpy.ndarray]:
     """Reslice data by using in-memory MPI directives.
 
     Parameters
@@ -75,7 +77,7 @@ def reslice_filebased(
     next_slice_dim: int,
     comm: Comm,
     reslice_dir: Path,
-) -> tuple[numpy.ndarray, int]:
+) -> Tuple[numpy.ndarray, int]:
     """Reslice data by writing to hdf5 store with data chunked along a different
     dimension, and reading back along the new chunking dimension.
     Parameters
