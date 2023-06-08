@@ -243,17 +243,17 @@ way of doing so.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Please see the :ref:`pl_reslice` section for more information about the
-reslicing operation that can occur during the execution of the processing
+re-slicing operation that can occur during the execution of the processing
 pipeline.
 
-By default, HTTomo will perform the reslice operation *without* writing a file
-to the output directory, and instead peform the operation "in-memory". This is
+By default, HTTomo will perform the re-slice operation *without* writing a file
+to the output directory, and instead perform the operation "in-memory". This is
 because the latter has much better performance than the former, and is thus
 given preference.
 
-While performing the reslice operation via writing a file has worse performance
+While performing the re-slice operation via writing a file has worse performance
 than in-memory, it is useful to have it as an option for backup. Therefore, this
-flag is for specifying to HTTomo that any reslice operations should be done
+flag is for specifying to HTTomo that any re-slice operations should be done
 with a file, rather than with RAM.
 
 :code:`--reslice-dir`
@@ -261,32 +261,32 @@ with a file, rather than with RAM.
 
 This is related to the :code:`--file-based-reslice` flag.
 
-By default, the directory that the file being used for the reslice operation is
+By default, the directory that the file being used for the re-slice operation is
 the output directory that HTTomo creates.
 
 If this output directory is on a network-mounted disk, then read/write
 operations to such a disk will in general be much slower compared to a local
-disk. In particular, this means that the reslice operation will be much slower
+disk. In particular, this means that the re-slice operation will be much slower
 if the output directory is on a network-mounted disk rather than on a local
 disk.
 
 This flag can be used to specify a different directory inside which the file
-used for reslicing should reside.
+used for re-slicing should reside.
 
-In particular, if performing the reslice with a file and the output directory is
+In particular, if performing the re-slice with a file and the output directory is
 on a *network-mounted disk*, it is recommended to use this flag to choose an
 output directory that is on a *local disk* where possible. This will
-*drastically* improve performance, compared to performing the reslice with a
+*drastically* improve performance, compared to performing the re-slice with a
 file on a network-mounted disk.
 
 .. note:: If running HTTomo across multiple machines, using a single local disk
-          to contain the file used for reslicing is not possible.
+          to contain the file used for re-slicing is not possible.
 
-Below is a summary of the different reslicing approaches and their relative
+Below is a summary of the different re-slicing approaches and their relative
 performances:
 
 ============================ =========
-Reslice type                 Speed
+Re-slice type                 Speed
 ============================ =========
 In-memory                    Very fast
 File w/ local disk           Fast
@@ -299,8 +299,8 @@ Run Commands
 ============
 
 As HTTomo was developed at the Diamond Light Source, there have been some extra
-efforts to accomodate the users at Diamond (for example, aliases for commands
-and launcher scripts). As such, there are some differences to how one would run
+efforts to accommodate the users at Diamond (for example, aliases for commands
+and launcher scripts). As such, there are some differences as to how one would run
 HTTomo at Diamond vs. outside of Diamond, and the guidance on running HTTomo has
 been split into two sections accordingly.
 
