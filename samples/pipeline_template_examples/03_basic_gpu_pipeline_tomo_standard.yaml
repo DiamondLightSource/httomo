@@ -6,16 +6,15 @@
       dimension: 1
       preview:
         - 
-        - start: 50
-          stop: 60
+        - 
         - 
       pad: 0
-# - httomolibgpu.misc.corr:
-#     remove_outlier3d:
-#       data_in_multi: [tomo, flats, darks]
-#       data_out_multi: [tomo, flats, darks]
-#       kernel_size: 3
-#       dif: 0.1
+- httomolibgpu.misc.corr:
+    remove_outlier3d:
+      data_in_multi: [tomo, flats, darks]
+      data_out_multi: [tomo, flats, darks]
+      kernel_size: 3
+      dif: 0.1
 - httomolibgpu.prep.normalize:
     normalize:
       data_in: tomo
