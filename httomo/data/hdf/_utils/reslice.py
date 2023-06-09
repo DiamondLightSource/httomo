@@ -54,18 +54,18 @@ def reslice(
 
     # Get shape of full/unsplit data, in order to set the chunk shape based on
     # the dims of the full data rather than of the split data
-    data_shape = chunk.get_data_shape(data, current_slice_dim - 1)
+    data_shape = chunk.get_data_shape(data, current_slice_dim)
 
     # build a list of what each process has to scatter to others
     nprocs = mpiutil.size
-    length = data_shape[next_slice_dim - 1]
+    length = data_shape[next_slice_dim]
     split_indices = [round((length / nprocs) * r) for r in range(1, nprocs)]
-    to_scatter = numpy.split(data, split_indices, axis=next_slice_dim - 1)
+    to_scatter = numpy.split(data, split_indices, axis=next_slice_dim)
 
     # all-to-all MPI call distributes every processes list to every other process,
     # and we concatenate them again across the resliced dimension
     new_data = numpy.concatenate(
-        mpiutil.alltoall(to_scatter), axis=current_slice_dim - 1
+        mpiutil.alltoall(to_scatter), axis=current_slice_dim
     )
 
     return new_data, next_slice_dim
@@ -100,14 +100,14 @@ def reslice_filebased(
     """
     # Get shape of full/unsplit data, in order to set the chunk shape based on
     # the dims of the full data rather than of the split data
-    data_shape = chunk.get_data_shape(data, current_slice_dim - 1)
+    data_shape = chunk.get_data_shape(data, current_slice_dim)
 
     # Calculate the chunk size for the resliced data
     slices_no_in_chunks = 1
-    if next_slice_dim == 1:
+    if next_slice_dim == 0:
         # Chunk along projection (rotation angle) dimension
         chunks_data = (slices_no_in_chunks, data_shape[1], data_shape[2])
-    elif next_slice_dim == 2:
+    elif next_slice_dim == 1:
         # Chunk along sinogram (detector y) dimension
         chunks_data = (data_shape[0], slices_no_in_chunks, data_shape[2])
     else:
@@ -127,14 +127,14 @@ def reslice_filebased(
         reslice_dir,
         "intermediate.h5",
         data,
-        current_slice_dim,
+        current_slice_dim+1,
         chunks_data,
         reslice=True,
         comm=comm,
     )
     # Read data back along the new slicing dimension
     data = load.load_data(
-        f"{reslice_dir}/intermediate.h5", next_slice_dim, "/data", comm=comm
+        f"{reslice_dir}/intermediate.h5", next_slice_dim+1, "/data", comm=comm
     )
 
-    return data, next_slice_dim
+    return data, next_slice_dim+1

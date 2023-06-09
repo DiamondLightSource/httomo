@@ -289,7 +289,12 @@ def run_tasks(
     # main sections loop
     for section in platform_sections:
         # determine the max_slices for the whole section
-        _update_max_slices(section, data_shape, data_dtype)       
+        _update_max_slices(section, data_shape, data_dtype)
+        print(data_shape)
+        print(_get_slicing_dim(section.pattern))
+        print(data_shape[_get_slicing_dim(section.pattern)])
+             
+             
         # in order to iterate over max slices we need to know the slicing
         # dimension of the section section.pattern.value
         # NOTE: in case of pattern "all" section.pattern.value is 2, that creates a problem 
@@ -1234,7 +1239,7 @@ def _update_max_slices(
     if process_data_shape is None or input_data_type is None:
         return
     if section.pattern == Pattern.sinogram:
-        slice_dim = 1
+        slice_dim = 1        
         non_slice_dims_shape = (process_data_shape[0], process_data_shape[2])
     elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
         # TODO: what if all methods in a section are pattern.all
@@ -1244,7 +1249,7 @@ def _update_max_slices(
         err_str = f"Invalid pattern {section.pattern}"
         log_exception(err_str)
         # this should not happen if data type is indeed the enum
-        raise ValueError(err_str)
+        raise ValueError(err_str)    
     max_slices = process_data_shape[slice_dim]
     data_type = input_data_type
     output_dims = non_slice_dims_shape
