@@ -43,7 +43,6 @@ RECON_MODULE_MATCH = "recon.algorithm"
 MAX_SWEEPS = 1
 
 
-
 @dataclass
 class MethodFunc:
     """
@@ -252,8 +251,10 @@ def run_tasks(
 
     loader_start_time = time.perf_counter_ns()
 
-    loader_func = method_funcs[0].method_func # function to be called from httomo.data.hdf.loaders
-    loader_info = loader_func(**method_funcs[0].parameters) # collect meta data from LoaderData.
+    # function to be called from httomo.data.hdf.loaders
+    loader_func = method_funcs[0].method_func
+    # collect meta data from LoaderData.
+    loader_info = loader_func(**method_funcs[0].parameters)
 
     output_str_list = [
         f"    Finished task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name} (",
@@ -475,17 +476,18 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         )
         wrapper_func = getattr(wrapper_init_module.module, method_name)
         wrapper_method = wrapper_init_module.wrapper_method
-        is_tomopy = split_module_name[0] == "tomopy"
-        is_httomolib = split_module_name[0] == "httomolib"
+        is_httomolibgpu = split_module_name[0] == "httomolibgpu"
         method_funcs.append(
             MethodFunc(
                 module_name=module_name,
                 method_func=wrapper_func,
                 wrapper_func=wrapper_method,
                 parameters=method_conf,
-                cpu=True if is_tomopy or is_httomolib else wrapper_init_module.meta.cpu,
-                gpu=False if is_tomopy or is_httomolib else wrapper_init_module.meta.gpu,
-                calc_max_slices=None if is_tomopy or is_httomolib else wrapper_init_module.calc_max_slices,
+                cpu=True if not is_httomolibgpu else wrapper_init_module.meta.cpu,
+                gpu=False if not is_httomolibgpu else wrapper_init_module.meta.gpu,
+                calc_max_slices=None
+                if not is_httomolibgpu
+                else wrapper_init_module.calc_max_slices,
                 reslice_ahead=False,
                 pattern=Pattern.all,
                 is_loader=False,
@@ -1158,7 +1160,9 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
     return dataclasses.replace(method_function, pattern=pattern)
 
 
-def determine_platform_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
+def determine_platform_sections(
+    method_funcs: List[MethodFunc],
+) -> List[PlatformSection]:
     ret: List[PlatformSection] = []
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
@@ -1210,11 +1214,10 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
         return int(100e9)  # arbitrarily high number - only used if GPU isn't available
 
 
-
 def update_max_slices(
     section: PlatformSection,
     process_data_shape: Optional[Tuple[int, int, int]],
-    input_data_type: Optional[np.dtype]
+    input_data_type: Optional[np.dtype],
 ) -> Tuple[np.dtype, Tuple[int, int]]:
     # section before loader - we don't know these shapes yet
     # TODO: make sure loader goes into its own section
@@ -1240,13 +1243,12 @@ def update_max_slices(
         for m in section.methods:
             if m.calc_max_slices is not None:
                 (slices, data_type, output_dims) = m.calc_max_slices(
-                    slice_dim,
-                    non_slice_dims_shape,
-                    data_type,
-                    available_memory
+                    slice_dim, non_slice_dims_shape, data_type, available_memory
                 )
                 max_slices = min(max_slices, slices)
-            non_slice_dims_shape = output_dims # overwrite input dims with estimated output ones
+            non_slice_dims_shape = (
+                output_dims  # overwrite input dims with estimated output ones
+            )
     else:
         # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
         pass

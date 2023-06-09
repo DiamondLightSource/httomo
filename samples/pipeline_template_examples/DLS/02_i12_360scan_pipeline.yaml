@@ -10,20 +10,20 @@
           stop: 60
         - 
       pad: 0
-- httomolib.misc.corr:
+- httomolibgpu.misc.corr:
     remove_outlier3d:
       data_in_multi: [tomo, flats, darks]
       data_out_multi: [tomo, flats, darks]
       kernel_size: 3
       dif: 0.1      
-- httomolib.prep.normalize:
+- httomolibgpu.prep.normalize:
     normalize:
       data_in: tomo
       data_out: tomo
       cutoff: 10.0
       minus_log: true
       nonnegativity: false 
-- httomolib.recon.rotation:
+- httomolibgpu.recon.rotation:
     find_center_360:
       data_in: tomo
       data_out: [cor, overlap, side, overlap_position]
@@ -33,19 +33,19 @@
       denoise: true
       norm: false
       use_overlap: true
-- httomolib.prep.stripe:
+- httomolibgpu.prep.stripe:
     remove_stripe_based_sorting:
       data_in: tomo
       data_out: tomo
       size: 11
       dim: 1
-- tomopy.misc.morph:
+- httomolibgpu.misc.morph:
     sino_360_to_180:
       data_in: tomo
       data_out: tomo
       overlap: overlap
-      rotation: right
-- httomolib.recon.algorithm:
+      rotation: right 
+- httomolibgpu.recon.algorithm:
      reconstruct_tomobar:
        data_in: tomo
        data_out: tomo

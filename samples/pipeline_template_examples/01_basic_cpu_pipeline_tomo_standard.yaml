@@ -9,11 +9,6 @@
         - 
         - 
       pad: 0
-- httomo.misc.corr:
-    median_filter3d:
-      data_in: tomo
-      data_out: tomo
-      radius_kernel: 1
 - tomopy.prep.normalize:
     normalize:
       data_in: tomo
@@ -23,14 +18,6 @@
     minus_log:
       data_in: tomo
       data_out: tomo
-- tomopy.prep.stripe:
-    remove_stripe_fw:
-      data_in: tomo
-      data_out: tomo
-      level: null
-      wname: db5
-      sigma: 2
-      pad: true
 - tomopy.recon.rotation:
     find_center_vo:
       data_in: tomo
@@ -54,8 +41,10 @@
 - httomolib.misc.images:
     save_to_images:
       data_in: tomo
-      out_folder_name: recon
+      subfolder_name: images
       axis: 0
-      file_format: 'tif'
+      file_format: tif
       bits: 8
+      perc_range_min: 0.0
+      perc_range_max: 100.0
       jpeg_quality: 95

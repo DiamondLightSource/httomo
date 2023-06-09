@@ -42,14 +42,6 @@
       step: 0.25
       ratio: 0.5
       drop: 20      
-#- tomopy.prep.stripe:
-#    remove_all_stripe:
-#      data_in: tomo
-#      data_out: tomo
-#      snr: 3
-#      la_size: 61
-#      sm_size: 21
-#      dim: 1
 - tomopy.recon.algorithm:
     recon:
       data_in: tomo

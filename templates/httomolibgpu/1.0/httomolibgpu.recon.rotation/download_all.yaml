@@ -1,0 +1,25 @@
+- httomolibgpu.recon.rotation:
+    find_center_360:
+      data_in: tomo
+      data_out:
+      - cor
+      - overlap
+      - side
+      - overlap_position
+      ind: null
+      win_width: 10
+      side: null
+      denoise: true
+      norm: false
+      use_overlap: false
+- httomolibgpu.recon.rotation:
+    find_center_vo:
+      data_in: tomo
+      data_out: cor
+      ind: null
+      smin: -50
+      smax: 50
+      srad: 6.0
+      step: 0.25
+      ratio: 0.5
+      drop: 20
