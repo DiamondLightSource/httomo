@@ -1,6 +1,7 @@
 import dataclasses
 import multiprocessing
 import time
+import math
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from importlib import import_module
@@ -208,7 +209,7 @@ def run_tasks(
     method_funcs = _check_if_should_reslice(method_funcs)
     reslice_info.reslice_bool_list = [m.reslice_ahead for m in method_funcs]
     #: no need to add loader into a platform section
-    platform_sections = determine_platform_sections(method_funcs[1:])
+    platform_sections = _determine_platform_sections(method_funcs[1:])
 
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
@@ -283,6 +284,21 @@ def run_tasks(
     # data shape and dtype are useful when calculating max slices
     data_shape = loader_info.data.shape
     data_dtype = loader_info.data.dtype
+
+    idx = 0
+    # main sections loop
+    for section in platform_sections:
+        # determine the max_slices for the whole section
+        _update_max_slices(section, data_shape, data_dtype)       
+        # in order to iterate over max slices we need to know the slicing
+        # dimension of the section section.pattern.value
+        # NOTE: in case of pattern "all" section.pattern.value is 2, that creates a problem 
+        # for calculations bellow
+        iterations_max_slices = math.ceil(data_shape[section.pattern.value] / section.max_slices)
+        indices_start = 0
+        # a loop over max slices for each section
+        #for it_slices in range(iterations_max_slices):
+        #    dict_datasets_pipeline[method_funcs[0].parameters["name"]] = loader_info.data                   
 
     # Run the methods
     for idx, method_func in enumerate(method_funcs[1:]):
@@ -1158,7 +1174,7 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
     return dataclasses.replace(method_function, pattern=pattern)
 
 
-def determine_platform_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
+def _determine_platform_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
     ret: List[PlatformSection] = []
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
@@ -1201,7 +1217,7 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
         dev = cp.cuda.Device()
         # first, let's make some space
         pool = cp.get_default_memory_pool()
-        cp.free_all_blocks()
+        pool.free_all_blocks()        
         cache = cp.fft.config.get_plan_cache()
         cache.clear()
         available_memory = dev.mem_info[0] + pool.free_bytes()
@@ -1209,15 +1225,12 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
     except:
         return int(100e9)  # arbitrarily high number - only used if GPU isn't available
 
-
-
-def update_max_slices(
+def _update_max_slices(
     section: PlatformSection,
     process_data_shape: Optional[Tuple[int, int, int]],
     input_data_type: Optional[np.dtype]
 ) -> Tuple[np.dtype, Tuple[int, int]]:
-    # section before loader - we don't know these shapes yet
-    # TODO: make sure loader goes into its own section
+
     if process_data_shape is None or input_data_type is None:
         return
     if section.pattern == Pattern.sinogram:
@@ -1237,20 +1250,23 @@ def update_max_slices(
     output_dims = non_slice_dims_shape
     if section.gpu:
         available_memory = _get_available_gpu_memory(10.0)
+        available_memory_in_GB = round(available_memory/(1024**3),2)
+        max_slices_methods = [None]*len(section.methods)
+        idx = 0
         for m in section.methods:
             if m.calc_max_slices is not None:
-                (slices, data_type, output_dims) = m.calc_max_slices(
+                (slices_estimated, data_type, output_dims) = m.calc_max_slices(
                     slice_dim,
                     non_slice_dims_shape,
                     data_type,
                     available_memory
                 )
-                max_slices = min(max_slices, slices)
+                max_slices_methods[idx] = min(max_slices, slices_estimated)
+                idx += 1
             non_slice_dims_shape = output_dims # overwrite input dims with estimated output ones
+        section.max_slices = min(max_slices_methods)
     else:
         # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
+        section.max_slices = max_slices
         pass
-
-    section.max_slices = max_slices
-    # TODO: don't return this - use the actual data's data type in the next section
     return data_type, output_dims

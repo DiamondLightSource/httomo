@@ -17,11 +17,9 @@ def test_get_invalid_module():
         get_method_info("tomopy.doesntexist.corr", "median_filter", "pattern")
 
 
-"""
 def test_get_invalid_method():
     with pytest.raises(KeyError, match="key doesntexist is not present"):
         get_method_info("tomopy.misc.corr", "doesntexist", "pattern")
-
 
 def test_get_invalid_attr():
     with pytest.raises(KeyError, match="attribute doesntexist is not present"):
@@ -53,4 +51,4 @@ def test_httomolibgpu_meta():
 def test_httomolibgpu_meta_incomplete_path():
     with pytest.raises(ValueError, match="not resolving"):
         get_httomolibgpu_method_meta("prep.normalize")
-"""
+
