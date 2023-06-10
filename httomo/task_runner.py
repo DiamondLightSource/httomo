@@ -285,26 +285,37 @@ def run_tasks(
     data_shape = loader_info.data.shape
     data_dtype = loader_info.data.dtype
 
+############################################################################
     idx = 0
     # main sections loop
     for section in platform_sections:
         # determine the max_slices for the whole section
         _update_max_slices(section, data_shape, data_dtype)
-        print(data_shape)
-        print(_get_slicing_dim(section.pattern))
-        print(data_shape[_get_slicing_dim(section.pattern)])
-             
-             
         # in order to iterate over max slices we need to know the slicing
-        # dimension of the section section.pattern.value
-        # NOTE: in case of pattern "all" section.pattern.value is 2, that creates a problem 
-        # for calculations bellow
-        iterations_max_slices = math.ceil(data_shape[section.pattern.value] / section.max_slices)
+        # dimension of the section
+        slicing_dim_section = _get_slicing_dim(section.pattern)
+        iterations_for_max_slices = math.ceil(data_shape[slicing_dim_section] / section.max_slices)
+        
         indices_start = 0
+        indices_end = section.max_slices
         # a loop over max slices for each section
-        #for it_slices in range(iterations_max_slices):
-        #    dict_datasets_pipeline[method_funcs[0].parameters["name"]] = loader_info.data                   
-
+        for it_slices in range(iterations_for_max_slices):
+            # calculating indices for partial slicing of the data
+            slc = [slice(None)] * len(data_shape)
+            slc[slicing_dim_section] = slice(indices_start, indices_end, 1)
+            # once can slice the data like this, but slicing indices need to be passed to run_method?
+            #dict_datasets_pipeline[method_funcs[0].parameters["name"]][tuple(slc)]
+            
+            # re-initialise the slicing indices
+            indices_start = indices_end
+            # checking if still within the slicing dimension size
+            res = (indices_start + section.max_slices) - data_shape[slicing_dim_section] 
+            if res > 0:
+                res = section.max_slices - res
+                indices_end += res
+            else:
+                indices_end += section.max_slices
+############################################################################
     # Run the methods
     for idx, method_func in enumerate(method_funcs[1:]):
         package = method_func.module_name.split(".")[0]
