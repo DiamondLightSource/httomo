@@ -2,6 +2,7 @@ import dataclasses
 import multiprocessing
 import time
 import math
+import copy
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from importlib import import_module
@@ -287,7 +288,7 @@ def run_tasks(
 
 ############################################################################
     idx = 0
-    # main sections loop
+    # sections loop
     for section in platform_sections:
         # determine the max_slices for the whole section
         _update_max_slices(section, data_shape, data_dtype)
@@ -295,26 +296,42 @@ def run_tasks(
         # dimension of the section
         slicing_dim_section = _get_slicing_dim(section.pattern)
         iterations_for_max_slices = math.ceil(data_shape[slicing_dim_section] / section.max_slices)
+
+        if iterations_for_max_slices > 1 and idx == 0:
+            # as we work with the subsets of the full data, we need to create a
+            # copy of the full data to override it later with the partial data.
+            # This copy needs to happen in the section loop only when we know 
+            # that the data is on the CPU
+            in_data_temp_host = copy.deepcopy(dict_datasets_pipeline[method_funcs[idx].parameters["name"]])
         
         indices_start = 0
         indices_end = section.max_slices
+        slc_indices = [slice(None)] * len(data_shape)
         # a loop over max slices for each section
         for it_slices in range(iterations_for_max_slices):
-            # calculating indices for partial slicing of the data
-            slc = [slice(None)] * len(data_shape)
-            slc[slicing_dim_section] = slice(indices_start, indices_end, 1)
-            # once can slice the data like this, but slicing indices need to be passed to run_method?
-            #dict_datasets_pipeline[method_funcs[0].parameters["name"]][tuple(slc)]
-            
-            # re-initialise the slicing indices
-            indices_start = indices_end
-            # checking if still within the slicing dimension size
-            res = (indices_start + section.max_slices) - data_shape[slicing_dim_section] 
-            if res > 0:
-                res = section.max_slices - res
-                indices_end += res
-            else:
-                indices_end += section.max_slices
+            if iterations_for_max_slices > 1:
+                # calculating indices for the partial slicing of the data                
+                slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)
+                # now initialise the partial input data using the copy of section input data
+                dict_datasets_pipeline[method_funcs[idx].parameters["name"]] = in_data_temp_host[tuple(slc_indices)]
+            # loop over methods in the section
+            for method_sec in section.methods:
+                #print("processing method")
+                #print(method_sec)
+                idx += 1
+                
+            if iterations_for_max_slices > 1:
+                # copy the processed partial data to the host copy
+                in_data_temp_host[tuple(slc_indices)] = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
+                # re-initialise the slicing indices
+                indices_start = indices_end
+                # checking if still within the slicing dimension size
+                res = (indices_start + section.max_slices) - data_shape[slicing_dim_section] 
+                if res > 0:
+                    res = section.max_slices - res
+                    indices_end += res
+                else:
+                    indices_end += section.max_slices            
 ############################################################################
     # Run the methods
     for idx, method_func in enumerate(method_funcs[1:]):
