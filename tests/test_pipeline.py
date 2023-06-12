@@ -391,7 +391,7 @@ def test_sweep_range_pipeline_with_step_absent(
 @pytest.mark.cupy
 def test_multi_inputs_pipeline(cmd, standard_data, sample_pipelines, output_folder):
     cmd.insert(7, standard_data)
-    cmd.insert(8, sample_pipelines + "multi_inputs/01_dezing_multi_inputs.yaml")
+    cmd.insert(8, sample_pipelines + "multi_inputs/01_multi_inputs.yaml")
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
@@ -399,21 +399,23 @@ def test_multi_inputs_pipeline(cmd, standard_data, sample_pipelines, output_fold
 
     copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
     assert compare_two_yamls(
-        sample_pipelines + "multi_inputs/01_dezing_multi_inputs.yaml", copied_yaml_path
+        sample_pipelines + "multi_inputs/01_multi_inputs.yaml", copied_yaml_path
     )
 
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 3
 
     with h5py.File(h5_files[0], "r") as f:
-        assert f["data"].shape == (180, 128, 160)
-        assert f["data"].dtype == np.uint16
-        assert np.sum(f["data"]) == 2981388880
-        assert_allclose(np.mean(f["data"]), 808.7534939236111, atol=1e-6)
+        arr = np.array(f["data"])
+        assert arr.shape == (180, 128, 160)
+        assert arr.dtype == np.float32
+        assert_allclose(arr.sum(), 2981532700.0, rtol=1e-6)
+        assert_allclose(arr.mean(), 808.7925, rtol=1e-6)
     with h5py.File(h5_files[1], "r") as f:
-        assert f["data"].shape == (20, 128, 160)
-        assert f["data"].dtype == np.uint16
-        assert np.sum(f["data"]) == 399933384
-        assert_allclose(np.mean(f["data"]), 976.39986328125, atol=1e-6)
+        arr = np.array(f["data"])
+        assert arr.shape == (20, 128, 160)
+        assert arr.dtype == np.float32
+        assert_allclose(arr.sum(), 399936600.0, rtol=1e-6)
+        assert_allclose(arr.mean(), 976.4077, rtol=1e-6)
     with h5py.File(h5_files[2], "r") as f:
         assert np.sum(f["data"]) == 0
