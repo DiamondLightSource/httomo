@@ -1,6 +1,13 @@
 import subprocess
 
 import pytest
+import numpy as np
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+
+from httomo.data.hdf.loaders import standard_tomo
 
 
 @pytest.mark.cupy
@@ -43,3 +50,72 @@ def test_diad_testing_pipeline_loaded(
     assert "Running task 5 (pattern=sinogram): find_center_vo..." in result.stderr
     assert "Running task 7 (pattern=all): save_to_images.." in result.stderr
     assert "Pipeline finished" in result.stderr
+
+
+def test_standard_tomo(standard_data, standard_data_path, standard_image_key_path):
+    preview = [None, {"start": 5, "stop": 10}, None]
+
+    output = standard_tomo(
+        "tomo",
+        standard_data,
+        standard_data_path,
+        1,
+        preview,
+        1,
+        comm,
+        image_key_path=standard_image_key_path,
+    )
+
+    # data
+    assert output.data.sum() == 141348397
+    np.testing.assert_allclose(output.data.mean(), 981.58574794, rtol=1e-5)
+    assert output.data.shape == (180, 5, 160)
+
+    # flats
+    assert output.flats.sum() == 15625259
+    np.testing.assert_allclose(output.flats.mean(), 976.5786875, rtol=1e-5)
+    assert output.flats.shape == (20, 5, 160)
+
+    # angles
+    assert output.angles.shape == (180,)
+    np.testing.assert_allclose(output.angles.sum(), 281.1725424962865, rtol=1e-5)
+    np.testing.assert_allclose(output.angles.mean(), 1.562069680534925, rtol=1e-5)
+
+    assert output.angles_total == 180  # angles_total
+    assert output.detector_y == 5  # detector_y
+    assert output.detector_x == 160  # detector_x
+
+
+def test_diad_loader():
+    in_file = "tests/test_data/k11_diad/k11-18014.nxs"
+    data_path = "/entry/imaging/data"
+    image_key_path = "/entry/instrument/imaging/image_key"
+    rotation_angles = {"data_path": "/entry/imaging_sum/gts_theta_value"}
+
+    output = standard_tomo(
+        "tomo",
+        in_file,
+        data_path,
+        1,
+        [None, {'start': 5, 'stop': 7}, None],
+        0,
+        comm,
+        image_key_path=image_key_path,
+        rotation_angles=rotation_angles,
+    )
+
+    assert output.data.sum() == 6019533062
+    np.testing.assert_allclose(output.data.mean(), 38573.89243329147, rtol=1e-5)
+    assert output.data.shape == (3001, 2, 26)
+
+    assert output.flats.sum() == 236484277
+    np.testing.assert_allclose(output.flats.mean(), 45477.74557692308, rtol=1e-5)
+    assert output.flats.shape == (100, 2, 26)
+
+    assert output.angles.shape == (3001,)
+    np.testing.assert_allclose(output.angles.sum(), 9427.76925660484, rtol=1e-5)
+    np.testing.assert_allclose(output.angles.mean(), 3.1415425713444987, rtol=1e-5)
+
+    assert output.angles_total == 3001
+    assert output.detector_y == 2
+    assert output.detector_x == 26
