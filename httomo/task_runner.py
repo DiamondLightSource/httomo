@@ -45,7 +45,6 @@ RECON_MODULE_MATCH = "recon.algorithm"
 MAX_SWEEPS = 1
 
 
-
 @dataclass
 class MethodFunc:
     """
@@ -254,8 +253,10 @@ def run_tasks(
 
     loader_start_time = time.perf_counter_ns()
 
-    loader_func = method_funcs[0].method_func # function to be called from httomo.data.hdf.loaders
-    loader_info = loader_func(**method_funcs[0].parameters) # collect meta data from LoaderData.
+    # function to be called from httomo.data.hdf.loaders
+    loader_func = method_funcs[0].method_func
+    # collect meta data from LoaderData.
+    loader_info = loader_func(**method_funcs[0].parameters)
 
     output_str_list = [
         f"    Finished task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name} (",
@@ -286,53 +287,6 @@ def run_tasks(
     data_shape = loader_info.data.shape
     data_dtype = loader_info.data.dtype
 
-############################################################################
-    idx = 0
-    # sections loop
-    for section in platform_sections:
-        # determine the max_slices for the whole section
-        _update_max_slices(section, data_shape, data_dtype)
-        # in order to iterate over max slices we need to know the slicing
-        # dimension of the section
-        slicing_dim_section = _get_slicing_dim(section.pattern)
-        iterations_for_max_slices = math.ceil(data_shape[slicing_dim_section] / section.max_slices)
-
-        if iterations_for_max_slices > 1 and idx == 0:
-            # as we work with the subsets of the full data, we need to create a
-            # copy of the full data to override it later with the partial data.
-            # This copy needs to happen in the section loop only when we know 
-            # that the data is on the CPU
-            in_data_temp_host = copy.deepcopy(dict_datasets_pipeline[method_funcs[idx].parameters["name"]])
-        
-        indices_start = 0
-        indices_end = section.max_slices
-        slc_indices = [slice(None)] * len(data_shape)
-        # a loop over max slices for each section
-        for it_slices in range(iterations_for_max_slices):
-            if iterations_for_max_slices > 1:
-                # calculating indices for the partial slicing of the data                
-                slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)
-                # now initialise the partial input data using the copy of section input data
-                dict_datasets_pipeline[method_funcs[idx].parameters["name"]] = in_data_temp_host[tuple(slc_indices)]
-            # loop over methods in the section
-            for method_sec in section.methods:
-                #print("processing method")
-                #print(method_sec)
-                idx += 1
-                
-            if iterations_for_max_slices > 1:
-                # copy the processed partial data to the host copy
-                in_data_temp_host[tuple(slc_indices)] = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
-                # re-initialise the slicing indices
-                indices_start = indices_end
-                # checking if still within the slicing dimension size
-                res = (indices_start + section.max_slices) - data_shape[slicing_dim_section] 
-                if res > 0:
-                    res = section.max_slices - res
-                    indices_end += res
-                else:
-                    indices_end += section.max_slices            
-############################################################################
     # Run the methods
     for idx, method_func in enumerate(method_funcs[1:]):
         package = method_func.module_name.split(".")[0]
@@ -526,15 +480,17 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         wrapper_method = wrapper_init_module.wrapper_method
         is_tomopy = split_module_name[0] == "tomopy"
         is_httomolib = split_module_name[0] == "httomolib"
+        is_httomolibgpu = split_module_name[0] == "httomolibgpu"
+
         method_funcs.append(
             MethodFunc(
                 module_name=module_name,
                 method_func=wrapper_func,
                 wrapper_func=wrapper_method,
                 parameters=method_conf,
-                cpu=True if is_tomopy or is_httomolib else wrapper_init_module.meta.cpu,
-                gpu=False if is_tomopy or is_httomolib else wrapper_init_module.meta.gpu,
-                calc_max_slices=None if is_tomopy or is_httomolib else wrapper_init_module.calc_max_slices,
+                cpu=True if not is_httomolibgpu else wrapper_init_module.meta.cpu,
+                gpu=False if not is_httomolibgpu else wrapper_init_module.meta.gpu,
+                calc_max_slices=None if not is_httomolibgpu else wrapper_init_module.calc_max_slices,
                 reslice_ahead=False,
                 pattern=Pattern.all,
                 is_loader=False,
@@ -1207,7 +1163,9 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
     return dataclasses.replace(method_function, pattern=pattern)
 
 
-def _determine_platform_sections(method_funcs: List[MethodFunc]) -> List[PlatformSection]:
+def _determine_platform_sections(
+    method_funcs: List[MethodFunc],
+) -> List[PlatformSection]:
     ret: List[PlatformSection] = []
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
@@ -1250,7 +1208,7 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
         dev = cp.cuda.Device()
         # first, let's make some space
         pool = cp.get_default_memory_pool()
-        pool.free_all_blocks()        
+        pool.free_all_blocks()
         cache = cp.fft.config.get_plan_cache()
         cache.clear()
         available_memory = dev.mem_info[0] + pool.free_bytes()
@@ -1258,16 +1216,17 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
     except:
         return int(100e9)  # arbitrarily high number - only used if GPU isn't available
 
+
 def _update_max_slices(
     section: PlatformSection,
     process_data_shape: Optional[Tuple[int, int, int]],
     input_data_type: Optional[np.dtype]
 ) -> Tuple[np.dtype, Tuple[int, int]]:
-
     if process_data_shape is None or input_data_type is None:
         return
     if section.pattern == Pattern.sinogram:
         slice_dim = 1        
+
         non_slice_dims_shape = (process_data_shape[0], process_data_shape[2])
     elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
         # TODO: what if all methods in a section are pattern.all
@@ -1277,7 +1236,7 @@ def _update_max_slices(
         err_str = f"Invalid pattern {section.pattern}"
         log_exception(err_str)
         # this should not happen if data type is indeed the enum
-        raise ValueError(err_str)    
+        raise ValueError(err_str)
     max_slices = process_data_shape[slice_dim]
     data_type = input_data_type
     output_dims = non_slice_dims_shape

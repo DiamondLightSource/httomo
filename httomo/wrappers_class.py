@@ -381,4 +381,4 @@ class HttomolibgpuWrapper(BaseWrapper):
             dtype,
             available_memory,
             **kwargs
-        )        
+        )

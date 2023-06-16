@@ -51,4 +51,3 @@ def test_httomolibgpu_meta():
 def test_httomolibgpu_meta_incomplete_path():
     with pytest.raises(ValueError, match="not resolving"):
         get_httomolibgpu_method_meta("prep.normalize")
-

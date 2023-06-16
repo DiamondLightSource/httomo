@@ -422,7 +422,7 @@ def test_sweep_range_pipeline_with_step_absent(
 @pytest.mark.cupy
 def test_multi_inputs_pipeline(cmd, standard_data, sample_pipelines, output_folder):
     cmd.insert(7, standard_data)
-    cmd.insert(8, sample_pipelines + "multi_inputs/01_dezing_multi_inputs.yaml")
+    cmd.insert(8, sample_pipelines + "multi_inputs/01_multi_inputs.yaml")
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
@@ -430,7 +430,7 @@ def test_multi_inputs_pipeline(cmd, standard_data, sample_pipelines, output_fold
 
     copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
     assert compare_two_yamls(
-        sample_pipelines + "multi_inputs/01_dezing_multi_inputs.yaml", copied_yaml_path
+        sample_pipelines + "multi_inputs/01_multi_inputs.yaml", copied_yaml_path
     )
 
     h5_files = list(filter(lambda x: ".h5" in x, files))
