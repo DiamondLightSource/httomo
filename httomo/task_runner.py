@@ -1243,7 +1243,7 @@ def _update_max_slices(
     if section.gpu:
         available_memory = _get_available_gpu_memory(10.0)
         available_memory_in_GB = round(available_memory/(1024**3),2)
-        max_slices_methods = [None]*len(section.methods)
+        max_slices_methods = [max_slices]*len(section.methods)
         idx = 0
         for m in section.methods:
             if m.calc_max_slices is not None:
