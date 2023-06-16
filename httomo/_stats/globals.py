@@ -2,17 +2,7 @@ import numpy as np
 from mpi4py import MPI
 from mpi4py.MPI import Comm
 
-gpu_enabled = False
-try:
-    import cupy as xp
-
-    try:
-        xp.cuda.Device(0).compute_capability
-        gpu_enabled = True  # CuPy is installed and GPU is available
-    except xp.cuda.runtime.CUDARuntimeError:
-        import numpy as xp
-except ImportError:
-    import numpy as xp
+from httomo.utils import gpu_enabled, xp
 
 
 def min_max_mean_std(data: xp.ndarray, comm: Comm):

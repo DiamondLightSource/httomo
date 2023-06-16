@@ -6,23 +6,7 @@ import numpy as np
 from mpi4py.MPI import Comm
 
 from httomo.data import mpiutil
-from httomo.utils import Colour, log_once
-
-gpu_enabled = False
-try:
-    import cupy as xp
-
-    try:
-        xp.cuda.Device(0).compute_capability
-        gpu_enabled = True  # CuPy is installed and GPU is available
-    except xp.cuda.runtime.CUDARuntimeError:
-        import numpy as xp
-
-        print("CuPy is installed but GPU device inaccessible")
-except ImportError:
-    import numpy as xp
-
-    print("CuPy is not installed")
+from httomo.utils import Colour, log_once, gpu_enabled, xp
 
 
 def _gpumem_cleanup():
