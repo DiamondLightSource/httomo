@@ -8,7 +8,6 @@ import click
 from mpi4py import MPI
 
 import httomo.globals
-from httomo.common import PipelineTasks
 from httomo.logger import setup_logger
 from httomo.task_runner import run_tasks
 from httomo.yaml_checker import validate_yaml_config
