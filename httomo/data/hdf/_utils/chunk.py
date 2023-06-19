@@ -75,14 +75,14 @@ def save_data_parallel(
     """
     rank = comm.rank
     nproc = comm.size
-    length = dataset.shape[slice_dim]
+    length = dataset.shape[slice_dim - 1]
     i0 = round((length / nproc) * rank)
     i1 = round((length / nproc) * (rank + 1))
-    if slice_dim == 0:
+    if slice_dim == 1:
         dataset[i0:i1] = data[...]
-    elif slice_dim == 1:
-        dataset[:, i0:i1] = data[...]
     elif slice_dim == 2:
+        dataset[:, i0:i1] = data[...]
+    elif slice_dim == 3:
         dataset[:, :, i0:i1] = data[...]
 
 

@@ -1225,8 +1225,7 @@ def _update_max_slices(
     if process_data_shape is None or input_data_type is None:
         return
     if section.pattern == Pattern.sinogram:
-        slice_dim = 1        
-
+        slice_dim = 1
         non_slice_dims_shape = (process_data_shape[0], process_data_shape[2])
     elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
         # TODO: what if all methods in a section are pattern.all

@@ -204,9 +204,9 @@ def _get_slicing_dim(pattern: Pattern) -> int:
     the method requires the data to be sliced in.
     """
     if pattern == Pattern.projection:
-        return 0
-    elif pattern == Pattern.sinogram:
         return 1
+    elif pattern == Pattern.sinogram:
+        return 2
     elif pattern == Pattern.all:
         # Any slicing dimension is fine, so arbitrarily just return 1
         return 1
