@@ -11,6 +11,7 @@ from httomo.data.hdf._utils import load
 from httomo.utils import Colour, _parse_preview, log_once, log_rank
 
 
+
 @dataclass
 class LoaderData:
     data: ndarray

@@ -132,7 +132,7 @@ The :code:`run` command
       --pad INTEGER                  The number of slices to pad each block of
                                      data.
       --ncore INTEGER                The number of the CPU cores per process.
-      --save_all                     Save intermediate datasets for all tasks in
+      --save-all                     Save intermediate datasets for all tasks in
                                      the pipeline.
       --file-based-reslice           Reslice using intermediate files (default is
                                      in-memory).
@@ -185,7 +185,7 @@ The :code:`run` command has 6 options/flags:
 - :code:`-d/--dimension`
 - :code:`--pad`
 - :code:`--ncore`
-- :code:`--save_all`
+- :code:`--save-all`
 - :code:`--file-based-reslice`
 - :code:`--reslice-dir`
 
@@ -223,7 +223,7 @@ cores can be provided to take advantage of this multi-process capability.
 
 .. _httomo-saving:
 
-:code:`--save_all`
+:code:`--save-all`
 ~~~~~~~~~~~~~~~~~~
 
 Regarding the output of methods, HTTomo's default behaviour is to *not* write

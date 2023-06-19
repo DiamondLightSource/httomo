@@ -376,5 +376,9 @@ class HttomolibgpuWrapper(BaseWrapper):
                 default_args[name] = par.default
         kwargs = {**default_args, **self.dict_params}
         return self.meta.calc_max_slices(
-            slice_dim, non_slice_dims_shape, dtype, available_memory, **kwargs
+            slice_dim, 
+            non_slice_dims_shape,
+            dtype,
+            available_memory,
+            **kwargs
         )

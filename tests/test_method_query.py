@@ -21,7 +21,6 @@ def test_get_invalid_method():
     with pytest.raises(KeyError, match="key doesntexist is not present"):
         get_method_info("tomopy.misc.corr", "doesntexist", "pattern")
 
-
 def test_get_invalid_attr():
     with pytest.raises(KeyError, match="attribute doesntexist is not present"):
         get_method_info("tomopy.misc.corr", "median_filter", "doesntexist")
