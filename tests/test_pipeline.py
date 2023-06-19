@@ -239,6 +239,7 @@ def test_i12_testing_pipeline_output(
     assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
+
 def test_diad_testing_pipeline_output(
     cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
 ):
@@ -383,6 +384,7 @@ def test_sweep_pipeline_with_save_all_using_mpi(
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 2
 
+
 """
 #   Something weird going on here with the logs 
 
@@ -402,6 +404,7 @@ def test_sweep_pipeline_with_save_all_using_mpi(
         in mpi_log_contents
     )
 """
+
 
 def test_sweep_range_pipeline_with_step_absent(
     cmd, standard_data, sample_pipelines, output_folder
@@ -440,7 +443,7 @@ def test_multi_inputs_pipeline(cmd, standard_data, sample_pipelines, output_fold
 
     with h5py.File(h5_files[0], "r") as f:
         arr = np.array(f["data"])
-        assert arr.shape == (20, 128, 160)          
+        assert arr.shape == (20, 128, 160)
         assert arr.dtype == np.uint16
     with h5py.File(h5_files[1], "r") as f:
         arr = np.array(f["data"])
@@ -448,5 +451,5 @@ def test_multi_inputs_pipeline(cmd, standard_data, sample_pipelines, output_fold
         assert arr.dtype == np.uint16
     with h5py.File(h5_files[2], "r") as f:
         arr = np.array(f["data"])
-        assert arr.shape == (180, 128, 160) 
+        assert arr.shape == (180, 128, 160)
         assert arr.dtype == np.uint16

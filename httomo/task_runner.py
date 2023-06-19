@@ -490,7 +490,9 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 parameters=method_conf,
                 cpu=True if not is_httomolibgpu else wrapper_init_module.meta.cpu,
                 gpu=False if not is_httomolibgpu else wrapper_init_module.meta.gpu,
-                calc_max_slices=None if not is_httomolibgpu else wrapper_init_module.calc_max_slices,
+                calc_max_slices=None
+                if not is_httomolibgpu
+                else wrapper_init_module.calc_max_slices,
                 reslice_ahead=False,
                 pattern=Pattern.all,
                 is_loader=False,
@@ -810,7 +812,9 @@ def run_method(
             recon_algorithm = None
             if recon_center is not None:
                 slice_dim = 1
-                recon_algorithm = dict_params_method.pop("algorithm", None) # covers tomopy case
+                recon_algorithm = dict_params_method.pop(
+                    "algorithm", None
+                )  # covers tomopy case
             else:
                 slice_dim = _get_slicing_dim(current_func.pattern)
 
@@ -1121,7 +1125,7 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
 def _update_max_slices(
     section: PlatformSection,
     process_data_shape: Optional[Tuple[int, int, int]],
-    input_data_type: Optional[np.dtype]
+    input_data_type: Optional[np.dtype],
 ) -> Tuple[np.dtype, Tuple[int, int]]:
     if process_data_shape is None or input_data_type is None:
         return
@@ -1142,20 +1146,19 @@ def _update_max_slices(
     output_dims = non_slice_dims_shape
     if section.gpu:
         available_memory = _get_available_gpu_memory(10.0)
-        available_memory_in_GB = round(available_memory/(1024**3),2)
-        max_slices_methods = [max_slices]*len(section.methods)
+        available_memory_in_GB = round(available_memory / (1024**3), 2)
+        max_slices_methods = [max_slices] * len(section.methods)
         idx = 0
         for m in section.methods:
             if m.calc_max_slices is not None:
                 (slices_estimated, data_type, output_dims) = m.calc_max_slices(
-                    slice_dim,
-                    non_slice_dims_shape,
-                    data_type,
-                    available_memory
+                    slice_dim, non_slice_dims_shape, data_type, available_memory
                 )
                 max_slices_methods[idx] = min(max_slices, slices_estimated)
                 idx += 1
-            non_slice_dims_shape = output_dims # overwrite input dims with estimated output ones
+            non_slice_dims_shape = (
+                output_dims  # overwrite input dims with estimated output ones
+            )
         section.max_slices = min(max_slices_methods)
     else:
         # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.

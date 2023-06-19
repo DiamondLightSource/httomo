@@ -2,6 +2,7 @@ import re
 from enum import IntEnum, unique
 from pathlib import Path
 
+
 @unique
 class PipelineTasks(IntEnum):
     """An enumeration of available pipeline stages."""

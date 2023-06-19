@@ -7,6 +7,7 @@ from httomo.data import mpiutil
 
 from mpi4py.MPI import Comm
 
+
 def _gpumem_cleanup():
     """cleans up GPU memory and also the FFT plan cache"""
     if gpu_enabled:
@@ -358,9 +359,5 @@ class HttomolibgpuWrapper(BaseWrapper):
                 default_args[name] = par.default
         kwargs = {**default_args, **self.dict_params}
         return self.meta.calc_max_slices(
-            slice_dim, 
-            non_slice_dims_shape,
-            dtype,
-            available_memory,
-            **kwargs
+            slice_dim, non_slice_dims_shape, dtype, available_memory, **kwargs
         )

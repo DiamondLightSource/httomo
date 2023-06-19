@@ -113,7 +113,7 @@ def test_determine_platform_sections_platform_change() -> None:
         "sino-all-sino",
         "all-sino-sino",
         "all-all-all",
-    ]
+    ],
 )
 def test_determine_platform_sections_pattern_all_combine(
     pattern1: Pattern, pattern2: Pattern, expected: Pattern
