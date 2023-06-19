@@ -813,8 +813,8 @@ def run_method(
 
         # Save the result if necessary
         if save_result and is_3d and not any_param_sweep:
-            recon_algorithm = dict_params_method.pop("algorithm", None)
-            if recon_algorithm is not None:
+            recon_center = dict_params_method.pop("center", None)
+            if recon_center is not None:
                 slice_dim = 1
             else:
                 slice_dim = _get_slicing_dim(current_func.pattern)
@@ -828,7 +828,7 @@ def run_method(
                 method_name,
                 out_dataset,
                 slice_dim,
-                recon_algorithm=recon_algorithm,
+                recon_algorithm=method_name,
             )
         elif save_result and any_param_sweep:
             # Save the result of each value in the parameter sweep as a
