@@ -2,28 +2,10 @@ from typing import Any, Callable, Dict, Tuple, Union
 import numpy as np
 import inspect
 from inspect import Parameter, signature
-from httomo.utils import Colour, log_exception, log_once
+from httomo.utils import Colour, log_exception, log_once, gpu_enabled, xp
 from httomo.data import mpiutil
 
 from mpi4py.MPI import Comm
-
-
-gpu_enabled = False
-try:
-    import cupy as xp
-
-    try:
-        xp.cuda.Device(0).compute_capability
-        gpu_enabled = True  # CuPy is installed and GPU is available
-    except xp.cuda.runtime.CUDARuntimeError:
-        import numpy as xp
-
-        print("CuPy is installed but GPU device inaccessible")
-except ImportError:
-    import numpy as xp
-
-    print("CuPy is not installed")
-
 
 def _gpumem_cleanup():
     """cleans up GPU memory and also the FFT plan cache"""
