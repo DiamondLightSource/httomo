@@ -122,7 +122,7 @@ def sample_pipelines():
 
 @pytest.fixture
 def gpu_pipeline():
-    return "samples/pipeline_template_examples/04_basic_gpu_pipeline_tomo_standard.yaml"
+    return "samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
 
 @pytest.fixture
 def merge_yamls():
