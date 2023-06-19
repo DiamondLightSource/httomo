@@ -150,32 +150,32 @@ def test_gpu_pipeline_output_with_save_all(
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
-    assert len(files) == 15
+    assert len(files) == 136
 
     tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 10
+    assert len(tif_files) == 128
     total_sum = 0
-    for i in range(10):
+    for i in range(128):
         arr = np.array(Image.open(tif_files[i]))
         assert arr.dtype == np.uint8
         assert arr.shape == (160, 160)
         total_sum += arr.sum()
 
-    assert total_sum == 17871073.0
+    assert total_sum == 185989420.0
 
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 3
+    assert len(h5_files) == 6
     with h5py.File(h5_files[0], "r") as f:
-        assert f["data"].shape == (180, 10, 160)
-        assert_allclose(np.sum(f["data"]), 84874.38, atol=1e-5)
-        assert_allclose(np.mean(f["data"]), 0.2947027, atol=1e-5)
+        assert f["data"].shape == (180, 128, 160)
+        assert_allclose(np.sum(f["data"]), 2981388880, atol=1e-5)
+        assert_allclose(np.mean(f["data"]), 808.753494, atol=1e-5)
     with h5py.File(h5_files[2], "r") as f:
-        assert_allclose(np.sum(f["data"]), 84127.195, atol=1e-5)
-        assert_allclose(np.mean(f["data"]), 0.29210833, atol=1e-5)
-    with h5py.File(h5_files[1], "r") as f:
-        assert_allclose(np.sum(f["data"]), 210.13103, atol=1e-5)
-        assert_allclose(np.mean(f["data"]), 0.00082082435, atol=1e-5)
-        assert f["data"].shape == (10, 160, 160)
+        assert_allclose(np.sum(f["data"]), 1059103.1, atol=1e-5)
+        assert_allclose(np.mean(f["data"]), 0.2873, atol=1e-5)
+    with h5py.File(h5_files[5], "r") as f:
+        assert_allclose(np.sum(f["data"]), 2614.8472, atol=1e-5)
+        assert_allclose(np.mean(f["data"]), 0.000798, atol=1e-5)
+        assert f["data"].shape == (128, 160, 160)
 
 
 def test_i12_testing_pipeline_output(
