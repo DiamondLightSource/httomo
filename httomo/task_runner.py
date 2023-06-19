@@ -43,7 +43,6 @@ RECON_MODULE_MATCH = "recon.algorithm"
 MAX_SWEEPS = 1
 
 
-
 @dataclass
 class MethodFunc:
     """
@@ -222,8 +221,10 @@ def run_tasks(
 
     loader_start_time = time.perf_counter_ns()
 
-    loader_func = method_funcs[0].method_func # function to be called from httomo.data.hdf.loaders
-    loader_info = loader_func(**method_funcs[0].parameters) # collect meta data from LoaderData.
+    # function to be called from httomo.data.hdf.loaders
+    loader_func = method_funcs[0].method_func
+    # collect meta data from LoaderData.
+    loader_info = loader_func(**method_funcs[0].parameters)
 
     output_str_list = [
         f"    Finished task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name} (",
@@ -450,9 +451,9 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 method_func=wrapper_func,
                 wrapper_func=wrapper_method,
                 parameters=method_conf,
-                cpu=True, # get cpu/gpu meta data info from httomolib methods
+                cpu=True,  # get cpu/gpu meta data info from httomolib methods
                 gpu=False,
-                calc_max_slices=None, # call calc_max_slices function in wrappers
+                calc_max_slices=None,  # call calc_max_slices function in wrappers
                 reslice_ahead=False,
                 pattern=Pattern.all,
                 is_loader=False,
@@ -701,33 +702,26 @@ def run_method(
 
             # Add global stats if necessary
             if req_glob_stats is True:
-                stats = _fetch_glob_stats(arr, comm)
+                # get the glob stats
+                stats = min_max_mean_std(arr, comm)
                 glob_stats[in_dataset].append(stats)
                 dict_params_method.update({"glob_stats": stats})
 
             # Run the method
             if method_name in SAVERS_NO_DATA_OUT_PARAM:
-                _run_method_wrapper(
-                    func_wrapper, method_name, dict_params_method, dict_httomo_params
-                )
+                func_wrapper(method_name, dict_params_method, **dict_httomo_params)
             else:
                 if current_param_sweep:
                     for val in param_sweep_vals:
                         dict_params_method[param_sweep_name] = val
-                        res = _run_method_wrapper(
-                            func_wrapper,
-                            method_name,
-                            dict_params_method,
-                            dict_httomo_params,
+                        res = func_wrapper(
+                            method_name, dict_params_method, **dict_httomo_params
                         )
                         out.append(res)
                     dict_datasets_pipeline[out_dataset] = out
                 else:
-                    res = _run_method_wrapper(
-                        func_wrapper,
-                        method_name,
-                        dict_params_method,
-                        dict_httomo_params,
+                    res = func_wrapper(
+                        method_name, dict_params_method, **dict_httomo_params
                     )
                     # Store the output(s) of the method in the appropriate
                     # dataset in the `dict_datasets_pipeline` dict
@@ -873,33 +867,6 @@ def run_method(
     return reslice_info, glob_stats
 
 
-def _run_method_wrapper(
-    func_wrapper: Callable,
-    method_name: str,
-    dict_params_method: Dict,
-    dict_httomo_params: Dict,
-) -> ndarray:
-    """Run a wrapper method function (httomolib/tomopy) in the processing pipeline.
-
-    Parameters
-    ----------
-    func_wrapper : Callable
-        The wrapper function of the wrapper class that executes the method.
-    method_name : str
-        The name of the method to apply.
-    dict_params_method : Dict
-        A dict of parameters for the tomopy method.
-    dict_httomo_params : Dict
-        A dict of parameters related to httomo.
-
-    Returns
-    -------
-    ndarray
-        An array containing the result of the method function.
-    """
-    return func_wrapper(method_name, dict_params_method, **dict_httomo_params)
-
-
 def _check_signature_for_httomo_params(
     func_wrapper: Callable,
     method_name: str,
@@ -964,73 +931,6 @@ def _check_method_params_for_datasets(
         if val in datasets:
             dataset_params[name] = datasets[val]
     return dataset_params
-
-
-def _set_method_data_param(
-    func_method: Callable, dataset_name: str, datasets: Dict[str, ndarray]
-) -> Dict[str, ndarray]:
-    """Set a key in the param dict whose value is the array associated with the
-    input dataset name given in the YAML config. The name of this key must be
-    the same as the associated parameter name in the python function which
-    performs the method, in order to pass the parameters via dict-unpacking.
-
-    E.g. suppose a method function has parameters:
-
-    def my_func(sino: ndarray, ...) -> ndarray:
-        ...
-
-    and in the user config YAML file, the dataset name to be passed into this
-    method function is called `tomo`, defined by YAML like the following:
-    ```
-    my_func:
-      data_in: tomo
-      data_out: tomo_out
-    ```
-
-    This function `_set_method_data_param()` would return a dict that contains:
-    - the key `sino` mapped to the value of the array associated to the `tomo`
-      dataset
-
-    Parameters
-    ----------
-    func_method : Callable
-        The method function whose data parameters will be inspected.
-    dataset_name : str
-        The name of the input dataset name from the user config YAML.
-    datasets : Dict[str, ndarray]
-        A dict of all the available datasets in the current run.
-
-    Returns
-    -------
-    Dict[str, ndarray]
-        A dict containing the input data parameter key and value needed for the
-        given method function.
-    """
-    sig_params = list(signature(func_method).parameters.keys())
-    # For httomo functions, the input data paramater will always be the first
-    # parameter
-    data_param = sig_params[0]
-    return {data_param: datasets[dataset_name]}
-
-
-def _fetch_glob_stats(
-    data: ndarray, comm: MPI.Comm
-) -> Tuple[float, float, float, float]:
-    """Fetch the min, max, mean, standard deviation of the given data.
-
-    Parameters
-    ----------
-    data : ndarray
-        The data to calculate statistics from.
-    comm : MPI.Comm
-        MPI communicator object.
-
-    Returns
-    -------
-    Tuple[float, float, float, float]
-        A tuple containing the stats values.
-    """
-    return min_max_mean_std(data, comm)
 
 
 def _check_if_should_reslice(methods: List[MethodFunc]) -> List[MethodFunc]:

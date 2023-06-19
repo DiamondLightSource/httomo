@@ -97,7 +97,7 @@ def test_diad_loader():
         in_file,
         data_path,
         1,
-        [None, {'start': 5, 'stop': 7}, None],
+        [None, {"start": 5, "stop": 7}, None],
         0,
         comm,
         image_key_path=image_key_path,
