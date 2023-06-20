@@ -441,15 +441,25 @@ def test_multi_inputs_pipeline(cmd, standard_data, sample_pipelines, output_fold
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 3
 
-    with h5py.File(h5_files[0], "r") as f:
+    median_filter_tomo = list(
+        filter(lambda x: "median_filter3d-tomo.h5" in x, h5_files)
+    )[0]
+    median_filter_flats = list(
+        filter(lambda x: "median_filter3d-flats.h5" in x, h5_files)
+    )[0]
+    median_filter_darks = list(
+        filter(lambda x: "median_filter3d-darks.h5" in x, h5_files)
+    )[0]
+
+    with h5py.File(median_filter_flats, "r") as f:
         arr = np.array(f["data"])
         assert arr.shape == (20, 128, 160)
         assert arr.dtype == np.uint16
-    with h5py.File(h5_files[1], "r") as f:
+    with h5py.File(median_filter_darks, "r") as f:
         arr = np.array(f["data"])
         assert arr.shape == (20, 128, 160)
         assert arr.dtype == np.uint16
-    with h5py.File(h5_files[2], "r") as f:
+    with h5py.File(median_filter_tomo, "r") as f:
         arr = np.array(f["data"])
         assert arr.shape == (180, 128, 160)
         assert arr.dtype == np.uint16
