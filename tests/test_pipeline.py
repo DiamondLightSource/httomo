@@ -317,38 +317,74 @@ def test_sweep_pipeline_with_save_all_using_mpi(
 ):
     #: - - - - - - - - - - SERIAL RUN - - - - - - - - - - - - - - - - -
     pipeline = sample_pipelines + "testing/sweep_testing_pipeline.yaml"
-    cmd.insert(7, standard_data)
-    cmd.insert(8, pipeline)
+    cmd.insert(4, "--output-folder")
+    cmd.insert(5, "serial_run")
+    cmd.insert(9, standard_data)
+    cmd.insert(10, pipeline)
     subprocess.check_output(cmd)
 
     #: - - - - - - - - - -  PARALLEL RUN - - - - - - - - - - -
+    cmd[5] = "parallel_run"
     local.cmd.mpirun("-n", "4", *cmd)
 
     #: - - - - - - - - - - SERIAL vs PARALLEL OUTPUT - - - - - - -
-    files = read_folder("output_dir/")
-    assert len(files) == 12
+    serial_files = read_folder("output_dir/serial_run/")
+    parallel_files = read_folder("output_dir/parallel_run/")
+    assert len(serial_files) == 6
+    assert len(parallel_files) == 6
 
-    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files))
-    assert compare_two_yamls(pipeline, copied_yaml_path[0])
-    assert compare_two_yamls(pipeline, copied_yaml_path[1])
+    serial_copied_yaml_path = list(filter(lambda x: ".yaml" in x, serial_files))[0]
+    parallel_copied_yaml_path = list(filter(lambda x: ".yaml" in x, parallel_files))[0]
+    assert compare_two_yamls(pipeline, serial_copied_yaml_path)
+    assert compare_two_yamls(pipeline, parallel_copied_yaml_path)
 
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 4
+    serial_tif_files = list(filter(lambda x: ".tif" in x, serial_files))
+    parallel_tif_files = list(filter(lambda x: ".tif" in x, parallel_files))
+    assert len(serial_tif_files) == 2
+    assert len(parallel_tif_files) == 2
 
     #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    mpi_imarray = np.array(Image.open(tif_files[2]))
+    serial_zeroth_tif = list(filter(lambda x: "00000.tif" in x, serial_tif_files))[0]
+    imarray = np.array(Image.open(serial_zeroth_tif))
+    parallel_zeroth_tif = list(filter(lambda x: "00000.tif" in x, parallel_tif_files))[
+        0
+    ]
+    mpi_imarray = np.array(Image.open(parallel_zeroth_tif))
     assert imarray.shape == (128, 160) == mpi_imarray.shape
-    assert imarray.sum() == 3856477 == mpi_imarray.sum()
+    SUM = 3855857
+    assert imarray.sum() == SUM
+    assert mpi_imarray.sum() == SUM
 
-    imarray = np.array(Image.open(tif_files[1]))
-    mpi_imarray = np.array(Image.open(tif_files[3]))
+    serial_first_tif = list(filter(lambda x: "00001.tif" in x, serial_tif_files))[0]
+    imarray = np.array(Image.open(serial_first_tif))
+    parallel_first_tif = list(filter(lambda x: "00001.tif" in x, parallel_tif_files))[0]
+    mpi_imarray = np.array(Image.open(parallel_first_tif))
     assert imarray.shape == (128, 160) == mpi_imarray.shape
-    assert imarray.sum() == 3855857 == mpi_imarray.sum()
+    SUM = 3856477
+    assert imarray.sum() == SUM
+    assert mpi_imarray.sum() == SUM
 
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 4
-    with h5py.File(h5_files[0], "r") as f, h5py.File(h5_files[2], "r") as f2:
+    serial_h5_files = list(filter(lambda x: ".h5" in x, serial_files))
+    parallel_h5_files = list(filter(lambda x: ".h5" in x, parallel_files))
+    assert len(serial_h5_files) == 2
+    assert len(parallel_h5_files) == 2
+
+    serial_median_filter_tomo = list(
+        filter(lambda x: "median_filter-tomo.h5" in x, serial_h5_files)
+    )[0]
+    parallel_median_filter_tomo = list(
+        filter(lambda x: "median_filter-tomo.h5" in x, parallel_h5_files)
+    )[0]
+    serial_normalize_tomo = list(
+        filter(lambda x: "normalize-tomo.h5" in x, serial_h5_files)
+    )[0]
+    parallel_normalize_tomo = list(
+        filter(lambda x: "normalize-tomo.h5" in x, parallel_h5_files)
+    )[0]
+
+    with h5py.File(serial_median_filter_tomo, "r") as f, h5py.File(
+        parallel_median_filter_tomo, "r"
+    ) as f2:
         assert (
             f["/data/param_sweep_0"].shape
             == (180, 128, 160)
@@ -368,7 +404,9 @@ def test_sweep_pipeline_with_save_all_using_mpi(
         assert_allclose(m, 808.7925, atol=1e-6)
         assert_allclose(np.mean(f2["/data/param_sweep_0"]), m, atol=1e-6)
 
-    with h5py.File(h5_files[1], "r") as f, h5py.File(h5_files[3], "r") as f2:
+    with h5py.File(serial_normalize_tomo, "r") as f, h5py.File(
+        parallel_normalize_tomo, "r"
+    ) as f2:
         assert (
             f["/data/param_sweep_1"].shape
             == (180, 128, 160)
@@ -388,8 +426,10 @@ def test_sweep_pipeline_with_save_all_using_mpi(
         assert_allclose(m, 0.828197, atol=1e-6)
         assert_allclose(np.mean(f2["/data/param_sweep_1"]), m, atol=1e-6)
 
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
+    serial_log_files = list(filter(lambda x: ".log" in x, serial_files))
+    parallel_log_files = list(filter(lambda x: ".log" in x, parallel_files))
+    assert len(serial_log_files) == 1
+    assert len(parallel_log_files) == 1
 
 
 """
