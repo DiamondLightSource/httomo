@@ -165,14 +165,21 @@ def test_gpu_pipeline_output_with_save_all(
 
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 6
-    with h5py.File(h5_files[0], "r") as f:
+
+    remove_outlier_tomo = list(
+        filter(lambda x: "remove_outlier3d-tomo.h5" in x, h5_files)
+    )[0]
+    normalize_tomo = list(filter(lambda x: "normalize-tomo.h5" in x, h5_files))[0]
+    fpb_recon_tomo = list(filter(lambda x: "FBP-tomo.h5" in x, h5_files))[0]
+
+    with h5py.File(normalize_tomo, "r") as f:
         assert f["data"].shape == (180, 128, 160)
         assert_allclose(np.sum(f["data"]), 1062695.4, atol=1e-5)
         assert_allclose(np.mean(f["data"]), 0.288275, atol=1e-5)
-    with h5py.File(h5_files[2], "r") as f:
+    with h5py.File(fpb_recon_tomo, "r") as f:
         assert_allclose(np.sum(f["data"]), 2614.8472, atol=1e-5)
         assert_allclose(np.mean(f["data"]), 0.000798, atol=1e-5)
-    with h5py.File(h5_files[5], "r") as f:
+    with h5py.File(remove_outlier_tomo, "r") as f:
         assert_allclose(np.sum(f["data"]), 2981388880, atol=1e-5)
         assert_allclose(np.mean(f["data"]), 808.753494, atol=1e-5)
         assert f["data"].shape == (180, 128, 160)
