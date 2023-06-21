@@ -17,6 +17,8 @@ httomo = ["methods_database/packages/*.yaml",
 
 [tool.setuptools-git-versioning]
 enabled = true
+template = "{tag}"
+dev_template = "{tag}"
 
 [project]
 name = "httomo"
