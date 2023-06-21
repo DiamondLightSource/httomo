@@ -17,7 +17,6 @@ httomo = ["methods_database/packages/*.yaml",
 
 [tool.setuptools-git-versioning]
 enabled = true
-tag_filter = "v(?P<tag>[0-9].*)"
 
 [project]
 name = "httomo"
@@ -39,7 +38,7 @@ classifiers = [
 ]
 
 requires-python = ">=3.9"
-version = "0.0.1"
+dynamic = ["version"]
 dependencies = [
     "click",
     "cupy",
