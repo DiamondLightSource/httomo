@@ -2,11 +2,11 @@ from typing import Any, Callable, Dict, Tuple, Union
 import numpy as np
 import inspect
 from inspect import Parameter, signature
+import httomo.globals
 from httomo.utils import Colour, log_exception, log_once, gpu_enabled, xp
 from httomo.data import mpiutil
 
 from mpi4py.MPI import Comm
-
 
 def _gpumem_cleanup():
     """cleans up GPU memory and also the FFT plan cache"""
@@ -28,7 +28,9 @@ class BaseWrapper:
         self.dict_params: Dict[str, Any] = {}
         if gpu_enabled:
             self.num_GPUs = xp.cuda.runtime.getDeviceCount()
-            self.gpu_id = mpiutil.local_rank % self.num_GPUs
+            _id = httomo.globals.gpu_id
+            # if gpu-id was specified in the CLI, use that
+            self.gpu_id = mpiutil.local_rank % self.num_GPUs if _id == -1 else _id
 
     def _transfer_data(self, *args) -> Union[tuple, xp.ndarray, np.ndarray]:
         """Transfer the data between the host and device for the GPU-enabled method
