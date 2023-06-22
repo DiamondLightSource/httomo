@@ -32,6 +32,7 @@ class Colour:
     """
 
     LIGHT_BLUE = "\033[1;34m"
+    LIGHT_BLUE_BCKGR = "\033[1;44m"
     BLUE = "\33[94m"
     CYAN = "\33[96m"
     GREEN = "\33[92m"
@@ -155,7 +156,7 @@ def _parse_preview(
             else:
                 preview_str += ":"
         elif slice_info == "mid":
-            #  user can simply write 'mid' to get 3 slices around the middle section of a choosen dimension
+            #  user can simply write 'mid' to get 3 slices around the middle section of a chosen dimension
             mid_slice = data_shape[idx] // 2
             if mid_slice > 1:
                 preview_str += f"{mid_slice-2}:{mid_slice+1}:{1}"

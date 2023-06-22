@@ -1,6 +1,8 @@
 import dataclasses
 import multiprocessing
 import time
+import math
+import copy
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from importlib import import_module
@@ -29,7 +31,7 @@ from httomo.utils import (
     log_exception,
     log_once,
 )
-from httomo.wrappers_class import HttomolibWrapper, TomoPyWrapper
+from httomo.wrappers_class import HttomolibWrapper, HttomolibgpuWrapper, TomoPyWrapper
 from httomo.yaml_utils import open_yaml_config
 
 # TODO: Define a list of savers which have no output dataset and so need to
@@ -114,6 +116,34 @@ class ResliceInfo:
     reslice_dir: Optional[Path] = None
 
 
+@dataclass
+class PlatformSection:
+    """
+    Data class to represent a section of the pipeline that runs on the same platform.
+    That is, all methods contained in this section of the pipeline run either all on CPU
+    or all on GPU.
+
+    This is used to iterate through GPU memory in chunks.
+
+    Attributes
+    ----------
+    gpu : bool
+        Whether this section is a GPU section (True) or CPU section (False)
+    pattern : Pattern
+        To denote the slicing pattern - sinogram, projection
+    max_slices : int
+        Holds information about how many slices can be fit in one chunk without
+        exhausting memory (relevant on GPU only)
+    methods : List[MethodFunc]
+        List of methods in this section
+    """
+
+    gpu: bool
+    pattern: Pattern
+    max_slices: int
+    methods: List[MethodFunc]
+
+
 def run_tasks(
     in_file: Path,
     yaml_config: Path,
@@ -178,6 +208,8 @@ def run_tasks(
 
     method_funcs = _check_if_should_reslice(method_funcs)
     reslice_info.reslice_bool_list = [m.reslice_ahead for m in method_funcs]
+    #: no need to add loader into a platform section
+    platform_sections = _determine_platform_sections(method_funcs[1:])
 
     # Check pipeline for the number of parameter sweeps present. If more than
     # one is defined, raise an error, due to not supporting multiple parameter
@@ -301,7 +333,7 @@ def run_tasks(
     reslice_summary_colour = Colour.BLUE if reslice_info.count <= 1 else Colour.RED
     log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
 
-    elapsed_time = 0
+    elapsed_time = 0.0
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
         end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
@@ -357,7 +389,7 @@ def _initialise_datasets_and_stats(
             )
 
         # Dict to hold the stats for each dataset associated with the method
-        method_stats = {}
+        method_stats: Dict[str, List] = {}
 
         # Check if there are multiple input datasets to account for
         if type(method_conf[dataset_param]) is list:
@@ -429,7 +461,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         method_name, method_conf = module_conf.popitem()
         method_conf["method_name"] = method_name
 
-        if split_module_name[0] not in ["tomopy", "httomolib"]:
+        if split_module_name[0] not in ["tomopy", "httomolib", "httomolibgpu"]:
             err_str = (
                 f"An unknown module name was encountered: " f"{split_module_name[0]}"
             )
@@ -439,21 +471,28 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         module_to_wrapper = {
             "tomopy": TomoPyWrapper,
             "httomolib": HttomolibWrapper,
+            "httomolibgpu": HttomolibgpuWrapper,
         }
         wrapper_init_module = module_to_wrapper[split_module_name[0]](
             split_module_name[1], split_module_name[2], method_name, comm
         )
         wrapper_func = getattr(wrapper_init_module.module, method_name)
         wrapper_method = wrapper_init_module.wrapper_method
+        is_tomopy = split_module_name[0] == "tomopy"
+        is_httomolib = split_module_name[0] == "httomolib"
+        is_httomolibgpu = split_module_name[0] == "httomolibgpu"
+
         method_funcs.append(
             MethodFunc(
                 module_name=module_name,
                 method_func=wrapper_func,
                 wrapper_func=wrapper_method,
                 parameters=method_conf,
-                cpu=True,  # get cpu/gpu meta data info from httomolib methods
-                gpu=False,
-                calc_max_slices=None,  # call calc_max_slices function in wrappers
+                cpu=True if not is_httomolibgpu else wrapper_init_module.meta.cpu,
+                gpu=False if not is_httomolibgpu else wrapper_init_module.meta.gpu,
+                calc_max_slices=None
+                if not is_httomolibgpu
+                else wrapper_init_module.calc_max_slices,
                 reslice_ahead=False,
                 pattern=Pattern.all,
                 is_loader=False,
@@ -526,6 +565,7 @@ def run_method(
         RECON_MODULE_MATCH in module_path
         or dict_params_method.pop("save_result", None)
     )
+    misc_params[-2] = (["save_result"], save_result)
 
     # Check if the input dataset should be resliced before the task runs
     should_reslice = reslice_info.reslice_bool_list[task_idx]
@@ -551,7 +591,7 @@ def run_method(
 
     # extra params unrelated to wrapped packages but related to httomo added
     dict_httomo_params = _check_signature_for_httomo_params(
-        func_wrapper, current_func, misc_params
+        func_wrapper, current_func.method_func, misc_params
     )
 
     # Get the information describing if the method is being run only
@@ -768,9 +808,13 @@ def run_method(
 
         # Save the result if necessary
         if save_result and is_3d and not any_param_sweep:
-            recon_algorithm = dict_params_method.pop("algorithm", None)
-            if recon_algorithm is not None:
+            recon_center = dict_params_method.pop("center", None)
+            recon_algorithm = None
+            if recon_center is not None:
                 slice_dim = 1
+                recon_algorithm = dict_params_method.pop(
+                    "algorithm", None
+                )  # covers tomopy case
             else:
                 slice_dim = _get_slicing_dim(current_func.pattern)
 
@@ -1022,3 +1066,102 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
         raise ValueError(err_str)
 
     return dataclasses.replace(method_function, pattern=pattern)
+
+
+def _determine_platform_sections(
+    method_funcs: List[MethodFunc],
+) -> List[PlatformSection]:
+    ret: List[PlatformSection] = []
+    current_gpu = method_funcs[0].gpu
+    current_pattern = method_funcs[0].pattern
+    methods: List[MethodFunc] = []
+    for method in method_funcs:
+        if method.gpu == current_gpu and (
+            method.pattern == current_pattern
+            or method.pattern == Pattern.all
+            or current_pattern == Pattern.all
+        ):
+            methods.append(method)
+            if current_pattern == Pattern.all and method.pattern != Pattern.all:
+                current_pattern = method.pattern
+        else:
+            ret.append(
+                PlatformSection(
+                    gpu=current_gpu,
+                    pattern=current_pattern,
+                    max_slices=0,
+                    methods=methods,
+                )
+            )
+            methods = [method]
+            current_pattern = method.pattern
+            current_gpu = method.gpu
+
+    ret.append(
+        PlatformSection(
+            gpu=current_gpu, pattern=current_pattern, max_slices=0, methods=methods
+        )
+    )
+
+    return ret
+
+
+def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
+    try:
+        import cupy as cp
+
+        dev = cp.cuda.Device()
+        # first, let's make some space
+        pool = cp.get_default_memory_pool()
+        pool.free_all_blocks()
+        cache = cp.fft.config.get_plan_cache()
+        cache.clear()
+        available_memory = dev.mem_info[0] + pool.free_bytes()
+        return int(available_memory * (1 - safety_margin_percent / 100.0))
+    except:
+        return int(100e9)  # arbitrarily high number - only used if GPU isn't available
+
+
+def _update_max_slices(
+    section: PlatformSection,
+    process_data_shape: Optional[Tuple[int, int, int]],
+    input_data_type: Optional[np.dtype],
+) -> Tuple[np.dtype, Tuple[int, int]]:
+    if process_data_shape is None or input_data_type is None:
+        return
+    if section.pattern == Pattern.sinogram:
+        slice_dim = 1
+        non_slice_dims_shape = (process_data_shape[0], process_data_shape[2])
+    elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
+        # TODO: what if all methods in a section are pattern.all
+        slice_dim = 0
+        non_slice_dims_shape = (process_data_shape[1], process_data_shape[2])
+    else:
+        err_str = f"Invalid pattern {section.pattern}"
+        log_exception(err_str)
+        # this should not happen if data type is indeed the enum
+        raise ValueError(err_str)
+    max_slices = process_data_shape[slice_dim]
+    data_type = input_data_type
+    output_dims = non_slice_dims_shape
+    if section.gpu:
+        available_memory = _get_available_gpu_memory(10.0)
+        available_memory_in_GB = round(available_memory / (1024**3), 2)
+        max_slices_methods = [max_slices] * len(section.methods)
+        idx = 0
+        for m in section.methods:
+            if m.calc_max_slices is not None:
+                (slices_estimated, data_type, output_dims) = m.calc_max_slices(
+                    slice_dim, non_slice_dims_shape, data_type, available_memory
+                )
+                max_slices_methods[idx] = min(max_slices, slices_estimated)
+                idx += 1
+            non_slice_dims_shape = (
+                output_dims  # overwrite input dims with estimated output ones
+            )
+        section.max_slices = min(max_slices_methods)
+    else:
+        # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
+        section.max_slices = max_slices
+        pass
+    return data_type, output_dims

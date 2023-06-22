@@ -7,13 +7,11 @@ import pytest
 from httomo import __version__
 
 
-@pytest.mark.cupy
 def test_cli_version_shows_version():
     cmd = [sys.executable, "-m", "httomo", "--version"]
     assert __version__ == subprocess.check_output(cmd).decode().strip()
 
 
-@pytest.mark.cupy
 def test_cli_help_shows_help():
     cmd = [sys.executable, "-m", "httomo", "--help"]
     assert (
@@ -24,7 +22,6 @@ def test_cli_help_shows_help():
     )
 
 
-@pytest.mark.cupy
 def test_cli_noargs_raises_error():
     cmd = [sys.executable, "-m", "httomo"]
     try:
@@ -33,7 +30,6 @@ def test_cli_noargs_raises_error():
         assert e.returncode == 2
 
 
-@pytest.mark.cupy
 def test_cli_check_pass_data_file(standard_loader, standard_data):
     cmd = [sys.executable, "-m", "httomo", "check", standard_loader, standard_data]
     check_data_str = (
@@ -43,7 +39,6 @@ def test_cli_check_pass_data_file(standard_loader, standard_data):
     assert check_data_str in subprocess.check_output(cmd).decode().strip()
 
 
-@pytest.mark.cupy
 def test_cli_pass_output_folder(
     standard_data, standard_loader, testing_pipeline, merge_yamls, output_folder
 ):
