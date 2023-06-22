@@ -8,6 +8,7 @@ from httomo.data import mpiutil
 
 from mpi4py.MPI import Comm
 
+
 def _gpumem_cleanup():
     """cleans up GPU memory and also the FFT plan cache"""
     if gpu_enabled:
