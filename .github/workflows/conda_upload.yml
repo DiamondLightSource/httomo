@@ -1,0 +1,47 @@
+name: httomo conda upload
+
+# Run the workflow whenever a tag beginning with `v` is pushed to any branch
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      # setup Python 3.9
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      # install dependencies with conda
+      - name: Install dependencies with conda
+        run: |
+          $CONDA/bin/conda env create --name httomo --file conda/environment.yml
+          $CONDA/bin/conda run -n httomo pip install .
+          $CONDA/bin/conda list
+
+      - name: Decrypt a secret
+        run: ./.scripts/decrypt_secret.sh
+        env:
+          LARGE_SECRET_PASSPHRASE: ${{ secrets.LARGE_SECRET_PASSPHRASE }}
+
+      - name: Build and upload the package to httomo conda cloud
+        env:
+          LABEL: main
+        run: |
+          chmod +x ./.scripts/conda_upload.sh
+          ./.scripts/conda_upload.sh
