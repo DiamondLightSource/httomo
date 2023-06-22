@@ -17,7 +17,6 @@ comm = MPI.COMM_WORLD
 
 def prerun_method(
     run_method_info: RunMethodInfo,
-    task_idx: int,
     save_all: int,
     misc_params: List[Tuple[List[str], object]],
     current_func: MethodFunc,
@@ -26,11 +25,11 @@ def prerun_method(
     dict_datasets_pipeline: Dict[str, ndarray],
     glob_stats: Dict,
     reslice_info: ResliceInfo,
-) -> RunMethodInfo:
+):
 
-    package_name = current_func.module_name.split(".")[0]
+    run_method_info.package_name = current_func.module_name.split(".")[0]
     dict_params_method = current_func.parameters
-    method_name = current_func.method_func.__name__
+    run_method_info.method_name = current_func.method_func.__name__
     func_wrapper = current_func.wrapper_func
 
     run_method_info.save_result = (
@@ -46,7 +45,7 @@ def prerun_method(
     )
 
     # Check if the input dataset should be resliced before the task runs
-    run_method_info.should_reslice = reslice_info.reslice_bool_list[task_idx]
+    run_method_info.should_reslice = reslice_info.reslice_bool_list[run_method_info.task_idx]
     if run_method_info.should_reslice:
         reslice_info.count += 1
         run_method_info.current_slice_dim = _get_slicing_dim(prev_func.pattern)
@@ -70,7 +69,9 @@ def prerun_method(
     # Make the input and output datasets always be lists just to be
     # generic, and further down loop through all the datasets that the
     # method should be applied to
-    data_in, data_out = get_data_in_data_out(method_name, dict_params_method)
+    data_in, data_out = get_data_in_data_out(
+        run_method_info.method_name, dict_params_method
+    )
 
     # Check if the method function's params require any datasets stored
     # in the `datasets` dict

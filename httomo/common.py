@@ -1,9 +1,7 @@
 import re
-from enum import IntEnum, unique
-from pathlib import Path
-
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from enum import IntEnum, unique
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -137,8 +135,14 @@ class RunMethodInfo:
         the dimension of the data that the current method requires the data to be sliced in.
     next_slice_dim : int
         the dimension of the data that the next method requires the data to be sliced in
-
+    task_idx: int
+        Index of the task in the pipeline being run
+    package_name: str
+        The name of the package the method is imported from
+    method_name: str
+        The name of the method being executed
     """
+
     dict_params_method: Dict[str, Any] = field(default_factory=dict)
     data_in: List[str] = field(default_factory=list)
     data_out: List[str] = field(default_factory=list)
@@ -147,5 +151,8 @@ class RunMethodInfo:
     save_result: bool = False
     current_slice_dim: int = -1
     next_slice_dim: int = -1
+    task_idx: int = -1
     param_sweep_name: str = None
     param_sweep_vals: Tuple = field(default_factory=tuple)
+    package_name: str = None
+    method_name: str = None

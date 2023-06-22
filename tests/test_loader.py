@@ -1,13 +1,13 @@
 import subprocess
 
-import pytest
 import numpy as np
-
+import pytest
 from mpi4py import MPI
+
+from httomo.data.hdf.loaders import standard_tomo
 
 comm = MPI.COMM_WORLD
 
-from httomo.data.hdf.loaders import standard_tomo
 
 
 def test_tomo_standard_testing_pipeline_loaded(

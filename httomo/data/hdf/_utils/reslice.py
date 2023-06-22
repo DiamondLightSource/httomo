@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Tuple
 
 import numpy
 from mpi4py.MPI import Comm
@@ -6,8 +7,6 @@ from mpi4py.MPI import Comm
 from httomo.data import mpiutil
 from httomo.data.hdf._utils import chunk, load
 from httomo.utils import Colour, log_once
-
-from typing import Tuple
 
 
 def reslice(
