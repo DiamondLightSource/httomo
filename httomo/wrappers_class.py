@@ -40,7 +40,13 @@ class BaseWrapper:
             Union[tuple, xp.ndarray, np.ndarray]: transferred datasets
         """
         if not gpu_enabled:
-            return args
+            # Apply the same logic as the `if self.cupyrun` block later on, to
+            # return either a single array or a tuple of arrays based on the
+            # number of args
+            if len(args) == 1:
+                return args[0]
+            else:
+                return args
         xp.cuda.Device(self.gpu_id).use()
         _gpumem_cleanup()
         if self.cupyrun:
