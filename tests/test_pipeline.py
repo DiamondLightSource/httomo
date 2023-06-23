@@ -475,7 +475,6 @@ def test_sweep_range_pipeline_with_step_absent(
     ) in log_contents
 
 
-@pytest.mark.cupy
 def test_multi_inputs_pipeline(cmd, standard_data, sample_pipelines, output_folder):
     cmd.insert(7, standard_data)
     cmd.insert(8, sample_pipelines + "multi_inputs/01_multi_inputs.yaml")
