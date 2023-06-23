@@ -1,5 +1,6 @@
 import dataclasses
 import inspect
+import pytest
 from unittest import mock
 from mpi4py import MPI
 import numpy as np
@@ -19,12 +20,14 @@ def test_httomolib_wrapper_max_slices_cpu():
     assert inspect.ismodule(wrp.module)
 
 
+@pytest.mark.cupy
 def test_httomolibgpu_wrapper_max_slices_gpu():
     wrp = HttomolibgpuWrapper("prep", "normalize", "normalize", MPI.COMM_WORLD)
     assert wrp.cupyrun is True
     assert wrp.calc_max_slices(0, (100, 100), np.uint8, 50000)[0] < 100000
 
 
+@pytest.mark.cupy
 def test_httomolibgpu_wrapper_max_slices_passes_kwargs():
     from httomolibgpu.prep.normalize import normalize
 

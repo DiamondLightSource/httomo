@@ -27,22 +27,26 @@ def test_get_invalid_attr():
         get_method_info("tomopy.misc.corr", "median_filter", "doesntexist")
 
 
+@pytest.mark.cupy
 def test_httomolibgpu_pattern():
     pat = get_method_info("httomolibgpu.prep.normalize", "normalize", "pattern")
     assert pat == "projection"
 
 
+@pytest.mark.cupy
 def test_httomolibgpu_gpu_cpu():
     assert get_method_info("httomolibgpu.prep.normalize", "normalize", "gpu") is True
     assert get_method_info("httomolibgpu.prep.normalize", "normalize", "cpu") is False
 
 
+@pytest.mark.cupy
 def test_httomolibgpu_memfunc():
     assert callable(
         get_method_info("httomolibgpu.prep.normalize", "normalize", "calc_max_slices")
     )
 
 
+@pytest.mark.cupy
 def test_httomolibgpu_meta():
     from httomolibgpu import MethodMeta
 
@@ -51,6 +55,7 @@ def test_httomolibgpu_meta():
     )
 
 
+@pytest.mark.cupy
 def test_httomolibgpu_meta_incomplete_path():
     with pytest.raises(ValueError, match="not resolving"):
         get_httomolibgpu_method_meta("prep.normalize")
