@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
-
 from mpi4py import MPI
+
+from httomo.data.hdf._utils.load import load_data
 
 comm = MPI.COMM_WORLD
 
-from httomo.data.hdf._utils.load import load_data
 
 
 @pytest.mark.parametrize(

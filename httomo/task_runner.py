@@ -17,131 +17,24 @@ from numpy import ndarray
 
 import httomo.globals
 from httomo._stats.globals import min_max_mean_std
-from httomo.common import remove_ansi_escape_sequences
+from httomo.common import MethodFunc, PlatformSection, ResliceInfo, RunMethodInfo
 from httomo.data.hdf._utils.chunk import get_data_shape, save_dataset
 from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf.loaders import LoaderData
 from httomo.methods_database.query import get_method_info
+from httomo.postrun import postrun_method
+from httomo.prerun import prerun_method
 from httomo.utils import (
     Colour,
     Pattern,
     _get_slicing_dim,
-    get_data_in_data_out,
     log_exception,
     log_once,
+    remove_ansi_escape_sequences,
 )
 from httomo.wrappers_class import HttomolibWrapper, HttomolibgpuWrapper, TomoPyWrapper
 from httomo.yaml_utils import open_yaml_config
-
-# TODO: Define a list of savers which have no output dataset and so need to
-# be treated differently to other methods. Probably should be handled in a
-# more robust way than this workaround.
-SAVERS_NO_DATA_OUT_PARAM = ["save_to_images"]
-
-# Hardcoded string that is used to check if a method is in a reconstruction
-# module or not
-RECON_MODULE_MATCH = "recon.algorithm"
-MAX_SWEEPS = 1
-
-
-@dataclass
-class MethodFunc:
-    """
-    Class holding information about each tomography pipeline method
-
-    Parameters
-    ==========
-
-    module_name : str
-        Fully qualified name of the module where the method is. E.g. httomolib.prep.normalize
-    method_func : Callable
-        The actual method callable
-    wrapper_func: Optional[Callable]
-        The wrapper function to handle the execution. It may be None,
-        for example for loaders.
-    calc_max_slices: Optional[Callable]
-        A callable with the signature
-        (slice_dim: int, other_dims: int, dtype: np.dtype, available_memory: int) -> int
-        which determines the maximum number of slices it can fit in the given memory.
-        If it is not present (None), the method is assumed to fit any amount of slices.
-    parameters : Dict[str, Any]
-        The method parameters that are specified in the pipeline yaml file.
-        They are used as kwargs when the method is called.
-    cpu : bool
-        Whether CPU execution is supported.
-    gpu : bool
-        Whether GPU execution is supported.
-    reslice_ahead : bool
-        Whether a reslice needs to be done due to a pattern change in the pipeline
-    is_last_method : bool
-        True if it is the last method in the pipeline
-    """
-
-    module_name: str
-    method_func: Callable
-    wrapper_func: Optional[Callable] = None
-    calc_max_slices: Optional[Callable] = None
-    parameters: Dict[str, Any] = field(default_factory=dict)
-    pattern: Pattern = Pattern.projection
-    cpu: bool = True
-    gpu: bool = False
-    reslice_ahead: bool = False
-    is_loader: bool = False
-    is_last_method: bool = False
-
-
-@dataclass
-class ResliceInfo:
-    """
-    Class holding information regarding reslicing
-
-    Parameters
-    ==========
-
-    count: int
-        Counter for how many reslices were done so far
-    has_warn_printed : bool
-        Whether the reslicing warning has been printed
-    reslice_bool_list : List[bool]
-        List of booleans to identify when reslicing is needed
-    reslice_dir : Optional[Path]
-        The directory to use with file-based reslicing. If None,
-        reslicing will be done in-memory.
-    """
-
-    count: int
-    has_warn_printed: bool
-    reslice_bool_list: List[bool]
-    reslice_dir: Optional[Path] = None
-
-
-@dataclass
-class PlatformSection:
-    """
-    Data class to represent a section of the pipeline that runs on the same platform.
-    That is, all methods contained in this section of the pipeline run either all on CPU
-    or all on GPU.
-
-    This is used to iterate through GPU memory in chunks.
-
-    Attributes
-    ----------
-    gpu : bool
-        Whether this section is a GPU section (True) or CPU section (False)
-    pattern : Pattern
-        To denote the slicing pattern - sinogram, projection
-    max_slices : int
-        Holds information about how many slices can be fit in one chunk without
-        exhausting memory (relevant on GPU only)
-    methods : List[MethodFunc]
-        List of methods in this section
-    """
-
-    gpu: bool
-    pattern: Pattern
-    max_slices: int
-    methods: List[MethodFunc]
 
 
 def run_tasks(
@@ -181,9 +74,7 @@ def run_tasks(
 
     # Define dict to store arrays of the whole pipeline using provided YAML
     # Define list to store dataset stats for each task in the user config YAML
-    dict_datasets_pipeline, glob_stats = _initialise_datasets_and_stats(
-        yaml_config, SAVERS_NO_DATA_OUT_PARAM
-    )
+    dict_datasets_pipeline, glob_stats = _initialise_datasets_and_stats(yaml_config)
 
     # Get a list of the python functions associated to the methods defined in
     # user config YAML
@@ -217,10 +108,10 @@ def run_tasks(
     params = [m.parameters for m in method_funcs]
     no_of_sweeps = sum(map(_check_params_for_sweep, params))
 
-    if no_of_sweeps > MAX_SWEEPS:
+    if no_of_sweeps > 1:
         err_str = (
             f"There are {no_of_sweeps} parameter sweeps in the "
-            f"pipeline, but a maximum of {MAX_SWEEPS} is supported."
+            "pipeline, but a maximum of 1 is supported."
         )
         log_exception(err_str)
         raise ValueError(err_str)
@@ -343,7 +234,7 @@ def run_tasks(
 
 
 def _initialise_datasets_and_stats(
-    yaml_config: Path, savers_no_data_out_param: List[str]
+    yaml_config: Path,
 ) -> tuple[Dict[str, None], List[Dict]]:
     """Add keys to dict that will contain all datasets defined in the YAML
     config.
@@ -352,9 +243,6 @@ def _initialise_datasets_and_stats(
     ----------
     yaml_config : Path
         The file containing the processing pipeline info as YAML
-    savers_no_data_out_param : List[str]
-        A list of savers which have neither `data_out` nor `data_out_multi` as
-        their output.
 
     Returns
     -------
@@ -549,96 +437,36 @@ def run_method(
         Returns a tuple containing the reslicing info and glob stats
     """
     module_path = current_func.module_name
-    package_name = current_func.module_name.split(".")[0]
-    dict_params_method = current_func.parameters
     method_name = current_func.method_func.__name__
     func_wrapper = current_func.wrapper_func
+    package_name = current_func.module_name.split(".")[0]
 
-    save_result = (
-        # save result for the last task always
-        current_func.is_last_method
-        or
-        # save result if --save_all is specified
-        save_all
-        or
-        # if the method is from a recon module
-        RECON_MODULE_MATCH in module_path
-        or dict_params_method.pop("save_result", None)
-    )
-    misc_params[-2] = (["save_result"], save_result)
+    #: create an object that would be passed along to prerun_method,
+    #: run_method, and postrun_method
+    run_method_info = RunMethodInfo(task_idx=task_idx)
 
-    # Check if the input dataset should be resliced before the task runs
-    should_reslice = reslice_info.reslice_bool_list[task_idx]
-    if should_reslice:
-        reslice_info.count += 1
-        current_slice_dim = _get_slicing_dim(prev_func.pattern)
-        next_slice_dim = _get_slicing_dim(current_func.pattern)
-
-    # the GPU wrapper should know if the reslice is needed to convert the result
-    # to numpy from cupy array
-    reslice_ahead = next_func.reslice_ahead if next_func is not None else False
-    misc_params[-2] = (["save_result"], save_result)
-    # reslice_ahead must be the last item in the list
-    misc_params[-1] = (["reslice_ahead"], reslice_ahead)
-
-    if reslice_info.count > 1 and not reslice_info.has_reslice_warn_printed:
-        reslice_warn_str = (
-            "WARNING: Reslicing is performed more than once in this "
-            "pipeline, is there a need for this?"
-        )
-        log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
-        reslice_info.has_reslice_warn_printed = True
-
-    # extra params unrelated to wrapped packages but related to httomo added
-    dict_httomo_params = _check_signature_for_httomo_params(
-        func_wrapper, current_func.method_func, misc_params
+    #: prerun - before running the method, update the dictionaries
+    prerun_method(
+        run_method_info,
+        save_all,
+        misc_params,
+        current_func,
+        prev_func,
+        next_func,
+        dict_datasets_pipeline,
+        glob_stats,
+        reslice_info,
     )
 
-    # Get the information describing if the method is being run only
-    # once, or multiple times with different input datasets
-    #
-    # Make the input and output datasets always be lists just to be
-    # generic, and further down loop through all the datasets that the
-    # method should be applied to
-    data_in, data_out = get_data_in_data_out(method_name, dict_params_method)
-
-    # Check if the method function's params require any datasets stored
-    # in the `datasets` dict
-    dataset_params = _check_method_params_for_datasets(
-        dict_params_method, dict_datasets_pipeline
-    )
-    # Update the relevant parameter values according to the required
-    # datasets
-    dict_params_method.update(dataset_params)
-
-    # check if the module needs the gpu_id parameter and flag it to add in the
-    # wrapper
-    gpu_id_par = "gpu_id" in signature(current_func.method_func).parameters
-    if gpu_id_par:
-        dict_params_method.update({"gpu_id": gpu_id_par})
-
-    # Check if method type signature requires global statistics
-    req_glob_stats = "glob_stats" in signature(current_func.method_func).parameters
-
-    # Check if a parameter sweep is defined for any of the method's
-    # parameters
-    current_param_sweep = False
-    for k, v in dict_params_method.items():
-        if type(v) is tuple:
-            param_sweep_name = k
-            param_sweep_vals = v
-            current_param_sweep = True
-            break
-
-    for in_dataset_idx, in_dataset in enumerate(data_in):
+    for in_dataset_idx, in_dataset in enumerate(run_method_info.data_in):
         # First, setup the datasets and arrays needed for the method, based on
         # two factors:
         # - if the current method has a parameter sweep for one of its
         #   parameters
         # - if the current method is going to run on the output of a parameter
         #   sweep from a previous method in the pipeline
-        if method_name in SAVERS_NO_DATA_OUT_PARAM:
-            if current_param_sweep:
+        if method_name == "save_to_images":
+            if run_method_info.param_sweep_name is not None:
                 err_str = "Parameters sweeps on savers is not supported"
                 log_exception(err_str)
                 raise ValueError(err_str)
@@ -648,7 +476,7 @@ def run_method(
                 else:
                     arrs = [dict_datasets_pipeline[in_dataset]]
         else:
-            if current_param_sweep:
+            if run_method_info.param_sweep_name:
                 arrs = [dict_datasets_pipeline[in_dataset]]
             else:
                 # If the data is a list of arrays, then it was the result of a
@@ -669,31 +497,17 @@ def run_method(
         #
         # Therefore, set the output dataset to be the element in `data_out` that
         # is at the same index as the input dataset in `data_in`
-        out_dataset = data_out[in_dataset_idx]
+        out_dataset = run_method_info.data_out[in_dataset_idx]
 
         # TODO: Not yet able to run parameter sweeps on a method that also
         # produces mutliple output datasets
-        if type(out_dataset) is list and current_param_sweep:
+        if isinstance(out_dataset, list) and run_method_info.param_sweep_name:
             err_str = "Parameter sweeps on methods with multiple output datasets is not supported"
             log_exception(err_str)
             raise ValueError(err_str)
 
-        # TODO: Not yet able to run a method that produces multiple output
-        # datasets on input data that was the result of a paremeter sweep
-        # earlier in the pipeline
-        if (
-            type(out_dataset) is list
-            and type(dict_datasets_pipeline[in_dataset]) is list
-        ):
-            err_str = (
-                "Running a method that produces mutliple outputs on "
-                "the result of a parameter sweep is not supported"
-            )
-            log_exception(err_str)
-            raise ValueError(err_str)
-
         # Create a list to store the result of the different parameter values
-        if current_param_sweep:
+        if run_method_info.param_sweep_name:
             out = []
 
         # Now, loop through all the arrays involved in the current method's
@@ -704,30 +518,26 @@ def run_method(
         #   parameter sweep data (just `save_to_images()` falls into this
         #   category)
         for i, arr in enumerate(arrs):
-            if method_name in SAVERS_NO_DATA_OUT_PARAM:
-                # TODO: Assuming that the `save_to_images()` method is
-                # being used when defining the `subfolder_name`
-                # parameter value, as it is currently the only method in
-                # `SAVERS_NO_DATA_OUT_PARAM`, not good...
-                #
-                # Define `subfolder_name` for `save_to_images()`
+            if method_name == "save_to_images":
                 subfolder_name = f"images_{i}"
-                dict_params_method.update({"subfolder_name": subfolder_name})
+                run_method_info.dict_params_method.update(
+                    {"subfolder_name": subfolder_name}
+                )
 
             # Perform a reslice of the data if necessary
-            if should_reslice:
+            if run_method_info.should_reslice:
                 if reslice_info.reslice_dir is None:
                     resliced_data, _ = reslice(
                         arr,
-                        current_slice_dim,
-                        next_slice_dim,
+                        run_method_info.current_slice_dim,
+                        run_method_info.next_slice_dim,
                         comm,
                     )
                 else:
                     resliced_data, _ = reslice_filebased(
                         arr,
-                        current_slice_dim,
-                        next_slice_dim,
+                        run_method_info.current_slice_dim,
+                        run_method_info.next_slice_dim,
                         comm,
                         reslice_info.reslice_dir,
                     )
@@ -738,30 +548,40 @@ def run_method(
                     dict_datasets_pipeline[in_dataset] = resliced_data
                 arr = resliced_data
 
-            dict_httomo_params["data"] = arr
+            run_method_info.dict_httomo_params["data"] = arr
 
             # Add global stats if necessary
-            if req_glob_stats is True:
+            if "glob_stats" in signature(current_func.method_func).parameters:
                 # get the glob stats
                 stats = min_max_mean_std(arr, comm)
                 glob_stats[in_dataset].append(stats)
-                dict_params_method.update({"glob_stats": stats})
+                run_method_info.dict_params_method.update({"glob_stats": stats})
 
             # Run the method
-            if method_name in SAVERS_NO_DATA_OUT_PARAM:
-                func_wrapper(method_name, dict_params_method, **dict_httomo_params)
+            if method_name == "save_to_images":
+                func_wrapper(
+                    method_name,
+                    run_method_info.dict_params_method,
+                    **run_method_info.dict_httomo_params,
+                )
             else:
-                if current_param_sweep:
-                    for val in param_sweep_vals:
-                        dict_params_method[param_sweep_name] = val
+                if run_method_info.param_sweep_name:
+                    for val in run_method_info.param_sweep_vals:
+                        run_method_info.dict_params_method[
+                            run_method_info.param_sweep_name
+                        ] = val
                         res = func_wrapper(
-                            method_name, dict_params_method, **dict_httomo_params
+                            method_name,
+                            run_method_info.dict_params_method,
+                            **run_method_info.dict_httomo_params,
                         )
                         out.append(res)
                     dict_datasets_pipeline[out_dataset] = out
                 else:
                     res = func_wrapper(
-                        method_name, dict_params_method, **dict_httomo_params
+                        method_name,
+                        run_method_info.dict_params_method,
+                        **run_method_info.dict_httomo_params,
                     )
                     # Store the output(s) of the method in the appropriate
                     # dataset in the `dict_datasets_pipeline` dict
@@ -777,204 +597,16 @@ def run_method(
                         else:
                             dict_datasets_pipeline[out_dataset] = res
 
-        if method_name in SAVERS_NO_DATA_OUT_PARAM:
+        if method_name == "save_to_images":
             # Nothing more to do if the saver has a special kind of
             # output which handles saving the result
             return reslice_info, glob_stats
 
-        # TODO: The dataset saving functionality only supports 3D data
-        # currently, so check that the dimension of the data is 3 before
-        # saving it
-        is_3d = False
-        # If `out_dataset` is a list, then this was a method which had a single
-        # input and multiple outputs.
-        #
-        # TODO: For now, in this case, assume that none of the results need to
-        # be saved, and instead will purely be used as inputs to other methods.
-        if isinstance(out_dataset, list):
-            # TODO: Not yet supporting parameter sweeps for methods that produce
-            # multiple outputs, so can assume that if `out_datasets` is a list,
-            # then no parameter sweep exists in the pipeline
-            any_param_sweep = False
-        elif isinstance(dict_datasets_pipeline[out_dataset], list):
-            # Either the method has had a parameter sweep, or been run on
-            # parameter sweep input
-            any_param_sweep = True
-        else:
-            # No parameter sweep is invovled, nor multiple output datasets, just
-            # the simple case
-            is_3d = len(dict_datasets_pipeline[out_dataset].shape) == 3
-            any_param_sweep = False
-
-        # Save the result if necessary
-        if save_result and is_3d and not any_param_sweep:
-            recon_center = dict_params_method.pop("center", None)
-            recon_algorithm = None
-            if recon_center is not None:
-                slice_dim = 1
-                recon_algorithm = dict_params_method.pop(
-                    "algorithm", None
-                )  # covers tomopy case
-            else:
-                slice_dim = _get_slicing_dim(current_func.pattern)
-
-            intermediate_dataset(
-                dict_datasets_pipeline[out_dataset],
-                httomo.globals.run_out_dir,
-                comm,
-                task_idx + 1,
-                package_name,
-                method_name,
-                out_dataset,
-                slice_dim,
-                recon_algorithm=recon_algorithm,
-            )
-        elif save_result and any_param_sweep:
-            # Save the result of each value in the parameter sweep as a
-            # different dataset within the same hdf5 file, and also save the
-            # middle slice of each parameter sweep result as a tiff file
-            param_sweep_datasets = dict_datasets_pipeline[out_dataset]
-            # For the output of a recon, fix the dimension that data is gathered
-            # along to be the first one (ie, the vertical dim in volume space).
-            # For all other types of methods, use the same dim associated to the
-            # pattern for their input data.
-            if RECON_MODULE_MATCH in module_path:
-                slice_dim = 1
-            else:
-                slice_dim = _get_slicing_dim(current_func.pattern)
-            data_shape = get_data_shape(param_sweep_datasets[0], slice_dim - 1)
-            hdf5_file_name = f"{task_idx}-{package_name}-{method_name}-{out_dataset}.h5"
-            # For each MPI process, send all the other processes the size of the
-            # slice dimension of the parameter sweep arrays (note that the list
-            # returned by `allgather()` is ordered by the rank of the process)
-            all_proc_info = comm.allgather(param_sweep_datasets[i].shape[0])
-            # Check if the current MPI process has the subset of data containing
-            # the middle slice or not
-            start_idx = 0
-            for i in range(comm.rank):
-                start_idx += all_proc_info[i]
-            glob_mid_slice_idx = data_shape[slice_dim - 1] // 2
-            has_mid_slice = (
-                start_idx <= glob_mid_slice_idx
-                and glob_mid_slice_idx < start_idx + param_sweep_datasets[0].shape[0]
-            )
-
-            # For the single MPI process that has access to the middle slices,
-            # create an array to hold these middle slices
-            if has_mid_slice:
-                tiff_stack_shape = (
-                    len(param_sweep_datasets),
-                    data_shape[1],
-                    data_shape[2],
-                )
-                middle_slices = np.empty(tiff_stack_shape)
-                # Calculate the index relative to the subset of the data that
-                # the MPI process has which corresponds to the middle slice of
-                # the "global" data
-                rel_mid_slice_idx = glob_mid_slice_idx - start_idx
-
-            for i in range(len(param_sweep_datasets)):
-                # Save hdf5 dataset
-                dataset_name = f"/data/param_sweep_{i}"
-                save_dataset(
-                    httomo.globals.run_out_dir,
-                    hdf5_file_name,
-                    param_sweep_datasets[i],
-                    slice_dim=slice_dim,
-                    chunks=(1, data_shape[1], data_shape[2]),
-                    path=dataset_name,
-                    comm=comm,
-                )
-                # Get the middle slice of the parameter-swept array
-                if has_mid_slice:
-                    if slice_dim == 1:
-                        middle_slices[i] = param_sweep_datasets[i][
-                            rel_mid_slice_idx, :, :
-                        ]
-                    elif slice_dim == 2:
-                        middle_slices[i] = param_sweep_datasets[i][
-                            :, rel_mid_slice_idx, :
-                        ]
-                    elif slice_dim == 3:
-                        middle_slices[i] = param_sweep_datasets[i][
-                            :, :, rel_mid_slice_idx
-                        ]
-
-            if has_mid_slice:
-                # Save tiffs of the middle slices
-                save_to_images(
-                    middle_slices,
-                    httomo.globals.run_out_dir,
-                    subfolder_name=f"middle_slices_{out_dataset}",
-                )
+        postrun_method(
+            run_method_info, out_dataset, dict_datasets_pipeline, current_func, i
+        )
 
     return reslice_info, glob_stats
-
-
-def _check_signature_for_httomo_params(
-    func_wrapper: Callable,
-    method_name: str,
-    possible_extra_params: List[Tuple[List[str], object]],
-) -> Dict:
-    """Check if the given method requires any parameters related to HTTomo.
-
-    Parameters
-    ----------
-    func_wrapper : Callable
-        Function of a wrapper whose type signature is to be inspected
-    method_name : str
-        The name of the method to apply.
-
-    possible_extra_params : List[Tuple[List[str], object]]
-        Each tuples contains a parameter name and the associated value that
-        should be added if a method requires that parameter (note: multiple
-        parameter names can be given in case the parameter isn't consistently
-        named across tomopy functions, such as "angles" vs "angles_radians")
-
-    Returns
-    -------
-    Dict
-        A dict with the parameter names and values to be added for the given
-        method function
-    """
-    extra_params = {}
-    sig_params = signature(func_wrapper).parameters
-    for names, val in possible_extra_params:
-        for name in names:
-            if name in sig_params:
-                extra_params[name] = val
-    return extra_params
-
-
-def _check_method_params_for_datasets(
-    dict_params_method: Dict, datasets: Dict[str, ndarray]
-) -> Dict:
-    """Check a given method function's parameter values to see if any of them
-    are a dataset.
-
-    Parameters
-    ----------
-    dict_params_method : Dict
-        The dict of param names and their values for a given method function.
-
-    datasets: Dict[str, ndarray]
-        The dict of dataset names and their associated arrays.
-
-    Returns
-    -------
-    Dict
-        A dict containing the parameter names assigned to particular datasets,
-        and the associated dataset values. This dict can be used to update the
-        method function's params dict to reflect the dataset arrays that the
-        method function requires.
-    """
-    dataset_params = {}
-    for name, val in dict_params_method.items():
-        # If the value of this parameter is a dataset, then replace the
-        # parameter value with the dataset value
-        if val in datasets:
-            dataset_params[name] = datasets[val]
-    return dataset_params
 
 
 def _check_if_should_reslice(methods: List[MethodFunc]) -> List[MethodFunc]:

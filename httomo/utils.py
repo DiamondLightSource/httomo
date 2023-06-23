@@ -1,12 +1,12 @@
+import re
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple
 
 from mpi4py.MPI import Comm
 
 import httomo.globals
-from httomo.common import remove_ansi_escape_sequences
 from httomo.data import mpiutil
-
 
 gpu_enabled = False
 try:
@@ -278,3 +278,16 @@ def get_data_in_data_out(method_name: str, dict_params_method: Dict[str, Any]) -
             data_out = [None]
 
     return data_in, data_out
+
+
+def remove_ansi_escape_sequences(filename):
+    """
+    Remove ANSI escape sequences from a file.
+    """
+    ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
+    if Path(filename).exists():
+        with open(filename, "r") as f:
+            lines = f.readlines()
+        with open(filename, "w") as f:
+            for line in lines:
+                f.write(ansi_escape.sub("", line))
