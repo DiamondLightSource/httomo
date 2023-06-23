@@ -3,7 +3,8 @@ import numpy as np
 import inspect
 from inspect import Parameter, signature
 import httomo.globals
-from httomo.utils import Colour, log_exception, log_once, gpu_enabled, xp
+from httomo.utils import Colour, log_exception, log_once
+from httomo.cupy_utils import gpu_enabled, xp
 from httomo.data import mpiutil
 
 from mpi4py.MPI import Comm

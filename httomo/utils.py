@@ -8,23 +8,6 @@ from mpi4py.MPI import Comm
 import httomo.globals
 from httomo.data import mpiutil
 
-gpu_enabled = False
-try:
-    import cupy as xp
-
-    try:
-        xp.cuda.Device(0).compute_capability
-        gpu_enabled = True  # CuPy is installed and GPU is available
-    except xp.cuda.runtime.CUDARuntimeError:
-        import numpy as xp
-
-        print("CuPy is installed but GPU device inaccessible")
-
-except ImportError:
-    import numpy as xp
-
-    print("CuPy is not installed")
-
 
 class Colour:
     """
