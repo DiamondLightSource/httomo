@@ -1,0 +1,15 @@
+name: httomo
+channels:
+  - conda-forge
+  - anaconda
+  - httomo
+dependencies:
+  - conda-forge::click
+  - conda-forge::mpi4py>=3.1
+  - conda-forge::h5py==3.8.0[build=*openmpi*]
+  - conda-forge::pyyaml
+  - conda-forge::numpy<1.24
+  - conda-forge::python
+  - conda-forge::tomopy
+  - anaconda::ipython
+  - httomo::httomolib
