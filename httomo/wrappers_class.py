@@ -82,11 +82,7 @@ class BaseWrapper:
         data = self._transfer_data(data)
 
         data = getattr(self.module, method_name)(data, **dict_params_method)
-        if reslice_ahead or save_result and gpu_enabled:
-            # reslice ahead, bring data back to numpy array
-            return xp.asnumpy(data)
-        else:
-            return data
+        return data.get() if self.cupyrun else data
 
     def _execute_normalize(
         self,
@@ -118,11 +114,7 @@ class BaseWrapper:
         data = getattr(self.module, method_name)(
             data, flats, darks, **dict_params_method
         )
-        if reslice_ahead or save_result and gpu_enabled:
-            # reslice ahead, bring data back to numpy array
-            return xp.asnumpy(data)
-        else:
-            return data
+        return data.get() if self.cupyrun else data
 
     def _execute_reconstruction(
         self,
@@ -162,11 +154,8 @@ class BaseWrapper:
         data = getattr(self.module, method_name)(
             data, angles_radians, **dict_params_method
         )
-        if reslice_ahead or save_result and gpu_enabled:
-            # reslice ahead, bring data back to numpy array
-            return xp.asnumpy(data)
-        else:
-            return data
+
+        return data.get() if self.cupyrun else data
 
     def _execute_rotation(
         self,
