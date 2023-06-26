@@ -173,10 +173,76 @@ def run_tasks(
         (["save_result"], False),
         (["reslice_ahead"], False),
     ]
-
     # data shape and dtype are useful when calculating max slices
     data_shape = loader_info.data.shape
     data_dtype = loader_info.data.dtype
+    
+    ##---------- Main GPU loop starts here ------------##
+    idx = 0
+    # initialise the CPU data array with the loaded data, we override it at the end of every section
+    data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
+    for section in platform_sections:
+        # determine the max_slices for the whole section
+        _update_max_slices(section, data_shape, data_dtype)
+        # in order to iterate over max slices we need to know the slicing
+        # dimension of the section
+        slicing_dim_section = _get_slicing_dim(section.pattern) - 1
+        # iterations_for_blocks determines the number of iterations needed
+        # to raster through the data in blocks that would fit into the GPU memory
+        iterations_for_blocks = math.ceil(data_shape[slicing_dim_section] / section.max_slices)
+        
+        ##---------- the loop over blocks in a section ------------##
+        indices_start = 0
+        indices_end = int(section.max_slices)
+        slc_indices = [slice(None)] * len(data_shape)
+        for it_blocks in range(iterations_for_blocks):
+            # preparing indices for the slicing of the data in blocks
+            slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)
+            
+            ###################Loading the data #####################            
+            # now initialise the block input data using indices
+            # NOTE:
+            # We need to be careful not to duplicate the memory here if
+            # the block size is the same size as the data_full_section!
+            data_block = data_full_section[tuple(slc_indices)]
+            ##---------- the loop over methods in a block ------------##
+            for method_sect in section.methods:
+                # TODO: 
+                # Here we should execute the wrappers associated with methods in 
+                # a section with an input of data_block data array
+                # 
+                # We should place the bit here that is ONLY associated
+                # with the wrappers execution, i.e., no data saving, reslicing etc. that is
+                # currently in run_method
+                
+                # NOTE: 
+                # The result of each method should override data_block?
+                # Take care of multi_input stuff here. I guess it requires 
+                # an inner loop? 
+                print(method_sect.module_name)
+            ##************* Methods loop is complete *************##
+            # TODO: The block has now been processed and the output data
+            # can now be saved as:
+            # data_full_section[tuple(slc_indices)] = data_block
+            # NOTE: data_block must be on the CPU already, assuming that
+            # the last method in the loop will return the numpy array and not cupy
+
+            # re-initialise the slicing indices
+            indices_start = indices_end
+            # checking if we still within the slicing dimension size and take remaining portion
+            res = (indices_start + int(section.max_slices)) - data_shape[slicing_dim_section] 
+            if res > 0:
+                res = int(section.max_slices) - res
+                indices_end += res
+            else:
+                indices_end += section.max_slices
+            
+        ##************* Blocks loop is complete *************##
+        # TODO: After the blocks loop is complete the full data
+        # is in "data_full_section" and the hdf5 file can be saved
+        # or resliced if needed
+    ##************* Sections loop is complete *************## 
+
 
     # Run the methods
     for idx, method_func in enumerate(method_funcs[1:]):
