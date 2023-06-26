@@ -11,5 +11,6 @@ dependencies:
   - conda-forge::numpy<1.24
   - conda-forge::python
   - conda-forge::tomopy
+  - conda-forge::numexpr>=2.8.4
   - anaconda::ipython
   - httomo::httomolib
