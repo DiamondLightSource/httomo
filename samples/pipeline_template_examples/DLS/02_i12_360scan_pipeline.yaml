@@ -6,8 +6,7 @@
       dimension: 1
       preview:
         - 
-        - start: 30
-          stop: 38
+        -
         - 
       pad: 0
 - httomolibgpu.prep.normalize:
