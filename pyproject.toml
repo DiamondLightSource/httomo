@@ -44,6 +44,7 @@ dynamic = ["version"]
 dependencies = [
     "click",
     "numpy",
+    "httomolib"
 ]
 
 [project.scripts]
@@ -53,10 +54,21 @@ httomo = "httomo.cli:main"
 repository = "https://github.com/DiamondLightSource/HTTomo"
 
 [project.optional-dependencies]
-tomopy = [ "tomopy" ]
-httomolib = [ "httomolib" ]
-httomolibgpu = ["httomolibgpu", "cupy"]
-dev = [
+cpu = ["tomopy" ]
+gpu = ["httomolibgpu"]
+dev-cpu = [
+  "pytest",
+  "pytest-cov",
+  "pytest-xdist",
+  "flake8",
+  "pyproject-flake8",
+  "pydocstyle",
+  "toml",
+  "httomolib[dev]",
+  "tomopy",
+  "plumbum",
+]
+dev-gpu = [
   "pytest",
   "pytest-cov",
   "pytest-xdist",
