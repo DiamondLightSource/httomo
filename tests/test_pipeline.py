@@ -185,6 +185,21 @@ def test_gpu_pipeline_output_with_save_all(
         assert f["data"].shape == (180, 128, 160)
 
 
+@pytest.mark.cupy
+def test_gpu_pipeline_360data(
+    cmd, data360, pipeline360, output_folder
+):
+    cmd.insert(7, data360)
+    cmd.insert(8, pipeline360)
+    subprocess.check_output(cmd)
+
+    files = read_folder("output_dir/")
+    assert len(files) == 9
+
+    tif_files = list(filter(lambda x: ".tif" in x, files))
+    assert len(tif_files) == 3
+
+
 def test_i12_testing_pipeline_output(
     cmd, i12_data, i12_loader, testing_pipeline, output_folder, merge_yamls
 ):

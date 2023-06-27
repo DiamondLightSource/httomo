@@ -99,6 +99,13 @@ def diad_loader():
 def i12_data():
     return "tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
 
+@pytest.fixture
+def data360():
+    return "tests/test_data/360scan/360scan.hdf"
+
+@pytest.fixture
+def pipeline360():
+    return "samples/pipeline_template_examples/DLS/02_i12_360scan_pipeline.yaml"
 
 @pytest.fixture
 def i12_loader():

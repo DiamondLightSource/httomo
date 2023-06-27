@@ -7,15 +7,9 @@
       preview:
         - 
         - start: 30
-          stop: 60
+          stop: 38
         - 
       pad: 0
-- httomolibgpu.misc.corr:
-    remove_outlier3d:
-      data_in_multi: [tomo, flats, darks]
-      data_out_multi: [tomo, flats, darks]
-      kernel_size: 3
-      dif: 0.1      
 - httomolibgpu.prep.normalize:
     normalize:
       data_in: tomo
@@ -46,7 +40,7 @@
       overlap: overlap
       rotation: right 
 - httomolibgpu.recon.algorithm:
-     reconstruct_tomobar:
+     FBP:
        data_in: tomo
        data_out: tomo
        center: cor
