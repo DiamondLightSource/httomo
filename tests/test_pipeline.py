@@ -186,9 +186,7 @@ def test_gpu_pipeline_output_with_save_all(
 
 
 @pytest.mark.cupy
-def test_gpu_pipeline_360data(
-    cmd, data360, pipeline360, output_folder
-):
+def test_gpu_pipeline_360data(cmd, data360, pipeline360, output_folder):
     cmd.insert(7, data360)
     cmd.insert(8, pipeline360)
     subprocess.check_output(cmd)
@@ -206,15 +204,15 @@ def test_gpu_pipeline_360data(
         total_sum += arr.sum()
 
     assert total_sum == 2316612878.0
-    
+
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 4
-    
+
     fpb_recon_tomo = list(filter(lambda x: "FBP-tomo.h5" in x, h5_files))[0]
-    
+
     with h5py.File(fpb_recon_tomo, "r") as f:
         assert_allclose(np.sum(f["data"]), 17200.271, atol=1e-5)
-        assert_allclose(np.mean(f["data"]), 0.000572, atol=1e-5)    
+        assert_allclose(np.mean(f["data"]), 0.000572, atol=1e-5)
 
 
 def test_i12_testing_pipeline_output(

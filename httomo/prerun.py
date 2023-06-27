@@ -26,7 +26,6 @@ def prerun_method(
     glob_stats: Dict,
     reslice_info: ResliceInfo,
 ):
-
     run_method_info.package_name = current_func.module_name.split(".")[0]
     dict_params_method = current_func.parameters
     run_method_info.method_name = current_func.method_func.__name__
@@ -45,7 +44,9 @@ def prerun_method(
     )
 
     # Check if the input dataset should be resliced before the task runs
-    run_method_info.should_reslice = reslice_info.reslice_bool_list[run_method_info.task_idx]
+    run_method_info.should_reslice = reslice_info.reslice_bool_list[
+        run_method_info.task_idx
+    ]
     if run_method_info.should_reslice:
         reslice_info.count += 1
         run_method_info.current_slice_dim = _get_slicing_dim(prev_func.pattern)
