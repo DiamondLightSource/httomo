@@ -88,14 +88,6 @@ def prerun_method(
     if gpu_id_par:
         dict_params_method.update({"gpu_id": gpu_id_par})
 
-    # Check if a parameter sweep is defined for any of the method's
-    # parameters
-    for k, v in dict_params_method.items():
-        if isinstance(v, tuple):
-            run_method_info.param_sweep_name = k
-            run_method_info.param_sweep_vals = v
-            break
-
     run_method_info.dict_params_method = dict_params_method
     run_method_info.data_in = data_in
     run_method_info.data_out = data_out
