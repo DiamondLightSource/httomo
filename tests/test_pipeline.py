@@ -320,6 +320,7 @@ def test_diad_testing_pipeline_output(
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
+@pytest.mark.preview
 def test_sweep_pipeline_with_save_all_using_mpi(
     cmd, standard_data, sample_pipelines, standard_loader, output_folder
 ):
@@ -457,6 +458,7 @@ def test_sweep_pipeline_with_save_all_using_mpi(
     )
 
 
+@pytest.mark.preview
 def test_sweep_range_pipeline_with_step_absent(
     cmd, standard_data, sample_pipelines, output_folder
 ):
