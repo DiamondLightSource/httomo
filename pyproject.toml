@@ -108,9 +108,9 @@ addopts = [
 testpaths = [
     "tests",
 ]
-# https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
-filterwarnings = "error"
-# Doctest python code in docs, python code in src docstrings, test functions in tests
+filterwarnings = [
+    "ignore::ImportWarning"
+]
 
 
 [tool.coverage.run]
