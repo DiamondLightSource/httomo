@@ -326,7 +326,7 @@ def _initialise_datasets_and_stats(
     # to exist in the `datasets` dict
     loader_dataset_param = "name"
     loader_dataset_params = [loader_dataset_param]
-    method_dataset_params = ["data_in", "data_out", "data_in_multi", "data_out_multi"]
+    method_dataset_params = ["data_in", "data_out"]
 
     dataset_params = method_dataset_params + loader_dataset_params
 
@@ -340,20 +340,11 @@ def _initialise_datasets_and_stats(
         if "loaders" in module_name:
             dataset_param = loader_dataset_param
         else:
-            dataset_param = (
-                "data_in_multi" if "data_in_multi" in method_conf.keys() else "data_in"
-            )
+            dataset_param = "data_in"
 
         # Dict to hold the stats for each dataset associated with the method
         method_stats: Dict[str, List] = {}
-
-        # Check if there are multiple input datasets to account for
-        if type(method_conf[dataset_param]) is list:
-            for dataset_name in method_conf[dataset_param]:
-                method_stats[dataset_name] = []
-        else:
-            method_stats[method_conf[dataset_param]] = []
-
+        method_stats[method_conf[dataset_param]] = []
         stats.append(method_stats)
 
         for param in method_conf.keys():
