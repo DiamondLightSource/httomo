@@ -117,70 +117,25 @@ assume that the output dataset name is the same as the input dataset name.
   using this functionality will unintentionally interfere with the desired
   pipeline.
 
-Processing multiple inputs with :code:`data_in_multi` and :code:`data_out_multi`
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Using a different name for the output dataset
++++++++++++++++++++++++++++++++++++++++++++++
 
-Sometimes it can be useful to process multiple datasets with the same method +
-parameters. In principle, this could be done by duplicating the method
-configuration for each dataset needing to be processed, and then changing the
-:code:`data_in` parameter for each duplicated block.
-
-However, HTTomo provides a more concise way of achieving the same result with
-only *one* copy of the method configuration. This is done by using the
-:code:`data_in_multi` and :code:`data_out_multi` parameters instead of
-:code:`data_in` and :code:`data_out` respectively.
-
-Instead of providing a single input/output dataset name, a *list* of dataset
-names can be given to :code:`data_in_multi` and :code:`data_out_multi`.
-
-The list of dataset names given to :code:`data_in_multi` should specify the
-different datasets that you would like to be processed by the method. Similarly,
-the list of dataset names given to :code:`data_out_multi` should specify what
-you would like the corresponding ouptut datat names to be.
-
-Example: processing three datasets with the same method
-#######################################################
-
-A snippet take from an example pipeline in the HTTomo repo shows
-:code:`median_filter` from TomoPy being applied to three datasets: projections,
-darks, and flats:
-
-.. literalinclude:: ../../../../samples/pipeline_template_examples/multi_inputs/01_multi_inputs.yaml
-  :language: yaml
-  :lines: 6-11
-  :emphasize-lines: 3-4
-  :caption: samples/pipeline_template_examples/multi_inputs/01_multi_inputs.yaml
-
-As a variation on this same example: in a similar fashion to how
-:code:`data_out` can be omitted and the output dataset is assumed to be the same
-as :code:`data_in`, it is the case that :code:`data_out_multi` can be omitted
-and the output datasets are assumed to be the same as :code:`data_in_multi`. So,
-the below achieves the same as above:
-
-.. code-block:: yaml
-  :emphasize-lines: 3
-
-  - tomopy.misc.corr:
-      median_filter:
-        data_in_multi: [tomo, flats, darks]
-        size: 3
-        axis: 0
-
-Example: using different names for the output datasets
-######################################################
-
-In principle, the output dataset names need not be the same as the input dataset
-names. Different dataset names are valid, so the following is fine:
+In principle, the output dataset name need not be the same as the input dataset
+name. Specifying a different dataset name is valid, so the following is fine:
 
 .. code-block:: yaml
   :emphasize-lines: 3-4
 
   - tomopy.misc.corr:
       median_filter:
-        data_in_multi: [tomo, flats, darks]
-        data_out_multi: [tomo_diff, flats_diff, darks_diff]
+        data_in: tomo
+        data_out: tomo_diff
         size: 3
         axis: 0
+
+In particular, this ensures that the input dataset :code:`tomo` is *not*
+being overwritten with the result of the :code:`median_filter` method. Instead,
+the result is stored in a different dataset, called :code:`tomo_diff`.
 
 Using a dataset as a parameter value
 ++++++++++++++++++++++++++++++++++++
