@@ -7,7 +7,6 @@ from httomo.data.hdf._utils.load import load_data
 comm = MPI.COMM_WORLD
 
 
-
 @pytest.mark.parametrize(
     "file, dim, path_to_data, expected_shape, expected_sum, expected_mean",
     [

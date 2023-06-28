@@ -101,6 +101,16 @@ def i12_data():
 
 
 @pytest.fixture
+def data360():
+    return "tests/test_data/360scan/360scan.hdf"
+
+
+@pytest.fixture
+def pipeline360():
+    return "samples/pipeline_template_examples/DLS/02_i12_360scan_pipeline.yaml"
+
+
+@pytest.fixture
 def i12_loader():
     return "samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
 

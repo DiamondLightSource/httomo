@@ -9,7 +9,6 @@ from httomo.data.hdf.loaders import standard_tomo
 comm = MPI.COMM_WORLD
 
 
-
 def test_tomo_standard_testing_pipeline_loaded(
     cmd, standard_data, standard_loader, output_folder, testing_pipeline, merge_yamls
 ):
