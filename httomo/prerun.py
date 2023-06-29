@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Tuple
 from mpi4py import MPI
 from numpy import ndarray
 
-from httomo.common import MethodFunc, ResliceInfo, RunMethodInfo
-from httomo.utils import _get_slicing_dim, get_data_in_data_out, log_exception, log_once
+from httomo.common import MethodFunc, RunMethodInfo
+from httomo.utils import get_data_in_data_out
 
 comm = MPI.COMM_WORLD
 
@@ -24,7 +24,6 @@ def prerun_method(
     next_func: MethodFunc,
     dict_datasets_pipeline: Dict[str, ndarray],
     glob_stats: Dict,
-    reslice_info: ResliceInfo,
 ):
 
     run_method_info.package_name = current_func.module_name.split(".")[0]
@@ -43,21 +42,6 @@ def prerun_method(
         "recon.algorithm" in current_func.module_name
         or dict_params_method.pop("save_result", None)
     )
-
-    # Check if the input dataset should be resliced before the task runs
-    run_method_info.should_reslice = reslice_info.reslice_bool_list[run_method_info.task_idx]
-    if run_method_info.should_reslice:
-        reslice_info.count += 1
-        run_method_info.current_slice_dim = _get_slicing_dim(prev_func.pattern)
-        run_method_info.next_slice_dim = _get_slicing_dim(current_func.pattern)
-
-    if reslice_info.count > 1 and not reslice_info.has_warn_printed:
-        reslice_warn_str = (
-            "WARNING: Reslicing is performed more than once in this "
-            "pipeline, is there a need for this?"
-        )
-        log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
-        reslice_info.has_warn_printed = True
 
     # extra params unrelated to wrapped packages but related to httomo added
     run_method_info.dict_httomo_params = _check_signature_for_httomo_params(

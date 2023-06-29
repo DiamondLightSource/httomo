@@ -59,7 +59,6 @@ class BaseWrapper:
         method_name: str,
         dict_params_method: Dict,
         data: xp.ndarray,
-        reslice_ahead: bool,
         save_result: bool,
     ) -> xp.ndarray:
         """The generic wrapper to execute functions for external packages.
@@ -68,7 +67,6 @@ class BaseWrapper:
             method_name (str): The name of the method to use.
             dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
-            reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
             save_result (bool): if data is saved then the conversion to numpy required.
 
         Returns:
@@ -91,7 +89,6 @@ class BaseWrapper:
         data: xp.ndarray,
         flats: xp.ndarray,
         darks: xp.ndarray,
-        reslice_ahead: bool,
         save_result: bool,
     ) -> xp.ndarray:
         """Normalisation-specific wrapper when flats and darks are required.
@@ -102,7 +99,6 @@ class BaseWrapper:
             data (xp.ndarray): a numpy or cupy data array.
             flats (xp.ndarray): a numpy or cupy flats array.
             darks (xp.ndarray): a numpy or darks flats array.
-            reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
             save_result (bool): if data is saved then the conversion to numpy required.
 
         Returns:
@@ -122,7 +118,6 @@ class BaseWrapper:
         dict_params_method: Dict,
         data: xp.ndarray,
         angles_radians: np.ndarray,
-        reslice_ahead: bool,
         save_result: bool,
     ) -> xp.ndarray:
         """The reconstruction wrapper.
@@ -132,7 +127,6 @@ class BaseWrapper:
             dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
             angles_radians (np.ndarray): a numpy array of projection angles.
-            reslice_ahead (bool): a bool to inform the wrapper if the reslice ahead and the conversion to numpy required.
             save_result (bool): if data is saved then the conversion to numpy required.
 
         Returns:

@@ -171,7 +171,6 @@ def run_tasks(
         (["comm"], comm),
         (["out_dir"], httomo.globals.run_out_dir),
         (["save_result"], False),
-        (["reslice_ahead"], False),
     ]
     # data shape and dtype are useful when calculating max slices
     data_shape = loader_info.data.shape
@@ -246,6 +245,15 @@ def run_tasks(
         # Assume that, after every section has been completed (except for the
         # last section), a reslice should occur
         if i < len(platform_sections) - 1:
+            reslice_info.count += 1
+            if reslice_info.count > 1 and not reslice_info.has_warn_printed:
+                reslice_warn_str = (
+                    "WARNING: Reslicing is performed more than once in this "
+                    "pipeline, is there a need for this?"
+                )
+                log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
+                reslice_info.has_warn_printed = True
+
             next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]
             # TODO: should `slicing_dim_section` be used to define
             # `current_slice_dim`? Or would that be too confusing to randomly
@@ -292,7 +300,7 @@ def run_tasks(
             method_func.parameters.update({"ncore": ncore})
 
         idx += 1
-        reslice_info, glob_stats[idx] = run_method(
+        glob_stats[idx] = run_method(
             idx,
             save_all,
             possible_extra_params,
@@ -302,7 +310,6 @@ def run_tasks(
             dict_datasets_pipeline,
             glob_stats[idx],
             comm,
-            reslice_info,
         )
 
         stop = time.perf_counter_ns()
@@ -423,7 +430,6 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
             is_loader=True,
             cpu=True,
             gpu=False,
-            reslice_ahead=False,
             pattern=Pattern.all,
         )
     )
@@ -466,7 +472,6 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 calc_max_slices=None
                 if not is_httomolibgpu
                 else wrapper_init_module.calc_max_slices,
-                reslice_ahead=False,
                 pattern=Pattern.all,
                 is_loader=False,
                 is_last_method=True if i == methods_count - 2 else False,
@@ -486,8 +491,7 @@ def run_method(
     dict_datasets_pipeline: Dict[str, Optional[ndarray]],
     glob_stats: Dict,
     comm: MPI.Comm,
-    reslice_info: ResliceInfo,
-) -> Tuple[ResliceInfo, bool]:
+) -> Dict:
     """
     Run a method function in the processing pipeline.
 
@@ -513,13 +517,11 @@ def run_method(
         necessary.
     comm : MPI.Comm
         The MPI communicator used for the run.
-    reslice_info : ResliceInfo
-        Contains the information about reslicing.
 
     Returns
     -------
-    Tuple[ResliceInfo, bool]
-        Returns a tuple containing the reslicing info and glob stats
+    Dict
+        Returns the global stats
     """
     module_path = current_func.module_name
     method_name = current_func.method_func.__name__
@@ -540,7 +542,6 @@ def run_method(
         next_func,
         dict_datasets_pipeline,
         glob_stats,
-        reslice_info,
     )
 
     # Assign the `data` parameter of the method to the array associated with its
@@ -581,11 +582,11 @@ def run_method(
     if method_name == "save_to_images":
         # Nothing more to do if the saver has a special kind of
         # output which handles saving the result
-        return reslice_info, glob_stats
+        return glob_stats
 
     postrun_method(run_method_info, dict_datasets_pipeline, current_func)
 
-    return reslice_info, glob_stats
+    return glob_stats
 
 
 def _check_params_for_sweep(params: Dict) -> int:

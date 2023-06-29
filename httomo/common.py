@@ -35,8 +35,6 @@ class MethodFunc:
         Whether CPU execution is supported.
     gpu : bool
         Whether GPU execution is supported.
-    reslice_ahead : bool
-        Whether a reslice needs to be done due to a pattern change in the pipeline
     is_last_method : bool
         True if it is the last method in the pipeline
     """
@@ -49,7 +47,6 @@ class MethodFunc:
     pattern: Pattern = Pattern.projection
     cpu: bool = True
     gpu: bool = False
-    reslice_ahead: bool = False
     is_loader: bool = False
     is_last_method: bool = False
 
@@ -118,16 +115,10 @@ class RunMethodInfo:
         The name of the input dataset
     data_out : Union[str, List[str]]
         The name(s) of the output dataset(s)
-    should_reslice : bool
-        To check if the input dataset should be resliced before the task runs
     dict_httomo_params : Dict
         Dict containing extra params unrelated to wrapped packages but related to httomo
     save_result : bool
         Bool to check if we need to save the result (e.g., if it is the last method)
-    current_slice_dim : int
-        the dimension of the data that the current method requires the data to be sliced in.
-    next_slice_dim : int
-        the dimension of the data that the next method requires the data to be sliced in
     task_idx: int
         Index of the task in the pipeline being run
     package_name: str
@@ -139,11 +130,8 @@ class RunMethodInfo:
     dict_params_method: Dict[str, Any] = field(default_factory=dict)
     data_in: str = field(default_factory=str)
     data_out: Union[str, List[str]] = field(default_factory=str)
-    should_reslice: bool = False
     dict_httomo_params: Dict[str, Any] = field(default_factory=dict)
     save_result: bool = False
-    current_slice_dim: int = -1
-    next_slice_dim: int = -1
     task_idx: int = -1
     package_name: str = None
     method_name: str = None
