@@ -245,38 +245,16 @@ def run_tasks(
         # Assume that, after every section has been completed (except for the
         # last section), a reslice should occur
         if i < len(platform_sections) - 1:
-            reslice_info.count += 1
-            if reslice_info.count > 1 and not reslice_info.has_warn_printed:
-                reslice_warn_str = (
-                    "WARNING: Reslicing is performed more than once in this "
-                    "pipeline, is there a need for this?"
-                )
-                log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
-                reslice_info.has_warn_printed = True
-
             next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]
-            # TODO: should `slicing_dim_section` be used to define
-            # `current_slice_dim`? Or would that be too confusing to randomly
-            # see `current_slice_dim = slicing_dim_section + 1`?
-            current_slice_dim = _get_slicing_dim(section.pattern)
-            next_slice_dim = _get_slicing_dim(platform_sections[i+1].pattern)
-            if reslice_dir is None:
-                resliced_data, _ = reslice(
-                    dict_datasets_pipeline[next_section_in],
-                    current_slice_dim,
-                    next_slice_dim,
-                    comm,
-                )
-            else:
-                resliced_data, _ = reslice_filebased(
-                    dict_datasets_pipeline[next_section_in],
-                    current_slice_dim,
-                    next_slice_dim,
-                    comm,
-                    reslice_dir,
-                )
-            # Store the resliced data
-            dict_datasets_pipeline[next_section_in] = resliced_data
+            # TODO: Ensure that the required dataset is in CPU memory not GPU
+            # memory before attempting to reslice it
+            dict_datasets_pipeline[next_section_in] = _perform_reslice(
+                dict_datasets_pipeline[next_section_in],
+                section,
+                platform_sections[i+1],
+                reslice_info,
+                comm
+            )
     ##************* Sections loop is complete *************## 
 
 
@@ -721,3 +699,41 @@ def _update_max_slices(
         section.max_slices = max_slices
         pass
     return data_type, output_dims
+
+
+def _perform_reslice(
+    data: np.ndarray,
+    current_section: PlatformSection,
+    next_section: PlatformSection,
+    reslice_info: ResliceInfo,
+    comm: MPI.Comm,
+) -> np.ndarray:
+    reslice_info.count += 1
+    if reslice_info.count > 1 and not reslice_info.has_warn_printed:
+        reslice_warn_str = (
+            "WARNING: Reslicing is performed more than once in this "
+            "pipeline, is there a need for this?"
+        )
+        log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
+        reslice_info.has_warn_printed = True
+
+    current_slice_dim = _get_slicing_dim(current_section.pattern)
+    next_slice_dim = _get_slicing_dim(next_section.pattern)
+
+    if reslice_info.reslice_dir is None:
+        resliced_data, _ = reslice(
+            data,
+            current_slice_dim,
+            next_slice_dim,
+            comm,
+        )
+    else:
+        resliced_data, _ = reslice_filebased(
+            data,
+            current_slice_dim,
+            next_slice_dim,
+            comm,
+            reslice_info.reslice_dir,
+        )
+
+    return resliced_data
