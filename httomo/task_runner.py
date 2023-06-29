@@ -530,7 +530,6 @@ def run_method(
         misc_params,
         current_func,
         dict_datasets_pipeline,
-        glob_stats,
     )
 
     # Assign the `data` parameter of the method to the array associated with its

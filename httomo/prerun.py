@@ -21,7 +21,6 @@ def prerun_method(
     misc_params: List[Tuple[List[str], object]],
     current_func: MethodFunc,
     dict_datasets_pipeline: Dict[str, ndarray],
-    glob_stats: Dict,
 ):
 
     run_method_info.package_name = current_func.module_name.split(".")[0]
