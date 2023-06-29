@@ -20,8 +20,6 @@ def prerun_method(
     save_all: int,
     misc_params: List[Tuple[List[str], object]],
     current_func: MethodFunc,
-    prev_func: MethodFunc,
-    next_func: MethodFunc,
     dict_datasets_pipeline: Dict[str, ndarray],
     glob_stats: Dict,
 ):

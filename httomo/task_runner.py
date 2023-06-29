@@ -305,8 +305,6 @@ def run_tasks(
             save_all,
             possible_extra_params,
             method_func,
-            method_funcs[idx - 1],
-            method_funcs[idx + 1] if idx < len(method_funcs) - 1 else None,
             dict_datasets_pipeline,
             glob_stats[idx],
             comm,
@@ -486,8 +484,6 @@ def run_method(
     save_all: bool,
     misc_params: List[Tuple[List[str], object]],
     current_func: MethodFunc,
-    prev_func: MethodFunc,
-    next_func: Optional[MethodFunc],
     dict_datasets_pipeline: Dict[str, Optional[ndarray]],
     glob_stats: Dict,
     comm: MPI.Comm,
@@ -505,11 +501,6 @@ def run_method(
         A list of possible extra params that may be needed by a method.
     current_func : MethodFunc
         Object describing the python function that performs the method.
-    prev_func : MethodFunc
-        Object describing the python function that performed the previous method in the pipeline.
-    next_func: Optional[MethodFunc]
-        Object describing the python function that is next in the pipeline,
-        unless the current method is the last one.
     dict_datasets_pipeline : Dict[str, ndarray]
         A dict containing all available datasets in the given pipeline.
     glob_stats : Dict
@@ -538,8 +529,6 @@ def run_method(
         save_all,
         misc_params,
         current_func,
-        prev_func,
-        next_func,
         dict_datasets_pipeline,
         glob_stats,
     )
