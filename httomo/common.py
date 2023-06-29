@@ -66,8 +66,6 @@ class ResliceInfo:
         Counter for how many reslices were done so far
     has_warn_printed : bool
         Whether the reslicing warning has been printed
-    reslice_bool_list : List[bool]
-        List of booleans to identify when reslicing is needed
     reslice_dir : Optional[Path]
         The directory to use with file-based reslicing. If None,
         reslicing will be done in-memory.
@@ -75,7 +73,6 @@ class ResliceInfo:
 
     count: int
     has_warn_printed: bool
-    reslice_bool_list: List[bool]
     reslice_dir: Optional[Path] = None
 
 

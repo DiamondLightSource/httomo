@@ -90,15 +90,13 @@ def run_tasks(
 
     # store info about reslicing with ResliceInfo
     reslice_info = ResliceInfo(
-        count=0, has_warn_printed=False, reslice_bool_list=None, reslice_dir=reslice_dir
+        count=0, has_warn_printed=False, reslice_dir=reslice_dir
     )
 
     # Associate patterns to method function objects
     for i, method_func in enumerate(method_funcs):
         method_funcs[i] = _assign_pattern_to_method(method_func)
 
-    method_funcs = _check_if_should_reslice(method_funcs)
-    reslice_info.reslice_bool_list = [m.reslice_ahead for m in method_funcs]
     #: no need to add loader into a platform section
     platform_sections = _determine_platform_sections(method_funcs[1:])
 
@@ -183,7 +181,8 @@ def run_tasks(
     idx = 0
     # initialise the CPU data array with the loaded data, we override it at the end of every section
     data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
-    for section in platform_sections:
+    for i, section in enumerate(platform_sections):
+        print(f"Section {i}")
         # determine the max_slices for the whole section
         _update_max_slices(section, data_shape, data_dtype)
         # in order to iterate over max slices we need to know the slicing
@@ -243,6 +242,33 @@ def run_tasks(
         # TODO: After the blocks loop is complete the full data
         # is in "data_full_section" and the hdf5 file can be saved
         # or resliced if needed
+
+        # Assume that, after every section has been completed (except for the
+        # last section), a reslice should occur
+        if i < len(platform_sections) - 1:
+            next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]
+            # TODO: should `slicing_dim_section` be used to define
+            # `current_slice_dim`? Or would that be too confusing to randomly
+            # see `current_slice_dim = slicing_dim_section + 1`?
+            current_slice_dim = _get_slicing_dim(section.pattern)
+            next_slice_dim = _get_slicing_dim(platform_sections[i+1].pattern)
+            if reslice_dir is None:
+                resliced_data, _ = reslice(
+                    dict_datasets_pipeline[next_section_in],
+                    current_slice_dim,
+                    next_slice_dim,
+                    comm,
+                )
+            else:
+                resliced_data, _ = reslice_filebased(
+                    dict_datasets_pipeline[next_section_in],
+                    current_slice_dim,
+                    next_slice_dim,
+                    comm,
+                    reslice_dir,
+                )
+            # Store the resliced data
+            dict_datasets_pipeline[next_section_in] = resliced_data
     ##************* Sections loop is complete *************## 
 
 
@@ -517,26 +543,6 @@ def run_method(
         reslice_info,
     )
 
-    # Perform a reslice of the data if necessary
-    if run_method_info.should_reslice:
-        if reslice_info.reslice_dir is None:
-            resliced_data, _ = reslice(
-                dict_datasets_pipeline[run_method_info.data_in],
-                run_method_info.current_slice_dim,
-                run_method_info.next_slice_dim,
-                comm,
-            )
-        else:
-            resliced_data, _ = reslice_filebased(
-                dict_datasets_pipeline[run_method_info.data_in],
-                run_method_info.current_slice_dim,
-                run_method_info.next_slice_dim,
-                comm,
-                reslice_info.reslice_dir,
-            )
-        # Store the resliced input
-        dict_datasets_pipeline[run_method_info.data_in] = resliced_data
-
     # Assign the `data` parameter of the method to the array associated with its
     # input dataset
     run_method_info.dict_httomo_params["data"] = dict_datasets_pipeline[
@@ -580,50 +586,6 @@ def run_method(
     postrun_method(run_method_info, dict_datasets_pipeline, current_func)
 
     return reslice_info, glob_stats
-
-
-def _check_if_should_reslice(methods: List[MethodFunc]) -> List[MethodFunc]:
-    """Determine if the input dataset for the method functions in the pipeline
-    should be resliced. Builds the list of booleans.
-
-    Parameters
-    ----------
-    methods : List[MethodFunc]
-        List of the methods in the pipeline, associated with the patterns.
-
-    Returns
-    -------
-    List[MethodFunc]
-        Modified list of methods, with the ``reslice_ahead`` field set
-    """
-    # ___________Rules for when and when-not to reslice the data___________
-    # In order to reslice more accurately we need to know about all patterns in
-    # the given pipeline.
-    # The general rules are the following:
-    # 1. Reslice ONLY if the pattern changes from "projection" to "sinogram" or the other way around
-    # 2. With Pattern.all present one needs to check patterns on the edges of
-    # the Pattern.all.
-    # For instance consider the following example (method - pattern):
-    #      1. Normalise - projection
-    #      2. Dezinger - all
-    #      3. Phase retrieval - projection
-    #      4. Median - all
-    #      5. Centering - sinogram
-    # In this case you DON'T reclice between 2 and 3 as 1 and 3 are the same pattern.
-    # You reclice between 4 and 5 as the pattern between 3 and 5 does change.
-    ret_methods = [*methods]
-
-    current_pattern = methods[0].pattern
-    for x, _ in enumerate(methods):
-        if (methods[x].pattern != current_pattern) and (
-            methods[x].pattern != Pattern.all
-        ):
-            # skipping "all" pattern and look for different pattern from the
-            # current pattern
-            current_pattern = methods[x].pattern
-            ret_methods[x] = dataclasses.replace(methods[x], reslice_ahead=True)
-
-    return ret_methods
 
 
 def _check_params_for_sweep(params: Dict) -> int:
