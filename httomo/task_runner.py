@@ -219,6 +219,10 @@ def run_tasks(
                 # The result of each method should override data_block?
                 # Take care of multi_input stuff here. I guess it requires 
                 # an inner loop? 
+
+                # NOTE: If `save_to_images` needs the stats of the output of the
+                # previous section, they can be accessed via
+                # platform_sections[i-1].output_stats
                 print(method_sect.module_name)
             ##************* Methods loop is complete *************##
             # TODO: The block has now been processed and the output data
@@ -241,6 +245,14 @@ def run_tasks(
         # TODO: After the blocks loop is complete the full data
         # is in "data_full_section" and the hdf5 file can be saved
         # or resliced if needed
+
+        # Calculate stats on result of the last method in the section
+        #
+        # NOTE: Currently assuming that the dataset to calculate stats from is
+        # the same input dataset from the beginning of the sections loop; should
+        # this instead be getting the output dataset from the last method that
+        # was in the section which has just completed?
+        section.output_stats = min_max_mean_std(data_full_section, comm)
 
         # Assume that, after every section has been completed (except for the
         # last section), a reslice should occur
@@ -278,13 +290,12 @@ def run_tasks(
             method_func.parameters.update({"ncore": ncore})
 
         idx += 1
-        glob_stats[idx] = run_method(
+        run_method(
             idx,
             save_all,
             possible_extra_params,
             method_func,
             dict_datasets_pipeline,
-            glob_stats[idx],
             comm,
         )
 
@@ -463,7 +474,6 @@ def run_method(
     misc_params: List[Tuple[List[str], object]],
     current_func: MethodFunc,
     dict_datasets_pipeline: Dict[str, Optional[ndarray]],
-    glob_stats: Dict,
     comm: MPI.Comm,
 ) -> Dict:
     """
@@ -481,9 +491,6 @@ def run_method(
         Object describing the python function that performs the method.
     dict_datasets_pipeline : Dict[str, ndarray]
         A dict containing all available datasets in the given pipeline.
-    glob_stats : Dict
-        A dict of the dataset names to store their associated global stats if
-        necessary.
     comm : MPI.Comm
         The MPI communicator used for the run.
 
@@ -516,12 +523,6 @@ def run_method(
         run_method_info.data_in
     ]
 
-    # Add global stats if the method requires it
-    if "glob_stats" in signature(current_func.method_func).parameters:
-        stats = min_max_mean_std(dict_datasets_pipeline[run_method_info.data_in], comm)
-        glob_stats[run_method_info.data_in].append(stats)
-        run_method_info.dict_params_method.update({"glob_stats": stats})
-
     # Run method on the input data
     if method_name == "save_to_images":
         func_wrapper(
@@ -548,11 +549,9 @@ def run_method(
     if method_name == "save_to_images":
         # Nothing more to do if the saver has a special kind of
         # output which handles saving the result
-        return glob_stats
+        return
 
     postrun_method(run_method_info, dict_datasets_pipeline, current_func)
-
-    return glob_stats
 
 
 def _check_params_for_sweep(params: Dict) -> int:
@@ -625,6 +624,7 @@ def _determine_platform_sections(
                     pattern=current_pattern,
                     max_slices=0,
                     methods=methods,
+                    output_stats=None,
                 )
             )
             methods = [method]
@@ -633,7 +633,8 @@ def _determine_platform_sections(
 
     ret.append(
         PlatformSection(
-            gpu=current_gpu, pattern=current_pattern, max_slices=0, methods=methods
+            gpu=current_gpu, pattern=current_pattern, max_slices=0, methods=methods,
+            output_stats=None
         )
     )
 

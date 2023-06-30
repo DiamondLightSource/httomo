@@ -93,12 +93,16 @@ class PlatformSection:
         exhausting memory (relevant on GPU only)
     methods : List[MethodFunc]
         List of methods in this section
+    output_stats : Tuple[int, int, float, float]
+        A tuple containing the min, max, mean, and standard deviation of the
+        output of the final method in the section
     """
 
     gpu: bool
     pattern: Pattern
     max_slices: int
     methods: List[MethodFunc]
+    output_stats: Tuple[int, int, float, float]
 
 
 @dataclass
