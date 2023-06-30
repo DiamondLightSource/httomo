@@ -42,16 +42,6 @@ DLS Specific templates
     
     .. literalinclude:: ../../../samples/pipeline_template_examples/DLS/02_i12_360scan_pipeline.yaml
 
-.. _tutorials_pl_templates_multiinput:
-
-Multi Inputs
-----------------------------
-Those templates show how to apply a method to several data inputs. 
-
-.. dropdown:: Several data inputs for one method
-    
-    .. literalinclude:: ../../../samples/pipeline_template_examples/multi_inputs/01_multi_inputs.yaml
-
 .. _tutorials_pl_templates_sweeps:
 
 Parameter Sweeps templates

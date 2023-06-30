@@ -102,16 +102,18 @@ def run_tasks(
     #: no need to add loader into a platform section
     platform_sections = _determine_platform_sections(method_funcs[1:])
 
-    # Check pipeline for the number of parameter sweeps present. If more than
-    # one is defined, raise an error, due to not supporting multiple parameter
-    # sweeps
+    # Check pipeline for the number of parameter sweeps present. If one is
+    # defined, raise an error, due to not supporting parameter sweeps in a
+    # "performance" run of httomo
     params = [m.parameters for m in method_funcs]
     no_of_sweeps = sum(map(_check_params_for_sweep, params))
 
-    if no_of_sweeps > 1:
+    if no_of_sweeps > 0:
         err_str = (
-            f"There are {no_of_sweeps} parameter sweeps in the "
-            "pipeline, but a maximum of 1 is supported."
+            f"There exists {no_of_sweeps} parameter sweep(s) in the "
+            "pipeline, but parameter sweeps are not supported in "
+            "`httomo performance`. Please either:\n  1) Remove the parameter "
+            "sweeps.\n  2) Use `httomo preview` to run this pipeline."
         )
         log_exception(err_str)
         raise ValueError(err_str)
@@ -324,7 +326,7 @@ def _initialise_datasets_and_stats(
     # to exist in the `datasets` dict
     loader_dataset_param = "name"
     loader_dataset_params = [loader_dataset_param]
-    method_dataset_params = ["data_in", "data_out", "data_in_multi", "data_out_multi"]
+    method_dataset_params = ["data_in", "data_out"]
 
     dataset_params = method_dataset_params + loader_dataset_params
 
@@ -338,20 +340,11 @@ def _initialise_datasets_and_stats(
         if "loaders" in module_name:
             dataset_param = loader_dataset_param
         else:
-            dataset_param = (
-                "data_in_multi" if "data_in_multi" in method_conf.keys() else "data_in"
-            )
+            dataset_param = "data_in"
 
         # Dict to hold the stats for each dataset associated with the method
         method_stats: Dict[str, List] = {}
-
-        # Check if there are multiple input datasets to account for
-        if type(method_conf[dataset_param]) is list:
-            for dataset_name in method_conf[dataset_param]:
-                method_stats[dataset_name] = []
-        else:
-            method_stats[method_conf[dataset_param]] = []
-
+        method_stats[method_conf[dataset_param]] = []
         stats.append(method_stats)
 
         for param in method_conf.keys():
@@ -524,153 +517,67 @@ def run_method(
         reslice_info,
     )
 
-    for in_dataset_idx, in_dataset in enumerate(run_method_info.data_in):
-        # First, setup the datasets and arrays needed for the method, based on
-        # two factors:
-        # - if the current method has a parameter sweep for one of its
-        #   parameters
-        # - if the current method is going to run on the output of a parameter
-        #   sweep from a previous method in the pipeline
-        if method_name == "save_to_images":
-            if run_method_info.param_sweep_name is not None:
-                err_str = "Parameters sweeps on savers is not supported"
-                log_exception(err_str)
-                raise ValueError(err_str)
-            else:
-                if type(dict_datasets_pipeline[in_dataset]) is list:
-                    arrs = dict_datasets_pipeline[in_dataset]
-                else:
-                    arrs = [dict_datasets_pipeline[in_dataset]]
+    # Perform a reslice of the data if necessary
+    if run_method_info.should_reslice:
+        if reslice_info.reslice_dir is None:
+            resliced_data, _ = reslice(
+                dict_datasets_pipeline[run_method_info.data_in],
+                run_method_info.current_slice_dim,
+                run_method_info.next_slice_dim,
+                comm,
+            )
         else:
-            if run_method_info.param_sweep_name:
-                arrs = [dict_datasets_pipeline[in_dataset]]
-            else:
-                # If the data is a list of arrays, then it was the result of a
-                # parameter sweep from a previous method, so the next method
-                # must be applied to all arrays in the list
-                if type(dict_datasets_pipeline[in_dataset]) is list:
-                    arrs = dict_datasets_pipeline[in_dataset]
-                else:
-                    arrs = [dict_datasets_pipeline[in_dataset]]
+            resliced_data, _ = reslice_filebased(
+                dict_datasets_pipeline[run_method_info.data_in],
+                run_method_info.current_slice_dim,
+                run_method_info.next_slice_dim,
+                comm,
+                reslice_info.reslice_dir,
+            )
+        # Store the resliced input
+        dict_datasets_pipeline[run_method_info.data_in] = resliced_data
 
-        # Both `data_in` and `data_out` are lists. However, `data_out` for a
-        # method can be such that there are multiple output datasets produced by
-        # the method when given only one input dataset.
-        #
-        # In this case, there will be a list of dataset names within `data_out`
-        # at some index `j`, which is then associated with the single input
-        # dataset in `data_in` at index `j`.
-        #
-        # Therefore, set the output dataset to be the element in `data_out` that
-        # is at the same index as the input dataset in `data_in`
-        out_dataset = run_method_info.data_out[in_dataset_idx]
+    # Assign the `data` parameter of the method to the array associated with its
+    # input dataset
+    run_method_info.dict_httomo_params["data"] = dict_datasets_pipeline[
+        run_method_info.data_in
+    ]
 
-        # TODO: Not yet able to run parameter sweeps on a method that also
-        # produces mutliple output datasets
-        if isinstance(out_dataset, list) and run_method_info.param_sweep_name:
-            err_str = "Parameter sweeps on methods with multiple output datasets is not supported"
-            log_exception(err_str)
-            raise ValueError(err_str)
+    # Add global stats if the method requires it
+    if "glob_stats" in signature(current_func.method_func).parameters:
+        stats = min_max_mean_std(dict_datasets_pipeline[run_method_info.data_in], comm)
+        glob_stats[run_method_info.data_in].append(stats)
+        run_method_info.dict_params_method.update({"glob_stats": stats})
 
-        # Create a list to store the result of the different parameter values
-        if run_method_info.param_sweep_name:
-            out = []
-
-        # Now, loop through all the arrays involved in the current method's
-        # processing, taking into account several things:
-        # - if reslicing needs to occur
-        # - if global stats are needed by the method
-        # - if extra parameters need to be added in order to handle the
-        #   parameter sweep data (just `save_to_images()` falls into this
-        #   category)
-        for i, arr in enumerate(arrs):
-            if method_name == "save_to_images":
-                subfolder_name = f"images_{i}"
-                run_method_info.dict_params_method.update(
-                    {"subfolder_name": subfolder_name}
-                )
-
-            # Perform a reslice of the data if necessary
-            if run_method_info.should_reslice:
-                if reslice_info.reslice_dir is None:
-                    resliced_data, _ = reslice(
-                        arr,
-                        run_method_info.current_slice_dim,
-                        run_method_info.next_slice_dim,
-                        comm,
-                    )
-                else:
-                    resliced_data, _ = reslice_filebased(
-                        arr,
-                        run_method_info.current_slice_dim,
-                        run_method_info.next_slice_dim,
-                        comm,
-                        reslice_info.reslice_dir,
-                    )
-                # Store the resliced input
-                if type(dict_datasets_pipeline[in_dataset]) is list:
-                    dict_datasets_pipeline[in_dataset][i] = resliced_data
-                else:
-                    dict_datasets_pipeline[in_dataset] = resliced_data
-                arr = resliced_data
-
-            run_method_info.dict_httomo_params["data"] = arr
-
-            # Add global stats if necessary
-            if "glob_stats" in signature(current_func.method_func).parameters:
-                # get the glob stats
-                stats = min_max_mean_std(arr, comm)
-                glob_stats[in_dataset].append(stats)
-                run_method_info.dict_params_method.update({"glob_stats": stats})
-
-            # Run the method
-            if method_name == "save_to_images":
-                func_wrapper(
-                    method_name,
-                    run_method_info.dict_params_method,
-                    **run_method_info.dict_httomo_params,
-                )
-            else:
-                if run_method_info.param_sweep_name:
-                    for val in run_method_info.param_sweep_vals:
-                        run_method_info.dict_params_method[
-                            run_method_info.param_sweep_name
-                        ] = val
-                        res = func_wrapper(
-                            method_name,
-                            run_method_info.dict_params_method,
-                            **run_method_info.dict_httomo_params,
-                        )
-                        out.append(res)
-                    dict_datasets_pipeline[out_dataset] = out
-                else:
-                    res = func_wrapper(
-                        method_name,
-                        run_method_info.dict_params_method,
-                        **run_method_info.dict_httomo_params,
-                    )
-                    # Store the output(s) of the method in the appropriate
-                    # dataset in the `dict_datasets_pipeline` dict
-                    if isinstance(res, (tuple, list)):
-                        # The method produced multiple outputs
-                        for val, dataset in zip(res, out_dataset):
-                            dict_datasets_pipeline[dataset] = val
-                    else:
-                        if isinstance(dict_datasets_pipeline[out_dataset], list):
-                            # Method has been run on an array that was part of a
-                            # parameter sweep
-                            dict_datasets_pipeline[out_dataset][i] = res
-                        else:
-                            dict_datasets_pipeline[out_dataset] = res
-
-        if method_name == "save_to_images":
-            # Nothing more to do if the saver has a special kind of
-            # output which handles saving the result
-            return reslice_info, glob_stats
-
-        postrun_method(
-            run_method_info, out_dataset, dict_datasets_pipeline, current_func, i
+    # Run method on the input data
+    if method_name == "save_to_images":
+        func_wrapper(
+            method_name,
+            run_method_info.dict_params_method,
+            **run_method_info.dict_httomo_params,
         )
+    else:
+        res = func_wrapper(
+            method_name,
+            run_method_info.dict_params_method,
+            **run_method_info.dict_httomo_params,
+        )
+        # Store the output(s) of the method in the appropriate
+        # dataset in the `dict_datasets_pipeline` dict
+        if isinstance(res, (tuple, list)):
+            # The method produced multiple outputs
+            for val, dataset in zip(res, run_method_info.data_out):
+                dict_datasets_pipeline[dataset] = val
+        else:
+            # The method produced a single output
+            dict_datasets_pipeline[run_method_info.data_out] = res
+
+    if method_name == "save_to_images":
+        # Nothing more to do if the saver has a special kind of
+        # output which handles saving the result
+        return reslice_info, glob_stats
+
+    postrun_method(run_method_info, dict_datasets_pipeline, current_func)
 
     return reslice_info, glob_stats
 

@@ -320,6 +320,7 @@ def test_diad_testing_pipeline_output(
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
+@pytest.mark.preview
 def test_sweep_pipeline_with_save_all_using_mpi(
     cmd, standard_data, sample_pipelines, standard_loader, output_folder
 ):
@@ -457,6 +458,7 @@ def test_sweep_pipeline_with_save_all_using_mpi(
     )
 
 
+@pytest.mark.preview
 def test_sweep_range_pipeline_with_step_absent(
     cmd, standard_data, sample_pipelines, output_folder
 ):
@@ -473,44 +475,3 @@ def test_sweep_range_pipeline_with_step_absent(
         "ERROR | Please provide `start`, `stop`, `step` values"
         " when specifying a range to peform a parameter sweep over."
     ) in log_contents
-
-
-@pytest.mark.cupy
-def test_multi_inputs_pipeline(cmd, standard_data, sample_pipelines, output_folder):
-    cmd.insert(7, standard_data)
-    cmd.insert(8, sample_pipelines + "multi_inputs/01_multi_inputs.yaml")
-    subprocess.check_output(cmd)
-
-    files = read_folder("output_dir/")
-    assert len(files) == 5
-
-    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
-    assert compare_two_yamls(
-        sample_pipelines + "multi_inputs/01_multi_inputs.yaml", copied_yaml_path
-    )
-
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 3
-
-    median_filter_tomo = list(
-        filter(lambda x: "median_filter3d-tomo.h5" in x, h5_files)
-    )[0]
-    median_filter_flats = list(
-        filter(lambda x: "median_filter3d-flats.h5" in x, h5_files)
-    )[0]
-    median_filter_darks = list(
-        filter(lambda x: "median_filter3d-darks.h5" in x, h5_files)
-    )[0]
-
-    with h5py.File(median_filter_flats, "r") as f:
-        arr = np.array(f["data"])
-        assert arr.shape == (20, 128, 160)
-        assert arr.dtype == np.uint16
-    with h5py.File(median_filter_darks, "r") as f:
-        arr = np.array(f["data"])
-        assert arr.shape == (20, 128, 160)
-        assert arr.dtype == np.uint16
-    with h5py.File(median_filter_tomo, "r") as f:
-        arr = np.array(f["data"])
-        assert arr.shape == (180, 128, 160)
-        assert arr.dtype == np.uint16

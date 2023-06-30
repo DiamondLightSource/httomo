@@ -3,7 +3,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import IntEnum, unique
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from httomo.utils import Pattern
 
@@ -117,14 +117,10 @@ class RunMethodInfo:
 
     dict_params_method : Dict
         The dict of param names and their values for a given method function.
-    data_in : List
-        Input datasets in a list
-    data_out : List
-        Output datasets in a list
-    param_sweep_name : str
-        The name of the param sweep involved
-    param_sweep_vals: Any
-        The tuple values of the param sweep
+    data_in : str
+        The name of the input dataset
+    data_out : Union[str, List[str]]
+        The name(s) of the output dataset(s)
     should_reslice : bool
         To check if the input dataset should be resliced before the task runs
     dict_httomo_params : Dict
@@ -144,15 +140,13 @@ class RunMethodInfo:
     """
 
     dict_params_method: Dict[str, Any] = field(default_factory=dict)
-    data_in: List[str] = field(default_factory=list)
-    data_out: List[str] = field(default_factory=list)
+    data_in: str = field(default_factory=str)
+    data_out: Union[str, List[str]] = field(default_factory=str)
     should_reslice: bool = False
     dict_httomo_params: Dict[str, Any] = field(default_factory=dict)
     save_result: bool = False
     current_slice_dim: int = -1
     next_slice_dim: int = -1
     task_idx: int = -1
-    param_sweep_name: str = None
-    param_sweep_vals: Tuple = field(default_factory=tuple)
     package_name: str = None
     method_name: str = None

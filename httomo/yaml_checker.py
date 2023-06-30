@@ -207,20 +207,6 @@ def validate_yaml_config(yaml_file, in_file: str = None) -> bool:
             for parameter in d1[key].keys():
                 assert isinstance(parameter, str)
 
-                # handle `data_in_multi` and `data_out_multi` as special cases
-                if parameter in ["data_in_multi", "data_out_multi"]:
-                    if not (
-                        isinstance(d1[key][parameter], list)
-                        and all(isinstance(x, str) for x in d1[key][parameter])
-                    ):
-                        _print_with_colour(
-                            f"Value assigned to parameter '{parameter}' in the '{modules[i]}' method"
-                            f" is not correct."
-                        )
-                        return False
-
-                    continue
-
                 if parameter not in d2[key].keys():
                     _print_with_colour(
                         f"Parameter '{parameter}' in the '{modules[i]}' method is not valid."
