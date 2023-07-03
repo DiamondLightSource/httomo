@@ -2,7 +2,7 @@ import numpy as np
 from mpi4py import MPI
 from mpi4py.MPI import Comm
 
-from httomo.utils import gpu_enabled, xp
+from httomo.cupy_utils import gpu_enabled, xp
 
 
 def min_max_mean_std(data: xp.ndarray, comm: Comm):

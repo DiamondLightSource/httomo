@@ -1,11 +1,10 @@
 {% set pyproject = load_file_data("../../pyproject.toml", from_recipe_dir=True) %}
 {% set proj = pyproject.get("project") %}
 {% set name = proj.get("name") %}
-{% set version = proj.get("version") %}
 
 package:
   name: {{ name|lower }}
-  version: {{ version }}
+  version: {{ GIT_DESCRIBE_TAG|trim("v") }}
 
 source:
   path: ../../
@@ -34,6 +33,7 @@ requirements:
     - python
     - pip
     - setuptools
+    - setuptools-git-versioning
   run:
     - python
     - numpy>= 1.20, <= 1.23

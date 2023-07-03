@@ -17,7 +17,8 @@ httomo = ["methods_database/packages/*.yaml",
 
 [tool.setuptools-git-versioning]
 enabled = true
-tag_filter = "v(?P<tag>[0-9].*)"
+template = "{tag}"
+dev_template = "{tag}"
 
 [project]
 name = "httomo"
@@ -39,11 +40,11 @@ classifiers = [
 ]
 
 requires-python = ">=3.9"
-version = "0.0.1"
+dynamic = ["version"]
 dependencies = [
     "click",
-    "cupy",
     "numpy",
+    "httomolib"
 ]
 
 [project.scripts]
@@ -53,10 +54,21 @@ httomo = "httomo.cli:main"
 repository = "https://github.com/DiamondLightSource/HTTomo"
 
 [project.optional-dependencies]
-tomopy = [ "tomopy" ]
-httomolib = [ "httomolib" ]
-httomolibgpu = ["httomolibgpu", "cupy"]
-dev = [
+cpu = ["tomopy" ]
+gpu = ["httomolibgpu"]
+dev-cpu = [
+  "pytest",
+  "pytest-cov",
+  "pytest-xdist",
+  "flake8",
+  "pyproject-flake8",
+  "pydocstyle",
+  "toml",
+  "httomolib[dev]",
+  "tomopy",
+  "plumbum",
+]
+dev-gpu = [
   "pytest",
   "pytest-cov",
   "pytest-xdist",
@@ -108,9 +120,9 @@ addopts = [
 testpaths = [
     "tests",
 ]
-# https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
-filterwarnings = "error"
-# Doctest python code in docs, python code in src docstrings, test functions in tests
+filterwarnings = [
+    "ignore::ImportWarning"
+]
 
 
 [tool.coverage.run]

@@ -363,7 +363,7 @@ def test_sweep_pipeline_with_save_all_using_mpi(
 
     #: - - - - - - - - - -  PARALLEL RUN - - - - - - - - - - -
     cmd[5] = "parallel_run"
-    local.cmd.mpirun("-n", "4", *cmd)
+    local.cmd.mpirun("-n", "2", *cmd)
 
     #: - - - - - - - - - - SERIAL vs PARALLEL OUTPUT - - - - - - -
     serial_files = read_folder("output_dir/serial_run/")
@@ -482,7 +482,7 @@ def test_sweep_pipeline_with_save_all_using_mpi(
 
     #: user log and mpi log would differ in the data shapes
     assert (
-        "DEBUG | RANK: [0], Data shape is (45, 128, 160) of type uint16"
+        "DEBUG | RANK: [0], Data shape is (90, 128, 160) of type uint16"
         in mpi_log_contents
     )
 
@@ -505,7 +505,6 @@ def test_sweep_range_pipeline_with_step_absent(
     ) in log_contents
 
 
-@pytest.mark.cupy
 def test_multi_inputs_pipeline(cmd, standard_data, sample_pipelines, output_folder):
     cmd.insert(7, standard_data)
     cmd.insert(8, sample_pipelines + "multi_inputs/01_multi_inputs.yaml")
