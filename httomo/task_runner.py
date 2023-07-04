@@ -90,15 +90,13 @@ def run_tasks(
 
     # store info about reslicing with ResliceInfo
     reslice_info = ResliceInfo(
-        count=0, has_warn_printed=False, reslice_bool_list=None, reslice_dir=reslice_dir
+        count=0, has_warn_printed=False, reslice_dir=reslice_dir
     )
 
     # Associate patterns to method function objects
     for i, method_func in enumerate(method_funcs):
         method_funcs[i] = _assign_pattern_to_method(method_func)
 
-    method_funcs = _check_if_should_reslice(method_funcs)
-    reslice_info.reslice_bool_list = [m.reslice_ahead for m in method_funcs]
     #: no need to add loader into a platform section
     platform_sections = _determine_platform_sections(method_funcs[1:])
 
@@ -173,7 +171,6 @@ def run_tasks(
         (["comm"], comm),
         (["out_dir"], httomo.globals.run_out_dir),
         (["save_result"], False),
-        (["reslice_ahead"], False),
     ]
     # data shape and dtype are useful when calculating max slices
     data_shape = loader_info.data.shape
@@ -183,7 +180,8 @@ def run_tasks(
     idx = 0
     # initialise the CPU data array with the loaded data, we override it at the end of every section
     data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
-    for section in platform_sections:
+    for i, section in enumerate(platform_sections):
+        print(f"Section {i}")
         # determine the max_slices for the whole section
         _update_max_slices(section, data_shape, data_dtype)
         # in order to iterate over max slices we need to know the slicing
@@ -221,6 +219,10 @@ def run_tasks(
                 # The result of each method should override data_block?
                 # Take care of multi_input stuff here. I guess it requires 
                 # an inner loop? 
+
+                # NOTE: If `save_to_images` needs the stats of the output of the
+                # previous section, they can be accessed via
+                # platform_sections[i-1].output_stats
                 print(method_sect.module_name)
             ##************* Methods loop is complete *************##
             # TODO: The block has now been processed and the output data
@@ -243,6 +245,28 @@ def run_tasks(
         # TODO: After the blocks loop is complete the full data
         # is in "data_full_section" and the hdf5 file can be saved
         # or resliced if needed
+
+        # Calculate stats on result of the last method in the section
+        #
+        # NOTE: Currently assuming that the dataset to calculate stats from is
+        # the same input dataset from the beginning of the sections loop; should
+        # this instead be getting the output dataset from the last method that
+        # was in the section which has just completed?
+        section.output_stats = min_max_mean_std(data_full_section, comm)
+
+        # Assume that, after every section has been completed (except for the
+        # last section), a reslice should occur
+        if i < len(platform_sections) - 1:
+            next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]
+            # TODO: Ensure that the required dataset is in CPU memory not GPU
+            # memory before attempting to reslice it
+            dict_datasets_pipeline[next_section_in] = _perform_reslice(
+                dict_datasets_pipeline[next_section_in],
+                section,
+                platform_sections[i+1],
+                reslice_info,
+                comm
+            )
     ##************* Sections loop is complete *************## 
 
 
@@ -266,17 +290,13 @@ def run_tasks(
             method_func.parameters.update({"ncore": ncore})
 
         idx += 1
-        reslice_info, glob_stats[idx] = run_method(
+        run_method(
             idx,
             save_all,
             possible_extra_params,
             method_func,
-            method_funcs[idx - 1],
-            method_funcs[idx + 1] if idx < len(method_funcs) - 1 else None,
             dict_datasets_pipeline,
-            glob_stats[idx],
             comm,
-            reslice_info,
         )
 
         stop = time.perf_counter_ns()
@@ -397,7 +417,6 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
             is_loader=True,
             cpu=True,
             gpu=False,
-            reslice_ahead=False,
             pattern=Pattern.all,
         )
     )
@@ -440,7 +459,6 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 calc_max_slices=None
                 if not is_httomolibgpu
                 else wrapper_init_module.calc_max_slices,
-                reslice_ahead=False,
                 pattern=Pattern.all,
                 is_loader=False,
                 is_last_method=True if i == methods_count - 2 else False,
@@ -455,13 +473,9 @@ def run_method(
     save_all: bool,
     misc_params: List[Tuple[List[str], object]],
     current_func: MethodFunc,
-    prev_func: MethodFunc,
-    next_func: Optional[MethodFunc],
     dict_datasets_pipeline: Dict[str, Optional[ndarray]],
-    glob_stats: Dict,
     comm: MPI.Comm,
-    reslice_info: ResliceInfo,
-) -> Tuple[ResliceInfo, bool]:
+) -> Dict:
     """
     Run a method function in the processing pipeline.
 
@@ -475,25 +489,15 @@ def run_method(
         A list of possible extra params that may be needed by a method.
     current_func : MethodFunc
         Object describing the python function that performs the method.
-    prev_func : MethodFunc
-        Object describing the python function that performed the previous method in the pipeline.
-    next_func: Optional[MethodFunc]
-        Object describing the python function that is next in the pipeline,
-        unless the current method is the last one.
     dict_datasets_pipeline : Dict[str, ndarray]
         A dict containing all available datasets in the given pipeline.
-    glob_stats : Dict
-        A dict of the dataset names to store their associated global stats if
-        necessary.
     comm : MPI.Comm
         The MPI communicator used for the run.
-    reslice_info : ResliceInfo
-        Contains the information about reslicing.
 
     Returns
     -------
-    Tuple[ResliceInfo, bool]
-        Returns a tuple containing the reslicing info and glob stats
+    Dict
+        Returns the global stats
     """
     module_path = current_func.module_name
     method_name = current_func.method_func.__name__
@@ -510,44 +514,14 @@ def run_method(
         save_all,
         misc_params,
         current_func,
-        prev_func,
-        next_func,
         dict_datasets_pipeline,
-        glob_stats,
-        reslice_info,
     )
-
-    # Perform a reslice of the data if necessary
-    if run_method_info.should_reslice:
-        if reslice_info.reslice_dir is None:
-            resliced_data, _ = reslice(
-                dict_datasets_pipeline[run_method_info.data_in],
-                run_method_info.current_slice_dim,
-                run_method_info.next_slice_dim,
-                comm,
-            )
-        else:
-            resliced_data, _ = reslice_filebased(
-                dict_datasets_pipeline[run_method_info.data_in],
-                run_method_info.current_slice_dim,
-                run_method_info.next_slice_dim,
-                comm,
-                reslice_info.reslice_dir,
-            )
-        # Store the resliced input
-        dict_datasets_pipeline[run_method_info.data_in] = resliced_data
 
     # Assign the `data` parameter of the method to the array associated with its
     # input dataset
     run_method_info.dict_httomo_params["data"] = dict_datasets_pipeline[
         run_method_info.data_in
     ]
-
-    # Add global stats if the method requires it
-    if "glob_stats" in signature(current_func.method_func).parameters:
-        stats = min_max_mean_std(dict_datasets_pipeline[run_method_info.data_in], comm)
-        glob_stats[run_method_info.data_in].append(stats)
-        run_method_info.dict_params_method.update({"glob_stats": stats})
 
     # Run method on the input data
     if method_name == "save_to_images":
@@ -575,55 +549,9 @@ def run_method(
     if method_name == "save_to_images":
         # Nothing more to do if the saver has a special kind of
         # output which handles saving the result
-        return reslice_info, glob_stats
+        return
 
     postrun_method(run_method_info, dict_datasets_pipeline, current_func)
-
-    return reslice_info, glob_stats
-
-
-def _check_if_should_reslice(methods: List[MethodFunc]) -> List[MethodFunc]:
-    """Determine if the input dataset for the method functions in the pipeline
-    should be resliced. Builds the list of booleans.
-
-    Parameters
-    ----------
-    methods : List[MethodFunc]
-        List of the methods in the pipeline, associated with the patterns.
-
-    Returns
-    -------
-    List[MethodFunc]
-        Modified list of methods, with the ``reslice_ahead`` field set
-    """
-    # ___________Rules for when and when-not to reslice the data___________
-    # In order to reslice more accurately we need to know about all patterns in
-    # the given pipeline.
-    # The general rules are the following:
-    # 1. Reslice ONLY if the pattern changes from "projection" to "sinogram" or the other way around
-    # 2. With Pattern.all present one needs to check patterns on the edges of
-    # the Pattern.all.
-    # For instance consider the following example (method - pattern):
-    #      1. Normalise - projection
-    #      2. Dezinger - all
-    #      3. Phase retrieval - projection
-    #      4. Median - all
-    #      5. Centering - sinogram
-    # In this case you DON'T reclice between 2 and 3 as 1 and 3 are the same pattern.
-    # You reclice between 4 and 5 as the pattern between 3 and 5 does change.
-    ret_methods = [*methods]
-
-    current_pattern = methods[0].pattern
-    for x, _ in enumerate(methods):
-        if (methods[x].pattern != current_pattern) and (
-            methods[x].pattern != Pattern.all
-        ):
-            # skipping "all" pattern and look for different pattern from the
-            # current pattern
-            current_pattern = methods[x].pattern
-            ret_methods[x] = dataclasses.replace(methods[x], reslice_ahead=True)
-
-    return ret_methods
 
 
 def _check_params_for_sweep(params: Dict) -> int:
@@ -696,6 +624,7 @@ def _determine_platform_sections(
                     pattern=current_pattern,
                     max_slices=0,
                     methods=methods,
+                    output_stats=None,
                 )
             )
             methods = [method]
@@ -704,7 +633,8 @@ def _determine_platform_sections(
 
     ret.append(
         PlatformSection(
-            gpu=current_gpu, pattern=current_pattern, max_slices=0, methods=methods
+            gpu=current_gpu, pattern=current_pattern, max_slices=0, methods=methods,
+            output_stats=None
         )
     )
 
@@ -770,3 +700,41 @@ def _update_max_slices(
         section.max_slices = max_slices
         pass
     return data_type, output_dims
+
+
+def _perform_reslice(
+    data: np.ndarray,
+    current_section: PlatformSection,
+    next_section: PlatformSection,
+    reslice_info: ResliceInfo,
+    comm: MPI.Comm,
+) -> np.ndarray:
+    reslice_info.count += 1
+    if reslice_info.count > 1 and not reslice_info.has_warn_printed:
+        reslice_warn_str = (
+            "WARNING: Reslicing is performed more than once in this "
+            "pipeline, is there a need for this?"
+        )
+        log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
+        reslice_info.has_warn_printed = True
+
+    current_slice_dim = _get_slicing_dim(current_section.pattern)
+    next_slice_dim = _get_slicing_dim(next_section.pattern)
+
+    if reslice_info.reslice_dir is None:
+        resliced_data, _ = reslice(
+            data,
+            current_slice_dim,
+            next_slice_dim,
+            comm,
+        )
+    else:
+        resliced_data, _ = reslice_filebased(
+            data,
+            current_slice_dim,
+            next_slice_dim,
+            comm,
+            reslice_info.reslice_dir,
+        )
+
+    return resliced_data

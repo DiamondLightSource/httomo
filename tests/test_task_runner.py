@@ -139,6 +139,7 @@ def test_platform_section_max_slices():
         gpu=True,
         pattern=Pattern.projection,
         max_slices=0,
+        output_stats=None,
         methods=[
             make_test_method(
                 pattern=Pattern.projection, gpu=True, calc_max_slices=max_slices_20
