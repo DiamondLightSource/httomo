@@ -22,7 +22,7 @@ import httomo.globals
 from httomo._stats.globals import min_max_mean_std
 from httomo.common import MethodFunc, PlatformSection, ResliceInfo, RunMethodInfo
 from httomo.data.hdf._utils.chunk import get_data_shape, save_dataset
-from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
+from httomo.data.hdf._utils.reslice import reslice, reslice_filebased, single_sino_reslice
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf.loaders import LoaderData
 from httomo.methods_database.query import get_method_info
@@ -165,6 +165,13 @@ def run_tasks(
     loader_func = method_funcs[0].method_func
     # collect meta data from LoaderData.
     loader_info = loader_func(**method_funcs[0].parameters)
+
+    # Gather a single sinogram (the middle one) to the rank 0 process
+    #
+    # TODO: Hardcoding the mid slice for now, later it needs to be properly
+    # calculated
+    MID_SLICE_IDX = 1080
+    mid_slice = single_sino_reslice(loader_info.data, MID_SLICE_IDX)
 
     output_str_list = [
         f"    Finished task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name} (",
