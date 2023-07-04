@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+import cupy as cp
 from httomolib.misc.images import save_to_images
 from mpi4py import MPI
 from numpy import ndarray
@@ -38,6 +39,7 @@ from httomo.utils import (
 )
 from httomo.wrappers_class import BackendWrapper, _gpumem_cleanup
 from httomo.yaml_utils import open_yaml_config
+from httomolibgpu.recon.rotation import find_center_vo
 
 
 def run_tasks(
@@ -171,7 +173,21 @@ def run_tasks(
     # TODO: Hardcoding the mid slice for now, later it needs to be properly
     # calculated
     MID_SLICE_IDX = 1080
+
+    if comm.rank == 0:
+        single_sino_start_time = MPI.Wtime()
+
     mid_slice = single_sino_reslice(loader_info.data, MID_SLICE_IDX)
+    if comm.rank == 0:
+        # Copy sinogram to GPU memory
+        #
+        # NOTE: Forcing the raw sinogram data to be `float32` rather than its
+        # original `uint16`
+        mid_slice_gpu = cp.array(mid_slice, dtype=cp.float32)
+        cor = find_center_vo(mid_slice_gpu)
+        single_sino_elapsed_time = MPI.Wtime() - single_sino_start_time
+        single_sino_end_str = f"~~~ Single sino reslice + GPU centering ~~~ took {single_sino_elapsed_time} sec to execute, CoR is {cor}"
+        log_once(single_sino_end_str, comm=comm, colour=Colour.BVIOLET)
 
     output_str_list = [
         f"    Finished task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name} (",
