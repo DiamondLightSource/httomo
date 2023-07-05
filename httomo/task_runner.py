@@ -23,12 +23,13 @@ import httomo.globals
 from httomo._stats.globals import min_max_mean_std
 from httomo.common import MethodFunc, PlatformSection, ResliceInfo, RunMethodInfo
 from httomo.data.hdf._utils.chunk import get_data_shape, save_dataset
-from httomo.data.hdf._utils.reslice import reslice, reslice_filebased, single_sino_reslice
+from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.data.hdf.loaders import LoaderData
 from httomo.methods_database.query import get_method_info
 from httomo.postrun import postrun_method
 from httomo.prerun import prerun_method
+from httomo.preprocess import preprocess_data
 from httomo.utils import (
     Colour,
     Pattern,
@@ -39,8 +40,6 @@ from httomo.utils import (
 )
 from httomo.wrappers_class import BackendWrapper, _gpumem_cleanup
 from httomo.yaml_utils import open_yaml_config
-from httomolibgpu.recon.rotation import find_center_vo
-
 
 def run_tasks(
     in_file: Path,
@@ -97,10 +96,21 @@ def run_tasks(
     reslice_info = ResliceInfo(
         count=0, has_warn_printed=False, reslice_dir=reslice_dir
     )
-
-    # Associate patterns to method function objects
+    
+    # dictionary that enables data preprocessing before the main loop
+    dict_preprocess = {
+        "centering": False,
+        "center_method_indx": 0,
+        "dezingering": False,
+        "dezinger_method_indx": 0,     
+    }
+    
+    # Associate patterns to method function objects and update dict_preprocess
     for i, method_func in enumerate(method_funcs):
         method_funcs[i] = _assign_attribute_to_method(method_func, "pattern")        
+        if method_func.module_name.rsplit('.', 1)[-1] == 'rotation':
+            dict_preprocess['centering'] = True # the calculation of CoR is needed
+            dict_preprocess['center_method_indx'] = i # saving the index where the method in method_func            
 
     # Associate output_dims_change method attribute to method function objects
     for i, method_func in enumerate(method_funcs):
@@ -167,28 +177,7 @@ def run_tasks(
     loader_func = method_funcs[0].method_func
     # collect meta data from LoaderData.
     loader_info = loader_func(**method_funcs[0].parameters)
-
-    # Gather a single sinogram (the middle one) to the rank 0 process
-    #
-    # TODO: Hardcoding the mid slice for now, later it needs to be properly
-    # calculated
-    MID_SLICE_IDX = 1080
-
-    if comm.rank == 0:
-        single_sino_start_time = MPI.Wtime()
-
-    mid_slice = single_sino_reslice(loader_info.data, MID_SLICE_IDX)
-    if comm.rank == 0:
-        # Copy sinogram to GPU memory
-        #
-        # NOTE: Forcing the raw sinogram data to be `float32` rather than its
-        # original `uint16`
-        mid_slice_gpu = cp.array(mid_slice, dtype=cp.float32)
-        cor = find_center_vo(mid_slice_gpu)
-        single_sino_elapsed_time = MPI.Wtime() - single_sino_start_time
-        single_sino_end_str = f"~~~ Single sino reslice + GPU centering ~~~ took {single_sino_elapsed_time} sec to execute, CoR is {cor}"
-        log_once(single_sino_end_str, comm=comm, colour=Colour.BVIOLET)
-
+        
     output_str_list = [
         f"    Finished task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name} (",
         "httomo",
@@ -209,6 +198,13 @@ def run_tasks(
     del loader_info.darks
     del loader_info.flats
 
+    # Execute pre-processing of data if needed. For instance, we might
+    # want to calculate CoR before the data has been modified
+    temp_dict = preprocess_data(dict_preprocess,
+                                method_funcs,
+                                dict_datasets_pipeline,
+                                comm)
+
     # Extra params relevant to httomo that a wrapper function might need
     possible_extra_params = [
         (["darks"], dict_datasets_pipeline["darks"]),
@@ -218,7 +214,9 @@ def run_tasks(
         (["out_dir"], httomo.globals.run_out_dir),
         (["return_numpy"], False),
         (["cupyrun"], False),
+        (["save_result"], False),
     ]
+
     # data shape and dtype are useful when calculating max slices
     data_shape = dict_datasets_pipeline[method_funcs[0].parameters["name"]].shape
     # data_dtype = loader_info.data.dtype
