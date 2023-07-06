@@ -191,43 +191,70 @@ def run_tasks(
         # to raster through the data in blocks that would fit into the GPU memory
         iterations_for_blocks = math.ceil(data_shape[slicing_dim_section] / section.max_slices)
         
-        ##---------- the loop over blocks in a section ------------##
+        ##---------- the loop over blocks in a section for a chunk of data ------------##
         indices_start = 0
         indices_end = int(section.max_slices)
         slc_indices = [slice(None)] * len(data_shape)
         for it_blocks in range(iterations_for_blocks):
             # preparing indices for the slicing of the data in blocks
-            slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)
-            
-            ###################Loading the data #####################            
-            # now initialise the block input data using indices
-            # NOTE:
-            # We need to be careful not to duplicate the memory here if
-            # the block size is the same size as the data_full_section!
-            data_block = data_full_section[tuple(slc_indices)]
+            slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)         
+
             ##---------- the loop over methods in a block ------------##
-            for method_sect in section.methods:
-                # TODO: 
-                # Here we should execute the wrappers associated with methods in 
-                # a section with an input of data_block data array
-                # 
-                # We should place the bit here that is ONLY associated
-                # with the wrappers execution, i.e., no data saving, reslicing etc. that is
-                # currently in run_method
+            for m_ind, methodfunc_sect in enumerate(section.methods):
+                # preparing everything for the wrapper execution
+                module_path = methodfunc_sect.module_name
+                method_name = methodfunc_sect.method_func.__name__
+                func_wrapper = methodfunc_sect.wrapper_func
+                package_name = methodfunc_sect.module_name.split(".")[0]
                 
-                # NOTE: 
-                # The result of each method should override data_block?
-                # Take care of multi_input stuff here. I guess it requires 
-                # an inner loop? 
+                print(f"Method {method_name}")
+                #: create an object that would be passed along to prerun_method,
+                #: run_method, and postrun_method
+                run_method_info = RunMethodInfo(task_idx=m_ind)
+                
+                #: prerun - before running the method, update the dictionaries
+                prerun_method(
+                    run_method_info,
+                    save_all,
+                    possible_extra_params,
+                    methodfunc_sect,
+                    dict_datasets_pipeline,
+                )
+                if m_ind == 0:
+                    # Assign the block of data on a CPU to `data` parameter of the method
+                    # this should happen once in the beginning of the loop over methods
+                    run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
+                else:
+                    # initialise by saved output data
+                    run_method_info.dict_httomo_params["data"] = dict_datasets_pipeline[run_method_info.data_out]
+                
+                # remove methods name from the parameters list of a method
+                run_method_info.dict_params_method.pop('method_name')
+                
+                # run the wrapper
+                res = func_wrapper(
+                    method_name,
+                    run_method_info.dict_params_method,
+                    **run_method_info.dict_httomo_params,
+                )        
+                
+                # Store the output(s) of the method in the appropriate
+                # dataset in the `dict_datasets_pipeline` dict
+                if isinstance(res, (tuple, list)):
+                    # The method produced multiple outputs
+                    for val, dataset in zip(res, run_method_info.data_out):
+                        dict_datasets_pipeline[dataset] = val
+                else:
+                    # The method produced a single output
+                    dict_datasets_pipeline[run_method_info.data_out] = res
 
                 # NOTE: If `save_to_images` needs the stats of the output of the
                 # previous section, they can be accessed via
-                # platform_sections[i-1].output_stats
-                print(method_sect.module_name)
+                # platform_sections[i-1].output_stats                
             ##************* Methods loop is complete *************##
             # TODO: The block has now been processed and the output data
             # can now be saved as:
-            # data_full_section[tuple(slc_indices)] = data_block
+            data_full_section[tuple(slc_indices)] = dict_datasets_pipeline[run_method_info.data_out]
             # NOTE: data_block must be on the CPU already, assuming that
             # the last method in the loop will return the numpy array and not cupy
 
@@ -269,7 +296,7 @@ def run_tasks(
             )
     ##************* Sections loop is complete *************## 
 
-
+    """
     # Run the methods
     for idx, method_func in enumerate(method_funcs[1:]):
         package = method_func.module_name.split(".")[0]
@@ -311,6 +338,7 @@ def run_tasks(
     reslice_summary_str = f"Total number of reslices: {reslice_info.count}"
     reslice_summary_colour = Colour.BLUE if reslice_info.count <= 1 else Colour.RED
     log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
+    """
 
     elapsed_time = 0.0
     if comm.rank == 0:

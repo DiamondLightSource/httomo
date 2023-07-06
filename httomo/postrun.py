@@ -28,9 +28,13 @@ def postrun_method(
 
     # Save the result if necessary
     if run_method_info.save_result and is_3d:
-        recon_algorithm = run_method_info.dict_params_method.pop("algorithm", None)
-        if recon_algorithm is not None:
+        recon_center = run_method_info.dict_params_method.pop("center", None)
+        recon_algorithm = None
+        if recon_center is not None:
             slice_dim = 1
+            recon_algorithm = run_method_info.dict_params_method.pop(
+                "algorithm", None
+            )  # covers tomopy case
         else:
             slice_dim = _get_slicing_dim(current_func.pattern)
 
