@@ -198,13 +198,6 @@ def run_tasks(
     del loader_info.darks
     del loader_info.flats
 
-    # Execute pre-processing of data if needed. For instance, we might
-    # want to calculate CoR before the data has been modified
-    temp_dict = preprocess_data(dict_preprocess,
-                                method_funcs,
-                                dict_datasets_pipeline,
-                                comm)
-
     # Extra params relevant to httomo that a wrapper function might need
     possible_extra_params = [
         (["darks"], dict_datasets_pipeline["darks"]),
@@ -215,8 +208,16 @@ def run_tasks(
         (["return_numpy"], False),
         (["cupyrun"], False),
         (["save_result"], False),
-    ]
+    ]  
 
+    # Execute pre-processing of data if needed. For instance, we might
+    # want to dezinger data but also flats and darks in the loop
+    preprocess_data(dict_preprocess,
+                    method_funcs,
+                    possible_extra_params,
+                    dict_datasets_pipeline,
+                    comm)
+    
     # data shape and dtype are useful when calculating max slices
     data_shape = dict_datasets_pipeline[method_funcs[0].parameters["name"]].shape
     # data_dtype = loader_info.data.dtype

@@ -213,9 +213,10 @@ class BaseWrapper:
         overlap = 0
         side = 0
         overlap_position = 0
+
         if method_name == "find_center_360":
-            (rot_center, overlap, side, overlap_position) = method_func(
-                data, **dict_params_method
+            (rot_center, overlap, side, overlap_position) = self.comm.bcast(
+                (rot_center, overlap, side, overlap_position), root=self.comm.rank
             )
             log_once(
                 f"###___The center of rotation for 360 degrees sinogram is {rot_center},"
@@ -226,7 +227,7 @@ class BaseWrapper:
             )
             return (rot_center, overlap, side, overlap_position)
         elif method_name == "find_center_vo":
-            rot_center = method_func(data, **dict_params_method)
+            rot_center = self.comm.bcast(rot_center, root=self.comm.rank)
             log_once(
                     f"###____The center of rotation for 180 degrees sinogram is {rot_center}____###",
                     comm=self.comm,
@@ -275,6 +276,7 @@ class BaseWrapper:
                 data, out_dir, comm_rank=comm.rank, **dict_params_method
             )
         return None
+
 
 class BackendWrapper(BaseWrapper):
     """A class that wraps backend functions for httomo"""
