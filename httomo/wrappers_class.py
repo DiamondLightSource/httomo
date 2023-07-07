@@ -59,7 +59,7 @@ class BaseWrapper:
         method_name: str,
         dict_params_method: Dict,
         data: xp.ndarray,
-        save_result: bool,
+        return_numpy: bool,
     ) -> xp.ndarray:
         """The generic wrapper to execute functions for external packages.
 
@@ -67,7 +67,7 @@ class BaseWrapper:
             method_name (str): The name of the method to use.
             dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
-            save_result (bool): if data is saved then the conversion to numpy required.
+            return_numpy (bool): returns numpy array if set to True.
 
         Returns:
             xp.ndarray: A numpy or cupy array containing processed data.
@@ -80,7 +80,7 @@ class BaseWrapper:
         data = self._transfer_data(data)
 
         data = getattr(self.module, method_name)(data, **dict_params_method)
-        return data if self.cupyrun else data.get()
+        return data if self.cupyrun and not return_numpy else data.get()
 
     def _execute_normalize(
         self,
@@ -89,7 +89,7 @@ class BaseWrapper:
         data: xp.ndarray,
         flats: xp.ndarray,
         darks: xp.ndarray,
-        save_result: bool,
+        return_numpy: bool,
     ) -> xp.ndarray:
         """Normalisation-specific wrapper when flats and darks are required.
 
@@ -99,7 +99,7 @@ class BaseWrapper:
             data (xp.ndarray): a numpy or cupy data array.
             flats (xp.ndarray): a numpy or cupy flats array.
             darks (xp.ndarray): a numpy or darks flats array.
-            save_result (bool): if data is saved then the conversion to numpy required.
+            return_numpy (bool): returns numpy array if set to True.
 
         Returns:
             xp.ndarray: a numpy or cupy array of the normalised data.
@@ -110,7 +110,7 @@ class BaseWrapper:
         data = getattr(self.module, method_name)(
             data, flats, darks, **dict_params_method
         )
-        return data if self.cupyrun else data.get()
+        return data if self.cupyrun and not return_numpy else data.get()
 
     def _execute_reconstruction(
         self,
@@ -118,7 +118,7 @@ class BaseWrapper:
         dict_params_method: Dict,
         data: xp.ndarray,
         angles_radians: np.ndarray,
-        save_result: bool,
+        return_numpy: bool,
     ) -> xp.ndarray:
         """The reconstruction wrapper.
 
@@ -127,7 +127,7 @@ class BaseWrapper:
             dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
             angles_radians (np.ndarray): a numpy array of projection angles.
-            save_result (bool): if data is saved then the conversion to numpy required.
+            return_numpy (bool): returns numpy array if set to True.
 
         Returns:
             xp.ndarray: a numpy or cupy array of the reconstructed data.
@@ -149,7 +149,7 @@ class BaseWrapper:
             data, angles_radians, **dict_params_method
         )
 
-        return data if self.cupyrun else data.get()
+        return data if self.cupyrun and not return_numpy else data.get()
 
     def _execute_rotation(
         self,

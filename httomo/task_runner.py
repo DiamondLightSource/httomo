@@ -15,6 +15,8 @@ from httomolib.misc.images import save_to_images
 from mpi4py import MPI
 from numpy import ndarray
 
+from httomo.utils import gpu_enabled, xp
+
 import httomo.globals
 from httomo._stats.globals import min_max_mean_std
 from httomo.common import MethodFunc, PlatformSection, ResliceInfo, RunMethodInfo
@@ -159,18 +161,19 @@ def run_tasks(
 
     # Update `dict_datasets_pipeline` dict with the data that has been
     # loaded by the loader
-    dict_datasets_pipeline[method_funcs[0].parameters["name"]] = loader_info.data
-    dict_datasets_pipeline["flats"] = loader_info.flats
-    dict_datasets_pipeline["darks"] = loader_info.darks
+    # NOTE: conversion to float32 to avoid creating an additional output array in the GPU loop
+    dict_datasets_pipeline[method_funcs[0].parameters["name"]] = np.float32(loader_info.data)
+    dict_datasets_pipeline["flats"] = np.float32(loader_info.flats)
+    dict_datasets_pipeline["darks"] = np.float32(loader_info.darks)
 
     # Extra params relevant to httomo that a wrapper function might need
     possible_extra_params = [
-        (["darks"], loader_info.darks),
-        (["flats"], loader_info.flats),
+        (["darks"], dict_datasets_pipeline["darks"]),
+        (["flats"], dict_datasets_pipeline["flats"]),
         (["angles", "angles_radians"], loader_info.angles),
         (["comm"], comm),
         (["out_dir"], httomo.globals.run_out_dir),
-        (["save_result"], False),
+        (["return_numpy"], False),
     ]
     # data shape and dtype are useful when calculating max slices
     data_shape = loader_info.data.shape
@@ -210,16 +213,17 @@ def run_tasks(
                 print(f"Method {method_name}")
                 #: create an object that would be passed along to prerun_method,
                 #: run_method, and postrun_method
-                run_method_info = RunMethodInfo(task_idx=m_ind)
-                
+                run_method_info = RunMethodInfo(task_idx=m_ind)                
+                                
                 #: prerun - before running the method, update the dictionaries
                 prerun_method(
                     run_method_info,
-                    save_all,
+                    section,
                     possible_extra_params,
                     methodfunc_sect,
                     dict_datasets_pipeline,
                 )
+                # is_last_method=True if i == methods_count - 2 else False,
                 if m_ind == 0:
                     # Assign the block of data on a CPU to `data` parameter of the method
                     # this should happen once in the beginning of the loop over methods
@@ -252,8 +256,7 @@ def run_tasks(
                 # previous section, they can be accessed via
                 # platform_sections[i-1].output_stats                
             ##************* Methods loop is complete *************##
-            # TODO: The block has now been processed and the output data
-            # can now be saved as:
+            # Saving the processed block. 
             data_full_section[tuple(slc_indices)] = dict_datasets_pipeline[run_method_info.data_out]
             # NOTE: data_block must be on the CPU already, assuming that
             # the last method in the loop will return the numpy array and not cupy
@@ -267,6 +270,11 @@ def run_tasks(
                 indices_end += res
             else:
                 indices_end += section.max_slices
+            # flushing the GPU memory allocated in the methods loop
+            if gpu_enabled:
+                xp.get_default_memory_pool().free_all_blocks()
+                cache = xp.fft.config.get_plan_cache()
+                cache.clear()
             
         ##************* Blocks loop is complete *************##
         # TODO: After the blocks loop is complete the full data
@@ -489,7 +497,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 else wrapper_init_module.calc_max_slices,
                 pattern=Pattern.all,
                 is_loader=False,
-                is_last_method=True if i == methods_count - 2 else False,
+                return_numpy=False,          
             )
         )
 

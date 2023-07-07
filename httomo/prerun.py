@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Tuple
 from mpi4py import MPI
 from numpy import ndarray
 
-from httomo.common import MethodFunc, RunMethodInfo
+from httomo.common import MethodFunc, RunMethodInfo, PlatformSection
 from httomo.utils import get_data_in_data_out
 
 comm = MPI.COMM_WORLD
@@ -17,7 +17,7 @@ comm = MPI.COMM_WORLD
 
 def prerun_method(
     run_method_info: RunMethodInfo,
-    save_all: int,
+    section: PlatformSection,
     misc_params: List[Tuple[List[str], object]],
     current_func: MethodFunc,
     dict_datasets_pipeline: Dict[str, ndarray],
@@ -28,22 +28,17 @@ def prerun_method(
     run_method_info.method_name = current_func.method_func.__name__
     func_wrapper = current_func.wrapper_func
 
-    run_method_info.save_result = (
-        # save result for the last task always
-        current_func.is_last_method
-        or
-        # save result if --save_all is specified
-        save_all
-        or
-        # if the method is from a recon module
-        "recon.algorithm" in current_func.module_name
-        or dict_params_method.pop("save_result", None)
-    )
-
     # extra params unrelated to wrapped packages but related to httomo added
     run_method_info.dict_httomo_params = _check_signature_for_httomo_params(
         func_wrapper, current_func, misc_params
     )
+    # check platform section object to decide when numpy array need to be returned
+    if (run_method_info.task_idx + 1) == len(section.methods):
+        # check if the method is the last method in the section
+        run_method_info.return_numpy = True
+        run_method_info.dict_httomo_params['return_numpy'] = True
+        
+    
     # Get the information describing if the method is being run only
     # once, or multiple times with different input datasets
     #
