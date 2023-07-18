@@ -211,26 +211,32 @@ def run_tasks(
                 package_name = methodfunc_sect.module_name.split(".")[0]
                 
                 print(f"Method {method_name}")
-                #: create an object that would be passed along to prerun_method,
-                #: run_method, and postrun_method
-                run_method_info = RunMethodInfo(task_idx=m_ind)                
-                                
-                #: prerun - before running the method, update the dictionaries
-                prerun_method(
-                    run_method_info,
-                    section,
-                    possible_extra_params,
-                    methodfunc_sect,
-                    dict_datasets_pipeline,
-                )
-                # is_last_method=True if i == methods_count - 2 else False,
+                # Only run the `prerun_method()` once for a method, when the
+                # first block is going to be processed. This is because the
+                # method's parameters will not have changed from the first time
+                # it has run, only its input data, which is taken care of
+                # outside the `prerun_method()` function.
+                if it_blocks == 0:
+                    #: create an object that would be passed along to prerun_method,
+                    #: run_method, and postrun_method
+                    run_method_info = RunMethodInfo(task_idx=m_ind)
+
+                    #: prerun - before running the method, update the dictionaries
+                    prerun_method(
+                        run_method_info,
+                        section,
+                        possible_extra_params,
+                        methodfunc_sect,
+                        dict_datasets_pipeline,
+                    )
+
                 if m_ind == 0:
                     # Assign the block of data on a CPU to `data` parameter of the method
                     # this should happen once in the beginning of the loop over methods
                     run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
                 else:
-                    # initialise by saved output data
-                    run_method_info.dict_httomo_params["data"] = dict_datasets_pipeline[run_method_info.data_out]
+                    # Initialise with result from previous method
+                    run_method_info.dict_httomo_params["data"] = res
                 
                 # remove methods name from the parameters list of a method
                 run_method_info.dict_params_method.pop('method_name')
@@ -242,22 +248,19 @@ def run_tasks(
                     **run_method_info.dict_httomo_params,
                 )        
                 
-                # Store the output(s) of the method in the appropriate
-                # dataset in the `dict_datasets_pipeline` dict
                 if isinstance(res, (tuple, list)):
-                    # The method produced multiple outputs
-                    for val, dataset in zip(res, run_method_info.data_out):
-                        dict_datasets_pipeline[dataset] = val
-                else:
-                    # The method produced a single output
-                    dict_datasets_pipeline[run_method_info.data_out] = res
+                    err_str = (
+                        "Methods producing multiple outputs are not yet "
+                        "supported in the GPU loop"
+                    )
+                    raise ValueError(err_str)
 
                 # NOTE: If `save_to_images` needs the stats of the output of the
                 # previous section, they can be accessed via
                 # platform_sections[i-1].output_stats                
             ##************* Methods loop is complete *************##
             # Saving the processed block. 
-            data_full_section[tuple(slc_indices)] = dict_datasets_pipeline[run_method_info.data_out]
+            data_full_section[tuple(slc_indices)] = res
             # NOTE: data_block must be on the CPU already, assuming that
             # the last method in the loop will return the numpy array and not cupy
 
