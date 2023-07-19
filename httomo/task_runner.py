@@ -193,6 +193,9 @@ def run_tasks(
         # iterations_for_blocks determines the number of iterations needed
         # to raster through the data in blocks that would fit into the GPU memory
         iterations_for_blocks = math.ceil(data_shape[slicing_dim_section] / section.max_slices)
+        # Define a list to store the `RunMethodInfo` objects created for each
+        # method in the methods-loop, for reuse across iterations over blocks
+        run_method_info_objs = []
         
         ##---------- the loop over blocks in a section for a chunk of data ------------##
         indices_start = 0
@@ -220,6 +223,7 @@ def run_tasks(
                     #: create an object that would be passed along to prerun_method,
                     #: run_method, and postrun_method
                     run_method_info = RunMethodInfo(task_idx=m_ind)
+                    run_method_info_objs.append(run_method_info)
 
                     #: prerun - before running the method, update the dictionaries
                     prerun_method(
@@ -238,6 +242,10 @@ def run_tasks(
                     # parameters in `_get_method_funcs()` possibly could be
                     # removed?
                     run_method_info.dict_params_method.pop('method_name')
+                else:
+                    # Reuse the `RunMethodInfo` object that was defined for the
+                    # method when the 0th block in the section was processed
+                    run_method_info = run_method_info_objs[m_ind]
 
                 if m_ind == 0:
                     # Assign the block of data on a CPU to `data` parameter of the method
