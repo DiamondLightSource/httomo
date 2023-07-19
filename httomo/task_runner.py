@@ -196,6 +196,16 @@ def run_tasks(
         # Define a list to store the `RunMethodInfo` objects created for each
         # method in the methods-loop, for reuse across iterations over blocks
         run_method_info_objs = []
+        # Check if any methods in the section are a recon method, because recon
+        # methods change the shape of the input data and thus the processed
+        # blocks cannot be straightforwardly put into `data_full_section`.
+        # Instead, a new numpy array is created with the necessary shape to hold
+        # the full reconstructed volume, and it's this array that is updated as
+        # blocks are processed in the blocks-loop
+        contains_recon = any(['recon.algorithm' in method_func.module_name for method_func in section.methods])
+        if contains_recon:
+            recon_shape = (data_full_section.shape[1], data_full_section.shape[2], data_full_section.shape[2])
+            recon_arr = np.empty(recon_shape, dtype=np.float32)
         
         ##---------- the loop over blocks in a section for a chunk of data ------------##
         indices_start = 0
@@ -274,7 +284,11 @@ def run_tasks(
                 # platform_sections[i-1].output_stats                
             ##************* Methods loop is complete *************##
             # Saving the processed block. 
-            data_full_section[tuple(slc_indices)] = res
+            if not contains_recon:
+                data_full_section[tuple(slc_indices)] = res
+            else:
+                recon_slc_indices = (slc_indices[1], slice(None), slice(None))
+                recon_arr[recon_slc_indices] = res
             # NOTE: data_block must be on the CPU already, assuming that
             # the last method in the loop will return the numpy array and not cupy
 
@@ -297,6 +311,20 @@ def run_tasks(
         # TODO: After the blocks loop is complete the full data
         # is in "data_full_section" and the hdf5 file can be saved
         # or resliced if needed
+
+        # If the completed section contained a recon method, then the array
+        # created to hold the differently-shaped output of this section (due to
+        # the recon within the section changing the shape of the input data)
+        # must be assigned to
+        # - the original dataset name (defined by the loader) in
+        # `dict_datasets_pipeline`
+        # - the `data_full_section` variable
+        if contains_recon:
+            dict_datasets_pipeline[method_funcs[0].parameters["name"]] = \
+                recon_arr
+            data_full_section = recon_arr
+            # TODO: Free the memory held by the original numpy array, as it is
+            # no longer needed
 
         # Calculate stats on result of the last method in the section
         #
