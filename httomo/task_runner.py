@@ -230,6 +230,15 @@ def run_tasks(
                         dict_datasets_pipeline,
                     )
 
+                    # remove methods name from the parameters list of a method
+                    #
+                    # TODO: As this value is not being used anywhere, and the
+                    # `method_name` variable is being defined by other means,
+                    # the addition of the method name to the dict of method
+                    # parameters in `_get_method_funcs()` possibly could be
+                    # removed?
+                    run_method_info.dict_params_method.pop('method_name')
+
                 if m_ind == 0:
                     # Assign the block of data on a CPU to `data` parameter of the method
                     # this should happen once in the beginning of the loop over methods
@@ -237,9 +246,6 @@ def run_tasks(
                 else:
                     # Initialise with result from previous method
                     run_method_info.dict_httomo_params["data"] = res
-                
-                # remove methods name from the parameters list of a method
-                run_method_info.dict_params_method.pop('method_name')
                 
                 # run the wrapper
                 res = func_wrapper(
