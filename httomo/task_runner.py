@@ -35,7 +35,7 @@ from httomo.utils import (
     log_once,
     remove_ansi_escape_sequences,
 )
-from httomo.wrappers_class import HttomolibWrapper, HttomolibgpuWrapper, TomoPyWrapper
+from httomo.wrappers_class import HttomolibWrapper, HttomolibgpuWrapper, TomoPyWrapper, _gpumem_cleanup
 from httomo.yaml_utils import open_yaml_config
 
 
@@ -177,7 +177,8 @@ def run_tasks(
     ]
     # data shape and dtype are useful when calculating max slices
     data_shape = loader_info.data.shape
-    data_dtype = loader_info.data.dtype
+    # data_dtype = loader_info.data.dtype
+    data_dtype = np.dtype(np.float32) # make the data type constant for the run
     
     ##---------- Main GPU loop starts here ------------##
     idx = 0
@@ -223,7 +224,7 @@ def run_tasks(
                 func_wrapper = methodfunc_sect.wrapper_func
                 package_name = methodfunc_sect.module_name.split(".")[0]
                 
-                print(f"Method {method_name}")
+                print(f"Method {method_name} running for block {it_blocks} of {indices_end-indices_start} slices")
                 # Only run the `prerun_method()` once for a method, when the
                 # first block is going to be processed. This is because the
                 # method's parameters will not have changed from the first time
@@ -264,7 +265,7 @@ def run_tasks(
                 else:
                     # Initialise with result from previous method
                     run_method_info.dict_httomo_params["data"] = res
-                
+                                    
                 # run the wrapper
                 res = func_wrapper(
                     method_name,
@@ -295,17 +296,18 @@ def run_tasks(
             # re-initialise the slicing indices
             indices_start = indices_end
             # checking if we still within the slicing dimension size and take remaining portion
-            res = (indices_start + int(section.max_slices)) - data_shape[slicing_dim_section] 
-            if res > 0:
-                res = int(section.max_slices) - res
-                indices_end += res
+            res_indices = (indices_start + int(section.max_slices)) - data_shape[slicing_dim_section] 
+            if res_indices > 0:
+                res_indices = int(section.max_slices) - res_indices
+                indices_end += res_indices
             else:
                 indices_end += section.max_slices
-            # flushing the GPU memory allocated in the methods loop
-            if gpu_enabled:
-                xp.get_default_memory_pool().free_all_blocks()
-                cache = xp.fft.config.get_plan_cache()
-                cache.clear()
+            
+            # delete allocated memory pointers to free up the memory
+            run_method_info.dict_httomo_params["data"] = None
+            del res
+            # now flushing the GPU memory
+            _gpumem_cleanup()
             
         ##************* Blocks loop is complete *************##
         # TODO: After the blocks loop is complete the full data

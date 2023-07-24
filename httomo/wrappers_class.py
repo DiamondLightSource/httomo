@@ -80,6 +80,7 @@ class BaseWrapper:
         data = self._transfer_data(data)
 
         data = getattr(self.module, method_name)(data, **dict_params_method)
+        
         return data if self.cupyrun and not return_numpy else data.get()
 
     def _execute_normalize(
@@ -110,6 +111,7 @@ class BaseWrapper:
         data = getattr(self.module, method_name)(
             data, flats, darks, **dict_params_method
         )
+        
         return data if self.cupyrun and not return_numpy else data.get()
 
     def _execute_reconstruction(
