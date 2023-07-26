@@ -178,8 +178,6 @@ class BaseWrapper:
         overlap_position = 0
         mid_rank = int(round(self.comm.size / 2) + 0.1)
         if self.comm.rank == mid_rank:
-            if dict_params_method["ind"] == "mid":
-                dict_params_method["ind"] = data.shape[1] // 2  # get the middle slice
             if method_name == "find_center_360":
                 (rot_center, overlap, side, overlap_position) = method_func(
                     data, **dict_params_method

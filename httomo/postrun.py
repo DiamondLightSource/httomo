@@ -22,8 +22,6 @@ def postrun_method(
     dict_datasets_pipeline: Dict[str, Optional[np.ndarray]],
     current_func: MethodFunc,
 ):
-    # TODO: What happens when a method with multiple outputs has
-    # `run_method_info.save_result = True`? Should all output datasets be saved?
     is_3d = len(dict_datasets_pipeline[run_method_info.data_out].shape) == 3
 
     # Save the result if necessary

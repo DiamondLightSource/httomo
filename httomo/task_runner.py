@@ -180,7 +180,7 @@ def run_tasks(
     # data_dtype = loader_info.data.dtype
     data_dtype = np.dtype(np.float32) # make the data type constant for the run
     
-    ##---------- Main GPU loop starts here ------------##
+    ##---------- MAIN LOOP STARTS HERE ------------##
     idx = 0
     # initialise the CPU data array with the loaded data, we override it at the end of every section
     data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
@@ -207,22 +207,22 @@ def run_tasks(
         if contains_recon:
             recon_shape = (data_full_section.shape[1], data_full_section.shape[2], data_full_section.shape[2])
             recon_arr = np.empty(recon_shape, dtype=np.float32)
-        
-        ##---------- the loop over blocks in a section for a chunk of data ------------##
+       
+        ##---------- LOOP OVER _BLOCKS_ IN THE SECTION ------------##
         indices_start = 0
         indices_end = int(section.max_slices)
         slc_indices = [slice(None)] * len(data_shape)
         for it_blocks in range(iterations_for_blocks):
             # preparing indices for the slicing of the data in blocks
-            slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)         
+            slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)
 
-            ##---------- the loop over methods in a block ------------##
+            ##---------- LOOP OVER _METHODS_ IN THE BLOCK ------------##
             for m_ind, methodfunc_sect in enumerate(section.methods):
                 # preparing everything for the wrapper execution
                 module_path = methodfunc_sect.module_name
                 method_name = methodfunc_sect.method_func.__name__
                 func_wrapper = methodfunc_sect.wrapper_func
-                package_name = methodfunc_sect.module_name.split(".")[0]
+                package_name = methodfunc_sect.module_name.split(".")[0]              
                 
                 print(f"Method {method_name} running for block {it_blocks} of {indices_end-indices_start} slices")
                 # Only run the `prerun_method()` once for a method, when the
@@ -259,19 +259,57 @@ def run_tasks(
                     run_method_info = run_method_info_objs[m_ind]
 
                 if m_ind == 0:
-                    # Assign the block of data on a CPU to `data` parameter of the method
-                    # this should happen once in the beginning of the loop over methods
-                    run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
+                    # check if the method is the centering method
+                    if 'center' in method_name and it_blocks == 0:
+                            slice_ind_center = run_method_info.dict_params_method['ind']
+                            if slice_ind_center is None or 'mid':
+                                slice_ind_center = data_full_section.shape[1] // 2  # get the middle slice of the whole data chunk
+                            # copy the "ind" slice from the CPU section dataset (a chunk)
+                            run_method_info.dict_httomo_params["data"] = data_full_section[:,slice_ind_center,:]
+                    else:
+                        # Assign the block of data on a CPU to `data` parameter of the method
+                        # this should happen once in the beginning of the loop over methods
+                        run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
                 else:
-                    # Initialise with result from previous method
-                    run_method_info.dict_httomo_params["data"] = res
-                                    
-                # run the wrapper
-                res = func_wrapper(
-                    method_name,
-                    run_method_info.dict_params_method,
-                    **run_method_info.dict_httomo_params,
-                )        
+                    # check if the method is the centering method (again)
+                    if 'center' in method_name and it_blocks == 0:
+                            slice_ind_center = run_method_info.dict_params_method['ind']
+                            if slice_ind_center is None or 'mid':
+                                slice_ind_center = data_full_section.shape[1] // 2  # get the middle slice of the whole data chunk
+                            # copy the "ind" slice from the CPU section dataset (a chunk)
+                            run_method_info.dict_httomo_params["data"] = data_full_section[:,slice_ind_center,:]
+                    else:
+                        # Initialise with the result from the previous method
+                        run_method_info.dict_httomo_params["data"] = res                
+                                   
+                # ------ RUNNING THE WRAPPER -------#
+                if 'center' in method_name:
+                    if it_blocks == 0:
+                        # we need to avoid overriding "res" with a scalar.
+                        res_param = func_wrapper(
+                            method_name,
+                            run_method_info.dict_params_method,
+                            **run_method_info.dict_httomo_params,
+                        )
+                        # Store the output(s) of the method in the appropriate
+                        # dataset in the `dict_datasets_pipeline` dict
+                        if isinstance(res_param, (tuple, list)):
+                            # The method produced multiple outputs
+                            for val, dataset in zip(res_param, run_method_info.data_out):
+                                dict_datasets_pipeline[dataset] = val
+                        else:
+                            # The method produced a single output
+                            dict_datasets_pipeline[run_method_info.data_out] = res_param                       
+                    # passing the data to the next method (or initialise res)
+                    if m_ind == 0:
+                        res = data_full_section[tuple(slc_indices)]
+                else:
+                    # overriding the result with an output of a method
+                    res = func_wrapper(
+                        method_name,
+                        run_method_info.dict_params_method,
+                        **run_method_info.dict_httomo_params,
+                    )
                 
                 if isinstance(res, (tuple, list)):
                     err_str = (
@@ -283,15 +321,13 @@ def run_tasks(
                 # NOTE: If `save_to_images` needs the stats of the output of the
                 # previous section, they can be accessed via
                 # platform_sections[i-1].output_stats                
-            ##************* Methods loop is complete *************##
-            # Saving the processed block. 
+            ##************* METHODS LOOP IS COMPLETE *************##
+            # Saving the processed block (the block is in the CPU memory)
             if not contains_recon:
                 data_full_section[tuple(slc_indices)] = res
             else:
                 recon_slc_indices = (slc_indices[1], slice(None), slice(None))
                 recon_arr[recon_slc_indices] = res
-            # NOTE: data_block must be on the CPU already, assuming that
-            # the last method in the loop will return the numpy array and not cupy
 
             # re-initialise the slicing indices
             indices_start = indices_end
@@ -309,7 +345,7 @@ def run_tasks(
             # now flushing the GPU memory
             _gpumem_cleanup()
             
-        ##************* Blocks loop is complete *************##
+        ##************* BLOCKS LOOP IS COMPLETE *************##
         # TODO: After the blocks loop is complete the full data
         # is in "data_full_section" and the hdf5 file can be saved
         # or resliced if needed
@@ -334,7 +370,9 @@ def run_tasks(
         # the same input dataset from the beginning of the sections loop; should
         # this instead be getting the output dataset from the last method that
         # was in the section which has just completed?
-        section.output_stats = min_max_mean_std(data_full_section, comm)
+        
+        # TODO: !CRASHES IDE/TERMINAL!
+        # section.output_stats = min_max_mean_std(data_full_section, comm)
 
         # Assume that, after every section has been completed (except for the
         # last section), a reslice should occur
@@ -349,7 +387,7 @@ def run_tasks(
                 reslice_info,
                 comm
             )
-    ##************* Sections loop is complete *************## 
+    ##************* SECTIONS LOOP IS COMPLETE *************## 
 
     """
     # Run the methods
