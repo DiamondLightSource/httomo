@@ -1,5 +1,5 @@
 import math
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional, Union
 
 import h5py as h5
 import numpy as np
@@ -375,12 +375,49 @@ def get_angles(file: str, path: str, comm: MPI.Comm = MPI.COMM_WORLD) -> ndarray
     return angles
 
 
+def _parse_ignore_darks_flats(ignore: Dict) -> List[int]:
+    """Get all indices of darks/flats to ignore.
+
+    Parameters
+    ----------
+    ignore : Dict
+        A dict describing the individual and batch darks/flats to ignore.
+
+    Returns
+    -------
+    List[int]
+        A list of indices that describe which darks/flats to ignore.
+    """
+    indices = []
+    if "individual" in ignore.keys():
+        for val in ignore["individual"]:
+            if not isinstance(val, int):
+                err_str = f"The value {val} is not an integer."
+                raise ValueError(err_str)
+        indices += ignore["individual"]
+
+    if "batch" in ignore.keys():
+        for batch in ignore["batch"]:
+            if not isinstance(batch["start"], int) or not isinstance(
+                batch["stop"], int
+            ):
+                err_str = (
+                    f"The start={batch['start']} and stop={batch['stop']} "
+                    f"values should both be integers"
+                )
+                raise ValueError(err_str)
+            indices += list(range(batch["start"], batch["stop"] + 1))
+    return indices
+
+
 def get_darks_flats_together(
     file: str,
     data_path: str = "/entry1/tomo_entry/data/data",
     darks_path: str = None,
     flats_path: str = None,
     image_key_path: str = "/entry1/instrument/image_key/image_key",
+    ignore_darks: Optional[Union[bool, Dict]] = False,
+    ignore_flats: Optional[Union[bool, Dict]] = False,
     dim: int = 1,
     pad: int = 0,
     preview: str = ":,:,:",
@@ -400,6 +437,12 @@ def get_darks_flats_together(
         Path to the flats dataset within the file.
     image_key_path : str
         Path to the image_key within the file.
+    ignore_darks : optional, Union[bool, Dict]
+        If bool, specifies ignoring all or none of darks. If dict, specifies
+        individual and batch darks to ignore.
+    ignore_flats : optional, Union[bool, Dict]
+        If bool, specifies ignoring all or none of flats. If dict, specifies
+        individual and batch flats to ignore.
     dim : int
         Dimension along which data is being split between MPI processes. Only
         affects darks and flats if dim = 2.
@@ -428,6 +471,18 @@ def get_darks_flats_together(
                     flats_indices.append(i)
                 elif int(key) == 2:
                     darks_indices.append(i)
+            # Get indices of darks to ignore (if any)
+            if ignore_darks is True:
+                darks_indices = []
+            elif isinstance(ignore_darks, dict):
+                ignore_darks_indices = _parse_ignore_darks_flats(ignore_darks)
+                darks_indices = list(set(darks_indices) - set(ignore_darks_indices))
+            # Get indices of flats to ignore (if any)
+            if ignore_flats is True:
+                flats_indices = []
+            elif isinstance(ignore_flats, dict):
+                ignore_flats_indices = _parse_ignore_darks_flats(ignore_flats)
+                flats_indices = list(set(flats_indices) - set(ignore_flats_indices))
             dataset = file[data_path]
             darks = _get_darks_flats(dataset, darks_indices, dim, pad, preview, comm)
             flats = _get_darks_flats(dataset, flats_indices, dim, pad, preview, comm)
@@ -455,6 +510,7 @@ def get_darks_flats_separate(
     pad: int = 0,
     preview: str = ":,:,:",
     comm: MPI.Comm = MPI.COMM_WORLD,
+    ignore_indices: Optional[Union[bool, Dict]] = False,
 ) -> ndarray:
     """Get darks or flats from a separate dataset and/or separate file from the
     projection data.
@@ -475,6 +531,9 @@ def get_darks_flats_separate(
         Crop the data with a preview:
     comm : MPI.Comm
         MPI communicator object.
+    ignore_indices : optional, Union[bool, Dict]
+        If bool, specifies ignoring all or none of darks/flats. If dict,
+        specifies individual and batch darks/flats to ignore.
 
     Returns
     -------
@@ -483,7 +542,12 @@ def get_darks_flats_separate(
     """
     with h5.File(file_path, "r", driver="mpio", comm=comm) as f:
         dataset = f[data_path]
-        indices = np.arange(dataset.shape[0])
+        indices = list(range(dataset.shape[0]))
+        if ignore_indices is True:
+            indices = []
+        elif isinstance(ignore_indices, dict):
+            ignore_indices = _parse_ignore_darks_flats(ignore_indices)
+            indices = list(set(indices) - set(ignore_indices))
         data = _get_darks_flats(dataset, indices, dim, pad, preview, comm)
     return data
 
