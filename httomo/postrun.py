@@ -22,7 +22,7 @@ def postrun_method(
     dict_datasets_pipeline: Dict[str, Optional[np.ndarray]],
     section: PlatformSection,
 ):
-    if run_method_info.method_name is not "save_to_images" and 'center' not in run_method_info.method_name:
+    if run_method_info.method_name != "save_to_images" and 'center' not in run_method_info.method_name:
     
         is_3d = len(dict_datasets_pipeline[run_method_info.data_out].shape) == 3
 
