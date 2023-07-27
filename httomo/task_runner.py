@@ -185,7 +185,8 @@ def run_tasks(
     # initialise the CPU data array with the loaded data, we override it at the end of every section
     data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
     for i, section in enumerate(platform_sections):
-        print(f"Section {i}")
+        section_no_str = f"Section {i}"
+        log_once(f"{section_no_str}", comm, colour=Colour.LIGHT_BLUE, level=1)
         # determine the max_slices for the whole section
         _update_max_slices(section, data_shape, data_dtype)
         # in order to iterate over max slices we need to know the slicing
@@ -356,16 +357,7 @@ def run_tasks(
             dict_datasets_pipeline[method_funcs[0].parameters["name"]] = \
                 recon_arr
             data_full_section = recon_arr
-            del recon_arr
-            # TODO: Free the memory held by the original numpy array, as it is
-            # no longer needed
-
-        # Saving the data if required
-        
-        # NOTE: If `save_to_images` needs the stats of the output of the
-        # previous section, they can be accessed via
-        # platform_sections[i-1].output_stats
-
+       
         if i < len(platform_sections) - 1:
             # Assume that, after every section has been completed (except for the
             # last section), a reslice should occur
@@ -376,19 +368,22 @@ def run_tasks(
                 platform_sections[i+1],
                 reslice_info,
                 comm
-            )    
-            
+            )            
             if 'center' not in method_name:
                 # Calculate stats on result of the last method in the section (except centering)
                 section.output_stats = min_max_mean_std(data_full_section, comm)
-        
-        # if method_name == "save_to_images":
-        # # Nothing more to do if the saver has a special kind of
-        # # output which handles saving the result
-        #     return
-        
-    ##************* SECTIONS LOOP IS COMPLETE *************##
 
+        # saving intermediate datasets IF it has been asked for
+        postrun_method(run_method_info, dict_datasets_pipeline, section)               
+    ##************* SECTIONS LOOP IS COMPLETE *************##
+    elapsed_time = 0.0
+    if comm.rank == 0:
+        elapsed_time = MPI.Wtime() - start_time
+        end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
+        log_once(end_str, comm=comm, colour=Colour.BVIOLET)
+        #: remove ansi escape sequences from the log file
+        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
+    
     """
     # Run the methods
     for idx, method_func in enumerate(method_funcs[1:]):
@@ -432,15 +427,6 @@ def run_tasks(
     reslice_summary_colour = Colour.BLUE if reslice_info.count <= 1 else Colour.RED
     log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
     """
-
-    elapsed_time = 0.0
-    if comm.rank == 0:
-        elapsed_time = MPI.Wtime() - start_time
-        end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
-        log_once(end_str, comm=comm, colour=Colour.BVIOLET)
-        #: remove ansi escape sequences from the log file
-        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
-
 
 def _initialise_datasets_and_stats(
     yaml_config: Path,
@@ -817,7 +803,7 @@ def _update_max_slices(
             )
         section.max_slices = min(max_slices_methods)
     else:
-        # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
+        # NOTE: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
         section.max_slices = max_slices
         pass
     return data_type, output_dims

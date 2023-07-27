@@ -123,6 +123,8 @@ class RunMethodInfo:
         Dict containing extra params unrelated to wrapped packages but related to httomo
     return_numpy : bool
         if True forces the wrapper to return a numpy array
+    save_result : bool
+        save the result into intermediate dataset
     task_idx: int
         Index of the task in the pipeline being run
     package_name: str
@@ -136,6 +138,7 @@ class RunMethodInfo:
     data_out: Union[str, List[str]] = field(default_factory=str)
     dict_httomo_params: Dict[str, Any] = field(default_factory=dict)
     return_numpy: bool = False
+    save_result: bool = False
     task_idx: int = -1
     package_name: str = None
     method_name: str = None
