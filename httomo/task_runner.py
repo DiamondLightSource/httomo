@@ -259,28 +259,22 @@ def run_tasks(
                     run_method_info = run_method_info_objs[m_ind]
 
                 if m_ind == 0:
-                    # check if the method is the centering method
-                    if 'center' in method_name and it_blocks == 0:
-                            slice_ind_center = run_method_info.dict_params_method['ind']
-                            if slice_ind_center is None or 'mid':
-                                slice_ind_center = data_full_section.shape[1] // 2  # get the middle slice of the whole data chunk
-                            # copy the "ind" slice from the CPU section dataset (a chunk)
-                            run_method_info.dict_httomo_params["data"] = data_full_section[:,slice_ind_center,:]
-                    else:
-                        # Assign the block of data on a CPU to `data` parameter of the method
-                        # this should happen once in the beginning of the loop over methods
-                        run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
+                    # Assign the block of data on a CPU to `data` parameter of
+                    # the method; this should happen once in the beginning of
+                    # the loop over methods
+                    run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
                 else:
-                    # check if the method is the centering method (again)
-                    if 'center' in method_name and it_blocks == 0:
-                            slice_ind_center = run_method_info.dict_params_method['ind']
-                            if slice_ind_center is None or 'mid':
-                                slice_ind_center = data_full_section.shape[1] // 2  # get the middle slice of the whole data chunk
-                            # copy the "ind" slice from the CPU section dataset (a chunk)
-                            run_method_info.dict_httomo_params["data"] = data_full_section[:,slice_ind_center,:]
-                    else:
-                        # Initialise with the result from the previous method
-                        run_method_info.dict_httomo_params["data"] = res                
+                    # Initialise with result from previous method
+                    run_method_info.dict_httomo_params["data"] = res
+
+                # Override the `data` param in the special case of a centering
+                # method
+                if 'center' in method_name and it_blocks == 0:
+                    slice_ind_center = run_method_info.dict_params_method['ind']
+                    if slice_ind_center is None or 'mid':
+                        slice_ind_center = data_full_section.shape[1] // 2  # get the middle slice of the whole data chunk
+                    # copy the "ind" slice from the CPU section dataset (a chunk)
+                    run_method_info.dict_httomo_params["data"] = data_full_section[:,slice_ind_center,:]
                                    
                 # ------ RUNNING THE WRAPPER -------#
                 if 'center' in method_name:
