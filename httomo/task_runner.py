@@ -135,7 +135,9 @@ def run_tasks(
     # been provided
     if "preview" not in method_funcs[0].parameters.keys():
         method_funcs[0].parameters["preview"] = [None]
-
+    
+    output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
+    output_colour_list_short = [Colour.GREEN, Colour.CYAN]
     loader_method_name = method_funcs[0].parameters.pop("method_name")
     log_once(
         f"Running task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name}...",
@@ -156,7 +158,6 @@ def run_tasks(
         "httomo",
         f") Took {float(time.perf_counter_ns() - loader_start_time)*1e-6:.2f}ms",
     ]
-    output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
     log_once(output_str_list, comm=comm, colour=output_colour_list)
 
     # Update `dict_datasets_pipeline` dict with the data that has been
@@ -185,8 +186,7 @@ def run_tasks(
     # initialise the CPU data array with the loaded data, we override it at the end of every section
     data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
     for i, section in enumerate(platform_sections):
-        section_no_str = f"Section {i}"
-        log_once(f"{section_no_str}", comm, colour=Colour.LIGHT_BLUE, level=1)
+        section_no_str = f"Section {i}"        
         # determine the max_slices for the whole section
         _update_max_slices(section, data_shape, data_dtype)
         # in order to iterate over max slices we need to know the slicing
@@ -223,15 +223,26 @@ def run_tasks(
                 module_path = methodfunc_sect.module_name
                 method_name = methodfunc_sect.method_func.__name__
                 func_wrapper = methodfunc_sect.wrapper_func
-                package_name = methodfunc_sect.module_name.split(".")[0]              
+                package_name = methodfunc_sect.module_name.split(".")[0]
                 
-                print(f"Method {method_name} running for block {it_blocks} of {indices_end-indices_start} slices")
+                # log related stuff
+                pattern_str = f"(pattern={section.pattern.name})"
+                package_str = f"({package_name})"
+                task_no_str = f"Running task {idx+2}"
+                task_end_str = task_no_str.replace("Running", "Finished")
+                
                 # Only run the `prerun_method()` once for a method, when the
                 # first block is going to be processed. This is because the
                 # method's parameters will not have changed from the first time
                 # it has run, only its input data, which is taken care of
                 # outside the `prerun_method()` function.
                 if it_blocks == 0:
+                    log_once(
+                    f"{task_no_str} {pattern_str}: {method_name}...",
+                    comm,
+                    colour=Colour.LIGHT_BLUE,
+                    level=0,
+                    )
                     #: create an object that would be passed along to prerun_method,
                     #: run_method, and postrun_method
                     run_method_info = RunMethodInfo(task_idx=m_ind)
@@ -278,6 +289,7 @@ def run_tasks(
                     run_method_info.dict_httomo_params["data"] = data_full_section[:,slice_ind_center,:]
                                    
                 # ------ RUNNING THE WRAPPER -------#
+                start = time.perf_counter_ns()
                 if 'center' in method_name:
                     if it_blocks == 0:
                         # we need to avoid overriding "res" with a scalar.
@@ -315,6 +327,24 @@ def run_tasks(
                         run_method_info.dict_params_method,
                         **run_method_info.dict_httomo_params,
                     )
+                stop = time.perf_counter_ns()
+
+                section_block_method_str = f"Section {i} runs method {method_name} on a block {it_blocks} of {indices_end-indices_start} slices"                                 
+                
+                output_str_list_verbose = [
+                    f"{section_block_method_str} ",
+                    f" Complete in {float(stop-start)*1e-6:.2f}ms",
+                ]
+                log_once(output_str_list_verbose, comm=comm, colour=output_colour_list_short, level = 1)
+               
+                if it_blocks == 0:
+                    output_str_list_once = [
+                        f"    {task_end_str} {pattern_str}: {method_name} ",
+                        f" {package_str}",
+                    ]              
+                    log_once(output_str_list_once, comm=comm, colour=output_colour_list_short)
+                    idx += 1
+                
                 if isinstance(res, (tuple, list)):
                     err_str = (
                         "Methods producing multiple outputs are not yet "
