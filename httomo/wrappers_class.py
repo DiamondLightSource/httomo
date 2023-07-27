@@ -81,7 +81,14 @@ class BaseWrapper:
 
         data = getattr(self.module, method_name)(data, **dict_params_method)
         
-        return data if self.cupyrun and not return_numpy else data.get()
+        if self.cupyrun and return_numpy:
+            # if data in CuPy array but we need numpy
+            return data.get() # get numpy
+        elif self.cupyrun and not return_numpy:
+            # if data in CuPy array and we need it
+            return data # return CuPy array
+        else:
+            return data # return numpy
 
     def _execute_normalize(
         self,
@@ -112,7 +119,14 @@ class BaseWrapper:
             data, flats, darks, **dict_params_method
         )
         
-        return data if self.cupyrun and not return_numpy else data.get()
+        if self.cupyrun and return_numpy:
+            # if data in CuPy array but we need numpy
+            return data.get() # get numpy
+        elif self.cupyrun and not return_numpy:
+            # if data in CuPy array and we need it
+            return data # return CuPy array
+        else:
+            return data # return numpy        
 
     def _execute_reconstruction(
         self,
@@ -149,15 +163,22 @@ class BaseWrapper:
 
         data = getattr(self.module, method_name)(
             data, angles_radians, **dict_params_method
-        )
-
-        return data if self.cupyrun and not return_numpy else data.get()
+        )        
+        if self.cupyrun and return_numpy:
+            # if data in CuPy array but we need numpy
+            return data.get() # get numpy
+        elif self.cupyrun and not return_numpy:
+            # if data in CuPy array and we need it
+            return data # return CuPy array
+        else:
+            return data # return numpy
 
     def _execute_rotation(
         self,
         method_name: str,
         dict_params_method: Dict,
         data: xp.ndarray,
+        return_numpy: bool,
     ) -> tuple | Any:
         """The center of rotation wrapper.
 
@@ -165,6 +186,7 @@ class BaseWrapper:
             method_name (str): The name of the method to use.
             dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
+            return_numpy (bool): returns numpy array if set to True.
 
         Returns:
             tuple: The center of rotation and other parameters if it is 360 sinogram.

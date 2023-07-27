@@ -231,18 +231,19 @@ def run_tasks(
                 task_no_str = f"Running task {idx+2}"
                 task_end_str = task_no_str.replace("Running", "Finished")
                 
-                # Only run the `prerun_method()` once for a method, when the
-                # first block is going to be processed. This is because the
-                # method's parameters will not have changed from the first time
-                # it has run, only its input data, which is taken care of
-                # outside the `prerun_method()` function.
-                if it_blocks == 0:
+                if it_blocks == iterations_for_blocks-1:
                     log_once(
                     f"{task_no_str} {pattern_str}: {method_name}...",
                     comm,
                     colour=Colour.LIGHT_BLUE,
                     level=0,
                     )
+                # Only run the `prerun_method()` once for a method, when the
+                # first block is going to be processed. This is because the
+                # method's parameters will not have changed from the first time
+                # it has run, only its input data, which is taken care of
+                # outside the `prerun_method()` function.
+                if it_blocks == 0:
                     #: create an object that would be passed along to prerun_method,
                     #: run_method, and postrun_method
                     run_method_info = RunMethodInfo(task_idx=m_ind)
@@ -327,17 +328,17 @@ def run_tasks(
                         run_method_info.dict_params_method,
                         **run_method_info.dict_httomo_params,
                     )
+                # ------ WRAPPER COMPLETED -------#
                 stop = time.perf_counter_ns()
 
-                section_block_method_str = f"Section {i} runs method {method_name} on a block {it_blocks} of {indices_end-indices_start} slices"                                 
-                
+                section_block_method_str = f"Section {i} runs method {method_name} on a block {it_blocks} of {indices_end-indices_start} slices"
                 output_str_list_verbose = [
                     f"{section_block_method_str} ",
                     f" Complete in {float(stop-start)*1e-6:.2f}ms",
                 ]
                 log_once(output_str_list_verbose, comm=comm, colour=output_colour_list_short, level = 1)
                
-                if it_blocks == 0:
+                if it_blocks == iterations_for_blocks-1:
                     output_str_list_once = [
                         f"    {task_end_str} {pattern_str}: {method_name} ",
                         f" {package_str}",
