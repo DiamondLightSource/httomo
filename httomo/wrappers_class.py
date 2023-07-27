@@ -265,6 +265,7 @@ class HttomolibWrapper(BaseWrapper):
         out_dir: str,
         comm: Comm,
         data: xp.ndarray,
+        return_numpy: bool,
     ) -> None:
         """httomolib wrapper for save images function.
 
@@ -274,6 +275,7 @@ class HttomolibWrapper(BaseWrapper):
             out_dir (str): The output directory.
             comm (Comm): The MPI communicator.
             data (xp.ndarray): a numpy or cupy data array.
+            return_numpy (bool): returns numpy array if set to True.
 
         Returns:
             None: returns None.

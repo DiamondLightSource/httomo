@@ -297,6 +297,16 @@ def run_tasks(
                     # passing the data to the next method (or initialise res)
                     if m_ind == 0:
                         res = data_full_section[tuple(slc_indices)]
+                elif method_name == "save_to_images":
+                    # just executing the wrapper (no output)
+                    func_wrapper(
+                            method_name,
+                            run_method_info.dict_params_method,
+                            **run_method_info.dict_httomo_params,
+                        )
+                    # passing the data to the next method (or initialise res)
+                    if m_ind == 0:
+                        res = data_full_section[tuple(slc_indices)]
                 else:
                     # overriding the result with an output of a method
                     res = func_wrapper(
@@ -304,17 +314,13 @@ def run_tasks(
                         run_method_info.dict_params_method,
                         **run_method_info.dict_httomo_params,
                     )
-                
                 if isinstance(res, (tuple, list)):
                     err_str = (
                         "Methods producing multiple outputs are not yet "
                         "supported in the GPU loop"
                     )
                     raise ValueError(err_str)
-
-                # NOTE: If `save_to_images` needs the stats of the output of the
-                # previous section, they can be accessed via
-                # platform_sections[i-1].output_stats                
+    
             ##************* METHODS LOOP IS COMPLETE *************##
             # Saving the processed block (the block is in the CPU memory)
             if not contains_recon:
@@ -335,15 +341,10 @@ def run_tasks(
             
             # delete allocated memory pointers to free up the memory
             run_method_info.dict_httomo_params["data"] = None
-            del res
             # now flushing the GPU memory
             _gpumem_cleanup()
             
         ##************* BLOCKS LOOP IS COMPLETE *************##
-        # TODO: After the blocks loop is complete the full data
-        # is in "data_full_section" and the hdf5 file can be saved
-        # or resliced if needed
-
         # If the completed section contained a recon method, then the array
         # created to hold the differently-shaped output of this section (due to
         # the recon within the section changing the shape of the input data)
@@ -355,33 +356,38 @@ def run_tasks(
             dict_datasets_pipeline[method_funcs[0].parameters["name"]] = \
                 recon_arr
             data_full_section = recon_arr
+            del recon_arr
             # TODO: Free the memory held by the original numpy array, as it is
             # no longer needed
 
-        # Calculate stats on result of the last method in the section
-        #
-        # NOTE: Currently assuming that the dataset to calculate stats from is
-        # the same input dataset from the beginning of the sections loop; should
-        # this instead be getting the output dataset from the last method that
-        # was in the section which has just completed?
+        # Saving the data if required
         
-        # TODO: !CRASHES IDE/TERMINAL!
-        # section.output_stats = min_max_mean_std(data_full_section, comm)
+        # NOTE: If `save_to_images` needs the stats of the output of the
+        # previous section, they can be accessed via
+        # platform_sections[i-1].output_stats
 
-        # Assume that, after every section has been completed (except for the
-        # last section), a reslice should occur
         if i < len(platform_sections) - 1:
-            next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]
-            # TODO: Ensure that the required dataset is in CPU memory not GPU
-            # memory before attempting to reslice it
+            # Assume that, after every section has been completed (except for the
+            # last section), a reslice should occur
+            next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]            
             dict_datasets_pipeline[next_section_in] = _perform_reslice(
                 dict_datasets_pipeline[next_section_in],
                 section,
                 platform_sections[i+1],
                 reslice_info,
                 comm
-            )
-    ##************* SECTIONS LOOP IS COMPLETE *************## 
+            )    
+            
+            if 'center' not in method_name:
+                # Calculate stats on result of the last method in the section (except centering)
+                section.output_stats = min_max_mean_std(data_full_section, comm)
+        
+        # if method_name == "save_to_images":
+        # # Nothing more to do if the saver has a special kind of
+        # # output which handles saving the result
+        #     return
+        
+    ##************* SECTIONS LOOP IS COMPLETE *************##
 
     """
     # Run the methods
@@ -827,8 +833,7 @@ def _perform_reslice(
     reslice_info.count += 1
     if reslice_info.count > 1 and not reslice_info.has_warn_printed:
         reslice_warn_str = (
-            "WARNING: Reslicing is performed more than once in this "
-            "pipeline, is there a need for this?"
+            f"WARNING: Reslicing is performed {reslice_info.count} times. The number of reslices increases the total run time."
         )
         log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
         reslice_info.has_warn_printed = True
