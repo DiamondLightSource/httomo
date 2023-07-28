@@ -185,13 +185,18 @@ def run_tasks(
     idx = 0
     # initialise the CPU data array with the loaded data, we override it at the end of every section
     data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
-    for i, section in enumerate(platform_sections):
-        section_no_str = f"Section {i}"        
-        # determine the max_slices for the whole section
-        _update_max_slices(section, data_shape, data_dtype)
-        # in order to iterate over max slices we need to know the slicing
-        # dimension of the section
-        slicing_dim_section = _get_slicing_dim(section.pattern) - 1
+    for i, section in enumerate(platform_sections):  
+        # getting the slicing dimension of the section
+        if section.pattern.name == 'all':
+            # the "all" pattern should inherit the pattern of the previous section
+            if i > 0:
+                slicing_dim_section = _get_slicing_dim(platform_sections[i-1].pattern) - 1
+        else:
+            slicing_dim_section = _get_slicing_dim(section.pattern) - 1
+            
+        # determine max_slices for the whole section and return output dims and type
+        output_dims_upd, data_type_upd = _update_max_slices(section, slicing_dim_section, data_shape, data_dtype)
+
         # iterations_for_blocks determines the number of iterations needed
         # to raster through the data in blocks that would fit into the GPU memory
         iterations_for_blocks = math.ceil(data_shape[slicing_dim_section] / section.max_slices)
@@ -403,6 +408,9 @@ def run_tasks(
             if 'center' not in method_name:
                 # Calculate stats on result of the last method in the section (except centering)
                 section.output_stats = min_max_mean_std(data_full_section, comm)
+        # update input data dimensions and data type for a new section
+        data_shape = output_dims_upd
+        data_dtype = data_type_upd        
 
         # saving intermediate datasets IF it has been asked for
         postrun_method(run_method_info, dict_datasets_pipeline, section)               
@@ -797,24 +805,18 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
 
 def _update_max_slices(
     section: PlatformSection,
+    slicing_dim_section: int,
     process_data_shape: Optional[Tuple[int, int, int]],
     input_data_type: Optional[np.dtype],
 ) -> Tuple[np.dtype, Tuple[int, int]]:
+    
     if process_data_shape is None or input_data_type is None:
         return
-    if section.pattern == Pattern.sinogram:
-        slice_dim = 1
-        non_slice_dims_shape = (process_data_shape[0], process_data_shape[2])
-    elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
-        # TODO: what if all methods in a section are pattern.all
-        slice_dim = 0
-        non_slice_dims_shape = (process_data_shape[1], process_data_shape[2])
-    else:
-        err_str = f"Invalid pattern {section.pattern}"
-        log_exception(err_str)
-        # this should not happen if data type is indeed the enum
-        raise ValueError(err_str)
-    max_slices = process_data_shape[slice_dim]
+    
+    nsl_dim_l = list(process_data_shape)
+    nsl_dim_l.pop(slicing_dim_section)
+    non_slice_dims_shape = tuple(nsl_dim_l)
+    max_slices = process_data_shape[slicing_dim_section]
     data_type = input_data_type
     output_dims = non_slice_dims_shape
     if section.gpu:
@@ -825,7 +827,7 @@ def _update_max_slices(
         for m in section.methods:
             if m.calc_max_slices is not None:
                 (slices_estimated, data_type, output_dims) = m.calc_max_slices(
-                    slice_dim, non_slice_dims_shape, data_type, available_memory
+                    slicing_dim_section, non_slice_dims_shape, data_type, available_memory
                 )
                 max_slices_methods[idx] = min(max_slices, slices_estimated)
                 idx += 1
@@ -834,10 +836,22 @@ def _update_max_slices(
             )
         section.max_slices = min(max_slices_methods)
     else:
-        # NOTE: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
         section.max_slices = max_slices
+        # NOTE: although there is also no direct way to know out data type for other backends, 
+        # such as TomoPy, the problem of the output shape is the most significant. 
+        # After tomopy recon the data has changed its shape and if we to run methods
+        # from httomolibgpu library, the calculation of slices will be incorrect!
+        
+        # therefore those changes are temporary to deal with the issue above
+        for m in section.methods:
+            if m.parameters['method_name'] == "recon":
+                output_dims = (output_dims[1],output_dims[1])
         pass
-    return data_type, output_dims
+    # we need to return the full output_dims for the sections loop
+    output_dims_l = list(output_dims)    
+    output_dims_l.insert(slicing_dim_section, max_slices)
+    output_dims = tuple(output_dims_l)
+    return output_dims, data_type
 
 
 def _perform_reslice(
