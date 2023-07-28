@@ -18,7 +18,7 @@ comm = MPI.COMM_WORLD
 def prerun_method(
     run_method_info: RunMethodInfo,
     section: PlatformSection,
-    misc_params: List[Tuple[List[str], object]],
+    possible_extra_params: List[Tuple[List[str], object]],
     current_func: MethodFunc,
     dict_datasets_pipeline: Dict[str, ndarray],
 ):
@@ -30,7 +30,7 @@ def prerun_method(
 
     # extra params unrelated to wrapped packages but related to httomo added
     run_method_info.dict_httomo_params = _check_signature_for_httomo_params(
-        func_wrapper, current_func, misc_params
+        func_wrapper, current_func, possible_extra_params
     )
     # check platform section object to decide when numpy array need to be returned
     if (run_method_info.task_idx + 1) == len(section.methods):

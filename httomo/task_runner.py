@@ -175,6 +175,7 @@ def run_tasks(
         (["comm"], comm),
         (["out_dir"], httomo.globals.run_out_dir),
         (["return_numpy"], False),
+        (["save_result"], False),
     ]
     # data shape and dtype are useful when calculating max slices
     data_shape = loader_info.data.shape
@@ -620,21 +621,18 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
 def _determine_platform_sections(
     method_funcs: List[MethodFunc],
 ) -> List[PlatformSection]:
-    ret: List[PlatformSection] = []
+    section: List[PlatformSection] = []
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
     methods: List[MethodFunc] = []
-    for method in method_funcs:
-        if method.gpu == current_gpu and (
-            method.pattern == current_pattern
-            or method.pattern == Pattern.all
-            or current_pattern == Pattern.all
-        ):
-            methods.append(method)
-            if current_pattern == Pattern.all and method.pattern != Pattern.all:
-                current_pattern = method.pattern
-        else:
-            ret.append(
+    for m_ind, method in enumerate(method_funcs):
+        try:
+            save_res = method.parameters['save_result']
+        except:
+            save_res = False
+        if save_res and m_ind > 0:
+            # this will _always_ create a separate section
+            section.append(
                 PlatformSection(
                     gpu=current_gpu,
                     pattern=current_pattern,
@@ -644,17 +642,38 @@ def _determine_platform_sections(
                 )
             )
             methods = [method]
-            current_pattern = method.pattern
             current_gpu = method.gpu
+        else:
+            if method.gpu == current_gpu and (
+                method.pattern == current_pattern
+                or method.pattern == Pattern.all
+                or current_pattern == Pattern.all
+            ):
+                methods.append(method)
+                if current_pattern == Pattern.all and method.pattern != Pattern.all:
+                    current_pattern = method.pattern
+            else:
+                section.append(
+                    PlatformSection(
+                        gpu=current_gpu,
+                        pattern=current_pattern,
+                        max_slices=0,
+                        methods=methods,
+                        output_stats=None,
+                    )
+                )
+                methods = [method]
+                current_pattern = method.pattern
+                current_gpu = method.gpu
 
-    ret.append(
+    section.append(
         PlatformSection(
             gpu=current_gpu, pattern=current_pattern, max_slices=0, methods=methods,
             output_stats=None
         )
     )
 
-    return ret
+    return section
 
 
 def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
