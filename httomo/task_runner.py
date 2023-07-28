@@ -408,6 +408,7 @@ def run_tasks(
             if 'center' not in method_name:
                 # Calculate stats on result of the last method in the section (except centering)
                 section.output_stats = min_max_mean_std(data_full_section, comm)
+                
         # update input data dimensions and data type for a new section
         data_shape = output_dims_upd
         data_dtype = data_type_upd        
@@ -421,52 +422,8 @@ def run_tasks(
         end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
         log_once(end_str, comm=comm, colour=Colour.BVIOLET)
         #: remove ansi escape sequences from the log file
-        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
+        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")    
     
-    """
-    # Run the methods
-    for idx, method_func in enumerate(method_funcs[1:]):
-        package = method_func.module_name.split(".")[0]
-        method_name = method_func.parameters.pop("method_name")
-        task_no_str = f"Running task {idx+2}"
-        task_end_str = task_no_str.replace("Running", "Finished")
-        pattern_str = f"(pattern={method_func.pattern.name})"
-        log_once(
-            f"{task_no_str} {pattern_str}: {method_name}...",
-            comm,
-            colour=Colour.LIGHT_BLUE,
-            level=0,
-        )
-        start = time.perf_counter_ns()
-
-        # check if the module needs the ncore parameter and add it
-        if "ncore" in signature(method_func.method_func).parameters:
-            method_func.parameters.update({"ncore": ncore})
-
-        idx += 1
-        run_method(
-            idx,
-            save_all,
-            possible_extra_params,
-            method_func,
-            dict_datasets_pipeline,
-            comm,
-        )
-
-        stop = time.perf_counter_ns()
-        output_str_list = [
-            f"    {task_end_str} {pattern_str}: {method_name} (",
-            package,
-            f") Took {float(stop-start)*1e-6:.2f}ms",
-        ]
-        output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
-        log_once(output_str_list, comm=comm, colour=output_colour_list)
-
-    reslice_summary_str = f"Total number of reslices: {reslice_info.count}"
-    reslice_summary_colour = Colour.BLUE if reslice_info.count <= 1 else Colour.RED
-    log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
-    """
-
 def _initialise_datasets_and_stats(
     yaml_config: Path,
 ) -> tuple[Dict[str, None], List[Dict]]:
@@ -612,93 +569,6 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         )
 
     return method_funcs
-
-
-def run_method(
-    task_idx: int,
-    save_all: bool,
-    misc_params: List[Tuple[List[str], object]],
-    current_func: MethodFunc,
-    dict_datasets_pipeline: Dict[str, Optional[ndarray]],
-    comm: MPI.Comm,
-) -> Dict:
-    """
-    Run a method function in the processing pipeline.
-
-    Parameters
-    ----------
-    task_idx : int
-        The index of the current task (zero-based indexing).
-    save_all : bool
-        Whether to save the result of all methods in the pipeline.
-    misc_params : List[Tuple[List[str], object]]
-        A list of possible extra params that may be needed by a method.
-    current_func : MethodFunc
-        Object describing the python function that performs the method.
-    dict_datasets_pipeline : Dict[str, ndarray]
-        A dict containing all available datasets in the given pipeline.
-    comm : MPI.Comm
-        The MPI communicator used for the run.
-
-    Returns
-    -------
-    Dict
-        Returns the global stats
-    """
-    module_path = current_func.module_name
-    method_name = current_func.method_func.__name__
-    func_wrapper = current_func.wrapper_func
-    package_name = current_func.module_name.split(".")[0]
-
-    #: create an object that would be passed along to prerun_method,
-    #: run_method, and postrun_method
-    run_method_info = RunMethodInfo(task_idx=task_idx)
-
-    #: prerun - before running the method, update the dictionaries
-    prerun_method(
-        run_method_info,
-        save_all,
-        misc_params,
-        current_func,
-        dict_datasets_pipeline,
-    )
-
-    # Assign the `data` parameter of the method to the array associated with its
-    # input dataset
-    run_method_info.dict_httomo_params["data"] = dict_datasets_pipeline[
-        run_method_info.data_in
-    ]
-
-    # Run method on the input data
-    if method_name == "save_to_images":
-        func_wrapper(
-            method_name,
-            run_method_info.dict_params_method,
-            **run_method_info.dict_httomo_params,
-        )
-    else:
-        res = func_wrapper(
-            method_name,
-            run_method_info.dict_params_method,
-            **run_method_info.dict_httomo_params,
-        )
-        # Store the output(s) of the method in the appropriate
-        # dataset in the `dict_datasets_pipeline` dict
-        if isinstance(res, (tuple, list)):
-            # The method produced multiple outputs
-            for val, dataset in zip(res, run_method_info.data_out):
-                dict_datasets_pipeline[dataset] = val
-        else:
-            # The method produced a single output
-            dict_datasets_pipeline[run_method_info.data_out] = res
-
-    if method_name == "save_to_images":
-        # Nothing more to do if the saver has a special kind of
-        # output which handles saving the result
-        return
-
-    postrun_method(run_method_info, dict_datasets_pipeline, current_func)
-
 
 def _check_params_for_sweep(params: Dict) -> int:
     """Check the parameter dict of a method for the number of parameter sweeps
