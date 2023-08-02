@@ -32,12 +32,11 @@ def prerun_method(
     run_method_info.dict_httomo_params = _check_signature_for_httomo_params(
         func_wrapper, current_func, possible_extra_params
     )
-    # check platform section object to decide when numpy array need to be returned
+    # check platform section object to decide when numpy array needs to be returned
     if (run_method_info.task_idx + 1) == len(section.methods):
         # check if the method is the last method in the section
-        run_method_info.return_numpy = True
-        run_method_info.dict_httomo_params['return_numpy'] = True
-        
+        #run_method_info.return_numpy = True
+        run_method_info.dict_httomo_params['return_numpy'] = True        
     
     # Get the information describing if the method is being run only
     # once, or multiple times with different input datasets
@@ -58,6 +57,18 @@ def prerun_method(
     # datasets
     dict_params_method.update(dataset_params)
 
+    # check if save_result is in the dict_params_method
+    try:
+        save_res = dict_params_method['save_result']
+        dict_params_method.pop('save_result') # remove the item
+    except:
+        save_res = False    
+    if save_res:        
+        #run_method_info.return_numpy = True
+        run_method_info.save_result = True
+        run_method_info.dict_httomo_params['return_numpy'] = True
+        #run_method_info.dict_httomo_params['save_result'] = True
+        
     # check if the module needs the gpu_id parameter and flag it to add in the
     # wrapper
     gpu_id_par = "gpu_id" in signature(current_func.method_func).parameters

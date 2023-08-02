@@ -121,8 +121,6 @@ class RunMethodInfo:
         The name(s) of the output dataset(s)
     dict_httomo_params : Dict
         Dict containing extra params unrelated to wrapped packages but related to httomo
-    return_numpy : bool
-        if True forces the wrapper to return a numpy array
     save_result : bool
         save the result into intermediate dataset
     task_idx: int
@@ -137,7 +135,6 @@ class RunMethodInfo:
     data_in: str = field(default_factory=str)
     data_out: Union[str, List[str]] = field(default_factory=str)
     dict_httomo_params: Dict[str, Any] = field(default_factory=dict)
-    return_numpy: bool = False
     save_result: bool = False
     task_idx: int = -1
     package_name: str = None

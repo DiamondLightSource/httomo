@@ -175,7 +175,6 @@ def run_tasks(
         (["comm"], comm),
         (["out_dir"], httomo.globals.run_out_dir),
         (["return_numpy"], False),
-        (["save_result"], False),
     ]
     # data shape and dtype are useful when calculating max slices
     data_shape = loader_info.data.shape
@@ -394,9 +393,9 @@ def run_tasks(
             dict_datasets_pipeline[method_funcs[0].parameters["name"]] = \
                 recon_arr
             data_full_section = recon_arr
-       
+        
         if i < len(platform_sections) - 1:
-            # Assume that, after every section has been completed (except for the
+            # we should consider reslicing ONLY when the pattern of the section changes except for the
             # last section), a reslice should occur
             next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]            
             dict_datasets_pipeline[next_section_in] = _perform_reslice(
@@ -405,17 +404,18 @@ def run_tasks(
                 platform_sections[i+1],
                 reslice_info,
                 comm
-            )            
+            )
             if 'center' not in method_name:
                 # Calculate stats on result of the last method in the section (except centering)
                 section.output_stats = min_max_mean_std(data_full_section, comm)
                 
         # update input data dimensions and data type for a new section
         data_shape = output_dims_upd
-        data_dtype = data_type_upd        
-
+        data_dtype = data_type_upd
+        
         # saving intermediate datasets IF it has been asked for
-        postrun_method(run_method_info, dict_datasets_pipeline, section)               
+        postrun_method(run_method_info, dict_datasets_pipeline, section)
+
     ##************* SECTIONS LOOP IS COMPLETE *************##
     elapsed_time = 0.0
     if comm.rank == 0:
@@ -630,8 +630,9 @@ def _determine_platform_sections(
             save_res = method.parameters['save_result']
         except:
             save_res = False
-        if save_res and m_ind > 0:
-            # this will _always_ create a separate section
+        if save_res:
+            if m_ind == 0:
+                methods = [method]
             section.append(
                 PlatformSection(
                     gpu=current_gpu,
@@ -641,7 +642,10 @@ def _determine_platform_sections(
                     output_stats=None,
                 )
             )
-            methods = [method]
+            if m_ind > 0:
+                methods = [method]
+            else:
+                methods = []
             current_gpu = method.gpu
         else:
             if method.gpu == current_gpu and (
@@ -699,6 +703,8 @@ def _update_max_slices(
     input_data_type: Optional[np.dtype],
 ) -> Tuple[np.dtype, Tuple[int, int]]:
     
+    comm = MPI.COMM_WORLD
+        
     if process_data_shape is None or input_data_type is None:
         return
     
@@ -711,6 +717,8 @@ def _update_max_slices(
     if section.gpu:
         available_memory = _get_available_gpu_memory(10.0)
         available_memory_in_GB = round(available_memory / (1024**3), 2)
+        memory_str = f"The amount of the available GPU memory is {available_memory_in_GB} GB"
+        log_once(memory_str, comm=comm, colour=Colour.BVIOLET, level=1)
         max_slices_methods = [max_slices] * len(section.methods)
         idx = 0
         for m in section.methods:
