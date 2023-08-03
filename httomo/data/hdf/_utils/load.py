@@ -375,18 +375,18 @@ def get_angles(file: str, path: str, comm: MPI.Comm = MPI.COMM_WORLD) -> ndarray
     return angles
 
 
-def _parse_ignore_darks_flats(ignore: Dict) -> List[int]:
-    """Get all indices of darks/flats to ignore.
+def _parse_ignore_indices(ignore: Dict) -> List[int]:
+    """Get all indices to ignore.
 
     Parameters
     ----------
     ignore : Dict
-        A dict describing the individual and batch darks/flats to ignore.
+        A dict describing the individual and batch images to ignore.
 
     Returns
     -------
     List[int]
-        A list of indices that describe which darks/flats to ignore.
+        A list of indices that describe which images to ignore.
     """
     indices = []
     if "individual" in ignore.keys():
@@ -475,7 +475,7 @@ def get_darks_flats_together(
             if ignore_darks is True:
                 darks_indices = []
             elif isinstance(ignore_darks, dict):
-                ignore_darks_indices = _parse_ignore_darks_flats(ignore_darks)
+                ignore_darks_indices = _parse_ignore_indices(ignore_darks)
                 if not set(ignore_darks_indices) <= set(darks_indices):
                     err_str = (
                         f"The darks indices to ignore are "
@@ -488,7 +488,7 @@ def get_darks_flats_together(
             if ignore_flats is True:
                 flats_indices = []
             elif isinstance(ignore_flats, dict):
-                ignore_flats_indices = _parse_ignore_darks_flats(ignore_flats)
+                ignore_flats_indices = _parse_ignore_indices(ignore_flats)
                 if not set(ignore_flats_indices) <= set(flats_indices):
                     err_str = (
                         f"The flats indices to ignore are "
@@ -560,7 +560,7 @@ def get_darks_flats_separate(
         if ignore_indices is True:
             indices = []
         elif isinstance(ignore_indices, dict):
-            ignore_indices = _parse_ignore_darks_flats(ignore_indices)
+            ignore_indices = _parse_ignore_indices(ignore_indices)
             if not set(ignore_indices) <= set(indices):
                 err_str = (
                     f"The darks/flats indices to ignore are "
