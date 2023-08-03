@@ -183,16 +183,12 @@ def run_tasks(
     
     ##---------- MAIN LOOP STARTS HERE ------------##
     idx = 0
+    idx_global = 0
     # initialise the CPU data array with the loaded data, we override it at the end of every section
     data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
     for i, section in enumerate(platform_sections):  
         # getting the slicing dimension of the section
-        if section.pattern.name == 'all':
-            # the "all" pattern should inherit the pattern of the previous section
-            if i > 0:
-                slicing_dim_section = _get_slicing_dim(platform_sections[i-1].pattern) - 1
-        else:
-            slicing_dim_section = _get_slicing_dim(section.pattern) - 1
+        slicing_dim_section = _get_slicing_dim(section.pattern) - 1
             
         # determine max_slices for the whole section and return output dims and type
         output_dims_upd, data_type_upd = _update_max_slices(section, slicing_dim_section, data_shape, data_dtype)
@@ -211,8 +207,7 @@ def run_tasks(
         # blocks are processed in the blocks-loop
         contains_recon = any(['recon.algorithm' in method_func.module_name for method_func in section.methods])
         if contains_recon:
-            recon_shape = (data_full_section.shape[1], data_full_section.shape[2], data_full_section.shape[2])
-            recon_arr = np.empty(recon_shape, dtype=np.float32)
+            recon_arr = np.empty(output_dims_upd, dtype=np.float32)
        
         ##---------- LOOP OVER _BLOCKS_ IN THE SECTION ------------##
         indices_start = 0
@@ -235,6 +230,7 @@ def run_tasks(
                 package_str = f"({package_name})"
                 task_no_str = f"Running task {idx+2}"
                 task_end_str = task_no_str.replace("Running", "Finished")
+                idx_global += 2
                 
                 if it_blocks == iterations_for_blocks-1:
                     log_once(
@@ -271,6 +267,7 @@ def run_tasks(
                     # parameters in `_get_method_funcs()` possibly could be
                     # removed?
                     run_method_info.dict_params_method.pop('method_name')
+                    idx_global += 1
                 else:
                     # Reuse the `RunMethodInfo` object that was defined for the
                     # method when the 0th block in the section was processed
@@ -291,14 +288,16 @@ def run_tasks(
                     slice_ind_center = run_method_info.dict_params_method['ind']
                     if slice_ind_center is None or 'mid':
                         slice_ind_center = data_full_section.shape[1] // 2  # get the middle slice of the whole data chunk
-                    # copy the "ind" slice from the CPU section dataset (a chunk)
+                    # copy the "ind" slice from the last section dataset (a chunk)
+                    # NOTE: even if there are some GPU filters before in the section, 
+                    # we still be using the data from the LAST section
                     run_method_info.dict_httomo_params["data"] = data_full_section[:,slice_ind_center,:]
                                    
                 # ------ RUNNING THE WRAPPER -------#
                 start = time.perf_counter_ns()
                 if 'center' in method_name:
                     if it_blocks == 0:
-                        # we need to avoid overriding "res" with a scalar.
+                        # we need to avoid overriding "res" with a scalar.                        
                         res_param = func_wrapper(
                             method_name,
                             run_method_info.dict_params_method,
@@ -363,8 +362,11 @@ def run_tasks(
             if not contains_recon:
                 data_full_section[tuple(slc_indices)] = res
             else:
-                recon_slc_indices = (slc_indices[1], slice(None), slice(None))
-                recon_arr[recon_slc_indices] = res
+                if recon_arr.shape[0] != res.shape[0]:
+                    # TomoPy returns reconstruction in a different shape from httomolibgpu                    
+                    recon_arr[tuple(slc_indices)] = xp.swapaxes(res,0,1)
+                else:
+                    recon_arr[tuple(slc_indices)] = res
 
             # re-initialise the slicing indices
             indices_start = indices_end
@@ -394,9 +396,8 @@ def run_tasks(
                 recon_arr
             data_full_section = recon_arr
         
-        if i < len(platform_sections) - 1:
-            # we should consider reslicing ONLY when the pattern of the section changes except for the
-            # last section), a reslice should occur
+        if section.reslice:
+            # we reslice only when the pattern of the section changes
             next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]            
             dict_datasets_pipeline[next_section_in] = _perform_reslice(
                 dict_datasets_pipeline[next_section_in],
@@ -404,10 +405,16 @@ def run_tasks(
                 platform_sections[i+1],
                 reslice_info,
                 comm
-            )
-            if 'center' not in method_name:
-                # Calculate stats on result of the last method in the section (except centering)
-                section.output_stats = min_max_mean_std(data_full_section, comm)
+            )    
+        """
+        TODO: something is not right with this function memory-wise, it can be also 
+        rewritten with less allreduce: 
+        https://github.com/andrewliao11/gail-tf/blob/54d9db583968a2213b982652fc4362a474cac92f/gailtf/baselines/common/mpi_moments.py#L5
+        
+        if 'center' not in method_name:
+            # Calculate stats on result of the last method in the section (except centering)
+            section.output_stats = min_max_mean_std(data_full_section, comm)
+        """    
                 
         # update input data dimensions and data type for a new section
         data_shape = output_dims_upd
@@ -625,29 +632,31 @@ def _determine_platform_sections(
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
     methods: List[MethodFunc] = []
+    
+    save_res_previous_method = False
     for m_ind, method in enumerate(method_funcs):
         try:
-            save_res = method.parameters['save_result']
+            save_res_current = method.parameters['save_result']
         except:
-            save_res = False
-        if save_res:
-            if m_ind == 0:
-                methods = [method]
+            save_res_current = False
+            
+        if m_ind > 0 and save_res_previous_method:
+            # previous method requested the result to be saved,
+            # i.e., we need to create a section with that method or methods        
             section.append(
                 PlatformSection(
                     gpu=current_gpu,
                     pattern=current_pattern,
+                    reslice=False,
                     max_slices=0,
                     methods=methods,
                     output_stats=None,
                 )
             )
-            if m_ind > 0:
-                methods = [method]
-            else:
-                methods = []
+            methods = [method]
+            current_pattern = method.pattern
             current_gpu = method.gpu
-        else:
+        else:        
             if method.gpu == current_gpu and (
                 method.pattern == current_pattern
                 or method.pattern == Pattern.all
@@ -661,22 +670,51 @@ def _determine_platform_sections(
                     PlatformSection(
                         gpu=current_gpu,
                         pattern=current_pattern,
+                        reslice=False,
                         max_slices=0,
                         methods=methods,
                         output_stats=None,
                     )
                 )
-                methods = [method]
+                methods = [method]                
                 current_pattern = method.pattern
                 current_gpu = method.gpu
+        save_res_previous_method = save_res_current
 
     section.append(
         PlatformSection(
-            gpu=current_gpu, pattern=current_pattern, max_slices=0, methods=methods,
+            gpu=current_gpu, pattern=current_pattern, reslice=False, max_slices=0, methods=methods,
             output_stats=None
         )
     )
-
+    # first we need to check if there are any sections with pattern "all" and inherit
+    # the pattern from the previous section
+    for i, section_current in enumerate(section):                   
+        for m_ind, methodfunc_sect in enumerate(section_current.methods):
+            if m_ind == len(section_current.methods) - 1:
+                # we make every last method in the section to return_numpy: True
+                methodfunc_sect.return_numpy = True
+            if 'rotation' in methodfunc_sect.module_name:
+                # NOTE: we also need to check if centering is the last method in the section.
+                # Then what architecture of the previous method in that section AND the next 
+                # method in the next section after centering.
+                # This is due to TomoPy CPU functions can follow centering executed on the 
+                # GPU while the GPU data is not returned to CPU. 
+                # Centering doesn't care about the data being in blocks as it takes data from the CPU array                
+                if m_ind > 0:
+                    previous_method_arch = section_current.methods[m_ind-1].gpu
+                    if i > 0 and i < len(section) - 1:
+                        next_method_arch = section[i+1].methods[0].gpu
+                        if previous_method_arch != next_method_arch:
+                            section_current.methods[m_ind-1].return_numpy = True                      
+            
+    # we need to check if the reslice needed _after_ the section is complete
+    for i, section_current in enumerate(section):
+        # and we don't need to reslice for the last section
+        if i < len(section) - 1:            
+            if section_current.pattern.name != section[i+1].pattern.name and section[i+1].pattern.name != 'all':
+                # check that the pattern changed but exclude the case when next pattern is "all"
+                section[i].reslice = True
     return section
 
 
@@ -745,7 +783,7 @@ def _update_max_slices(
                 output_dims = (output_dims[1],output_dims[1])
         pass
     # we need to return the full output_dims for the sections loop
-    output_dims_l = list(output_dims)    
+    output_dims_l = list(output_dims)
     output_dims_l.insert(slicing_dim_section, max_slices)
     output_dims = tuple(output_dims_l)
     return output_dims, data_type

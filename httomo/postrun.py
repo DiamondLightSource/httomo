@@ -31,12 +31,12 @@ def postrun_method(
             recon_center = run_method_info.dict_params_method.pop("center", None)
             recon_algorithm = None
             if recon_center is not None:
-                slice_dim = 1
+                # get the name of the reconstruction algorithm
                 recon_algorithm = run_method_info.dict_params_method.pop(
                     "algorithm", None
-                )  # covers tomopy case
-            else:
-                slice_dim = _get_slicing_dim(section.pattern)
+                )
+
+            slice_dim = _get_slicing_dim(section.pattern)
 
             intermediate_dataset(
                 dict_datasets_pipeline[run_method_info.data_out],

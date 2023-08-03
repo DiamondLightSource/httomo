@@ -76,11 +76,14 @@ class ResliceInfo:
 @dataclass
 class PlatformSection:
     """
-    Data class to represent a section of the pipeline that runs on the same platform.
-    That is, all methods contained in this section of the pipeline run either all on CPU
-    or all on GPU.
+    Data class to represent a section of the pipeline. Section can combine methods
+    if they run on the same platform (cpu or gpu) and have the same pattern. 
+    The sections can be further divided if necessary if the results of the method
+    needed to be saved. 
+    NOTE: More fine division of sections into subsections will slow down 
+    the pipeline.
 
-    This is used to iterate through GPU memory in chunks.
+    Mainly used to iterate through GPU memory in chunks.
 
     Attributes
     ----------
@@ -88,6 +91,8 @@ class PlatformSection:
         Whether this section is a GPU section (True) or CPU section (False)
     pattern : Pattern
         To denote the slicing pattern - sinogram, projection
+    reslice : bool
+        This tells the runner if we need to reslice the data before next section
     max_slices : int
         Holds information about how many slices can be fit in one chunk without
         exhausting memory (relevant on GPU only)
@@ -100,6 +105,7 @@ class PlatformSection:
 
     gpu: bool
     pattern: Pattern
+    reslice: bool
     max_slices: int
     methods: List[MethodFunc]
     output_stats: Tuple[int, int, float, float]
