@@ -476,12 +476,26 @@ def get_darks_flats_together(
                 darks_indices = []
             elif isinstance(ignore_darks, dict):
                 ignore_darks_indices = _parse_ignore_darks_flats(ignore_darks)
+                if not set(ignore_darks_indices) <= set(darks_indices):
+                    err_str = (
+                        f"The darks indices to ignore are "
+                        f"{ignore_darks_indices}, which has one or "
+                        f"more values outside the darks in the dataset."
+                    )
+                    raise ValueError(err_str)
                 darks_indices = list(set(darks_indices) - set(ignore_darks_indices))
             # Get indices of flats to ignore (if any)
             if ignore_flats is True:
                 flats_indices = []
             elif isinstance(ignore_flats, dict):
                 ignore_flats_indices = _parse_ignore_darks_flats(ignore_flats)
+                if not set(ignore_flats_indices) <= set(flats_indices):
+                    err_str = (
+                        f"The flats indices to ignore are "
+                        f"{ignore_flats_indices}, which has one or "
+                        f"more values outside the flats in the dataset."
+                    )
+                    raise ValueError(err_str)
                 flats_indices = list(set(flats_indices) - set(ignore_flats_indices))
             dataset = file[data_path]
             darks = _get_darks_flats(dataset, darks_indices, dim, pad, preview, comm)
@@ -547,6 +561,13 @@ def get_darks_flats_separate(
             indices = []
         elif isinstance(ignore_indices, dict):
             ignore_indices = _parse_ignore_darks_flats(ignore_indices)
+            if not set(ignore_indices) <= set(indices):
+                err_str = (
+                    f"The darks/flats indices to ignore are "
+                    f"{ignore_indices}, which has one or more values "
+                    f"outside the darks/flats in the dataset."
+                )
+                raise ValueError(err_str)
             indices = list(set(indices) - set(ignore_indices))
         data = _get_darks_flats(dataset, indices, dim, pad, preview, comm)
     return data
