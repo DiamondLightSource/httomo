@@ -97,7 +97,7 @@ def run_tasks(
 
     # Associate patterns to method function objects
     for i, method_func in enumerate(method_funcs):
-        method_funcs[i] = _assign_pattern_to_method(method_func)
+        method_funcs[i] = _assign_pattern_to_method(method_func, i)
 
     #: no need to add loader into a platform section
     platform_sections = _determine_platform_sections(method_funcs[1:])
@@ -183,7 +183,6 @@ def run_tasks(
     
     ##---------- MAIN LOOP STARTS HERE ------------##
     idx = 0
-    idx_global = 0
     # initialise the CPU data array with the loaded data, we override it at the end of every section
     data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
     for i, section in enumerate(platform_sections):  
@@ -230,8 +229,7 @@ def run_tasks(
                 package_str = f"({package_name})"
                 task_no_str = f"Running task {idx+2}"
                 task_end_str = task_no_str.replace("Running", "Finished")
-                idx_global += 2
-                
+               
                 if it_blocks == iterations_for_blocks-1:
                     log_once(
                     f"{task_no_str} {pattern_str}: {method_name}...",
@@ -267,7 +265,6 @@ def run_tasks(
                     # parameters in `_get_method_funcs()` possibly could be
                     # removed?
                     run_method_info.dict_params_method.pop('method_name')
-                    idx_global += 1
                 else:
                     # Reuse the `RunMethodInfo` object that was defined for the
                     # method when the 0th block in the section was processed
@@ -405,7 +402,7 @@ def run_tasks(
                 platform_sections[i+1],
                 reslice_info,
                 comm
-            )    
+            )
         """
         TODO: something is not right with this function memory-wise, it can be also 
         rewritten with less allreduce: 
@@ -589,7 +586,10 @@ def _check_params_for_sweep(params: Dict) -> int:
     return count
 
 
-def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
+def _assign_pattern_to_method(
+    method_function: MethodFunc,
+    index_method : int,
+    ) -> MethodFunc:
     """Fetch the pattern information from the methods database in
     `httomo/methods_database/packages` for the given method and associate that
     pattern with the function object.
@@ -597,8 +597,9 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
     Parameters
     ----------
     method_function : MethodFunc
-        The method function information whose pattern information will be fetched and populated.
-
+        The method function information whose pattern information will be fetched and populated.    
+    index_method: int
+        An index of a method in the pipeline
     Returns
     -------
     MethodFunc
@@ -621,7 +622,8 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
         )
         log_exception(err_str)
         raise ValueError(err_str)
-
+    
+    method_function.idx_global = index_method + 1
     return dataclasses.replace(method_function, pattern=pattern)
 
 

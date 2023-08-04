@@ -42,7 +42,7 @@ def postrun_method(
                 dict_datasets_pipeline[run_method_info.data_out],
                 httomo.globals.run_out_dir,
                 comm,
-                run_method_info.task_idx + 1,
+                run_method_info.task_idx_global,
                 run_method_info.package_name,
                 run_method_info.method_name,
                 run_method_info.data_out,

@@ -32,6 +32,9 @@ def prerun_method(
     run_method_info.dict_httomo_params = _check_signature_for_httomo_params(
         func_wrapper, current_func, possible_extra_params
     )
+    # assign a global index of the method
+    run_method_info.task_idx_global = section.methods[run_method_info.task_idx].idx_global
+    
     # check platform section object to decide when numpy array needs to be returned   
     if section.methods[run_method_info.task_idx].return_numpy:
         run_method_info.dict_httomo_params['return_numpy'] = True

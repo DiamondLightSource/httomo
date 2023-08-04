@@ -37,6 +37,8 @@ class MethodFunc:
         Whether GPU execution is supported.
     return_numpy : bool
         Returns numpy array if set to True.
+    idx_global: int
+        A global index of the method in the pipeline
     """
 
     module_name: str
@@ -49,6 +51,7 @@ class MethodFunc:
     gpu: bool = False
     is_loader: bool = False
     return_numpy: bool = False
+    idx_global: int = 0
 
 
 @dataclass
@@ -130,7 +133,9 @@ class RunMethodInfo:
     save_result : bool
         save the result into intermediate dataset
     task_idx: int
-        Index of the task in the pipeline being run
+        Index of the local task in the section being run
+    task_idx_global: int 
+        Index of the global task (method) in the pipeline
     package_name: str
         The name of the package the method is imported from
     method_name: str
@@ -143,5 +148,6 @@ class RunMethodInfo:
     dict_httomo_params: Dict[str, Any] = field(default_factory=dict)
     save_result: bool = False
     task_idx: int = -1
+    task_idx_global: int = -1
     package_name: str = None
     method_name: str = None
