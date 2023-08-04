@@ -1,6 +1,7 @@
 import subprocess
 
 import numpy as np
+import h5py
 import pytest
 from mpi4py import MPI
 
@@ -161,6 +162,81 @@ def test_standard_tomo_ignore_flats_error(
             comm,
             image_key_path=standard_image_key_path,
             ignore_flats=ignore_flats,
+        )
+
+
+def test_standard_tomo_ignore_projs(
+    standard_data, standard_data_path, standard_image_key_path
+):
+    preview = [None, None, None]
+    # Ignore 3 individual + 5 batch projections
+    ignore_projs = {
+        "individual": [0, 1, 2],
+        "batch": [
+            {
+                "start": 3,
+                "stop": 7,
+            }
+        ],
+    }
+    output = standard_tomo(
+        "tomo",
+        standard_data,
+        standard_data_path,
+        1,
+        preview,
+        1,
+        comm,
+        image_key_path=standard_image_key_path,
+        ignore_projections=ignore_projs,
+    )
+    assert output.data.shape[0] == 172  # 8 projections removed
+    assert output.angles.shape[0] == 172  # 8 angles removed
+    with h5py.File(standard_data, "r") as f:
+        orig_angles = f["entry1/tomo_entry/data/rotation_angle"]
+        orig_angles = orig_angles[0:180]  # consider angles for projections only
+        orig_angles = orig_angles[8:]  # remove the first 8 angles
+        # Convert returned angles in radians back to degrees to compare to
+        # original
+        np.testing.assert_allclose(orig_angles, np.rad2deg(output.angles), atol=1e-10)
+        orig_data = f[standard_data_path]
+        # In the returned data the first 8 projections from the original should
+        # be removed. Compare the first 10 projections of the returned data to
+        # the appropriate 10 projections in the original (indices 8 to 18)
+        np.testing.assert_array_equal(output.data[0:10, :, :], orig_data[8:18, :, :])
+
+
+def test_standard_tomo_ignore_projs_error(
+    standard_data, standard_data_path, standard_image_key_path
+):
+    preview = [None, None, None]
+    # Ignore 3 individual + 5 batch projections, one of which (the end one) is
+    # outside the range of projections
+    ignore_projs = {
+        "individual": [173, 174, 175],
+        "batch": [
+            {
+                "start": 176,
+                "stop": 180,
+            }
+        ],
+    }
+    expected_err_str = (
+        r"The specified projection indices to ignore are: \{173, 174, 175, "
+        r"176, 177, 178, 179, 180\}. However, the indices \{180\} are not "
+        r"projection indices in the dataset."
+    )
+    with pytest.raises(ValueError, match=expected_err_str):
+        standard_tomo(
+            "tomo",
+            standard_data,
+            standard_data_path,
+            1,
+            preview,
+            1,
+            comm,
+            image_key_path=standard_image_key_path,
+            ignore_projections=ignore_projs,
         )
 
 
