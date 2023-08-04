@@ -21,6 +21,7 @@ def prerun_method(
     possible_extra_params: List[Tuple[List[str], object]],
     current_func: MethodFunc,
     dict_datasets_pipeline: Dict[str, ndarray],
+    save_all: bool,
 ):
 
     run_method_info.package_name = current_func.module_name.split(".")[0]
@@ -63,8 +64,9 @@ def prerun_method(
         save_res = dict_params_method['save_result']
         dict_params_method.pop('save_result') # remove the item
     except:
-        save_res = False
-    if save_res:
+        save_res = False                   
+        
+    if save_res or save_all:
         run_method_info.save_result = True
         run_method_info.dict_httomo_params['return_numpy'] = True        
         

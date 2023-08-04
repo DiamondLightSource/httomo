@@ -99,8 +99,8 @@ def run_tasks(
     for i, method_func in enumerate(method_funcs):
         method_funcs[i] = _assign_pattern_to_method(method_func, i)
 
-    #: no need to add loader into a platform section
-    platform_sections = _determine_platform_sections(method_funcs[1:])
+    # Initialising platform sections (skipping loader)
+    platform_sections = _determine_platform_sections(method_funcs[1:], save_all)
 
     # Check pipeline for the number of parameter sweeps present. If one is
     # defined, raise an error, due to not supporting parameter sweeps in a
@@ -255,6 +255,7 @@ def run_tasks(
                         possible_extra_params,
                         methodfunc_sect,
                         dict_datasets_pipeline,
+                        save_all,
                     )
 
                     # remove methods name from the parameters list of a method
@@ -629,19 +630,23 @@ def _assign_pattern_to_method(
 
 def _determine_platform_sections(
     method_funcs: List[MethodFunc],
+    save_all: bool,
 ) -> List[PlatformSection]:
     section: List[PlatformSection] = []
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
     methods: List[MethodFunc] = []
     
-    save_res_previous_method = False
+    save_res_previous_method = save_all
     for m_ind, method in enumerate(method_funcs):
-        try:
-            save_res_current = method.parameters['save_result']
-        except:
-            save_res_current = False
-            
+        if not save_all:
+            try:
+                save_res_current = method.parameters['save_result']
+            except:
+                save_res_current = False
+        else:
+            save_res_current = True
+                    
         if m_ind > 0 and save_res_previous_method:
             # previous method requested the result to be saved,
             # i.e., we need to create a section with that method or methods        
