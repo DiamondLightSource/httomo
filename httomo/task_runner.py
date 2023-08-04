@@ -404,16 +404,11 @@ def run_tasks(
                 reslice_info,
                 comm
             )
-        """
-        TODO: something is not right with this function memory-wise, it can be also 
-        rewritten with less allreduce: 
-        https://github.com/andrewliao11/gail-tf/blob/54d9db583968a2213b982652fc4362a474cac92f/gailtf/baselines/common/mpi_moments.py#L5
-        
-        if 'center' not in method_name:
+    
+        if 'center' not in method_name and i < len(platform_sections) - 1:
             # Calculate stats on result of the last method in the section (except centering)
             section.output_stats = min_max_mean_std(data_full_section, comm)
-        """    
-                
+        
         # update input data dimensions and data type for a new section
         data_shape = output_dims_upd
         data_dtype = data_type_upd
