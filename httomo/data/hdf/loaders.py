@@ -146,7 +146,7 @@ def standard_tomo(
     # Remove projections (and associated angles) if specified
     if ignore_projections is not False and isinstance(ignore_projections, dict):
         data, angles = load.remove_projections(
-            data, angles, ignore_projections, data_indices[0], dimension, comm
+            data, angles, ignore_projections, data_indices, dimension, comm
         )
 
     # Get darks and flats

@@ -697,7 +697,7 @@ def remove_projections(
     data: np.ndarray,
     angles: np.ndarray,
     ignore: Dict,
-    start_idx: int,
+    data_indices: List[int],
     slice_dim: int,
     comm: MPI.Comm,
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -712,8 +712,8 @@ def remove_projections(
         The array containing the angles data.
     ignore : Dict
         Specifies individual and batch projections to ignore.
-    start_idx : int
-        The index where projections begin in the dataset (as opposed to
+    data_indices : List[int]
+        The indices in the dataset where projections are located (as opposed to
         darks/flats).
     slice_dim : int
         The dimension the loaded data is sliced along.
@@ -725,6 +725,16 @@ def remove_projections(
     Tuple[np.ndarray, np.ndarray]
         The projections and angles arrays with the relevant data removed.
     """
+    # Check that the given indices to ignore indeed refer to projections
+    ignore_indices = np.array(_parse_ignore_indices(ignore), dtype=np.uint16)
+    if not set(ignore_indices) <= set(data_indices):
+        invalid_indices = set(ignore_indices) - set(data_indices)
+        err_str = (
+            f"The specified projection indices to ignore are: "
+            f"{set(ignore_indices)}. However, the indices {invalid_indices} "
+            f"are not projection indices in the dataset."
+        )
+        raise ValueError(err_str)
     # Calculate start and stop bounds of the full data that the current MPI
     # process has (because no projections have been removed yet, the bounds of
     # the data can be calculated in this simpler manner, compared to what is
@@ -737,7 +747,7 @@ def remove_projections(
     i1 = round((length / nproc) * (rank + 1))
 
     # Check if the MPI process has any projections that should be removed
-    ignore_indices = np.array(_parse_ignore_indices(ignore), dtype=np.uint16)
+    start_idx = data_indices[0]
     data_ignore_indices = np.isin(
         np.arange(i0 + start_idx, i1 + start_idx, 1), ignore_indices
     )
