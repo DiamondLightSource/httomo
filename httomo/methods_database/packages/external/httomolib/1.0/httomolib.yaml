@@ -1,3 +1,7 @@
+prep:
+  phase:
+    paganin_filter:
+      pattern: projection
 misc:
   corr:
     inpainting_filter3d:
