@@ -6,6 +6,7 @@ import numpy as np
 from mpi4py import MPI
 from numpy import ndarray
 
+from httomo.data.hdf._utils.chunk import get_data_shape
 from httomo.utils import Colour, log_once
 
 
@@ -690,3 +691,69 @@ def get_slice_list_from_preview(preview: str) -> List[slice]:
         elif len(values) == 3:
             slice_list[dimension] = slice(new_values[0], new_values[1], new_values[2])
     return slice_list
+
+
+def remove_projections(
+    data: np.ndarray,
+    angles: np.ndarray,
+    ignore: Dict,
+    start_idx: int,
+    slice_dim: int,
+    comm: MPI.Comm,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Ignore projections by removing them (and associated angles) from the
+    relevant arrays.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The array containing the projection data.
+    angles : np.ndarray
+        The array containing the angles data.
+    ignore : Dict
+        Specifies individual and batch projections to ignore.
+    start_idx : int
+        The index where projections begin in the dataset (as opposed to
+        darks/flats).
+    slice_dim : int
+        The dimension the loaded data is sliced along.
+    comm : MPI.Comm
+        MPI communicator object.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        The projections and angles arrays with the relevant data removed.
+    """
+    # Calculate start and stop bounds of the full data that the current MPI
+    # process has (because no projections have been removed yet, the bounds of
+    # the data can be calculated in this simpler manner, compared to what is
+    # done in `chunk.get_data_bounds()`)
+    rank = comm.rank
+    nproc = comm.size
+    shape = get_data_shape(data, slice_dim - 1)
+    length = shape[slice_dim - 1]
+    i0 = round((length / nproc) * rank)
+    i1 = round((length / nproc) * (rank + 1))
+
+    # Check if the MPI process has any projections that should be removed
+    ignore_indices = np.array(_parse_ignore_indices(ignore), dtype=np.uint16)
+    data_ignore_indices = np.isin(
+        np.arange(i0 + start_idx, i1 + start_idx, 1), ignore_indices
+    )
+    contains_any_ignore_indices = np.any(data_ignore_indices)
+    if contains_any_ignore_indices:
+        data_keep_indices = np.squeeze(np.argwhere(data_ignore_indices == False))
+        data = data[data_keep_indices]
+
+    # Remove angle indices associated with *any* projections that are removed
+    # (ie, even though this MPI process may not need to remove any projections,
+    # each process has the full array of angles, and projections that are
+    # removed in other processes need to have the associated angles removed from
+    # the angles array in *all* processes)
+    all_indices = list(range(len(angles)))
+    angles_ignore_indices = ignore_indices - start_idx
+    angles_keep_indices = list(set(all_indices) - set(angles_ignore_indices))
+    angles = angles[angles_keep_indices]
+
+    return data, angles

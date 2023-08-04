@@ -38,6 +38,7 @@ def standard_tomo(
     flats: Optional[Dict] = None,
     ignore_darks: Optional[Union[bool, Dict]] = False,
     ignore_flats: Optional[Union[bool, Dict]] = False,
+    ignore_projections: Optional[Union[bool, Dict]] = False,
 ) -> LoaderData:
     """Loader for standard tomography data.
 
@@ -78,6 +79,9 @@ def standard_tomo(
     ignore_flats : optional, Union[bool, Dict]
         If bool, specifies ignoring all or none of flats. If dict, specifies
         individual and batch flats to ignore.
+    ignore_projections : optional, Union[bool, Dict]
+        If bool, specifies ignoring all or none of projections. If dict,
+        specifies individual and batch projections to ignore.
 
     Returns
     -------
@@ -138,6 +142,12 @@ def standard_tomo(
     data = load.load_data(
         str(in_file), dim, data_path, preview=preview_str, pad=pad_values, comm=comm
     )
+
+    # Remove projections (and associated angles) if specified
+    if ignore_projections is not False and isinstance(ignore_projections, dict):
+        data, angles = load.remove_projections(
+            data, angles, ignore_projections, data_indices[0], dimension, comm
+        )
 
     # Get darks and flats
     if darks is not None and flats is not None and darks["file"] != flats["file"]:
