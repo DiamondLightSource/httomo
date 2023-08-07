@@ -64,11 +64,20 @@ def prerun_method(
         save_res = dict_params_method['save_result']
         dict_params_method.pop('save_result') # remove the item
     except:
-        save_res = False                   
-        
+        save_res = False
+               
     if save_res or save_all:
         run_method_info.save_result = True
         run_method_info.dict_httomo_params['return_numpy'] = True        
+
+    # check if global stats is requested in dict_params_method
+    try:
+        glob_stats = dict_params_method['glob_stats']        
+    except:
+        glob_stats = False
+    
+    if glob_stats:
+        run_method_info.global_statistics = True
         
     # check if the module needs the gpu_id parameter and flag it to add in the
     # wrapper

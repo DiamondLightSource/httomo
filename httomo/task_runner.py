@@ -97,7 +97,7 @@ def run_tasks(
 
     # Associate patterns to method function objects
     for i, method_func in enumerate(method_funcs):
-        method_funcs[i] = _assign_pattern_to_method(method_func, i)
+        method_funcs[i] = _assign_pattern_to_method(method_func)
 
     # Initialising platform sections (skipping loader)
     platform_sections = _determine_platform_sections(method_funcs[1:], save_all)
@@ -277,7 +277,7 @@ def run_tasks(
                     # the loop over methods
                     run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
                 else:
-                    # Initialise with result from previous method
+                    # Initialise with result from the previous method
                     run_method_info.dict_httomo_params["data"] = res
 
                 # Override the `data` param in the special case of a centering
@@ -290,7 +290,12 @@ def run_tasks(
                     # NOTE: even if there are some GPU filters before in the section, 
                     # we still be using the data from the LAST section
                     run_method_info.dict_httomo_params["data"] = data_full_section[:,slice_ind_center,:]
-                                   
+                           
+                # Calculate stats on the result of the last method (except centering)
+                # It is triggered by adding glob_stats: true parameter to the parameters list
+                if 'center' not in method_name and i < len(platform_sections) and run_method_info.global_statistics:
+                    run_method_info.dict_params_method['glob_stats'] = min_max_mean_std(data_full_section, comm)
+
                 # ------ RUNNING THE WRAPPER -------#
                 start = time.perf_counter_ns()
                 if 'center' in method_name:
@@ -404,10 +409,6 @@ def run_tasks(
                 reslice_info,
                 comm
             )
-    
-        if 'center' not in method_name and i < len(platform_sections) - 1:
-            # Calculate stats on result of the last method in the section (except centering)
-            section.output_stats = min_max_mean_std(data_full_section, comm)
         
         # update input data dimensions and data type for a new section
         data_shape = output_dims_upd
@@ -565,9 +566,12 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 else wrapper_init_module.calc_max_slices,
                 pattern=Pattern.all,
                 is_loader=False,
-                return_numpy=False,          
+                return_numpy=False,
+                idx_global=i+1,
+                global_statistics=False,
             )
         )
+        
 
     return method_funcs
 
@@ -584,7 +588,6 @@ def _check_params_for_sweep(params: Dict) -> int:
 
 def _assign_pattern_to_method(
     method_function: MethodFunc,
-    index_method : int,
     ) -> MethodFunc:
     """Fetch the pattern information from the methods database in
     `httomo/methods_database/packages` for the given method and associate that
@@ -594,8 +597,6 @@ def _assign_pattern_to_method(
     ----------
     method_function : MethodFunc
         The method function information whose pattern information will be fetched and populated.    
-    index_method: int
-        An index of a method in the pipeline
     Returns
     -------
     MethodFunc
@@ -617,9 +618,8 @@ def _assign_pattern_to_method(
             f"{method_function.module_name} is invalid."
         )
         log_exception(err_str)
-        raise ValueError(err_str)
+        raise ValueError(err_str) 
     
-    method_function.idx_global = index_method + 1
     return dataclasses.replace(method_function, pattern=pattern)
 
 
@@ -639,6 +639,13 @@ def _determine_platform_sections(
                 save_res_current = method.parameters['save_result']
             except:
                 save_res_current = False
+                
+            try:
+                global_stats = method.parameters['glob_stats']
+            except:
+                global_stats = False
+            if global_stats:
+                save_res_current = True # the stats has been requested, the section created
         else:
             save_res_current = True
                     
@@ -652,7 +659,6 @@ def _determine_platform_sections(
                     reslice=False,
                     max_slices=0,
                     methods=methods,
-                    output_stats=None,
                 )
             )
             methods = [method]
@@ -675,18 +681,16 @@ def _determine_platform_sections(
                         reslice=False,
                         max_slices=0,
                         methods=methods,
-                        output_stats=None,
                     )
                 )
-                methods = [method]                
+                methods = [method]
                 current_pattern = method.pattern
                 current_gpu = method.gpu
         save_res_previous_method = save_res_current
 
     section.append(
         PlatformSection(
-            gpu=current_gpu, pattern=current_pattern, reslice=False, max_slices=0, methods=methods,
-            output_stats=None
+            gpu=current_gpu, pattern=current_pattern, reslice=False, max_slices=0, methods=methods
         )
     )
     # first we need to check if there are any sections with pattern "all" and inherit

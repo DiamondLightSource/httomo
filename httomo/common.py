@@ -17,7 +17,7 @@ class MethodFunc:
     ==========
 
     module_name : str
-        Fully qualified name of the module where the method is. E.g. httomolib.prep.normalize
+        Fully qualified name of the module where the method is. E.g. httomolibgpu.prep.normalize
     method_func : Callable
         The actual method callable
     wrapper_func: Optional[Callable]
@@ -38,7 +38,9 @@ class MethodFunc:
     return_numpy : bool
         Returns numpy array if set to True.
     idx_global: int
-        A global index of the method in the pipeline
+        A global index of the method in the pipeline.
+    global_statistics: bool
+        Whether global statistics needs to be calculated on the output of the method.
     """
 
     module_name: str
@@ -52,6 +54,7 @@ class MethodFunc:
     is_loader: bool = False
     return_numpy: bool = False
     idx_global: int = 0
+    global_statistics: bool = False
 
 
 @dataclass
@@ -101,9 +104,6 @@ class PlatformSection:
         exhausting memory (relevant on GPU only)
     methods : List[MethodFunc]
         List of methods in this section
-    output_stats : Tuple[int, int, float, float]
-        A tuple containing the min, max, mean, and standard deviation of the
-        output of the final method in the section
     """
 
     gpu: bool
@@ -111,7 +111,6 @@ class PlatformSection:
     reslice: bool
     max_slices: int
     methods: List[MethodFunc]
-    output_stats: Tuple[int, int, float, float]
 
 
 @dataclass
@@ -140,6 +139,8 @@ class RunMethodInfo:
         The name of the package the method is imported from
     method_name: str
         The name of the method being executed
+    global_statistics: bool
+        Whether global statistics needs to be calculated on the output of the method.        
     """
 
     dict_params_method: Dict[str, Any] = field(default_factory=dict)
@@ -151,3 +152,4 @@ class RunMethodInfo:
     task_idx_global: int = -1
     package_name: str = None
     method_name: str = None
+    global_statistics: bool = False
