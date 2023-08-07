@@ -256,6 +256,51 @@ def test_i12_testing_pipeline_output(
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
+def test_i12_testing_ignore_darks_flats_pipeline_output(
+    cmd,
+    i12_data,
+    i12_loader_ignore_darks_flats,
+    testing_pipeline,
+    output_folder,
+    merge_yamls,
+):
+    cmd.insert(7, i12_data)
+    merge_yamls(i12_loader_ignore_darks_flats, testing_pipeline)
+    cmd.insert(8, "temp.yaml")
+    subprocess.check_output(cmd)
+
+    files = read_folder("output_dir/")
+    assert len(files) == 16
+
+    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
+    assert compare_two_yamls("temp.yaml", copied_yaml_path)
+
+    log_files = list(filter(lambda x: ".log" in x, files))
+    assert len(log_files) == 1
+
+    tif_files = list(filter(lambda x: ".tif" in x, files))
+    assert len(tif_files) == 10
+
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 4
+
+    log_contents = _get_log_contents(log_files[0])
+    assert "DEBUG | The full dataset shape is (724, 10, 192)" in log_contents
+    assert (
+        "DEBUG | Loading data: tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
+        in log_contents
+    )
+    assert "DEBUG | Path to data: /1-TempPlugin-tomo/data" in log_contents
+    assert "DEBUG | Preview: (0:724, :, :)" in log_contents
+    assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
+    assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in log_contents
+    assert "Reslicing not necessary, as there is only one process" in log_contents
+    assert "Saving intermediate file: 4-tomopy-remove_stripe_fw-tomo.h5" in log_contents
+    assert "The center of rotation for 180 degrees sinogram is 95.5" in log_contents
+    assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
+    assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
+
+
 def test_diad_testing_pipeline_output(
     cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
 ):

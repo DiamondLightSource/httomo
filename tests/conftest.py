@@ -107,6 +107,11 @@ def i12_loader():
 
 
 @pytest.fixture
+def i12_loader_ignore_darks_flats():
+    return "samples/pipeline_template_examples/DLS/04_i12_ignore_darks_flats.yaml"
+
+
+@pytest.fixture
 def standard_loader():
     return "samples/loader_configs/standard_tomo.yaml"
 

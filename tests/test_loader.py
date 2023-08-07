@@ -84,6 +84,87 @@ def test_standard_tomo(standard_data, standard_data_path, standard_image_key_pat
     assert output.detector_x == 160  # detector_x
 
 
+def test_standard_tomo_ignore_darks(
+    standard_data, standard_data_path, standard_image_key_path
+):
+    preview = [None, None, None]
+    # Ignore 3 individual darks
+    ignore_darks = {"individual": [215, 217, 219]}
+    output = standard_tomo(
+        "tomo",
+        standard_data,
+        standard_data_path,
+        1,
+        preview,
+        1,
+        comm,
+        image_key_path=standard_image_key_path,
+        ignore_darks=ignore_darks,
+    )
+    assert output.darks.shape[0] == 17  # 3 darks removed
+    assert output.flats.shape[0] == 20  # no flats removed
+
+
+def test_standard_tomo_ignore_flats(
+    standard_data, standard_data_path, standard_image_key_path
+):
+    preview = [None, None, None]
+    # Ignore 5 batch flats
+    ignore_flats = {
+        "batch": [
+            {
+                "start": 185,
+                "stop": 189,
+            }
+        ]
+    }
+    output = standard_tomo(
+        "tomo",
+        standard_data,
+        standard_data_path,
+        1,
+        preview,
+        1,
+        comm,
+        image_key_path=standard_image_key_path,
+        ignore_flats=ignore_flats,
+    )
+    assert output.darks.shape[0] == 20  # no darks removed
+    assert output.flats.shape[0] == 15  # 5 flats removed
+
+
+def test_standard_tomo_ignore_flats_error(
+    standard_data, standard_data_path, standard_image_key_path
+):
+    preview = [None, None, None]
+    # Ignore 5 batch flats, one of which (the end one) is outside the range of
+    # flats
+    ignore_flats = {
+        "batch": [
+            {
+                "start": 195,
+                "stop": 200,
+            }
+        ]
+    }
+    expected_err_str = (
+        r"The flats indices to ignore are \[195, 196, 197, 198, 199, 200\], "
+        r"which has one or more values outside the flats in the dataset."
+    )
+    with pytest.raises(ValueError, match=expected_err_str):
+        output = standard_tomo(
+            "tomo",
+            standard_data,
+            standard_data_path,
+            1,
+            preview,
+            1,
+            comm,
+            image_key_path=standard_image_key_path,
+            ignore_flats=ignore_flats,
+        )
+
+
 def test_diad_loader():
     in_file = "tests/test_data/k11_diad/k11-18014.nxs"
     data_path = "/entry/imaging/data"
