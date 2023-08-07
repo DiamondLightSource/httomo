@@ -148,6 +148,12 @@ def standard_tomo(
         err_str = "Ignoring all projections is not yet supported."
         raise ValueError(err_str)
     elif isinstance(ignore_projections, dict):
+        if dimension != 1:
+            err_str = (
+                "Ignoring projections is only supported when `--dimension 1` "
+                "is used (which is the default value)."
+            )
+            raise ValueError(err_str)
         data, angles = load.remove_projections(
             data, angles, ignore_projections, data_indices, dimension, comm
         )
