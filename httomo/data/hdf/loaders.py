@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from h5py import File
 from mpi4py.MPI import Comm
@@ -36,6 +36,8 @@ def standard_tomo(
     },
     darks: Optional[Dict] = None,
     flats: Optional[Dict] = None,
+    ignore_darks: Optional[Union[bool, Dict]] = False,
+    ignore_flats: Optional[Union[bool, Dict]] = False,
 ) -> LoaderData:
     """Loader for standard tomography data.
 
@@ -70,6 +72,12 @@ def standard_tomo(
     flats : optional, Dict
         A dict containing filepath and dataset information about the flats if
         they are not in the same dataset as the data.
+    ignore_darks : optional, Union[bool, Dict]
+        If bool, specifies ignoring all or none of darks. If dict, specifies
+        individual and batch darks to ignore.
+    ignore_flats : optional, Union[bool, Dict]
+        If bool, specifies ignoring all or none of flats. If dict, specifies
+        individual and batch flats to ignore.
 
     Returns
     -------
@@ -136,10 +144,18 @@ def standard_tomo(
         # Get darks and flats from different datasets within different NeXuS
         # files
         darks_data = load.get_darks_flats_separate(
-            darks["file"], darks["data_path"], dim=dimension, preview=preview_str
+            darks["file"],
+            darks["data_path"],
+            dim=dimension,
+            preview=preview_str,
+            ignore_indices=ignore_darks,
         )
         flats_data = load.get_darks_flats_separate(
-            flats["file"], flats["data_path"], dim=dimension, preview=preview_str
+            flats["file"],
+            flats["data_path"],
+            dim=dimension,
+            preview=preview_str,
+            ignore_indices=ignore_flats,
         )
     elif darks is not None and flats is not None and darks["file"] == flats["file"]:
         # Get darks and flats from different datasets within the same NeXuS file
@@ -149,6 +165,8 @@ def standard_tomo(
             darks_path=darks["data_path"],
             flats_path=flats["data_path"],
             image_key_path=image_key_path,
+            ignore_darks=ignore_darks,
+            ignore_flats=ignore_flats,
             comm=comm,
             preview=preview_str,
             dim=dimension,
@@ -159,6 +177,8 @@ def standard_tomo(
             str(in_file),
             data_path,
             image_key_path=image_key_path,
+            ignore_darks=ignore_darks,
+            ignore_flats=ignore_flats,
             comm=comm,
             preview=preview_str,
             dim=dimension,
