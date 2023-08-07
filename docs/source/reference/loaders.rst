@@ -26,6 +26,10 @@ and to specify a range of indices to exclude, use the :code:`batch` subfield.
 These subfields can both be used at the same time to select batches of
 darks/flats/projections as well as individual darks/flats/projections to ignore.
 
+.. note:: The range provided to the :code:`batch` option via :code:`start` and
+          :code:`stop` is *inclusive*; ie, the :code:`stop` value is *included*
+          in the index values to ignore.
+
 It is also possible to ignore *all* darks and/or flats by setting the value of
 either :code:`ignore_darks` or :code:`ignore_flats` to :code:`true`. However,
 ignoring all *projections* is not yet supported.
