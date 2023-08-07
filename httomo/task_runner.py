@@ -551,8 +551,8 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         wrapper_method = wrapper_init_module.wrapper_method
         is_tomopy = split_module_name[0] == "tomopy"
         is_httomolib = split_module_name[0] == "httomolib"
-        is_httomolibgpu = split_module_name[0] == "httomolibgpu"
-
+        is_httomolibgpu = split_module_name[0] == "httomolibgpu"        
+        
         method_funcs.append(
             MethodFunc(
                 module_name=module_name,
@@ -567,7 +567,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 pattern=Pattern.all,
                 is_loader=False,
                 return_numpy=False,
-                idx_global=i+1,
+                idx_global=i+2,
                 global_statistics=False,
             )
         )

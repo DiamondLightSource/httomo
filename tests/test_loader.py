@@ -27,7 +27,7 @@ def test_tomo_standard_testing_pipeline_loaded(
     assert "Running task 3 (pattern=projection): minus_log.." in result.stderr
     assert "Running task 4 (pattern=sinogram): remove_stripe_fw..." in result.stderr
     assert "Running task 5 (pattern=sinogram): find_center_vo..." in result.stderr
-    assert "Running task 7 (pattern=sinogram): save_to_images.." in result.stderr
+    assert "Running task 7 (pattern=all): save_to_images.." in result.stderr
     assert "Pipeline finished" in result.stderr
 
 

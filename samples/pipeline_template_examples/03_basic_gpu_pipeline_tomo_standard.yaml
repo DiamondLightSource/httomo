@@ -67,3 +67,4 @@
       perc_range_min: 0.0
       perc_range_max: 100.0
       jpeg_quality: 95
+      glob_stats: true
