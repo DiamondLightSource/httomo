@@ -37,7 +37,7 @@ def make_test_method(
 
 def test_determine_platform_sections_single() -> None:
     methods = [make_test_method(is_loader=True, module_name="testloader")]
-    sections = _determine_platform_sections(methods)
+    sections = _determine_platform_sections(methods, save_all=False)
 
     assert len(sections) == 1
     s0 = sections[0]
@@ -51,7 +51,7 @@ def test_determine_platform_sections_two_cpu() -> None:
         make_test_method(is_loader=True, module_name="testloader"),
         make_test_method(),
     ]
-    sections = _determine_platform_sections(methods)
+    sections = _determine_platform_sections(methods, save_all=False)
 
     assert len(sections) == 1
     s0 = sections[0]
@@ -67,7 +67,7 @@ def test_determine_platform_sections_pattern_change() -> None:
         ),
         make_test_method(pattern=Pattern.sinogram),
     ]
-    sections = _determine_platform_sections(methods)
+    sections = _determine_platform_sections(methods, save_all=False)
 
     assert len(sections) == 2
     s0 = sections[0]
@@ -85,7 +85,7 @@ def test_determine_platform_sections_platform_change() -> None:
         make_test_method(is_loader=True, module_name="testloader"),
         make_test_method(gpu=True),
     ]
-    sections = _determine_platform_sections(methods)
+    sections = _determine_platform_sections(methods, save_all=False)
 
     assert len(sections) == 2
     s0 = sections[0]
@@ -122,7 +122,7 @@ def test_determine_platform_sections_pattern_all_combine(
         make_test_method(pattern=pattern1, is_loader=True, module_name="testloader"),
         make_test_method(pattern=pattern2),
     ]
-    sections = _determine_platform_sections(methods)
+    sections = _determine_platform_sections(methods, save_all=False)
 
     assert len(sections) == 1
     s0 = sections[0]
@@ -137,9 +137,9 @@ def test_platform_section_max_slices():
     max_slices_30 = mock.Mock(return_value=(30, np.float32(), (24, 42)))
     section = PlatformSection(
         gpu=True,
-        pattern=Pattern.projection,
+        pattern=Pattern.projection,        
+        reslice=False,
         max_slices=0,
-        output_stats=None,
         methods=[
             make_test_method(
                 pattern=Pattern.projection, gpu=True, calc_max_slices=max_slices_20
@@ -158,7 +158,7 @@ def test_platform_section_max_slices():
     with mock.patch(
         "httomo.task_runner._get_available_gpu_memory", return_value=100000
     ):
-        dtype, output_dims = _update_max_slices(section, (1000, 24, 42), np.uint8())
+        output_dims,dtype = _update_max_slices(section, 0, (1000, 24, 42), np.uint8())
 
     assert section.max_slices == 20
     assert dtype == np.float32()
