@@ -22,7 +22,7 @@ def test_httomolib_wrapper_max_slices_cpu():
 def test_httomolibgpu_wrapper_max_slices_gpu():
     wrp = HttomolibgpuWrapper("prep", "normalize", "normalize", MPI.COMM_WORLD)
     assert wrp.cupyrun is True
-    assert wrp.calc_max_slices(0, (100, 100), np.uint8, 50000)[0] < 100000
+    assert wrp.calc_max_slices(0, (100, 100), np.uint8(), 50000)[0] < 100000
 
 
 def test_httomolibgpu_wrapper_max_slices_passes_kwargs():

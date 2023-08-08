@@ -35,7 +35,7 @@ from httomo.utils import (
     log_once,
     remove_ansi_escape_sequences,
 )
-from httomo.wrappers_class import HttomolibWrapper, HttomolibgpuWrapper, TomoPyWrapper
+from httomo.wrappers_class import HttomolibWrapper, HttomolibgpuWrapper, TomoPyWrapper, _gpumem_cleanup
 from httomo.yaml_utils import open_yaml_config
 
 
@@ -99,8 +99,8 @@ def run_tasks(
     for i, method_func in enumerate(method_funcs):
         method_funcs[i] = _assign_pattern_to_method(method_func)
 
-    #: no need to add loader into a platform section
-    platform_sections = _determine_platform_sections(method_funcs[1:])
+    # Initialising platform sections (skipping loader)
+    platform_sections = _determine_platform_sections(method_funcs[1:], save_all)
 
     # Check pipeline for the number of parameter sweeps present. If one is
     # defined, raise an error, due to not supporting parameter sweeps in a
@@ -135,7 +135,9 @@ def run_tasks(
     # been provided
     if "preview" not in method_funcs[0].parameters.keys():
         method_funcs[0].parameters["preview"] = [None]
-
+    
+    output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
+    output_colour_list_short = [Colour.GREEN, Colour.CYAN]
     loader_method_name = method_funcs[0].parameters.pop("method_name")
     log_once(
         f"Running task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name}...",
@@ -156,7 +158,6 @@ def run_tasks(
         "httomo",
         f") Took {float(time.perf_counter_ns() - loader_start_time)*1e-6:.2f}ms",
     ]
-    output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
     log_once(output_str_list, comm=comm, colour=output_colour_list)
 
     # Update `dict_datasets_pipeline` dict with the data that has been
@@ -177,32 +178,45 @@ def run_tasks(
     ]
     # data shape and dtype are useful when calculating max slices
     data_shape = loader_info.data.shape
-    data_dtype = loader_info.data.dtype
+    # data_dtype = loader_info.data.dtype
+    data_dtype = np.dtype(np.float32) # make the data type constant for the run
     
-    ##---------- Main GPU loop starts here ------------##
+    ##---------- MAIN LOOP STARTS HERE ------------##
     idx = 0
     # initialise the CPU data array with the loaded data, we override it at the end of every section
     data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
-    for i, section in enumerate(platform_sections):
-        print(f"Section {i}")
-        # determine the max_slices for the whole section
-        _update_max_slices(section, data_shape, data_dtype)
-        # in order to iterate over max slices we need to know the slicing
-        # dimension of the section
+    for i, section in enumerate(platform_sections):  
+        # getting the slicing dimension of the section
         slicing_dim_section = _get_slicing_dim(section.pattern) - 1
+            
+        # determine max_slices for the whole section and return output dims and type
+        output_dims_upd, data_type_upd = _update_max_slices(section, slicing_dim_section, data_shape, data_dtype)
+
         # iterations_for_blocks determines the number of iterations needed
         # to raster through the data in blocks that would fit into the GPU memory
         iterations_for_blocks = math.ceil(data_shape[slicing_dim_section] / section.max_slices)
-        
-        ##---------- the loop over blocks in a section for a chunk of data ------------##
+        # Define a list to store the `RunMethodInfo` objects created for each
+        # method in the methods-loop, for reuse across iterations over blocks
+        run_method_info_objs = []
+        # Check if any methods in the section are a recon method, because recon
+        # methods change the shape of the input data and thus the processed
+        # blocks cannot be straightforwardly put into `data_full_section`.
+        # Instead, a new numpy array is created with the necessary shape to hold
+        # the full reconstructed volume, and it's this array that is updated as
+        # blocks are processed in the blocks-loop
+        contains_recon = any(['recon.algorithm' in method_func.module_name for method_func in section.methods])
+        if contains_recon:
+            recon_arr = np.empty(output_dims_upd, dtype=np.float32)
+       
+        ##---------- LOOP OVER _BLOCKS_ IN THE SECTION ------------##
         indices_start = 0
         indices_end = int(section.max_slices)
         slc_indices = [slice(None)] * len(data_shape)
         for it_blocks in range(iterations_for_blocks):
             # preparing indices for the slicing of the data in blocks
-            slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)         
+            slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)
 
-            ##---------- the loop over methods in a block ------------##
+            ##---------- LOOP OVER _METHODS_ IN THE BLOCK ------------##
             for m_ind, methodfunc_sect in enumerate(section.methods):
                 # preparing everything for the wrapper execution
                 module_path = methodfunc_sect.module_name
@@ -210,91 +224,184 @@ def run_tasks(
                 func_wrapper = methodfunc_sect.wrapper_func
                 package_name = methodfunc_sect.module_name.split(".")[0]
                 
-                print(f"Method {method_name}")
-                #: create an object that would be passed along to prerun_method,
-                #: run_method, and postrun_method
-                run_method_info = RunMethodInfo(task_idx=m_ind)                
-                                
-                #: prerun - before running the method, update the dictionaries
-                prerun_method(
-                    run_method_info,
-                    section,
-                    possible_extra_params,
-                    methodfunc_sect,
-                    dict_datasets_pipeline,
-                )
-                # is_last_method=True if i == methods_count - 2 else False,
+                # log related stuff
+                pattern_str = f"(pattern={section.pattern.name})"
+                package_str = f"({package_name})"
+                task_no_str = f"Running task {idx+2}"
+                task_end_str = task_no_str.replace("Running", "Finished")
+               
+                if it_blocks == iterations_for_blocks-1:
+                    log_once(
+                    f"{task_no_str} {pattern_str}: {method_name}...",
+                    comm,
+                    colour=Colour.LIGHT_BLUE,
+                    level=0,
+                    )
+                # Only run the `prerun_method()` once for a method, when the
+                # first block is going to be processed. This is because the
+                # method's parameters will not have changed from the first time
+                # it has run, only its input data, which is taken care of
+                # outside the `prerun_method()` function.
+                if it_blocks == 0:
+                    #: create an object that would be passed along to prerun_method,
+                    #: run_method, and postrun_method
+                    run_method_info = RunMethodInfo(task_idx=m_ind)
+                    run_method_info_objs.append(run_method_info)
+
+                    #: prerun - before running the method, update the dictionaries
+                    prerun_method(
+                        run_method_info,
+                        section,
+                        possible_extra_params,
+                        methodfunc_sect,
+                        dict_datasets_pipeline,
+                        save_all,
+                    )
+
+                    # remove methods name from the parameters list of a method
+                    #
+                    # TODO: As this value is not being used anywhere, and the
+                    # `method_name` variable is being defined by other means,
+                    # the addition of the method name to the dict of method
+                    # parameters in `_get_method_funcs()` possibly could be
+                    # removed?
+                    run_method_info.dict_params_method.pop('method_name')
+                else:
+                    # Reuse the `RunMethodInfo` object that was defined for the
+                    # method when the 0th block in the section was processed
+                    run_method_info = run_method_info_objs[m_ind]
+
                 if m_ind == 0:
-                    # Assign the block of data on a CPU to `data` parameter of the method
-                    # this should happen once in the beginning of the loop over methods
+                    # Assign the block of data on a CPU to `data` parameter of
+                    # the method; this should happen once in the beginning of
+                    # the loop over methods
                     run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
                 else:
-                    # initialise by saved output data
-                    run_method_info.dict_httomo_params["data"] = dict_datasets_pipeline[run_method_info.data_out]
-                
-                # remove methods name from the parameters list of a method
-                run_method_info.dict_params_method.pop('method_name')
-                
-                # run the wrapper
-                res = func_wrapper(
-                    method_name,
-                    run_method_info.dict_params_method,
-                    **run_method_info.dict_httomo_params,
-                )        
-                
-                # Store the output(s) of the method in the appropriate
-                # dataset in the `dict_datasets_pipeline` dict
-                if isinstance(res, (tuple, list)):
-                    # The method produced multiple outputs
-                    for val, dataset in zip(res, run_method_info.data_out):
-                        dict_datasets_pipeline[dataset] = val
-                else:
-                    # The method produced a single output
-                    dict_datasets_pipeline[run_method_info.data_out] = res
+                    # Initialise with result from the previous method
+                    run_method_info.dict_httomo_params["data"] = res
 
-                # NOTE: If `save_to_images` needs the stats of the output of the
-                # previous section, they can be accessed via
-                # platform_sections[i-1].output_stats                
-            ##************* Methods loop is complete *************##
-            # Saving the processed block. 
-            data_full_section[tuple(slc_indices)] = dict_datasets_pipeline[run_method_info.data_out]
-            # NOTE: data_block must be on the CPU already, assuming that
-            # the last method in the loop will return the numpy array and not cupy
+                # Override the `data` param in the special case of a centering
+                # method
+                if 'center' in method_name and it_blocks == 0:
+                    slice_ind_center = run_method_info.dict_params_method['ind']
+                    if slice_ind_center is None or 'mid':
+                        slice_ind_center = data_full_section.shape[1] // 2  # get the middle slice of the whole data chunk
+                    # copy the "ind" slice from the last section dataset (a chunk)
+                    # NOTE: even if there are some GPU filters before in the section, 
+                    # we still be using the data from the LAST section
+                    run_method_info.dict_httomo_params["data"] = data_full_section[:,slice_ind_center,:]
+                           
+                # Calculate stats on the result of the last method (except centering)
+                # It is triggered by adding glob_stats: true parameter to the parameters list
+                if 'center' not in method_name and i < len(platform_sections) and run_method_info.global_statistics:
+                    run_method_info.dict_params_method['glob_stats'] = min_max_mean_std(data_full_section, comm)
+
+                # ------ RUNNING THE WRAPPER -------#
+                start = time.perf_counter_ns()
+                if 'center' in method_name:
+                    if it_blocks == 0:
+                        # we need to avoid overriding "res" with a scalar.                        
+                        res_param = func_wrapper(
+                            method_name,
+                            run_method_info.dict_params_method,
+                            **run_method_info.dict_httomo_params,
+                        )
+                        # Store the output(s) of the method in the appropriate
+                        # dataset in the `dict_datasets_pipeline` dict
+                        if isinstance(res_param, (tuple, list)):
+                            # The method produced multiple outputs
+                            for val, dataset in zip(res_param, run_method_info.data_out):
+                                dict_datasets_pipeline[dataset] = val
+                        else:
+                            # The method produced a single output
+                            dict_datasets_pipeline[run_method_info.data_out] = res_param                       
+                    # passing the data to the next method (or initialise res)
+                    if m_ind == 0:
+                        res = data_full_section[tuple(slc_indices)]
+                elif method_name == "save_to_images":
+                    # just executing the wrapper (no output)
+                    func_wrapper(
+                            method_name,
+                            run_method_info.dict_params_method,
+                            **run_method_info.dict_httomo_params,
+                        )
+                    # passing the data to the next method (or initialise res)
+                    if m_ind == 0:
+                        res = data_full_section[tuple(slc_indices)]
+                else:
+                    # overriding the result with an output of a method
+                    res = func_wrapper(
+                        method_name,
+                        run_method_info.dict_params_method,
+                        **run_method_info.dict_httomo_params,
+                    )
+                # ------ WRAPPER COMPLETED -------#
+                stop = time.perf_counter_ns()
+
+                section_block_method_str = f"Section {i} runs method {method_name} on a block {it_blocks} of {indices_end-indices_start} slices"
+                output_str_list_verbose = [
+                    f"{section_block_method_str} ",
+                    f" Complete in {float(stop-start)*1e-6:.2f}ms",
+                ]
+                log_once(output_str_list_verbose, comm=comm, colour=output_colour_list_short, level = 1)
+               
+                if it_blocks == iterations_for_blocks-1:
+                    output_str_list_once = [
+                        f"    {task_end_str} {pattern_str}: {method_name} ",
+                        f" {package_str}",
+                    ]              
+                    log_once(output_str_list_once, comm=comm, colour=output_colour_list_short)
+                    idx += 1
+                
+                if isinstance(res, (tuple, list)):
+                    err_str = (
+                        "Methods producing multiple outputs are not yet "
+                        "supported in the GPU loop"
+                    )
+                    raise ValueError(err_str)
+    
+            ##************* METHODS LOOP IS COMPLETE *************##
+            # Saving the processed block (the block is in the CPU memory)
+            if not contains_recon:
+                data_full_section[tuple(slc_indices)] = res
+            else:
+                if recon_arr.shape[0] != res.shape[0]:
+                    # TomoPy returns reconstruction in a different shape from httomolibgpu                    
+                    recon_arr[tuple(slc_indices)] = xp.swapaxes(res,0,1)
+                else:
+                    recon_arr[tuple(slc_indices)] = res
 
             # re-initialise the slicing indices
             indices_start = indices_end
             # checking if we still within the slicing dimension size and take remaining portion
-            res = (indices_start + int(section.max_slices)) - data_shape[slicing_dim_section] 
-            if res > 0:
-                res = int(section.max_slices) - res
-                indices_end += res
+            res_indices = (indices_start + int(section.max_slices)) - data_shape[slicing_dim_section] 
+            if res_indices > 0:
+                res_indices = int(section.max_slices) - res_indices
+                indices_end += res_indices
             else:
                 indices_end += section.max_slices
-            # flushing the GPU memory allocated in the methods loop
-            if gpu_enabled:
-                xp.get_default_memory_pool().free_all_blocks()
-                cache = xp.fft.config.get_plan_cache()
-                cache.clear()
             
-        ##************* Blocks loop is complete *************##
-        # TODO: After the blocks loop is complete the full data
-        # is in "data_full_section" and the hdf5 file can be saved
-        # or resliced if needed
-
-        # Calculate stats on result of the last method in the section
-        #
-        # NOTE: Currently assuming that the dataset to calculate stats from is
-        # the same input dataset from the beginning of the sections loop; should
-        # this instead be getting the output dataset from the last method that
-        # was in the section which has just completed?
-        section.output_stats = min_max_mean_std(data_full_section, comm)
-
-        # Assume that, after every section has been completed (except for the
-        # last section), a reslice should occur
-        if i < len(platform_sections) - 1:
-            next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]
-            # TODO: Ensure that the required dataset is in CPU memory not GPU
-            # memory before attempting to reslice it
+            # delete allocated memory pointers to free up the memory
+            run_method_info.dict_httomo_params["data"] = None
+            # now flushing the GPU memory
+            _gpumem_cleanup()
+            
+        ##************* BLOCKS LOOP IS COMPLETE *************##
+        # If the completed section contained a recon method, then the array
+        # created to hold the differently-shaped output of this section (due to
+        # the recon within the section changing the shape of the input data)
+        # must be assigned to
+        # - the original dataset name (defined by the loader) in
+        # `dict_datasets_pipeline`
+        # - the `data_full_section` variable
+        if contains_recon:
+            dict_datasets_pipeline[method_funcs[0].parameters["name"]] = \
+                recon_arr
+            data_full_section = recon_arr
+        
+        if section.reslice:
+            # we reslice only when the pattern of the section changes
+            next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]            
             dict_datasets_pipeline[next_section_in] = _perform_reslice(
                 dict_datasets_pipeline[next_section_in],
                 section,
@@ -302,61 +409,23 @@ def run_tasks(
                 reslice_info,
                 comm
             )
-    ##************* Sections loop is complete *************## 
+        
+        # update input data dimensions and data type for a new section
+        data_shape = output_dims_upd
+        data_dtype = data_type_upd
+        
+        # saving intermediate datasets IF it has been asked for
+        postrun_method(run_method_info, dict_datasets_pipeline, section)
 
-    """
-    # Run the methods
-    for idx, method_func in enumerate(method_funcs[1:]):
-        package = method_func.module_name.split(".")[0]
-        method_name = method_func.parameters.pop("method_name")
-        task_no_str = f"Running task {idx+2}"
-        task_end_str = task_no_str.replace("Running", "Finished")
-        pattern_str = f"(pattern={method_func.pattern.name})"
-        log_once(
-            f"{task_no_str} {pattern_str}: {method_name}...",
-            comm,
-            colour=Colour.LIGHT_BLUE,
-            level=0,
-        )
-        start = time.perf_counter_ns()
-
-        # check if the module needs the ncore parameter and add it
-        if "ncore" in signature(method_func.method_func).parameters:
-            method_func.parameters.update({"ncore": ncore})
-
-        idx += 1
-        run_method(
-            idx,
-            save_all,
-            possible_extra_params,
-            method_func,
-            dict_datasets_pipeline,
-            comm,
-        )
-
-        stop = time.perf_counter_ns()
-        output_str_list = [
-            f"    {task_end_str} {pattern_str}: {method_name} (",
-            package,
-            f") Took {float(stop-start)*1e-6:.2f}ms",
-        ]
-        output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
-        log_once(output_str_list, comm=comm, colour=output_colour_list)
-
-    reslice_summary_str = f"Total number of reslices: {reslice_info.count}"
-    reslice_summary_colour = Colour.BLUE if reslice_info.count <= 1 else Colour.RED
-    log_once(reslice_summary_str, comm=comm, colour=reslice_summary_colour, level=1)
-    """
-
+    ##************* SECTIONS LOOP IS COMPLETE *************##
     elapsed_time = 0.0
     if comm.rank == 0:
         elapsed_time = MPI.Wtime() - start_time
         end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
         log_once(end_str, comm=comm, colour=Colour.BVIOLET)
         #: remove ansi escape sequences from the log file
-        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
-
-
+        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")    
+    
 def _initialise_datasets_and_stats(
     yaml_config: Path,
 ) -> tuple[Dict[str, None], List[Dict]]:
@@ -482,8 +551,8 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
         wrapper_method = wrapper_init_module.wrapper_method
         is_tomopy = split_module_name[0] == "tomopy"
         is_httomolib = split_module_name[0] == "httomolib"
-        is_httomolibgpu = split_module_name[0] == "httomolibgpu"
-
+        is_httomolibgpu = split_module_name[0] == "httomolibgpu"        
+        
         method_funcs.append(
             MethodFunc(
                 module_name=module_name,
@@ -497,98 +566,14 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 else wrapper_init_module.calc_max_slices,
                 pattern=Pattern.all,
                 is_loader=False,
-                return_numpy=False,          
+                return_numpy=False,
+                idx_global=i+2,
+                global_statistics=False,
             )
         )
+        
 
     return method_funcs
-
-
-def run_method(
-    task_idx: int,
-    save_all: bool,
-    misc_params: List[Tuple[List[str], object]],
-    current_func: MethodFunc,
-    dict_datasets_pipeline: Dict[str, Optional[ndarray]],
-    comm: MPI.Comm,
-) -> Dict:
-    """
-    Run a method function in the processing pipeline.
-
-    Parameters
-    ----------
-    task_idx : int
-        The index of the current task (zero-based indexing).
-    save_all : bool
-        Whether to save the result of all methods in the pipeline.
-    misc_params : List[Tuple[List[str], object]]
-        A list of possible extra params that may be needed by a method.
-    current_func : MethodFunc
-        Object describing the python function that performs the method.
-    dict_datasets_pipeline : Dict[str, ndarray]
-        A dict containing all available datasets in the given pipeline.
-    comm : MPI.Comm
-        The MPI communicator used for the run.
-
-    Returns
-    -------
-    Dict
-        Returns the global stats
-    """
-    module_path = current_func.module_name
-    method_name = current_func.method_func.__name__
-    func_wrapper = current_func.wrapper_func
-    package_name = current_func.module_name.split(".")[0]
-
-    #: create an object that would be passed along to prerun_method,
-    #: run_method, and postrun_method
-    run_method_info = RunMethodInfo(task_idx=task_idx)
-
-    #: prerun - before running the method, update the dictionaries
-    prerun_method(
-        run_method_info,
-        save_all,
-        misc_params,
-        current_func,
-        dict_datasets_pipeline,
-    )
-
-    # Assign the `data` parameter of the method to the array associated with its
-    # input dataset
-    run_method_info.dict_httomo_params["data"] = dict_datasets_pipeline[
-        run_method_info.data_in
-    ]
-
-    # Run method on the input data
-    if method_name == "save_to_images":
-        func_wrapper(
-            method_name,
-            run_method_info.dict_params_method,
-            **run_method_info.dict_httomo_params,
-        )
-    else:
-        res = func_wrapper(
-            method_name,
-            run_method_info.dict_params_method,
-            **run_method_info.dict_httomo_params,
-        )
-        # Store the output(s) of the method in the appropriate
-        # dataset in the `dict_datasets_pipeline` dict
-        if isinstance(res, (tuple, list)):
-            # The method produced multiple outputs
-            for val, dataset in zip(res, run_method_info.data_out):
-                dict_datasets_pipeline[dataset] = val
-        else:
-            # The method produced a single output
-            dict_datasets_pipeline[run_method_info.data_out] = res
-
-    if method_name == "save_to_images":
-        # Nothing more to do if the saver has a special kind of
-        # output which handles saving the result
-        return
-
-    postrun_method(run_method_info, dict_datasets_pipeline, current_func)
-
 
 def _check_params_for_sweep(params: Dict) -> int:
     """Check the parameter dict of a method for the number of parameter sweeps
@@ -601,7 +586,9 @@ def _check_params_for_sweep(params: Dict) -> int:
     return count
 
 
-def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
+def _assign_pattern_to_method(
+    method_function: MethodFunc,
+    ) -> MethodFunc:
     """Fetch the pattern information from the methods database in
     `httomo/methods_database/packages` for the given method and associate that
     pattern with the function object.
@@ -609,8 +596,7 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
     Parameters
     ----------
     method_function : MethodFunc
-        The method function information whose pattern information will be fetched and populated.
-
+        The method function information whose pattern information will be fetched and populated.    
     Returns
     -------
     MethodFunc
@@ -632,49 +618,110 @@ def _assign_pattern_to_method(method_function: MethodFunc) -> MethodFunc:
             f"{method_function.module_name} is invalid."
         )
         log_exception(err_str)
-        raise ValueError(err_str)
-
+        raise ValueError(err_str) 
+    
     return dataclasses.replace(method_function, pattern=pattern)
 
 
 def _determine_platform_sections(
     method_funcs: List[MethodFunc],
+    save_all: bool,
 ) -> List[PlatformSection]:
-    ret: List[PlatformSection] = []
+    section: List[PlatformSection] = []
     current_gpu = method_funcs[0].gpu
     current_pattern = method_funcs[0].pattern
     methods: List[MethodFunc] = []
-    for method in method_funcs:
-        if method.gpu == current_gpu and (
-            method.pattern == current_pattern
-            or method.pattern == Pattern.all
-            or current_pattern == Pattern.all
-        ):
-            methods.append(method)
-            if current_pattern == Pattern.all and method.pattern != Pattern.all:
-                current_pattern = method.pattern
+    
+    save_res_previous_method = save_all
+    for m_ind, method in enumerate(method_funcs):
+        if not save_all:
+            try:
+                save_res_current = method.parameters['save_result']
+            except:
+                save_res_current = False
+                
+            try:
+                global_stats = method.parameters['glob_stats']
+            except:
+                global_stats = False
+            if global_stats:
+                save_res_current = True # the stats has been requested, the section created
         else:
-            ret.append(
+            save_res_current = True
+                    
+        if m_ind > 0 and save_res_previous_method:
+            # previous method requested the result to be saved,
+            # i.e., we need to create a section with that method or methods        
+            section.append(
                 PlatformSection(
                     gpu=current_gpu,
                     pattern=current_pattern,
+                    reslice=False,
                     max_slices=0,
                     methods=methods,
-                    output_stats=None,
                 )
             )
             methods = [method]
             current_pattern = method.pattern
             current_gpu = method.gpu
+        else:        
+            if method.gpu == current_gpu and (
+                method.pattern == current_pattern
+                or method.pattern == Pattern.all
+                or current_pattern == Pattern.all
+            ):
+                methods.append(method)
+                if current_pattern == Pattern.all and method.pattern != Pattern.all:
+                    current_pattern = method.pattern
+            else:
+                section.append(
+                    PlatformSection(
+                        gpu=current_gpu,
+                        pattern=current_pattern,
+                        reslice=False,
+                        max_slices=0,
+                        methods=methods,
+                    )
+                )
+                methods = [method]
+                current_pattern = method.pattern
+                current_gpu = method.gpu
+        save_res_previous_method = save_res_current
 
-    ret.append(
+    section.append(
         PlatformSection(
-            gpu=current_gpu, pattern=current_pattern, max_slices=0, methods=methods,
-            output_stats=None
+            gpu=current_gpu, pattern=current_pattern, reslice=False, max_slices=0, methods=methods
         )
     )
-
-    return ret
+    # first we need to check if there are any sections with pattern "all" and inherit
+    # the pattern from the previous section
+    for i, section_current in enumerate(section):                   
+        for m_ind, methodfunc_sect in enumerate(section_current.methods):
+            if m_ind == len(section_current.methods) - 1:
+                # we make every last method in the section to return_numpy: True
+                methodfunc_sect.return_numpy = True
+            if 'rotation' in methodfunc_sect.module_name:
+                # NOTE: we also need to check if centering is the last method in the section.
+                # Then what architecture of the previous method in that section AND the next 
+                # method in the next section after centering.
+                # This is due to TomoPy CPU functions can follow centering executed on the 
+                # GPU while the GPU data is not returned to CPU. 
+                # Centering doesn't care about the data being in blocks as it takes data from the CPU array                
+                if m_ind > 0:
+                    previous_method_arch = section_current.methods[m_ind-1].gpu
+                    if i > 0 and i < len(section) - 1:
+                        next_method_arch = section[i+1].methods[0].gpu
+                        if previous_method_arch != next_method_arch:
+                            section_current.methods[m_ind-1].return_numpy = True                      
+            
+    # we need to check if the reslice needed _after_ the section is complete
+    for i, section_current in enumerate(section):
+        # and we don't need to reslice for the last section
+        if i < len(section) - 1:            
+            if section_current.pattern.name != section[i+1].pattern.name and section[i+1].pattern.name != 'all':
+                # check that the pattern changed but exclude the case when next pattern is "all"
+                section[i].reslice = True
+    return section
 
 
 def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
@@ -695,35 +742,33 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
 
 def _update_max_slices(
     section: PlatformSection,
+    slicing_dim_section: int,
     process_data_shape: Optional[Tuple[int, int, int]],
     input_data_type: Optional[np.dtype],
 ) -> Tuple[np.dtype, Tuple[int, int]]:
+    
+    comm = MPI.COMM_WORLD
+        
     if process_data_shape is None or input_data_type is None:
         return
-    if section.pattern == Pattern.sinogram:
-        slice_dim = 1
-        non_slice_dims_shape = (process_data_shape[0], process_data_shape[2])
-    elif section.pattern == Pattern.projection or section.pattern == Pattern.all:
-        # TODO: what if all methods in a section are pattern.all
-        slice_dim = 0
-        non_slice_dims_shape = (process_data_shape[1], process_data_shape[2])
-    else:
-        err_str = f"Invalid pattern {section.pattern}"
-        log_exception(err_str)
-        # this should not happen if data type is indeed the enum
-        raise ValueError(err_str)
-    max_slices = process_data_shape[slice_dim]
+    
+    nsl_dim_l = list(process_data_shape)
+    nsl_dim_l.pop(slicing_dim_section)
+    non_slice_dims_shape = tuple(nsl_dim_l)
+    max_slices = process_data_shape[slicing_dim_section]
     data_type = input_data_type
     output_dims = non_slice_dims_shape
     if section.gpu:
         available_memory = _get_available_gpu_memory(10.0)
         available_memory_in_GB = round(available_memory / (1024**3), 2)
+        memory_str = f"The amount of the available GPU memory is {available_memory_in_GB} GB"
+        log_once(memory_str, comm=comm, colour=Colour.BVIOLET, level=1)
         max_slices_methods = [max_slices] * len(section.methods)
         idx = 0
         for m in section.methods:
             if m.calc_max_slices is not None:
                 (slices_estimated, data_type, output_dims) = m.calc_max_slices(
-                    slice_dim, non_slice_dims_shape, data_type, available_memory
+                    slicing_dim_section, non_slice_dims_shape, data_type, available_memory
                 )
                 max_slices_methods[idx] = min(max_slices, slices_estimated)
                 idx += 1
@@ -732,10 +777,22 @@ def _update_max_slices(
             )
         section.max_slices = min(max_slices_methods)
     else:
-        # TODO: How do we determine the output dtype in functions that aren't on GPU, tomopy, etc.
         section.max_slices = max_slices
+        # NOTE: although there is also no direct way to know out data type for other backends, 
+        # such as TomoPy, the problem of the output shape is the most significant. 
+        # After tomopy recon the data has changed its shape and if we to run methods
+        # from httomolibgpu library, the calculation of slices will be incorrect!
+        
+        # therefore those changes are temporary to deal with the issue above
+        for m in section.methods:
+            if m.parameters['method_name'] == "recon":
+                output_dims = (output_dims[1],output_dims[1])
         pass
-    return data_type, output_dims
+    # we need to return the full output_dims for the sections loop
+    output_dims_l = list(output_dims)
+    output_dims_l.insert(slicing_dim_section, max_slices)
+    output_dims = tuple(output_dims_l)
+    return output_dims, data_type
 
 
 def _perform_reslice(
@@ -748,8 +805,7 @@ def _perform_reslice(
     reslice_info.count += 1
     if reslice_info.count > 1 and not reslice_info.has_warn_printed:
         reslice_warn_str = (
-            "WARNING: Reslicing is performed more than once in this "
-            "pipeline, is there a need for this?"
+            f"WARNING: Reslicing is performed {reslice_info.count} times. The number of reslices increases the total run time."
         )
         log_once(reslice_warn_str, comm=comm, colour=Colour.RED)
         reslice_info.has_warn_printed = True

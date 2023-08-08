@@ -18,9 +18,10 @@ comm = MPI.COMM_WORLD
 def prerun_method(
     run_method_info: RunMethodInfo,
     section: PlatformSection,
-    misc_params: List[Tuple[List[str], object]],
+    possible_extra_params: List[Tuple[List[str], object]],
     current_func: MethodFunc,
     dict_datasets_pipeline: Dict[str, ndarray],
+    save_all: bool,
 ):
 
     run_method_info.package_name = current_func.module_name.split(".")[0]
@@ -30,14 +31,14 @@ def prerun_method(
 
     # extra params unrelated to wrapped packages but related to httomo added
     run_method_info.dict_httomo_params = _check_signature_for_httomo_params(
-        func_wrapper, current_func, misc_params
+        func_wrapper, current_func, possible_extra_params
     )
-    # check platform section object to decide when numpy array need to be returned
-    if (run_method_info.task_idx + 1) == len(section.methods):
-        # check if the method is the last method in the section
-        run_method_info.return_numpy = True
+    # assign a global index of the method
+    run_method_info.task_idx_global = section.methods[run_method_info.task_idx].idx_global
+    
+    # check platform section object to decide when numpy array needs to be returned   
+    if section.methods[run_method_info.task_idx].return_numpy:
         run_method_info.dict_httomo_params['return_numpy'] = True
-        
     
     # Get the information describing if the method is being run only
     # once, or multiple times with different input datasets
@@ -58,6 +59,26 @@ def prerun_method(
     # datasets
     dict_params_method.update(dataset_params)
 
+    # check if save_result is in the dict_params_method
+    try:
+        save_res = dict_params_method['save_result']
+        dict_params_method.pop('save_result') # remove the item
+    except:
+        save_res = False
+               
+    if save_res or save_all:
+        run_method_info.save_result = True
+        run_method_info.dict_httomo_params['return_numpy'] = True        
+
+    # check if global stats is requested in dict_params_method
+    try:
+        glob_stats = dict_params_method['glob_stats']        
+    except:
+        glob_stats = False
+    
+    if glob_stats:
+        run_method_info.global_statistics = True
+        
     # check if the module needs the gpu_id parameter and flag it to add in the
     # wrapper
     gpu_id_par = "gpu_id" in signature(current_func.method_func).parameters

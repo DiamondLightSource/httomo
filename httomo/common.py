@@ -17,7 +17,7 @@ class MethodFunc:
     ==========
 
     module_name : str
-        Fully qualified name of the module where the method is. E.g. httomolib.prep.normalize
+        Fully qualified name of the module where the method is. E.g. httomolibgpu.prep.normalize
     method_func : Callable
         The actual method callable
     wrapper_func: Optional[Callable]
@@ -37,6 +37,10 @@ class MethodFunc:
         Whether GPU execution is supported.
     return_numpy : bool
         Returns numpy array if set to True.
+    idx_global: int
+        A global index of the method in the pipeline.
+    global_statistics: bool
+        Whether global statistics needs to be calculated on the output of the method.
     """
 
     module_name: str
@@ -49,6 +53,8 @@ class MethodFunc:
     gpu: bool = False
     is_loader: bool = False
     return_numpy: bool = False
+    idx_global: int = 0
+    global_statistics: bool = False
 
 
 @dataclass
@@ -76,11 +82,14 @@ class ResliceInfo:
 @dataclass
 class PlatformSection:
     """
-    Data class to represent a section of the pipeline that runs on the same platform.
-    That is, all methods contained in this section of the pipeline run either all on CPU
-    or all on GPU.
+    Data class to represent a section of the pipeline. Section can combine methods
+    if they run on the same platform (cpu or gpu) and have the same pattern. 
+    The sections can be further divided if necessary if the results of the method
+    needed to be saved. 
+    NOTE: More fine division of sections into subsections will slow down 
+    the pipeline.
 
-    This is used to iterate through GPU memory in chunks.
+    Mainly used to iterate through GPU memory in chunks.
 
     Attributes
     ----------
@@ -88,21 +97,20 @@ class PlatformSection:
         Whether this section is a GPU section (True) or CPU section (False)
     pattern : Pattern
         To denote the slicing pattern - sinogram, projection
+    reslice : bool
+        This tells the runner if we need to reslice the data before next section
     max_slices : int
         Holds information about how many slices can be fit in one chunk without
         exhausting memory (relevant on GPU only)
     methods : List[MethodFunc]
         List of methods in this section
-    output_stats : Tuple[int, int, float, float]
-        A tuple containing the min, max, mean, and standard deviation of the
-        output of the final method in the section
     """
 
     gpu: bool
     pattern: Pattern
+    reslice: bool
     max_slices: int
     methods: List[MethodFunc]
-    output_stats: Tuple[int, int, float, float]
 
 
 @dataclass
@@ -121,21 +129,27 @@ class RunMethodInfo:
         The name(s) of the output dataset(s)
     dict_httomo_params : Dict
         Dict containing extra params unrelated to wrapped packages but related to httomo
-    return_numpy : bool
-        if True forces the wrapper to return a numpy array
+    save_result : bool
+        save the result into intermediate dataset
     task_idx: int
-        Index of the task in the pipeline being run
+        Index of the local task in the section being run
+    task_idx_global: int 
+        Index of the global task (method) in the pipeline
     package_name: str
         The name of the package the method is imported from
     method_name: str
         The name of the method being executed
+    global_statistics: bool
+        Whether global statistics needs to be calculated on the output of the method.        
     """
 
     dict_params_method: Dict[str, Any] = field(default_factory=dict)
     data_in: str = field(default_factory=str)
     data_out: Union[str, List[str]] = field(default_factory=str)
     dict_httomo_params: Dict[str, Any] = field(default_factory=dict)
-    return_numpy: bool = False
+    save_result: bool = False
     task_idx: int = -1
+    task_idx_global: int = -1
     package_name: str = None
     method_name: str = None
+    global_statistics: bool = False

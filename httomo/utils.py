@@ -226,7 +226,8 @@ def _get_slicing_dim(pattern: Pattern) -> int:
     elif pattern == Pattern.sinogram:
         return 2
     elif pattern == Pattern.all:
-        # Any slicing dimension is fine, so arbitrarily just return 1
+        # this pattern should inherit the pattern from the previous section if it is available.
+        # It needs taken care of in the runner.
         return 1
     else:
         err_str = f"An unknown pattern has been encountered {pattern}"
