@@ -16,6 +16,7 @@ from mpi4py import MPI
 from numpy import ndarray
 
 from httomo.utils import gpu_enabled, xp
+from httomo.data.mpiutil import local_rank
 
 import httomo.globals
 from httomo._stats.globals import min_max_mean_std
@@ -728,7 +729,7 @@ def _get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
     try:
         import cupy as cp
 
-        dev = cp.cuda.Device()
+        dev = cp.cuda.Device(local_rank)
         # first, let's make some space
         pool = cp.get_default_memory_pool()
         pool.free_all_blocks()
