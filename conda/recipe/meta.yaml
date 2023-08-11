@@ -47,6 +47,7 @@ requirements:
     - click
     - setuptools
     - pytest
+    - plumbum
 
 about:
   home: https://github.com/DiamondLightSource/httomo
