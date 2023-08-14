@@ -9,13 +9,28 @@ Documentation
 ==============
 Please check the full documentation `here <https://diamondlightsource.github.io/httomo/>`_.
 
-Install HTTomo as a pre-built conda Python package
+Install HTTomo as a pre-built conda package
 ======================================================
 .. code-block:: console
 
    $ conda create --name httomo # create a fresh conda environment
+   $ conda activate httomo
    $ conda install -c conda-forge -c https://conda.anaconda.org/httomo/ httomo
    $ conda install -c https://conda.anaconda.org/httomo/ httomolibgpu # for GPU methods
+
+Note: we recommend using `mamba <https://anaconda.org/conda-forge/mamba>`_ for a much faster dependency resolution.
+After creating a fresh environment and activating it, install `mamba` with
+
+.. code-block:: console
+
+   $ conda install -c conda-forge mamba
+
+And install the packages using :code:`mamba` instead (replace :code:`conda` with :code:`mamba`):
+
+.. code-block:: console
+
+   $ mamba install -c conda-forge -c https://conda.anaconda.org/httomo/ httomo
+
 
 Install as a Python module
 ======================================================
@@ -31,12 +46,6 @@ Setup HTTomo development environment:
 .. code-block:: console
 
    $ pip install -e .[dev] # development mode 
-
-Build HTTomo as a conda Python package
-======================================================
-.. code-block:: console
-
-   $ conda build conda/recipe/ -c conda-forge -c https://conda.anaconda.org/httomo/ 
 
 Running the code:
 ======================================================
