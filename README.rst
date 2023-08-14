@@ -13,8 +13,9 @@ Install HTTomo as a pre-built conda Python package
 ======================================================
 .. code-block:: console
 
-   $ conda env create --name httomo # create a fresh conda environment
+   $ conda create --name httomo # create a fresh conda environment
    $ conda install -c conda-forge -c https://conda.anaconda.org/httomo/ httomo
+   $ conda install -c https://conda.anaconda.org/httomo/ httomolibgpu # for GPU methods
 
 Install as a Python module
 ======================================================
@@ -23,7 +24,7 @@ Install as a Python module
    $ git clone git@github.com:DiamondLightSource/HTTomo.git # clone the repo
    $ conda env create --name httomo --file conda/environment.yml # install dependencies
    $ conda activate httomo # activate environment
-   $ pip install .[httomolib,tomopy] # Install the module + backend(s)
+   $ pip install .[tomopy,httomolib,httomolibgpu] # Install the module + backend(s)
 
 Setup HTTomo development environment:
 ======================================================
