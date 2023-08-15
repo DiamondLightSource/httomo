@@ -191,7 +191,14 @@ def run_tasks(
         slicing_dim_section = _get_slicing_dim(section.pattern) - 1
             
         # determine max_slices for the whole section and return output dims and type
-        output_dims_upd, data_type_upd = _update_max_slices(section, slicing_dim_section, data_shape, data_dtype)
+        output_dims_upd, data_type_upd = _update_max_slices(section,
+                                                            slicing_dim_section,
+                                                            data_shape,
+                                                            data_dtype,
+                                                            dict_datasets_pipeline)
+        
+        maxslices_str = f"Maximum amount of slices is {section.max_slices} for section {i}"
+        log_once(maxslices_str, comm=comm, colour=Colour.BVIOLET, level=1)
 
         # iterations_for_blocks determines the number of iterations needed
         # to raster through the data in blocks that would fit into the GPU memory
@@ -746,6 +753,7 @@ def _update_max_slices(
     slicing_dim_section: int,
     process_data_shape: Optional[Tuple[int, int, int]],
     input_data_type: Optional[np.dtype],
+    dict_datasets_pipeline: Dict[str, ndarray],
 ) -> Tuple[np.dtype, Tuple[int, int]]:
     
     comm = MPI.COMM_WORLD
@@ -768,6 +776,16 @@ def _update_max_slices(
         idx = 0
         for m in section.methods:
             if m.calc_max_slices is not None:
+                if m.parameters['method_name'] == "normalize":
+                    # the memory estimators for normalization do not take into account the memory 
+                    # required for darks and flats to be stored. We need to explicitly calculate it here.
+                    flats_bytes = 0
+                    darks_bytes = 0
+                    if dict_datasets_pipeline['flats'] is not None:
+                        flats_bytes = np.prod(np.shape(dict_datasets_pipeline['flats'])) * np.float32().nbytes
+                    if dict_datasets_pipeline['darks'] is not None:
+                        darks_bytes = np.prod(np.shape(dict_datasets_pipeline['darks'])) * np.float32().nbytes
+                    available_memory -= darks_bytes + flats_bytes
                 (slices_estimated, data_type, output_dims) = m.calc_max_slices(
                     slicing_dim_section, non_slice_dims_shape, data_type, available_memory
                 )

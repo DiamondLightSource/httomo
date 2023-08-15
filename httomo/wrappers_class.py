@@ -42,6 +42,8 @@ class BaseWrapper:
         if not gpu_enabled:
             return args
         xp.cuda.Device(self.gpu_id).use()
+        gpulog_str = f"Using GPU {self.gpu_id} to transfer data of shape {xp.shape(args[0])}"
+        log_once(gpulog_str, comm=self.comm, colour=Colour.BVIOLET, level=1)
         _gpumem_cleanup()
         if self.cupyrun:
             if len(args) == 1:
