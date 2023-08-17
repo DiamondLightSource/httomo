@@ -38,6 +38,7 @@ def add_function_summary(doc_dir, root, files):
             rst_name = root.split("/")[-1]
             add_title(edit_doc, rst_name)
             add_tomopy_link(edit_doc, rst_name)
+            add_httomolib_link(edit_doc, rst_name)
         else:
             edit_doc.write(f"\n\n   .. rubric:: **Functions**")
             edit_doc.write(f"\n\n   .. autosummary::\n")
@@ -58,27 +59,49 @@ def create_yaml_dropdown(doc_dir, root, files):
     files : List
         List of functions for each module.
     """
-    rst_name = root.split("/")[-1]
-    doc_rst_file = f"{doc_dir}/api/{rst_name}.rst"
+    mod_name = root.split("/")[-1]
+    doc_rst_file = f"{doc_dir}/api/{mod_name}.rst"
     template_dir = root.split("source")[-1]
     download_all_button(template_dir, doc_rst_file)
 
     for fi in files:
-        t_name = f"{template_dir}/{fi}"
+        t_file = f"{template_dir}/{fi}"
         f_name = fi.split(".yaml")[0]
-        url = (
-            f"https://tomopy.readthedocs.io/en/stable/api/{rst_name}"
-            f".html#{rst_name}.{f_name}"
-        )
+        link = link_to_function(t_file, f_name, mod_name)
         with open(doc_rst_file, "a") as edit_doc:
             edit_doc.write(f"\n\n.. dropdown:: {fi}")
-            edit_doc.write(f"\n\n    :download:`Download <{t_name}>`\n\n")
-            if "tomopy" in t_name:
-                edit_doc.write(
-                    f"    |link_icon| `Link to {f_name}"
-                    f" function description <{url}>`_"
-                )
-            edit_doc.write(f"\n\n    .. literalinclude:: {t_name}")
+            edit_doc.write(f"\n\n    :download:`Download <{t_file}>`\n\n")
+            edit_doc.write(link)
+            edit_doc.write(f"\n\n    .. literalinclude:: {t_file}")
+
+
+def link_to_function(t_file, f_name, mod_name):
+    """Generate rst txt link to function.
+    
+    Parameters
+    ----------
+    t_file : String
+        Template file name
+    f_name: 
+        Name of function
+    mod_name: 
+        Name of rst file
+
+    Returns str link
+    """""
+    if "tomopy" in t_file:
+        tomopy_api = "https://tomopy.readthedocs.io/en/stable/api/"
+        url = f"{tomopy_api}{mod_name}.html#{mod_name}.{f_name}"
+    elif "httomolib." in t_file:
+        htlib_api = "https://diamondlightsource.github.io/httomolib/api/"
+        url = f"{htlib_api}{mod_name}.html#{mod_name}.{f_name}"
+    else:
+        return ""
+    link_txt = (
+        f"    |link_icon| `Link to {f_name}"
+        f" function description <{url}>`_"
+    )
+    return link_txt
 
 
 def download_all_button(template_dir, doc_rst_file):
@@ -128,6 +151,22 @@ def add_tomopy_link(edit_doc, rst_name):
     if "tomopy" in rst_name:
         # If it is a tomopy module, insert a link.
         url = "https://tomopy.readthedocs.io/en/v1.14.0/api/"
+        edit_doc.write(f"\n{url}{rst_name}.html\n\n")
+
+
+def add_httomolib_link(edit_doc, rst_name):
+    """Link to httomolib documentation.
+
+    Parameters
+    ----------
+    edit_doc : File
+        Document to write to.
+    rst_name : str
+        name of rst file.
+    """
+    if "httomolib." in rst_name:
+        # If it is a httomolib module, insert a link.
+        url = "https://diamondlightsource.github.io/httomolib/api/"
         edit_doc.write(f"\n{url}{rst_name}.html\n\n")
 
 
