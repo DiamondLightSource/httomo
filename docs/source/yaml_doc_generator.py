@@ -77,30 +77,28 @@ def create_yaml_dropdown(doc_dir, root, files):
 
 def link_to_function(t_file, f_name, mod_name):
     """Generate rst txt link to function.
-    
+
     Parameters
     ----------
-    t_file : String
+    t_file : str
         Template file name
-    f_name: 
+    f_name: str
         Name of function
-    mod_name: 
-        Name of rst file
+    mod_name: str
+        Name of module
 
     Returns str link
-    """""
+    """
     if "tomopy" in t_file:
         tomopy_api = "https://tomopy.readthedocs.io/en/stable/api/"
         url = f"{tomopy_api}{mod_name}.html#{mod_name}.{f_name}"
     elif "httomolib." in t_file:
-        htlib_api = "https://diamondlightsource.github.io/httomolib/api/"
+        htlib_api = \
+            "https://diamondlightsource.github.io/httomolib/api/"
         url = f"{htlib_api}{mod_name}.html#{mod_name}.{f_name}"
     else:
         return ""
-    link_txt = (
-        f"    |link_icon| `Link to {f_name}"
-        f" function description <{url}>`_"
-    )
+    link_txt = f"    |link_icon| `Link to {f_name} function description <{url}>`_"
     return link_txt
 
 
