@@ -40,6 +40,9 @@ for mod_name in MOCK_MODULES:
 project = "HTTomo"
 copyright = f"{date.today().year}, Diamond Light Source"
 
+# Specify a base language to help assistive technology
+language = "en"
+
 # Save the commit hash, this is displayed in the page title
 release = os.popen('git log -1 --format="%H"').read().strip()
 
