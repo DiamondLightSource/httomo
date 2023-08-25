@@ -3,7 +3,7 @@ import numpy as np
 import inspect
 from inspect import Parameter, signature
 import httomo.globals
-from httomo.utils import Colour, log_exception, log_once, gpu_enabled, xp
+from httomo.utils import Colour, log_exception, log_once, log_rank, gpu_enabled, xp
 from httomo.data import mpiutil
 
 from mpi4py.MPI import Comm
@@ -40,10 +40,12 @@ class BaseWrapper:
             Union[tuple, xp.ndarray, np.ndarray]: transferred datasets
         """
         if not gpu_enabled:
+            no_gpulog_str = "GPU is not available, please use only CPU methods"
+            log_once(no_gpulog_str, self.comm, colour=Colour.BVIOLET, level=1)
             return args
-        xp.cuda.Device(self.gpu_id).use()
+        xp.cuda.Device(self.gpu_id).use()        
         gpulog_str = f"Using GPU {self.gpu_id} to transfer data of shape {xp.shape(args[0])}"
-        log_once(gpulog_str, comm=self.comm, colour=Colour.BVIOLET, level=1)
+        log_rank(gpulog_str, comm=self.comm)
         _gpumem_cleanup()
         if self.cupyrun:
             if len(args) == 1:
