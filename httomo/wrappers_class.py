@@ -202,41 +202,30 @@ class BaseWrapper:
         overlap = 0
         side = 0
         overlap_position = 0
-        mid_rank = int(round(self.comm.size / 2) + 0.1)
-        if self.comm.rank == mid_rank:
-            if method_name == "find_center_360":
-                (rot_center, overlap, side, overlap_position) = method_func(
-                    data, **dict_params_method
-                )
-            else:
-                rot_center = method_func(data, **dict_params_method)
-
-        if method_name == "find_center_vo":
-            rot_center = self.comm.bcast(rot_center, root=mid_rank)
-            log_once(
-                f"The center of rotation for 180 degrees sinogram is {rot_center}",
-                comm=self.comm,
-                colour=Colour.LYELLOW,
-                level=1,
-            )
-            return rot_center
-        elif method_name == "find_center_360":
-            (rot_center, overlap, side, overlap_position) = self.comm.bcast(
-                (rot_center, overlap, side, overlap_position), root=mid_rank
+        if method_name == "find_center_360":
+            (rot_center, overlap, side, overlap_position) = method_func(
+                data, **dict_params_method
             )
             log_once(
-                f"The center of rotation for 360 degrees sinogram is {rot_center},"
-                + f" overlap {overlap}, side {side} and overlap position {overlap_position}",
+                f"###___The center of rotation for 360 degrees sinogram is {rot_center},"
+                + f" overlap {overlap}, side {side} and overlap position {overlap_position}___###",
                 self.comm,
                 colour=Colour.LYELLOW,
                 level=1,
             )
             return (rot_center, overlap, side, overlap_position)
+        elif method_name == "find_center_vo":
+            rot_center = method_func(data, **dict_params_method)
+            log_once(
+                    f"###____The center of rotation for 180 degrees sinogram is {rot_center}____###",
+                    comm=self.comm,
+                    colour=Colour.LYELLOW,
+                    level=1,)
+            return rot_center
         else:
             err_str = f"Invalid method name: {method_name}"
             log_exception(err_str)
             raise ValueError(err_str)
-
 
 class TomoPyWrapper(BaseWrapper):
     """A class that wraps TomoPy functions for httomo"""

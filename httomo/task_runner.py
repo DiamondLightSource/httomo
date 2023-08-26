@@ -188,8 +188,8 @@ def run_tasks(
     data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
     for i, section in enumerate(platform_sections):  
         # getting the slicing dimension of the section
-        slicing_dim_section = _get_slicing_dim(section.pattern) - 1
-            
+        slicing_dim_section = _get_slicing_dim(section.pattern) - 1        
+        
         # determine max_slices for the whole section and return output dims and type
         output_dims_upd, data_type_upd = _update_max_slices(section,
                                                             slicing_dim_section,
@@ -219,7 +219,7 @@ def run_tasks(
         ##---------- LOOP OVER _BLOCKS_ IN THE SECTION ------------##
         indices_start = 0
         indices_end = int(section.max_slices)
-        slc_indices = [slice(None)] * len(data_shape)
+        slc_indices = [slice(None)] * len(data_shape)             
         for it_blocks in range(iterations_for_blocks):
             # preparing indices for the slicing of the data in blocks
             slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)
@@ -285,9 +285,9 @@ def run_tasks(
                     # the loop over methods
                     run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
                 else:
-                    # Initialise with result from the previous method
-                    run_method_info.dict_httomo_params["data"] = res
-
+                    # Initialise with result from the previous method                    
+                    run_method_info.dict_httomo_params["data"] = res                    
+                
                 # Override the `data` param in the special case of a centering
                 # method
                 if 'center' in method_name and it_blocks == 0:
@@ -296,9 +296,9 @@ def run_tasks(
                         slice_ind_center = data_full_section.shape[1] // 2  # get the middle slice of the whole data chunk
                     # copy the "ind" slice from the last section dataset (a chunk)
                     # NOTE: even if there are some GPU filters before in the section, 
-                    # we still be using the data from the LAST section
+                    # we still be using the data from the LAST section                    
                     run_method_info.dict_httomo_params["data"] = data_full_section[:,slice_ind_center,:]
-                           
+  
                 # Calculate stats on the result of the last method (except centering)
                 # It is triggered by adding glob_stats: true parameter to the parameters list
                 if 'center' not in method_name and i < len(platform_sections) and run_method_info.global_statistics:
@@ -409,7 +409,7 @@ def run_tasks(
         
         if section.reslice:
             # we reslice only when the pattern of the section changes
-            next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]            
+            next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]
             dict_datasets_pipeline[next_section_in] = _perform_reslice(
                 dict_datasets_pipeline[next_section_in],
                 section,
@@ -417,9 +417,11 @@ def run_tasks(
                 reslice_info,
                 comm
             )
+            # re-initialise the section input with the resliced data
+            data_full_section = dict_datasets_pipeline[next_section_in]
         
-        # update input data dimensions and data type for a new section
-        data_shape = output_dims_upd
+        # update input data dimensions and data type for the next section        
+        data_shape = np.shape(data_full_section)
         data_dtype = data_type_upd
         
         # saving intermediate datasets IF it has been asked for
