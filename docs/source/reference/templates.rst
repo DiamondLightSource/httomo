@@ -41,6 +41,7 @@ v.1.0
    ../api/httomolib.misc.corr
    ../api/httomolib.misc.images
    ../api/httomolib.misc.segm
+   ../api/httomolib.prep.phase
 
 .. _reference_templates_httomo:
 
