@@ -19,7 +19,7 @@
 import os
 
 
-def add_function_summary(doc_dir, root, files):
+def add_function_summary(doc_dir, root, files, t_version):
     """Append title and function summary to documentation file.
 
     Parameters
@@ -30,6 +30,8 @@ def add_function_summary(doc_dir, root, files):
         Path to the yaml template directory.
     files : List
         List of yaml function templates for each module.
+    t_version : str
+        tomopy version.
     """
     rst_name = root.split("/")[-1]
     doc_rst_file = f"{doc_dir}/api/{rst_name}.rst"
@@ -37,7 +39,7 @@ def add_function_summary(doc_dir, root, files):
         if os.stat(doc_rst_file).st_size == 0:
             rst_name = root.split("/")[-1]
             add_title(edit_doc, rst_name)
-            add_tomopy_link(edit_doc, rst_name)
+            add_tomopy_link(edit_doc, rst_name, t_version)
             add_httomolib_link(edit_doc, rst_name)
         else:
             edit_doc.write(f"\n\n   .. rubric:: **Functions**")
@@ -47,7 +49,7 @@ def add_function_summary(doc_dir, root, files):
                 edit_doc.write(f"\n       {yml_title}")
 
 
-def create_yaml_dropdown(doc_dir, root, files):
+def create_yaml_dropdown(doc_dir, root, files, t_version):
     """Create dropdown panels to allow yaml functions to be downloaded.
 
     Parameters
@@ -58,6 +60,8 @@ def create_yaml_dropdown(doc_dir, root, files):
         Path to the yaml template directory.
     files : List
         List of functions for each module.
+    t_version : str
+        tomopy version.
     """
     mod_name = root.split("/")[-1]
     doc_rst_file = f"{doc_dir}/api/{mod_name}.rst"
@@ -67,7 +71,7 @@ def create_yaml_dropdown(doc_dir, root, files):
     for fi in files:
         t_file = f"{template_dir}/{fi}"
         f_name = fi.split(".yaml")[0]
-        link = link_to_function(t_file, f_name, mod_name)
+        link = link_to_function(t_file, f_name, mod_name, t_version)
         with open(doc_rst_file, "a") as edit_doc:
             edit_doc.write(f"\n\n.. dropdown:: {fi}")
             edit_doc.write(f"\n\n    :download:`Download <{t_file}>`\n\n")
@@ -75,7 +79,7 @@ def create_yaml_dropdown(doc_dir, root, files):
             edit_doc.write(f"\n\n    .. literalinclude:: {t_file}")
 
 
-def link_to_function(t_file, f_name, mod_name):
+def link_to_function(t_file, f_name, mod_name, t_version):
     """Generate rst txt link to function.
 
     Parameters
@@ -86,15 +90,16 @@ def link_to_function(t_file, f_name, mod_name):
         Name of function
     mod_name: str
         Name of module
+    t_version : str
+        tomopy version.
 
     Returns str link
     """
     if "tomopy" in t_file:
-        tomopy_api = "https://tomopy.readthedocs.io/en/stable/api/"
+        tomopy_api = f"https://tomopy.readthedocs.io/en/{t_version}/api/"
         url = f"{tomopy_api}{mod_name}.html#{mod_name}.{f_name}"
     elif "httomolib." in t_file:
-        htlib_api = \
-            "https://diamondlightsource.github.io/httomolib/api/"
+        htlib_api = "https://diamondlightsource.github.io/httomolib/api/"
         url = f"{htlib_api}{mod_name}.html#{mod_name}.{f_name}"
     else:
         return ""
@@ -136,7 +141,7 @@ def add_title(edit_doc, rst_name):
     edit_doc.write(f"{underline}\n")
 
 
-def add_tomopy_link(edit_doc, rst_name):
+def add_tomopy_link(edit_doc, rst_name, t_version):
     """Link to tomopy documentation.
 
     Parameters
@@ -145,10 +150,12 @@ def add_tomopy_link(edit_doc, rst_name):
         Document to write to.
     rst_name : str
         name of rst file.
+    t_version : str
+        tomopy version.
     """
     if "tomopy" in rst_name:
         # If it is a tomopy module, insert a link.
-        url = "https://tomopy.readthedocs.io/en/v1.14.0/api/"
+        url = f"https://tomopy.readthedocs.io/en/{t_version}/api/"
         edit_doc.write(f"\n{url}{rst_name}.html\n\n")
 
 
@@ -193,12 +200,13 @@ if __name__ == "__main__":
     """
     doc_source_dir = os.path.dirname(os.path.abspath(__file__))
     path_to_templates = doc_source_dir + "/../../templates/"
+    tomopy_version = "v1.14.0"
     for root, dirs, files in os.walk(path_to_templates, topdown=True):
         dirs[:] = [d for d in dirs]
         files[:] = [fi for fi in files if ".yaml" in fi]
         # Don't include the module list on the documentation pages
         files[:] = [fi for fi in files if "modules" not in fi]
         if files:
-            add_function_summary(doc_source_dir, root, files)
+            add_function_summary(doc_source_dir, root, files, tomopy_version)
             save_all_yaml_functions(root, files)
-            create_yaml_dropdown(doc_source_dir, root, files)
+            create_yaml_dropdown(doc_source_dir, root, files, tomopy_version)

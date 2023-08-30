@@ -395,6 +395,9 @@ def test_diad_testing_pipeline_output(
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
+"""
+# Commented as the sweep functionality is not yet enabled for GPU and MPI run 
+@pytest.mark.preview
 def test_sweep_pipeline_with_save_all_using_mpi(
     cmd, standard_data, sample_pipelines, standard_loader, output_folder
 ):
@@ -530,6 +533,7 @@ def test_sweep_pipeline_with_save_all_using_mpi(
         "DEBUG | RANK: [0], Data shape is (90, 128, 160) of type uint16"
         in mpi_log_contents
     )
+"""
 
 
 def test_sweep_range_pipeline_with_step_absent(
