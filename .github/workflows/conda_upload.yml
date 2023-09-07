@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     defaults:
       run:
@@ -32,6 +32,10 @@ jobs:
         run: |
           $CONDA/bin/conda env create --name httomo --file conda/environment.yml
           $CONDA/bin/conda run -n httomo pip install .
+          $CONDA/bin/conda install -c conda-forge conda-build
+          $CONDA/bin/conda install -c conda-forge anaconda-client
+          $CONDA/bin/conda update conda
+          $CONDA/bin/conda update conda-build          
           $CONDA/bin/conda list
 
       - name: Decrypt a secret
