@@ -4,7 +4,7 @@ tomopy:
   - 1.14
 httomolib:
   current:
-  - 1.0
+  - 1.2
 httomolibgpu:
   current:
-  - 1.0
+  - 1.2

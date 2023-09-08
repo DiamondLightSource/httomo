@@ -20,7 +20,7 @@ v.1.14
 
 HTTomolibgpu Modules
 -------------------- 
-v.1.0
+v.1.2
 '''''
 
 .. toctree::
@@ -32,7 +32,7 @@ v.1.0
 
 HTTomolib Modules
 ------------------
-v.1.0
+v.1.2
 '''''
 
 .. toctree::
