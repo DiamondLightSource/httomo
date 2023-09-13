@@ -39,7 +39,7 @@ Install as a Python module
    $ git clone git@github.com:DiamondLightSource/HTTomo.git # clone the repo
    $ conda env create --name httomo --file conda/environment.yml # install dependencies
    $ conda activate httomo # activate environment
-   $ pip install .[tomopy,httomolib,httomolibgpu] # Install the module + backend(s)
+   $ pip install . # Install the module
 
 Setup HTTomo development environment:
 ======================================================
