@@ -1,0 +1,6 @@
+- httomolibgpu.misc.morph:
+    sino_360_to_180:
+      data_in: tomo
+      data_out: tomo
+      overlap: 0
+      rotation: left

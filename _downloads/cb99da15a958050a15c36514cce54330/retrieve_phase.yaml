@@ -1,0 +1,9 @@
+- tomopy.prep.phase:
+    retrieve_phase:
+      data_in: tomo
+      data_out: tomo
+      pixel_size: 0.0001
+      dist: 50
+      energy: 20
+      alpha: 0.001
+      pad: true

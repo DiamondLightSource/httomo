@@ -1,0 +1,1069 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>A CPU pipeline to process 360 double field-of-view scan using HTTomo &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/css/general.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/nbsphinx-code-cells.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/clipboard.min.js"></script>
+    <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'ipynb/samples/jupyter_notebooks/DLS_specific/01_sino360_to180covert_inpainting';</script>
+    <link rel="shortcut icon" href="../../../../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="The basic CPU pipeline to process standard parallel-beam tomographic data in HTTomo:" href="../general/01_basic_cpu_pipeline_tomo_standard.html" />
+    <link rel="prev" title="Jupyter Notebooks" href="../../../../tutorials/jn.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/logo_light.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../../_static/logo_dark.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../introduction/about.html">HTTomo concept</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto/installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto/run_httomo.html">How to run HTTomo</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../howto/process_lists_guide.html">Process Lists Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../howto/process_lists/process_list_configure.html">Configure process list using templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../howto/process_lists/editing_process_lists.html">Editing process lists</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../howto/httomo_features.html">HTTomo Features</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../howto/httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../howto/httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../howto/httomo_features/parameter_tuning.html">Parameter Tuning</a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../reference/templates.html">YAML Templates</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.sim.project.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.sim.project</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolib.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolib.misc.images.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.images</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolib.misc.segm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.segm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolib.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomo.data.hdf.loaders.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomo.data.hdf.loaders</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Backends</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../backends/list.html">Supported backends</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials/Examples</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/yaml.html">Process list templates</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../../../tutorials/jn.html">Jupyter Notebooks</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">A CPU pipeline to process 360 double field-of-view scan using HTTomo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../general/01_basic_cpu_pipeline_tomo_standard.html">The basic CPU pipeline to process standard parallel-beam tomographic data in HTTomo:</a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../developers/yaml_generator.html">YAML generator</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../../../_sources/ipynb/samples/jupyter_notebooks/DLS_specific/01_sino360_to180covert_inpainting.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>A CPU pipeline to process 360 double field-of-view scan using HTTomo</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="A-CPU-pipeline-to-process-360-double-field-of-view-scan-using-HTTomo">
+<h1>A CPU pipeline to process 360 double field-of-view scan using HTTomo<a class="headerlink" href="#A-CPU-pipeline-to-process-360-double-field-of-view-scan-using-HTTomo" title="Permalink to this headline">#</a></h1>
+<ol class="arabic simple">
+<li><p>Normalise the data, take the negative log</p></li>
+<li><p>Stripes detection and binary mask creation as the data has got vertical bands with missing data</p></li>
+<li><p>Inpainting of the regions based on the provided mask</p></li>
+<li><p>Comparing the result of the inpainting with the stripe removal algorithm</p></li>
+<li><p>Finding the center of rotation in the 360 degrees sinogram</p></li>
+<li><p>Converting 360 degres projection data to the conventional 180 degrees one</p></li>
+<li><p>Reconstructing with the Gridrec algorithm</p></li>
+<li><p>Save the result as tiffs</p></li>
+</ol>
+<p>NOTE: The data is the 360 degrees scan acquired on I12 beamline, DLS, UK</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">mkdir</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">pprint</span>
+
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">nvtx</span> <span class="kn">import</span> <span class="n">annotate</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">import</span> <span class="nn">tomopy</span>
+
+<span class="kn">from</span> <span class="nn">httomo.common</span> <span class="kn">import</span> <span class="n">PipelineTasks</span>
+<span class="kn">from</span> <span class="nn">httomo.data.hdf.loaders</span> <span class="kn">import</span> <span class="n">standard_tomo</span>
+<span class="kn">from</span> <span class="nn">httomo.data.hdf._utils.save</span> <span class="kn">import</span> <span class="n">intermediate_dataset</span>
+<span class="kn">from</span> <span class="nn">httomo.data.hdf._utils.reslice</span> <span class="kn">import</span> <span class="n">reslice</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+FileNotFoundError: [Errno 2] No such file or directory: &#39;git&#39;
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># load the corresponding YAML configuration ftask ile which can be excecuted through the HTTomo task runner</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s1">&#39;../../pipeline_template_examples/DLS_specific/01_sino360_to180covert_inpainting.yaml&#39;</span><span class="p">))</span>
+<span class="n">pp</span> <span class="o">=</span> <span class="n">pprint</span><span class="o">.</span><span class="n">PrettyPrinter</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># set paths to the data</span>
+<span class="n">current_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+<span class="n">main_data_path</span> <span class="o">=</span> <span class="s2">&quot;/dls/i12/data/2022/nt32462-1/rawdata/&quot;</span>
+<span class="c1">#main_data_path = &quot;/media/algol/29B3CEA03D85F0EA/DATA/i12/360scan_large_rings/&quot;</span>
+<span class="c1">#main_data_path = &quot;/scratch/daniil/data/i12/360_scan_stripes/&quot;</span>
+<span class="n">in_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">main_data_path</span><span class="p">,</span><span class="s2">&quot;112482.nxs&quot;</span><span class="p">)</span>
+<span class="n">run_out_dir_main</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">main_data_path</span><span class="p">,</span> <span class="s2">&quot;output_temp&quot;</span><span class="p">)</span>
+<span class="n">run_out_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">run_out_dir_main</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1">-%m-%Y_%H_%M_%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">_output&quot;</span><span class="p">)</span>
+
+<span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+<span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">run_out_dir_main</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">run_out_dir_main</span><span class="p">)</span>
+    <span class="n">mkdir</span><span class="p">(</span><span class="n">run_out_dir</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">ncore</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="c1"># use all available CPU cores if not an MPI run</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># getting the dictionaries from the YAML template file</span>
+<span class="n">standard_tomo_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;httomo.data.hdf.loaders&#39;</span><span class="p">][</span><span class="s1">&#39;standard_tomo&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">standard_tomo_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="c1"># Loading the data</span>
+<span class="n">data</span><span class="p">,</span> <span class="n">flats</span><span class="p">,</span> <span class="n">darks</span><span class="p">,</span> <span class="n">angles</span><span class="p">,</span> <span class="n">angles_total</span><span class="p">,</span> <span class="n">detector_y</span><span class="p">,</span> <span class="n">detector_x</span> <span class="o">=</span> <span class="n">standard_tomo</span><span class="p">(</span><span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">in_file</span><span class="p">,</span>
+                                                                                 <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;data_path&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;image_key_path&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;dimension&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;preview&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;pad&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">comm</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">,:,:])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Raw projection&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="mi">2</span><span class="p">,:])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Raw sinogram&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;data_path&#39;: &#39;entry1/tomo_entry/data/data&#39;,
+ &#39;dimension&#39;: 1,
+ &#39;image_key_path&#39;: &#39;/entry1/instrument/image_key/image_key&#39;,
+ &#39;name&#39;: &#39;tomo&#39;,
+ &#39;pad&#39;: 0,
+ &#39;preview&#39;: [None, {&#39;start&#39;: 1318, &#39;stop&#39;: 1322}, None]}
+The full dataset shape is (3751, 2160, 2560)
+[0] Pad values are (0, 0).
+/dls/i12/data/2022/nt32462-1/rawdata/112482.nxs
+entry1/tomo_entry/data/data
+100:3701, 1318:1322:, :
+[0] Data shape is (3601, 4, 2560) of type uint16
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;Raw sinogram&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_3_2.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_3_2.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Normalising the data</span>
+<span class="kn">from</span> <span class="nn">tomopy.prep.normalize</span> <span class="kn">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">minus_log</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">flats</span><span class="p">,</span> <span class="n">darks</span><span class="p">,</span> <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">data</span><span class="p">[</span><span class="n">data</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-09</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">minus_log</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="mi">2</span><span class="p">,:])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Normalised sinogram&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">300</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2295</span><span class="p">:</span><span class="mi">2360</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Normalised magnified sinogram&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;Normalised magnified sinogram&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_4_1.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_4_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Running stripes detection module</span>
+<span class="kn">from</span> <span class="nn">httomo.prep.stripe</span> <span class="kn">import</span> <span class="n">detect_stripes</span>
+<span class="kn">from</span> <span class="nn">ast</span> <span class="kn">import</span> <span class="n">literal_eval</span>
+
+<span class="n">detectstripes_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="s1">&#39;httomo.prep.stripe&#39;</span><span class="p">][</span><span class="s1">&#39;detect_stripes&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">detectstripes_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="n">stripes_weight</span> <span class="o">=</span> <span class="n">detect_stripes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span>
+                                <span class="n">literal_eval</span><span class="p">(</span><span class="n">detectstripes_params</span><span class="p">[</span><span class="s1">&#39;search_window_dims&#39;</span><span class="p">]),</span>
+                                <span class="n">detectstripes_params</span><span class="p">[</span><span class="s1">&#39;vert_window_size&#39;</span><span class="p">],</span>
+                                <span class="n">detectstripes_params</span><span class="p">[</span><span class="s1">&#39;gradient_gap&#39;</span><span class="p">],</span>
+                                <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">300</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2295</span><span class="p">:</span><span class="mi">2360</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Normalised sinogram&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">stripes_weight</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">300</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2295</span><span class="p">:</span><span class="mi">2360</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Estimated stripes Weights&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;data_in&#39;: &#39;tomo&#39;,
+ &#39;data_out&#39;: &#39;stripes_weight&#39;,
+ &#39;gradient_gap&#39;: 2,
+ &#39;search_window_dims&#39;: &#39;(1,5,1)&#39;,
+ &#39;vert_window_size&#39;: 5}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;Estimated stripes Weights&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_5_2.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_5_2.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># generate a mask from weights and merge stripes</span>
+<span class="kn">from</span> <span class="nn">httomo.prep.stripe</span> <span class="kn">import</span> <span class="n">merge_stripes</span>
+
+<span class="n">mergestripes_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="s1">&#39;httomo.prep.stripe&#39;</span><span class="p">][</span><span class="s1">&#39;merge_stripes&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">mergestripes_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="n">stripes_mask</span> <span class="o">=</span> <span class="n">merge_stripes</span><span class="p">(</span><span class="n">stripes_weight</span><span class="p">,</span>
+                             <span class="n">stripe_width_max_perc</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                             <span class="n">mask_dilate</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                             <span class="n">threshold_stripes</span><span class="o">=</span><span class="mf">0.004</span><span class="p">,</span>
+                             <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">300</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2295</span><span class="p">:</span><span class="mi">2360</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Stripes Weights&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">stripes_mask</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">300</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2295</span><span class="p">:</span><span class="mi">2360</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Magnified mask&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;data_in&#39;: &#39;stripes_weight&#39;,
+ &#39;data_out&#39;: &#39;stripes_mask&#39;,
+ &#39;mask_dilate&#39;: 2,
+ &#39;stripe_width_max_perc&#39;: 5,
+ &#39;threshold_stripes&#39;: 0.1}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;Magnified mask&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_6_2.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_6_2.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Inpaint the data with the mask provided</span>
+<span class="kn">from</span> <span class="nn">httomo.misc.corr</span> <span class="kn">import</span> <span class="n">inpainting_filter3d</span>
+
+<span class="n">inpaint_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">5</span><span class="p">][</span><span class="s1">&#39;httomo.misc.corr&#39;</span><span class="p">][</span><span class="s1">&#39;inpainting_filter3d&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">inpaint_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="n">tomo_inpainted</span> <span class="o">=</span> <span class="n">inpainting_filter3d</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stripes_mask</span><span class="p">,</span>
+                                           <span class="n">inpaint_params</span><span class="p">[</span><span class="s1">&#39;number_of_iterations&#39;</span><span class="p">],</span>
+                                           <span class="n">inpaint_params</span><span class="p">[</span><span class="s1">&#39;windowsize_half&#39;</span><span class="p">],</span>
+                                           <span class="n">inpaint_params</span><span class="p">[</span><span class="s1">&#39;method_type&#39;</span><span class="p">],</span>
+                                           <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3000</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1000</span><span class="p">:</span><span class="mi">2500</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">1.45</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Original data&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">tomo_inpainted</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3000</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1000</span><span class="p">:</span><span class="mi">2500</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">1.45</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Inpainted data&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">300</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2295</span><span class="p">:</span><span class="mi">2360</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">1.4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Zoom of original data&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">tomo_inpainted</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">300</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2295</span><span class="p">:</span><span class="mi">2360</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">1.4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Zoom of inpainted data&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;data_in&#39;: &#39;tomo&#39;,
+ &#39;data_out&#39;: &#39;tomo_inpainted&#39;,
+ &#39;mask&#39;: &#39;stripes_mask&#39;,
+ &#39;method_type&#39;: &#39;random&#39;,
+ &#39;number_of_iterations&#39;: 3,
+ &#39;windowsize_half&#39;: 5}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_7_1.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_7_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_7_2.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_7_2.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Let&#39;s apply a ring removal method for a comparison</span>
+<span class="kn">from</span> <span class="nn">tomopy.prep.stripe</span> <span class="kn">import</span> <span class="n">remove_all_stripe</span>
+
+<span class="n">destripe_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">6</span><span class="p">][</span><span class="s1">&#39;tomopy.prep.stripe&#39;</span><span class="p">][</span><span class="s1">&#39;remove_all_stripe&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">destripe_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="n">tomo_destriped</span> <span class="o">=</span> <span class="n">remove_all_stripe</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3000</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1000</span><span class="p">:</span><span class="mi">2500</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">1.45</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Original data&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">tomo_destriped</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3000</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1000</span><span class="p">:</span><span class="mi">2500</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">1.45</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Destriped data&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">300</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2295</span><span class="p">:</span><span class="mi">2360</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">1.4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Zoom of original data&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">tomo_destriped</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">300</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2295</span><span class="p">:</span><span class="mi">2360</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">1.4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Zoom of destriped data&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;data_in&#39;: &#39;tomo&#39;,
+ &#39;data_out&#39;: &#39;tomo_destriped&#39;,
+ &#39;dim&#39;: 1,
+ &#39;la_size&#39;: 61,
+ &#39;sm_size&#39;: 21,
+ &#39;snr&#39;: 3}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_8_1.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_8_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_8_2.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_8_2.png" />
+</div>
+</div>
+<p>Althought the results of inpainting and stripe removal methods look similar, there is an underlying problem of applying the ring removal method to every pixel of the sinogram. Some vertical features can be also distorted by filtering, which can be avoided with more accurate stripe detection methods.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># the differences between ring removal and stripe detected inpaiting</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">200</span><span class="p">:</span><span class="mi">700</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">400</span><span class="p">:</span><span class="mi">660</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">2.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Zoom of the sinogram area&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">200</span><span class="p">:</span><span class="mi">700</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">400</span><span class="p">:</span><span class="mi">660</span><span class="p">]</span><span class="o">-</span><span class="n">tomo_destriped</span><span class="p">[</span><span class="mi">200</span><span class="p">:</span><span class="mi">700</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">400</span><span class="p">:</span><span class="mi">660</span><span class="p">]),</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Stripe removal filter residual&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">200</span><span class="p">:</span><span class="mi">700</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">400</span><span class="p">:</span><span class="mi">660</span><span class="p">]</span><span class="o">-</span><span class="n">tomo_inpainted</span><span class="p">[</span><span class="mi">200</span><span class="p">:</span><span class="mi">700</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">400</span><span class="p">:</span><span class="mi">660</span><span class="p">]),</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Inpainting&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_10_0.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_10_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_10_1.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_10_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[50]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">httomo.recon.rotation</span> <span class="kn">import</span> <span class="n">find_center_360</span>
+
+<span class="n">center360_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">7</span><span class="p">][</span><span class="s1">&#39;httomo.recon.rotation&#39;</span><span class="p">][</span><span class="s1">&#39;find_center_360&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">center360_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="p">(</span><span class="n">CoR360</span><span class="p">,</span> <span class="n">overlap</span><span class="p">,</span> <span class="n">side</span><span class="p">,</span> <span class="n">overlap_position</span><span class="p">)</span> <span class="o">=</span> <span class="n">find_center_360</span><span class="p">(</span><span class="n">tomo_inpainted</span><span class="p">[:,</span><span class="mi">2</span><span class="p">,:])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">CoR360</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;data_in&#39;: &#39;tomo_inpainted&#39;,
+ &#39;data_out&#39;: &#39;tomo&#39;,
+ &#39;denoise&#39;: True,
+ &#39;norm&#39;: False,
+ &#39;side&#39;: &#39;None&#39;,
+ &#39;use_overlap&#39;: False,
+ &#39;win_width&#39;: 10}
+1583.0220031738281
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">tomopy.misc.morph</span> <span class="kn">import</span> <span class="n">sino_360_to_180</span>
+
+<span class="n">converted_data180</span> <span class="o">=</span> <span class="n">sino_360_to_180</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="n">overlap</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+<span class="n">converted_inpainted_data180</span> <span class="o">=</span> <span class="n">sino_360_to_180</span><span class="p">(</span><span class="n">tomo_inpainted</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="n">overlap</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">131</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">converted_data180</span><span class="p">[:,</span><span class="mi">2</span><span class="p">,</span><span class="mi">200</span><span class="p">:</span><span class="mi">2950</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;original sinogram 180&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">132</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">converted_inpainted_data180</span><span class="p">[:,</span><span class="mi">2</span><span class="p">,</span><span class="mi">200</span><span class="p">:</span><span class="mi">2950</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;inpainted&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">133</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">converted_data180</span><span class="o">-</span><span class="n">converted_inpainted_data180</span><span class="p">)[:,</span><span class="mi">2</span><span class="p">,</span><span class="mi">200</span><span class="p">:</span><span class="mi">2950</span><span class="p">],</span>  <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Residual&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">converted_data180</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">500</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">500</span><span class="p">:</span><span class="mi">900</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Zoomed original 180 sinogram&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">converted_inpainted_data180</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">500</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">500</span><span class="p">:</span><span class="mi">900</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Zoomed inpainted 180 sinogram&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_12_0.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_12_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_12_1.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_12_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">converted_data180</span><span class="p">,</span> <span class="n">dimension</span> <span class="o">=</span> <span class="n">reslice</span><span class="p">(</span><span class="n">converted_data180</span><span class="p">,</span> <span class="n">run_out_dir</span><span class="p">,</span> <span class="n">dimension</span><span class="p">,</span> <span class="n">angles_total</span><span class="p">,</span> <span class="n">detector_y</span><span class="p">,</span> <span class="n">detector_x</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+<span class="n">converted_inpainted_data180</span><span class="p">,</span> <span class="n">dimension</span> <span class="o">=</span> <span class="n">reslice</span><span class="p">(</span><span class="n">converted_inpainted_data180</span><span class="p">,</span> <span class="n">run_out_dir</span><span class="p">,</span> <span class="n">dimension</span><span class="p">,</span> <span class="n">angles_total</span><span class="p">,</span> <span class="n">detector_y</span><span class="p">,</span> <span class="n">detector_x</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+/media/algol/29B3CEA03D85F0EA/DATA/OUTPUT_SAVU/14-11-2022_13_32_13_output/intermediate.h5
+/data
+:,:,:
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">tomopy.recon.algorithm</span> <span class="kn">import</span> <span class="n">recon</span>
+
+<span class="n">recon_original</span> <span class="o">=</span> <span class="n">recon</span><span class="p">(</span><span class="n">converted_data180</span><span class="p">,</span>
+              <span class="n">angles</span><span class="p">,</span>
+              <span class="n">center</span><span class="o">=</span><span class="n">CoR360</span><span class="p">,</span>
+              <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;gridrec&quot;</span><span class="p">,</span>
+              <span class="n">sinogram_order</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+              <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">recon_original</span><span class="p">[</span><span class="mi">2</span><span class="p">,:,:],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">vmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.004</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Reconstruction slice&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">recon_original</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">750</span><span class="p">:</span><span class="mi">1800</span><span class="p">,</span><span class="mi">750</span><span class="p">:</span><span class="mi">1800</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">vmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.0008</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Zoomed Reconstruction&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_14_0.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_14_0.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><br/><span></span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">tomopy.recon.algorithm</span> <span class="kn">import</span> <span class="n">recon</span>
+
+<span class="n">recon_inpainted</span> <span class="o">=</span> <span class="n">recon</span><span class="p">(</span><span class="n">converted_inpainted_data180</span><span class="p">,</span>
+                <span class="n">angles</span><span class="p">,</span>
+                <span class="n">center</span><span class="o">=</span><span class="n">CoR360</span><span class="p">,</span>
+                <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;gridrec&quot;</span><span class="p">,</span>
+                <span class="n">sinogram_order</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">recon_inpainted</span><span class="p">[</span><span class="mi">2</span><span class="p">,:,:],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">vmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.004</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Inpainted recon &#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">recon_inpainted</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">750</span><span class="p">:</span><span class="mi">1800</span><span class="p">,</span><span class="mi">750</span><span class="p">:</span><span class="mi">1800</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">vmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.0008</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Zoomed Inpainted Recon&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_16_0.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_DLS_specific_01_sino360_to180covert_inpainting_16_0.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># save the resulting dataset to images</span>
+<span class="kn">from</span> <span class="nn">httomo.misc.images</span> <span class="kn">import</span> <span class="n">save_to_images</span>
+<span class="kn">from</span> <span class="nn">httomo._stats.globals</span> <span class="kn">import</span> <span class="n">min_max_mean_std</span>
+
+<span class="c1"># get global stats</span>
+<span class="n">glob_stats</span> <span class="o">=</span> <span class="n">min_max_mean_std</span><span class="p">(</span><span class="n">recon_original</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+<span class="n">save_to_images</span><span class="p">(</span><span class="n">recon_original</span><span class="p">,</span> <span class="s2">&quot;recon_original&quot;</span><span class="p">,</span> <span class="n">run_out_dir</span><span class="p">,</span> <span class="n">glob_stats</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+<span class="n">glob_stats2</span> <span class="o">=</span> <span class="n">min_max_mean_std</span><span class="p">(</span><span class="n">recon_inpainted</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+<span class="n">save_to_images</span><span class="p">(</span><span class="n">recon_inpainted</span><span class="p">,</span> <span class="s2">&quot;recon_inpainted&quot;</span><span class="p">,</span> <span class="n">run_out_dir</span><span class="p">,</span> <span class="n">glob_stats2</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../../../../tutorials/jn.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Jupyter Notebooks</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../general/01_basic_cpu_pipeline_tomo_standard.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">The basic CPU pipeline to process standard parallel-beam tomographic data in HTTomo:</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2023, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Sep 13, 2023.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

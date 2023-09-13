@@ -1,0 +1,5 @@
+- tomopy.prep.alignment:
+    add_noise:
+      data_in: tomo
+      data_out: tomo
+      ratio: 0.05

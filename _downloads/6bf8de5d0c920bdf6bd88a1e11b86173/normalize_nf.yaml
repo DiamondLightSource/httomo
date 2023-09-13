@@ -1,0 +1,7 @@
+- tomopy.prep.normalize:
+    normalize_nf:
+      data_in: tomo
+      data_out: tomo
+      flat_loc: REQUIRED
+      cutoff: null
+      averaging: mean

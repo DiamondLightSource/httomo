@@ -1,0 +1,718 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>httomo.common &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/general.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/httomo.common';</script>
+    <link rel="shortcut icon" href="../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo_light.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/logo_dark.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../introduction/about.html">HTTomo concept</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../howto/installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto/run_httomo.html">How to run HTTomo</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/process_lists_guide.html">Process Lists Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../howto/process_lists/process_list_configure.html">Configure process list using templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/process_lists/editing_process_lists.html">Editing process lists</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/httomo_features.html">HTTomo Features</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/parameter_tuning.html">Parameter Tuning</a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/templates.html">YAML Templates</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomopy.sim.project.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.sim.project</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolibgpu.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolibgpu.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolibgpu.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolibgpu.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolibgpu.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolibgpu.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolibgpu.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolibgpu.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolib.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolib.misc.images.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.images</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolib.misc.segm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.segm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomolib.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomo.data.hdf.loaders.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomo.data.hdf.loaders</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Backends</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../backends/list.html">Supported backends</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials/Examples</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/yaml.html">Process list templates</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/jn.html">Jupyter Notebooks</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ipynb/samples/jupyter_notebooks/DLS_specific/01_sino360_to180covert_inpainting.html">A CPU pipeline to process 360 double field-of-view scan using HTTomo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipynb/samples/jupyter_notebooks/general/01_basic_cpu_pipeline_tomo_standard.html">The basic CPU pipeline to process standard parallel-beam tomographic data in HTTomo:</a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../developers/yaml_generator.html">YAML generator</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/httomo.common.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>httomo.common</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="module-httomo.common">
+<span id="httomo-common"></span><h1><a class="reference internal" href="#module-httomo.common" title="httomo.common"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomo.common</span></code></a><a class="headerlink" href="#module-httomo.common" title="Permalink to this headline">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httomo.common.</span></span><span class="sig-name descname"><span class="pre">MethodFunc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_func:</span> <span class="pre">collections.abc.Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrapper_func:</span> <span class="pre">typing.Optional[collections.abc.Callable]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calc_max_slices:</span> <span class="pre">typing.Optional[collections.abc.Callable]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters:</span> <span class="pre">typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern:</span> <span class="pre">httomo.utils.Pattern</span> <span class="pre">=</span> <span class="pre">Pattern.projection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpu:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gpu:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reslice_ahead:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_loader:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_last_method:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/httomo/common.html#MethodFunc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#httomo.common.MethodFunc" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class holding information about each tomography pipeline method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module_name</strong> (<em>str</em>) – Fully qualified name of the module where the method is. E.g. httomolib.prep.normalize</p></li>
+<li><p><strong>method_func</strong> (<em>Callable</em>) – The actual method callable</p></li>
+<li><p><strong>wrapper_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – The wrapper function to handle the execution. It may be None,
+for example for loaders.</p></li>
+<li><p><strong>calc_max_slices</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – A callable with the signature
+(slice_dim: int, other_dims: int, dtype: np.dtype, available_memory: int) -&gt; int
+which determines the maximum number of slices it can fit in the given memory.
+If it is not present (None), the method is assumed to fit any amount of slices.</p></li>
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – The method parameters that are specified in the pipeline yaml file.
+They are used as kwargs when the method is called.</p></li>
+<li><p><strong>cpu</strong> (<em>bool</em>) – Whether CPU execution is supported.</p></li>
+<li><p><strong>gpu</strong> (<em>bool</em>) – Whether GPU execution is supported.</p></li>
+<li><p><strong>reslice_ahead</strong> (<em>bool</em>) – Whether a reslice needs to be done due to a pattern change in the pipeline</p></li>
+<li><p><strong>is_last_method</strong> (<em>bool</em>) – True if it is the last method in the pipeline</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.calc_max_slices">
+<span class="sig-name descname"><span class="pre">calc_max_slices</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">collections.abc.Callable</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#httomo.common.MethodFunc.calc_max_slices" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.cpu">
+<span class="sig-name descname"><span class="pre">cpu</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#httomo.common.MethodFunc.cpu" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.gpu">
+<span class="sig-name descname"><span class="pre">gpu</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#httomo.common.MethodFunc.gpu" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.is_last_method">
+<span class="sig-name descname"><span class="pre">is_last_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#httomo.common.MethodFunc.is_last_method" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.is_loader">
+<span class="sig-name descname"><span class="pre">is_loader</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#httomo.common.MethodFunc.is_loader" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.method_func">
+<span class="sig-name descname"><span class="pre">method_func</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">collections.abc.Callable</span></em><a class="headerlink" href="#httomo.common.MethodFunc.method_func" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.module_name">
+<span class="sig-name descname"><span class="pre">module_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#httomo.common.MethodFunc.module_name" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#httomo.common.MethodFunc.parameters" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.pattern">
+<span class="sig-name descname"><span class="pre">pattern</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="httomo.utils.html#httomo.utils.Pattern" title="httomo.utils.Pattern"><span class="pre">httomo.utils.Pattern</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#httomo.common.MethodFunc.pattern" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.reslice_ahead">
+<span class="sig-name descname"><span class="pre">reslice_ahead</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#httomo.common.MethodFunc.reslice_ahead" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.MethodFunc.wrapper_func">
+<span class="sig-name descname"><span class="pre">wrapper_func</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">collections.abc.Callable</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#httomo.common.MethodFunc.wrapper_func" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="httomo.common.PlatformSection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httomo.common.</span></span><span class="sig-name descname"><span class="pre">PlatformSection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gpu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="httomo.utils.html#httomo.utils.Pattern" title="httomo.utils.Pattern"><span class="pre">httomo.utils.Pattern</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_slices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">methods</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#httomo.common.MethodFunc" title="httomo.common.MethodFunc"><span class="pre">httomo.common.MethodFunc</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/httomo/common.html#PlatformSection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#httomo.common.PlatformSection" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Data class to represent a section of the pipeline that runs on the same platform.
+That is, all methods contained in this section of the pipeline run either all on CPU
+or all on GPU.</p>
+<p>This is used to iterate through GPU memory in chunks.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.PlatformSection.gpu">
+<span class="sig-name descname"><span class="pre">gpu</span></span><a class="headerlink" href="#httomo.common.PlatformSection.gpu" title="Permalink to this definition">#</a></dt>
+<dd><p>Whether this section is a GPU section (True) or CPU section (False)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.PlatformSection.pattern">
+<span class="sig-name descname"><span class="pre">pattern</span></span><a class="headerlink" href="#httomo.common.PlatformSection.pattern" title="Permalink to this definition">#</a></dt>
+<dd><p>To denote the slicing pattern - sinogram, projection</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="httomo.utils.html#httomo.utils.Pattern" title="httomo.utils.Pattern">Pattern</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.PlatformSection.max_slices">
+<span class="sig-name descname"><span class="pre">max_slices</span></span><a class="headerlink" href="#httomo.common.PlatformSection.max_slices" title="Permalink to this definition">#</a></dt>
+<dd><p>Holds information about how many slices can be fit in one chunk without
+exhausting memory (relevant on GPU only)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.PlatformSection.methods">
+<span class="sig-name descname"><span class="pre">methods</span></span><a class="headerlink" href="#httomo.common.PlatformSection.methods" title="Permalink to this definition">#</a></dt>
+<dd><p>List of methods in this section</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#httomo.common.MethodFunc" title="httomo.common.MethodFunc">MethodFunc</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">gpu</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#id0" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">max_slices</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#id1" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">methods</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#httomo.common.MethodFunc" title="httomo.common.MethodFunc"><span class="pre">httomo.common.MethodFunc</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id2" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">pattern</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="httomo.utils.html#httomo.utils.Pattern" title="httomo.utils.Pattern"><span class="pre">httomo.utils.Pattern</span></a></em><a class="headerlink" href="#id3" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="httomo.common.ResliceInfo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httomo.common.</span></span><span class="sig-name descname"><span class="pre">ResliceInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_warn_printed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reslice_bool_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reslice_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/httomo/common.html#ResliceInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#httomo.common.ResliceInfo" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class holding information regarding reslicing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>count</strong> (<em>int</em>) – Counter for how many reslices were done so far</p></li>
+<li><p><strong>has_warn_printed</strong> (<em>bool</em>) – Whether the reslicing warning has been printed</p></li>
+<li><p><strong>reslice_bool_list</strong> (<em>List</em><em>[</em><em>bool</em><em>]</em>) – List of booleans to identify when reslicing is needed</p></li>
+<li><p><strong>reslice_dir</strong> (<em>Optional</em><em>[</em><em>Path</em><em>]</em>) – The directory to use with file-based reslicing. If None,
+reslicing will be done in-memory.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.ResliceInfo.count">
+<span class="sig-name descname"><span class="pre">count</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#httomo.common.ResliceInfo.count" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.ResliceInfo.has_warn_printed">
+<span class="sig-name descname"><span class="pre">has_warn_printed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#httomo.common.ResliceInfo.has_warn_printed" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.ResliceInfo.reslice_bool_list">
+<span class="sig-name descname"><span class="pre">reslice_bool_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#httomo.common.ResliceInfo.reslice_bool_list" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.ResliceInfo.reslice_dir">
+<span class="sig-name descname"><span class="pre">reslice_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#httomo.common.ResliceInfo.reslice_dir" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httomo.common.</span></span><span class="sig-name descname"><span class="pre">RunMethodInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dict_params_method:</span> <span class="pre">typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_in:</span> <span class="pre">typing.List[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_out:</span> <span class="pre">typing.List[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_reslice:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_httomo_params:</span> <span class="pre">typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_result:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_slice_dim:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_slice_dim:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_idx:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_sweep_name:</span> <span class="pre">typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_sweep_vals:</span> <span class="pre">typing.Tuple</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package_name:</span> <span class="pre">typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name:</span> <span class="pre">typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/httomo/common.html#RunMethodInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#httomo.common.RunMethodInfo" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class holding information about each method before/while it runs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dict_params_method</strong> (<em>Dict</em>) – The dict of param names and their values for a given method function.</p></li>
+<li><p><strong>data_in</strong> (<em>List</em>) – Input datasets in a list</p></li>
+<li><p><strong>data_out</strong> (<em>List</em>) – Output datasets in a list</p></li>
+<li><p><strong>param_sweep_name</strong> (<em>str</em>) – The name of the param sweep involved</p></li>
+<li><p><strong>param_sweep_vals</strong> (<em>Any</em>) – The tuple values of the param sweep</p></li>
+<li><p><strong>should_reslice</strong> (<em>bool</em>) – To check if the input dataset should be resliced before the task runs</p></li>
+<li><p><strong>dict_httomo_params</strong> (<em>Dict</em>) – Dict containing extra params unrelated to wrapped packages but related to httomo</p></li>
+<li><p><strong>save_result</strong> (<em>bool</em>) – Bool to check if we need to save the result (e.g., if it is the last method)</p></li>
+<li><p><strong>current_slice_dim</strong> (<em>int</em>) – the dimension of the data that the current method requires the data to be sliced in.</p></li>
+<li><p><strong>next_slice_dim</strong> (<em>int</em>) – the dimension of the data that the next method requires the data to be sliced in</p></li>
+<li><p><strong>task_idx</strong> (<em>int</em>) – Index of the task in the pipeline being run</p></li>
+<li><p><strong>package_name</strong> (<em>str</em>) – The name of the package the method is imported from</p></li>
+<li><p><strong>method_name</strong> (<em>str</em>) – The name of the method being executed</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.current_slice_dim">
+<span class="sig-name descname"><span class="pre">current_slice_dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-1</span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.current_slice_dim" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.data_in">
+<span class="sig-name descname"><span class="pre">data_in</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.data_in" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.data_out">
+<span class="sig-name descname"><span class="pre">data_out</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.data_out" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.dict_httomo_params">
+<span class="sig-name descname"><span class="pre">dict_httomo_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.dict_httomo_params" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.dict_params_method">
+<span class="sig-name descname"><span class="pre">dict_params_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.dict_params_method" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.method_name">
+<span class="sig-name descname"><span class="pre">method_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.method_name" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.next_slice_dim">
+<span class="sig-name descname"><span class="pre">next_slice_dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-1</span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.next_slice_dim" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.package_name">
+<span class="sig-name descname"><span class="pre">package_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.package_name" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.param_sweep_name">
+<span class="sig-name descname"><span class="pre">param_sweep_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.param_sweep_name" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.param_sweep_vals">
+<span class="sig-name descname"><span class="pre">param_sweep_vals</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.param_sweep_vals" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.save_result">
+<span class="sig-name descname"><span class="pre">save_result</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.save_result" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.should_reslice">
+<span class="sig-name descname"><span class="pre">should_reslice</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.should_reslice" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="httomo.common.RunMethodInfo.task_idx">
+<span class="sig-name descname"><span class="pre">task_idx</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-1</span></em><a class="headerlink" href="#httomo.common.RunMethodInfo.task_idx" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2023, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Sep 13, 2023.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

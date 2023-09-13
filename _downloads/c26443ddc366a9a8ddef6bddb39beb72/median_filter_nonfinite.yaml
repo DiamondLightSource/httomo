@@ -1,0 +1,6 @@
+- tomopy.misc.corr:
+    median_filter_nonfinite:
+      data_in: tomo
+      data_out: tomo
+      size: 3
+      callback: null

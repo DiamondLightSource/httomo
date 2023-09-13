@@ -1,0 +1,837 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>The basic CPU pipeline to process standard parallel-beam tomographic data in HTTomo: &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/css/general.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/nbsphinx-code-cells.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/clipboard.min.js"></script>
+    <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'ipynb/samples/jupyter_notebooks/general/01_basic_cpu_pipeline_tomo_standard';</script>
+    <link rel="shortcut icon" href="../../../../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="YAML generator" href="../../../../developers/yaml_generator.html" />
+    <link rel="prev" title="A CPU pipeline to process 360 double field-of-view scan using HTTomo" href="../DLS_specific/01_sino360_to180covert_inpainting.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/logo_light.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../../_static/logo_dark.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../introduction/about.html">HTTomo concept</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto/installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto/run_httomo.html">How to run HTTomo</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../howto/process_lists_guide.html">Process Lists Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../howto/process_lists/process_list_configure.html">Configure process list using templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../howto/process_lists/editing_process_lists.html">Editing process lists</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../howto/httomo_features.html">HTTomo Features</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../howto/httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../howto/httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../howto/httomo_features/parameter_tuning.html">Parameter Tuning</a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../reference/templates.html">YAML Templates</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/tomopy.sim.project.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.sim.project</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolibgpu.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolib.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolib.misc.images.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.images</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolib.misc.segm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.segm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomolib.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/httomo.data.hdf.loaders.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomo.data.hdf.loaders</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Backends</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../backends/list.html">Supported backends</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials/Examples</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/yaml.html">Process list templates</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../../../tutorials/jn.html">Jupyter Notebooks</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../DLS_specific/01_sino360_to180covert_inpainting.html">A CPU pipeline to process 360 double field-of-view scan using HTTomo</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">The basic CPU pipeline to process standard parallel-beam tomographic data in HTTomo:</a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../developers/yaml_generator.html">YAML generator</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../../../_sources/ipynb/samples/jupyter_notebooks/general/01_basic_cpu_pipeline_tomo_standard.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>The basic CPU pipeline to process standard parallel-beam tomographic data in HTTomo:</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="The-basic-CPU-pipeline-to-process-standard-parallel-beam-tomographic-data-in-HTTomo:">
+<h1>The basic CPU pipeline to process standard parallel-beam tomographic data in HTTomo:<a class="headerlink" href="#The-basic-CPU-pipeline-to-process-standard-parallel-beam-tomographic-data-in-HTTomo:" title="Permalink to this headline">#</a></h1>
+<ol class="arabic simple">
+<li><p>Load the raw data</p></li>
+<li><p>Apply 3D dezinger filter from HTTomo</p></li>
+<li><p>Normalise the data, take the negative log</p></li>
+<li><p>Perform stripes removal</p></li>
+<li><p>Find the Center of Rotation (CoR)</p></li>
+<li><p>Reconstruct using the Gridrec algorithm</p></li>
+<li><p>Save the result as tiffs</p></li>
+</ol>
+<p>Note: This pipeline uses some methods from the <a class="reference external" href="https://tomopy.readthedocs.io/">TomoPy</a> software</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">mkdir</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">pprint</span>
+
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">nvtx</span> <span class="kn">import</span> <span class="n">annotate</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">import</span> <span class="nn">tomopy</span>
+
+<span class="kn">from</span> <span class="nn">httomo.common</span> <span class="kn">import</span> <span class="n">PipelineTasks</span>
+<span class="kn">from</span> <span class="nn">httomo.data.hdf.loaders</span> <span class="kn">import</span> <span class="n">standard_tomo</span>
+<span class="kn">from</span> <span class="nn">httomo.data.hdf._utils.save</span> <span class="kn">import</span> <span class="n">intermediate_dataset</span>
+<span class="kn">from</span> <span class="nn">httomo.data.hdf._utils.reslice</span> <span class="kn">import</span> <span class="n">reslice</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># load the corresponding YAML configuration ftask ile which can be excecuted through the HTTomo task runner</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s1">&#39;../../pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml&#39;</span><span class="p">))</span>
+<span class="n">pp</span> <span class="o">=</span> <span class="n">pprint</span><span class="o">.</span><span class="n">PrettyPrinter</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># set paths to tomo_standard</span>
+<span class="n">current_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+<span class="n">in_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_dir</span><span class="p">,</span> <span class="s2">&quot;../../../testdata&quot;</span> <span class="p">,</span><span class="s2">&quot;tomo_standard.nxs&quot;</span><span class="p">)</span>
+<span class="n">run_out_dir_main</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_dir</span><span class="p">,</span> <span class="s2">&quot;../../../testdata&quot;</span> <span class="p">,</span><span class="s2">&quot;output_temp&quot;</span><span class="p">)</span>
+<span class="n">run_out_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_dir</span><span class="p">,</span> <span class="s2">&quot;../../../testdata&quot;</span> <span class="p">,</span><span class="s2">&quot;output_temp&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1">-%m-%Y_%H_%M_%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">_output&quot;</span><span class="p">)</span>
+
+<span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+<span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">run_out_dir_main</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">run_out_dir_main</span><span class="p">)</span>
+    <span class="n">mkdir</span><span class="p">(</span><span class="n">run_out_dir</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">ncore</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="c1"># use all available CPU cores if not an MPI run</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># getting the dictionaries from the YAML template file</span>
+<span class="n">standard_tomo_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;httomo.data.hdf.loaders&#39;</span><span class="p">][</span><span class="s1">&#39;standard_tomo&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">standard_tomo_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="c1"># loading the data</span>
+<span class="n">data</span><span class="p">,</span> <span class="n">flats</span><span class="p">,</span> <span class="n">darks</span><span class="p">,</span> <span class="n">angles</span><span class="p">,</span> <span class="n">angles_total</span><span class="p">,</span> <span class="n">detector_y</span><span class="p">,</span> <span class="n">detector_x</span> <span class="o">=</span> <span class="n">standard_tomo</span><span class="p">(</span><span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">in_file</span><span class="p">,</span>
+                                                                                 <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;data_path&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;image_key_path&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;dimension&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;preview&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;pad&#39;</span><span class="p">],</span>
+                                                                                 <span class="n">comm</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">90</span><span class="p">,:,:],</span> <span class="n">vmin</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Raw projection&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="mi">90</span><span class="p">,:],</span> <span class="n">vmin</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Raw sinogram&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;data_path&#39;: &#39;entry1/tomo_entry/data/data&#39;,
+ &#39;dimension&#39;: 1,
+ &#39;image_key_path&#39;: &#39;entry1/tomo_entry/instrument/detector/image_key&#39;,
+ &#39;name&#39;: &#39;tomo&#39;,
+ &#39;pad&#39;: 0,
+ &#39;preview&#39;: [None, None, None]}
+The full dataset shape is (220, 128, 160)
+[0] Pad values are (0, 0).
+/home/algol/Documents/DEV/HTTomo/samples/jupyter_notebooks/general/../../../testdata/tomo_standard.nxs
+entry1/tomo_entry/data/data
+0:180, :, :
+[0] Data shape is (180, 128, 160) of type uint16
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_general_01_basic_cpu_pipeline_tomo_standard_3_1.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_general_01_basic_cpu_pipeline_tomo_standard_3_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Apply 3d dezinger filter from HTTomo to raw data/flats/darks</span>
+<span class="c1"># here you will also need to get global statistics of the input data for the filter</span>
+<span class="kn">from</span> <span class="nn">httomo.misc.corr</span> <span class="kn">import</span> <span class="n">dezinger_filter3d</span>
+<span class="kn">from</span> <span class="nn">httomo._stats.globals</span> <span class="kn">import</span> <span class="n">min_max_mean_std</span>
+
+<span class="n">dezinger_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;httomo.misc.corr&#39;</span><span class="p">][</span><span class="s1">&#39;dezinger_filter3d&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">dezinger_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="c1"># get global stats for each of the datasets (glob_stats[3] is a std)</span>
+<span class="n">glob_stats</span> <span class="o">=</span> <span class="n">min_max_mean_std</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">dezinger_filter3d</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">glob_stats</span><span class="p">,</span> <span class="n">dezinger_params</span><span class="p">[</span><span class="s1">&#39;radius_kernel&#39;</span><span class="p">],</span> <span class="n">dezinger_params</span><span class="p">[</span><span class="s1">&#39;mu_dezinger&#39;</span><span class="p">],</span> <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+
+<span class="n">glob_stats</span> <span class="o">=</span> <span class="n">min_max_mean_std</span><span class="p">(</span><span class="n">flats</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+<span class="n">flats</span> <span class="o">=</span> <span class="n">dezinger_filter3d</span><span class="p">(</span><span class="n">flats</span><span class="p">,</span> <span class="n">glob_stats</span><span class="p">,</span> <span class="n">dezinger_params</span><span class="p">[</span><span class="s1">&#39;radius_kernel&#39;</span><span class="p">],</span> <span class="n">dezinger_params</span><span class="p">[</span><span class="s1">&#39;mu_dezinger&#39;</span><span class="p">],</span> <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+
+<span class="n">glob_stats</span> <span class="o">=</span> <span class="n">min_max_mean_std</span><span class="p">(</span><span class="n">darks</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+<span class="n">darks</span> <span class="o">=</span> <span class="n">dezinger_filter3d</span><span class="p">(</span><span class="n">darks</span><span class="p">,</span> <span class="n">glob_stats</span><span class="p">,</span> <span class="n">dezinger_params</span><span class="p">[</span><span class="s1">&#39;radius_kernel&#39;</span><span class="p">],</span> <span class="n">dezinger_params</span><span class="p">[</span><span class="s1">&#39;mu_dezinger&#39;</span><span class="p">],</span> <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">90</span><span class="p">,:,:],</span> <span class="n">vmin</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Raw projection dezinged&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="mi">90</span><span class="p">,:],</span> <span class="n">vmin</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Raw sinogram dezinged&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;data_in_multi&#39;: [&#39;tomo&#39;, &#39;flats&#39;, &#39;darks&#39;],
+ &#39;data_out_multi&#39;: [&#39;tomo&#39;, &#39;flats&#39;, &#39;darks&#39;],
+ &#39;mu_dezinger&#39;: 0.1,
+ &#39;radius_kernel&#39;: 1}
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_general_01_basic_cpu_pipeline_tomo_standard_4_1.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_general_01_basic_cpu_pipeline_tomo_standard_4_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Normalising raw data using TomoPy functions</span>
+<span class="kn">from</span> <span class="nn">tomopy.prep.normalize</span> <span class="kn">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">minus_log</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">flats</span><span class="p">,</span> <span class="n">darks</span><span class="p">,</span> <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">data</span><span class="p">[</span><span class="n">data</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-09</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">tomopy</span><span class="o">.</span><span class="n">minus_log</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">90</span><span class="p">,:,:],</span> <span class="n">vmin</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Normalised projection&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="mi">90</span><span class="p">,:],</span> <span class="n">vmin</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Normalised sinogram&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_general_01_basic_cpu_pipeline_tomo_standard_5_0.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_general_01_basic_cpu_pipeline_tomo_standard_5_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[41]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Save intermediate dataset and reslice to change chunking from projection to sinogram</span>
+<span class="n">data</span><span class="p">,</span> <span class="n">dimension</span> <span class="o">=</span> <span class="n">reslice</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">run_out_dir</span><span class="p">,</span> <span class="n">standard_tomo_params</span><span class="p">[</span><span class="s1">&#39;dimension&#39;</span><span class="p">],</span> <span class="n">angles_total</span><span class="p">,</span> <span class="n">detector_y</span><span class="p">,</span> <span class="n">detector_x</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+/home/algol/Documents/DEV/HTTomo/samples/jupyter_notebooks/general/../../../testdata/output_temp/16-11-2022_21_59_55_output/intermediate.h5
+/data
+:,:,:
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[42]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Apply a stripe removal method (as all TomoPy methods are exposed, one can select a desirable one)</span>
+<span class="kn">from</span> <span class="nn">tomopy.prep.stripe</span> <span class="kn">import</span> <span class="n">remove_stripe_fw</span>
+
+<span class="n">stripe_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="s1">&#39;tomopy.prep.stripe&#39;</span><span class="p">][</span><span class="s1">&#39;remove_stripe_fw&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">stripe_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="n">data_destriped</span> <span class="o">=</span> <span class="n">remove_stripe_fw</span><span class="p">(</span><span class="n">data</span><span class="p">,</span>
+                                  <span class="n">stripe_params</span><span class="p">[</span><span class="s1">&#39;level&#39;</span><span class="p">],</span>
+                                  <span class="n">stripe_params</span><span class="p">[</span><span class="s1">&#39;wname&#39;</span><span class="p">],</span>
+                                  <span class="n">stripe_params</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">],</span>
+                                  <span class="n">stripe_params</span><span class="p">[</span><span class="s1">&#39;pad&#39;</span><span class="p">],</span>
+                                  <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data_destriped</span><span class="p">[</span><span class="mi">90</span><span class="p">,:,:],</span> <span class="n">vmin</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Destriped projection&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data_destriped</span><span class="p">[:,</span><span class="mi">90</span><span class="p">,:],</span> <span class="n">vmin</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Destriped sinogram&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;data_in&#39;: &#39;tomo&#39;,
+ &#39;data_out&#39;: &#39;tomo&#39;,
+ &#39;level&#39;: None,
+ &#39;pad&#39;: True,
+ &#39;sigma&#39;: 2,
+ &#39;wname&#39;: &#39;db5&#39;}
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_general_01_basic_cpu_pipeline_tomo_standard_7_1.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_general_01_basic_cpu_pipeline_tomo_standard_7_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[43]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Finding the center of rotation (CoR)</span>
+<span class="kn">from</span> <span class="nn">tomopy.recon.rotation</span> <span class="kn">import</span> <span class="n">find_center_vo</span>
+
+<span class="n">cor_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">5</span><span class="p">][</span><span class="s1">&#39;tomopy.recon.rotation&#39;</span><span class="p">][</span><span class="s1">&#39;find_center_vo&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">cor_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="n">rot_center</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">mid_rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="n">mid_rank</span><span class="p">:</span>
+    <span class="n">mid_slice</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">rot_center</span> <span class="o">=</span> <span class="n">find_center_vo</span><span class="p">(</span><span class="n">data_destriped</span><span class="p">,</span>
+                                <span class="n">mid_slice</span><span class="p">,</span>
+                                <span class="n">cor_params</span><span class="p">[</span><span class="s1">&#39;smin&#39;</span><span class="p">],</span>
+                                <span class="n">cor_params</span><span class="p">[</span><span class="s1">&#39;smax&#39;</span><span class="p">],</span>
+                                <span class="n">cor_params</span><span class="p">[</span><span class="s1">&#39;srad&#39;</span><span class="p">],</span>
+                                <span class="n">cor_params</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">],</span>
+                                <span class="n">cor_params</span><span class="p">[</span><span class="s1">&#39;ratio&#39;</span><span class="p">],</span>
+                                <span class="n">cor_params</span><span class="p">[</span><span class="s1">&#39;drop&#39;</span><span class="p">],</span>
+                                <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+<span class="n">rot_center</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">rot_center</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">mid_rank</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found CoR </span><span class="si">{</span><span class="n">rot_center</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;data_in&#39;: &#39;tomo&#39;,
+ &#39;data_out&#39;: &#39;cor&#39;,
+ &#39;drop&#39;: 20,
+ &#39;ind&#39;: None,
+ &#39;ratio&#39;: 0.5,
+ &#39;smax&#39;: 50,
+ &#39;smin&#39;: -50,
+ &#39;srad&#39;: 6,
+ &#39;step&#39;: 0.25}
+Found CoR 79.5 &lt;mpi4py.MPI.Intracomm object at 0x7f68c08e9c90&gt;
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[44]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Reconstructing the data using Gridrec algorithm</span>
+<span class="kn">from</span> <span class="nn">tomopy.recon.algorithm</span> <span class="kn">import</span> <span class="n">recon</span>
+
+<span class="n">rec_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">6</span><span class="p">][</span><span class="s1">&#39;tomopy.recon.algorithm&#39;</span><span class="p">][</span><span class="s1">&#39;recon&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">rec_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="n">reconstruction</span> <span class="o">=</span> <span class="n">recon</span><span class="p">(</span><span class="n">data_destriped</span><span class="p">,</span>
+                       <span class="n">angles</span><span class="p">,</span>
+                       <span class="n">rot_center</span><span class="p">,</span>
+                       <span class="n">rec_params</span><span class="p">[</span><span class="s1">&#39;sinogram_order&#39;</span><span class="p">],</span>
+                       <span class="n">rec_params</span><span class="p">[</span><span class="s1">&#39;algorithm&#39;</span><span class="p">],</span>
+                       <span class="n">ncore</span><span class="o">=</span><span class="n">ncore</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">reconstruction</span><span class="p">[</span><span class="mi">50</span><span class="p">,:,:])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Reconstruction axial&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">reconstruction</span><span class="p">[:,</span><span class="mi">100</span><span class="p">,:])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Reconstruction coronal&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;algorithm&#39;: &#39;gridrec&#39;,
+ &#39;center&#39;: &#39;cor&#39;,
+ &#39;data_in&#39;: &#39;tomo&#39;,
+ &#39;data_out&#39;: &#39;tomo&#39;,
+ &#39;init_recon&#39;: None,
+ &#39;sinogram_order&#39;: False}
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../../_images/ipynb_samples_jupyter_notebooks_general_01_basic_cpu_pipeline_tomo_standard_9_1.png" src="../../../../_images/ipynb_samples_jupyter_notebooks_general_01_basic_cpu_pipeline_tomo_standard_9_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># saving the resulting dataset to images</span>
+<span class="kn">from</span> <span class="nn">httomo.misc.images</span> <span class="kn">import</span> <span class="n">save_to_images</span>
+
+<span class="n">save_params</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">[</span><span class="mi">7</span><span class="p">][</span><span class="s1">&#39;httomo.misc.images&#39;</span><span class="p">][</span><span class="s1">&#39;save_to_images&#39;</span><span class="p">]</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">save_params</span><span class="p">)</span> <span class="c1"># print parameters from the YAML template</span>
+
+<span class="n">glob_stats</span> <span class="o">=</span> <span class="n">min_max_mean_std</span><span class="p">(</span><span class="n">reconstruction</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span> <span class="c1"># get global stats</span>
+<span class="n">save_to_images</span><span class="p">(</span><span class="n">reconstruction</span><span class="p">,</span> <span class="s2">&quot;recon&quot;</span><span class="p">,</span> <span class="n">run_out_dir</span><span class="p">,</span> <span class="n">glob_stats</span><span class="p">,</span> <span class="n">comm</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;axis&#39;: 0,
+ &#39;bits&#39;: 8,
+ &#39;data_in&#39;: &#39;tomo&#39;,
+ &#39;file_format&#39;: &#39;tif&#39;,
+ &#39;jpeg_quality&#39;: 95,
+ &#39;out_folder_name&#39;: &#39;recon&#39;}
+</pre></div></div>
+</div>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../DLS_specific/01_sino360_to180covert_inpainting.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">A CPU pipeline to process 360 double field-of-view scan using HTTomo</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../../../../developers/yaml_generator.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">YAML generator</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2023, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Sep 13, 2023.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+- tomopy.prep.alignment:
+    distortion_correction_proj:
+      data_in: tomo
+      data_out: tomo
+      xcenter: REQUIRED
+      ycenter: REQUIRED
+      list_fact: REQUIRED

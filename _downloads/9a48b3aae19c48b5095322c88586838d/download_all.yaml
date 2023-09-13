@@ -1,0 +1,87 @@
+- tomopy.prep.stripe:
+    remove_stripe_based_interpolation:
+      data_in: tomo
+      data_out: tomo
+      snr: 3
+      size: 31
+      drop_ratio: 0.1
+      norm: true
+- tomopy.prep.stripe:
+    remove_stripe_based_fitting:
+      data_in: tomo
+      data_out: tomo
+      order: 3
+      sigma: !!python/tuple
+      - 5
+      - 20
+- tomopy.prep.stripe:
+    remove_dead_stripe:
+      data_in: tomo
+      data_out: tomo
+      snr: 3
+      size: 51
+      norm: true
+- tomopy.prep.stripe:
+    stripes_mask3d:
+      data_in: tomo
+      data_out: tomo
+      weights: REQUIRED
+      threshold: 0.6
+      min_stripe_length: 20
+      min_stripe_depth: 10
+      min_stripe_width: 5
+      sensitivity_perc: 85.0
+- tomopy.prep.stripe:
+    remove_all_stripe:
+      data_in: tomo
+      data_out: tomo
+      snr: 3
+      la_size: 61
+      sm_size: 21
+      dim: 1
+- tomopy.prep.stripe:
+    stripes_detect3d:
+      data_in: tomo
+      data_out: tomo
+      size: 10
+      radius: 3
+- tomopy.prep.stripe:
+    remove_stripe_fw:
+      data_in: tomo
+      data_out: tomo
+      level: null
+      wname: db5
+      sigma: 2
+      pad: true
+- tomopy.prep.stripe:
+    remove_stripe_based_sorting:
+      data_in: tomo
+      data_out: tomo
+      size: null
+      dim: 1
+- tomopy.prep.stripe:
+    remove_stripe_based_filtering:
+      data_in: tomo
+      data_out: tomo
+      sigma: 3
+      size: null
+      dim: 1
+- tomopy.prep.stripe:
+    remove_stripe_sf:
+      data_in: tomo
+      data_out: tomo
+      size: 5
+- tomopy.prep.stripe:
+    remove_stripe_ti:
+      data_in: tomo
+      data_out: tomo
+      nblock: 0
+      alpha: 1.5
+- tomopy.prep.stripe:
+    remove_large_stripe:
+      data_in: tomo
+      data_out: tomo
+      snr: 3
+      size: 51
+      drop_ratio: 0.1
+      norm: true

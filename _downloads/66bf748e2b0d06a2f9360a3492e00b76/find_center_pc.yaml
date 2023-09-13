@@ -1,0 +1,8 @@
+- tomopy.recon.rotation:
+    find_center_pc:
+      data_in: tomo
+      data_out: tomo
+      proj1: REQUIRED
+      proj2: REQUIRED
+      tol: 0.5
+      rotc_guess: null

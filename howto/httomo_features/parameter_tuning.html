@@ -1,0 +1,701 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Parameter Tuning &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/general.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'howto/httomo_features/parameter_tuning';</script>
+    <link rel="shortcut icon" href="../../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="YAML Templates" href="../../reference/templates.html" />
+    <link rel="prev" title="Centre of Rotation (CoR)" href="centering.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo_light.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/logo_dark.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/about.html">HTTomo concept</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../run_httomo.html">How to run HTTomo</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../process_lists_guide.html">Process Lists Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../process_lists/process_list_configure.html">Configure process list using templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../process_lists/editing_process_lists.html">Editing process lists</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../httomo_features.html">HTTomo Features</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Parameter Tuning</a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/templates.html">YAML Templates</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.sim.project.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.sim.project</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolib.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolib.misc.images.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.images</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolib.misc.segm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.segm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolib.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomo.data.hdf.loaders.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomo.data.hdf.loaders</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Backends</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../backends/list.html">Supported backends</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials/Examples</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/yaml.html">Process list templates</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../tutorials/jn.html">Jupyter Notebooks</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../ipynb/samples/jupyter_notebooks/DLS_specific/01_sino360_to180covert_inpainting.html">A CPU pipeline to process 360 double field-of-view scan using HTTomo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ipynb/samples/jupyter_notebooks/general/01_basic_cpu_pipeline_tomo_standard.html">The basic CPU pipeline to process standard parallel-beam tomographic data in HTTomo:</a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../developers/yaml_generator.html">YAML generator</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/howto/httomo_features/parameter_tuning.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Parameter Tuning</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-it">What is it?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-would-this-be-useful-when-processing-data">How would this be useful when processing data?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-are-parameter-sweeps-defined-in-the-process-list-yaml-file">How are parameter sweeps defined in the process list YAML file?</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#specifying-a-range">Specifying a range</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#specifying-each-value">Specifying each value</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-does-the-output-data-of-a-parameter-sweep-look-like">What does the output data of a parameter sweep look like?</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tiff">Tiff</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#output-folder">Output folder</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#files">Files</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hdf5">HDF5</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="parameter-tuning">
+<span id="id1"></span><h1>Parameter Tuning<a class="headerlink" href="#parameter-tuning" title="Permalink to this headline">#</a></h1>
+<section id="what-is-it">
+<h2>What is it?<a class="headerlink" href="#what-is-it" title="Permalink to this headline">#</a></h2>
+<p>Parameter tuning (also called “parameter sweeping”) refers to providing multiple
+values for a specific parameter of a method, and then running that method on its
+input data with the different values for that parameter.</p>
+</section>
+<section id="how-would-this-be-useful-when-processing-data">
+<h2>How would this be useful when processing data?<a class="headerlink" href="#how-would-this-be-useful-when-processing-data" title="Permalink to this headline">#</a></h2>
+<p>This feature is typically used when prototyping a process list and it is
+difficult to guess a reasonable value of a method’s parameter. There could be
+many reasons for this situation, such as being unfamiliar with the method, or
+working with unfamiliar data, etc.</p>
+</section>
+<section id="how-are-parameter-sweeps-defined-in-the-process-list-yaml-file">
+<span id="parameter-tuning-range"></span><h2>How are parameter sweeps defined in the process list YAML file?<a class="headerlink" href="#how-are-parameter-sweeps-defined-in-the-process-list-yaml-file" title="Permalink to this headline">#</a></h2>
+<p>There are two ways of specifying the values that a parameter sweep should be
+performed across:</p>
+<ol class="arabic simple">
+<li><p>Specifying a range of values via start, stop and step values</p></li>
+<li><p>Manually specifying each value</p></li>
+</ol>
+<section id="specifying-a-range">
+<h3>Specifying a range<a class="headerlink" href="#specifying-a-range" title="Permalink to this headline">#</a></h3>
+<p>The first way is done by providing a start, stop and step value. Along with this
+information, a special phrase <code class="code docutils literal notranslate"><span class="pre">!SweepRange</span></code> is used to “mark” in the YAML
+that the start, stop and step values are for defining a parameter sweep.</p>
+<p>The snippet below is defining a parameter sweep for the <code class="code docutils literal notranslate"><span class="pre">center</span></code> parameter
+of a reconstruction method, where the sweep starts at <code class="code docutils literal notranslate"><span class="pre">10</span></code>, ends at
+<code class="code docutils literal notranslate"><span class="pre">50</span></code>, with steps of <code class="code docutils literal notranslate"><span class="pre">10</span></code> inbetween:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="kt">!SweepRange</span>
+<span class="w">  </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">  </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">  </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+</pre></div>
+</div>
+<p>Below, the same parameter is used in the context of a fully working yet minimal
+pipeline taken from the HTTomo repo:</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-number">Listing 3 </span><span class="caption-text">samples/pipeline_template_examples/parameter_sweeps/01_recon_cor_range_sweep.yaml</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">httomo.data.hdf.loaders</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">standard_tomo</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/entry1/tomo_entry/data/data</span>
+<span class="w">      </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/entry1/tomo_entry/instrument/detector/image_key</span>
+<span class="w">      </span><span class="nt">dimension</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.recon.algorithm</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">recon</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_in</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">data_out</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="kt">!SweepRange</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">        </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">      </span><span class="nt">sinogram_order</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gridrec</span>
+<span class="w">      </span><span class="nt">init_recon</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="specifying-each-value">
+<h3>Specifying each value<a class="headerlink" href="#specifying-each-value" title="Permalink to this headline">#</a></h3>
+<p>The second way is done by providing a list of values for a parameter, and again
+“marking” the list with a special phrase to denote that this list of values is
+defining a parameter sweep. The phrase in this case is <code class="code docutils literal notranslate"><span class="pre">!Sweep</span></code>.</p>
+<p>The snippet below is defining a parameter sweep for the <code class="code docutils literal notranslate"><span class="pre">size</span></code> parameter
+of a median filter method, where the sweep is across the two values <code class="code docutils literal notranslate"><span class="pre">3</span></code>
+and <code class="code docutils literal notranslate"><span class="pre">5</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sweep</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</pre></div>
+</div>
+<p>Below, the same parameter is used in the context of a fully working minimal
+pipeline taken from the HTTomo repo:</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-number">Listing 4 </span><span class="caption-text">samples/pipeline_template_examples/parameter_sweeps/02_median_filter_kernel_sweep.yaml</span><a class="headerlink" href="#id3" title="Permalink to this code">#</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">httomo.data.hdf.loaders</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">standard_tomo</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/entry1/tomo_entry/data/data</span>
+<span class="w">      </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/entry1/tomo_entry/instrument/detector/image_key</span>
+<span class="w">      </span><span class="nt">dimension</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.misc.corr</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">median_filter</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_in</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">data_out</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sweep</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">      </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.prep.normalize</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">normalize</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_in</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">data_out</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="what-does-the-output-data-of-a-parameter-sweep-look-like">
+<h2>What does the output data of a parameter sweep look like?<a class="headerlink" href="#what-does-the-output-data-of-a-parameter-sweep-look-like" title="Permalink to this headline">#</a></h2>
+<p>When a parameter sweep is detected in the process list file, HTTomo will
+automatically run that particular method on the “middle slice” of the method’s
+input data <em>only</em>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This means that the parameter sweep will not be performed on the
+<em>full input data</em>, but only on a single slice of it.</p>
+</div>
+<p>Meaning, if the method with the parameter sweep takes in projection data, the
+method will be run with the different parameter values on the <em>middle
+projection</em> of the stack. Similarly, for a method that runs on sinogram data,
+the method will be run with the different parameter values on the <em>middle
+sinogram</em> of the stack.</p>
+<p>HTTomo produces two outputs for a parameter sweep:</p>
+<ol class="arabic simple">
+<li><p>An HDF5 file containing multiple datasets</p></li>
+<li><p>A folder of tiff files</p></li>
+</ol>
+<p>Below is some information about how the data is structured in both cases.</p>
+<section id="tiff">
+<h3>Tiff<a class="headerlink" href="#tiff" title="Permalink to this headline">#</a></h3>
+<section id="output-folder">
+<h4>Output folder<a class="headerlink" href="#output-folder" title="Permalink to this headline">#</a></h4>
+<p>In the output folder of the HTTomo run, let’s call it <code class="code docutils literal notranslate"><span class="pre">output_folder/</span></code>,
+another folder will be created inside. Its name will be
+<code class="code docutils literal notranslate"><span class="pre">middle_slices_{DATASET_NAME}/</span></code>, where <code class="code docutils literal notranslate"><span class="pre">{DATASET_NAME}</span></code> is the name
+of the output dataset for the method.</p>
+<p>For example, if the method with the parameter sweep was defined to have its
+output dataset named <code class="code docutils literal notranslate"><span class="pre">tomo</span></code> like so:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.misc.corr</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">median_filter</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_in</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">data_out</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sweep</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">      </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+</pre></div>
+</div>
+<p>then the folder would be called <code class="code docutils literal notranslate"><span class="pre">middle_slices_tomo/</span></code>.</p>
+<p>There is then another folder within that, whose name specifies the bit-depth of
+the tiff files. Parameter sweeps default to using 8-bit tiffs, so the folder
+will be called <code class="code docutils literal notranslate"><span class="pre">images8bit_tif/</span></code>.</p>
+<p>All in all, the folder containing the tiff files in this case would be called
+<code class="code docutils literal notranslate"><span class="pre">output_folder/middle_slices_tomo/images8bit_tif</span></code>.</p>
+</section>
+<section id="files">
+<h4>Files<a class="headerlink" href="#files" title="Permalink to this headline">#</a></h4>
+<p>Inside this folder, there would be <code class="code docutils literal notranslate"><span class="pre">n</span></code> number of tiff files, where
+<code class="code docutils literal notranslate"><span class="pre">n</span></code> is the number of values in the parameter sweep. In this case
+<code class="code docutils literal notranslate"><span class="pre">n=2</span></code>, so there would be two tiff files in the folder
+<code class="code docutils literal notranslate"><span class="pre">output_folder/middle_slices_tomo/images8bit_tif</span></code>.</p>
+<p>The tiff files are named with numbers, such as <code class="code docutils literal notranslate"><span class="pre">00000.tif</span></code> and
+<code class="code docutils literal notranslate"><span class="pre">00001.tif</span></code>. The number in the tiff filename corresponds to the parameter
+value position in the sweep. In the above example, the two tiff files would be
+called <code class="code docutils literal notranslate"><span class="pre">00000.tif</span></code> and <code class="code docutils literal notranslate"><span class="pre">00001.tif</span></code>, where</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">00000.tif</span></code> contains the result of the method run with the parameter
+value <code class="code docutils literal notranslate"><span class="pre">3</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">00001.tif</span></code> contains the result of the method run with the parameter
+value <code class="code docutils literal notranslate"><span class="pre">5</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="hdf5">
+<h3>HDF5<a class="headerlink" href="#hdf5" title="Permalink to this headline">#</a></h3>
+<p>Suppose the parameter sweep defined is across two values, <code class="code docutils literal notranslate"><span class="pre">3</span></code> and
+<code class="code docutils literal notranslate"><span class="pre">5</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sweep</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</pre></div>
+</div>
+<p>Counting from zero, the 0th parameter sweep value would be <code class="code docutils literal notranslate"><span class="pre">3</span></code>, and the
+1st parameter sweep value would be <code class="code docutils literal notranslate"><span class="pre">5</span></code>.</p>
+<p>In the HDF5 file output of a parameter sweep, there is one dataset for each
+parameter value in the sweep. Each dataset has a path
+<code class="code docutils literal notranslate"><span class="pre">/data/param_sweep_{n}</span></code> where <code class="code docutils literal notranslate"><span class="pre">{n}</span></code> is an integer starting from 0,
+representing which value in the parameter sweep it was the result of.</p>
+<p>For this particular case, <code class="code docutils literal notranslate"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">{n}</span> <span class="pre">&lt;=</span> <span class="pre">1</span></code>, and there would be two datasets
+in the HDF5 file, <code class="code docutils literal notranslate"><span class="pre">/data/param_sweep_0</span></code> and <code class="code docutils literal notranslate"><span class="pre">/data/param_sweep_1</span></code>,
+where</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">/data/param_sweep_0</span></code> contains the result of the method run with the
+parameter value <code class="code docutils literal notranslate"><span class="pre">3</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">/data/param_sweep_1</span></code> contains the result of the method run with the
+parameter value <code class="code docutils literal notranslate"><span class="pre">5</span></code></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="centering.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Centre of Rotation (CoR)</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../../reference/templates.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">YAML Templates</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-it">What is it?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-would-this-be-useful-when-processing-data">How would this be useful when processing data?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-are-parameter-sweeps-defined-in-the-process-list-yaml-file">How are parameter sweeps defined in the process list YAML file?</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#specifying-a-range">Specifying a range</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#specifying-each-value">Specifying each value</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-does-the-output-data-of-a-parameter-sweep-look-like">What does the output data of a parameter sweep look like?</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tiff">Tiff</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#output-folder">Output folder</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#files">Files</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hdf5">HDF5</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2023, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Sep 13, 2023.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

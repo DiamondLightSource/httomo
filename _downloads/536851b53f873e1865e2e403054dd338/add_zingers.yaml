@@ -1,0 +1,6 @@
+- tomopy.sim.project:
+    add_zingers:
+      data_in: tomo
+      data_out: tomo
+      f: 0.01
+      sat: 65536

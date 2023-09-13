@@ -1,0 +1,6 @@
+- tomopy.prep.alignment:
+    add_jitter:
+      data_in: tomo
+      data_out: tomo
+      low: 0
+      high: 1

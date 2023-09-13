@@ -1,0 +1,31 @@
+- tomopy.prep.normalize:
+    normalize_bg:
+      data_in: tomo
+      data_out: tomo
+      air: 1
+- tomopy.prep.normalize:
+    normalize:
+      data_in: tomo
+      data_out: tomo
+      cutoff: null
+      averaging: mean
+- tomopy.prep.normalize:
+    normalize_roi:
+      data_in: tomo
+      data_out: tomo
+      roi:
+      - 0
+      - 0
+      - 10
+      - 10
+- tomopy.prep.normalize:
+    normalize_nf:
+      data_in: tomo
+      data_out: tomo
+      flat_loc: REQUIRED
+      cutoff: null
+      averaging: mean
+- tomopy.prep.normalize:
+    minus_log:
+      data_in: tomo
+      data_out: tomo

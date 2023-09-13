@@ -1,0 +1,8 @@
+- httomolibgpu.prep.phase:
+    fresnel_filter:
+      data_in: tomo
+      data_out: tomo
+      mat: REQUIRED
+      pattern: REQUIRED
+      ratio: REQUIRED
+      apply_log: true

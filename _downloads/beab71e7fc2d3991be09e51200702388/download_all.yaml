@@ -1,0 +1,85 @@
+- tomopy.misc.corr:
+    remove_neg:
+      data_in: tomo
+      data_out: tomo
+      val: 0.0
+- tomopy.misc.corr:
+    adjust_range:
+      data_in: tomo
+      data_out: tomo
+      dmin: null
+      dmax: null
+- tomopy.misc.corr:
+    remove_outlier1d:
+      data_in: tomo
+      data_out: tomo
+      dif: REQUIRED
+      size: 3
+      axis: 0
+- tomopy.misc.corr:
+    remove_ring:
+      data_in: tomo
+      data_out: tomo
+      rec: REQUIRED
+      center_x: null
+      center_y: null
+      thresh: 300.0
+      thresh_max: 300.0
+      thresh_min: -100.0
+      theta_min: 30
+      rwidth: 30
+      int_mode: WRAP
+- tomopy.misc.corr:
+    sobel_filter:
+      data_in: tomo
+      data_out: tomo
+      axis: 0
+- tomopy.misc.corr:
+    remove_outlier:
+      data_in: tomo
+      data_out: tomo
+      dif: REQUIRED
+      size: 3
+      axis: 0
+- tomopy.misc.corr:
+    remove_outlier3d:
+      data_in: tomo
+      data_out: tomo
+      dif: REQUIRED
+      size: 3
+- tomopy.misc.corr:
+    median_filter:
+      data_in: tomo
+      data_out: tomo
+      size: 3
+      axis: 0
+- tomopy.misc.corr:
+    gaussian_filter:
+      data_in: tomo
+      data_out: tomo
+      sigma: 3
+      order: 0
+      axis: 0
+- tomopy.misc.corr:
+    median_filter_nonfinite:
+      data_in: tomo
+      data_out: tomo
+      size: 3
+      callback: null
+- tomopy.misc.corr:
+    median_filter3d:
+      data_in: tomo
+      data_out: tomo
+      size: 3
+- tomopy.misc.corr:
+    remove_nan:
+      data_in: tomo
+      data_out: tomo
+      val: 0.0
+- tomopy.misc.corr:
+    circ_mask:
+      data_in: tomo
+      data_out: tomo
+      axis: REQUIRED
+      ratio: 1
+      val: 0.0

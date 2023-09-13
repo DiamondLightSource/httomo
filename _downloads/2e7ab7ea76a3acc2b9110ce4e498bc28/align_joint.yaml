@@ -1,0 +1,17 @@
+- tomopy.prep.alignment:
+    align_joint:
+      data_in: tomo
+      data_out: tomo
+      fdir: .
+      iters: 10
+      pad: !!python/tuple
+      - 0
+      - 0
+      blur: true
+      center: null
+      algorithm: sirt
+      upsample_factor: 10
+      rin: 0.5
+      rout: 0.8
+      save: false
+      debug: true

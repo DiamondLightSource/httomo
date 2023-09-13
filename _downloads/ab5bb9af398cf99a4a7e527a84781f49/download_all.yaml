@@ -1,0 +1,34 @@
+- tomopy.misc.morph:
+    pad:
+      data_in: tomo
+      data_out: tomo
+      axis: REQUIRED
+      npad: null
+      mode: constant
+      '#additional parameters': AVAILABLE
+- tomopy.misc.morph:
+    downsample:
+      data_in: tomo
+      data_out: tomo
+      level: 1
+      axis: 2
+- tomopy.misc.morph:
+    upsample:
+      data_in: tomo
+      data_out: tomo
+      level: 1
+      axis: 2
+- tomopy.misc.morph:
+    trim_sinogram:
+      data_in: tomo
+      data_out: tomo
+      center: REQUIRED
+      x: REQUIRED
+      y: REQUIRED
+      diameter: REQUIRED
+- tomopy.misc.morph:
+    sino_360_to_180:
+      data_in: tomo
+      data_out: tomo
+      overlap: 0
+      rotation: left

@@ -1,0 +1,57 @@
+- httomo.data.hdf.loaders:
+    standard_tomo:
+      name: tomo
+      data_path: entry1/tomo_entry/data/data
+      image_key_path: entry1/tomo_entry/instrument/detector/image_key
+      dimension: 1
+      preview:
+        - 
+        - 
+        - 
+      pad: 0
+- httomolibgpu.misc.corr:
+    remove_outlier3d:
+      data_in_multi: [tomo, flats, darks]
+      data_out_multi: [tomo, flats, darks]
+      kernel_size: 3
+      dif: 0.1
+- httomolibgpu.prep.normalize:
+    normalize:
+      data_in: tomo
+      data_out: tomo
+      cutoff: 10.0
+      minus_log: true
+      nonnegativity: false 
+- httomolibgpu.recon.rotation:
+    find_center_vo:
+      data_in: tomo
+      data_out: cor
+      ind: mid
+      smin: -50
+      smax: 50
+      srad: 6.0
+      step: 0.25
+      ratio: 0.5
+      drop: 20
+- httomolibgpu.prep.stripe:
+    remove_stripe_based_sorting:
+      data_in: tomo
+      data_out: tomo
+      size: 11
+      dim: 1
+- httomolibgpu.recon.algorithm:
+    FBP:
+      data_in: tomo
+      data_out: tomo
+      center: cor
+      objsize: null
+- httomolib.misc.images:
+    save_to_images:
+      data_in: tomo
+      subfolder_name: images
+      axis: 0
+      file_format: tif
+      bits: 8
+      perc_range_min: 0.0
+      perc_range_max: 100.0
+      jpeg_quality: 95

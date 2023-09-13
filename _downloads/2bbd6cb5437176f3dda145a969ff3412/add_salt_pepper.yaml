@@ -1,0 +1,6 @@
+- tomopy.sim.project:
+    add_salt_pepper:
+      data_in: tomo
+      data_out: tomo
+      prob: 0.01
+      val: null

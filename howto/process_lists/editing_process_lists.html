@@ -1,0 +1,710 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Editing process lists &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/general.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'howto/process_lists/editing_process_lists';</script>
+    <link rel="shortcut icon" href="../../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="HTTomo Features" href="../httomo_features.html" />
+    <link rel="prev" title="Configure process list using templates" href="process_list_configure.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo_light.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/logo_dark.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/about.html">HTTomo concept</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../run_httomo.html">How to run HTTomo</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../process_lists_guide.html">Process Lists Guide</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="process_list_configure.html">Configure process list using templates</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Editing process lists</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../httomo_features.html">HTTomo Features</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../httomo_features/parameter_tuning.html">Parameter Tuning</a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/templates.html">YAML Templates</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/tomopy.sim.project.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.sim.project</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolibgpu.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolib.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolib.misc.images.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.images</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolib.misc.segm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.segm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomolib.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/httomo.data.hdf.loaders.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomo.data.hdf.loaders</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Backends</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../backends/list.html">Supported backends</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials/Examples</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/yaml.html">Process list templates</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../tutorials/jn.html">Jupyter Notebooks</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../ipynb/samples/jupyter_notebooks/DLS_specific/01_sino360_to180covert_inpainting.html">A CPU pipeline to process 360 double field-of-view scan using HTTomo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ipynb/samples/jupyter_notebooks/general/01_basic_cpu_pipeline_tomo_standard.html">The basic CPU pipeline to process standard parallel-beam tomographic data in HTTomo:</a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../developers/yaml_generator.html">YAML generator</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/howto/process_lists/editing_process_lists.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Editing process lists</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-for-writing-process-lists">Workflow for Writing Process Lists</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-parameters-vs-httomo-method-parameters">Method Parameters vs. HTTomo Method Parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#httomo-method-parameter-guide">HTTomo Method Parameter Guide</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saving-intermediate-files-with-save-result">Saving intermediate files with <code class="code docutils literal notranslate"><span class="pre">save_result</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example-save-output-of-a-specific-method">Example: save output of a specific method</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example-using-save-all-and-save-result-together">Example: using <code class="code docutils literal notranslate"><span class="pre">--save_all</span></code> and <code class="code docutils literal notranslate"><span class="pre">save_result</span></code> together</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#omitting-data-out">Omitting <code class="code docutils literal notranslate"><span class="pre">data_out</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#processing-multiple-inputs-with-data-in-multi-and-data-out-multi">Processing multiple inputs with <code class="code docutils literal notranslate"><span class="pre">data_in_multi</span></code> and <code class="code docutils literal notranslate"><span class="pre">data_out_multi</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example-processing-three-datasets-with-the-same-method">Example: processing three datasets with the same method</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example-using-different-names-for-the-output-datasets">Example: using different names for the output datasets</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-a-dataset-as-a-parameter-value">Using a dataset as a parameter value</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="editing-process-lists">
+<h1>Editing process lists<a class="headerlink" href="#editing-process-lists" title="Permalink to this headline">#</a></h1>
+<p>The concepts in the previous page will have hopefully helped you to understand
+how to define your desired pipeline with HTTomo in the most computationally
+efficient manner. This page will provide guidance on editing a process list
+file.</p>
+<section id="workflow-for-writing-process-lists">
+<h2>Workflow for Writing Process Lists<a class="headerlink" href="#workflow-for-writing-process-lists" title="Permalink to this headline">#</a></h2>
+<p>Given time working with HTTomo, a user will likely settle on a workflow for
+defining process list YAML files that suits their individual needs.</p>
+<p>As a starting point, something like the following is suggested:</p>
+<ul class="simple">
+<li><p>copy+paste templates for the desired methods from the
+<a class="reference internal" href="../../reference/templates.html#reference-templates"><span class="std std-ref">YAML Templates</span></a> section</p></li>
+<li><p>manually edit the parameter values within the copied template as needed,
+checking the documentation for the relevant backend if/when necessary for
+further guidance on the method’s parameters</p></li>
+<li><p>intermittently run the <a class="reference internal" href="../../utilities/yaml_checker.html#utilities-yamlchecker"><span class="std std-ref">YAML checker</span></a> during
+editing of the YAML file to detect any errors early on</p></li>
+</ul>
+</section>
+<section id="method-parameters-vs-httomo-method-parameters">
+<h2>Method Parameters vs. HTTomo Method Parameters<a class="headerlink" href="#method-parameters-vs-httomo-method-parameters" title="Permalink to this headline">#</a></h2>
+<p>In addition to parameters for a method that influence the processing that the
+method performs, there are some parameters that can be used in a method’s YAML
+configuration that modify in some way how HTTomo handles the method (for
+example, whether or not to write the output of the method to a file).</p>
+<p>Since these parameters are <em>not</em> parameters for the method itself and are
+instead specific to HTTomo, the next section will go through these extra
+parameters, explaining what they are for and giving examples of how they can be
+used.</p>
+</section>
+<section id="httomo-method-parameter-guide">
+<h2>HTTomo Method Parameter Guide<a class="headerlink" href="#httomo-method-parameter-guide" title="Permalink to this headline">#</a></h2>
+<section id="saving-intermediate-files-with-save-result">
+<span id="save-result-examples"></span><h3>Saving intermediate files with <code class="code docutils literal notranslate"><span class="pre">save_result</span></code><a class="headerlink" href="#saving-intermediate-files-with-save-result" title="Permalink to this headline">#</a></h3>
+<p>As explained in <a class="reference internal" href="../run_httomo.html#httomo-saving"><span class="std std-ref">--save-all</span></a>, by default, HTTomo will <em>not</em> write the
+output of a method to a file unless under certain conditions (please see the
+link for a description of these file-saving conditions).</p>
+<p>HTTomo can be informed to write or not write the output of a method to a file
+with the <code class="code docutils literal notranslate"><span class="pre">save_result</span></code> parameter. Its value is a boolean, so either
+<code class="code docutils literal notranslate"><span class="pre">True</span></code> or <code class="code docutils literal notranslate"><span class="pre">False</span></code> are valid values for it.</p>
+<section id="example-save-output-of-a-specific-method">
+<h4>Example: save output of a specific method<a class="headerlink" href="#example-save-output-of-a-specific-method" title="Permalink to this headline">#</a></h4>
+<p>Suppose we wanted to save the output of the TomoPy <code class="code docutils literal notranslate"><span class="pre">median_filter</span></code>, we
+could add <code class="code docutils literal notranslate"><span class="pre">save_result:</span> <span class="pre">True</span></code> to its parameters:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.misc.corr</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">median_filter</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_in</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">data_out</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">      </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="hll"><span class="w">      </span><span class="nt">save_result</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+</span></pre></div>
+</div>
+</section>
+<section id="example-using-save-all-and-save-result-together">
+<h4>Example: using <code class="code docutils literal notranslate"><span class="pre">--save_all</span></code> and <code class="code docutils literal notranslate"><span class="pre">save_result</span></code> together<a class="headerlink" href="#example-using-save-all-and-save-result-together" title="Permalink to this headline">#</a></h4>
+<p>When the <code class="code docutils literal notranslate"><span class="pre">--save_all</span></code> option/flag is provided, the <code class="code docutils literal notranslate"><span class="pre">save_result</span></code>
+parameter can be used to override individual method’s to <em>not</em> save their
+output.</p>
+<p>In contrast to the previous example, suppose we had a process list where we
+would like to save the output of all methods <em>apart</em> from the
+<code class="code docutils literal notranslate"><span class="pre">median_filter</span></code>.  This could be achieved by using <code class="code docutils literal notranslate"><span class="pre">--save_all</span></code> when
+running HTTomo, along with providing <code class="code docutils literal notranslate"><span class="pre">save_result:</span> <span class="pre">False</span></code> for
+<code class="code docutils literal notranslate"><span class="pre">median_filter</span></code> in the YAML:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.misc.corr</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">median_filter</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_in</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">data_out</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">      </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="hll"><span class="w">      </span><span class="nt">save_result</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+</span></pre></div>
+</div>
+</section>
+</section>
+<section id="omitting-data-out">
+<h3>Omitting <code class="code docutils literal notranslate"><span class="pre">data_out</span></code><a class="headerlink" href="#omitting-data-out" title="Permalink to this headline">#</a></h3>
+<p>It could be the case that one would like to have the same name for the output
+dataset as the input dataset (keeping in mind that this will <em>overwrite</em> the
+input of a method with the output of the method once the method has finished its
+processing).</p>
+<p>In such cases, it can be tedious or an eyesore in the YAML to always be
+specifying both <code class="code docutils literal notranslate"><span class="pre">data_in</span></code> and <code class="code docutils literal notranslate"><span class="pre">data_out</span></code> to have the same value in
+each method’s configuration.</p>
+<p>To help with this, the <code class="code docutils literal notranslate"><span class="pre">data_out</span></code> parameter can be omitted and HTTomo will
+assume that the output dataset name is the same as the input dataset name.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>As previously stated, please be aware that using this will be <em>overwriting</em>
+the input dataset of a method with the output of the method.</p>
+<p>In particular, please be careful and check if any methods further down the
+pipeline would need to process the original dataset, as this will influence if
+using this functionality will unintentionally interfere with the desired
+pipeline.</p>
+</div>
+</section>
+<section id="processing-multiple-inputs-with-data-in-multi-and-data-out-multi">
+<h3>Processing multiple inputs with <code class="code docutils literal notranslate"><span class="pre">data_in_multi</span></code> and <code class="code docutils literal notranslate"><span class="pre">data_out_multi</span></code><a class="headerlink" href="#processing-multiple-inputs-with-data-in-multi-and-data-out-multi" title="Permalink to this headline">#</a></h3>
+<p>Sometimes it can be useful to process multiple datasets with the same method +
+parameters. In principle, this could be done by duplicating the method
+configuration for each dataset needing to be processed, and then changing the
+<code class="code docutils literal notranslate"><span class="pre">data_in</span></code> parameter for each duplicated block.</p>
+<p>However, HTTomo provides a more concise way of achieving the same result with
+only <em>one</em> copy of the method configuration. This is done by using the
+<code class="code docutils literal notranslate"><span class="pre">data_in_multi</span></code> and <code class="code docutils literal notranslate"><span class="pre">data_out_multi</span></code> parameters instead of
+<code class="code docutils literal notranslate"><span class="pre">data_in</span></code> and <code class="code docutils literal notranslate"><span class="pre">data_out</span></code> respectively.</p>
+<p>Instead of providing a single input/output dataset name, a <em>list</em> of dataset
+names can be given to <code class="code docutils literal notranslate"><span class="pre">data_in_multi</span></code> and <code class="code docutils literal notranslate"><span class="pre">data_out_multi</span></code>.</p>
+<p>The list of dataset names given to <code class="code docutils literal notranslate"><span class="pre">data_in_multi</span></code> should specify the
+different datasets that you would like to be processed by the method. Similarly,
+the list of dataset names given to <code class="code docutils literal notranslate"><span class="pre">data_out_multi</span></code> should specify what
+you would like the corresponding ouptut datat names to be.</p>
+<section id="example-processing-three-datasets-with-the-same-method">
+<h4>Example: processing three datasets with the same method<a class="headerlink" href="#example-processing-three-datasets-with-the-same-method" title="Permalink to this headline">#</a></h4>
+<p>A snippet take from an example pipeline in the HTTomo repo shows
+<code class="code docutils literal notranslate"><span class="pre">median_filter</span></code> from TomoPy being applied to three datasets: projections,
+darks, and flats:</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-number">Listing 1 </span><span class="caption-text">samples/pipeline_template_examples/multi_inputs/01_multi_inputs.yaml</span><a class="headerlink" href="#id1" title="Permalink to this code">#</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.misc.corr</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">median_filter3d</span><span class="p">:</span>
+<span class="hll"><span class="w">      </span><span class="nt">data_in_multi</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">tomo</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">flats</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">darks</span><span class="p p-Indicator">]</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">data_out_multi</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">tomo</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">flats</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">darks</span><span class="p p-Indicator">]</span>
+</span><span class="w">      </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</pre></div>
+</div>
+</div>
+<p>As a variation on this same example: in a similar fashion to how
+<code class="code docutils literal notranslate"><span class="pre">data_out</span></code> can be omitted and the output dataset is assumed to be the same
+as <code class="code docutils literal notranslate"><span class="pre">data_in</span></code>, it is the case that <code class="code docutils literal notranslate"><span class="pre">data_out_multi</span></code> can be omitted
+and the output datasets are assumed to be the same as <code class="code docutils literal notranslate"><span class="pre">data_in_multi</span></code>. So,
+the below achieves the same as above:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.misc.corr</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">median_filter</span><span class="p">:</span>
+<span class="hll"><span class="w">      </span><span class="nt">data_in_multi</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">tomo</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">flats</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">darks</span><span class="p p-Indicator">]</span>
+</span><span class="w">      </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">      </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+</pre></div>
+</div>
+</section>
+<section id="example-using-different-names-for-the-output-datasets">
+<h4>Example: using different names for the output datasets<a class="headerlink" href="#example-using-different-names-for-the-output-datasets" title="Permalink to this headline">#</a></h4>
+<p>In principle, the output dataset names need not be the same as the input dataset
+names. Different dataset names are valid, so the following is fine:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.misc.corr</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">median_filter</span><span class="p">:</span>
+<span class="hll"><span class="w">      </span><span class="nt">data_in_multi</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">tomo</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">flats</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">darks</span><span class="p p-Indicator">]</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">data_out_multi</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">tomo_diff</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">flats_diff</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">darks_diff</span><span class="p p-Indicator">]</span>
+</span><span class="w">      </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">      </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="using-a-dataset-as-a-parameter-value">
+<h3>Using a dataset as a parameter value<a class="headerlink" href="#using-a-dataset-as-a-parameter-value" title="Permalink to this headline">#</a></h3>
+<p>There are cases where the output dataset of a method is needed as the value of
+a parameter for a method further down the pipeline. For example, the output of a
+method that calculates the center of rotation needing would be used as the value
+of a CoR parameter for a reconstruction method.</p>
+<p>HTTomo supports providing a dataset name as the value of a parameter to handle
+situations like this.</p>
+<section id="example">
+<h4>Example<a class="headerlink" href="#example" title="Permalink to this headline">#</a></h4>
+<p>The following example comes from taking snippets from an example in the HTTomo
+repo, where the <code class="code docutils literal notranslate"><span class="pre">find_center_vo</span></code> method is generating an output dataset
+called <code class="code docutils literal notranslate"><span class="pre">cor</span></code>, which is then being used as the value of the <code class="code docutils literal notranslate"><span class="pre">center</span></code>
+parameter for the <code class="code docutils literal notranslate"><span class="pre">recon</span></code> method:</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-number">Listing 2 </span><span class="caption-text">samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.recon.rotation</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">find_center_vo</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_in</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="hll"><span class="w">      </span><span class="nt">data_out</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cor</span>
+</span><span class="w">      </span><span class="nt">ind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mid</span>
+<span class="w">      </span><span class="nt">smin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-50</span>
+<span class="w">      </span><span class="nt">smax</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">      </span><span class="nt">srad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+<span class="w">      </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.25</span>
+<span class="w">      </span><span class="nt">ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">      </span><span class="nt">drop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tomopy.recon.algorithm</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">recon</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_in</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">      </span><span class="nt">data_out</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="hll"><span class="w">      </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cor</span>
+</span><span class="w">      </span><span class="nt">sinogram_order</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gridrec</span>
+<span class="w">      </span><span class="nt">init_recon</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">      </span><span class="c1">#additional parameters&#39;: AVAILABLE</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="process_list_configure.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Configure process list using templates</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../httomo_features.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">HTTomo Features</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-for-writing-process-lists">Workflow for Writing Process Lists</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-parameters-vs-httomo-method-parameters">Method Parameters vs. HTTomo Method Parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#httomo-method-parameter-guide">HTTomo Method Parameter Guide</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saving-intermediate-files-with-save-result">Saving intermediate files with <code class="code docutils literal notranslate"><span class="pre">save_result</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example-save-output-of-a-specific-method">Example: save output of a specific method</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example-using-save-all-and-save-result-together">Example: using <code class="code docutils literal notranslate"><span class="pre">--save_all</span></code> and <code class="code docutils literal notranslate"><span class="pre">save_result</span></code> together</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#omitting-data-out">Omitting <code class="code docutils literal notranslate"><span class="pre">data_out</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#processing-multiple-inputs-with-data-in-multi-and-data-out-multi">Processing multiple inputs with <code class="code docutils literal notranslate"><span class="pre">data_in_multi</span></code> and <code class="code docutils literal notranslate"><span class="pre">data_out_multi</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example-processing-three-datasets-with-the-same-method">Example: processing three datasets with the same method</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example-using-different-names-for-the-output-datasets">Example: using different names for the output datasets</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-a-dataset-as-a-parameter-value">Using a dataset as a parameter value</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2023, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Sep 13, 2023.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

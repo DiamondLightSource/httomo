@@ -1,0 +1,61 @@
+- httomo.data.hdf.loaders:
+    standard_tomo:
+      name: tomo
+      data_path: /entry/imaging/data
+      image_key_path: /entry/instrument/imaging/image_key
+      rotation_angles:
+        data_path: /entry/imaging_sum/gts_theta_value
+      dimension: 1
+      preview:
+        - 
+        - start: 0
+          stop: 20
+        - 
+      pad: 0
+- tomopy.prep.normalize:
+    normalize:
+      data_in: tomo
+      data_out: tomo
+      cutoff: null
+- tomopy.prep.normalize:
+    minus_log:
+      data_in: tomo
+      data_out: tomo
+- tomopy.recon.rotation:
+    find_center_vo:
+      data_in: tomo
+      data_out: cor
+      ind: mid
+      smin: -50
+      smax: 50
+      srad: 6
+      step: 0.25
+      ratio: 0.5
+      drop: 20      
+- tomopy.prep.stripe:
+    remove_all_stripe:
+      data_in: tomo
+      data_out: tomo
+      snr: 3
+      la_size: 61
+      sm_size: 21
+      dim: 1
+- tomopy.recon.algorithm:
+    recon:
+      data_in: tomo
+      data_out: tomo
+      center: cor
+      sinogram_order: false
+      algorithm: gridrec
+      init_recon: null
+      #additional parameters': AVAILABLE
+- httomolib.misc.images:
+    save_to_images:
+      data_in: tomo
+      subfolder_name: images
+      axis: 0
+      file_format: tif
+      bits: 8
+      perc_range_min: 0.0
+      perc_range_max: 100.0
+      jpeg_quality: 95

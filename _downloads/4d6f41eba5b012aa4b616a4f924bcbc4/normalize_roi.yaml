@@ -1,0 +1,9 @@
+- tomopy.prep.normalize:
+    normalize_roi:
+      data_in: tomo
+      data_out: tomo
+      roi:
+      - 0
+      - 0
+      - 10
+      - 10

@@ -1,0 +1,5 @@
+- tomopy.misc.corr:
+    sobel_filter:
+      data_in: tomo
+      data_out: tomo
+      axis: 0

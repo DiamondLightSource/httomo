@@ -1,0 +1,76 @@
+- tomopy.prep.alignment:
+    add_noise:
+      data_in: tomo
+      data_out: tomo
+      ratio: 0.05
+- tomopy.prep.alignment:
+    blur_edges:
+      data_in: tomo
+      data_out: tomo
+      low: 0
+      high: 0.8
+- tomopy.prep.alignment:
+    distortion_correction_sino:
+      data_in: tomo
+      data_out: tomo
+      ind: REQUIRED
+      xcenter: REQUIRED
+      ycenter: REQUIRED
+      list_fact: REQUIRED
+- tomopy.prep.alignment:
+    add_jitter:
+      data_in: tomo
+      data_out: tomo
+      low: 0
+      high: 1
+- tomopy.prep.alignment:
+    align_seq:
+      data_in: tomo
+      data_out: tomo
+      fdir: .
+      iters: 10
+      pad: !!python/tuple
+      - 0
+      - 0
+      blur: true
+      center: null
+      algorithm: sirt
+      upsample_factor: 10
+      rin: 0.5
+      rout: 0.8
+      save: false
+      debug: true
+- tomopy.prep.alignment:
+    align_joint:
+      data_in: tomo
+      data_out: tomo
+      fdir: .
+      iters: 10
+      pad: !!python/tuple
+      - 0
+      - 0
+      blur: true
+      center: null
+      algorithm: sirt
+      upsample_factor: 10
+      rin: 0.5
+      rout: 0.8
+      save: false
+      debug: true
+- tomopy.prep.alignment:
+    distortion_correction_proj:
+      data_in: tomo
+      data_out: tomo
+      xcenter: REQUIRED
+      ycenter: REQUIRED
+      list_fact: REQUIRED
+- tomopy.prep.alignment:
+    shift_images:
+      data_in: tomo
+      data_out: tomo
+      sx: REQUIRED
+      sy: REQUIRED
+- tomopy.prep.alignment:
+    scale:
+      data_in: tomo
+      data_out: tomo

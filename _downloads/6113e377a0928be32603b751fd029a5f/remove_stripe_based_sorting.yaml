@@ -1,0 +1,6 @@
+- httomolibgpu.prep.stripe:
+    remove_stripe_based_sorting:
+      data_in: tomo
+      data_out: tomo
+      size: 11
+      dim: 1

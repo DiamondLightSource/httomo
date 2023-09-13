@@ -1,0 +1,6 @@
+- tomopy.prep.alignment:
+    shift_images:
+      data_in: tomo
+      data_out: tomo
+      sx: REQUIRED
+      sy: REQUIRED

@@ -1,0 +1,8 @@
+- httomolib.misc.corr:
+    inpainting_filter3d:
+      data_in: tomo
+      data_out: tomo
+      mask: REQUIRED
+      iter: 3
+      windowsize_half: 5
+      method_type: random

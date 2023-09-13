@@ -1,0 +1,10 @@
+- tomopy.prep.stripe:
+    stripes_mask3d:
+      data_in: tomo
+      data_out: tomo
+      weights: REQUIRED
+      threshold: 0.6
+      min_stripe_length: 20
+      min_stripe_depth: 10
+      min_stripe_width: 5
+      sensitivity_perc: 85.0

@@ -1,0 +1,5 @@
+- tomopy.sim.project:
+    add_focal_spot_blur:
+      data_in: tomo
+      data_out: tomo
+      spotsize: REQUIRED

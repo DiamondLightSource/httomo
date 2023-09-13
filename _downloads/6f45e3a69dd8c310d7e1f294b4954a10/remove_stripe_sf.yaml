@@ -1,0 +1,5 @@
+- tomopy.prep.stripe:
+    remove_stripe_sf:
+      data_in: tomo
+      data_out: tomo
+      size: 5
