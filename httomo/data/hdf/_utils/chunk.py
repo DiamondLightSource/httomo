@@ -73,17 +73,49 @@ def save_data_parallel(
     comm : MPI.Comm
         MPI communicator object.
     """
-    rank = comm.rank
-    nproc = comm.size
-    length = dataset.shape[slice_dim - 1]
-    i0 = round((length / nproc) * rank)
-    i1 = round((length / nproc) * (rank + 1))
+    i0, i1 = get_data_bounds(data, comm, slice_dim - 1)
     if slice_dim == 1:
         dataset[i0:i1] = data[...]
     elif slice_dim == 2:
         dataset[:, i0:i1] = data[...]
     elif slice_dim == 3:
         dataset[:, :, i0:i1] = data[...]
+
+
+def get_data_bounds(
+    data: ndarray,
+    comm: MPI.Comm,
+    slice_dim: int,
+) -> Tuple[int, int]:
+    """Calculate the bounds of the data that the current MPI process has with
+    respect to the full data size.
+
+    When projections have not been removed, the calcualtion of the bounds is
+    simpler and can be done independent in each process based solely on:
+    - the length of the dimension that the data is being split along
+    - the number of processes
+
+    via the following:
+    ```
+    rank = comm.rank
+    nproc = comm.size
+    length = dataset.shape[slice_dim - 1]
+    i0 = round((length / nproc) * rank)
+    i1 = round((length / nproc) * (rank + 1))
+    ```
+
+    However, to be more general and work for the case when projections are
+    removed, the following approach is instead used.
+    """
+    # The list returned is ordered by the rank of the process
+    recv_data = comm.allgather(data.shape)
+    # Find the start bound for the current MPI process based on the sizes of the
+    # data that other MPI processes have
+    start = 0
+    for i in range(comm.rank):
+        start += recv_data[i][slice_dim]
+    end = start + data.shape[slice_dim]
+    return start, end
 
 
 def get_data_shape(data: ndarray, dim: int, comm: MPI.Comm = MPI.COMM_WORLD) -> Tuple:
