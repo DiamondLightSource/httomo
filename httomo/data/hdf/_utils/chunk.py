@@ -3,16 +3,18 @@ from typing import Tuple
 import h5py as h5
 from mpi4py import MPI
 from numpy import ndarray
+from httomo.data.hdf.loaders import LoaderData
 
 
 def save_dataset(
     out_folder: str,
     file_name: str,
     data: ndarray,
+    loader_info: LoaderData,
     slice_dim: int = 1,
     chunks: Tuple = (150, 150, 10),
     path: str = "/data",
-    reslice: bool = False,
+    reslice: bool = False,    
     comm: MPI.Comm = MPI.COMM_WORLD,
 ) -> None:
     """Save dataset in parallel.
@@ -25,6 +27,8 @@ def save_dataset(
         Name of file to save dataset in.
     data : ndarray
         Data to save to file.
+    loader_info: Dict
+        Dictionary with information about the loaded data.        
     slice_dim : int
         Where data has been parallelized (split into blocks, each of which is
         given to an MPI process), provide the dimension along which the data was
@@ -48,9 +52,11 @@ def save_dataset(
     with h5.File(
         f"{out_folder}/{file_name}", file_mode, driver="mpio", comm=comm
     ) as file:
-        dataset = file.create_dataset(path, shape, dtype, chunks=chunks)
+        dataset = file.create_dataset(path, shape, dtype, chunks=chunks)        
         save_data_parallel(dataset, data, slice_dim)
-
+    #grp = file.create_group("subgroup")
+    #grp.create_dataset(path + "/angles", loader_info.angles)
+    file.close()
 
 def save_data_parallel(
     dataset: h5.Dataset,

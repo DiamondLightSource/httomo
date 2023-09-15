@@ -425,7 +425,7 @@ def run_tasks(
         data_dtype = data_type_upd
         
         # saving intermediate datasets IF it has been asked for
-        postrun_method(run_method_info, dict_datasets_pipeline, section)
+        postrun_method(run_method_info, dict_datasets_pipeline, section, loader_info)
 
     ##************* SECTIONS LOOP IS COMPLETE *************##
     elapsed_time = 0.0

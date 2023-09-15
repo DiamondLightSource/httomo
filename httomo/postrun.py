@@ -10,6 +10,7 @@ from mpi4py import MPI
 
 import httomo.globals
 from httomo.common import MethodFunc, RunMethodInfo, PlatformSection
+from httomo.data.hdf.loaders import LoaderData
 from httomo.data.hdf._utils.chunk import get_data_shape, save_dataset
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.utils import _get_slicing_dim
@@ -21,6 +22,7 @@ def postrun_method(
     run_method_info: RunMethodInfo,
     dict_datasets_pipeline: Dict[str, Optional[np.ndarray]],
     section: PlatformSection,
+    loader_info: LoaderData,
 ):
     if run_method_info.method_name != "save_to_images" and 'center' not in run_method_info.method_name:
     
@@ -41,11 +43,12 @@ def postrun_method(
             intermediate_dataset(
                 dict_datasets_pipeline[run_method_info.data_out],
                 httomo.globals.run_out_dir,
+                loader_info,
                 comm,
                 run_method_info.task_idx_global,
                 run_method_info.package_name,
                 run_method_info.method_name,
                 run_method_info.data_out,
                 slice_dim,
-                recon_algorithm=recon_algorithm,
+                recon_algorithm=recon_algorithm,                
             )
