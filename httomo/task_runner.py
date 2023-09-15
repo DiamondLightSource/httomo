@@ -407,6 +407,14 @@ def run_tasks(
                 recon_arr
             data_full_section = recon_arr
         
+        # saving intermediate datasets IF it has been asked for
+        postrun_method(
+            run_method_info,
+            dict_datasets_pipeline,
+            section,
+            loader_info
+        )
+
         if section.reslice:
             # we reslice only when the pattern of the section changes
             next_section_in = platform_sections[i+1].methods[0].parameters["data_in"]
@@ -423,9 +431,6 @@ def run_tasks(
         # update input data dimensions and data type for the next section        
         data_shape = np.shape(data_full_section)
         data_dtype = data_type_upd
-        
-        # saving intermediate datasets IF it has been asked for
-        postrun_method(run_method_info, dict_datasets_pipeline, section, loader_info)
 
     ##************* SECTIONS LOOP IS COMPLETE *************##
     elapsed_time = 0.0
