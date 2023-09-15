@@ -54,9 +54,10 @@ def save_dataset(
     ) as file:
         dataset = file.create_dataset(path, shape, dtype, chunks=chunks)        
         save_data_parallel(dataset, data, slice_dim)
-    #grp = file.create_group("subgroup")
-    #grp.create_dataset(path + "/angles", loader_info.angles)
-    file.close()
+        file.create_dataset("/angles", data = loader_info.angles)
+        file.create_dataset(file_name, data = [0,0])
+        g1 = file.create_group('data_dims')
+        g1.create_dataset('detector_x_y',data = [loader_info.detector_x, loader_info.detector_y])
 
 def save_data_parallel(
     dataset: h5.Dataset,

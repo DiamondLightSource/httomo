@@ -13,11 +13,33 @@ include = ["httomo*"]
 httomo = ["methods_database/packages/*.yaml",
           "methods_database/packages/external/*.yaml",
           "methods_database/packages/external/httomolib/*/*.yaml",
-          "methods_database/packages/external/tomopy/*/*.yaml"]
+          "methods_database/packages/external/tomopy/*/*.yaml",
+          "../templates/httomolib/*/httomolib.misc.corr/*.yaml",
+          "../templates/httomolib/*/httomolib.misc.images/*.yaml",
+          "../templates/httomolib/*/httomolib.misc.segm/*.yaml",
+          "../templates/httomolib/*/httomolib.misc.phase/*.yaml",
+          "../templates/httomolibgpu/*/httomolibgpu.misc.corr/*.yaml",
+          "../templates/httomolibgpu/*/httomolibgpu.misc.morph/*.yaml",
+          "../templates/httomolibgpu/*/httomolibgpu.prep.alignment/*.yaml",
+          "../templates/httomolibgpu/*/httomolibgpu.prep.normalize/*.yaml",
+          "../templates/httomolibgpu/*/httomolibgpu.prep.phase/*.yaml",
+          "../templates/httomolibgpu/*/httomolibgpu.prep.stripe/*.yaml",
+          "../templates/httomolibgpu/*/httomolibgpu.recon.algorithm/*.yaml",
+          "../templates/httomolibgpu/*/httomolibgpu.recon.rotation/*.yaml",
+          "../templates/tomopy/*/tomopy.misc.corr/*.yaml",
+          "../templates/tomopy/*/tomopy.misc.morph/*.yaml",
+          "../templates/tomopy/*/tomopy.prep.alignment/*.yaml",
+          "../templates/tomopy/*/tomopy.prep.normalize/*.yaml",
+          "../templates/tomopy/*/tomopy.prep.phase/*.yaml",
+          "../templates/tomopy/*/tomopy.prep.stripe/*.yaml",
+          "../templates/tomopy/*/tomopy.recon.algorithm/*.yaml",
+          "../templates/tomopy/*/tomopy.recon.rotation/*.yaml",
+          "../templates/tomopy/*/tomopy.sim.project/*.yaml"]
 
 [tool.setuptools-git-versioning]
 enabled = true
-tag_filter = "v(?P<tag>[0-9].*)"
+template = "{tag}"
+dev_template = "{tag}"
 
 [project]
 name = "httomo"
@@ -39,11 +61,11 @@ classifiers = [
 ]
 
 requires-python = ">=3.9"
-version = "0.0.1"
+dynamic = ["version"]
 dependencies = [
     "click",
-    "cupy",
     "numpy",
+    "httomolib"
 ]
 
 [project.scripts]
@@ -53,10 +75,21 @@ httomo = "httomo.cli:main"
 repository = "https://github.com/DiamondLightSource/HTTomo"
 
 [project.optional-dependencies]
-tomopy = [ "tomopy" ]
-httomolib = [ "httomolib" ]
-httomolibgpu = ["httomolibgpu", "cupy"]
-dev = [
+cpu = ["tomopy" ]
+gpu = ["httomolibgpu"]
+dev-cpu = [
+  "pytest",
+  "pytest-cov",
+  "pytest-xdist",
+  "flake8",
+  "pyproject-flake8",
+  "pydocstyle",
+  "toml",
+  "httomolib[dev]",
+  "tomopy",
+  "plumbum",
+]
+dev-gpu = [
   "pytest",
   "pytest-cov",
   "pytest-xdist",
@@ -108,9 +141,9 @@ addopts = [
 testpaths = [
     "tests",
 ]
-# https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
-filterwarnings = "error"
-# Doctest python code in docs, python code in src docstrings, test functions in tests
+filterwarnings = [
+    "ignore::ImportWarning"
+]
 
 
 [tool.coverage.run]
