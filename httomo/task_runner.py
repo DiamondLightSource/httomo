@@ -167,6 +167,12 @@ def run_tasks(
     dict_datasets_pipeline[method_funcs[0].parameters["name"]] = np.float32(loader_info.data)
     dict_datasets_pipeline["flats"] = np.float32(loader_info.flats)
     dict_datasets_pipeline["darks"] = np.float32(loader_info.darks)
+    # Clean up `loader_info.data`, `loader_info.darks`, and `loader_info.flats`,
+    # as they have been converted to float32 and the original uint16 versions
+    # are no longer needed
+    del loader_info.data
+    del loader_info.darks
+    del loader_info.flats
 
     # Extra params relevant to httomo that a wrapper function might need
     possible_extra_params = [
@@ -178,7 +184,7 @@ def run_tasks(
         (["return_numpy"], False),
     ]
     # data shape and dtype are useful when calculating max slices
-    data_shape = loader_info.data.shape
+    data_shape = dict_datasets_pipeline[method_funcs[0].parameters["name"]].shape
     # data_dtype = loader_info.data.dtype
     data_dtype = np.dtype(np.float32) # make the data type constant for the run
     
