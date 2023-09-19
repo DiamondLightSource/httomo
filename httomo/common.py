@@ -23,10 +23,9 @@ class MethodFunc:
     wrapper_func: Optional[Callable]
         The wrapper function to handle the execution. It may be None,
         for example for loaders.
-    calc_max_slices: Optional[Callable]
-        A callable with the signature
-        (slice_dim: int, other_dims: int, dtype: np.dtype, available_memory: int) -> int
-        which determines the maximum number of slices it can fit in the given memory.
+    calc_max_slices: Optional[Dict[str, Any]]
+        None for the CPU method or Dictionary with parameters for GPU memory estimation.
+        This determines the maximum number of slices it can fit in the given memory.
         If it is not present (None), the method is assumed to fit any amount of slices.
     parameters : Dict[str, Any]
         The method parameters that are specified in the pipeline yaml file.
@@ -35,6 +34,8 @@ class MethodFunc:
         Whether CPU execution is supported.
     gpu : bool
         Whether GPU execution is supported.
+    cupyrun : bool
+        Whether CuPy API is used.
     return_numpy : bool
         Returns numpy array if set to True.
     idx_global: int
@@ -46,11 +47,12 @@ class MethodFunc:
     module_name: str
     method_func: Callable
     wrapper_func: Optional[Callable] = None
-    calc_max_slices: Optional[Callable] = None
+    calc_max_slices: Optional[Dict[str, Any]] = None
     parameters: Dict[str, Any] = field(default_factory=dict)
     pattern: Pattern = Pattern.projection
     cpu: bool = True
     gpu: bool = False
+    cupyrun: bool = False
     is_loader: bool = False
     return_numpy: bool = False
     idx_global: int = 0

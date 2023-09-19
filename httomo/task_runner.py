@@ -36,7 +36,7 @@ from httomo.utils import (
     log_once,
     remove_ansi_escape_sequences,
 )
-from httomo.wrappers_class import HttomolibgpuWrapper, BackendWrapper, _gpumem_cleanup
+from httomo.wrappers_class import BackendWrapper, _gpumem_cleanup
 from httomo.yaml_utils import open_yaml_config
 
 
@@ -106,7 +106,7 @@ def run_tasks(
 
     # Associate memory attributes to method function objects
     for i, method_func in enumerate(method_funcs):
-         method_funcs[i] = _assign_attribute_to_method(method_func, "memory")
+         method_funcs[i] = _assign_attribute_to_method(method_func, "memory_gpu")
 
     # Initialising platform sections (skipping loader)
     platform_sections = _determine_platform_sections(method_funcs[1:], save_all)    
@@ -184,6 +184,7 @@ def run_tasks(
         (["comm"], comm),
         (["out_dir"], httomo.globals.run_out_dir),
         (["return_numpy"], False),
+        (["cupyrun"], False),
     ]
     # data shape and dtype are useful when calculating max slices
     data_shape = loader_info.data.shape
@@ -562,21 +563,15 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
             log_exception(err_str)
             raise ValueError(err_str)
 
-        """
-        module_to_wrapper = {
-            "tomopy": BackendWrapper,
-            "httomolib": BackendWrapper,
-            "httomolibgpu": HttomolibgpuWrapper,
-        }
-        """
         wrapper_init_module = BackendWrapper(
-            split_module_name[0], split_module_name[1], split_module_name[2], method_name, comm
+            split_module_name[0],
+            split_module_name[1],
+            split_module_name[2],
+            method_name,
+            comm
         )
         wrapper_func = getattr(wrapper_init_module.module, method_name)
-        wrapper_method = wrapper_init_module.wrapper_method
-        #is_tomopy = split_module_name[0] == "tomopy"
-        #is_httomolib = split_module_name[0] == "httomolib"
-        #is_httomolibgpu = split_module_name[0] == "httomolibgpu"        
+        wrapper_method = wrapper_init_module.wrapper_method    
         
         method_funcs.append(
             MethodFunc(
@@ -586,6 +581,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 parameters=method_conf,
                 cpu=True,
                 gpu=False,
+                cupyrun=False,
                 calc_max_slices=None,
                 pattern=Pattern.all,
                 is_loader=False,
@@ -593,22 +589,6 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 idx_global=i+2,
                 global_statistics=False,
             )
-            # MethodFunc(
-            #     module_name=module_name,
-            #     method_func=wrapper_func,
-            #     wrapper_func=wrapper_method,
-            #     parameters=method_conf,
-            #     cpu=True if not is_httomolibgpu else wrapper_init_module.meta.cpu,
-            #     gpu=False if not is_httomolibgpu else wrapper_init_module.meta.gpu,
-            #     calc_max_slices=None
-            #     if not is_httomolibgpu
-            #     else wrapper_init_module.calc_max_slices,
-            #     pattern=Pattern.all,
-            #     is_loader=False,
-            #     return_numpy=False,
-            #     idx_global=i+2,
-            #     global_statistics=False,
-            # )
         )
     return method_funcs
 
@@ -642,7 +622,7 @@ def _assign_attribute_to_method(
     MethodFunc
         The updated function object
     """
-    if attribute in ["pattern", "implementation"]:        
+    if attribute in ["pattern", "implementation", "memory_gpu"]:
         attribute_value = get_method_info(
             method_function.module_name, method_function.method_func.__name__, attribute)
         if attribute == "pattern":
@@ -663,18 +643,23 @@ def _assign_attribute_to_method(
                 raise ValueError(err_str)
         if attribute == "implementation":
             if attribute_value in ["cpu", "gpu", "gpu_cupy"]:
-                # as "cpu" is switched by default we need to consider GPU cases here only
-                # TODO: a new class attribute for "gpu_cupy"?
+                # as "cpu" is switched by default we need to consider GPU cases here only                
                 if attribute_value in ["gpu", "gpu_cupy"]:
                     method_function = dataclasses.replace(method_function, cpu=False)
                     method_function = dataclasses.replace(method_function, gpu=True)
+                    if attribute_value == "gpu_cupy":
+                        method_function = dataclasses.replace(method_function, cupyrun=True)
             else:
                 err_str = (
                     f"The implementation arch {attribute_value} that is listed for the method "
                     f"{method_function.module_name} is invalid."
                 )
                 log_exception(err_str)
-                raise ValueError(err_str)            
+                raise ValueError(err_str)
+        if attribute == "memory_gpu":
+            if attribute_value != 'None':
+                # memory gpu is active and needs to be calculated, saving params
+                method_function = dataclasses.replace(method_function, calc_max_slices=attribute_value)
     else:
         err_str = (
             f"The attribute {attribute} that is listed for the method "
@@ -830,22 +815,25 @@ def _update_max_slices(
         max_slices_methods = [max_slices] * len(section.methods)
         idx = 0
         for m in section.methods:
-            if m.calc_max_slices is not None:
-                if m.parameters['method_name'] == "normalize":
-                    # the memory estimators for normalization do not take into account the memory 
-                    # required for darks and flats to be stored. We need to explicitly calculate it here.
-                    flats_bytes = 0
-                    darks_bytes = 0
-                    if dict_datasets_pipeline['flats'] is not None:
-                        flats_bytes = np.prod(np.shape(dict_datasets_pipeline['flats'])) * np.float32().nbytes
-                    if dict_datasets_pipeline['darks'] is not None:
-                        darks_bytes = np.prod(np.shape(dict_datasets_pipeline['darks'])) * np.float32().nbytes
-                    available_memory -= darks_bytes + flats_bytes
-                (slices_estimated, data_type, output_dims) = m.calc_max_slices(
-                    slicing_dim_section, non_slice_dims_shape, data_type, available_memory
-                )
-                max_slices_methods[idx] = min(max_slices, slices_estimated)
-                idx += 1
+            if m.calc_max_slices != 'None':
+                # the gpu memory needs to be estimated for the given method
+                memory_bytes_method = 1
+                for i, dst in enumerate(m.calc_max_slices[0]['datasets']):
+                    # loop over the dataset names given in the library file and extracting 
+                    # the corresponding dimensions from the available datasets                    
+                    if dst in ["flats", "darks"]:
+                        # for normalisation module dealing with flats and darks separately
+                        df_bytes = np.prod(np.shape(dict_datasets_pipeline[dst])) * data_type.itemsize
+                        available_memory -= m.calc_max_slices[1]['multipliers'][i] * df_bytes
+                    else:
+                        # rest of the input data
+                        if m.calc_max_slices[2]['methods'][i] == 'None':
+                            memory_bytes_method += m.calc_max_slices[1]['multipliers'][i] * np.prod(non_slice_dims_shape) * data_type.itemsize
+                slices_estimated = available_memory // memory_bytes_method
+            else:
+                slices_estimated = max_slices            
+            max_slices_methods[idx] = min(max_slices, slices_estimated)
+            idx += 1
             non_slice_dims_shape = (
                 output_dims  # overwrite input dims with estimated output ones
             )

@@ -3,11 +3,14 @@ misc:
     inpainting_filter3d:
       pattern: all
       implementation: cpu
+      memory_gpu: None
   images:
     save_to_images:
       pattern: all
       implementation: cpu
+      memory_gpu: None
   segm:
     binary_thresholding:
       pattern: all
       implementation: cpu
+      memory_gpu: None

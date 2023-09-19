@@ -4,3 +4,4 @@ data:
       standard_tomo:
         pattern: projection
         implementation: cpu
+        memory_gpu: None

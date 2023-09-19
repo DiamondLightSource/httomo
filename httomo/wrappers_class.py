@@ -23,8 +23,7 @@ class BaseWrapper:
     def __init__(
         self, backend_name: str, module_name: str, function_name: str, method_name: str, comm: Comm
     ):
-        self.comm = comm
-        self.cupyrun = False
+        self.comm = comm        
         self.module: Any = None
         self.dict_params: Dict[str, Any] = {}
         if gpu_enabled:
@@ -64,6 +63,7 @@ class BaseWrapper:
         dict_params_method: Dict,
         data: xp.ndarray,
         return_numpy: bool,
+        cupyrun: bool,
     ) -> xp.ndarray:
         """The generic wrapper to execute functions for external packages.
 
@@ -72,10 +72,12 @@ class BaseWrapper:
             dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
             return_numpy (bool): returns numpy array if set to True.
+            cupyrun (bool): True if the module uses CuPy API.
 
         Returns:
             xp.ndarray: A numpy or cupy array containing processed data.
         """
+        self.cupyrun = cupyrun
         # set the correct GPU ID if it is required
         if "gpu_id" in dict_params_method:
             dict_params_method["gpu_id"] = self.gpu_id
@@ -85,10 +87,10 @@ class BaseWrapper:
 
         data = getattr(self.module, method_name)(data, **dict_params_method)
         
-        if self.cupyrun and return_numpy:
+        if cupyrun and return_numpy:
             # if data in CuPy array but we need numpy
             return data.get() # get numpy
-        elif self.cupyrun and not return_numpy:
+        elif cupyrun and not return_numpy:
             # if data in CuPy array and we need it
             return data # return CuPy array
         else:
@@ -102,6 +104,7 @@ class BaseWrapper:
         flats: xp.ndarray,
         darks: xp.ndarray,
         return_numpy: bool,
+        cupyrun: bool,
     ) -> xp.ndarray:
         """Normalisation-specific wrapper when flats and darks are required.
 
@@ -112,10 +115,12 @@ class BaseWrapper:
             flats (xp.ndarray): a numpy or cupy flats array.
             darks (xp.ndarray): a numpy or darks flats array.
             return_numpy (bool): returns numpy array if set to True.
+            cupyrun (bool): True if the module uses CuPy API.
 
         Returns:
             xp.ndarray: a numpy or cupy array of the normalised data.
         """
+        self.cupyrun = cupyrun
         # check where data needs to be transfered host <-> device
         data, flats, darks = self._transfer_data(data, flats, darks)
 
@@ -123,10 +128,10 @@ class BaseWrapper:
             data, flats, darks, **dict_params_method
         )
         
-        if self.cupyrun and return_numpy:
+        if cupyrun and return_numpy:
             # if data in CuPy array but we need numpy
             return data.get() # get numpy
-        elif self.cupyrun and not return_numpy:
+        elif cupyrun and not return_numpy:
             # if data in CuPy array and we need it
             return data # return CuPy array
         else:
@@ -139,8 +144,9 @@ class BaseWrapper:
         data: xp.ndarray,
         angles_radians: np.ndarray,
         return_numpy: bool,
+        cupyrun: bool,
     ) -> xp.ndarray:
-        """The reconstruction wrapper.
+        """The image reconstruction wrapper.
 
         Args:
             method_name (str): The name of the method to use.
@@ -148,10 +154,12 @@ class BaseWrapper:
             data (xp.ndarray): a numpy or cupy data array.
             angles_radians (np.ndarray): a numpy array of projection angles.
             return_numpy (bool): returns numpy array if set to True.
+            cupyrun (bool): True if the module uses CuPy API.
 
         Returns:
             xp.ndarray: a numpy or cupy array of the reconstructed data.
         """
+        self.cupyrun = cupyrun
         # set the correct GPU ID if it is required
         if "gpu_id" in dict_params_method:
             dict_params_method["gpu_id"] = self.gpu_id
@@ -168,10 +176,10 @@ class BaseWrapper:
         data = getattr(self.module, method_name)(
             data, angles_radians, **dict_params_method
         )        
-        if self.cupyrun and return_numpy:
+        if cupyrun and return_numpy:
             # if data in CuPy array but we need numpy
             return data.get() # get numpy
-        elif self.cupyrun and not return_numpy:
+        elif cupyrun and not return_numpy:
             # if data in CuPy array and we need it
             return data # return CuPy array
         else:
@@ -183,6 +191,7 @@ class BaseWrapper:
         dict_params_method: Dict,
         data: xp.ndarray,
         return_numpy: bool,
+        cupyrun: bool,
     ) -> tuple | Any:
         """The center of rotation wrapper.
 
@@ -191,10 +200,12 @@ class BaseWrapper:
             dict_params_method (Dict): A dict containing parameters of the executed method.
             data (xp.ndarray): a numpy or cupy data array.
             return_numpy (bool): returns numpy array if set to True.
+            cupyrun (bool): True if the module uses CuPy API.
 
         Returns:
             tuple: The center of rotation and other parameters if it is 360 sinogram.
         """
+        self.cupyrun = cupyrun
         # check where data needs to be transfered host <-> device
         data = self._transfer_data(data)
         method_func = getattr(self.module, method_name)
@@ -235,6 +246,7 @@ class BaseWrapper:
         comm: Comm,
         data: xp.ndarray,
         return_numpy: bool,
+        cupyrun: bool,
     ) -> None:
         """Wrapper for save images function from httomolib.
 
@@ -245,10 +257,12 @@ class BaseWrapper:
             comm (Comm): The MPI communicator.
             data (xp.ndarray): a numpy or cupy data array.
             return_numpy (bool): returns numpy array if set to True.
+            cupyrun (bool): True if the module uses CuPy API.
 
         Returns:
             None: returns None.
         """
+        self.cupyrun = cupyrun
         # check where data needs to be transfered host <-> device
         data = self._transfer_data(data)
                 
@@ -261,64 +275,6 @@ class BaseWrapper:
                 data, out_dir, comm_rank=comm.rank, **dict_params_method
             )
         return None
-
-class HttomolibgpuWrapper(BaseWrapper):
-    """A class that wraps httomolibgpu functions for httomo"""
-
-    def __init__(
-        self, backend_name: str, module_name: str, function_name: str, method_name: str, comm: Comm
-    ):
-        super().__init__(backend_name, module_name, function_name, method_name, comm)
-
-        # if not changed bellow the generic wrapper will be executed
-        self.wrapper_method: Callable = super()._execute_generic
-
-        if module_name in ["misc", "prep", "recon"]:
-            from importlib import import_module           
-            
-            self.module = getattr(
-                import_module(backend_name + "." + module_name), function_name
-            )
-            if function_name == "normalize":
-                func = getattr(self.module, method_name)
-                sig_params = signature(func).parameters
-                if "darks" in sig_params and "flats" in sig_params:
-                    self.wrapper_method = super()._execute_normalize
-            if function_name == "algorithm":
-                self.wrapper_method = super()._execute_reconstruction
-            if function_name == "rotation":
-                self.wrapper_method = super()._execute_rotation
-
-        # httomolibgpu exports metadata from the method decorator, which we can use to
-        # check if we support CuPy
-        func = getattr(self.module, method_name)
-        self.meta = func.meta
-        self.cupyrun = self.meta.gpu
-        self.dict_params: Dict[str, Any] = {}
-
-    def calc_max_slices(
-        self,
-        slice_dim: int,
-        non_slice_dims_shape: Tuple[int, int],
-        dtype: np.dtype,
-        available_memory: int,
-    ) -> Tuple[int, np.dtype, Tuple[int, int]]:
-        # if the function does not support GPU, we return a very large value (as we don't
-        # care about limiting slices for CPU memory for now)
-        if not self.cupyrun:
-            return 1000000000, dtype, non_slice_dims_shape
-        # first we need to find the default argument value from the method meta info,
-        # before overriding those that are given (from YAML), for the kwargs arguments
-        # to calc_max_slices
-        sig: inspect.Signature = self.meta.signature
-        default_args = {}
-        for name, par in sig.parameters.items():
-            if par.default != Parameter.empty:
-                default_args[name] = par.default
-        kwargs = {**default_args, **self.dict_params}
-        return self.meta.calc_max_slices(
-            slice_dim, non_slice_dims_shape, dtype, available_memory, **kwargs
-        )
 
 class BackendWrapper(BaseWrapper):
     """A class that wraps backend functions for httomo"""
@@ -349,4 +305,3 @@ class BackendWrapper(BaseWrapper):
                 self.wrapper_method = super()._execute_rotation
             if function_name == "images":
                 self.wrapper_method = super()._execute_images
-            

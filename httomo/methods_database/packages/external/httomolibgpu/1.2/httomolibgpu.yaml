@@ -2,9 +2,10 @@ prep:
   normalize:
     normalize:
       pattern: projection
-      memory:
-        - datasets: [tomo, flats, darks]
-        - multipliers: [2, 1.1, 1.1]
-        - methods: [None, None, None]
       implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo, flats, darks]
+        - multipliers: [2, 1.05, 1.05]
+        - methods: [None, None, None]        
+      
 
