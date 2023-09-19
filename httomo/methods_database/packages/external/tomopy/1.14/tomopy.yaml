@@ -3,141 +3,205 @@ sim:
   project:
     add_drift:
       pattern: all
+      implementation: cpu
     add_focal_spot_blur:
       pattern: all
+      implementation: cpu
     add_gaussian:
       pattern: all
+      implementation: cpu
     add_poisson:
       pattern: all
+      implementation: cpu
     add_rings:
       pattern: all
+      implementation: cpu
     add_salt_pepper:
       pattern: all
+      implementation: cpu
     add_zingers:
       pattern: all
+      implementation: cpu
     project:
       pattern: all
+      implementation: cpu
     project2:
       pattern: all
+      implementation: cpu
     project3:
       pattern: all
+      implementation: cpu
 misc:
   corr:
     adjust_range:
       pattern: all
+      implementation: cpu
     circ_mask:
       pattern: all
+      implementation: cpu
     gaussian_filter:
       pattern: all
+      implementation: cpu
     median_filter:
       pattern: all
+      implementation: cpu
     median_filter3d:
       pattern: all
+      implementation: cpu
     median_filter_nonfinite:
       pattern: all
+      implementation: cpu
     remove_nan:
       pattern: all
+      implementation: cpu
     remove_neg:
       pattern: all
+      implementation: cpu
     remove_outlier:
       pattern: all
+      implementation: cpu
     remove_outlier1d:
       pattern: all
+      implementation: cpu
     remove_outlier3d:
       pattern: all
+      implementation: cpu
     remove_ring:
       pattern: all
+      implementation: cpu
     sobel_filter:
       pattern: all
+      implementation: cpu
   morph:
     downsample:
       pattern: all
+      implementation: cpu
     pad:
       pattern: all
+      implementation: cpu
     sino_360_to_180:
       pattern: sinogram
+      implementation: cpu
     trim_sinogram:
       pattern: sinogram
+      implementation: cpu
     upsample:
       pattern: all
+      implementation: cpu
 prep:
   alignment:
     add_jitter:
       pattern: projection
+      implementation: cpu
     add_noise:
       pattern: all
+      implementation: cpu
     align_joint:
       pattern: sinogram
+      implementation: cpu
     align_seq:
       pattern: sinogram
+      implementation: cpu
     blur_edges:
       pattern: projection
+      implementation: cpu
     distortion_correction_proj:
       pattern: projection
+      implementation: cpu
     distortion_correction_sino:
       pattern: sinogram
+      implementation: cpu
     scale:
       pattern: projection
+      implementation: cpu
     shift_images:
       pattern: projection
+      implementation: cpu
   normalize:
     minus_log:
       pattern: projection
+      implementation: cpu
     normalize:
       pattern: projection
+      implementation: cpu
     normalize_roi:
       pattern: projection
+      implementation: cpu
     normalize_bg:
       pattern: projection
+      implementation: cpu
     normalize_nf:
       pattern: projection
+      implementation: cpu
   phase:
     retrieve_phase:
       pattern: projection
+      implementation: cpu
   stripe:
     remove_all_stripe:
       pattern: sinogram
+      implementation: cpu
     remove_stripe_fw:
       pattern: sinogram
+      implementation: cpu
     remove_stripe_ti:
       pattern: sinogram
+      implementation: cpu
     remove_stripe_sf:
       pattern: sinogram
+      implementation: cpu
     remove_stripe_based_sorting:
       pattern: sinogram
+      implementation: cpu
     remove_stripe_based_filtering:
       pattern: sinogram
+      implementation: cpu
     remove_stripe_based_fitting:
       pattern: sinogram
+      implementation: cpu
     remove_large_stripe:
       pattern: sinogram
+      implementation: cpu
     remove_dead_stripe:
       pattern: sinogram
+      implementation: cpu
     remove_stripe_based_interpolation:
       pattern: sinogram
+      implementation: cpu
     stripes_detect3d:
       pattern: sinogram
+      implementation: cpu
     stripes_mask3d:
       pattern: sinogram
+      implementation: cpu
 recon:
   algorithm:
     recon:
       pattern: sinogram
+      implementation: cpu
   rotation:
     find_center:
       pattern: sinogram
+      implementation: cpu
     find_center_pc:
       pattern: sinogram
+      implementation: cpu
     find_center_vo:
       pattern: sinogram
+      implementation: cpu
     write_center:
       pattern: sinogram
+      implementation: cpu
   wrappers:
     astra:
       pattern: sinogram
+      implementation: gpu
     ufo_fbp:
       pattern: sinogram
+      implementation: cpu
     ufo_dfi:
       pattern: sinogram
+      implementation: cpu
     lprec:
       pattern: sinogram
+      implementation: cpu

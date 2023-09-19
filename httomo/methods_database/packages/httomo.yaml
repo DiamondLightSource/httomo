@@ -3,3 +3,4 @@ data:
     loaders:
       standard_tomo:
         pattern: projection
+        implementation: cpu

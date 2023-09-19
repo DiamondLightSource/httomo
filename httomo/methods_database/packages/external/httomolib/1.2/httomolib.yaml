@@ -1,0 +1,13 @@
+misc:
+  corr:
+    inpainting_filter3d:
+      pattern: all
+      implementation: cpu
+  images:
+    save_to_images:
+      pattern: all
+      implementation: cpu
+  segm:
+    binary_thresholding:
+      pattern: all
+      implementation: cpu

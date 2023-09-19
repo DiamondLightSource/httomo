@@ -36,7 +36,7 @@ from httomo.utils import (
     log_once,
     remove_ansi_escape_sequences,
 )
-from httomo.wrappers_class import HttomolibWrapper, HttomolibgpuWrapper, TomoPyWrapper, _gpumem_cleanup
+from httomo.wrappers_class import HttomolibgpuWrapper, BackendWrapper, _gpumem_cleanup
 from httomo.yaml_utils import open_yaml_config
 
 
@@ -98,10 +98,18 @@ def run_tasks(
 
     # Associate patterns to method function objects
     for i, method_func in enumerate(method_funcs):
-        method_funcs[i] = _assign_pattern_to_method(method_func)
+        method_funcs[i] = _assign_attribute_to_method(method_func, "pattern")        
+
+    # Associate implementation architectures to method function objects
+    for i, method_func in enumerate(method_funcs):
+         method_funcs[i] = _assign_attribute_to_method(method_func, "implementation")
+
+    # Associate memory attributes to method function objects
+    for i, method_func in enumerate(method_funcs):
+         method_funcs[i] = _assign_attribute_to_method(method_func, "memory")
 
     # Initialising platform sections (skipping loader)
-    platform_sections = _determine_platform_sections(method_funcs[1:], save_all)
+    platform_sections = _determine_platform_sections(method_funcs[1:], save_all)    
 
     # Check pipeline for the number of parameter sweeps present. If one is
     # defined, raise an error, due to not supporting parameter sweeps in a
@@ -554,19 +562,21 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
             log_exception(err_str)
             raise ValueError(err_str)
 
+        """
         module_to_wrapper = {
-            "tomopy": TomoPyWrapper,
-            "httomolib": HttomolibWrapper,
+            "tomopy": BackendWrapper,
+            "httomolib": BackendWrapper,
             "httomolibgpu": HttomolibgpuWrapper,
         }
-        wrapper_init_module = module_to_wrapper[split_module_name[0]](
-            split_module_name[1], split_module_name[2], method_name, comm
+        """
+        wrapper_init_module = BackendWrapper(
+            split_module_name[0], split_module_name[1], split_module_name[2], method_name, comm
         )
         wrapper_func = getattr(wrapper_init_module.module, method_name)
         wrapper_method = wrapper_init_module.wrapper_method
-        is_tomopy = split_module_name[0] == "tomopy"
-        is_httomolib = split_module_name[0] == "httomolib"
-        is_httomolibgpu = split_module_name[0] == "httomolibgpu"        
+        #is_tomopy = split_module_name[0] == "tomopy"
+        #is_httomolib = split_module_name[0] == "httomolib"
+        #is_httomolibgpu = split_module_name[0] == "httomolibgpu"        
         
         method_funcs.append(
             MethodFunc(
@@ -574,20 +584,32 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 method_func=wrapper_func,
                 wrapper_func=wrapper_method,
                 parameters=method_conf,
-                cpu=True if not is_httomolibgpu else wrapper_init_module.meta.cpu,
-                gpu=False if not is_httomolibgpu else wrapper_init_module.meta.gpu,
-                calc_max_slices=None
-                if not is_httomolibgpu
-                else wrapper_init_module.calc_max_slices,
+                cpu=True,
+                gpu=False,
+                calc_max_slices=None,
                 pattern=Pattern.all,
                 is_loader=False,
                 return_numpy=False,
                 idx_global=i+2,
                 global_statistics=False,
             )
+            # MethodFunc(
+            #     module_name=module_name,
+            #     method_func=wrapper_func,
+            #     wrapper_func=wrapper_method,
+            #     parameters=method_conf,
+            #     cpu=True if not is_httomolibgpu else wrapper_init_module.meta.cpu,
+            #     gpu=False if not is_httomolibgpu else wrapper_init_module.meta.gpu,
+            #     calc_max_slices=None
+            #     if not is_httomolibgpu
+            #     else wrapper_init_module.calc_max_slices,
+            #     pattern=Pattern.all,
+            #     is_loader=False,
+            #     return_numpy=False,
+            #     idx_global=i+2,
+            #     global_statistics=False,
+            # )
         )
-        
-
     return method_funcs
 
 def _check_params_for_sweep(params: Dict) -> int:
@@ -601,41 +623,67 @@ def _check_params_for_sweep(params: Dict) -> int:
     return count
 
 
-def _assign_pattern_to_method(
+def _assign_attribute_to_method(
     method_function: MethodFunc,
+    attribute: str,
     ) -> MethodFunc:
-    """Fetch the pattern information from the methods database in
+    """Fetch the information about a given attribute from the methods database in
     `httomo/methods_database/packages` for the given method and associate that
-    pattern with the function object.
+    with the function object.
 
     Parameters
     ----------
     method_function : MethodFunc
-        The method function information whose pattern information will be fetched and populated.    
+        The method function to populate.
+    attribute: str
+        A given attribute of a method, e.g. "pattern", "implementation", etc. 
     Returns
     -------
     MethodFunc
-        The function information `pattern` attribute set, corresponding to the
-        pattern that the method requires its input data to have.
+        The updated function object
     """
-    pattern_str = get_method_info(
-        method_function.module_name, method_function.method_func.__name__, "pattern"
-    )
-    if pattern_str == "projection":
-        pattern = Pattern.projection
-    elif pattern_str == "sinogram":
-        pattern = Pattern.sinogram
-    elif pattern_str == "all":
-        pattern = Pattern.all
+    if attribute in ["pattern", "implementation"]:        
+        attribute_value = get_method_info(
+            method_function.module_name, method_function.method_func.__name__, attribute)
+        if attribute == "pattern":
+            if attribute_value in ["projection", "sinogram", "all"]:  
+                if attribute_value == "projection":
+                    pattern_upd = Pattern.projection
+                if attribute_value == "sinogram":
+                    pattern_upd = Pattern.sinogram
+                if attribute_value == "all":
+                    pattern_upd = Pattern.all
+                method_function = dataclasses.replace(method_function, pattern=pattern_upd)
+            else:
+                err_str = (
+                    f"The pattern {attribute_value} that is listed for the method "
+                    f"{method_function.module_name} is invalid."
+                )
+                log_exception(err_str)
+                raise ValueError(err_str)
+        if attribute == "implementation":
+            if attribute_value in ["cpu", "gpu", "gpu_cupy"]:
+                # as "cpu" is switched by default we need to consider GPU cases here only
+                # TODO: a new class attribute for "gpu_cupy"?
+                if attribute_value in ["gpu", "gpu_cupy"]:
+                    method_function = dataclasses.replace(method_function, cpu=False)
+                    method_function = dataclasses.replace(method_function, gpu=True)
+            else:
+                err_str = (
+                    f"The implementation arch {attribute_value} that is listed for the method "
+                    f"{method_function.module_name} is invalid."
+                )
+                log_exception(err_str)
+                raise ValueError(err_str)            
     else:
         err_str = (
-            f"The pattern {pattern_str} that is listed for the method "
+            f"The attribute {attribute} that is listed for the method "
             f"{method_function.module_name} is invalid."
         )
         log_exception(err_str)
-        raise ValueError(err_str) 
+        raise ValueError(err_str)
     
-    return dataclasses.replace(method_function, pattern=pattern)
+    return method_function
 
 
 def _determine_platform_sections(

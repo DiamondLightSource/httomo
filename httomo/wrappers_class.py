@@ -21,7 +21,7 @@ class BaseWrapper:
     """A parent class for all wrappers in httomo that use external modules."""
 
     def __init__(
-        self, module_name: str, function_name: str, method_name: str, comm: Comm
+        self, backend_name: str, module_name: str, function_name: str, method_name: str, comm: Comm
     ):
         self.comm = comm
         self.cupyrun = False
@@ -227,52 +227,6 @@ class BaseWrapper:
             log_exception(err_str)
             raise ValueError(err_str)
 
-class TomoPyWrapper(BaseWrapper):
-    """A class that wraps TomoPy functions for httomo"""
-
-    def __init__(
-        self, module_name: str, function_name: str, method_name: str, comm: Comm
-    ):
-        super().__init__(module_name, function_name, method_name, comm)
-
-        # if not changed bellow the generic wrapper will be executed
-        self.wrapper_method: Callable = super()._execute_generic
-
-        if module_name in ["misc", "prep", "recon"]:
-            from importlib import import_module
-
-            self.module = getattr(import_module("tomopy." + module_name), function_name)
-            if function_name == "normalize":
-                func = getattr(self.module, method_name)
-                sig_params = signature(func).parameters
-                if "dark" in sig_params and "flat" in sig_params:
-                    self.wrapper_method = super()._execute_normalize
-            if function_name == "algorithm":
-                self.wrapper_method = super()._execute_reconstruction
-            if function_name == "rotation":
-                self.wrapper_method = super()._execute_rotation
-
-
-class HttomolibWrapper(BaseWrapper):
-    """A class that wraps httomolib functions for httomo"""
-
-    def __init__(
-        self, module_name: str, function_name: str, method_name: str, comm: Comm
-    ):
-        super().__init__(module_name, function_name, method_name, comm)
-
-        # if not changed bellow the generic wrapper will be executed
-        self.wrapper_method: Callable = super()._execute_generic
-
-        if module_name in ["misc"]:
-            from importlib import import_module
-
-            self.module = getattr(
-                import_module("httomolib." + module_name), function_name
-            )
-            if function_name == "images":
-                self.wrapper_method = self._execute_images
-
     def _execute_images(
         self,
         method_name: str,
@@ -282,7 +236,7 @@ class HttomolibWrapper(BaseWrapper):
         data: xp.ndarray,
         return_numpy: bool,
     ) -> None:
-        """httomolib wrapper for save images function.
+        """Wrapper for save images function from httomolib.
 
         Args:
             method_name (str): The name of the method to use.
@@ -295,8 +249,10 @@ class HttomolibWrapper(BaseWrapper):
         Returns:
             None: returns None.
         """
+        # check where data needs to be transfered host <-> device
+        data = self._transfer_data(data)
+                
         if gpu_enabled:
-            _gpumem_cleanup()
             data = getattr(self.module, method_name)(
                 xp.asnumpy(data), out_dir, comm_rank=comm.rank, **dict_params_method
             )
@@ -306,23 +262,22 @@ class HttomolibWrapper(BaseWrapper):
             )
         return None
 
-
 class HttomolibgpuWrapper(BaseWrapper):
     """A class that wraps httomolibgpu functions for httomo"""
 
     def __init__(
-        self, module_name: str, function_name: str, method_name: str, comm: Comm
+        self, backend_name: str, module_name: str, function_name: str, method_name: str, comm: Comm
     ):
-        super().__init__(module_name, function_name, method_name, comm)
+        super().__init__(backend_name, module_name, function_name, method_name, comm)
 
         # if not changed bellow the generic wrapper will be executed
         self.wrapper_method: Callable = super()._execute_generic
 
         if module_name in ["misc", "prep", "recon"]:
-            from importlib import import_module
-
+            from importlib import import_module           
+            
             self.module = getattr(
-                import_module("httomolibgpu." + module_name), function_name
+                import_module(backend_name + "." + module_name), function_name
             )
             if function_name == "normalize":
                 func = getattr(self.module, method_name)
@@ -364,3 +319,34 @@ class HttomolibgpuWrapper(BaseWrapper):
         return self.meta.calc_max_slices(
             slice_dim, non_slice_dims_shape, dtype, available_memory, **kwargs
         )
+
+class BackendWrapper(BaseWrapper):
+    """A class that wraps backend functions for httomo"""
+
+    def __init__(
+        self, backend_name: str, module_name: str, function_name: str, method_name: str, comm: Comm
+    ):
+        super().__init__(backend_name, module_name, function_name, method_name, comm)
+
+        # if not changed bellow the generic wrapper will be executed
+        self.wrapper_method: Callable = super()._execute_generic
+
+        if module_name in ["misc", "prep", "recon"]:
+            from importlib import import_module
+
+            self.module = getattr(
+                import_module(backend_name + "." + module_name), function_name
+            )
+            # deal with special cases 
+            if function_name == "normalize":
+                func = getattr(self.module, method_name)
+                sig_params = signature(func).parameters
+                if "darks" or "dark" in sig_params and "flats" or "flat" in sig_params:
+                    self.wrapper_method = super()._execute_normalize
+            if function_name == "algorithm":
+                self.wrapper_method = super()._execute_reconstruction
+            if function_name == "rotation":
+                self.wrapper_method = super()._execute_rotation
+            if function_name == "images":
+                self.wrapper_method = super()._execute_images
+            

@@ -70,8 +70,9 @@ def get_method_info(module_path: str, method_name: str, attr: str):
     method_path = f"{module_path}.{method_name}"
     split_method_path = method_path.split(".")
     package_name = split_method_path[0]
-    if package_name == "httomolibgpu":
-        return _get_method_info_httomolibgpu(split_method_path[1:], attr)
+    # TODO: moving to the common library
+    # if package_name == "httomolibgpu":
+    #     return _get_method_info_httomolibgpu(split_method_path[1:], attr)
 
     yaml_info_path = Path(YAML_DIR, f"{package_name}.yaml")
 
