@@ -5,7 +5,7 @@ prep:
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo, flats, darks]
-        - multipliers: [2, 1.05, 1.05]
+        - multipliers: [2, 1.075, 1.075]
         - methods: [None, None, None]        
       
 

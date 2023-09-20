@@ -63,16 +63,11 @@ def get_method_info(module_path: str, method_name: str, attr: str):
 
     Returns
     -------
-    TODO: Needs a "generic" type to represent anything that could be stored in
-    the YAML files in the methods database?
-        The requested piece of information about the method.
+    The requested piece of information about the method.
     """
     method_path = f"{module_path}.{method_name}"
     split_method_path = method_path.split(".")
     package_name = split_method_path[0]
-    # TODO: moving to the common library
-    # if package_name == "httomolibgpu":
-    #     return _get_method_info_httomolibgpu(split_method_path[1:], attr)
 
     yaml_info_path = Path(YAML_DIR, f"{package_name}.yaml")
 
