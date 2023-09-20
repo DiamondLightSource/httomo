@@ -6,6 +6,13 @@ prep:
       memory_gpu:
         - datasets: [tomo, flats, darks]
         - multipliers: [2, 1.075, 1.075]
-        - methods: [None, None, None]        
-      
+        - methods: [direct, direct, direct]
+  phase:
+    paganin_filter_tomopy:
+      pattern: projection
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
 

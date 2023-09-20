@@ -826,9 +826,13 @@ def _update_max_slices(
                         df_bytes = np.prod(np.shape(dict_datasets_pipeline[dst])) * data_type.itemsize
                         available_memory -= m.calc_max_slices[1]['multipliers'][i] * df_bytes
                     else:
-                        # rest of the input data
-                        if m.calc_max_slices[2]['methods'][i] == 'None':
+                        # deal with the rest of the data                        
+                        if m.calc_max_slices[2]['methods'][i] == 'direct':
+                            # this calculation assumes a direct (simple) correspondence through multiplier
                             memory_bytes_method += m.calc_max_slices[1]['multipliers'][i] * np.prod(non_slice_dims_shape) * data_type.itemsize
+                        else:
+                            # this requires more complicated calculation using the function that exists in the module
+                            module_mem = getattr(import_module(m.module_name), "_calc_memory_bytes_"+m.parameters['method_name'])
                 slices_estimated = available_memory // memory_bytes_method
             else:
                 slices_estimated = max_slices            

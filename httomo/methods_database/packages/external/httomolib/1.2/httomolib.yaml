@@ -14,3 +14,9 @@ misc:
       pattern: all
       implementation: cpu
       memory_gpu: None
+prep:
+  phase:
+    paganin_filter:
+      pattern: projection
+      implementation: cpu
+      memory_gpu: None      

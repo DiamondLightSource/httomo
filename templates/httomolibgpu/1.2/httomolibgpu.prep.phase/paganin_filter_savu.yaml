@@ -1,5 +1,5 @@
 - httomolibgpu.prep.phase:
-    paganin_filter:
+    paganin_filter_savu:
       data_in: tomo
       data_out: tomo
       ratio: 250.0

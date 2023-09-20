@@ -2,7 +2,7 @@
     save_to_images:
       data_in: tomo
       subfolder_name: images
-      axis: 0
+      axis: 1
       file_format: tif
       bits: 8
       perc_range_min: 0.0
