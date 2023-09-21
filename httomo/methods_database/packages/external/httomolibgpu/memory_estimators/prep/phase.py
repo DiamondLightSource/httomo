@@ -16,7 +16,7 @@
 # limitations under the License.
 # ---------------------------------------------------------------------------
 # Created By  : Tomography Team at DLS <scientificsoftware@diamond.ac.uk>
-# Created Date: 21 November 2023
+# Created Date: 21 September 2023
 # ---------------------------------------------------------------------------
 """Modules for memory estimation for phase retrieval and phase-contrast enhancement"""
 
