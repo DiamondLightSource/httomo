@@ -212,11 +212,25 @@ def run_tasks(
 
     # Execute pre-processing of data if needed. For instance, we might
     # want to dezinger data but also flats and darks in the loop
-    preprocess_data(dict_preprocess,
-                    method_funcs,
-                    possible_extra_params,
-                    dict_datasets_pipeline,
-                    comm)
+    centering_method_func = method_funcs[dict_preprocess["center_method_indx"]]
+    centering_out_name = centering_method_func.parameters["data_out"]
+    res = preprocess_data(
+        dict_datasets_pipeline[method_funcs[0].parameters["name"]],
+        dict_datasets_pipeline["darks"],
+        dict_datasets_pipeline["flats"],
+        centering_method_func,
+        comm
+    )
+
+    # Store the output(s) of the method in the appropriate
+    # dataset in the `dict_datasets_pipeline` dict
+    if isinstance(res, (tuple, list)):
+        # The method produced multiple outputs
+        for val, dataset in zip(res, centering_out_name):
+            dict_datasets_pipeline[dataset] = val
+    else:
+        # The method produced a single output
+        dict_datasets_pipeline[centering_out_name] = res
     
     # data shape and dtype are useful when calculating max slices
     data_shape = dict_datasets_pipeline[method_funcs[0].parameters["name"]].shape
