@@ -808,7 +808,7 @@ def _update_max_slices(
     data_type = input_data_type
     output_dims = non_slice_dims_shape
     if section.gpu:
-        available_memory = _get_available_gpu_memory(10.0)
+        available_memory = int(_get_available_gpu_memory(10.0))
         available_memory_in_GB = round(available_memory / (1024**3), 2)
         memory_str = f"The amount of the available GPU memory is {available_memory_in_GB} GB"
         log_once(memory_str, comm=comm, colour=Colour.BVIOLET, level=1)
@@ -819,21 +819,32 @@ def _update_max_slices(
                 # the gpu memory needs to be estimated for the given method
                 memory_bytes_method = 1
                 for i, dst in enumerate(m.calc_max_slices[0]['datasets']):
+                    subtract_bytes = 0
                     # loop over the dataset names given in the library file and extracting 
                     # the corresponding dimensions from the available datasets                    
                     if dst in ["flats", "darks"]:
                         # for normalisation module dealing with flats and darks separately
                         df_bytes = np.prod(np.shape(dict_datasets_pipeline[dst])) * data_type.itemsize
-                        available_memory -= m.calc_max_slices[1]['multipliers'][i] * df_bytes
+                        available_memory -= int(m.calc_max_slices[1]['multipliers'][i] * df_bytes)
                     else:
                         # deal with the rest of the data                        
                         if m.calc_max_slices[2]['methods'][i] == 'direct':
                             # this calculation assumes a direct (simple) correspondence through multiplier
-                            memory_bytes_method += m.calc_max_slices[1]['multipliers'][i] * np.prod(non_slice_dims_shape) * data_type.itemsize
+                            memory_bytes_method += int(m.calc_max_slices[1]['multipliers'][i] * np.prod(non_slice_dims_shape) * data_type.itemsize)
                         else:
-                            # this requires more complicated calculation using the function that exists in the module
-                            module_mem = getattr(import_module(m.module_name), "_calc_memory_bytes_"+m.parameters['method_name'])
-                slices_estimated = available_memory // memory_bytes_method
+                            # this requires more complicated memory calculation using the function that exists in methods_database of httomo
+                            # building up path to the function here:
+                            module_mem_path = "httomo.methods_database.packages.external."
+                            for n_ind, module_str in enumerate(m.module_name.split(".")):
+                                if n_ind == 0:
+                                    module_mem_path += m.module_name.split(".")[0] + ".memory_estimators"
+                                else:
+                                    module_mem_path += "."
+                                    module_mem_path += m.module_name.split(".")[n_ind]
+                            module_mem = getattr(import_module(module_mem_path), "_calc_memory_bytes_"+m.parameters['method_name'])
+                            (memory_bytes_method, subtract_bytes) = module_mem(non_slice_dims_shape, data_type)
+
+                slices_estimated = (available_memory - subtract_bytes) // memory_bytes_method
             else:
                 slices_estimated = max_slices            
             max_slices_methods[idx] = min(max_slices, slices_estimated)
