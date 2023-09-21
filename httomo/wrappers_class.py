@@ -215,8 +215,8 @@ class BaseWrapper:
         overlap_position = 0
 
         if method_name == "find_center_360":
-            (rot_center, overlap, side, overlap_position) = self.comm.bcast(
-                (rot_center, overlap, side, overlap_position), root=self.comm.rank
+            (rot_center, overlap, side, overlap_position) = method_func(
+                data, **dict_params_method
             )
             log_once(
                 f"###___The center of rotation for 360 degrees sinogram is {rot_center},"
@@ -227,7 +227,7 @@ class BaseWrapper:
             )
             return (rot_center, overlap, side, overlap_position)
         elif method_name == "find_center_vo":
-            rot_center = self.comm.bcast(rot_center, root=self.comm.rank)
+            rot_center = method_func(data, **dict_params_method)
             log_once(
                     f"###____The center of rotation for 180 degrees sinogram is {rot_center}____###",
                     comm=self.comm,

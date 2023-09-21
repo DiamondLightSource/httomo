@@ -59,6 +59,7 @@ def preprocess_data(
     else:
         res = None
 
+    res = comm.bcast(res, root=0)
     return res
 
 
