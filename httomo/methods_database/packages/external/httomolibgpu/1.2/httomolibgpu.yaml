@@ -54,3 +54,18 @@ prep:
         - datasets: [tomo]
         - multipliers: [1.2]
         - methods: [direct]
+  stripe:
+    remove_stripe_based_sorting:
+      pattern: sinogram
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [1.17]
+        - methods: [direct]
+    remove_stripe_ti:
+      pattern: sinogram
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
