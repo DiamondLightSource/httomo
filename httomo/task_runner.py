@@ -231,7 +231,7 @@ def run_tasks(
         slc_indices = [slice(None)] * len(data_shape)             
         for it_blocks in range(iterations_for_blocks):
             # preparing indices for the slicing of the data in blocks
-            slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)
+            slc_indices[slicing_dim_section] = slice(int(indices_start), int(indices_end), 1)
 
             ##---------- LOOP OVER _METHODS_ IN THE BLOCK ------------##
             for m_ind, methodfunc_sect in enumerate(section.methods):
@@ -393,7 +393,7 @@ def run_tasks(
             # checking if we still within the slicing dimension size and take remaining portion
             res_indices = (indices_start + int(section.max_slices)) - data_shape[slicing_dim_section] 
             if res_indices > 0:
-                res_indices = int(section.max_slices) - res_indices
+                res_indices = int(section.max_slices - res_indices)
                 indices_end += res_indices
             else:
                 indices_end += section.max_slices
@@ -842,7 +842,7 @@ def _update_max_slices(
                                     module_mem_path += "."
                                     module_mem_path += m.module_name.split(".")[n_ind]
                             module_mem = getattr(import_module(module_mem_path), "_calc_memory_bytes_"+m.parameters['method_name'])
-                            (memory_bytes_method, subtract_bytes) = module_mem(non_slice_dims_shape, data_type)
+                            (memory_bytes_method, subtract_bytes) = module_mem(non_slice_dims_shape, data_type, **m.parameters)
 
                 slices_estimated = (available_memory - subtract_bytes) // memory_bytes_method
             else:

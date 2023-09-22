@@ -15,4 +15,10 @@ prep:
         - datasets: [tomo]
         - multipliers: [None]
         - methods: [module]
-
+    paganin_filter_savu:
+      pattern: projection
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
