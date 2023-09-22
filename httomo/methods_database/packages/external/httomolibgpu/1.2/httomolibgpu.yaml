@@ -1,3 +1,27 @@
+misc:
+  corr:
+    median_filter3d:
+      pattern: all
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [2.1]
+        - methods: [direct]
+    remove_outlier3d:
+      pattern: all
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [2.1]
+        - methods: [direct]
+  morph:
+    sino_360_to_180:
+      pattern: sinogram
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [2.2]
+        - methods: [direct]
 prep:
   normalize:
     normalize:
@@ -22,3 +46,11 @@ prep:
         - datasets: [tomo]
         - multipliers: [None]
         - methods: [module]
+  alignment:
+    distortion_correction_proj_discorpy:
+      pattern: projection
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [1.2]
+        - methods: [direct]

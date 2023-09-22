@@ -6,6 +6,7 @@ import numpy as np
 from numpy import uint16, float32
 
 from numpy.testing import assert_allclose, assert_equal
+import os
 
 cupy = pytest.importorskip("cupy")
 httomolibgpu = pytest.importorskip("httomolibgpu")
@@ -14,9 +15,11 @@ import cupy as cp
 from httomo.methods_database.query import get_method_info
 
 from httomolibgpu.prep.normalize import normalize
-
 from httomolibgpu.prep.phase import paganin_filter_tomopy, paganin_filter_savu
+from httomolibgpu.prep.alignment import distortion_correction_proj_discorpy
+
 from httomo.methods_database.packages.external.httomolibgpu.memory_estimators.prep.phase import *
+from httomo.methods_database.packages.external.httomolibgpu.memory_estimators.prep.alignment import *
 
 
 module_mem_path = "httomo.methods_database.packages.external."
@@ -73,7 +76,7 @@ def test_normalize_memoryhook(data, flats, darks, ensure_clean_memory):
     # the resulting percent value should not deviate from max_mem on more than 20%    
     assert estimated_memory_mb >= max_mem_mb 
     assert percents_relative_maxmem <= 20
-    
+   
 @pytest.mark.cupy
 @pytest.mark.parametrize("slices", [128, 256, 512])
 def test_normalize_memoryhook_parametrise(slices, ensure_clean_memory):
@@ -113,8 +116,6 @@ def test_normalize_memoryhook_parametrise(slices, ensure_clean_memory):
 @pytest.mark.parametrize("dim_x", [81, 260, 320])
 @pytest.mark.parametrize("dim_y", [340, 135, 96])
 def test_paganin_filter_tomopy_memoryhook(slices, dim_x, dim_y, ensure_clean_memory):    
-    cache = cp.fft.config.get_plan_cache()
-    cache.clear()
     data = cp.random.random_sample((slices, dim_x, dim_y), dtype=np.float32)
     hook = MaxMemoryHook()
     with hook:
@@ -143,8 +144,6 @@ def test_paganin_filter_tomopy_memoryhook(slices, dim_x, dim_y, ensure_clean_mem
 @pytest.mark.parametrize("dim_x", [81, 260, 320])
 @pytest.mark.parametrize("dim_y", [340, 135, 96])
 def test_paganin_filter_savu_memoryhook(slices, dim_x, dim_y, ensure_clean_memory):    
-    cache = cp.fft.config.get_plan_cache()
-    cache.clear()
     data = cp.random.random_sample((slices, dim_x, dim_y), dtype=np.float32)
     kwargs = {}
     kwargs["ratio"] = 250.0
@@ -175,4 +174,38 @@ def test_paganin_filter_savu_memoryhook(slices, dim_x, dim_y, ensure_clean_memor
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     # the resulting percent value should not deviate from max_mem on more than 20%    
     assert estimated_memory_mb >= max_mem_mb 
-    assert percents_relative_maxmem <= 20    
+    assert percents_relative_maxmem <= 20
+    
+    
+@pytest.mark.cupy
+@pytest.mark.parametrize("slices", [128, 190, 256])
+def test_distortion_correction_memoryhook(slices, distortion_correction_path, ensure_clean_memory):
+    data_size_dim = 320
+    data = cp.random.random_sample((slices, data_size_dim, data_size_dim), dtype=np.float32)
+    
+    distortion_coeffs_path = os.path.join(
+        distortion_correction_path, "distortion-coeffs.txt"
+    )
+    preview = {"starts": [0, 0], "stops": [data.shape[1], data.shape[2]], "steps": [1, 1]}
+    
+    hook = MaxMemoryHook()
+    with hook:
+        data_corrected = distortion_correction_proj_discorpy(cp.copy(data), 
+                                                             distortion_coeffs_path,
+                                                             preview).get()
+
+    # make sure estimator function is within range (80% min, 100% max)
+    max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook
+    max_mem_mb = round(max_mem / (1024**2), 2) # now in mbs
+    
+    # now we estimate how much of the total memory required for this data
+    library_info = get_method_info("httomolibgpu.prep.alignment", "distortion_correction_proj_discorpy", "memory_gpu")
+    estimated_memory_bytes = library_info[1]['multipliers'][0] * np.prod(cp.shape(data)) * float32().nbytes
+    estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
+    # now we compare both memory estimations 
+    difference_mb = abs(estimated_memory_mb - max_mem_mb)
+    percents_relative_maxmem = round((difference_mb/max_mem_mb)*100)
+    # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
+    # the resulting percent value should not deviate from max_mem on more than 20%    
+    assert estimated_memory_mb >= max_mem_mb 
+    assert percents_relative_maxmem <= 20

@@ -92,9 +92,13 @@ def ensure_clean_memory():
     import cupy as cp
     cp.get_default_memory_pool().free_all_blocks()
     cp.get_default_pinned_memory_pool().free_all_blocks()
+    cache = cp.fft.config.get_plan_cache()
+    cache.clear()
     yield None
     cp.get_default_memory_pool().free_all_blocks()
     cp.get_default_pinned_memory_pool().free_all_blocks()
+    cache = cp.fft.config.get_plan_cache()
+    cache.clear()    
 
 
 @pytest.fixture
@@ -192,6 +196,10 @@ def sample_pipelines():
 @pytest.fixture
 def gpu_pipeline():
     return "samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
+
+@pytest.fixture(scope="session")
+def distortion_correction_path(test_data_path):
+    return os.path.join(test_data_path, "distortion-correction")
 
 
 @pytest.fixture
