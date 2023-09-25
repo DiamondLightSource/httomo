@@ -3,262 +3,324 @@ sim:
   project:
     add_drift:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     add_focal_spot_blur:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     add_gaussian:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     add_poisson:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     add_rings:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     add_salt_pepper:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     add_zingers:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     project:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     project2:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     project3:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
 misc:
   corr:
     adjust_range:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     circ_mask:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     gaussian_filter:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     median_filter:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     median_filter3d:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     median_filter_nonfinite:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_nan:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_neg:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_outlier:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_outlier1d:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_outlier3d:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_ring:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     sobel_filter:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
   morph:
     downsample:
       pattern: all
+      output_dims_change: True
       implementation: cpu
       memory_gpu: None
     pad:
       pattern: all
+      output_dims_change: True
       implementation: cpu
       memory_gpu: None
     sino_360_to_180:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     trim_sinogram:
       pattern: sinogram
+      output_dims_change: True
       implementation: cpu
       memory_gpu: None
     upsample:
       pattern: all
+      output_dims_change: True
       implementation: cpu
       memory_gpu: None
 prep:
   alignment:
     add_jitter:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     add_noise:
       pattern: all
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     align_joint:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     align_seq:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     blur_edges:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     distortion_correction_proj:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     distortion_correction_sino:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     scale:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     shift_images:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
   normalize:
     minus_log:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     normalize:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     normalize_roi:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     normalize_bg:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     normalize_nf:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
   phase:
     retrieve_phase:
       pattern: projection
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
   stripe:
     remove_all_stripe:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_stripe_fw:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_stripe_ti:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_stripe_sf:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_stripe_based_sorting:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_stripe_based_filtering:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_stripe_based_fitting:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_large_stripe:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_dead_stripe:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     remove_stripe_based_interpolation:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     stripes_detect3d:
       pattern: sinogram
       implementation: cpu
+      output_dims_change: False
       memory_gpu: None
     stripes_mask3d:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
 recon:
   algorithm:
     recon:
       pattern: sinogram
+      output_dims_change: True
       implementation: cpu
       memory_gpu: None
   rotation:
     find_center:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     find_center_pc:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     find_center_vo:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
     write_center:
       pattern: sinogram
+      output_dims_change: False
       implementation: cpu
       memory_gpu: None
   wrappers:
     astra:
       pattern: sinogram
+      output_dims_change: True
       implementation: cpu
       memory_gpu: None
     ufo_fbp:
       pattern: sinogram
+      output_dims_change: True
       implementation: cpu
       memory_gpu: None
     ufo_dfi:
@@ -267,5 +329,6 @@ recon:
       memory_gpu: None
     lprec:
       pattern: sinogram
+      output_dims_change: True
       implementation: cpu
       memory_gpu: None

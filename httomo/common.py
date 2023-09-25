@@ -27,6 +27,9 @@ class MethodFunc:
         None for the CPU method or Dictionary with parameters for GPU memory estimation.
         This determines the maximum number of slices it can fit in the given memory.
         If it is not present (None), the method is assumed to fit any amount of slices.
+    output_dims_change : Dict[str, Any]
+        False - the output data dimensions of the method are the same as input
+        True - the data dimensions are different with respect to input data dimensions.
     parameters : Dict[str, Any]
         The method parameters that are specified in the pipeline yaml file.
         They are used as kwargs when the method is called.
@@ -48,6 +51,7 @@ class MethodFunc:
     method_func: Callable
     wrapper_func: Optional[Callable] = None
     calc_max_slices: Optional[Dict[str, Any]] = None
+    output_dims_change: Dict[str, Any] = None
     parameters: Dict[str, Any] = field(default_factory=dict)
     pattern: Pattern = Pattern.projection
     cpu: bool = True

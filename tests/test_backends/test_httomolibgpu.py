@@ -18,10 +18,11 @@ from httomolibgpu.prep.normalize import normalize
 from httomolibgpu.prep.phase import paganin_filter_tomopy, paganin_filter_savu
 from httomolibgpu.prep.alignment import distortion_correction_proj_discorpy
 from httomolibgpu.prep.stripe import remove_stripe_based_sorting, remove_stripe_ti
+from httomolibgpu.recon.algorithm import FBP, SIRT, CGLS
 
-from httomo.methods_database.packages.external.httomolibgpu.memory_estimators.prep.phase import *
-from httomo.methods_database.packages.external.httomolibgpu.memory_estimators.prep.stripe import *
-
+from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.phase import *
+from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.stripe import *
+from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.recon.algorithm import *
 
 module_mem_path = "httomo.methods_database.packages.external."
 class MaxMemoryHook(cp.cuda.MemoryHook):
@@ -255,6 +256,74 @@ def test_remove_stripe_ti_memoryhook(slices, ensure_clean_memory):
     estimated_memory_mb = round(slices*estimated_memory_bytes / (1024**2), 2)
     max_mem -= subtract_bytes
     max_mem_mb = round(max_mem / (1024**2), 2)
+    
+    # now we compare both memory estimations 
+    difference_mb = abs(estimated_memory_mb - max_mem_mb)
+    percents_relative_maxmem = round((difference_mb/max_mem_mb)*100)
+    # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
+    # the resulting percent value should not deviate from max_mem on more than 20%    
+    assert estimated_memory_mb >= max_mem_mb 
+    assert percents_relative_maxmem <= 20
+    
+@pytest.mark.cupy
+@pytest.mark.parametrize("slices", [3, 5, 8])
+@pytest.mark.parametrize("recon_size_it", [600, 1200, 2560])
+def test_recon_FBP_memoryhook(slices, recon_size_it, ensure_clean_memory):
+    data = cp.random.random_sample((1801, slices, recon_size_it), dtype=np.float32)
+    kwargs={}
+    kwargs['angles'] = np.linspace(0.0 * np.pi / 180.0, 180.0 * np.pi / 180.0, data.shape[0])
+    kwargs['center'] = 500    
+    kwargs['recon_size'] = recon_size_it
+    kwargs['recon_mask_radius'] = 0.8
+    recon_size = data.shape[2]
+    hook = MaxMemoryHook()
+    with hook:
+        recon_data = FBP(data, **kwargs)
+
+    # make sure estimator function is within range (80% min, 100% max)
+    max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook   
+    max_mem_mb = round(max_mem / (1024**2), 2)
+    
+    # now we estimate how much of the total memory required for this data
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_FBP((1801, recon_size_it), dtype=np.float32(), **kwargs)
+    estimated_memory_mb = round(slices*estimated_memory_bytes / (1024**2), 2)
+    max_mem -= subtract_bytes
+    max_mem_mb = round(max_mem / (1024**2), 2)   
+    
+    # now we compare both memory estimations 
+    difference_mb = abs(estimated_memory_mb - max_mem_mb)
+    percents_relative_maxmem = round((difference_mb/max_mem_mb)*100)
+    # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
+    # the resulting percent value should not deviate from max_mem on more than 20%    
+    assert estimated_memory_mb >= max_mem_mb 
+    assert percents_relative_maxmem <= 25
+    
+    
+@pytest.mark.cupy
+@pytest.mark.parametrize("slices", [3, 5, 8])
+def test_recon_SIRT_memoryhook(slices, ensure_clean_memory):
+    data = cp.random.random_sample((1801, slices, 2560), dtype=np.float32)
+    recon_size = data.shape[2]
+    hook = MaxMemoryHook()
+    with hook:
+        recon_data = SIRT(
+                    data,
+                    np.linspace(0.0 * np.pi / 180.0, 180.0 * np.pi / 180.0, data.shape[0]),
+                    1200,
+                    recon_size=recon_size,
+                    iterations=2,
+                    nonnegativity=True,
+                    recon_mask_radius = 0.8,
+                )
+
+    # make sure estimator function is within range (80% min, 100% max)
+    max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook   
+    max_mem_mb = round(max_mem / (1024**2), 2)
+    
+    # now we estimate how much of the total memory required for this data
+    library_info = get_method_info("httomolibgpu.recon.algorithm", "SIRT", "memory_gpu")
+    estimated_memory_bytes = library_info[1]['multipliers'][0] * np.prod(cp.shape(data)) * float32().nbytes
+    estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
     
     # now we compare both memory estimations 
     difference_mb = abs(estimated_memory_mb - max_mem_mb)

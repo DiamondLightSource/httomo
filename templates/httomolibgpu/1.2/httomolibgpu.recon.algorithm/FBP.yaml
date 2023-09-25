@@ -3,4 +3,5 @@
       data_in: tomo
       data_out: tomo
       center: null
-      objsize: null
+      recon_size: null
+      recon_mask_radius: null

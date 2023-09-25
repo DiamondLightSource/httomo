@@ -2,6 +2,7 @@ misc:
   corr:
     median_filter3d:
       pattern: all
+      output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]
@@ -9,6 +10,7 @@ misc:
         - methods: [direct]
     remove_outlier3d:
       pattern: all
+      output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]
@@ -17,6 +19,7 @@ misc:
   morph:
     sino_360_to_180:
       pattern: sinogram
+      output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]
@@ -26,6 +29,7 @@ prep:
   normalize:
     normalize:
       pattern: projection
+      output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo, flats, darks]
@@ -34,6 +38,7 @@ prep:
   phase:
     paganin_filter_tomopy:
       pattern: projection
+      output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]
@@ -41,6 +46,7 @@ prep:
         - methods: [module]
     paganin_filter_savu:
       pattern: projection
+      output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]
@@ -49,6 +55,7 @@ prep:
   alignment:
     distortion_correction_proj_discorpy:
       pattern: projection
+      output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]
@@ -57,6 +64,7 @@ prep:
   stripe:
     remove_stripe_based_sorting:
       pattern: sinogram
+      output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]
@@ -64,8 +72,27 @@ prep:
         - methods: [direct]
     remove_stripe_ti:
       pattern: sinogram
+      output_dims_change: False
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
         - methods: [module]
+recon:
+  algorithm:
+    FBP:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
+    SIRT:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [8]
+        - methods: [direct]
