@@ -96,3 +96,11 @@ recon:
         - datasets: [tomo]
         - multipliers: [8]
         - methods: [direct]
+    CGLS:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [10]
+        - methods: [direct]     
