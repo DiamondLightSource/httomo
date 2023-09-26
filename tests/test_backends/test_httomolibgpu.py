@@ -367,3 +367,4 @@ def test_recon_CGLS_memoryhook(slices, ensure_clean_memory):
     # the resulting percent value should not deviate from max_mem on more than 20%    
     assert estimated_memory_mb >= max_mem_mb 
     assert percents_relative_maxmem <= 20
+    

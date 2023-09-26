@@ -103,4 +103,21 @@ recon:
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [10]
-        - methods: [direct]     
+        - methods: [direct]
+  rotation:
+    find_center_vo:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [0]
+        - methods: [direct]
+    find_center_360:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [0]
+        - methods: [direct]
