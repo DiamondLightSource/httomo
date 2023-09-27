@@ -57,7 +57,6 @@ class MethodFunc:
     cpu: bool = True
     gpu: bool = False
     cupyrun: bool = False
-    is_loader: bool = False
     return_numpy: bool = False
     idx_global: int = 0
     global_statistics: bool = False
