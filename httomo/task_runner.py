@@ -78,11 +78,8 @@ def run_tasks(
 
     # Define dict to store arrays of the whole pipeline using provided YAML
     # Define list to store dataset stats for each task in the user config YAML
-    dict_datasets_pipeline, glob_stats = _initialise_datasets_and_stats(yaml_config)
-
-    # Get a list of the python functions associated to the methods defined in
-    # user config YAML
-    method_funcs = _get_method_funcs(yaml_config, comm)
+    glob_stats: List = []
+    dict_datasets_pipeline: Dict[str, np.ndarray] = {}
 
     # Define dict of params that are needed by loader functions
     dict_loader_extra_params = {
@@ -496,65 +493,6 @@ def run_tasks(
         #: remove ansi escape sequences from the log file
         remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")    
     
-def _initialise_datasets_and_stats(
-    yaml_config: Path,
-) -> tuple[Dict[str, None], List[Dict]]:
-    """Add keys to dict that will contain all datasets defined in the YAML
-    config.
-
-    Parameters
-    ----------
-    yaml_config : Path
-        The file containing the processing pipeline info as YAML
-
-    Returns
-    -------
-    tuple
-        Returns a tuple containing a dict of datasets and a
-        list containing the stats of all datasets of all methods in the pipeline.
-        The fist element is the dict of datasets, whose keys are the names of the datasets, and
-        values will eventually be arrays (but initialised to None in this
-        function)
-    """
-    datasets, stats = {}, []
-    # Define a list of parameter names that refer to a "dataset" that would need
-    # to exist in the `datasets` dict
-    loader_dataset_param = "name"
-    loader_dataset_params = [loader_dataset_param]
-    method_dataset_params = ["data_in", "data_out"]
-
-    dataset_params = method_dataset_params + loader_dataset_params
-
-    yaml_conf = open_yaml_config(yaml_config)
-    for task_conf in yaml_conf:
-        module_name, module_conf = task_conf.popitem()
-        method_name, method_conf = module_conf.popitem()
-        # Check parameters of method if it contains any of the parameters which
-        # require a dataset to be defined
-
-        if "loaders" in module_name:
-            dataset_param = loader_dataset_param
-        else:
-            dataset_param = "data_in"
-
-        # Dict to hold the stats for each dataset associated with the method
-        method_stats: Dict[str, List] = {}
-        method_stats[method_conf[dataset_param]] = []
-        stats.append(method_stats)
-
-        for param in method_conf.keys():
-            if param in dataset_params:
-                if type(method_conf[param]) is list:
-                    for dataset_name in method_conf[param]:
-                        if dataset_name not in datasets:
-                            datasets[dataset_name] = None
-                else:
-                    if method_conf[param] not in datasets:
-                        datasets[method_conf[param]] = None
-
-    return datasets, stats
-
-
 def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
     """Gather all the python functions needed to run the defined processing
     pipeline.
