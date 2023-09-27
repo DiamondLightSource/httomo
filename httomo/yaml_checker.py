@@ -8,7 +8,7 @@ import h5py
 import yaml
 
 from httomo.utils import Colour
-from httomo.yaml_utils import get_external_package_current_version, open_yaml_config
+from httomo.yaml_utils import get_external_package_current_version
 
 __all__ = [
     "check_one_method_per_module",

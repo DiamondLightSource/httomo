@@ -158,3 +158,25 @@ class RunMethodInfo:
     package_name: str = None
     method_name: str = None
     global_statistics: bool = False
+
+
+@dataclass
+class PreProcessInfo:
+    """
+    Class holding execution info for each method in the pre-processing stage
+    of the pipeline
+    """
+    params: Dict[str, Any]
+    method_name: str
+    wrapper_func: Callable
+
+
+@dataclass
+class LoaderInfo:
+    """
+    Class holding execution info for the loader
+    """
+    params: Dict[str, Any]
+    method_name: str
+    method_func: Callable
+    pattern: Pattern

@@ -6,18 +6,19 @@ For example: Centering, Dezingering for multidata, etc.
 """
 from typing import Tuple, Union
 
-from mpi4py import MPI
 import numpy as np
+from mpi4py import MPI
 from numpy import newaxis
 
-from httomo.common import MethodFunc
+from httomo.common import PreProcessInfo
 from httomo.data.hdf._utils.reslice import single_sino_reslice
+
 
 def preprocess_data(
     projs: np.ndarray,
     darks: np.ndarray,
     flats: np.ndarray,
-    centering_method_func: MethodFunc,
+    centering_method_info: PreProcessInfo,
     comm: MPI.Comm,
 ) -> Union[float, Tuple[float, float, float, float]]:
     """_summary_
@@ -26,14 +27,14 @@ def preprocess_data(
         projs: np.ndarray: projection data
         darks: np.ndarray: dark-field data
         flats: np.ndarray: flat-field data
-        centering_method_func MethodFunc: object representing centering method
+        centering_method_info PreProcessInfo: object representing centering method
         comm (MPI.Comm): communicator object
 
     Returns:
         Union[float, Tuple[float, float, float, float]]: result from regular
             centering, or 360 centering
     """
-    sino_slice, slice_for_cor = get_sino(projs, centering_method_func.parameters['ind'])
+    sino_slice, slice_for_cor = get_sino(projs, centering_method_info.params['ind'])
 
     if comm.rank == 0:
         sino_slice = normalise_sino(
@@ -42,17 +43,11 @@ def preprocess_data(
             darks[:,slice_for_cor,:],
         )
 
-        # preparing everything for the wrapper execution
-        method_name = centering_method_func.parameters.pop("method_name")
-        func_wrapper = centering_method_func.wrapper_func
-        del centering_method_func.parameters["data_in"]
-        del centering_method_func.parameters["data_out"]
-        del centering_method_func.parameters["ind"]
+        param_filter = ("method_name", "data_in", "data_out", "ind")
         
-        # run the wrapper
-        res = func_wrapper(
-            method_name,
-            centering_method_func.parameters,
+        res = centering_method_info.wrapper_func(
+            centering_method_info.method_name,
+            {k:centering_method_info.params[k] for k in centering_method_info.params.keys() - param_filter},
             sino_slice,
             return_numpy=False,
         )

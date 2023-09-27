@@ -1,3 +1,4 @@
+--- # Loading stage
 - httomo.data.hdf.loaders:
     standard_tomo:
       name: tomo
@@ -9,32 +10,7 @@
         - 
         - 
       pad: 0
-- httomolibgpu.misc.corr:
-    remove_outlier3d:
-      data_in: tomo
-      data_out: tomo
-      kernel_size: 3
-      dif: 0.1
-- httomolibgpu.misc.corr:
-    remove_outlier3d:
-      data_in: flats
-      data_out: flats
-      kernel_size: 3
-      dif: 0.1
-- httomolibgpu.misc.corr:
-    remove_outlier3d:
-      data_in: darks
-      data_out: darks
-      kernel_size: 3
-      dif: 0.1
-- httomolibgpu.prep.normalize:
-    normalize:
-      data_in: tomo
-      data_out: tomo
-      cutoff: 10.0
-      minus_log: true
-      nonnegativity: false
-      remove_nans: false
+--- # Pre-normalisation / pre-processing stage
 - httomolibgpu.recon.rotation:
     find_center_vo:
       data_in: tomo
@@ -46,6 +22,14 @@
       step: 0.25
       ratio: 0.5
       drop: 20
+--- # Main processing stage
+- httomolibgpu.prep.normalize:
+    normalize:
+      data_in: tomo
+      data_out: tomo
+      cutoff: 10.0
+      minus_log: true
+      nonnegativity: false
 - httomolibgpu.prep.stripe:
     remove_stripe_based_sorting:
       data_in: tomo
