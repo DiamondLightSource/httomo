@@ -1,0 +1,123 @@
+misc:
+  corr:
+    median_filter3d:
+      pattern: all
+      output_dims_change: False      
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [2.1]
+        - methods: [direct]
+    remove_outlier3d:
+      pattern: all
+      output_dims_change: False      
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [2.1]
+        - methods: [direct]
+  morph:
+    sino_360_to_180:
+      pattern: sinogram
+      output_dims_change: False      
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [2.2]
+        - methods: [direct]
+prep:
+  normalize:
+    normalize:
+      pattern: projection
+      output_dims_change: False      
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo, flats, darks]
+        - multipliers: [2, 1.075, 1.075]
+        - methods: [direct, direct, direct]
+  phase:
+    paganin_filter_tomopy:
+      pattern: projection
+      output_dims_change: False      
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
+    paganin_filter_savu:
+      pattern: projection
+      output_dims_change: False      
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
+  alignment:
+    distortion_correction_proj_discorpy:
+      pattern: projection
+      output_dims_change: False      
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [1.2]
+        - methods: [direct]
+  stripe:
+    remove_stripe_based_sorting:
+      pattern: sinogram
+      output_dims_change: False      
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [1.17]
+        - methods: [direct]
+    remove_stripe_ti:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
+recon:
+  algorithm:
+    FBP:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
+    SIRT:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [8]
+        - methods: [direct]
+    CGLS:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [10]
+        - methods: [direct]
+  rotation:
+    find_center_vo:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [0]
+        - methods: [direct]
+    find_center_360:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [0]
+        - methods: [direct]

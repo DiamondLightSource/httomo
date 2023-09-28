@@ -1,0 +1,9 @@
+- httomolibgpu.recon.algorithm:
+    SIRT:
+      data_in: tomo
+      data_out: tomo
+      center: null
+      recon_size: null
+      iterations: 300
+      nonnegativity: true
+      recon_mask_radius: null

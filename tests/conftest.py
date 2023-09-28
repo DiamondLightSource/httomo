@@ -4,9 +4,12 @@ import os
 import sys
 from pathlib import Path
 from shutil import rmtree
+import numpy as np
 
 import pytest
 import yaml
+
+CUR_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 def pytest_configure(config):
@@ -71,6 +74,70 @@ def standard_data():
     return "tests/test_data/tomo_standard.nxs"
 
 
+@pytest.fixture(scope="session")
+def test_data_path():
+    return os.path.join(CUR_DIR, "test_data")
+    
+# only load from disk once per session, and we use np.copy for the elements,
+# to ensure data in this loaded file stays as originally loaded
+@pytest.fixture(scope="session")
+def data_file(test_data_path):
+    in_file = os.path.join(test_data_path, "tomo_standard.npz")
+    # keys: data, flats, darks, angles, angles_total, detector_y, detector_x
+    return np.load(in_file)
+
+@pytest.fixture
+@pytest.mark.cupy
+def ensure_clean_memory():
+    import cupy as cp
+    cp.get_default_memory_pool().free_all_blocks()
+    cp.get_default_pinned_memory_pool().free_all_blocks()
+    cache = cp.fft.config.get_plan_cache()
+    cache.clear()
+    yield None
+    cp.get_default_memory_pool().free_all_blocks()
+    cp.get_default_pinned_memory_pool().free_all_blocks()
+    cache = cp.fft.config.get_plan_cache()
+    cache.clear()    
+
+
+@pytest.fixture
+def host_data(data_file):
+    return np.float32(np.copy(data_file["data"]))
+    
+    
+@pytest.fixture
+@pytest.mark.cupy
+def data(host_data, ensure_clean_memory):
+    import cupy as cp
+    return cp.asarray(host_data)
+
+@pytest.fixture
+def host_flats(data_file):
+    return np.float32(np.copy(data_file["flats"]))
+
+
+@pytest.fixture
+@pytest.mark.cupy
+def flats(host_flats, ensure_clean_memory):
+    import cupy as cp
+    return cp.asarray(host_flats)
+
+
+@pytest.fixture
+def host_darks(
+    data_file,
+):
+    return np.float32(np.copy(data_file["darks"]))
+
+
+@pytest.fixture
+@pytest.mark.cupy
+def darks(host_darks, ensure_clean_memory):
+    import cupy as cp
+    return cp.asarray(host_darks)
+
+
 @pytest.fixture
 def standard_data_path():
     return "/entry1/tomo_entry/data/data"
@@ -129,6 +196,10 @@ def sample_pipelines():
 @pytest.fixture
 def gpu_pipeline():
     return "samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
+
+@pytest.fixture(scope="session")
+def distortion_correction_path(test_data_path):
+    return os.path.join(test_data_path, "distortion-correction")
 
 
 @pytest.fixture

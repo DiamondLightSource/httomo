@@ -1,0 +1,8 @@
+- httomolibgpu.prep.alignment:
+    distortion_correction_proj_discorpy:
+      data_in: tomo
+      data_out: tomo
+      metadata_path: REQUIRED
+      preview: REQUIRED
+      order: 1
+      mode: reflect

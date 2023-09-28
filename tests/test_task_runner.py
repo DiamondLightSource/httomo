@@ -132,9 +132,9 @@ def test_determine_platform_sections_pattern_all_combine(
 
 
 def test_platform_section_max_slices():
-    max_slices_20 = mock.Mock(return_value=(20, np.float32(), (24, 42)))
-    max_slices_50 = mock.Mock(return_value=(50, np.float32(), (24, 42)))
-    max_slices_30 = mock.Mock(return_value=(30, np.float32(), (24, 42)))
+    data_shape = (1000, 24, 42)
+    dict_datasets_pipeline={}
+    dict_datasets_pipeline['tomo'] = np.float32(np.zeros(data_shape))
     section = PlatformSection(
         gpu=True,
         pattern=Pattern.projection,        
@@ -142,28 +142,20 @@ def test_platform_section_max_slices():
         max_slices=0,
         methods=[
             make_test_method(
-                pattern=Pattern.projection, gpu=True, calc_max_slices=max_slices_20
+                pattern=Pattern.projection, gpu=True, calc_max_slices=[{'datasets': ['tomo']}, {'multipliers': [1]}, {'methods': ['direct']}]
             ),
             make_test_method(
-                pattern=Pattern.projection, gpu=True, calc_max_slices=max_slices_50
+                pattern=Pattern.projection, gpu=True, calc_max_slices=[{'datasets': ['tomo']}, {'multipliers': [1]}, {'methods': ['direct']}]
             ),
             make_test_method(
-                pattern=Pattern.projection, gpu=True, calc_max_slices=max_slices_30
-            ),
-            make_test_method(
-                pattern=Pattern.projection, gpu=True, calc_max_slices=None
+                pattern=Pattern.projection, gpu=True, calc_max_slices=[{'datasets': ['tomo']}, {'multipliers': [1]}, {'methods': ['direct']}]
             ),
         ],
     )
     with mock.patch(
         "httomo.task_runner._get_available_gpu_memory", return_value=100000
     ):
-        output_dims,dtype = _update_max_slices(section, 0, (1000, 24, 42), np.uint8())
+        output_dims,dtype = _update_max_slices(section, 0, data_shape, np.float32(), dict_datasets_pipeline)
 
-    assert section.max_slices == 20
+    assert output_dims == data_shape
     assert dtype == np.float32()
-    # this also checks if the data type is respected - we give uint8 as input,
-    # it returns float32, and the subsequent methods get the float32 as input
-    max_slices_20.assert_called_once_with(0, (24, 42), np.uint8(), 100000)
-    max_slices_30.assert_called_once_with(0, (24, 42), np.float32(), 100000)
-    max_slices_50.assert_called_once_with(0, (24, 42), np.float32(), 100000)

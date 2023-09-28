@@ -40,6 +40,10 @@ def prerun_method(
     if section.methods[run_method_info.task_idx].return_numpy:
         run_method_info.dict_httomo_params['return_numpy'] = True
     
+    # if the method uses CuPy API
+    if section.methods[run_method_info.task_idx].cupyrun:
+        run_method_info.dict_httomo_params['cupyrun'] = True
+    
     # Get the information describing if the method is being run only
     # once, or multiple times with different input datasets
     #
@@ -68,7 +72,7 @@ def prerun_method(
                
     if save_res or save_all:
         run_method_info.save_result = True
-        run_method_info.dict_httomo_params['return_numpy'] = True        
+        run_method_info.dict_httomo_params['return_numpy'] = True
 
     # check if global stats is requested in dict_params_method
     try:

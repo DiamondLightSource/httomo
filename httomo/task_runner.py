@@ -36,7 +36,7 @@ from httomo.utils import (
     log_once,
     remove_ansi_escape_sequences,
 )
-from httomo.wrappers_class import HttomolibWrapper, HttomolibgpuWrapper, TomoPyWrapper, _gpumem_cleanup
+from httomo.wrappers_class import BackendWrapper, _gpumem_cleanup
 from httomo.yaml_utils import open_yaml_config
 
 
@@ -98,10 +98,22 @@ def run_tasks(
 
     # Associate patterns to method function objects
     for i, method_func in enumerate(method_funcs):
-        method_funcs[i] = _assign_pattern_to_method(method_func)
+        method_funcs[i] = _assign_attribute_to_method(method_func, "pattern")        
+
+    # Associate output_dims_change method attribute to method function objects
+    for i, method_func in enumerate(method_funcs):
+         method_funcs[i] = _assign_attribute_to_method(method_func, "output_dims_change")
+
+    # Associate implementation architectures to method function objects
+    for i, method_func in enumerate(method_funcs):
+         method_funcs[i] = _assign_attribute_to_method(method_func, "implementation")
+
+    # Associate memory attributes to method function objects
+    for i, method_func in enumerate(method_funcs):
+         method_funcs[i] = _assign_attribute_to_method(method_func, "memory_gpu")
 
     # Initialising platform sections (skipping loader)
-    platform_sections = _determine_platform_sections(method_funcs[1:], save_all)
+    platform_sections = _determine_platform_sections(method_funcs[1:], save_all)    
 
     # Check pipeline for the number of parameter sweeps present. If one is
     # defined, raise an error, due to not supporting parameter sweeps in a
@@ -182,6 +194,7 @@ def run_tasks(
         (["comm"], comm),
         (["out_dir"], httomo.globals.run_out_dir),
         (["return_numpy"], False),
+        (["cupyrun"], False),
     ]
     # data shape and dtype are useful when calculating max slices
     data_shape = dict_datasets_pipeline[method_funcs[0].parameters["name"]].shape
@@ -228,7 +241,7 @@ def run_tasks(
         slc_indices = [slice(None)] * len(data_shape)             
         for it_blocks in range(iterations_for_blocks):
             # preparing indices for the slicing of the data in blocks
-            slc_indices[slicing_dim_section] = slice(indices_start, indices_end, 1)
+            slc_indices[slicing_dim_section] = slice(int(indices_start), int(indices_end), 1)
 
             ##---------- LOOP OVER _METHODS_ IN THE BLOCK ------------##
             for m_ind, methodfunc_sect in enumerate(section.methods):
@@ -380,7 +393,7 @@ def run_tasks(
                 data_full_section[tuple(slc_indices)] = res
             else:
                 if recon_arr.shape[0] != res.shape[0]:
-                    # TomoPy returns reconstruction in a different shape from httomolibgpu                    
+                    # TomoPy returns reconstruction in a different shape from httomolibgpu
                     recon_arr[tuple(slc_indices)] = xp.swapaxes(res,0,1)
                 else:
                     recon_arr[tuple(slc_indices)] = res
@@ -390,7 +403,7 @@ def run_tasks(
             # checking if we still within the slicing dimension size and take remaining portion
             res_indices = (indices_start + int(section.max_slices)) - data_shape[slicing_dim_section] 
             if res_indices > 0:
-                res_indices = int(section.max_slices) - res_indices
+                res_indices = int(section.max_slices - res_indices)
                 indices_end += res_indices
             else:
                 indices_end += section.max_slices
@@ -560,19 +573,15 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
             log_exception(err_str)
             raise ValueError(err_str)
 
-        module_to_wrapper = {
-            "tomopy": TomoPyWrapper,
-            "httomolib": HttomolibWrapper,
-            "httomolibgpu": HttomolibgpuWrapper,
-        }
-        wrapper_init_module = module_to_wrapper[split_module_name[0]](
-            split_module_name[1], split_module_name[2], method_name, comm
+        wrapper_init_module = BackendWrapper(
+            split_module_name[0],
+            split_module_name[1],
+            split_module_name[2],
+            method_name,
+            comm
         )
         wrapper_func = getattr(wrapper_init_module.module, method_name)
-        wrapper_method = wrapper_init_module.wrapper_method
-        is_tomopy = split_module_name[0] == "tomopy"
-        is_httomolib = split_module_name[0] == "httomolib"
-        is_httomolibgpu = split_module_name[0] == "httomolibgpu"        
+        wrapper_method = wrapper_init_module.wrapper_method    
         
         method_funcs.append(
             MethodFunc(
@@ -580,11 +589,11 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 method_func=wrapper_func,
                 wrapper_func=wrapper_method,
                 parameters=method_conf,
-                cpu=True if not is_httomolibgpu else wrapper_init_module.meta.cpu,
-                gpu=False if not is_httomolibgpu else wrapper_init_module.meta.gpu,
-                calc_max_slices=None
-                if not is_httomolibgpu
-                else wrapper_init_module.calc_max_slices,
+                cpu=True,
+                gpu=False,
+                cupyrun=False,
+                calc_max_slices=None,
+                output_dims_change = False,
                 pattern=Pattern.all,
                 is_loader=False,
                 return_numpy=False,
@@ -592,8 +601,6 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 global_statistics=False,
             )
         )
-        
-
     return method_funcs
 
 def _check_params_for_sweep(params: Dict) -> int:
@@ -607,41 +614,75 @@ def _check_params_for_sweep(params: Dict) -> int:
     return count
 
 
-def _assign_pattern_to_method(
+def _assign_attribute_to_method(
     method_function: MethodFunc,
+    attribute: str,
     ) -> MethodFunc:
-    """Fetch the pattern information from the methods database in
+    """Fetch the information about a given attribute from the methods database in
     `httomo/methods_database/packages` for the given method and associate that
-    pattern with the function object.
+    with the function object.
 
     Parameters
     ----------
     method_function : MethodFunc
-        The method function information whose pattern information will be fetched and populated.    
+        The method function to populate.
+    attribute: str
+        A given attribute of a method, e.g. "pattern", "implementation", etc. 
     Returns
     -------
     MethodFunc
-        The function information `pattern` attribute set, corresponding to the
-        pattern that the method requires its input data to have.
+        The updated function object
     """
-    pattern_str = get_method_info(
-        method_function.module_name, method_function.method_func.__name__, "pattern"
-    )
-    if pattern_str == "projection":
-        pattern = Pattern.projection
-    elif pattern_str == "sinogram":
-        pattern = Pattern.sinogram
-    elif pattern_str == "all":
-        pattern = Pattern.all
+    if attribute in ["pattern", "implementation", "memory_gpu", "output_dims_change"]:
+        attribute_value = get_method_info(
+            method_function.module_name, method_function.method_func.__name__, attribute)
+        if attribute == "pattern":
+            if attribute_value in ["projection", "sinogram", "all"]:  
+                if attribute_value == "projection":
+                    pattern_upd = Pattern.projection
+                if attribute_value == "sinogram":
+                    pattern_upd = Pattern.sinogram
+                if attribute_value == "all":
+                    pattern_upd = Pattern.all
+                method_function = dataclasses.replace(method_function, pattern=pattern_upd)
+            else:
+                err_str = (
+                    f"The pattern {attribute_value} that is listed for the method "
+                    f"{method_function.module_name} is invalid."
+                )
+                log_exception(err_str)
+                raise ValueError(err_str)
+        if attribute == "implementation":
+            if attribute_value in ["cpu", "gpu", "gpu_cupy"]:
+                # as "cpu" is switched by default we need to consider GPU cases here only                
+                if attribute_value in ["gpu", "gpu_cupy"]:
+                    method_function = dataclasses.replace(method_function, cpu=False)
+                    method_function = dataclasses.replace(method_function, gpu=True)
+                    if attribute_value == "gpu_cupy":
+                        method_function = dataclasses.replace(method_function, cupyrun=True)
+            else:
+                err_str = (
+                    f"The implementation arch {attribute_value} that is listed for the method "
+                    f"{method_function.module_name} is invalid."
+                )
+                log_exception(err_str)
+                raise ValueError(err_str)
+        if attribute == "memory_gpu":
+            if attribute_value != 'None':
+                # memory gpu is active and needs to be calculated, saving params
+                method_function = dataclasses.replace(method_function, calc_max_slices=attribute_value)
+        if attribute == "output_dims_change":
+            if attribute_value:
+                method_function = dataclasses.replace(method_function, output_dims_change=True)
     else:
         err_str = (
-            f"The pattern {pattern_str} that is listed for the method "
+            f"The attribute {attribute} that is listed for the method "
             f"{method_function.module_name} is invalid."
         )
         log_exception(err_str)
-        raise ValueError(err_str) 
+        raise ValueError(err_str)
     
-    return dataclasses.replace(method_function, pattern=pattern)
+    return method_function
 
 
 def _determine_platform_sections(
@@ -714,8 +755,6 @@ def _determine_platform_sections(
             gpu=current_gpu, pattern=current_pattern, reslice=False, max_slices=0, methods=methods
         )
     )
-    # first we need to check if there are any sections with pattern "all" and inherit
-    # the pattern from the previous section
     for i, section_current in enumerate(section):                   
         for m_ind, methodfunc_sect in enumerate(section_current.methods):
             if m_ind == len(section_current.methods) - 1:
@@ -738,10 +777,13 @@ def _determine_platform_sections(
     # we need to check if the reslice needed _after_ the section is complete
     for i, section_current in enumerate(section):
         # and we don't need to reslice for the last section
-        if i < len(section) - 1:            
+        if i < len(section) - 1:   
             if section_current.pattern.name != section[i+1].pattern.name and section[i+1].pattern.name != 'all':
                 # check that the pattern changed but exclude the case when next pattern is "all"
                 section[i].reslice = True
+            if i == 0 and section_current.pattern.name == 'all':
+                # if the first section has "all" pattern we skip the reslice 
+                section[i].reslice = False
     return section
 
 
@@ -778,48 +820,71 @@ def _update_max_slices(
     nsl_dim_l.pop(slicing_dim_section)
     non_slice_dims_shape = tuple(nsl_dim_l)
     max_slices = process_data_shape[slicing_dim_section]
-    data_type = input_data_type
-    output_dims = non_slice_dims_shape
+    data_type = input_data_type # initialisation of data_type
+    output_dims = non_slice_dims_shape # initialisation of dims
     if section.gpu:
-        available_memory = _get_available_gpu_memory(10.0)
+        available_memory = int(_get_available_gpu_memory(10.0))
         available_memory_in_GB = round(available_memory / (1024**3), 2)
         memory_str = f"The amount of the available GPU memory is {available_memory_in_GB} GB"
         log_once(memory_str, comm=comm, colour=Colour.BVIOLET, level=1)
         max_slices_methods = [max_slices] * len(section.methods)
-        idx = 0
-        for m in section.methods:
-            if m.calc_max_slices is not None:
-                if m.parameters['method_name'] == "normalize":
-                    # the memory estimators for normalization do not take into account the memory 
-                    # required for darks and flats to be stored. We need to explicitly calculate it here.
-                    flats_bytes = 0
-                    darks_bytes = 0
-                    if dict_datasets_pipeline['flats'] is not None:
-                        flats_bytes = np.prod(np.shape(dict_datasets_pipeline['flats'])) * np.float32().nbytes
-                    if dict_datasets_pipeline['darks'] is not None:
-                        darks_bytes = np.prod(np.shape(dict_datasets_pipeline['darks'])) * np.float32().nbytes
-                    available_memory -= darks_bytes + flats_bytes
-                (slices_estimated, data_type, output_dims) = m.calc_max_slices(
-                    slicing_dim_section, non_slice_dims_shape, data_type, available_memory
-                )
-                max_slices_methods[idx] = min(max_slices, slices_estimated)
-                idx += 1
-            non_slice_dims_shape = (
-                output_dims  # overwrite input dims with estimated output ones
-            )
+    
+    idx = 0
+    # loop over all methods in section
+    for m in section.methods:        
+        if m.output_dims_change:
+            # the "non_slice_dims_shape" needs to be changed for the current method
+            module_mem_path = "httomo.methods_database.packages.external."
+            for n_ind, module_str in enumerate(m.module_name.split(".")):
+                if n_ind == 0:
+                    module_mem_path += m.module_name.split(".")[0] + ".supporting_funcs"
+                else:
+                    module_mem_path += "."
+                    module_mem_path += m.module_name.split(".")[n_ind]
+            module_mem = getattr(import_module(module_mem_path), "_calc_output_dim_"+m.parameters['method_name'])                
+            output_dims = module_mem(non_slice_dims_shape, **m.parameters)        
+        if section.gpu:
+            if m.calc_max_slices != 'None':
+                # the gpu memory needs to be estimated for the given method
+                memory_bytes_method = 1
+                for i, dst in enumerate(m.calc_max_slices[0]['datasets']):
+                    subtract_bytes = 0
+                    # loop over the dataset names given in the library file and extracting 
+                    # the corresponding dimensions from the available datasets                    
+                    if dst in ["flats", "darks"]:
+                        # for normalisation module dealing with flats and darks separately
+                        df_bytes = np.prod(np.shape(dict_datasets_pipeline[dst])) * data_type.itemsize
+                        available_memory -= int(m.calc_max_slices[1]['multipliers'][i] * df_bytes)
+                    else:
+                        # deal with the rest of the data                        
+                        if m.calc_max_slices[2]['methods'][i] == 'direct':
+                            # this calculation assumes a direct (simple) correspondence through multiplier
+                            memory_bytes_method += int(m.calc_max_slices[1]['multipliers'][i] * np.prod(non_slice_dims_shape) * data_type.itemsize)
+                        else:
+                            # this requires more complicated memory calculation using the function that exists in methods_database of httomo
+                            # building up path to the function here:                     
+                            module_mem_path = "httomo.methods_database.packages.external."       
+                            for n_ind, module_str in enumerate(m.module_name.split(".")):
+                                if n_ind == 0:
+                                    module_mem_path += m.module_name.split(".")[0] + ".supporting_funcs"
+                                else:
+                                    module_mem_path += "."
+                                    module_mem_path += m.module_name.split(".")[n_ind]
+                            module_mem = getattr(import_module(module_mem_path), "_calc_memory_bytes_" + m.parameters['method_name'])
+                            (memory_bytes_method, subtract_bytes) = module_mem(non_slice_dims_shape, data_type, **m.parameters)
+
+                slices_estimated = (available_memory - subtract_bytes) // memory_bytes_method
+            else:
+                slices_estimated = max_slices            
+            max_slices_methods[idx] = min(max_slices, slices_estimated)            
+            idx += 1
+        non_slice_dims_shape = output_dims # overwrite input dims with estimated output ones
+                
+    if section.gpu:
         section.max_slices = min(max_slices_methods)
     else:
+        # non - gpu modules
         section.max_slices = max_slices
-        # NOTE: although there is also no direct way to know out data type for other backends, 
-        # such as TomoPy, the problem of the output shape is the most significant. 
-        # After tomopy recon the data has changed its shape and if we to run methods
-        # from httomolibgpu library, the calculation of slices will be incorrect!
-        
-        # therefore those changes are temporary to deal with the issue above
-        for m in section.methods:
-            if m.parameters['method_name'] == "recon":
-                output_dims = (output_dims[1],output_dims[1])
-        pass
     # we need to return the full output_dims for the sections loop
     output_dims_l = list(output_dims)
     output_dims_l.insert(slicing_dim_section, max_slices)

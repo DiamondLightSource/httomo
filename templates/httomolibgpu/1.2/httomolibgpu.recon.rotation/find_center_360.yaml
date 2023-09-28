@@ -1,0 +1,14 @@
+- httomolibgpu.recon.rotation:
+    find_center_360:
+      data_in: tomo
+      data_out:
+      - cor
+      - overlap
+      - side
+      - overlap_position
+      ind: null
+      win_width: 10
+      side: null
+      denoise: true
+      norm: false
+      use_overlap: false

@@ -1,0 +1,8 @@
+- httomolibgpu.prep.normalize:
+    normalize:
+      data_in: tomo
+      data_out: tomo
+      cutoff: 10.0
+      minus_log: false
+      nonnegativity: false
+      remove_nans: false
