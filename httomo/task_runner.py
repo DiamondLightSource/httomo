@@ -240,14 +240,14 @@ def run_tasks(
         dict_datasets_pipeline[centering_out_name] = cor
     
     # data shape and dtype are useful when calculating max slices
-    data_shape = dict_datasets_pipeline[method_funcs[0].parameters["name"]].shape
+    data_shape = dict_datasets_pipeline[loader_run_info.params["name"]].shape
     # data_dtype = loader_info.data.dtype
     data_dtype = np.dtype(np.float32) # make the data type constant for the run
     
     ##---------- MAIN LOOP STARTS HERE ------------##
     idx = 0
     # initialise the CPU data array with the loaded data, we override it at the end of every section
-    data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
+    data_full_section = dict_datasets_pipeline[loader_run_info.params["name"]]
     for i, section in enumerate(platform_sections):  
         # getting the slicing dimension of the section
         slicing_dim_section = _get_slicing_dim(section.pattern) - 1        
@@ -465,7 +465,7 @@ def run_tasks(
         # `dict_datasets_pipeline`
         # - the `data_full_section` variable
         if contains_recon:
-            dict_datasets_pipeline[method_funcs[0].parameters["name"]] = \
+            dict_datasets_pipeline[loader_run_info.params["name"]] = \
                 recon_arr
             data_full_section = recon_arr
         
