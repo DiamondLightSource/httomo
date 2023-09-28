@@ -120,7 +120,7 @@ def run_tasks(
          method_funcs[i] = _assign_attribute_to_method(method_func, "memory_gpu")
 
     # Initialising platform sections (skipping loader)
-    platform_sections = _determine_platform_sections(method_funcs[1:], save_all)    
+    platform_sections = _determine_platform_sections(method_funcs, save_all)
 
     # Check pipeline for the number of parameter sweeps present. If one is
     # defined, raise an error, due to not supporting parameter sweeps in a
