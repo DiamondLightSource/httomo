@@ -62,9 +62,17 @@ prep:
         - multipliers: [1.2]
         - methods: [direct]
   stripe:
+    remove_all_stripe:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [2]
+        - methods: [direct]
     remove_stripe_based_sorting:
       pattern: sinogram
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]

@@ -17,7 +17,7 @@ from httomo.methods_database.query import get_method_info
 from httomolibgpu.prep.normalize import normalize
 from httomolibgpu.prep.phase import paganin_filter_tomopy, paganin_filter_savu
 from httomolibgpu.prep.alignment import distortion_correction_proj_discorpy
-from httomolibgpu.prep.stripe import remove_stripe_based_sorting, remove_stripe_ti
+from httomolibgpu.prep.stripe import remove_stripe_based_sorting, remove_stripe_ti, remove_all_stripe
 from httomolibgpu.recon.algorithm import FBP, SIRT, CGLS
 
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.phase import *
@@ -264,6 +264,36 @@ def test_remove_stripe_ti_memoryhook(slices, ensure_clean_memory):
     # the resulting percent value should not deviate from max_mem on more than 20%    
     assert estimated_memory_mb >= max_mem_mb 
     assert percents_relative_maxmem <= 20
+
+
+@pytest.mark.cupy
+#@pytest.mark.parametrize("slices", [64, 129, 258])
+#@pytest.mark.parametrize("dim_x", [510, 300, 100])
+#@pytest.mark.parametrize("dim_y", [128, 257, 511])
+@pytest.mark.parametrize("angles", [1800])
+@pytest.mark.parametrize("dim_x_slices", [1])
+@pytest.mark.parametrize("dim_y", [2560])
+def test_remove_all_stripe_memoryhook(angles, dim_x_slices, dim_y, ensure_clean_memory):    
+    data = cp.random.random_sample((angles, dim_x_slices, dim_y), dtype=np.float32)
+    hook = MaxMemoryHook()
+    with hook:
+        data_filtered = remove_all_stripe(cp.copy(data)).get()
+
+    # make sure estimator function is within range (80% min, 100% max)
+    max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook
+    max_mem_mb = round(max_mem / (1024**2), 2) # now in mbs
+    
+    # now we estimate how much of the total memory required for this data
+    library_info = get_method_info("httomolibgpu.prep.stripe", "remove_all_stripe", "memory_gpu")
+    estimated_memory_bytes = library_info[1]['multipliers'][0] * np.prod(cp.shape(data)) * float32().nbytes
+    estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
+    # now we compare both memory estimations 
+    difference_mb = abs(estimated_memory_mb - max_mem_mb)
+    percents_relative_maxmem = round((difference_mb/max_mem_mb)*100)
+    # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
+    # the resulting percent value should not deviate from max_mem on more than 20%    
+    assert estimated_memory_mb >= max_mem_mb 
+    assert percents_relative_maxmem <= 20 
     
 @pytest.mark.cupy
 @pytest.mark.parametrize("slices", [3, 5, 8])
