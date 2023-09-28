@@ -749,8 +749,6 @@ def _determine_platform_sections(
             gpu=current_gpu, pattern=current_pattern, reslice=False, max_slices=0, methods=methods
         )
     )
-    # first we need to check if there are any sections with pattern "all" and inherit
-    # the pattern from the previous section
     for i, section_current in enumerate(section):                   
         for m_ind, methodfunc_sect in enumerate(section_current.methods):
             if m_ind == len(section_current.methods) - 1:
@@ -773,10 +771,13 @@ def _determine_platform_sections(
     # we need to check if the reslice needed _after_ the section is complete
     for i, section_current in enumerate(section):
         # and we don't need to reslice for the last section
-        if i < len(section) - 1:            
+        if i < len(section) - 1:   
             if section_current.pattern.name != section[i+1].pattern.name and section[i+1].pattern.name != 'all':
                 # check that the pattern changed but exclude the case when next pattern is "all"
                 section[i].reslice = True
+            if i == 0 and section_current.pattern.name == 'all':
+                # if the first section has "all" pattern we skip the reslice 
+                section[i].reslice = False
     return section
 
 

@@ -295,10 +295,11 @@ class BackendWrapper(BaseWrapper):
             )
             # deal with special cases 
             if function_name == "normalize":
-                func = getattr(self.module, method_name)
-                sig_params = signature(func).parameters
-                if "darks" or "dark" in sig_params and "flats" or "flat" in sig_params:
-                    self.wrapper_method = super()._execute_normalize
+                if method_name != "minus_log":
+                    func = getattr(self.module, method_name)
+                    sig_params = signature(func).parameters
+                    if "darks" or "dark" in sig_params and "flats" or "flat" in sig_params:
+                        self.wrapper_method = super()._execute_normalize
             if function_name == "algorithm":
                 self.wrapper_method = super()._execute_reconstruction
             if function_name == "rotation":

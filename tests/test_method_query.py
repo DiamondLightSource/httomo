@@ -1,4 +1,4 @@
-from httomo.methods_database.query import get_httomolibgpu_method_meta, get_method_info
+from httomo.methods_database.query import get_method_info
 import pytest
 
 
@@ -32,25 +32,14 @@ def test_httomolibgpu_pattern():
     assert pat == "projection"
 
 
-def test_httomolibgpu_gpu_cpu():
-    assert get_method_info("httomolibgpu.prep.normalize", "normalize", "gpu") is True
-    assert get_method_info("httomolibgpu.prep.normalize", "normalize", "cpu") is False
+def test_httomolibgpu_implementation():
+    implementation  =  get_method_info("httomolibgpu.prep.normalize", "normalize", "implementation")
+    assert implementation == "gpu_cupy"
 
+def test_httomolibgpu_output_dims_change():
+    output_dims_change  =  get_method_info("httomolibgpu.prep.normalize", "normalize", "output_dims_change")
+    assert output_dims_change == False
 
-def test_httomolibgpu_memfunc():
-    assert callable(
-        get_method_info("httomolibgpu.prep.normalize", "normalize", "calc_max_slices")
-    )
-
-
-def test_httomolibgpu_meta():
-    from httomolibgpu import MethodMeta
-
-    assert isinstance(
-        get_httomolibgpu_method_meta("prep.normalize.normalize"), MethodMeta
-    )
-
-
-def test_httomolibgpu_meta_incomplete_path():
-    with pytest.raises(ValueError, match="not resolving"):
-        get_httomolibgpu_method_meta("prep.normalize")
+def test_httomolibgpu_memory_gpu():
+    memory_gpu  =  get_method_info("httomolibgpu.prep.normalize", "normalize", "memory_gpu")
+    assert len(memory_gpu) == 3
