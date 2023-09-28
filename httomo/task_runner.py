@@ -205,6 +205,8 @@ def run_tasks(
             dezinging_preproc_idx = i
 
     if dezinging_preproc_idx is not None:
+        dezing_preproc_str = f"Running pre-processing: {pre_process_infos[dezinging_preproc_idx].method_name}"
+        log_once(dezing_preproc_str, comm=comm, colour=Colour.BLUE, level=0)
         dict_datasets_pipeline[loader_run_info.params["name"]] = \
             httomo.preprocess.dezinging(
                 dict_datasets_pipeline[loader_run_info.params["name"]],
@@ -221,6 +223,8 @@ def run_tasks(
                 pre_process_infos[dezinging_preproc_idx]
             )
 
+    centering_preproc_str = f"Running pre-processing: {pre_process_infos[centering_preproc_idx].method_name}"
+    log_once(centering_preproc_str, comm=comm, colour=Colour.BLUE, level=0)
     cor = httomo.preprocess.centering(
         dict_datasets_pipeline[loader_run_info.params["name"]],
         dict_datasets_pipeline["darks"],
