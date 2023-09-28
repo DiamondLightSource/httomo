@@ -111,8 +111,6 @@ class PipelineReader:
             split_module_name = module_name.split(".")
             method_name, method_conf = module_conf.popitem()
             method_conf["method_name"] = method_name
-            method_conf.pop("data_in", None)
-            method_conf.pop("data_out", None)
 
             if split_module_name[0] not in ["tomopy", "httomolib", "httomolibgpu"]:
                 err_str = (
