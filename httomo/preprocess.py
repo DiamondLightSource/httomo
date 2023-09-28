@@ -4,7 +4,7 @@ loop over GPU blocks has started.
 
 For example: Centering, Dezingering for multidata, etc. 
 """
-from typing import Tuple, Union
+from typing import Any, Tuple, TypeAlias, Union
 
 import numpy as np
 from mpi4py import MPI
@@ -14,13 +14,32 @@ from httomo.common import PreProcessInfo
 from httomo.data.hdf._utils.reslice import single_sino_reslice
 
 
-def preprocess_data(
-    projs: np.ndarray,
-    darks: np.ndarray,
-    flats: np.ndarray,
+Centering180Result: TypeAlias = float
+Centering360Result: TypeAlias = Tuple[float, float, float]
+
+
+def dezinging(
+    data: np.ndarray[Any, np.dtype[np.float32]],
+    preproc_info: PreProcessInfo,
+) -> np.ndarray[Any, np.dtype[np.float32]]:
+
+    param_filter = ("method_name")
+
+    return preproc_info.wrapper_func(
+        preproc_info.method_name,
+        {k:preproc_info.params[k] for k in preproc_info.params.keys() - param_filter},
+        data,
+        return_numpy=True,
+    )
+
+
+def centering(
+    projs: np.ndarray[Any, np.dtype[np.float32]],
+    darks: np.ndarray[Any, np.dtype[np.float32]],
+    flats: np.ndarray[Any, np.dtype[np.float32]],
     centering_method_info: PreProcessInfo,
     comm: MPI.Comm,
-) -> Union[float, Tuple[float, float, float, float]]:
+) -> Union[Centering180Result, Centering360Result]:
     """_summary_
 
     Args:
@@ -34,10 +53,10 @@ def preprocess_data(
         Union[float, Tuple[float, float, float, float]]: result from regular
             centering, or 360 centering
     """
-    sino_slice, slice_for_cor = get_sino(projs, centering_method_info.params['ind'])
+    sino_slice, slice_for_cor = _get_sino(projs, centering_method_info.params['ind'])
 
     if comm.rank == 0:
-        sino_slice = normalise_sino(
+        sino_slice = _normalise_sino(
             sino_slice,
             flats[:,slice_for_cor,:],
             darks[:,slice_for_cor,:],
@@ -54,12 +73,12 @@ def preprocess_data(
     else:
         res = None
 
-    res = comm.bcast(res, root=0)
+    res: Union[Centering180Result, Centering360Result] = comm.bcast(res, root=0)
     return res
 
 
-def get_sino(
-    data: np.ndarray,
+def _get_sino(
+    data: np.ndarray[Any, np.dtype[np.float32]],
     idx: str,
 ) -> Tuple[np.ndarray, int]:
     if idx == "mid" or idx is None:
@@ -71,11 +90,11 @@ def get_sino(
     return sino_slice, slice_for_cor
 
 
-def normalise_sino(
-    sino: np.ndarray,
-    flats: np.ndarray,
-    darks: np.ndarray,
-) -> np.ndarray:
+def _normalise_sino(
+    sino: np.ndarray[Any, np.dtype[np.float32]],
+    flats: np.ndarray[Any, np.dtype[np.float32]],
+    darks: np.ndarray[Any, np.dtype[np.float32]],
+) -> np.ndarray[Any, np.dtype[np.float32]]:
     if flats is not None:
         flats1d = np.float32(np.mean(flats, 0))
     else:

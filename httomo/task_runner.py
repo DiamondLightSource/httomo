@@ -20,6 +20,7 @@ from httomo.utils import gpu_enabled, xp
 from httomo.data.mpiutil import local_rank
 
 import httomo.globals
+import httomo.preprocess
 from httomo._stats.globals import min_max_mean_std
 from httomo.common import LoaderInfo, MethodFunc, PlatformSection, PreProcessInfo, ResliceInfo, RunMethodInfo
 from httomo.data.hdf._utils.chunk import get_data_shape, save_dataset
@@ -29,7 +30,6 @@ from httomo.data.hdf.loaders import LoaderData
 from httomo.methods_database.query import get_method_info
 from httomo.postrun import postrun_method
 from httomo.prerun import prerun_method
-from httomo.preprocess import preprocess_data
 from httomo.utils import (
     Colour,
     Pattern,
@@ -200,14 +200,33 @@ def run_tasks(
         (["save_result"], False),
     ]  
 
+    dezinging_preproc_idx: Optional[int] = None
     for i, preproc in enumerate(pre_process_infos):
         if "center" in preproc.method_name:
             centering_preproc_idx = i
             centering_out_name = preproc.params["data_out"]
-            break
 
-    # Execute methods in pre-processing stage of pipeline file
-    res = preprocess_data(
+        if "remove_outlier3d" in preproc.method_name:
+            dezinging_preproc_idx = i
+
+    if dezinging_preproc_idx is not None:
+        dict_datasets_pipeline[loader_run_info.params["name"]] = \
+            httomo.preprocess.dezinging(
+                dict_datasets_pipeline[loader_run_info.params["name"]],
+                pre_process_infos[dezinging_preproc_idx]
+            )
+        dict_datasets_pipeline["darks"] = \
+            httomo.preprocess.dezinging(
+                dict_datasets_pipeline["darks"],
+                pre_process_infos[dezinging_preproc_idx]
+            )
+        dict_datasets_pipeline["flats"] = \
+            httomo.preprocess.dezinging(
+                dict_datasets_pipeline["flats"],
+                pre_process_infos[dezinging_preproc_idx]
+            )
+
+    cor = httomo.preprocess.centering(
         dict_datasets_pipeline[loader_run_info.params["name"]],
         dict_datasets_pipeline["darks"],
         dict_datasets_pipeline["flats"],
@@ -217,13 +236,13 @@ def run_tasks(
 
     # Store the output(s) of the method in the appropriate
     # dataset in the `dict_datasets_pipeline` dict
-    if isinstance(res, (tuple, list)):
+    if isinstance(cor, (tuple, list)):
         # The method produced multiple outputs
-        for val, dataset in zip(res, centering_out_name):
+        for val, dataset in zip(cor, centering_out_name):
             dict_datasets_pipeline[dataset] = val
     else:
         # The method produced a single output
-        dict_datasets_pipeline[centering_out_name] = res
+        dict_datasets_pipeline[centering_out_name] = cor
     
     # data shape and dtype are useful when calculating max slices
     data_shape = dict_datasets_pipeline[method_funcs[0].parameters["name"]].shape

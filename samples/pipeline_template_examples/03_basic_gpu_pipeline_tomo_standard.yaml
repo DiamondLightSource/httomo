@@ -11,6 +11,10 @@
         - 
       pad: 0
 --- # Pre-normalisation / pre-processing stage
+- httomolibgpu.misc.corr:
+    remove_outlier3d:
+      kernel_size: 3
+      dif: 0.1
 - httomolibgpu.recon.rotation:
     find_center_vo:
       data_in: tomo
