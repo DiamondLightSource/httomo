@@ -51,6 +51,8 @@ class PipelineReader:
         module = import_module(module_name)
         method_func = getattr(module, method_name)
         method_conf.update(extra_params)
+        if "preview" not in method_conf.keys():
+            method_conf["preview"] = [None]
         return LoaderInfo(
             params=method_conf,
             method_name=method_name,

@@ -149,11 +149,6 @@ def run_tasks(
         colour=Colour.CYAN,
         level=0,
     )
-
-    # Check if a value for the `preview` parameter of the loader has
-    # been provided
-    if "preview" not in method_funcs[0].parameters.keys():
-        method_funcs[0].parameters["preview"] = [None]
     
     output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
     output_colour_list_short = [Colour.GREEN, Colour.CYAN]
