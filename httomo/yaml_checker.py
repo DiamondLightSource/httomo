@@ -7,7 +7,6 @@ from typing import Any, Optional
 import h5py
 import yaml
 
-from httomo.pipeline_reader import PipelineConfig
 from httomo.utils import Colour
 from httomo.yaml_loader import YamlLoader
 from httomo.yaml_utils import get_external_package_current_version
@@ -19,10 +18,7 @@ __all__ = [
 ]
 
 
-def sanity_check(
-        yaml_file: str,
-        loader: type[YamlLoader]
-) -> Optional[PipelineConfig]:
+def sanity_check(yaml_file: str, loader: type[YamlLoader]) -> bool:
     """
     Check if the yaml file is properly indented, has valid mapping and tags.
     """
@@ -32,43 +28,45 @@ def sanity_check(
     )
     try:
         with open(yaml_file, "r") as f:
-            yaml_data = list(yaml.load_all(f, Loader=loader))
+            list(yaml.load_all(f, Loader=loader))
 
         _print_with_colour(
             "Sanity check of the YAML_CONFIG was successfully done...\n",
             colour=Colour.GREEN,
         )
-        return yaml_data
+        return True
     except yaml.parser.ParserError as e:
         line = e.problem_mark.line
         _print_with_colour(
             f"Incorrect indentation in the YAML_CONFIG file at line {line}. "
             "Please recheck the indentation of the file."
         )
+        return False
     except yaml.scanner.ScannerError as e:
         _print_with_colour(
             f"Incorrect mapping in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
         )
+        return False
     except yaml.constructor.ConstructorError as e:
         _print_with_colour(
             f"Invalid tag in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
         )
+        return False
     except yaml.reader.ReaderError as e:
         _print_with_colour(
             f"Failed to parse YAML file at line {e.problem_mark.line + 1}: {e}"
         )
+        return False
     except yaml.YAMLError as e:
         if hasattr(e, "problem_mark"):
             _print_with_colour(
                 f"Error in the YAML_CONFIG file at line {e.problem_mark.line}. "
                 "Please recheck the file."
             )
+        return False
 
 
-def check_all_stages_defined(
-        yaml_file: str,
-        loader: type[YamlLoader]
-) -> Optional[PipelineConfig]:
+def check_all_stages_defined(yaml_file: str, loader: type[YamlLoader]) -> bool:
     """
     Check if all three stages are defined in the YAML (loading, pre-processing,
     main processing).
@@ -85,14 +83,11 @@ def check_all_stages_defined(
             "2) pre-processing\n"
             "3) main processing\n"
         )
-        return
-    return yaml_data
+        return False
+    return True
 
 
-def check_all_stages_non_empty(
-        yaml_file: str,
-        loader: type[YamlLoader]
-) -> Optional[PipelineConfig]:
+def check_all_stages_non_empty(yaml_file: str, loader: type[YamlLoader]) -> bool:
     """
     Check if all three stages in the YAML (loading, pre-processing, main
     processing) are non-empty.
@@ -106,14 +101,11 @@ def check_all_stages_non_empty(
                 "Please make sure that all three stages in the pipeline YAML "
                 "file are not empty."
             )
-            return
-    return yaml_data
+            return False
+    return True
 
 
-def check_loading_stage_one_method(
-        yaml_file: str,
-        loader: type[YamlLoader]
-) -> Optional[PipelineConfig]:
+def check_loading_stage_one_method(yaml_file: str, loader: type[YamlLoader]) -> bool:
     """
     Check that the loading stage in the pipeline YAML has only one method in
     it.
@@ -126,14 +118,11 @@ def check_loading_stage_one_method(
             "Please make sure that the loading stage has only one method in "
             "it, a loader method."
         )
-        return
-    return yaml_data
+        return False
+    return True
 
 
-def check_one_method_per_module(
-        yaml_file: str,
-        loader: type[YamlLoader],
-):
+def check_one_method_per_module(yaml_file: str, loader: type[YamlLoader]) -> bool:
     """
     Check that we cannot have a yaml file with more than one method
     being called from one module. For example, we cannot have:
@@ -171,7 +160,7 @@ def check_one_method_per_module(
         "'One method per module' check was successfully done...\n",
         colour=Colour.GREEN,
     )
-    return yaml_data
+    return True
 
 
 def _print_with_colour(end_str: Any, colour: Any = Colour.RED) -> None:

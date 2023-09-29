@@ -25,21 +25,21 @@ def test_missing_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
     missing_loader_stage_pipeline = (
         sample_pipelines + "testing/missing_loader_stage.yaml"
     )
-    assert check_all_stages_defined(missing_loader_stage_pipeline, yaml_loader) is None
+    assert not check_all_stages_defined(missing_loader_stage_pipeline, yaml_loader)
 
 
 def test_empty_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
     empty_loader_stage_pipeline = (
         sample_pipelines + "testing/empty_loader_stage.yaml"
     )
-    assert check_all_stages_non_empty(empty_loader_stage_pipeline, yaml_loader) is None
+    assert not check_all_stages_non_empty(empty_loader_stage_pipeline, yaml_loader)
 
 
 def test_invalid_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
     invalid_loader_stage_pipeline = (
         sample_pipelines + "testing/invalid_loader_stage.yaml"
     )
-    assert check_loading_stage_one_method(invalid_loader_stage_pipeline, yaml_loader) is None
+    assert not check_loading_stage_one_method(invalid_loader_stage_pipeline, yaml_loader)
 
 
 def test_one_method_per_module(more_than_one_method, yaml_loader: type[YamlLoader]):
