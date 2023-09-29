@@ -115,6 +115,29 @@ def check_loading_stage_one_method(conf: PipelineConfig) -> bool:
     return True
 
 
+def check_first_stage_has_loader(conf: PipelineConfig) -> bool:
+    """
+    Check that the only method in the first stage in the pipeline YAML is a
+    loader.
+    """
+    first_stage_method = conf[0][0]
+    module_name = list(first_stage_method.keys())[0]
+
+    _print_with_colour(
+        "Checking that the first method in the pipeline is a loader...",
+        colour=Colour.GREEN,
+    )
+    if module_name != "httomo.data.hdf.loaders":
+        _print_with_colour(
+            "The first method in the YAML_CONFIG file is not a loader from "
+            "'httomo.data.hdf.loaders'. Please recheck the yaml file."
+        )
+        return False
+    _print_with_colour("Loader check successful!!\n", colour=Colour.GREEN)
+
+    return True
+
+
 def check_one_method_per_module(conf: PipelineConfig) -> bool:
     """
     Check that we cannot have a yaml file with more than one method

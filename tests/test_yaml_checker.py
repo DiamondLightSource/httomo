@@ -7,6 +7,7 @@ import yaml
 from httomo.yaml_checker import (
     check_all_stages_defined,
     check_all_stages_non_empty,
+    check_first_stage_has_loader,
     check_loading_stage_one_method,
     check_one_method_per_module,
     sanity_check,
@@ -54,6 +55,15 @@ def test_invalid_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
     assert not check_loading_stage_one_method(conf)
 
 
+def test_first_stage_has_loader(sample_pipelines, yaml_loader: type[YamlLoader]):
+    incorrect_first_stage_pipeline = (
+        sample_pipelines + "testing/incorrect_first_stage.yaml"
+    )
+    with open(incorrect_first_stage_pipeline, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    assert not check_first_stage_has_loader(conf)
+
+
 def test_one_method_per_module(more_than_one_method, yaml_loader: type[YamlLoader]):
     with open(more_than_one_method, "r") as f:
         conf = list(yaml.load_all(f, Loader=yaml_loader))
@@ -63,7 +73,6 @@ def test_one_method_per_module(more_than_one_method, yaml_loader: type[YamlLoade
 @pytest.mark.parametrize(
     "yaml_file, expected",
     [
-        ("testing/testing_pipeline.yaml", False),
         ("testing/incorrect_method.yaml", False),
         ("02_basic_cpu_pipeline_tomo_standard.yaml", True),
         ("03_basic_gpu_pipeline_tomo_standard.yaml", True),
@@ -72,7 +81,6 @@ def test_one_method_per_module(more_than_one_method, yaml_loader: type[YamlLoade
         ("testing/required_param.yaml", False),
     ],
     ids=[
-        "no_loader_pipeline",
         "incorrect_method",
         "cpu_pipeline",
         "gpu_pipeline",
