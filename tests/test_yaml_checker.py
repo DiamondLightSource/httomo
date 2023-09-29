@@ -8,6 +8,7 @@ from httomo.yaml_checker import (
     check_all_stages_defined,
     check_all_stages_non_empty,
     check_first_stage_has_loader,
+    check_hdf5_paths_against_loader,
     check_loading_stage_one_method,
     check_one_method_per_module,
     sanity_check,
@@ -70,6 +71,19 @@ def test_one_method_per_module(more_than_one_method, yaml_loader: type[YamlLoade
     assert not check_one_method_per_module(conf)
 
 
+def test_hdf5_paths_against_loader(
+        standard_data,
+        sample_pipelines,
+        yaml_loader: type[YamlLoader]
+):
+    incorrect_path_pipeline = (
+        sample_pipelines + "testing/incorrect_path.yaml"
+    )
+    with open(incorrect_path_pipeline, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    assert not check_hdf5_paths_against_loader(conf[0][0], standard_data)
+
+
 @pytest.mark.parametrize(
     "yaml_file, expected",
     [
@@ -77,7 +91,6 @@ def test_one_method_per_module(more_than_one_method, yaml_loader: type[YamlLoade
         ("02_basic_cpu_pipeline_tomo_standard.yaml", True),
         ("03_basic_gpu_pipeline_tomo_standard.yaml", True),
         ("parameter_sweeps/02_median_filter_kernel_sweep.yaml", True),
-        ("testing/incorrect_path.yaml", False),
         ("testing/required_param.yaml", False),
     ],
     ids=[
@@ -85,7 +98,6 @@ def test_one_method_per_module(more_than_one_method, yaml_loader: type[YamlLoade
         "cpu_pipeline",
         "gpu_pipeline",
         "sweep_pipeline",
-        "incorrect_path",
         "required_param",
     ],
 )

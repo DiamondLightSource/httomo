@@ -7,7 +7,7 @@ from typing import Any, Generator, Optional
 import h5py
 import yaml
 
-from httomo.pipeline_reader import PipelineConfig
+from httomo.pipeline_reader import MethodConfig, PipelineConfig
 from httomo.utils import Colour
 from httomo.yaml_loader import YamlLoader
 from httomo.yaml_utils import get_external_package_current_version
@@ -173,6 +173,40 @@ def check_one_method_per_module(conf: PipelineConfig) -> bool:
         "'One method per module' check was successfully done...\n",
         colour=Colour.GREEN,
     )
+    return True
+
+
+def check_hdf5_paths_against_loader(
+        conf: MethodConfig,
+        in_file_path: str
+) -> bool:
+    """
+    Check that the hdf5 paths given as parameters to the loader indeed exist in
+    the given data file.
+    """
+    with h5py.File(in_file_path, "r") as f:
+        hdf5_members = []
+        _store_hdf5_members(f, hdf5_members)
+        hdf5_members = [m[0] for m in hdf5_members]
+
+    _print_with_colour(
+        "Checking that the paths to the data and keys in the YAML_CONFIG file "
+        "match the paths and keys in the input file (IN_DATA)...",
+        colour=Colour.GREEN,
+    )
+    module_name = list(conf.keys())[0]
+    method_conf = conf[module_name]
+    method_name = list(method_conf.keys())[0]
+    params = method_conf[method_name]
+    _path_keys = [key for key in params if "_path" in key]
+    for key in _path_keys:
+        if params[key].strip("/") not in hdf5_members:
+            _print_with_colour(
+                f"'{params[key]}' is not a valid path to a dataset in YAML_CONFIG. "
+                "Please recheck the yaml file."
+            )
+            return False
+    _print_with_colour("Loader paths check successful!!\n", colour=Colour.GREEN)
     return True
 
 
