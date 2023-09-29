@@ -106,6 +106,26 @@ def check_all_stages_non_empty(
     return yaml_data
 
 
+def check_loading_stage_one_method(
+        yaml_file: str,
+        loader: type[YamlLoader]
+) -> Optional[PipelineConfig]:
+    """
+    Check that the loading stage in the pipeline YAML has only one method in
+    it.
+    """
+    with open(yaml_file, "r") as f:
+        yaml_data = list(yaml.load_all(f, Loader=loader))
+
+    if len(yaml_data[0]) != 1:
+        _print_with_colour(
+            "Please make sure that the loading stage has only one method in "
+            "it, a loader method."
+        )
+        return
+    return yaml_data
+
+
 def check_one_method_per_module(yaml_file):
     """
     Check that we cannot have a yaml file with more than one method

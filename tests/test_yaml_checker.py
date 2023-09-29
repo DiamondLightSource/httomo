@@ -6,6 +6,7 @@ import pytest
 from httomo.yaml_checker import (
     check_all_stages_defined,
     check_all_stages_non_empty,
+    check_loading_stage_one_method,
     check_one_method_per_module,
     sanity_check,
     validate_yaml_config,
@@ -32,6 +33,13 @@ def test_empty_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
         sample_pipelines + "testing/empty_loader_stage.yaml"
     )
     assert check_all_stages_non_empty(empty_loader_stage_pipeline, yaml_loader) is None
+
+
+def test_invalid_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
+    invalid_loader_stage_pipeline = (
+        sample_pipelines + "testing/invalid_loader_stage.yaml"
+    )
+    assert check_loading_stage_one_method(invalid_loader_stage_pipeline, yaml_loader) is None
 
 
 def test_one_method_per_module(more_than_one_method):
