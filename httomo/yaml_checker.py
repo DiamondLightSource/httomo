@@ -229,6 +229,67 @@ def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
     return True
 
 
+def check_valid_method_parameters(
+        conf: PipelineConfig,
+        loader: type[YamlLoader]
+) -> bool:
+    """
+    Check each method config in the pipeline against the templates to see if
+    the given parameter names are valid.
+    """
+    modules, methods, packages = _get_pipeline_info(conf)
+    template_yaml_files = _get_yaml_templates(modules, methods, packages)
+    template_yaml_data_list: List[Generator] = []
+
+    for f in template_yaml_files:
+        with open(f, "r") as template:
+            method_dict = yaml.load(template, Loader=loader)[0]
+            template_yaml_data_list.append(
+                next(iter(method_dict.values()))
+            )
+
+    for i, _ in enumerate(modules):
+        end_str_list = ["Checking '", next(iter(methods[i])), "' and its parameters..."]
+        colours = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
+        _print_with_colour(end_str_list, colours)
+        d1 = methods[i]
+        d2 = template_yaml_data_list[i]
+
+        for key in d1.keys():
+            for parameter in d1[key].keys():
+                assert isinstance(parameter, str)
+
+                if parameter not in d2[key].keys():
+                    _print_with_colour(
+                        f"Parameter '{parameter}' in the '{modules[i]}' method is not valid."
+                    )
+                    return False
+
+                # there should be no REQUIRED parameters in the YAML_CONFIG file
+                if d1[key][parameter] == "REQUIRED":
+                    _print_with_colour(
+                        f"A value is needed for the parameter '{parameter}' in the '{modules[i]}' method."
+                        " Please specify a value instead of 'REQUIRED'."
+                        " Refer to the method docstring for more information."
+                    )
+                    return False
+
+                # skip tuples for !Sweep and !SweepRange
+                if isinstance(d1[key][parameter], tuple) or None in (
+                    d1[key][parameter],
+                    d2[key][parameter],
+                ):
+                    continue
+
+                if not isinstance(d1[key][parameter], type(d2[key][parameter])):
+                    _print_with_colour(
+                        f"Value assigned to parameter '{parameter}' in the '{next(iter(methods[i]))}' method"
+                        f" is not correct. It should be of type {type(d2[key][parameter])}."
+                    )
+                    return False
+    return True
+
+
 def _get_pipeline_info(conf: PipelineConfig) -> Tuple[List, List, List]:
     """
     Helper function to get modules, methods, and packages in the pipeline YAML.

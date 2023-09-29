@@ -12,6 +12,7 @@ from httomo.yaml_checker import (
     check_loading_stage_one_method,
     check_methods_exist_in_templates,
     check_one_method_per_module,
+    check_valid_method_parameters,
     sanity_check,
     validate_yaml_config,
 )
@@ -97,19 +98,29 @@ def test_check_methods_exist_in_templates(
     assert not check_methods_exist_in_templates(conf)
 
 
+def test_check_valid_method_parameters(
+        sample_pipelines,
+        yaml_loader: type[YamlLoader]
+):
+    required_param_pipeline = (
+        sample_pipelines + "testing/required_param.yaml"
+    )
+    with open(required_param_pipeline, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    assert not check_valid_method_parameters(conf, yaml_loader)
+
+
 @pytest.mark.parametrize(
     "yaml_file, expected",
     [
         ("02_basic_cpu_pipeline_tomo_standard.yaml", True),
         ("03_basic_gpu_pipeline_tomo_standard.yaml", True),
         ("parameter_sweeps/02_median_filter_kernel_sweep.yaml", True),
-        ("testing/required_param.yaml", False),
     ],
     ids=[
         "cpu_pipeline",
         "gpu_pipeline",
         "sweep_pipeline",
-        "required_param",
     ],
 )
 def test_validate_yaml_config(sample_pipelines, yaml_file, standard_data, expected):
