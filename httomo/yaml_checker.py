@@ -85,6 +85,27 @@ def check_all_stages_defined(
     return yaml_data
 
 
+def check_all_stages_non_empty(
+        yaml_file: str,
+        loader: type[YamlLoader]
+) -> Optional[PipelineConfig]:
+    """
+    Check if all three stages in the YAML (loading, pre-processing, main
+    processing) are non-empty.
+    """
+    with open(yaml_file, "r") as f:
+        yaml_data = list(yaml.load_all(f, Loader=loader))
+
+    for stage in yaml_data:
+        if stage is None:
+            _print_with_colour(
+                "Please make sure that all three stages in the pipeline YAML "
+                "file are not empty."
+            )
+            return
+    return yaml_data
+
+
 def check_one_method_per_module(yaml_file):
     """
     Check that we cannot have a yaml file with more than one method
