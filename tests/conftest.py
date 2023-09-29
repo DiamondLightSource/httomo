@@ -9,6 +9,9 @@ import numpy as np
 import pytest
 import yaml
 
+from httomo.yaml_loader import YamlLoader
+
+
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -214,3 +217,10 @@ def merge_yamls():
             yaml.dump(data, file_descriptor)
 
     return _merge_yamls
+
+
+@pytest.fixture
+def yaml_loader() -> type[YamlLoader]:
+    YamlLoader.add_constructor("!Sweep", YamlLoader.sweep_manual)
+    YamlLoader.add_constructor("!SweepRange", YamlLoader.sweep_range)
+    return YamlLoader

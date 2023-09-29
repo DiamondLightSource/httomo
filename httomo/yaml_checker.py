@@ -2,12 +2,14 @@
 Module for checking the validity of yaml files.
 """
 import os
-from typing import Any
+from typing import Any, Optional
 
 import h5py
 import yaml
 
+from httomo.pipeline_reader import PipelineConfig
 from httomo.utils import Colour
+from httomo.yaml_loader import YamlLoader
 from httomo.yaml_utils import get_external_package_current_version
 
 __all__ = [
@@ -57,6 +59,30 @@ def sanity_check(yaml_file):
                     f"Error in the YAML_CONFIG file at line {e.problem_mark.line}. "
                     "Please recheck the file."
                 )
+
+
+def check_all_stages_defined(
+        yaml_file: str,
+        loader: type[YamlLoader]
+) -> Optional[PipelineConfig]:
+    """
+    Check if all three stages are defined in the YAML (loading, pre-processing,
+    main processing).
+    """
+    with open(yaml_file, "r") as f:
+        yaml_data = list(yaml.load_all(f, Loader=loader))
+
+    assert isinstance(yaml_data, list)
+    if len(yaml_data) != 3:
+        _print_with_colour(
+            "Please make sure to define the three stages in the pipeline YAML "
+            "file:\n"
+            "1) loading\n"
+            "2) pre-processing\n"
+            "3) main processing\n"
+        )
+        return
+    return yaml_data
 
 
 def check_one_method_per_module(yaml_file):

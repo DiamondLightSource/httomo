@@ -4,10 +4,12 @@ Some unit tests for the yaml checker
 import pytest
 
 from httomo.yaml_checker import (
+    check_all_stages_defined,
     check_one_method_per_module,
     sanity_check,
     validate_yaml_config,
 )
+from httomo.yaml_loader import YamlLoader
 
 
 def test_sanity_check(sample_pipelines):
@@ -15,6 +17,13 @@ def test_sanity_check(sample_pipelines):
         sample_pipelines + "testing/wrong_indentation_pipeline.yaml"
     )
     assert not sanity_check(wrong_indentation_pipeline)
+
+
+def test_missing_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
+    missing_loader_stage_pipeline = (
+        sample_pipelines + "testing/missing_loader_stage.yaml"
+    )
+    assert check_all_stages_defined(missing_loader_stage_pipeline, yaml_loader) is None
 
 
 def test_one_method_per_module(more_than_one_method):
