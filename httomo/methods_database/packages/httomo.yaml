@@ -3,6 +3,7 @@ data:
     loaders:
       standard_tomo:
         pattern: projection
+        padding: False
         output_dims_change: False
         implementation: cpu
         memory_gpu: None

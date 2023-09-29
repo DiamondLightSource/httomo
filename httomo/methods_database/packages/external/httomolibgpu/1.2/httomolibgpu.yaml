@@ -2,7 +2,8 @@ misc:
   corr:
     median_filter3d:
       pattern: all
-      output_dims_change: False      
+      output_dims_change: False
+      padding: True
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]
@@ -10,6 +11,7 @@ misc:
         - methods: [direct]
     remove_outlier3d:
       pattern: all
+      padding: True
       output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
@@ -19,6 +21,7 @@ misc:
   morph:
     sino_360_to_180:
       pattern: sinogram
+      padding: False
       output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
@@ -29,6 +32,7 @@ prep:
   normalize:
     normalize:
       pattern: projection
+      padding: False
       output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
@@ -38,6 +42,7 @@ prep:
   phase:
     paganin_filter_tomopy:
       pattern: projection
+      padding: False
       output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
@@ -46,6 +51,7 @@ prep:
         - methods: [module]
     paganin_filter_savu:
       pattern: projection
+      padding: False
       output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
@@ -55,6 +61,7 @@ prep:
   alignment:
     distortion_correction_proj_discorpy:
       pattern: projection
+      padding: False
       output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
@@ -64,6 +71,7 @@ prep:
   stripe:
     remove_stripe_based_sorting:
       pattern: sinogram
+      padding: False
       output_dims_change: False      
       implementation: gpu_cupy
       memory_gpu:
@@ -72,6 +80,7 @@ prep:
         - methods: [direct]
     remove_stripe_ti:
       pattern: sinogram
+      padding: False
       output_dims_change: False
       implementation: gpu_cupy
       memory_gpu:
@@ -82,6 +91,7 @@ recon:
   algorithm:
     FBP:
       pattern: sinogram
+      padding: False
       output_dims_change: True
       implementation: gpu_cupy
       memory_gpu:
@@ -90,6 +100,7 @@ recon:
         - methods: [module]
     SIRT:
       pattern: sinogram
+      padding: False
       output_dims_change: True
       implementation: gpu_cupy
       memory_gpu:
@@ -98,6 +109,7 @@ recon:
         - methods: [direct]
     CGLS:
       pattern: sinogram
+      padding: False
       output_dims_change: True
       implementation: gpu_cupy
       memory_gpu:
@@ -107,6 +119,7 @@ recon:
   rotation:
     find_center_vo:
       pattern: sinogram
+      padding: False
       output_dims_change: False
       implementation: gpu_cupy
       memory_gpu:
@@ -115,6 +128,7 @@ recon:
         - methods: [direct]
     find_center_360:
       pattern: sinogram
+      padding: False
       output_dims_change: False
       implementation: gpu_cupy
       memory_gpu:

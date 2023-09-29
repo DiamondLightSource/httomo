@@ -27,6 +27,9 @@ class MethodFunc:
         None for the CPU method or Dictionary with parameters for GPU memory estimation.
         This determines the maximum number of slices it can fit in the given memory.
         If it is not present (None), the method is assumed to fit any amount of slices.
+    padding: Optional[bool]
+        Padding is an attribute of every method and True usually when the method
+        is 3D, e.g. median3d filter will have padding linked to its kernel size. 
     output_dims_change : Dict[str, Any]
         False - the output data dimensions of the method are the same as input
         True - the data dimensions are different with respect to input data dimensions.
@@ -51,6 +54,7 @@ class MethodFunc:
     method_func: Callable
     wrapper_func: Optional[Callable] = None
     calc_max_slices: Optional[Dict[str, Any]] = None
+    padding: bool = False
     output_dims_change: Dict[str, Any] = None
     parameters: Dict[str, Any] = field(default_factory=dict)
     pattern: Pattern = Pattern.projection
@@ -92,10 +96,7 @@ class PlatformSection:
     if they run on the same platform (cpu or gpu) and have the same pattern. 
     The sections can be further divided if necessary if the results of the method
     needed to be saved. 
-    NOTE: More fine division of sections into subsections will slow down 
-    the pipeline.
-
-    Mainly used to iterate through GPU memory in chunks.
+    Mainly used to iterate through GPU memory in blocks.
 
     Attributes
     ----------
@@ -106,8 +107,10 @@ class PlatformSection:
     reslice : bool
         This tells the runner if we need to reslice the data before next section
     max_slices : int
-        Holds information about how many slices can be fit in one chunk without
+        Holds information about how many slices can be fit in one block of data without
         exhausting memory (relevant on GPU only)
+    padding : int
+        padding value for the current section.       
     methods : List[MethodFunc]
         List of methods in this section
     """
@@ -116,6 +119,7 @@ class PlatformSection:
     pattern: Pattern
     reslice: bool
     max_slices: int
+    padding: int
     methods: List[MethodFunc]
 
 

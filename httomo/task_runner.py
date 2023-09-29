@@ -43,9 +43,6 @@ from httomo.yaml_utils import open_yaml_config
 def run_tasks(
     in_file: Path,
     yaml_config: Path,
-    dimension: int,
-    pad: int = 0,
-    ncore: int = 1,
     save_all: bool = False,
     reslice_dir: Optional[Path] = None,
 ) -> None:
@@ -57,12 +54,6 @@ def run_tasks(
         The file to read data from.
     yaml_config : Path
         The file containing the processing pipeline info as YAML.
-    dimension : int
-        The dimension to slice in.
-    pad : int
-        The padding size to use. Defaults to 0.
-    ncore : int
-        The number of the CPU cores per process.
     save_all : bool
         Specifies if intermediate datasets should be saved for all tasks in the
         pipeline.
@@ -71,9 +62,6 @@ def run_tasks(
         should be done in-memory.
     """
     comm = MPI.COMM_WORLD
-    if comm.size == 1:
-        # use all available CPU cores if not an MPI run
-        ncore = multiprocessing.cpu_count()
 
     # Define dict to store arrays of the whole pipeline using provided YAML
     # Define list to store dataset stats for each task in the user config YAML
@@ -82,19 +70,6 @@ def run_tasks(
     # Get a list of the python functions associated to the methods defined in
     # user config YAML
     method_funcs = _get_method_funcs(yaml_config, comm)
-
-    # Define dict of params that are needed by loader functions
-    dict_loader_extra_params = {
-        "in_file": in_file,
-        "dimension": dimension,
-        "pad": pad,
-        "comm": comm,
-    }
-
-    # store info about reslicing with ResliceInfo
-    reslice_info = ResliceInfo(
-        count=0, has_warn_printed=False, reslice_dir=reslice_dir
-    )
 
     # Associate patterns to method function objects
     for i, method_func in enumerate(method_funcs):
@@ -112,8 +87,16 @@ def run_tasks(
     for i, method_func in enumerate(method_funcs):
          method_funcs[i] = _assign_attribute_to_method(method_func, "memory_gpu")
 
-    # Initialising platform sections (skipping loader)
+    # Associate padding attribute to method function objects
+    for i, method_func in enumerate(method_funcs):
+         method_funcs[i] = _assign_attribute_to_method(method_func, "padding")
+
+    # Initialising platform sections (skipping loader method)
     platform_sections = _determine_platform_sections(method_funcs[1:], save_all)    
+
+    #TODO: evaluate padding for each section based on the methods present in each section
+    #NOTE: padding value in the first section will define padding for the loader
+    # _evaluate_padding_per_section(platform_sections)
 
     # Check pipeline for the number of parameter sweeps present. If one is
     # defined, raise an error, due to not supporting parameter sweeps in a
@@ -141,6 +124,20 @@ def run_tasks(
         comm,
         colour=Colour.CYAN,
         level=0,
+    )
+    
+    # padding value needs to be the max padding value for the loading section
+    pad = 0
+    # Define dict of params that are needed by loader functions
+    dict_loader_extra_params = {
+        "in_file": in_file,
+        "pad": pad,
+        "comm": comm,
+    }
+
+    # store info about reslicing with ResliceInfo
+    reslice_info = ResliceInfo(
+        count=0, has_warn_printed=False, reslice_dir=reslice_dir
     )
     method_funcs[0].parameters.update(dict_loader_extra_params)
 
@@ -593,6 +590,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 gpu=False,
                 cupyrun=False,
                 calc_max_slices=None,
+                padding = 0,
                 output_dims_change = False,
                 pattern=Pattern.all,
                 is_loader=False,
@@ -633,7 +631,7 @@ def _assign_attribute_to_method(
     MethodFunc
         The updated function object
     """
-    if attribute in ["pattern", "implementation", "memory_gpu", "output_dims_change"]:
+    if attribute in ["pattern", "implementation", "memory_gpu", "output_dims_change", "padding"]:
         attribute_value = get_method_info(
             method_function.module_name, method_function.method_func.__name__, attribute)
         if attribute == "pattern":
@@ -674,6 +672,8 @@ def _assign_attribute_to_method(
         if attribute == "output_dims_change":
             if attribute_value:
                 method_function = dataclasses.replace(method_function, output_dims_change=True)
+        if attribute == "padding":
+            method_function = dataclasses.replace(method_function, padding=attribute_value)                
     else:
         err_str = (
             f"The attribute {attribute} that is listed for the method "
@@ -720,6 +720,7 @@ def _determine_platform_sections(
                     pattern=current_pattern,
                     reslice=False,
                     max_slices=0,
+                    padding=0,
                     methods=methods,
                 )
             )
@@ -742,6 +743,7 @@ def _determine_platform_sections(
                         pattern=current_pattern,
                         reslice=False,
                         max_slices=0,
+                        padding=0,
                         methods=methods,
                     )
                 )
@@ -752,10 +754,15 @@ def _determine_platform_sections(
 
     section.append(
         PlatformSection(
-            gpu=current_gpu, pattern=current_pattern, reslice=False, max_slices=0, methods=methods
+            gpu=current_gpu, 
+            pattern=current_pattern, 
+            reslice=False, 
+            max_slices=0,
+            padding=0,
+            methods=methods,
         )
     )
-    for i, section_current in enumerate(section):                   
+    for i, section_current in enumerate(section):
         for m_ind, methodfunc_sect in enumerate(section_current.methods):
             if m_ind == len(section_current.methods) - 1:
                 # we make every last method in the section to return_numpy: True
@@ -784,6 +791,11 @@ def _determine_platform_sections(
             if i == 0 and section_current.pattern.name == 'all':
                 # if the first section has "all" pattern we skip the reslice 
                 section[i].reslice = False
+        # exclude sections with pattern "all"
+        if section_current.pattern.name == 'all':
+            # inherit pattern from the previous section
+            if i > 0:
+                section[i].pattern = section[i-1].pattern    
     return section
 
 
