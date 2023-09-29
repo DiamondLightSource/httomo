@@ -2,11 +2,12 @@
 Module for checking the validity of yaml files.
 """
 import os
-from typing import Any, Optional
+from typing import Any, Generator, Optional
 
 import h5py
 import yaml
 
+from httomo.pipeline_reader import PipelineConfig
 from httomo.utils import Colour
 from httomo.yaml_loader import YamlLoader
 from httomo.yaml_utils import get_external_package_current_version
@@ -18,7 +19,7 @@ __all__ = [
 ]
 
 
-def sanity_check(yaml_file: str, loader: type[YamlLoader]) -> bool:
+def sanity_check(conf_generator: Generator) -> bool:
     """
     Check if the yaml file is properly indented, has valid mapping and tags.
     """
@@ -27,9 +28,10 @@ def sanity_check(yaml_file: str, loader: type[YamlLoader]) -> bool:
         colour=Colour.GREEN,
     )
     try:
-        with open(yaml_file, "r") as f:
-            list(yaml.load_all(f, Loader=loader))
-
+        # Convert generator into a list, to force all elements to be attempted
+        # to be interpreted as python objects, and thus initiating all the YAML
+        # parsing checks performed by `yaml`
+        list(conf_generator)
         _print_with_colour(
             "Sanity check of the YAML_CONFIG was successfully done...\n",
             colour=Colour.GREEN,
@@ -66,16 +68,13 @@ def sanity_check(yaml_file: str, loader: type[YamlLoader]) -> bool:
         return False
 
 
-def check_all_stages_defined(yaml_file: str, loader: type[YamlLoader]) -> bool:
+def check_all_stages_defined(conf: PipelineConfig) -> bool:
     """
     Check if all three stages are defined in the YAML (loading, pre-processing,
     main processing).
     """
-    with open(yaml_file, "r") as f:
-        yaml_data = list(yaml.load_all(f, Loader=loader))
-
-    assert isinstance(yaml_data, list)
-    if len(yaml_data) != 3:
+    assert isinstance(conf, list)
+    if len(conf) != 3:
         _print_with_colour(
             "Please make sure to define the three stages in the pipeline YAML "
             "file:\n"
@@ -87,15 +86,12 @@ def check_all_stages_defined(yaml_file: str, loader: type[YamlLoader]) -> bool:
     return True
 
 
-def check_all_stages_non_empty(yaml_file: str, loader: type[YamlLoader]) -> bool:
+def check_all_stages_non_empty(conf: PipelineConfig) -> bool:
     """
     Check if all three stages in the YAML (loading, pre-processing, main
     processing) are non-empty.
     """
-    with open(yaml_file, "r") as f:
-        yaml_data = list(yaml.load_all(f, Loader=loader))
-
-    for stage in yaml_data:
+    for stage in conf:
         if stage is None:
             _print_with_colour(
                 "Please make sure that all three stages in the pipeline YAML "
@@ -105,15 +101,12 @@ def check_all_stages_non_empty(yaml_file: str, loader: type[YamlLoader]) -> bool
     return True
 
 
-def check_loading_stage_one_method(yaml_file: str, loader: type[YamlLoader]) -> bool:
+def check_loading_stage_one_method(conf: PipelineConfig) -> bool:
     """
     Check that the loading stage in the pipeline YAML has only one method in
     it.
     """
-    with open(yaml_file, "r") as f:
-        yaml_data = list(yaml.load_all(f, Loader=loader))
-
-    if len(yaml_data[0]) != 1:
+    if len(conf[0]) != 1:
         _print_with_colour(
             "Please make sure that the loading stage has only one method in "
             "it, a loader method."
@@ -122,7 +115,7 @@ def check_loading_stage_one_method(yaml_file: str, loader: type[YamlLoader]) -> 
     return True
 
 
-def check_one_method_per_module(yaml_file: str, loader: type[YamlLoader]) -> bool:
+def check_one_method_per_module(conf: PipelineConfig) -> bool:
     """
     Check that we cannot have a yaml file with more than one method
     being called from one module. For example, we cannot have:
@@ -141,10 +134,7 @@ def check_one_method_per_module(yaml_file: str, loader: type[YamlLoader]) -> boo
         "\nDoing a sanity check first...",
         colour=Colour.GREEN,
     )
-    with open(yaml_file, "r") as f:
-        yaml_data = list(yaml.load_all(f, Loader=loader))
-
-    for stage in yaml_data:
+    for stage in conf:
         lvalues = [value for d in stage for value in d.values()]
         for i, d in enumerate(lvalues):
             assert isinstance(d, dict)

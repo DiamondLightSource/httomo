@@ -2,6 +2,7 @@
 Some unit tests for the yaml checker
 """
 import pytest
+import yaml
 
 from httomo.yaml_checker import (
     check_all_stages_defined,
@@ -18,32 +19,45 @@ def test_sanity_check(sample_pipelines, yaml_loader: type[YamlLoader]):
     wrong_indentation_pipeline = (
         sample_pipelines + "testing/wrong_indentation_pipeline.yaml"
     )
-    assert not sanity_check(wrong_indentation_pipeline, yaml_loader)
+    with open(wrong_indentation_pipeline, "r") as f:
+        conf_generator = yaml.load_all(f, Loader=yaml_loader)
+        # `assert` needs to be in `with` block for this case, because
+        # `conf_generator` is lazy-loaded from the file when converted to a
+        # list inside `sanity_check()`
+        assert not sanity_check(conf_generator)
 
 
 def test_missing_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
     missing_loader_stage_pipeline = (
         sample_pipelines + "testing/missing_loader_stage.yaml"
     )
-    assert not check_all_stages_defined(missing_loader_stage_pipeline, yaml_loader)
+    with open(missing_loader_stage_pipeline, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    assert not check_all_stages_defined(conf)
 
 
 def test_empty_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
     empty_loader_stage_pipeline = (
         sample_pipelines + "testing/empty_loader_stage.yaml"
     )
-    assert not check_all_stages_non_empty(empty_loader_stage_pipeline, yaml_loader)
+    with open(empty_loader_stage_pipeline, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    assert not check_all_stages_non_empty(conf)
 
 
 def test_invalid_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
     invalid_loader_stage_pipeline = (
         sample_pipelines + "testing/invalid_loader_stage.yaml"
     )
-    assert not check_loading_stage_one_method(invalid_loader_stage_pipeline, yaml_loader)
+    with open(invalid_loader_stage_pipeline, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    assert not check_loading_stage_one_method(conf)
 
 
 def test_one_method_per_module(more_than_one_method, yaml_loader: type[YamlLoader]):
-    assert not check_one_method_per_module(more_than_one_method, yaml_loader)
+    with open(more_than_one_method, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    assert not check_one_method_per_module(conf)
 
 
 @pytest.mark.parametrize(
