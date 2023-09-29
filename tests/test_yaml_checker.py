@@ -10,6 +10,7 @@ from httomo.yaml_checker import (
     check_first_stage_has_loader,
     check_hdf5_paths_against_loader,
     check_loading_stage_one_method,
+    check_methods_exist_in_templates,
     check_one_method_per_module,
     sanity_check,
     validate_yaml_config,
@@ -84,17 +85,27 @@ def test_hdf5_paths_against_loader(
     assert not check_hdf5_paths_against_loader(conf[0][0], standard_data)
 
 
+def test_check_methods_exist_in_templates(
+        sample_pipelines,
+        yaml_loader: type[YamlLoader]
+):
+    incorrect_method_pipeline = (
+        sample_pipelines + "testing/incorrect_method.yaml"
+    )
+    with open(incorrect_method_pipeline, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    assert not check_methods_exist_in_templates(conf)
+
+
 @pytest.mark.parametrize(
     "yaml_file, expected",
     [
-        ("testing/incorrect_method.yaml", False),
         ("02_basic_cpu_pipeline_tomo_standard.yaml", True),
         ("03_basic_gpu_pipeline_tomo_standard.yaml", True),
         ("parameter_sweeps/02_median_filter_kernel_sweep.yaml", True),
         ("testing/required_param.yaml", False),
     ],
     ids=[
-        "incorrect_method",
         "cpu_pipeline",
         "gpu_pipeline",
         "sweep_pipeline",

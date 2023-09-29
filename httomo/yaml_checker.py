@@ -2,7 +2,7 @@
 Module for checking the validity of yaml files.
 """
 import os
-from typing import Any, Generator, Optional
+from typing import Any, Generator, List, Optional
 
 import h5py
 import yaml
@@ -207,6 +207,48 @@ def check_hdf5_paths_against_loader(
             )
             return False
     _print_with_colour("Loader paths check successful!!\n", colour=Colour.GREEN)
+    return True
+
+
+def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
+    """
+    Check if the methods in the pipeline YAML file are valid methods, by
+    checking if they exist in the template YAML files.
+    """
+    parent_dir = os.path.dirname(os.path.abspath("__file__"))
+    templates_dir = os.path.join(parent_dir, "templates")
+    assert os.path.exists(templates_dir)
+
+    modules: List[str] = []
+    methods: List[MethodConfig] = []
+    for stage in conf:
+        for module in stage:
+            module_name = list(module.keys())[0]
+            modules.append(module_name)
+            methods.append(module[module_name])
+
+    packages = [
+        m.split(".")[0] + "/" + get_external_package_current_version(m.split(".")[0])
+        if m.split(".")[0] != "httomo"
+        else m.split(".")[0]
+        for m in modules
+    ]
+
+    _template_yaml_files = [
+        os.path.join(
+            templates_dir, packages[i], modules[i], next(iter(methods[i])) + ".yaml"
+        )
+        for i in range(len(modules))
+    ]
+
+    for i, f in enumerate(_template_yaml_files):
+        if not os.path.exists(f):
+            _print_with_colour(
+                f"'{modules[i] + '/' + next(iter(methods[i]))}' is not a valid"
+                " path to a method. Please recheck the yaml file."
+            )
+            return False
+
     return True
 
 
