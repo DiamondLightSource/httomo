@@ -14,11 +14,11 @@ from httomo.yaml_checker import (
 from httomo.yaml_loader import YamlLoader
 
 
-def test_sanity_check(sample_pipelines):
+def test_sanity_check(sample_pipelines, yaml_loader: type[YamlLoader]):
     wrong_indentation_pipeline = (
         sample_pipelines + "testing/wrong_indentation_pipeline.yaml"
     )
-    assert not sanity_check(wrong_indentation_pipeline)
+    assert not sanity_check(wrong_indentation_pipeline, yaml_loader)
 
 
 def test_missing_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):

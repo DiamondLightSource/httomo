@@ -19,7 +19,10 @@ __all__ = [
 ]
 
 
-def sanity_check(yaml_file):
+def sanity_check(
+        yaml_file: str,
+        loader: type[YamlLoader]
+) -> Optional[PipelineConfig]:
     """
     Check if the yaml file is properly indented, has valid mapping and tags.
     """
@@ -27,38 +30,39 @@ def sanity_check(yaml_file):
         "Checking that the YAML_CONFIG is properly indented and has valid mappings and tags...",
         colour=Colour.GREEN,
     )
-    with open(yaml_file, "r") as file:
-        try:
-            yaml_data = open_yaml_config(yaml_file)
+    try:
+        with open(yaml_file, "r") as f:
+            yaml_data = list(yaml.load_all(f, Loader=loader))
+
+        _print_with_colour(
+            "Sanity check of the YAML_CONFIG was successfully done...\n",
+            colour=Colour.GREEN,
+        )
+        return yaml_data
+    except yaml.parser.ParserError as e:
+        line = e.problem_mark.line
+        _print_with_colour(
+            f"Incorrect indentation in the YAML_CONFIG file at line {line}. "
+            "Please recheck the indentation of the file."
+        )
+    except yaml.scanner.ScannerError as e:
+        _print_with_colour(
+            f"Incorrect mapping in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
+        )
+    except yaml.constructor.ConstructorError as e:
+        _print_with_colour(
+            f"Invalid tag in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
+        )
+    except yaml.reader.ReaderError as e:
+        _print_with_colour(
+            f"Failed to parse YAML file at line {e.problem_mark.line + 1}: {e}"
+        )
+    except yaml.YAMLError as e:
+        if hasattr(e, "problem_mark"):
             _print_with_colour(
-                "Sanity check of the YAML_CONFIG was successfully done...\n",
-                colour=Colour.GREEN,
+                f"Error in the YAML_CONFIG file at line {e.problem_mark.line}. "
+                "Please recheck the file."
             )
-            return yaml_data
-        except yaml.parser.ParserError as e:
-            line = e.problem_mark.line
-            _print_with_colour(
-                f"Incorrect indentation in the YAML_CONFIG file at line {line}. "
-                "Please recheck the indentation of the file."
-            )
-        except yaml.scanner.ScannerError as e:
-            _print_with_colour(
-                f"Incorrect mapping in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
-            )
-        except yaml.constructor.ConstructorError as e:
-            _print_with_colour(
-                f"Invalid tag in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
-            )
-        except yaml.reader.ReaderError as e:
-            _print_with_colour(
-                f"Failed to parse YAML file at line {e.problem_mark.line + 1}: {e}"
-            )
-        except yaml.YAMLError as e:
-            if hasattr(e, "problem_mark"):
-                _print_with_colour(
-                    f"Error in the YAML_CONFIG file at line {e.problem_mark.line}. "
-                    "Please recheck the file."
-                )
 
 
 def check_all_stages_defined(
