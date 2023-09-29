@@ -152,10 +152,8 @@ def check_one_method_per_module(
         "\nDoing a sanity check first...",
         colour=Colour.GREEN,
     )
-    sanity_check(yaml_file, loader)
-    check_all_stages_defined(yaml_file, loader)
-    check_all_stages_non_empty(yaml_file, loader)
-    yaml_data = check_loading_stage_one_method(yaml_file, loader)
+    with open(yaml_file, "r") as f:
+        yaml_data = list(yaml.load_all(f, Loader=loader))
 
     for stage in yaml_data:
         lvalues = [value for d in stage for value in d.values()]
@@ -170,7 +168,7 @@ def check_one_method_per_module(
                 return False
 
     _print_with_colour(
-        "'One method per module' check was also successfully done...\n",
+        "'One method per module' check was successfully done...\n",
         colour=Colour.GREEN,
     )
     return yaml_data
