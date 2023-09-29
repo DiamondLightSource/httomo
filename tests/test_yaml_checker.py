@@ -123,6 +123,12 @@ def test_check_valid_method_parameters(
         "sweep_pipeline",
     ],
 )
-def test_validate_yaml_config(sample_pipelines, yaml_file, standard_data, expected):
+def test_validate_yaml_config(
+    sample_pipelines: str,
+    yaml_file: str,
+    standard_data: str,
+    expected: bool,
+    yaml_loader: type[YamlLoader]
+):
     yaml_file = sample_pipelines + yaml_file
-    assert validate_yaml_config(yaml_file, standard_data) == expected
+    assert validate_yaml_config(yaml_file, yaml_loader, standard_data) == expected

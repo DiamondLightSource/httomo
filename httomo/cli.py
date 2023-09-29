@@ -11,6 +11,7 @@ import httomo.globals
 from httomo.logger import setup_logger
 from httomo.task_runner import run_tasks
 from httomo.yaml_checker import validate_yaml_config
+from httomo.yaml_loader import YamlLoader
 
 from . import __version__
 
@@ -34,7 +35,9 @@ def main():
 def check(yaml_config: Path, in_data: Path = None):
     """Check a YAML pipeline file for errors."""
     in_data = str(in_data) if isinstance(in_data, PurePath) else None
-    return validate_yaml_config(yaml_config, in_data)
+    YamlLoader.add_constructor("!Sweep", YamlLoader.sweep_manual)
+    YamlLoader.add_constructor("!SweepRange", YamlLoader.sweep_range)
+    return validate_yaml_config(yaml_config, YamlLoader, in_data)
 
 
 @main.command()
