@@ -2,7 +2,7 @@
 Module for checking the validity of yaml files.
 """
 import os
-from typing import Any, Generator, List, Optional
+from typing import Any, Generator, List, Optional, Tuple
 
 import h5py
 import yaml
@@ -215,10 +215,24 @@ def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
     Check if the methods in the pipeline YAML file are valid methods, by
     checking if they exist in the template YAML files.
     """
-    parent_dir = os.path.dirname(os.path.abspath("__file__"))
-    templates_dir = os.path.join(parent_dir, "templates")
-    assert os.path.exists(templates_dir)
+    modules, methods, packages = _get_pipeline_info(conf)
+    template_yaml_files = _get_yaml_templates(modules, methods, packages)
 
+    for i, f in enumerate(template_yaml_files):
+        if not os.path.exists(f):
+            _print_with_colour(
+                f"'{modules[i] + '/' + next(iter(methods[i]))}' is not a valid"
+                " path to a method. Please recheck the yaml file."
+            )
+            return False
+
+    return True
+
+
+def _get_pipeline_info(conf: PipelineConfig) -> Tuple[List, List, List]:
+    """
+    Helper function to get modules, methods, and packages in the pipeline YAML.
+    """
     modules: List[str] = []
     methods: List[MethodConfig] = []
     for stage in conf:
@@ -233,23 +247,23 @@ def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
         else m.split(".")[0]
         for m in modules
     ]
+    return modules, methods, packages
 
-    _template_yaml_files = [
+
+def _get_yaml_templates(modules: List, methods: List, packages: List) -> List:
+    """
+    Helper function that fetches YAML template files associated with methods
+    passed.
+    """
+    parent_dir = os.path.dirname(os.path.abspath("__file__"))
+    templates_dir = os.path.join(parent_dir, "templates")
+    assert os.path.exists(templates_dir)
+    return [
         os.path.join(
             templates_dir, packages[i], modules[i], next(iter(methods[i])) + ".yaml"
         )
         for i in range(len(modules))
     ]
-
-    for i, f in enumerate(_template_yaml_files):
-        if not os.path.exists(f):
-            _print_with_colour(
-                f"'{modules[i] + '/' + next(iter(methods[i]))}' is not a valid"
-                " path to a method. Please recheck the yaml file."
-            )
-            return False
-
-    return True
 
 
 def _print_with_colour(end_str: Any, colour: Any = Colour.RED) -> None:
