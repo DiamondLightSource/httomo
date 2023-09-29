@@ -42,8 +42,8 @@ def test_invalid_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
     assert check_loading_stage_one_method(invalid_loader_stage_pipeline, yaml_loader) is None
 
 
-def test_one_method_per_module(more_than_one_method):
-    assert not check_one_method_per_module(more_than_one_method)
+def test_one_method_per_module(more_than_one_method, yaml_loader: type[YamlLoader]):
+    assert not check_one_method_per_module(more_than_one_method, yaml_loader)
 
 
 @pytest.mark.parametrize(

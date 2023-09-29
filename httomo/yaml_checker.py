@@ -130,7 +130,10 @@ def check_loading_stage_one_method(
     return yaml_data
 
 
-def check_one_method_per_module(yaml_file):
+def check_one_method_per_module(
+        yaml_file: str,
+        loader: type[YamlLoader],
+):
     """
     Check that we cannot have a yaml file with more than one method
     being called from one module. For example, we cannot have:
@@ -149,18 +152,22 @@ def check_one_method_per_module(yaml_file):
         "\nDoing a sanity check first...",
         colour=Colour.GREEN,
     )
-    yaml_data = sanity_check(yaml_file)
+    sanity_check(yaml_file, loader)
+    check_all_stages_defined(yaml_file, loader)
+    check_all_stages_non_empty(yaml_file, loader)
+    yaml_data = check_loading_stage_one_method(yaml_file, loader)
 
-    lvalues = [value for d in yaml_data for value in d.values()]
-    for i, d in enumerate(lvalues):
-        assert isinstance(d, dict)
-        if len(d) != 1:
-            _print_with_colour(
-                f"More than one method is being called from the"
-                f" module '{next(iter(yaml_data[i]))}'. "
-                "Please recheck the yaml file."
-            )
-            return False
+    for stage in yaml_data:
+        lvalues = [value for d in stage for value in d.values()]
+        for i, d in enumerate(lvalues):
+            assert isinstance(d, dict)
+            if len(d) != 1:
+                _print_with_colour(
+                    f"More than one method is being called from the"
+                    f" module '{next(iter(stage[i]))}'. "
+                    "Please recheck the yaml file."
+                )
+                return False
 
     _print_with_colour(
         "'One method per module' check was also successfully done...\n",
