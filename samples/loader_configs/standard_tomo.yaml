@@ -1,3 +1,4 @@
+--- # loading
 - httomo.data.hdf.loaders:
     standard_tomo:
       name: tomo

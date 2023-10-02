@@ -212,9 +212,9 @@ def merge_yamls():
         data = []
         for y in yamls:
             with open(y, "r") as file_descriptor:
-                data.extend(yaml.load(file_descriptor, Loader=yaml.SafeLoader))
+                data.extend(yaml.load_all(file_descriptor, Loader=yaml.SafeLoader))
         with open("temp.yaml", "w") as file_descriptor:
-            yaml.dump(data, file_descriptor)
+            yaml.dump_all(data, file_descriptor)
 
     return _merge_yamls
 
