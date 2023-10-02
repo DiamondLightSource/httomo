@@ -57,7 +57,7 @@ class PipelineReader:
             params=method_conf,
             method_name=method_name,
             method_func=method_func,
-            pattern=Pattern.all
+            pattern=Pattern(extra_params["dimension"] - 1)
         )
 
 
