@@ -96,7 +96,7 @@ def run_tasks(
 
     #TODO: evaluate padding for each section based on the methods present in each section
     #NOTE: padding value in the first section will define padding for the loader
-    # _evaluate_padding_per_section(platform_sections)
+    _evaluate_padding_per_section(platform_sections)
 
     # Check pipeline for the number of parameter sweeps present. If one is
     # defined, raise an error, due to not supporting parameter sweeps in a
@@ -843,7 +843,7 @@ def _update_max_slices(
     
     idx = 0
     # loop over all methods in section
-    for m in section.methods:        
+    for m in section.methods:
         if m.output_dims_change:
             # the "non_slice_dims_shape" needs to be changed for the current method
             module_mem_path = "httomo.methods_database.packages.external."
@@ -902,6 +902,33 @@ def _update_max_slices(
     output_dims_l.insert(slicing_dim_section, max_slices)
     output_dims = tuple(output_dims_l)
     return output_dims, data_type
+
+def __local_supporting_func_path(module_name):
+    for n_ind, module_str in enumerate(module_name.split(".")):
+        if n_ind == 0:
+            module_path += module_name.split(".")[0] + ".supporting_funcs"
+        else:
+            module_path += "."
+            module_path += module_name.split(".")[n_ind]
+module_mem = getattr(import_module(module_mem_path), "_calc_memory_bytes_" + m.parameters['method_name'])
+
+
+def _evaluate_padding_per_section(
+    section: PlatformSection,
+) -> List[PlatformSection]:
+    # perform loop over sections
+    for i, section in enumerate(section):
+        # loop over all methods in section
+        padding_max_methods = [0] * len(section.methods)
+        for j, m in enumerate(section.methods):
+            if m.padding:
+                # perform estimation of the padding value using the supporting functions library
+            else:
+                # no padding
+                padding_max_methods[j] = 0
+            section.padding = max(padding_max_methods)
+
+    return section
 
 
 def _perform_reslice(
