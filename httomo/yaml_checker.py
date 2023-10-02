@@ -359,27 +359,35 @@ def validate_yaml_config(
     """
     with open(yaml_file, "r") as f:
         conf_generator: Generator = yaml.load_all(f, Loader=loader)
-        if not sanity_check(conf_generator):
-            return False
+        is_yaml_ok = sanity_check(conf_generator)
 
     with open(yaml_file, "r") as f:
         conf = list(yaml.load_all(f, Loader=loader))
-    if not check_all_stages_defined(conf):
-        return False
-    if not check_all_stages_non_empty(conf):
-        return False
-    if not check_loading_stage_one_method(conf):
-        return False
-    if not check_first_stage_has_loader(conf):
-        return False
-    if not check_one_method_per_module(conf):
-        return False
+
+    # Let all checks run before returning with the result, even if some checks
+    # fail, to show all errors present in YAML
+    are_all_stages_defined = check_all_stages_defined(conf)
+    are_all_stages_non_empty = check_all_stages_non_empty(conf)
+    is_loading_stage_correct_len = check_loading_stage_one_method(conf)
+    is_loading_stage_method_correct = check_first_stage_has_loader(conf)
+    is_one_method_per_module = check_one_method_per_module(conf)
+    are_hdf5_paths_correct = True
     if in_file is not None:
-        if not check_hdf5_paths_against_loader(conf[0][0], in_file):
-            return False
-    if not check_methods_exist_in_templates(conf):
-        return False
-    if not check_valid_method_parameters(conf, loader):
+        are_hdf5_paths_correct = check_hdf5_paths_against_loader(conf[0][0], in_file)
+    do_methods_exist = check_methods_exist_in_templates(conf)
+    are_method_params_valid = check_valid_method_parameters(conf, loader)
+
+    all_checks_pass = is_yaml_ok and \
+        are_all_stages_defined and \
+        are_all_stages_non_empty and \
+        is_loading_stage_correct_len and \
+        is_loading_stage_method_correct and \
+        is_one_method_per_module and \
+        are_hdf5_paths_correct and \
+        do_methods_exist and \
+        are_method_params_valid
+
+    if not all_checks_pass:
         return False
 
     end_str = (
