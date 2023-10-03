@@ -150,7 +150,7 @@ def test_gpu_pipeline_output_with_save_all(
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
-    assert len(files) == 136
+    assert len(files) == 133
     
     # commenting this until we sort out statistics calculation
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -162,28 +162,26 @@ def test_gpu_pipeline_output_with_save_all(
         assert arr.shape == (160, 160)
         total_sum += arr.sum()
 
-    assert total_sum == 193160265.0
+    assert total_sum == 185989420.0
 
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 6
+    assert len(h5_files) == 3
 
-    remove_outlier_tomo = list(
-        filter(lambda x: "remove_outlier3d-tomo.h5" in x, h5_files)
-    )[0]
     normalize_tomo = list(filter(lambda x: "normalize-tomo.h5" in x, h5_files))[0]
+    remove_stripe_tomo = list(filter(lambda x: "remove_stripe_based_sorting-tomo.h5" in x, h5_files))[0]
     fpb_recon_tomo = list(filter(lambda x: "FBP-tomo.h5" in x, h5_files))[0]
 
     with h5py.File(normalize_tomo, "r") as f:
         assert f["data"].shape == (180, 128, 160)
-        assert_allclose(np.sum(f["data"]), 1060863, atol=1e-5)
-        assert_allclose(np.mean(f["data"]), 0.287778, atol=1e-5)
-    with h5py.File(fpb_recon_tomo, "r") as f:
-        assert_allclose(np.sum(f["data"]), 2611.2117, atol=1e-5)
-        assert_allclose(np.mean(f["data"]), 0.000798, atol=1e-5)
-    with h5py.File(remove_outlier_tomo, "r") as f:
-        assert_allclose(np.sum(f["data"]), 2.981388e+09, atol=1e-5)
-        assert_allclose(np.mean(f["data"]), 808.75336, atol=1e-5)
+        assert_allclose(np.sum(f["data"]), 1062695.375, atol=1e-5)
+        assert_allclose(np.mean(f["data"]), 0.288275, atol=1e-5)
+    with h5py.File(remove_stripe_tomo, "r") as f:
         assert f["data"].shape == (180, 128, 160)
+        assert_allclose(np.sum(f["data"]), 1059103.125, atol=1e-5)
+        assert_allclose(np.mean(f["data"]), 0.287300, atol=1e-5)
+    with h5py.File(fpb_recon_tomo, "r") as f:
+        assert_allclose(np.sum(f["data"]), 2614.8481, atol=1e-5)
+        assert_allclose(np.mean(f["data"]), 0.000798, atol=1e-5)
 
 
 def test_i12_testing_pipeline_output(
