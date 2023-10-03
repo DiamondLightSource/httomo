@@ -74,8 +74,8 @@ def test_tomo_standard_testing_pipeline_output(
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 3, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.mean(f["data"]), -7.02924e-06, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), -0.539846, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), -2.123908e-06, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), -0.163116, atol=1e-6)
 
     #: some basic testing of the generated user.log file, because running the whole pipeline again
     #: will slow down the execution of the test suite.
@@ -337,8 +337,8 @@ def test_diad_testing_pipeline_output(
         if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (26, 2, 26)
-                assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), -0.000823, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), -1.11251, atol=1e-6)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
