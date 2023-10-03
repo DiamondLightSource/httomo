@@ -252,7 +252,7 @@ def test_i12_testing_pipeline_output(
     assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "Saving intermediate file: 4-tomopy-remove_stripe_fw-tomo.h5" in log_contents
     assert "The center of rotation for 180 degrees sinogram is 95.5" in log_contents
-    assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
+    assert "Saving intermediate file: 5-tomopy-recon-tomo-gridrec.h5" in log_contents
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
@@ -297,7 +297,7 @@ def test_i12_testing_ignore_darks_flats_pipeline_output(
     assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "Saving intermediate file: 4-tomopy-remove_stripe_fw-tomo.h5" in log_contents
     assert "The center of rotation for 180 degrees sinogram is 95.5" in log_contents
-    assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
+    assert "Saving intermediate file: 5-tomopy-recon-tomo-gridrec.h5" in log_contents
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
