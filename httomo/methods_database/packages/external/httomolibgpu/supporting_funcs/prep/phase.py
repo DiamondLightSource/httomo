@@ -18,7 +18,7 @@
 # Created By  : Tomography Team at DLS <scientificsoftware@diamond.ac.uk>
 # Created Date: 21 September 2023
 # ---------------------------------------------------------------------------
-"""Modules for memory estimation for phase retrieval and phase-contrast enhancement"""
+"""Modules for memory estimation, padding, data dims for phase retrieval and phase-contrast enhancement"""
 
 import math
 from typing import Tuple

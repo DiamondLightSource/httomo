@@ -38,6 +38,7 @@ from httomo.utils import (
 )
 from httomo.wrappers_class import BackendWrapper, _gpumem_cleanup
 from httomo.yaml_utils import open_yaml_config
+supporting_module_path = "httomo.methods_database.packages.external."
 
 
 def run_tasks(
@@ -94,7 +95,6 @@ def run_tasks(
     # Initialising platform sections (skipping loader method)
     platform_sections = _determine_platform_sections(method_funcs[1:], save_all)    
 
-    #TODO: evaluate padding for each section based on the methods present in each section
     #NOTE: padding value in the first section will define padding for the loader
     _evaluate_padding_per_section(platform_sections)
 
@@ -828,6 +828,7 @@ def _update_max_slices(
     if process_data_shape is None or input_data_type is None:
         return
     
+    
     nsl_dim_l = list(process_data_shape)
     nsl_dim_l.pop(slicing_dim_section)
     non_slice_dims_shape = tuple(nsl_dim_l)
@@ -846,15 +847,8 @@ def _update_max_slices(
     for m in section.methods:
         if m.output_dims_change:
             # the "non_slice_dims_shape" needs to be changed for the current method
-            module_mem_path = "httomo.methods_database.packages.external."
-            for n_ind, module_str in enumerate(m.module_name.split(".")):
-                if n_ind == 0:
-                    module_mem_path += m.module_name.split(".")[0] + ".supporting_funcs"
-                else:
-                    module_mem_path += "."
-                    module_mem_path += m.module_name.split(".")[n_ind]
-            module_mem = getattr(import_module(module_mem_path), "_calc_output_dim_"+m.parameters['method_name'])                
-            output_dims = module_mem(non_slice_dims_shape, **m.parameters)        
+            module_attr = __library_supporting_func_getattr(m, "calc_output_dim")
+            output_dims = module_attr(non_slice_dims_shape, **m.parameters)        
         if section.gpu:
             if m.calc_max_slices != 'None':
                 # the gpu memory needs to be estimated for the given method
@@ -874,16 +868,9 @@ def _update_max_slices(
                             memory_bytes_method += int(m.calc_max_slices[1]['multipliers'][i] * np.prod(non_slice_dims_shape) * data_type.itemsize)
                         else:
                             # this requires more complicated memory calculation using the function that exists in methods_database of httomo
-                            # building up path to the function here:                     
-                            module_mem_path = "httomo.methods_database.packages.external."       
-                            for n_ind, module_str in enumerate(m.module_name.split(".")):
-                                if n_ind == 0:
-                                    module_mem_path += m.module_name.split(".")[0] + ".supporting_funcs"
-                                else:
-                                    module_mem_path += "."
-                                    module_mem_path += m.module_name.split(".")[n_ind]
-                            module_mem = getattr(import_module(module_mem_path), "_calc_memory_bytes_" + m.parameters['method_name'])
-                            (memory_bytes_method, subtract_bytes) = module_mem(non_slice_dims_shape, data_type, **m.parameters)
+                            # building up path to the function here:
+                            module_attr = __library_supporting_func_getattr(m, "calc_memory_bytes")
+                            (memory_bytes_method, subtract_bytes) = module_attr(non_slice_dims_shape, data_type, **m.parameters)
 
                 slices_estimated = (available_memory - subtract_bytes) // memory_bytes_method
             else:
@@ -903,14 +890,16 @@ def _update_max_slices(
     output_dims = tuple(output_dims_l)
     return output_dims, data_type
 
-def __local_supporting_func_path(module_name):
-    for n_ind, module_str in enumerate(module_name.split(".")):
+def __library_supporting_func_getattr(method, supporting_func_str):
+    module_path = supporting_module_path
+    for n_ind, module_str in enumerate(method.module_name.split(".")):
         if n_ind == 0:
-            module_path += module_name.split(".")[0] + ".supporting_funcs"
+            module_path += method.module_name.split(".")[0] + ".supporting_funcs"
         else:
             module_path += "."
-            module_path += module_name.split(".")[n_ind]
-module_mem = getattr(import_module(module_mem_path), "_calc_memory_bytes_" + m.parameters['method_name'])
+            module_path += method.module_name.split(".")[n_ind]
+    func_full_path = "_" + supporting_func_str + "_" + method.parameters['method_name']
+    return getattr(import_module(module_path), func_full_path)
 
 
 def _evaluate_padding_per_section(
@@ -919,14 +908,16 @@ def _evaluate_padding_per_section(
     # perform loop over sections
     for i, section in enumerate(section):
         # loop over all methods in section
-        padding_max_methods = [0] * len(section.methods)
+        padding_methods = [0] * len(section.methods)
         for j, m in enumerate(section.methods):
             if m.padding:
                 # perform estimation of the padding value using the supporting functions library
+                module_attr = __library_supporting_func_getattr(m, "calc_padding")
+                padding_methods[j] = module_attr(**m.parameters)
             else:
                 # no padding
-                padding_max_methods[j] = 0
-            section.padding = max(padding_max_methods)
+                padding_methods[j] = 0
+        section.padding = max(padding_methods)
 
     return section
 
