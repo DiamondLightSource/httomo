@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import cupy as cp
 from httomolib.misc.images import save_to_images
 from mpi4py import MPI
 from numpy import ndarray
