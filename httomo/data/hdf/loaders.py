@@ -26,7 +26,7 @@ def standard_tomo(
     name: str,
     in_file: os.PathLike | str,
     data_path: str,
-    dimension: int,
+    pattern: str,
     preview: List[Dict[str, int]],
     pad: int,
     comm: Comm,
@@ -49,8 +49,8 @@ def standard_tomo(
         The absolute filepath to the input data.
     data_path : str
         The path within the hdf/nxs file to the data.
-    dimension : int
-        The dimension to slice in.
+    pattern : str
+        pattern will define how the data loaded and the initial slicing axis.
     preview : List[Dict[str, int]]
         The previewing/slicing to be applied to the data.
     pad : int
@@ -125,6 +125,13 @@ def standard_tomo(
     # Get string representation of `preview` parameter
     preview_str = _parse_preview(preview, shape, data_indices)
 
+    if pattern == "projection":
+        dimension = 1 # first dimension for data: (angles [1], detX [2], detY [3]) 
+    elif pattern == "sinogram":
+        dimension = 2 # second dimension for data: (angles [1], detX [2], detY [3])         
+    else:
+        raise Exception("Invalid pattern in the loader. Choose between 'projection' or 'sinogram'.")        
+        
     dim = dimension
     pad_values = load.get_pad_values(
         pad,
@@ -184,9 +191,9 @@ def standard_tomo(
             dim=dimension,
         )
 
-    (angles_total, detector_y, detector_x) = data.shape
+    (angles_total, detector_x, detector_y) = data.shape
     log_rank(
-        f"Data shape is {(angles_total, detector_y, detector_x)}"
+        f"Data shape is {(angles_total, detector_x, detector_y)}"
         + f" of type {data.dtype}",
         comm,
     )
@@ -197,6 +204,6 @@ def standard_tomo(
         darks=asarray(darks_data),
         angles=angles,
         angles_total=angles_total,
-        detector_y=detector_y,
         detector_x=detector_x,
+        detector_y=detector_y,
     )

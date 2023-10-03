@@ -2,18 +2,21 @@ misc:
   corr:
     inpainting_filter3d:
       pattern: all
+      padding: True
       output_dims_change: False
       implementation: cpu
       memory_gpu: None
   images:
     save_to_images:
       pattern: all
+      padding: False
       output_dims_change: False
       implementation: cpu
       memory_gpu: None
   segm:
     binary_thresholding:
       pattern: all
+      padding: False
       output_dims_change: False
       implementation: cpu
       memory_gpu: None
@@ -21,6 +24,7 @@ prep:
   phase:
     paganin_filter:
       pattern: projection
+      padding: False
       output_dims_change: False
       implementation: cpu
       memory_gpu: None      

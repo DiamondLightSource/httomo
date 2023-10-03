@@ -38,14 +38,12 @@ from httomo.utils import (
 )
 from httomo.wrappers_class import BackendWrapper, _gpumem_cleanup
 from httomo.yaml_utils import open_yaml_config
+supporting_module_path = "httomo.methods_database.packages.external."
 
 
 def run_tasks(
     in_file: Path,
     yaml_config: Path,
-    dimension: int,
-    pad: int = 0,
-    ncore: int = 1,
     save_all: bool = False,
     reslice_dir: Optional[Path] = None,
 ) -> None:
@@ -57,12 +55,6 @@ def run_tasks(
         The file to read data from.
     yaml_config : Path
         The file containing the processing pipeline info as YAML.
-    dimension : int
-        The dimension to slice in.
-    pad : int
-        The padding size to use. Defaults to 0.
-    ncore : int
-        The number of the CPU cores per process.
     save_all : bool
         Specifies if intermediate datasets should be saved for all tasks in the
         pipeline.
@@ -71,9 +63,6 @@ def run_tasks(
         should be done in-memory.
     """
     comm = MPI.COMM_WORLD
-    if comm.size == 1:
-        # use all available CPU cores if not an MPI run
-        ncore = multiprocessing.cpu_count()
 
     # Define dict to store arrays of the whole pipeline using provided YAML
     # Define list to store dataset stats for each task in the user config YAML
@@ -82,19 +71,6 @@ def run_tasks(
     # Get a list of the python functions associated to the methods defined in
     # user config YAML
     method_funcs = _get_method_funcs(yaml_config, comm)
-
-    # Define dict of params that are needed by loader functions
-    dict_loader_extra_params = {
-        "in_file": in_file,
-        "dimension": dimension,
-        "pad": pad,
-        "comm": comm,
-    }
-
-    # store info about reslicing with ResliceInfo
-    reslice_info = ResliceInfo(
-        count=0, has_warn_printed=False, reslice_dir=reslice_dir
-    )
 
     # Associate patterns to method function objects
     for i, method_func in enumerate(method_funcs):
@@ -112,8 +88,15 @@ def run_tasks(
     for i, method_func in enumerate(method_funcs):
          method_funcs[i] = _assign_attribute_to_method(method_func, "memory_gpu")
 
-    # Initialising platform sections (skipping loader)
+    # Associate padding attribute to method function objects
+    for i, method_func in enumerate(method_funcs):
+         method_funcs[i] = _assign_attribute_to_method(method_func, "padding")
+
+    # Initialising platform sections (skipping loader method)
     platform_sections = _determine_platform_sections(method_funcs[1:], save_all)    
+
+    #NOTE: padding value in the first section will define padding for the loader
+    _evaluate_padding_per_section(platform_sections)
 
     # Check pipeline for the number of parameter sweeps present. If one is
     # defined, raise an error, due to not supporting parameter sweeps in a
@@ -141,6 +124,20 @@ def run_tasks(
         comm,
         colour=Colour.CYAN,
         level=0,
+    )
+    
+    # padding value needs to be the max padding value for the loading section
+    pad = 0
+    # Define dict of params that are needed by loader functions
+    dict_loader_extra_params = {
+        "in_file": in_file,
+        "pad": pad,
+        "comm": comm,
+    }
+
+    # store info about reslicing with ResliceInfo
+    reslice_info = ResliceInfo(
+        count=0, has_warn_printed=False, reslice_dir=reslice_dir
     )
     method_funcs[0].parameters.update(dict_loader_extra_params)
 
@@ -593,6 +590,7 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
                 gpu=False,
                 cupyrun=False,
                 calc_max_slices=None,
+                padding = 0,
                 output_dims_change = False,
                 pattern=Pattern.all,
                 is_loader=False,
@@ -633,7 +631,7 @@ def _assign_attribute_to_method(
     MethodFunc
         The updated function object
     """
-    if attribute in ["pattern", "implementation", "memory_gpu", "output_dims_change"]:
+    if attribute in ["pattern", "implementation", "memory_gpu", "output_dims_change", "padding"]:
         attribute_value = get_method_info(
             method_function.module_name, method_function.method_func.__name__, attribute)
         if attribute == "pattern":
@@ -674,6 +672,8 @@ def _assign_attribute_to_method(
         if attribute == "output_dims_change":
             if attribute_value:
                 method_function = dataclasses.replace(method_function, output_dims_change=True)
+        if attribute == "padding":
+            method_function = dataclasses.replace(method_function, padding=attribute_value)                
     else:
         err_str = (
             f"The attribute {attribute} that is listed for the method "
@@ -720,6 +720,7 @@ def _determine_platform_sections(
                     pattern=current_pattern,
                     reslice=False,
                     max_slices=0,
+                    padding=0,
                     methods=methods,
                 )
             )
@@ -742,6 +743,7 @@ def _determine_platform_sections(
                         pattern=current_pattern,
                         reslice=False,
                         max_slices=0,
+                        padding=0,
                         methods=methods,
                     )
                 )
@@ -752,10 +754,15 @@ def _determine_platform_sections(
 
     section.append(
         PlatformSection(
-            gpu=current_gpu, pattern=current_pattern, reslice=False, max_slices=0, methods=methods
+            gpu=current_gpu, 
+            pattern=current_pattern, 
+            reslice=False, 
+            max_slices=0,
+            padding=0,
+            methods=methods,
         )
     )
-    for i, section_current in enumerate(section):                   
+    for i, section_current in enumerate(section):
         for m_ind, methodfunc_sect in enumerate(section_current.methods):
             if m_ind == len(section_current.methods) - 1:
                 # we make every last method in the section to return_numpy: True
@@ -784,6 +791,11 @@ def _determine_platform_sections(
             if i == 0 and section_current.pattern.name == 'all':
                 # if the first section has "all" pattern we skip the reslice 
                 section[i].reslice = False
+        # exclude sections with pattern "all"
+        if section_current.pattern.name == 'all':
+            # inherit pattern from the previous section
+            if i > 0:
+                section[i].pattern = section[i-1].pattern    
     return section
 
 
@@ -816,6 +828,7 @@ def _update_max_slices(
     if process_data_shape is None or input_data_type is None:
         return
     
+    
     nsl_dim_l = list(process_data_shape)
     nsl_dim_l.pop(slicing_dim_section)
     non_slice_dims_shape = tuple(nsl_dim_l)
@@ -831,18 +844,11 @@ def _update_max_slices(
     
     idx = 0
     # loop over all methods in section
-    for m in section.methods:        
+    for m in section.methods:
         if m.output_dims_change:
             # the "non_slice_dims_shape" needs to be changed for the current method
-            module_mem_path = "httomo.methods_database.packages.external."
-            for n_ind, module_str in enumerate(m.module_name.split(".")):
-                if n_ind == 0:
-                    module_mem_path += m.module_name.split(".")[0] + ".supporting_funcs"
-                else:
-                    module_mem_path += "."
-                    module_mem_path += m.module_name.split(".")[n_ind]
-            module_mem = getattr(import_module(module_mem_path), "_calc_output_dim_"+m.parameters['method_name'])                
-            output_dims = module_mem(non_slice_dims_shape, **m.parameters)        
+            module_attr = __library_supporting_func_getattr(m, "calc_output_dim")
+            output_dims = module_attr(non_slice_dims_shape, **m.parameters)        
         if section.gpu:
             if m.calc_max_slices != 'None':
                 # the gpu memory needs to be estimated for the given method
@@ -862,16 +868,9 @@ def _update_max_slices(
                             memory_bytes_method += int(m.calc_max_slices[1]['multipliers'][i] * np.prod(non_slice_dims_shape) * data_type.itemsize)
                         else:
                             # this requires more complicated memory calculation using the function that exists in methods_database of httomo
-                            # building up path to the function here:                     
-                            module_mem_path = "httomo.methods_database.packages.external."       
-                            for n_ind, module_str in enumerate(m.module_name.split(".")):
-                                if n_ind == 0:
-                                    module_mem_path += m.module_name.split(".")[0] + ".supporting_funcs"
-                                else:
-                                    module_mem_path += "."
-                                    module_mem_path += m.module_name.split(".")[n_ind]
-                            module_mem = getattr(import_module(module_mem_path), "_calc_memory_bytes_" + m.parameters['method_name'])
-                            (memory_bytes_method, subtract_bytes) = module_mem(non_slice_dims_shape, data_type, **m.parameters)
+                            # building up path to the function here:
+                            module_attr = __library_supporting_func_getattr(m, "calc_memory_bytes")
+                            (memory_bytes_method, subtract_bytes) = module_attr(non_slice_dims_shape, data_type, **m.parameters)
 
                 slices_estimated = (available_memory - subtract_bytes) // memory_bytes_method
             else:
@@ -890,6 +889,37 @@ def _update_max_slices(
     output_dims_l.insert(slicing_dim_section, max_slices)
     output_dims = tuple(output_dims_l)
     return output_dims, data_type
+
+def __library_supporting_func_getattr(method, supporting_func_str):
+    module_path = supporting_module_path
+    for n_ind, module_str in enumerate(method.module_name.split(".")):
+        if n_ind == 0:
+            module_path += method.module_name.split(".")[0] + ".supporting_funcs"
+        else:
+            module_path += "."
+            module_path += method.module_name.split(".")[n_ind]
+    func_full_path = "_" + supporting_func_str + "_" + method.parameters['method_name']
+    return getattr(import_module(module_path), func_full_path)
+
+
+def _evaluate_padding_per_section(
+    section: PlatformSection,
+) -> List[PlatformSection]:
+    # perform loop over sections
+    for i, section in enumerate(section):
+        # loop over all methods in section
+        padding_methods = [0] * len(section.methods)
+        for j, m in enumerate(section.methods):
+            if m.padding:
+                # perform estimation of the padding value using the supporting functions library
+                module_attr = __library_supporting_func_getattr(m, "calc_padding")
+                padding_methods[j] = module_attr(**m.parameters)
+            else:
+                # no padding
+                padding_methods[j] = 0
+        section.padding = max(padding_methods)
+
+    return section
 
 
 def _perform_reslice(

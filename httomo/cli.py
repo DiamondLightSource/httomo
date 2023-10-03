@@ -47,25 +47,6 @@ def check(yaml_config: Path, in_data: Path = None):
     type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
 )
 @click.option(
-    "-d",
-    "--dimension",
-    type=click.IntRange(1, 3),
-    default=1,
-    help="The dimension to slice through.",
-)
-@click.option(
-    "--pad",
-    type=click.INT,
-    default=0,
-    help="The number of slices to pad each block of data.",
-)
-@click.option(
-    "--ncore",
-    type=click.INT,
-    default=1,
-    help=" The number of the CPU cores per process.",
-)
-@click.option(
     "--gpu-id",
     type=click.INT,
     default=-1,
@@ -101,9 +82,6 @@ def run(
     in_file: Path,
     yaml_config: Path,
     out_dir: Path,
-    dimension: int,
-    pad: int,
-    ncore: int,
     gpu_id: int,
     save_all: bool,
     file_based_reslice: bool,
@@ -148,9 +126,6 @@ def run(
     return run_tasks(
         in_file,
         yaml_config,
-        dimension,
-        pad,
-        ncore,
         save_all,
         reslice_dir if file_based_reslice else None,
     )

@@ -248,12 +248,12 @@ def get_pad_values(
     preview: str = ":,:,:",
     comm: MPI.Comm = MPI.COMM_WORLD,
 ) -> Tuple[int, int]:
-    """Get number of slices the block of data is padded either side.
+    """Get the number of slices the chunk of data is padded either side.
 
     Parameters
     ----------
     pad : int
-        Number of slices to pad block with.
+        Number of slices to pad chunk with.
     dim : int
         Dimension data is to be padded in (same dimension data is sliced in).
     dim_length : int
