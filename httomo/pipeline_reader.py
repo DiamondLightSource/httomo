@@ -94,6 +94,7 @@ class PipelineReader:
             pre_process_infos.append(PreProcessInfo(
                 params=method_conf,
                 method_name=method_name,
+                module_path=module_name,
                 wrapper_func=wrapper_init_module.wrapper_method
             ))
 

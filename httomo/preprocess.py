@@ -12,6 +12,7 @@ from numpy import newaxis
 
 from httomo.common import PreProcessInfo
 from httomo.data.hdf._utils.reslice import single_sino_reslice
+from httomo.methods_database.query import get_method_info
 
 
 Centering180Result: TypeAlias = float
@@ -24,12 +25,18 @@ def dezinging(
 ) -> np.ndarray[Any, np.dtype[np.float32]]:
 
     param_filter = ("method_name")
+    is_cupyrun = get_method_info(
+        preproc_info.module_path,
+        preproc_info.method_name,
+        "implementation"
+    ) == "gpu_cupy"
 
     return preproc_info.wrapper_func(
         preproc_info.method_name,
         {k:preproc_info.params[k] for k in preproc_info.params.keys() - param_filter},
         data,
         return_numpy=True,
+        cupyrun=is_cupyrun
     )
 
 
@@ -63,12 +70,18 @@ def centering(
         )
 
         param_filter = ("method_name", "data_in", "data_out", "ind")
+        is_cupyrun = get_method_info(
+            centering_method_info.module_path,
+            centering_method_info.method_name,
+            "implementation"
+        ) == "gpu_cupy"
         
         res = centering_method_info.wrapper_func(
             centering_method_info.method_name,
             {k:centering_method_info.params[k] for k in centering_method_info.params.keys() - param_filter},
             sino_slice,
             return_numpy=False,
+            cupyrun=is_cupyrun
         )
     else:
         res = None

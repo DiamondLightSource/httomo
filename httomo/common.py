@@ -168,6 +168,7 @@ class PreProcessInfo:
     """
     params: Dict[str, Any]
     method_name: str
+    module_path: str
     wrapper_func: Callable
 
 
