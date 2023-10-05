@@ -1,3 +1,4 @@
+--- # loading
 - httomo.data.hdf.loaders:
     standard_tomo:
       name: tomo
@@ -9,12 +10,14 @@
           stop: 60
         - 
       pad: 0
+--- # pre-processing
 - tomopy.misc.corr:
     median_filters:
       data: tomo
       data_out: tomo
       size: tomo
       axis: 0
+--- # main processing
 - tomopy.prep.normalize:
     normalize:
       data_in: tomo

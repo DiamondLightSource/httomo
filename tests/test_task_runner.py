@@ -17,7 +17,6 @@ def _dummy():
 
 def make_test_method(
     gpu=False,
-    is_loader=False,
     pattern=Pattern.projection,
     module_name="testmodule",
     wrapper_function=None,
@@ -26,7 +25,6 @@ def make_test_method(
     return MethodFunc(
         cpu=not gpu,
         gpu=gpu,
-        is_loader=is_loader,
         module_name=module_name,
         pattern=pattern,
         method_func=_dummy,
@@ -36,7 +34,7 @@ def make_test_method(
 
 
 def test_determine_platform_sections_single() -> None:
-    methods = [make_test_method(is_loader=True, module_name="testloader")]
+    methods = [make_test_method()]
     sections = _determine_platform_sections(methods, save_all=False)
 
     assert len(sections) == 1
@@ -48,7 +46,7 @@ def test_determine_platform_sections_single() -> None:
 
 def test_determine_platform_sections_two_cpu() -> None:
     methods = [
-        make_test_method(is_loader=True, module_name="testloader"),
+        make_test_method(),
         make_test_method(),
     ]
     sections = _determine_platform_sections(methods, save_all=False)
@@ -62,9 +60,7 @@ def test_determine_platform_sections_two_cpu() -> None:
 
 def test_determine_platform_sections_pattern_change() -> None:
     methods = [
-        make_test_method(
-            is_loader=True, module_name="testloader", pattern=Pattern.projection
-        ),
+        make_test_method(pattern=Pattern.projection),
         make_test_method(pattern=Pattern.sinogram),
     ]
     sections = _determine_platform_sections(methods, save_all=False)
@@ -82,7 +78,7 @@ def test_determine_platform_sections_pattern_change() -> None:
 
 def test_determine_platform_sections_platform_change() -> None:
     methods = [
-        make_test_method(is_loader=True, module_name="testloader"),
+        make_test_method(gpu=False),
         make_test_method(gpu=True),
     ]
     sections = _determine_platform_sections(methods, save_all=False)
@@ -119,7 +115,7 @@ def test_determine_platform_sections_pattern_all_combine(
     pattern1: Pattern, pattern2: Pattern, expected: Pattern
 ) -> None:
     methods = [
-        make_test_method(pattern=pattern1, is_loader=True, module_name="testloader"),
+        make_test_method(pattern=pattern1),
         make_test_method(pattern=pattern2),
     ]
     sections = _determine_platform_sections(methods, save_all=False)

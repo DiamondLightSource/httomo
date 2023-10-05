@@ -19,8 +19,9 @@ from httomo.utils import gpu_enabled, xp
 from httomo.data.mpiutil import local_rank
 
 import httomo.globals
+import httomo.preprocess
 from httomo._stats.globals import min_max_mean_std
-from httomo.common import MethodFunc, PlatformSection, ResliceInfo, RunMethodInfo
+from httomo.common import LoaderInfo, MethodFunc, PlatformSection, PreProcessInfo, ResliceInfo, RunMethodInfo
 from httomo.data.hdf._utils.chunk import get_data_shape, save_dataset
 from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
 from httomo.data.hdf._utils.save import intermediate_dataset
@@ -36,8 +37,9 @@ from httomo.utils import (
     log_once,
     remove_ansi_escape_sequences,
 )
-from httomo.wrappers_class import BackendWrapper, _gpumem_cleanup
-from httomo.yaml_utils import open_yaml_config
+from httomo.wrappers_class import _gpumem_cleanup
+from httomo.yaml_loader import YamlLoader
+from httomo.pipeline_reader import PipelineReader, PipelineReaderInterface
 
 
 def run_tasks(
@@ -77,11 +79,8 @@ def run_tasks(
 
     # Define dict to store arrays of the whole pipeline using provided YAML
     # Define list to store dataset stats for each task in the user config YAML
-    dict_datasets_pipeline, glob_stats = _initialise_datasets_and_stats(yaml_config)
-
-    # Get a list of the python functions associated to the methods defined in
-    # user config YAML
-    method_funcs = _get_method_funcs(yaml_config, comm)
+    glob_stats: List = []
+    dict_datasets_pipeline: Dict[str, np.ndarray] = {}
 
     # Define dict of params that are needed by loader functions
     dict_loader_extra_params = {
@@ -91,12 +90,19 @@ def run_tasks(
         "comm": comm,
     }
 
+    # Get objects representing the methods in the different stages defined in
+    # the pipeline YAML file
+    pipeline_reader: PipelineReaderInterface = PipelineReader(YamlLoader)
+    loader_run_info: LoaderInfo = pipeline_reader.get_loader_info(yaml_config, dict_loader_extra_params)
+    pre_process_infos: List[PreProcessInfo] = pipeline_reader.get_pre_process_info(yaml_config, comm)
+    method_funcs: List[MethodFunc] = pipeline_reader.get_main_pipeline_info(yaml_config, comm)
+
     # store info about reslicing with ResliceInfo
     reslice_info = ResliceInfo(
         count=0, has_warn_printed=False, reslice_dir=reslice_dir
     )
-
-    # Associate patterns to method function objects
+    
+    # Associate patterns to method function objects and update dict_preprocess
     for i, method_func in enumerate(method_funcs):
         method_funcs[i] = _assign_attribute_to_method(method_func, "pattern")        
 
@@ -113,7 +119,7 @@ def run_tasks(
          method_funcs[i] = _assign_attribute_to_method(method_func, "memory_gpu")
 
     # Initialising platform sections (skipping loader)
-    platform_sections = _determine_platform_sections(method_funcs[1:], save_all)    
+    platform_sections = _determine_platform_sections(method_funcs, save_all)
 
     # Check pipeline for the number of parameter sweeps present. If one is
     # defined, raise an error, due to not supporting parameter sweeps in a
@@ -142,32 +148,22 @@ def run_tasks(
         colour=Colour.CYAN,
         level=0,
     )
-    method_funcs[0].parameters.update(dict_loader_extra_params)
-
-    # Check if a value for the `preview` parameter of the loader has
-    # been provided
-    if "preview" not in method_funcs[0].parameters.keys():
-        method_funcs[0].parameters["preview"] = [None]
     
     output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
     output_colour_list_short = [Colour.GREEN, Colour.CYAN]
-    loader_method_name = method_funcs[0].parameters.pop("method_name")
     log_once(
-        f"Running task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name}...",
+        f"Running task 1 (pattern={loader_run_info.pattern.name}): {loader_run_info.method_name}...",
         comm,
         colour=Colour.LIGHT_BLUE,
         level=0,
     )
 
     loader_start_time = time.perf_counter_ns()
-
-    # function to be called from httomo.data.hdf.loaders
-    loader_func = method_funcs[0].method_func
-    # collect meta data from LoaderData.
-    loader_info = loader_func(**method_funcs[0].parameters)
-
+    loader_func = loader_run_info.method_func
+    loader_info = loader_func(**loader_run_info.params)
+        
     output_str_list = [
-        f"    Finished task 1 (pattern={method_funcs[0].pattern.name}): {loader_method_name} (",
+        f"    Finished task 1 (pattern={loader_run_info.pattern.name}): {loader_run_info.method_name} (",
         "httomo",
         f") Took {float(time.perf_counter_ns() - loader_start_time)*1e-6:.2f}ms",
     ]
@@ -176,7 +172,7 @@ def run_tasks(
     # Update `dict_datasets_pipeline` dict with the data that has been
     # loaded by the loader
     # NOTE: conversion to float32 to avoid creating an additional output array in the GPU loop
-    dict_datasets_pipeline[method_funcs[0].parameters["name"]] = np.float32(loader_info.data)
+    dict_datasets_pipeline[loader_run_info.params["name"]] = np.float32(loader_info.data)
     dict_datasets_pipeline["flats"] = np.float32(loader_info.flats)
     dict_datasets_pipeline["darks"] = np.float32(loader_info.darks)
     # Clean up `loader_info.data`, `loader_info.darks`, and `loader_info.flats`,
@@ -195,16 +191,66 @@ def run_tasks(
         (["out_dir"], httomo.globals.run_out_dir),
         (["return_numpy"], False),
         (["cupyrun"], False),
-    ]
+        (["save_result"], False),
+    ]  
+
+    dezinging_preproc_idx: Optional[int] = None
+    for i, preproc in enumerate(pre_process_infos):
+        if "center" in preproc.method_name:
+            centering_preproc_idx = i
+            centering_out_name = preproc.params["data_out"]
+
+        if "remove_outlier3d" in preproc.method_name:
+            dezinging_preproc_idx = i
+
+    if dezinging_preproc_idx is not None:
+        dezing_preproc_str = f"Running pre-processing: {pre_process_infos[dezinging_preproc_idx].method_name}"
+        log_once(dezing_preproc_str, comm=comm, colour=Colour.BLUE, level=0)
+        dict_datasets_pipeline[loader_run_info.params["name"]] = \
+            httomo.preprocess.dezinging(
+                dict_datasets_pipeline[loader_run_info.params["name"]],
+                pre_process_infos[dezinging_preproc_idx]
+            )
+        dict_datasets_pipeline["darks"] = \
+            httomo.preprocess.dezinging(
+                dict_datasets_pipeline["darks"],
+                pre_process_infos[dezinging_preproc_idx]
+            )
+        dict_datasets_pipeline["flats"] = \
+            httomo.preprocess.dezinging(
+                dict_datasets_pipeline["flats"],
+                pre_process_infos[dezinging_preproc_idx]
+            )
+
+    centering_preproc_str = f"Running pre-processing: {pre_process_infos[centering_preproc_idx].method_name}"
+    log_once(centering_preproc_str, comm=comm, colour=Colour.BLUE, level=0)
+    cor = httomo.preprocess.centering(
+        dict_datasets_pipeline[loader_run_info.params["name"]],
+        dict_datasets_pipeline["darks"],
+        dict_datasets_pipeline["flats"],
+        pre_process_infos[centering_preproc_idx],
+        comm
+    )
+
+    # Store the output(s) of the method in the appropriate
+    # dataset in the `dict_datasets_pipeline` dict
+    if isinstance(cor, (tuple, list)):
+        # The method produced multiple outputs
+        for val, dataset in zip(cor, centering_out_name):
+            dict_datasets_pipeline[dataset] = val
+    else:
+        # The method produced a single output
+        dict_datasets_pipeline[centering_out_name] = cor
+    
     # data shape and dtype are useful when calculating max slices
-    data_shape = dict_datasets_pipeline[method_funcs[0].parameters["name"]].shape
+    data_shape = dict_datasets_pipeline[loader_run_info.params["name"]].shape
     # data_dtype = loader_info.data.dtype
     data_dtype = np.dtype(np.float32) # make the data type constant for the run
     
     ##---------- MAIN LOOP STARTS HERE ------------##
     idx = 0
     # initialise the CPU data array with the loaded data, we override it at the end of every section
-    data_full_section = dict_datasets_pipeline[method_funcs[idx].parameters["name"]]
+    data_full_section = dict_datasets_pipeline[loader_run_info.params["name"]]
     for i, section in enumerate(platform_sections):  
         # getting the slicing dimension of the section
         slicing_dim_section = _get_slicing_dim(section.pattern) - 1        
@@ -422,7 +468,7 @@ def run_tasks(
         # `dict_datasets_pipeline`
         # - the `data_full_section` variable
         if contains_recon:
-            dict_datasets_pipeline[method_funcs[0].parameters["name"]] = \
+            dict_datasets_pipeline[loader_run_info.params["name"]] = \
                 recon_arr
             data_full_section = recon_arr
         
@@ -459,149 +505,7 @@ def run_tasks(
         log_once(end_str, comm=comm, colour=Colour.BVIOLET)
         #: remove ansi escape sequences from the log file
         remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")    
-    
-def _initialise_datasets_and_stats(
-    yaml_config: Path,
-) -> tuple[Dict[str, None], List[Dict]]:
-    """Add keys to dict that will contain all datasets defined in the YAML
-    config.
 
-    Parameters
-    ----------
-    yaml_config : Path
-        The file containing the processing pipeline info as YAML
-
-    Returns
-    -------
-    tuple
-        Returns a tuple containing a dict of datasets and a
-        list containing the stats of all datasets of all methods in the pipeline.
-        The fist element is the dict of datasets, whose keys are the names of the datasets, and
-        values will eventually be arrays (but initialised to None in this
-        function)
-    """
-    datasets, stats = {}, []
-    # Define a list of parameter names that refer to a "dataset" that would need
-    # to exist in the `datasets` dict
-    loader_dataset_param = "name"
-    loader_dataset_params = [loader_dataset_param]
-    method_dataset_params = ["data_in", "data_out"]
-
-    dataset_params = method_dataset_params + loader_dataset_params
-
-    yaml_conf = open_yaml_config(yaml_config)
-    for task_conf in yaml_conf:
-        module_name, module_conf = task_conf.popitem()
-        method_name, method_conf = module_conf.popitem()
-        # Check parameters of method if it contains any of the parameters which
-        # require a dataset to be defined
-
-        if "loaders" in module_name:
-            dataset_param = loader_dataset_param
-        else:
-            dataset_param = "data_in"
-
-        # Dict to hold the stats for each dataset associated with the method
-        method_stats: Dict[str, List] = {}
-        method_stats[method_conf[dataset_param]] = []
-        stats.append(method_stats)
-
-        for param in method_conf.keys():
-            if param in dataset_params:
-                if type(method_conf[param]) is list:
-                    for dataset_name in method_conf[param]:
-                        if dataset_name not in datasets:
-                            datasets[dataset_name] = None
-                else:
-                    if method_conf[param] not in datasets:
-                        datasets[method_conf[param]] = None
-
-    return datasets, stats
-
-
-def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
-    """Gather all the python functions needed to run the defined processing
-    pipeline.
-
-    Parameters
-    ==========
-
-    yaml_config : Path
-        The file containing the processing pipeline info as YAML
-
-    Returns
-    =======
-
-    List[MethodFunc]
-        A list describing each method function with its properties
-    """
-    method_funcs: List[MethodFunc] = []
-    yaml_conf = open_yaml_config(yaml_config)
-    methods_count = len(yaml_conf)
-
-    # the first task is always the loader
-    # so consider it separately
-    assert next(iter(yaml_conf[0].keys())) == "httomo.data.hdf.loaders"
-    module_name, module_conf = yaml_conf[0].popitem()
-    method_name, method_conf = module_conf.popitem()
-    method_conf["method_name"] = method_name
-    module = import_module(module_name)
-    method_func = getattr(module, method_name)
-    method_funcs.append(
-        MethodFunc(
-            module_name=module_name,
-            method_func=method_func,
-            wrapper_func=None,
-            parameters=method_conf,
-            is_loader=True,
-            cpu=True,
-            gpu=False,
-            pattern=Pattern.all,
-        )
-    )
-
-    for i, task_conf in enumerate(yaml_conf[1:]):
-        module_name, module_conf = task_conf.popitem()
-        split_module_name = module_name.split(".")
-        method_name, method_conf = module_conf.popitem()
-        method_conf["method_name"] = method_name
-
-        if split_module_name[0] not in ["tomopy", "httomolib", "httomolibgpu"]:
-            err_str = (
-                f"An unknown module name was encountered: " f"{split_module_name[0]}"
-            )
-            log_exception(err_str)
-            raise ValueError(err_str)
-
-        wrapper_init_module = BackendWrapper(
-            split_module_name[0],
-            split_module_name[1],
-            split_module_name[2],
-            method_name,
-            comm
-        )
-        wrapper_func = getattr(wrapper_init_module.module, method_name)
-        wrapper_method = wrapper_init_module.wrapper_method    
-        
-        method_funcs.append(
-            MethodFunc(
-                module_name=module_name,
-                method_func=wrapper_func,
-                wrapper_func=wrapper_method,
-                parameters=method_conf,
-                cpu=True,
-                gpu=False,
-                cupyrun=False,
-                calc_max_slices=None,
-                output_dims_change = False,
-                pattern=Pattern.all,
-                is_loader=False,
-                return_numpy=False,
-                idx_global=i+2,
-                global_statistics=False,
-            )
-        )
-    return method_funcs
 
 def _check_params_for_sweep(params: Dict) -> int:
     """Check the parameter dict of a method for the number of parameter sweeps

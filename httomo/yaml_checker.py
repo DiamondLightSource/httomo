@@ -2,13 +2,15 @@
 Module for checking the validity of yaml files.
 """
 import os
-from typing import Any
+from typing import Any, Generator, List, Optional, Tuple
 
 import h5py
 import yaml
 
+from httomo.pipeline_reader import MethodConfig, PipelineConfig
 from httomo.utils import Colour
-from httomo.yaml_utils import get_external_package_current_version, open_yaml_config
+from httomo.yaml_loader import YamlLoader
+from httomo.yaml_utils import get_external_package_current_version
 
 __all__ = [
     "check_one_method_per_module",
@@ -17,7 +19,7 @@ __all__ = [
 ]
 
 
-def sanity_check(yaml_file):
+def sanity_check(conf_generator: Generator) -> bool:
     """
     Check if the yaml file is properly indented, has valid mapping and tags.
     """
@@ -25,41 +27,118 @@ def sanity_check(yaml_file):
         "Checking that the YAML_CONFIG is properly indented and has valid mappings and tags...",
         colour=Colour.GREEN,
     )
-    with open(yaml_file, "r") as file:
-        try:
-            yaml_data = open_yaml_config(yaml_file)
+    try:
+        # Convert generator into a list, to force all elements to be attempted
+        # to be interpreted as python objects, and thus initiating all the YAML
+        # parsing checks performed by `yaml`
+        list(conf_generator)
+        _print_with_colour(
+            "Sanity check of the YAML_CONFIG was successfully done...\n",
+            colour=Colour.GREEN,
+        )
+        return True
+    except yaml.parser.ParserError as e:
+        line = e.problem_mark.line
+        _print_with_colour(
+            f"Incorrect indentation in the YAML_CONFIG file at line {line}. "
+            "Please recheck the indentation of the file."
+        )
+        return False
+    except yaml.scanner.ScannerError as e:
+        _print_with_colour(
+            f"Incorrect mapping in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
+        )
+        return False
+    except yaml.constructor.ConstructorError as e:
+        _print_with_colour(
+            f"Invalid tag in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
+        )
+        return False
+    except yaml.reader.ReaderError as e:
+        _print_with_colour(
+            f"Failed to parse YAML file at line {e.problem_mark.line + 1}: {e}"
+        )
+        return False
+    except yaml.YAMLError as e:
+        if hasattr(e, "problem_mark"):
             _print_with_colour(
-                "Sanity check of the YAML_CONFIG was successfully done...\n",
-                colour=Colour.GREEN,
+                f"Error in the YAML_CONFIG file at line {e.problem_mark.line}. "
+                "Please recheck the file."
             )
-            return yaml_data
-        except yaml.parser.ParserError as e:
-            line = e.problem_mark.line
-            _print_with_colour(
-                f"Incorrect indentation in the YAML_CONFIG file at line {line}. "
-                "Please recheck the indentation of the file."
-            )
-        except yaml.scanner.ScannerError as e:
-            _print_with_colour(
-                f"Incorrect mapping in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
-            )
-        except yaml.constructor.ConstructorError as e:
-            _print_with_colour(
-                f"Invalid tag in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
-            )
-        except yaml.reader.ReaderError as e:
-            _print_with_colour(
-                f"Failed to parse YAML file at line {e.problem_mark.line + 1}: {e}"
-            )
-        except yaml.YAMLError as e:
-            if hasattr(e, "problem_mark"):
-                _print_with_colour(
-                    f"Error in the YAML_CONFIG file at line {e.problem_mark.line}. "
-                    "Please recheck the file."
-                )
+        return False
 
 
-def check_one_method_per_module(yaml_file):
+def check_all_stages_defined(conf: PipelineConfig) -> bool:
+    """
+    Check if all three stages are defined in the YAML (loading, pre-processing,
+    main processing).
+    """
+    assert isinstance(conf, list)
+    if len(conf) != 3:
+        _print_with_colour(
+            "Please make sure to define the three stages in the pipeline YAML "
+            "file:\n"
+            "1) loading\n"
+            "2) pre-processing\n"
+            "3) main processing\n"
+        )
+        return False
+    return True
+
+
+def check_all_stages_non_empty(conf: PipelineConfig) -> bool:
+    """
+    Check if all three stages in the YAML (loading, pre-processing, main
+    processing) are non-empty.
+    """
+    for stage in conf:
+        if stage is None:
+            _print_with_colour(
+                "Please make sure that all three stages in the pipeline YAML "
+                "file are not empty."
+            )
+            return False
+    return True
+
+
+def check_loading_stage_one_method(conf: PipelineConfig) -> bool:
+    """
+    Check that the loading stage in the pipeline YAML has only one method in
+    it.
+    """
+    if len(conf[0]) != 1:
+        _print_with_colour(
+            "Please make sure that the loading stage has only one method in "
+            "it, a loader method."
+        )
+        return False
+    return True
+
+
+def check_first_stage_has_loader(conf: PipelineConfig) -> bool:
+    """
+    Check that the only method in the first stage in the pipeline YAML is a
+    loader.
+    """
+    first_stage_method = conf[0][0]
+    module_name = list(first_stage_method.keys())[0]
+
+    _print_with_colour(
+        "Checking that the first method in the pipeline is a loader...",
+        colour=Colour.GREEN,
+    )
+    if module_name != "httomo.data.hdf.loaders":
+        _print_with_colour(
+            "The first method in the YAML_CONFIG file is not a loader from "
+            "'httomo.data.hdf.loaders'. Please recheck the yaml file."
+        )
+        return False
+    _print_with_colour("Loader check successful!!\n", colour=Colour.GREEN)
+
+    return True
+
+
+def check_one_method_per_module(conf: PipelineConfig) -> bool:
     """
     Check that we cannot have a yaml file with more than one method
     being called from one module. For example, we cannot have:
@@ -78,111 +157,68 @@ def check_one_method_per_module(yaml_file):
         "\nDoing a sanity check first...",
         colour=Colour.GREEN,
     )
-    yaml_data = sanity_check(yaml_file)
-
-    lvalues = [value for d in yaml_data for value in d.values()]
-    for i, d in enumerate(lvalues):
-        assert isinstance(d, dict)
-        if len(d) != 1:
-            _print_with_colour(
-                f"More than one method is being called from the"
-                f" module '{next(iter(yaml_data[i]))}'. "
-                "Please recheck the yaml file."
-            )
-            return False
-
-    _print_with_colour(
-        "'One method per module' check was also successfully done...\n",
-        colour=Colour.GREEN,
-    )
-    return yaml_data
-
-
-def _print_with_colour(end_str: Any, colour: Any = Colour.RED) -> None:
-    if isinstance(end_str, list):
-        output = "".join(
-            [f"{colour}{out}{Colour.END}" for out, colour in zip(end_str, colour)]
-        )
-        print(output)
-    else:
-        print(colour + end_str + Colour.END)
-
-
-def _store_hdf5_members(group, members_list, path=""):
-    """store the members of an hdf5 group in a list"""
-    for name, value in group.items():
-        new_path = f"{path}/{name}" if path else name
-        if isinstance(value, h5py.Group):
-            _store_hdf5_members(value, members_list, path=new_path)
-        elif isinstance(value, h5py.Dataset):
-            members_list.append((new_path, value))
-
-
-def validate_yaml_config(yaml_file, in_file: str = None) -> bool:
-    """
-    Check that the modules, methods, and parameters in the `YAML_CONFIG` file
-    are valid, and adhere to the same structure as in each corresponding
-    module in `httomo.templates`.
-    """
-    yaml_data = check_one_method_per_module(yaml_file)
-
-    modules = [next(iter(d)) for d in yaml_data]
-    methods = [next(iter(d.values())) for d in yaml_data]
-    packages = [
-        m.split(".")[0] + "/" + get_external_package_current_version(m.split(".")[0])
-        if m.split(".")[0] != "httomo"
-        else m.split(".")[0]
-        for m in modules
-    ]
-
-    #: the first method is always a loader
-    #: so `testing_pipeline.yaml` should not pass.
-    _print_with_colour(
-        "Checking that the first method in the pipeline is a loader...",
-        colour=Colour.GREEN,
-    )
-    if modules[0] != "httomo.data.hdf.loaders":
-        _print_with_colour(
-            "The first method in the YAML_CONFIG file is not a loader from "
-            "'httomo.data.hdf.loaders'. Please recheck the yaml file."
-        )
-        return False
-    _print_with_colour("Loader check successful!!\n", colour=Colour.GREEN)
-
-    if in_file is not None:
-        with h5py.File(in_file, "r") as f:
-            hdf5_members = []
-            _store_hdf5_members(f, hdf5_members)
-            hdf5_members = [m[0] for m in hdf5_members]
-
-        _print_with_colour(
-            "Checking that the paths to the data and keys in the YAML_CONFIG file "
-            "match the paths and keys in the input file (IN_DATA)...",
-            colour=Colour.GREEN,
-        )
-        loader_params = next(iter(methods[0].values()))
-        _path_keys = [key for key in loader_params if "_path" in key]
-        for key in _path_keys:
-            if loader_params[key].strip("/") not in hdf5_members:
+    for stage in conf:
+        lvalues = [value for d in stage for value in d.values()]
+        for i, d in enumerate(lvalues):
+            assert isinstance(d, dict)
+            if len(d) != 1:
                 _print_with_colour(
-                    f"'{loader_params[key]}' is not a valid path to a dataset in YAML_CONFIG. "
+                    f"More than one method is being called from the"
+                    f" module '{next(iter(stage[i]))}'. "
                     "Please recheck the yaml file."
                 )
                 return False
-        _print_with_colour("Loader paths check successful!!\n", colour=Colour.GREEN)
 
-    parent_dir = os.path.dirname(os.path.abspath("__file__"))
-    templates_dir = os.path.join(parent_dir, "templates")
-    assert os.path.exists(templates_dir)
+    _print_with_colour(
+        "'One method per module' check was successfully done...\n",
+        colour=Colour.GREEN,
+    )
+    return True
 
-    _template_yaml_files = [
-        os.path.join(
-            templates_dir, packages[i], modules[i], next(iter(methods[i])) + ".yaml"
-        )
-        for i in range(len(modules))
-    ]
 
-    for i, f in enumerate(_template_yaml_files):
+def check_hdf5_paths_against_loader(
+        conf: MethodConfig,
+        in_file_path: str
+) -> bool:
+    """
+    Check that the hdf5 paths given as parameters to the loader indeed exist in
+    the given data file.
+    """
+    with h5py.File(in_file_path, "r") as f:
+        hdf5_members = []
+        _store_hdf5_members(f, hdf5_members)
+        hdf5_members = [m[0] for m in hdf5_members]
+
+    _print_with_colour(
+        "Checking that the paths to the data and keys in the YAML_CONFIG file "
+        "match the paths and keys in the input file (IN_DATA)...",
+        colour=Colour.GREEN,
+    )
+    module_name = list(conf.keys())[0]
+    method_conf = conf[module_name]
+    method_name = list(method_conf.keys())[0]
+    params = method_conf[method_name]
+    _path_keys = [key for key in params if "_path" in key]
+    for key in _path_keys:
+        if params[key].strip("/") not in hdf5_members:
+            _print_with_colour(
+                f"'{params[key]}' is not a valid path to a dataset in YAML_CONFIG. "
+                "Please recheck the yaml file."
+            )
+            return False
+    _print_with_colour("Loader paths check successful!!\n", colour=Colour.GREEN)
+    return True
+
+
+def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
+    """
+    Check if the methods in the pipeline YAML file are valid methods, by
+    checking if they exist in the template YAML files.
+    """
+    modules, methods, packages = _get_pipeline_info(conf)
+    template_yaml_files = _get_yaml_templates(modules, methods, packages)
+
+    for i, f in enumerate(template_yaml_files):
         if not os.path.exists(f):
             _print_with_colour(
                 f"'{modules[i] + '/' + next(iter(methods[i]))}' is not a valid"
@@ -190,18 +226,34 @@ def validate_yaml_config(yaml_file, in_file: str = None) -> bool:
             )
             return False
 
-    _template_yaml_data_list = [
-        next(iter(d.values()))
-        for f in _template_yaml_files
-        for d in open_yaml_config(f)
-    ]
+    return True
+
+
+def check_valid_method_parameters(
+        conf: PipelineConfig,
+        loader: type[YamlLoader]
+) -> bool:
+    """
+    Check each method config in the pipeline against the templates to see if
+    the given parameter names are valid.
+    """
+    modules, methods, packages = _get_pipeline_info(conf)
+    template_yaml_files = _get_yaml_templates(modules, methods, packages)
+    template_yaml_data_list: List[Generator] = []
+
+    for f in template_yaml_files:
+        with open(f, "r") as template:
+            method_dict = yaml.load(template, Loader=loader)[0]
+            template_yaml_data_list.append(
+                next(iter(method_dict.values()))
+            )
 
     for i, _ in enumerate(modules):
         end_str_list = ["Checking '", next(iter(methods[i])), "' and its parameters..."]
         colours = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
         _print_with_colour(end_str_list, colours)
         d1 = methods[i]
-        d2 = _template_yaml_data_list[i]
+        d2 = template_yaml_data_list[i]
 
         for key in d1.keys():
             for parameter in d1[key].keys():
@@ -235,7 +287,112 @@ def validate_yaml_config(yaml_file, in_file: str = None) -> bool:
                         f" is not correct. It should be of type {type(d2[key][parameter])}."
                     )
                     return False
+    return True
 
-    end_str = "\nYAML validation successful!! Please feel free to use the `run` command to run the pipeline."
+
+def _get_pipeline_info(conf: PipelineConfig) -> Tuple[List, List, List]:
+    """
+    Helper function to get modules, methods, and packages in the pipeline YAML.
+    """
+    modules: List[str] = []
+    methods: List[MethodConfig] = []
+    for stage in conf:
+        for module in stage:
+            module_name = list(module.keys())[0]
+            modules.append(module_name)
+            methods.append(module[module_name])
+
+    packages = [
+        m.split(".")[0] + "/" + get_external_package_current_version(m.split(".")[0])
+        if m.split(".")[0] != "httomo"
+        else m.split(".")[0]
+        for m in modules
+    ]
+    return modules, methods, packages
+
+
+def _get_yaml_templates(modules: List, methods: List, packages: List) -> List:
+    """
+    Helper function that fetches YAML template files associated with methods
+    passed.
+    """
+    parent_dir = os.path.dirname(os.path.abspath("__file__"))
+    templates_dir = os.path.join(parent_dir, "templates")
+    assert os.path.exists(templates_dir)
+    return [
+        os.path.join(
+            templates_dir, packages[i], modules[i], next(iter(methods[i])) + ".yaml"
+        )
+        for i in range(len(modules))
+    ]
+
+
+def _print_with_colour(end_str: Any, colour: Any = Colour.RED) -> None:
+    if isinstance(end_str, list):
+        output = "".join(
+            [f"{colour}{out}{Colour.END}" for out, colour in zip(end_str, colour)]
+        )
+        print(output)
+    else:
+        print(colour + end_str + Colour.END)
+
+
+def _store_hdf5_members(group, members_list, path=""):
+    """store the members of an hdf5 group in a list"""
+    for name, value in group.items():
+        new_path = f"{path}/{name}" if path else name
+        if isinstance(value, h5py.Group):
+            _store_hdf5_members(value, members_list, path=new_path)
+        elif isinstance(value, h5py.Dataset):
+            members_list.append((new_path, value))
+
+
+def validate_yaml_config(
+        yaml_file: str,
+        loader: type[YamlLoader],
+        in_file: Optional[str] = None
+) -> bool:
+    """
+    Check that the modules, methods, and parameters in the `YAML_CONFIG` file
+    are valid, and adhere to the same structure as in each corresponding
+    module in `httomo.templates`.
+    """
+    with open(yaml_file, "r") as f:
+        conf_generator: Generator = yaml.load_all(f, Loader=loader)
+        is_yaml_ok = sanity_check(conf_generator)
+
+    with open(yaml_file, "r") as f:
+        conf = list(yaml.load_all(f, Loader=loader))
+
+    # Let all checks run before returning with the result, even if some checks
+    # fail, to show all errors present in YAML
+    are_all_stages_defined = check_all_stages_defined(conf)
+    are_all_stages_non_empty = check_all_stages_non_empty(conf)
+    is_loading_stage_correct_len = check_loading_stage_one_method(conf)
+    is_loading_stage_method_correct = check_first_stage_has_loader(conf)
+    is_one_method_per_module = check_one_method_per_module(conf)
+    are_hdf5_paths_correct = True
+    if in_file is not None:
+        are_hdf5_paths_correct = check_hdf5_paths_against_loader(conf[0][0], in_file)
+    do_methods_exist = check_methods_exist_in_templates(conf)
+    are_method_params_valid = check_valid_method_parameters(conf, loader)
+
+    all_checks_pass = is_yaml_ok and \
+        are_all_stages_defined and \
+        are_all_stages_non_empty and \
+        is_loading_stage_correct_len and \
+        is_loading_stage_method_correct and \
+        is_one_method_per_module and \
+        are_hdf5_paths_correct and \
+        do_methods_exist and \
+        are_method_params_valid
+
+    if not all_checks_pass:
+        return False
+
+    end_str = (
+        "\nYAML validation successful!! Please feel free to use the `run` "
+        "command to run the pipeline."
+    )
     _print_with_colour(end_str, colour=Colour.BVIOLET)
     return True

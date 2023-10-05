@@ -74,8 +74,8 @@ def test_tomo_standard_testing_pipeline_output(
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 3, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.mean(f["data"]), -7.02924e-06, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), -0.539846, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), -2.123908e-06, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), -0.163116, atol=1e-6)
 
     #: some basic testing of the generated user.log file, because running the whole pipeline again
     #: will slow down the execution of the test suite.
@@ -150,7 +150,7 @@ def test_gpu_pipeline_output_with_save_all(
     subprocess.check_output(cmd)
 
     files = read_folder("output_dir/")
-    assert len(files) == 136
+    assert len(files) == 133
     
     # commenting this until we sort out statistics calculation
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -162,28 +162,26 @@ def test_gpu_pipeline_output_with_save_all(
         assert arr.shape == (160, 160)
         total_sum += arr.sum()
 
-    assert total_sum == 193160265.0
+    assert total_sum == 185989420.0
 
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 6
+    assert len(h5_files) == 3
 
-    remove_outlier_tomo = list(
-        filter(lambda x: "remove_outlier3d-tomo.h5" in x, h5_files)
-    )[0]
     normalize_tomo = list(filter(lambda x: "normalize-tomo.h5" in x, h5_files))[0]
+    remove_stripe_tomo = list(filter(lambda x: "remove_stripe_based_sorting-tomo.h5" in x, h5_files))[0]
     fpb_recon_tomo = list(filter(lambda x: "FBP-tomo.h5" in x, h5_files))[0]
 
     with h5py.File(normalize_tomo, "r") as f:
         assert f["data"].shape == (180, 128, 160)
-        assert_allclose(np.sum(f["data"]), 1060863, atol=1e-5)
-        assert_allclose(np.mean(f["data"]), 0.287778, atol=1e-5)
-    with h5py.File(fpb_recon_tomo, "r") as f:
-        assert_allclose(np.sum(f["data"]), 2611.2117, atol=1e-5)
-        assert_allclose(np.mean(f["data"]), 0.000798, atol=1e-5)
-    with h5py.File(remove_outlier_tomo, "r") as f:
-        assert_allclose(np.sum(f["data"]), 2.981388e+09, atol=1e-5)
-        assert_allclose(np.mean(f["data"]), 808.75336, atol=1e-5)
+        assert_allclose(np.sum(f["data"]), 1062695.375, atol=1e-5)
+        assert_allclose(np.mean(f["data"]), 0.288275, atol=1e-5)
+    with h5py.File(remove_stripe_tomo, "r") as f:
         assert f["data"].shape == (180, 128, 160)
+        assert_allclose(np.sum(f["data"]), 1059103.125, atol=1e-5)
+        assert_allclose(np.mean(f["data"]), 0.287300, atol=1e-5)
+    with h5py.File(fpb_recon_tomo, "r") as f:
+        assert_allclose(np.sum(f["data"]), 2614.8481, atol=1e-5)
+        assert_allclose(np.mean(f["data"]), 0.000798, atol=1e-5)
 
 
 def test_i12_testing_pipeline_output(
@@ -252,7 +250,7 @@ def test_i12_testing_pipeline_output(
     assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "Saving intermediate file: 4-tomopy-remove_stripe_fw-tomo.h5" in log_contents
     assert "The center of rotation for 180 degrees sinogram is 95.5" in log_contents
-    assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
+    assert "Saving intermediate file: 5-tomopy-recon-tomo-gridrec.h5" in log_contents
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
@@ -297,7 +295,7 @@ def test_i12_testing_ignore_darks_flats_pipeline_output(
     assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "Saving intermediate file: 4-tomopy-remove_stripe_fw-tomo.h5" in log_contents
     assert "The center of rotation for 180 degrees sinogram is 95.5" in log_contents
-    assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
+    assert "Saving intermediate file: 5-tomopy-recon-tomo-gridrec.h5" in log_contents
     assert "INFO | ~~~ Pipeline finished ~~~" in log_contents
 
 
@@ -339,8 +337,8 @@ def test_diad_testing_pipeline_output(
         if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (26, 2, 26)
-                assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), -0.000823, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), -1.11251, atol=1e-6)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1

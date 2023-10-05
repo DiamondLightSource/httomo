@@ -213,6 +213,7 @@ class BaseWrapper:
         overlap = 0
         side = 0
         overlap_position = 0
+
         if method_name == "find_center_360":
             (rot_center, overlap, side, overlap_position) = method_func(
                 data, **dict_params_method
@@ -275,6 +276,7 @@ class BaseWrapper:
                 data, out_dir, comm_rank=comm.rank, **dict_params_method
             )
         return None
+
 
 class BackendWrapper(BaseWrapper):
     """A class that wraps backend functions for httomo"""
