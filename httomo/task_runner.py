@@ -92,10 +92,12 @@ def run_tasks(
     for i, method_func in enumerate(method_funcs):
          method_funcs[i] = _assign_attribute_to_method(method_func, "padding")
 
+    # initiate glob_stats in methods so that division into sections would be correct
+    _initiate_stats_for_methods(method_funcs[1:])
+    
     # Initialising platform sections (skipping loader method)
-    platform_sections = _determine_platform_sections(method_funcs[1:], save_all)    
-
-    #NOTE: padding value in the first section will define padding for the loader
+    platform_sections = _determine_platform_sections(method_funcs[1:], save_all)        
+    
     _evaluate_padding_per_section(platform_sections)
 
     # Check pipeline for the number of parameter sweeps present. If one is
@@ -124,14 +126,14 @@ def run_tasks(
         comm,
         colour=Colour.CYAN,
         level=0,
-    )
+    )    
     
-    # padding value needs to be the max padding value for the loading section
-    pad = 0
+    # padding value in the first section will define padding for the loader
+    padding_to_loader = platform_sections[0].padding
     # Define dict of params that are needed by loader functions
     dict_loader_extra_params = {
         "in_file": in_file,
-        "pad": pad,
+        "pad": padding_to_loader,
         "comm": comm,
     }
 
@@ -217,7 +219,11 @@ def run_tasks(
         log_once(maxslices_str, comm=comm, colour=Colour.BVIOLET, level=1)
 
         # iterations_for_blocks determines the number of iterations needed
-        # to raster through the data in blocks that would fit into the GPU memory
+        # to raster through the data in blocks that would fit into the GPU memory        
+        if section.max_slices == data_shape[slicing_dim_section]:
+            # in this case the whole data CHUNK fits into a BLOCKб so there is no need to pad
+            section.padding = 0        
+        section.max_slices -= 2*section.padding # reduce the amount of slices to account for padding
         iterations_for_blocks = math.ceil(data_shape[slicing_dim_section] / section.max_slices)
         # Define a list to store the `RunMethodInfo` objects created for each
         # method in the methods-loop, for reuse across iterations over blocks
@@ -235,10 +241,21 @@ def run_tasks(
         ##---------- LOOP OVER _BLOCKS_ IN THE SECTION ------------##
         indices_start = 0
         indices_end = int(section.max_slices)
-        slc_indices = [slice(None)] * len(data_shape)             
+        slc_indices = [slice(None)] * len(data_shape)
+        slc_indices_pad = [slice(None)] * len(data_shape)
         for it_blocks in range(iterations_for_blocks):
-            # preparing indices for the slicing of the data in blocks
+            # Preparing indices for the slicing of the data in blocks
             slc_indices[slicing_dim_section] = slice(int(indices_start), int(indices_end), 1)
+
+            if section.padding > 0:
+                indices_start_pad = indices_start
+                indices_end_pad = indices_end
+                # We also need to take padding into the account here
+                if (indices_start - section.padding) >= 0:
+                    indices_start_pad = indices_start - section.padding
+                if (indices_end + section.padding) < data_shape[slicing_dim_section]:
+                    indices_end_pad = indices_end + section.padding
+                slc_indices_pad[slicing_dim_section] = slice(int(indices_start_pad), int(indices_end_pad), 1)
 
             ##---------- LOOP OVER _METHODS_ IN THE BLOCK ------------##
             for m_ind, methodfunc_sect in enumerate(section.methods):
@@ -299,7 +316,10 @@ def run_tasks(
                     # Assign the block of data on a CPU to `data` parameter of
                     # the method; this should happen once in the beginning of
                     # the loop over methods
-                    run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
+                    if section.padding > 0:
+                        run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices_pad)]
+                    else:
+                        run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
                 else:
                     # Initialise with result from the previous method                    
                     run_method_info.dict_httomo_params["data"] = res                    
@@ -341,7 +361,10 @@ def run_tasks(
                             dict_datasets_pipeline[run_method_info.data_out] = res_param                       
                     # passing the data to the next method (or initialise res)
                     if m_ind == 0:
-                        res = data_full_section[tuple(slc_indices)]
+                        if section.padding > 0:
+                            res = data_full_section[tuple(slc_indices_pad)]
+                        else:
+                            res = data_full_section[tuple(slc_indices)]
                 elif method_name == "save_to_images":
                     # just executing the wrapper (no output)
                     func_wrapper(
@@ -351,7 +374,10 @@ def run_tasks(
                         )
                     # passing the data to the next method (or initialise res)
                     if m_ind == 0:
-                        res = data_full_section[tuple(slc_indices)]
+                        if section.padding > 0:
+                            res = data_full_section[tuple(slc_indices_pad)]
+                        else:
+                            res = data_full_section[tuple(slc_indices)]
                 else:
                     # overriding the result with an output of a method
                     res = func_wrapper(
@@ -384,21 +410,28 @@ def run_tasks(
                     )
                     raise ValueError(err_str)
     
-            ##************* METHODS LOOP IS COMPLETE *************##
+            ##************* METHODS LOOP IS COMPLETE *************##            
+            # cropping indices for a block if the block-data is padded
+            if indices_start != 0:
+                indices_block_start_crop = section.padding
+            else:
+                indices_block_start_crop = 0
+            if indices_end != data_shape[slicing_dim_section]:
+                indices_block_end_crop = res.shape[slicing_dim_section]- section.padding
+            else:
+                indices_block_end_crop  = res.shape[slicing_dim_section]
+            slc_block_cropping_indices = [slice(None)] * len(res.shape)
+            slc_block_cropping_indices[slicing_dim_section] = slice(int(indices_block_start_crop), int(indices_block_end_crop), 1)
             # Saving the processed block (the block is in the CPU memory)
             if not contains_recon:
-                data_full_section[tuple(slc_indices)] = res
+                data_full_section[tuple(slc_indices)] = res[tuple(slc_block_cropping_indices)]
             else:
-                if recon_arr.shape[0] != res.shape[0]:
-                    # TomoPy returns reconstruction in a different shape from httomolibgpu
-                    recon_arr[tuple(slc_indices)] = xp.swapaxes(res,0,1)
-                else:
-                    recon_arr[tuple(slc_indices)] = res
+                recon_arr[tuple(slc_indices)] = res[tuple(slc_block_cropping_indices)]
 
             # re-initialise the slicing indices
             indices_start = indices_end
             # checking if we still within the slicing dimension size and take remaining portion
-            res_indices = (indices_start + int(section.max_slices)) - data_shape[slicing_dim_section] 
+            res_indices = (indices_start + int(section.max_slices)) - data_shape[slicing_dim_section]
             if res_indices > 0:
                 res_indices = int(section.max_slices - res_indices)
                 indices_end += res_indices
@@ -684,6 +717,20 @@ def _assign_attribute_to_method(
     
     return method_function
 
+def _initiate_stats_for_methods(
+    method_funcs: List[MethodFunc],
+) -> List[MethodFunc]:
+    for m_ind, method in enumerate(method_funcs):
+        try:
+            global_stats = method.parameters['glob_stats']
+        except:
+            global_stats = False
+        if global_stats:
+            # the stats has been requested, the section needs to be created
+            # between the current AND the previous method
+            if m_ind >= 0:
+                method_funcs[m_ind-1].global_statistics = True            
+    return method_funcs
 
 def _determine_platform_sections(
     method_funcs: List[MethodFunc],
@@ -700,13 +747,8 @@ def _determine_platform_sections(
             try:
                 save_res_current = method.parameters['save_result']
             except:
-                save_res_current = False
-                
-            try:
-                global_stats = method.parameters['glob_stats']
-            except:
-                global_stats = False
-            if global_stats:
+                save_res_current = False            
+            if method.global_statistics:
                 save_res_current = True # the stats has been requested, the section created
         else:
             save_res_current = True
@@ -918,7 +960,6 @@ def _evaluate_padding_per_section(
                 # no padding
                 padding_methods[j] = 0
         section.padding = max(padding_methods)
-
     return section
 
 

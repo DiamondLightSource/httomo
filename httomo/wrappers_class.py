@@ -177,13 +177,22 @@ class BaseWrapper:
             data, angles_radians, **dict_params_method
         )        
         if cupyrun and return_numpy:
-            # if data in CuPy array but we need numpy
-            return data.get() # get numpy
+            # if data in the CuPy array but we need numpy
+            if self.module.__name__.split(".")[0] == 'tomopy':
+                # the axis for the reconstructed tomopy array are swapped
+                return xp.swapaxes(data.get(),0,1)
+            else:
+                return data.get() # get numpy
         elif cupyrun and not return_numpy:
             # if data in CuPy array and we need it
             return data # return CuPy array
         else:
-            return data # return numpy
+            # return numpy
+            if self.module.__name__.split(".")[0] == 'tomopy':
+                # the axis for the reconstructed tomopy array are swapped
+                return xp.swapaxes(data,0,1)
+            else:
+                return data
 
     def _execute_rotation(
         self,
