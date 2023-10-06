@@ -3,7 +3,7 @@ misc:
     median_filter3d:
       pattern: all
       output_dims_change: False
-      padding: False
+      padding: True
       implementation: gpu_cupy
       memory_gpu:
         - datasets: [tomo]
