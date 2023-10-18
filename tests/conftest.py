@@ -116,6 +116,25 @@ def data(host_data, ensure_clean_memory):
     return cp.asarray(host_data)
 
 @pytest.fixture
+def host_angles(data_file):
+    return np.float32(np.copy(data_file["angles"]))
+
+@pytest.fixture
+@pytest.mark.cupy
+def angles(host_angles, ensure_clean_memory):
+    import cupy as cp
+    return cp.asarray(host_angles)
+
+@pytest.fixture
+def host_angles_radians(host_angles):
+    return host_angles
+
+@pytest.fixture
+@pytest.mark.cupy
+def angles_radians(angles):
+    return angles
+
+@pytest.fixture
 def host_flats(data_file):
     return np.float32(np.copy(data_file["flats"]))
 

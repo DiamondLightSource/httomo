@@ -82,6 +82,7 @@ dev-cpu = [
   "pytest",
   "pytest-cov",
   "pytest-xdist",
+  "pytest-mock",
   "flake8",
   "pyproject-flake8",
   "pydocstyle",
@@ -89,11 +90,14 @@ dev-cpu = [
   "httomolib[dev]",
   "tomopy",
   "plumbum",
+  "mypy",
+  "types-PyYAML",
 ]
 dev-gpu = [
   "pytest",
   "pytest-cov",
   "pytest-xdist",
+  "pytest-mock",
   "flake8",
   "pyproject-flake8",
   "pydocstyle",
@@ -102,6 +106,8 @@ dev-gpu = [
   "httomolibgpu[dev]",
   "tomopy",
   "plumbum",
+  "mypy",
+  "types-PyYAML",
 ]
 
 [tool.mypy]
