@@ -149,7 +149,8 @@ testpaths = [
     "tests",
 ]
 filterwarnings = [
-    "ignore::ImportWarning"
+    "ignore::ImportWarning",
+    "ignore:distutils:DeprecationWarning:numexpr"
 ]
 
 
