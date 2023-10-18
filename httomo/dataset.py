@@ -1,19 +1,27 @@
-from typing import TypeAlias
+from typing import Optional, TypeAlias, Union
 from httomo.utils import gpu_enabled, xp
 import numpy as np
 
 
 class DataSet:
     """Holds the dataset the methods work on, handling both CPU or GPU.
-    It handles the transfers if needed internally, given the GPU id in the
-    constructor.
+    It handles the transfers if needed internally, given the currently-active
+    GPU device in the CuPy context.
 
     Flats, darks, and angles are assumed to be read-only - separate copies on
     CPU and GPU are maintained as needed. Depending on where data itself is,
-    the flats/darks/angles will be returned on the same device.
+    the flats/darks/angles will be returned on the same device (and cached).
+    
+    Example::
+       
+       dataset = DataSet(data, angles, flats, darks)
+       dataset.data        # access data
+       dataset.to_gpu()    # transfer
+       dataset.data        # now returns a GPU-based array
+       assert dataset.is_gpu is True
     """
 
-    generic_array: TypeAlias = xp.ndarray | np.ndarray
+    generic_array: TypeAlias = Union[xp.ndarray, np.ndarray]
 
     def __init__(
         self,
@@ -30,9 +38,9 @@ class DataSet:
         if gpu_enabled:
             import cupy as cp
             # cached GPU data - transferred lazily
-            self._angles_gpu: cp.ndarray | None = None
-            self._flats_gpu: cp.ndarray | None = None
-            self._darks_gpu: cp.ndarray | None = None
+            self._angles_gpu: Optional[cp.ndarray] = None
+            self._flats_gpu: Optional[cp.ndarray] = None
+            self._darks_gpu: Optional[cp.ndarray] = None
             # keep track if fields have been reset on GPU, to ensure
             # transferring back to CPU if needed
             self._angles_dirty: bool = False
@@ -117,6 +125,8 @@ class DataSet:
         self._is_locked = True
 
     def unlock(self):
+        """Unlock the read-only flag for the darks, angles, and flats members,
+        allowing to overwrite them with the setter or modify their values"""
         self._angles.setflags(write=True)
         self._darks.setflags(write=True)
         self._flats.setflags(write=True)
@@ -127,11 +137,13 @@ class DataSet:
         return self._is_locked
 
     def to_gpu(self):
+        """Transfer dataset to GPU if not already."""
         if not gpu_enabled:
             raise ValueError("cannot transfer to GPU if not enabled")
         self._data = xp.asarray(self._data)
 
     def to_cpu(self):
+        """Transfter dataset to CPU (if not already)"""
         if not self.is_gpu:
             return
         self._data = xp.asnumpy(self._data)
@@ -175,7 +187,7 @@ class DataSet:
             setattr(self, f"_{field}_gpu", None)
             setattr(self, f"_{field}", new_data)
 
-    def _transfer_if_needed(self, cpuarray: np.ndarray, gpuarray: xp.ndarray | None):
+    def _transfer_if_needed(self, cpuarray: np.ndarray, gpuarray: Optional[xp.ndarray]):
         """Internal helper to transfer flats/darks/angles lazily"""
         if gpuarray is None:
             gpuarray = xp.asarray(cpuarray)
