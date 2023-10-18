@@ -2,7 +2,7 @@
 Module for checking the validity of yaml files.
 """
 import os
-from typing import Any, Generator, List, Optional, Tuple
+from typing import Any, Generator, Iterator, List, Optional, Tuple
 
 import h5py
 import yaml
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-def sanity_check(conf_generator: Generator) -> bool:
+def sanity_check(conf_generator: Iterator[Any]) -> bool:
     """
     Check if the yaml file is properly indented, has valid mapping and tags.
     """
@@ -348,9 +348,9 @@ def _store_hdf5_members(group, members_list, path=""):
 
 
 def validate_yaml_config(
-        yaml_file: str,
+        yaml_file: os.PathLike,
         loader: type[YamlLoader],
-        in_file: Optional[str] = None
+        in_file: Optional[os.PathLike] = None
 ) -> bool:
     """
     Check that the modules, methods, and parameters in the `YAML_CONFIG` file
@@ -358,7 +358,7 @@ def validate_yaml_config(
     module in `httomo.templates`.
     """
     with open(yaml_file, "r") as f:
-        conf_generator: Generator = yaml.load_all(f, Loader=loader)
+        conf_generator: Iterator[Any] = yaml.load_all(f, Loader=loader)
         is_yaml_ok = sanity_check(conf_generator)
 
     with open(yaml_file, "r") as f:
@@ -373,7 +373,7 @@ def validate_yaml_config(
     is_one_method_per_module = check_one_method_per_module(conf)
     are_hdf5_paths_correct = True
     if in_file is not None:
-        are_hdf5_paths_correct = check_hdf5_paths_against_loader(conf[0][0], in_file)
+        are_hdf5_paths_correct = check_hdf5_paths_against_loader(conf[0][0], str(in_file))
     do_methods_exist = check_methods_exist_in_templates(conf)
     are_method_params_valid = check_valid_method_parameters(conf, loader)
 

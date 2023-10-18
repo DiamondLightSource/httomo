@@ -32,7 +32,7 @@ def main():
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     required=False,
 )
-def check(yaml_config: Path, in_data: Path = None):
+def check(yaml_config: Path, in_data: Optional[Path] = None):
     """Check a YAML pipeline file for errors."""
     in_data = str(in_data) if isinstance(in_data, PurePath) else None
     YamlLoader.add_constructor("!Sweep", YamlLoader.sweep_manual)

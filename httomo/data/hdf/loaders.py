@@ -24,7 +24,7 @@ class LoaderData:
 
 def standard_tomo(
     name: str,
-    in_file: os.PathLike | str,
+    in_file: Union[os.PathLike, str],
     data_path: str,
     dimension: int,
     preview: List[Dict[str, int]],
