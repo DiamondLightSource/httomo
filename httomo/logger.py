@@ -1,8 +1,9 @@
 import logging
 from pathlib import Path
 import os
+from typing import Optional
 
-def setup_logger(out_dir: os.PathLike | None):
+def setup_logger(out_dir: Optional[os.PathLike]):
     if out_dir is None:
         raise ValueError("out_dir has not been set")
     out_path = Path(out_dir)
