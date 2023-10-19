@@ -334,7 +334,7 @@ def test_wrapper_save_to_images(mocker: MockerFixture, dummy_dataset: DataSet):
 @pytest.mark.cupy
 def test_wrapper_images_leaves_gpudata(mocker: MockerFixture, dummy_dataset: DataSet):
     class FakeModule:
-        def save_to_images(data):
+        def save_to_images(data, out_dir, comm_rank):
             assert getattr(data, "device", None) is None  # make sure it's on CPU
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
