@@ -19,12 +19,21 @@ def _gpumem_cleanup():
 
 
 class BackendWrapper2:
-    """Defines a generic method backend wrapper in httomo which is used by task runner."""
+    """Defines a generic method backend wrapper in httomo which is used by task runner.
+
+    Method parameters (configuration parameters, usually set by the user) can be set either
+    using keyword arguments to the constructor, or by using conventional dictionary set/get methods
+    like::
+
+        wrapper["parameter"] = value
+    """
 
     DictValues = Union[str, bool, int, float, os.PathLike]
     DictType = Dict[str, Union[DictValues, List[DictValues]]]
 
-    def __init__(self, module_path: str, method_name: str, comm: Comm, cupyrun: bool):
+    def __init__(
+        self, module_path: str, method_name: str, comm: Comm, cupyrun: bool, **kwargs
+    ):
         """Constructs a BackendWrapper for a method located in module_path with the name method_name.
 
         Parameters
@@ -38,6 +47,9 @@ class BackendWrapper2:
             MPI communicator object
         cupyrun: bool
             whether the method supports running with CuPy array inputs
+        **kwargs:
+            Additional keyword arguments will be set as configuration parameters for this
+            method. Note: The method must actually accept them as parameters.
         """
 
         self.comm = comm
@@ -51,10 +63,38 @@ class BackendWrapper2:
         # get all the method parameter names, so we know which to set on calling it
         sig = signature(self.method)
         self.parameters = list(sig.parameters.keys())
+        # check if the kwargs are actually supported by the method
+        self._config_params = kwargs
+        self._check_config_params()
+
         if gpu_enabled:
             self.num_gpus = xp.cuda.runtime.getDeviceCount()
             _id = httomo.globals.gpu_id
             self.gpu_id = mpiutil.local_rank % self.num_gpus if _id == -1 else _id
+
+    def __getitem__(self, key: str) -> DictValues:
+        """Get a parameter for the method using dictionary notation (wrapper["param"])"""
+        return self._config_params[key]
+
+    def __setitem__(self, key: str, value: DictValues):
+        """Set a parameter for the method using dictionary notation (wrapper["param"] = 42)"""
+        self._config_params[key] = value
+        self._check_config_params()
+
+    @property
+    def config_params(self):
+        """Access a copy of the configuration parameters (cannot be modified directly)"""
+        return {**self._config_params}
+
+    def append_config_params(self, params: DictType):
+        """Append configuration parameters to the existing config_params"""
+        self._config_params |= params
+        self._check_config_params()
+
+    def _check_config_params(self):
+        for k in self._config_params.keys():
+            if k not in self.parameters:
+                raise ValueError(f"Unsupported keyword argument given: {k}")
 
     def _build_kwargs(self, dict_params: DictType, dataset: DataSet) -> Dict[str, Any]:
         # first parameter is always the data
@@ -66,13 +106,18 @@ class BackendWrapper2:
                 ret[p] = getattr(dataset, p)
             elif p in dict_params:
                 ret[p] = dict_params[p]
+            elif p == "gpu_id":
+                if gpu_enabled:
+                    ret[p] = self.gpu_id
+                else:
+                    raise ValueError(
+                        f"method {self.method_name} requires gpu_id parameter, but GPU is not enabled"
+                    )
             else:
                 raise ValueError(f"Cannot map method parameter {p} to a value")
         return ret
 
-    def execute(
-        self, dict_params: DictType, dataset: DataSet, return_numpy: bool
-    ) -> DataSet:
+    def execute(self, dataset: DataSet) -> DataSet:
         """Execute functions for external packages.
 
         Developer note: Derived classes may override this function or any of the methods
@@ -81,12 +126,8 @@ class BackendWrapper2:
         Parameters
         ----------
 
-        dict_params: DictType
-            A dict containing parameters of the executed method, e.g. from Yaml file
         dataset: DataSet
             A numpy or cupy dataset, mutable (method might work in-place).
-        return_numpy: bool
-            Returns numpy array if set to True (use if followed by a CPU method).
 
         Returns
         -------
@@ -95,17 +136,11 @@ class BackendWrapper2:
             A CPU or GPU-based dataset object with the output
         """
 
-        # set the correct GPU ID if it is required
-        if "gpu_id" in dict_params:
-            dict_params["gpu_id"] = self.gpu_id
-
         dataset = self._transfer_data(dataset)
         dataset = self._preprocess_data(dataset)
-        args = self._build_kwargs(self._transform_params(dict_params), dataset)
+        args = self._build_kwargs(self._transform_params(self._config_params), dataset)
         dataset = self._run_method(dataset, args)
         dataset = self._postprocess_data(dataset)
-        if return_numpy:
-            dataset.to_cpu()
 
         return dataset
 
@@ -169,8 +204,10 @@ class ReconstructionWrapper(BackendWrapper2):
     """Wraps reconstruction functions, limiting the length of the angles array
     before calling the method."""
 
-    def __init__(self, module_path: str, method_name: str, comm: Comm, cupyrun: bool):
-        super().__init__(module_path, method_name, comm, cupyrun)
+    def __init__(
+        self, module_path: str, method_name: str, comm: Comm, cupyrun: bool, **kwargs
+    ):
+        super().__init__(module_path, method_name, comm, cupyrun, **kwargs)
 
     def _preprocess_data(self, dataset: DataSet) -> DataSet:
         # for 360 degrees data the angular dimension will be truncated while angles are not.
@@ -188,8 +225,10 @@ class RotationWrapper(BackendWrapper2):
     but have a side output for the center of rotation data (handling both 180 and 360).
     """
 
-    def __init__(self, module_path: str, method_name: str, comm: Comm, cupyrun: bool):
-        super().__init__(module_path, method_name, comm, cupyrun)
+    def __init__(
+        self, module_path: str, method_name: str, comm: Comm, cupyrun: bool, **kwargs
+    ):
+        super().__init__(module_path, method_name, comm, cupyrun, **kwargs)
         self._side_output: Dict[str, Any] = dict()
 
     def _process_return_type(self, ret: Any, input_dataset: DataSet) -> DataSet:
@@ -214,34 +253,23 @@ class DezingingWrapper(BackendWrapper2):
     data, darks, and flats.
     """
 
-    def __init__(self, module_path: str, method_name: str, comm: Comm, cupyrun: bool):
-        super().__init__(module_path, method_name, comm, cupyrun)
+    def __init__(
+        self, module_path: str, method_name: str, comm: Comm, cupyrun: bool, **kwargs
+    ):
+        super().__init__(module_path, method_name, comm, cupyrun, **kwargs)
         assert (
             method_name == "remove_outlier3d"
         ), "Only remove_outlier3d is supported at the moment"
 
-    def execute(
-        self,
-        dict_params: BackendWrapper2.DictType,
-        dataset: DataSet,
-        return_numpy: bool,
-    ) -> DataSet:
+    def execute(self, dataset: DataSet) -> DataSet:
         # check if data needs to be transfered host <-> device
         dataset = self._transfer_data(dataset)
 
-        args: Dict[str, Any] = dict()
-        if "kernel_size" in dict_params:
-            args["kernel_size"] = dict_params["kernel_size"]
-        if "dif" in dict_params:
-            args["dif"] = dict_params["dif"]
-        dataset.data = self.method(dataset.data, **args)
+        dataset.data = self.method(dataset.data, **self._config_params)
         dataset.unlock()
-        dataset.darks = self.method(dataset.darks, **args)
-        dataset.flats = self.method(dataset.flats, **args)
+        dataset.darks = self.method(dataset.darks, **self._config_params)
+        dataset.flats = self.method(dataset.flats, **self._config_params)
         dataset.lock()
-
-        if return_numpy:
-            dataset.to_cpu()
 
         return dataset
 
@@ -256,24 +284,19 @@ class ImagesWrapper(BackendWrapper2):
         method_name: str,
         comm: Comm,
         out_dir: os.PathLike,
+        **kwargs,
     ):
-        super().__init__(module_path, method_name, comm, True)
-        self.out_dir = out_dir
+        super().__init__(module_path, method_name, comm, True, **kwargs)
+        self["out_dir"] = out_dir
+        self["comm_rank"] = comm.rank
 
     # Images execute is leaving original data on the device where it is,
     # but gives the method a CPU copy of the data.
     def execute(
         self,
-        dict_params: BackendWrapper2.DictType,
         dataset: DataSet,
-        return_numpy: bool,
     ) -> DataSet:
-        # if user wants numpy results, we transfer first (images methods are assumed to work on
-        # numpy data anyway, not on GPU data)
-        if return_numpy:
-            dataset.to_cpu()
-
-        args = self._build_kwargs(self._transform_params(dict_params), dataset)
+        args = self._build_kwargs(self._transform_params(self._config_params), dataset)
         if dataset.is_gpu:
             # give method a CPU copy of the data
             args[self.parameters[0]] = xp.asnumpy(dataset.data)
@@ -282,14 +305,9 @@ class ImagesWrapper(BackendWrapper2):
 
         return dataset
 
-    def _transform_params(
-        self, dict_params: BackendWrapper2.DictType
-    ) -> BackendWrapper2.DictType:
-        return {**dict_params, "out_dir": self.out_dir, "comm_rank": self.comm.rank}
-
 
 def make_backend_wrapper(
-    module_path: str, method_name: str, comm: Comm, cupyrun: bool = True
+    module_path: str, method_name: str, comm: Comm, cupyrun: bool = True, **kwargs
 ) -> BackendWrapper2:
     """Factor function to generate the appropriate wrapper based on the module
     path and method name. Clients do not need to be concerned about which particular
@@ -306,6 +324,8 @@ def make_backend_wrapper(
         MPI communicator object
     cupyrun: bool
         whether the method supports running with CuPy array inputs
+    kwargs:
+        Arbitrary keyword arguments that get passed to the method as parameters.
 
     Returns
     -------
@@ -316,15 +336,27 @@ def make_backend_wrapper(
 
     if module_path.endswith(".algorithm"):
         return ReconstructionWrapper(
-            module_path=module_path, method_name=method_name, comm=comm, cupyrun=cupyrun
+            module_path=module_path,
+            method_name=method_name,
+            comm=comm,
+            cupyrun=cupyrun,
+            **kwargs,
         )
     if module_path.endswith(".rotation"):
         return RotationWrapper(
-            module_path=module_path, method_name=method_name, comm=comm, cupyrun=cupyrun
+            module_path=module_path,
+            method_name=method_name,
+            comm=comm,
+            cupyrun=cupyrun,
+            **kwargs,
         )
     if method_name == "remove_outlier3d":
         return DezingingWrapper(
-            module_path=module_path, method_name=method_name, comm=comm, cupyrun=cupyrun
+            module_path=module_path,
+            method_name=method_name,
+            comm=comm,
+            cupyrun=cupyrun,
+            **kwargs,
         )
     if module_path.endswith(".images"):
         return ImagesWrapper(
@@ -332,9 +364,14 @@ def make_backend_wrapper(
             method_name=method_name,
             comm=comm,
             out_dir=httomo.globals.run_out_dir,
+            **kwargs,
         )
     return BackendWrapper2(
-        module_path=module_path, method_name=method_name, comm=comm, cupyrun=cupyrun
+        module_path=module_path,
+        method_name=method_name,
+        comm=comm,
+        cupyrun=cupyrun,
+        **kwargs,
     )
 
 
