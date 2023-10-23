@@ -1,5 +1,7 @@
-from httomo.methods_database.query import get_method_info
+from httomo.methods_database.query import MethodsDatabaseQuery, get_method_info
 import pytest
+
+from httomo.utils import Pattern
 
 
 def test_get_from_tomopy():
@@ -33,13 +35,31 @@ def test_httomolibgpu_pattern():
 
 
 def test_httomolibgpu_implementation():
-    implementation  =  get_method_info("httomolibgpu.prep.normalize", "normalize", "implementation")
+    implementation = get_method_info(
+        "httomolibgpu.prep.normalize", "normalize", "implementation"
+    )
     assert implementation == "gpu_cupy"
 
+
 def test_httomolibgpu_output_dims_change():
-    output_dims_change  =  get_method_info("httomolibgpu.prep.normalize", "normalize", "output_dims_change")
+    output_dims_change = get_method_info(
+        "httomolibgpu.prep.normalize", "normalize", "output_dims_change"
+    )
     assert output_dims_change == False
 
+
 def test_httomolibgpu_memory_gpu():
-    memory_gpu  =  get_method_info("httomolibgpu.prep.normalize", "normalize", "memory_gpu")
+    memory_gpu = get_method_info(
+        "httomolibgpu.prep.normalize", "normalize", "memory_gpu"
+    )
     assert len(memory_gpu) == 3
+
+
+def test_database_query_object():
+    query = MethodsDatabaseQuery("httomolibgpu.prep.normalize", "normalize")
+    assert query.get_pattern() == Pattern.projection
+    assert query.get_output_dims_change() is False
+    assert query.get_implementation() == "gpu_cupy"
+    assert set(query.get_memory_gpu_params().keys()) == set(
+        ["datasets", "multipliers", "methods"]
+    )

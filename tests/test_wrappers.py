@@ -3,11 +3,11 @@ from mpi4py import MPI
 import numpy as np
 import httomo
 from httomo.dataset import DataSet
-from httomo.utils import xp, gpu_enabled
+from httomo.utils import Pattern, xp, gpu_enabled
 from pytest_mock import MockerFixture
 import pytest
 
-from httomo.wrappers_class import BackendWrapper, make_backend_wrapper
+from httomo.wrappers_class import BackendWrapper, MethodRepository, make_backend_wrapper
 
 
 def test_tomopy_wrapper():
@@ -64,6 +64,26 @@ def test_httomolibgpu_wrapper():
 #     )
 
 
+def make_mock_repo(
+    mocker: MockerFixture,
+    pattern=Pattern.sinogram,
+    output_dims_change=False,
+    implementation="cpu",
+    memory_gpu={"datasets": ["tomo"], "multipliers": [1.2], "methods": ["direct"]},
+) -> MethodRepository:
+    """Makes a mock MethodRepository that returns the given properties on any query"""
+    mock_repo = mocker.MagicMock()
+    mock_query = mocker.MagicMock()
+    mocker.patch.object(mock_repo, "query", return_value=mock_query)
+    mocker.patch.object(mock_query, "get_pattern", return_value=pattern)
+    mocker.patch.object(
+        mock_query, "get_output_dims_change", return_value=output_dims_change
+    )
+    mocker.patch.object(mock_query, "get_implementation", return_value=implementation)
+    mocker.patch.object(mock_query, "get_memory_gpu_params", return_value=memory_gpu)
+    return mock_repo
+
+
 @pytest.fixture
 def dummy_dataset() -> DataSet:
     return DataSet(
@@ -82,7 +102,9 @@ def test_basewrapper_execute_transfers_to_gpu(
             return data
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
-    wrp = make_backend_wrapper("module_path", "fake_method", MPI.COMM_WORLD, True)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker, implementation="gpu_cupy"), "module_path", "fake_method", MPI.COMM_WORLD
+    )
     dataset = wrp.execute(dummy_dataset)
 
     assert dataset.is_gpu == gpu_enabled
@@ -96,7 +118,9 @@ def test_basewrapper_execute_calls_pre_post_process(
             return data
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
-    wrp = make_backend_wrapper("module_path", "fake_method", MPI.COMM_WORLD, True)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker, implementation="gpu_cupy"), "module_path", "fake_method", MPI.COMM_WORLD
+    )
     prep = mocker.patch.object(wrp, "_preprocess_data", return_value=dummy_dataset)
     post = mocker.patch.object(wrp, "_postprocess_data", return_value=dummy_dataset)
     trans = mocker.patch.object(wrp, "_transfer_data", return_value=dummy_dataset)
@@ -119,7 +143,7 @@ def test_wrapper_fails_with_wrong_returntype(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path", "fake_method", MPI.COMM_WORLD, False
+        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
     with pytest.raises(ValueError) as e:
         wrp.execute(dummy_dataset)
@@ -136,7 +160,7 @@ def test_wrapper_different_data_parameter_name(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path", "fake_method", MPI.COMM_WORLD, False
+        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
     dummy_dataset.data[:] = 42
     wrp.execute(dummy_dataset)
@@ -152,7 +176,11 @@ def test_wrapper_sets_config_params_constructor(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path", "param_tester", MPI.COMM_WORLD, False, param=42
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "param_tester",
+        MPI.COMM_WORLD,
+        param=42,
     )
     wrp.execute(dummy_dataset)
 
@@ -169,7 +197,7 @@ def test_wrapper_sets_config_params_setter(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path", "param_tester", MPI.COMM_WORLD, False
+        make_mock_repo(mocker), "mocked_module_path", "param_tester", MPI.COMM_WORLD, 
     )
     wrp["param"] = 42
     wrp.execute(dummy_dataset)
@@ -188,7 +216,7 @@ def test_wrapper_sets_config_params_append_dict(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path", "param_tester", MPI.COMM_WORLD, False
+        make_mock_repo(mocker), "mocked_module_path", "param_tester", MPI.COMM_WORLD,
     )
     wrp.append_config_params({"param1": 42, "param2": 43})
     wrp.execute(dummy_dataset)
@@ -209,7 +237,10 @@ def test_wrapper_passes_darks_flats_to_normalize(
 
     importmock = mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path", "normalize_tester", MPI.COMM_WORLD, False
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "normalize_tester",
+        MPI.COMM_WORLD,
     )
     dummy_dataset.unlock()
     dummy_dataset.data[:] = 1
@@ -234,7 +265,10 @@ def test_wrapper_handles_reconstruction_angle_reshape(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path.algorithm", "recon_tester", MPI.COMM_WORLD, False
+        make_mock_repo(mocker),
+        "mocked_module_path.algorithm",
+        "recon_tester",
+        MPI.COMM_WORLD,
     )
     dummy_dataset.data[:] = 1
     dummy_dataset.unlock()
@@ -251,7 +285,10 @@ def test_wrapper_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path.rotation", "rotation_tester", MPI.COMM_WORLD, False
+        make_mock_repo(mocker),
+        "mocked_module_path.rotation",
+        "rotation_tester",
+        MPI.COMM_WORLD,
     )
 
     new_dataset = wrp.execute(dummy_dataset)
@@ -268,7 +305,10 @@ def test_wrapper_rotation_360(mocker: MockerFixture, dummy_dataset: DataSet):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path.rotation", "rotation_tester", MPI.COMM_WORLD, False
+        make_mock_repo(mocker),
+        "mocked_module_path.rotation",
+        "rotation_tester",
+        MPI.COMM_WORLD,
     )
     new_dataset = wrp.execute(dummy_dataset)
 
@@ -288,7 +328,10 @@ def test_wrapper_dezinging(mocker: MockerFixture, dummy_dataset: DataSet):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path.prep", "remove_outlier3d", MPI.COMM_WORLD, False
+        make_mock_repo(mocker),
+        "mocked_module_path.prep",
+        "remove_outlier3d",
+        MPI.COMM_WORLD,
     )
     dummy_dataset.unlock()
     dummy_dataset.data[:] = 1
@@ -315,10 +358,10 @@ def test_wrapper_save_to_images(mocker: MockerFixture, dummy_dataset: DataSet):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
+        make_mock_repo(mocker, implementation="cpu"),
         "mocked_module_path.images",
         "save_to_images",
         MPI.COMM_WORLD,
-        False,
         axis=1,
         file_format="tif",
     )
@@ -339,10 +382,48 @@ def test_wrapper_images_leaves_gpudata(mocker: MockerFixture, dummy_dataset: Dat
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        "mocked_module_path.images", "save_to_images", MPI.COMM_WORLD, False
+        make_mock_repo(mocker),
+        "mocked_module_path.images",
+        "save_to_images",
+        MPI.COMM_WORLD,
     )
     with xp.cuda.Device(0):
         dummy_dataset.to_gpu()
         new_dataset = wrp.execute(dummy_dataset)
 
         assert new_dataset.is_gpu is True
+
+
+@pytest.mark.parametrize("implementation,is_cpu,is_gpu,cupyrun", [
+    ("cpu", True, False, False),
+    ("gpu", False, True, False),
+    ("gpu_cupy", False, True, True)
+])
+def test_wrapper_method_queries(mocker: MockerFixture, implementation: str, is_cpu: bool, is_gpu: bool, cupyrun: bool):
+    class FakeModule:
+        def test_method(data):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    memory_gpu = {"datasets": ["tomo"], "multipliers": [1.2], "methods": ["direct"]}
+    wrp = make_backend_wrapper(
+        make_mock_repo(
+            mocker,
+            pattern=Pattern.projection,
+            output_dims_change=True,
+            implementation=implementation,
+            memory_gpu=memory_gpu,
+        ),
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+    )
+
+    assert wrp.pattern == Pattern.projection
+    assert wrp.output_dims_change is True
+    assert wrp.implementation == implementation
+    assert wrp.is_cpu == is_cpu
+    assert wrp.is_gpu == is_gpu
+    assert wrp.cupyrun == cupyrun
+    assert wrp.memory_gpu == memory_gpu

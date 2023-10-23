@@ -1,9 +1,11 @@
 import os
 from typing import Any, Callable, Dict, List, Union
 import numpy as np
+from abc import ABC, abstractmethod
 from inspect import signature
 from httomo.dataset import DataSet
 import httomo.globals
+from httomo.methods_query import MethodsQuery
 from httomo.utils import Colour, log_exception, log_once, log_rank, gpu_enabled, xp
 from httomo.data import mpiutil
 
@@ -16,6 +18,12 @@ def _gpumem_cleanup():
         xp.get_default_memory_pool().free_all_blocks()
         cache = xp.fft.config.get_plan_cache()
         cache.clear()
+
+
+class MethodRepository(ABC):
+    @abstractmethod
+    def query(self, module_path: str, method_name: str) -> MethodsQuery:
+        pass
 
 
 class BackendWrapper2:
@@ -32,21 +40,26 @@ class BackendWrapper2:
     DictType = Dict[str, Union[DictValues, List[DictValues]]]
 
     def __init__(
-        self, module_path: str, method_name: str, comm: Comm, cupyrun: bool, **kwargs
+        self,
+        method_repository: MethodRepository,
+        module_path: str,
+        method_name: str,
+        comm: Comm,
+        **kwargs,
     ):
         """Constructs a BackendWrapper for a method located in module_path with the name method_name.
 
         Parameters
         ----------
 
+        method_repository: MethodRepository
+            Repository that can be used to build queries about method attributes
         module_path: str
             Path to the module where the method is in python notation, e.g. "httomolibgpu.prep.normalize"
         method_name: str
             Name of the method (function within the given module)
         comm: Comm
             MPI communicator object
-        cupyrun: bool
-            whether the method supports running with CuPy array inputs
         **kwargs:
             Additional keyword arguments will be set as configuration parameters for this
             method. Note: The method must actually accept them as parameters.
@@ -55,7 +68,6 @@ class BackendWrapper2:
         self.comm = comm
         self.module_path = module_path
         self.method_name = method_name
-        self.cupyrun = cupyrun
         from importlib import import_module
 
         self.module = import_module(module_path)
@@ -66,6 +78,16 @@ class BackendWrapper2:
         # check if the kwargs are actually supported by the method
         self._config_params = kwargs
         self._check_config_params()
+
+        # assign method properties from the methods repository
+        query = method_repository.query(module_path, method_name)
+        self.pattern = query.get_pattern()
+        self.output_dims_change = query.get_output_dims_change()
+        self.implementation = query.get_implementation()
+        self.memory_gpu = query.get_memory_gpu_params()
+        self.cupyrun = self.implementation == "gpu_cupy"
+        self.is_cpu = self.implementation == "cpu"
+        self.is_gpu = not self.is_cpu
 
         if gpu_enabled:
             self.num_gpus = xp.cuda.runtime.getDeviceCount()
@@ -205,9 +227,14 @@ class ReconstructionWrapper(BackendWrapper2):
     before calling the method."""
 
     def __init__(
-        self, module_path: str, method_name: str, comm: Comm, cupyrun: bool, **kwargs
+        self,
+        method_repository: MethodRepository,
+        module_path: str,
+        method_name: str,
+        comm: Comm,
+        **kwargs,
     ):
-        super().__init__(module_path, method_name, comm, cupyrun, **kwargs)
+        super().__init__(method_repository, module_path, method_name, comm, **kwargs)
 
     def _preprocess_data(self, dataset: DataSet) -> DataSet:
         # for 360 degrees data the angular dimension will be truncated while angles are not.
@@ -226,9 +253,14 @@ class RotationWrapper(BackendWrapper2):
     """
 
     def __init__(
-        self, module_path: str, method_name: str, comm: Comm, cupyrun: bool, **kwargs
+        self,
+        method_repository: MethodRepository,
+        module_path: str,
+        method_name: str,
+        comm: Comm,
+        **kwargs,
     ):
-        super().__init__(module_path, method_name, comm, cupyrun, **kwargs)
+        super().__init__(method_repository, module_path, method_name, comm, **kwargs)
         self._side_output: Dict[str, Any] = dict()
 
     def _process_return_type(self, ret: Any, input_dataset: DataSet) -> DataSet:
@@ -254,9 +286,14 @@ class DezingingWrapper(BackendWrapper2):
     """
 
     def __init__(
-        self, module_path: str, method_name: str, comm: Comm, cupyrun: bool, **kwargs
+        self,
+        method_repository: MethodRepository,
+        module_path: str,
+        method_name: str,
+        comm: Comm,
+        **kwargs,
     ):
-        super().__init__(module_path, method_name, comm, cupyrun, **kwargs)
+        super().__init__(method_repository, module_path, method_name, comm, **kwargs)
         assert (
             method_name == "remove_outlier3d"
         ), "Only remove_outlier3d is supported at the moment"
@@ -280,13 +317,14 @@ class ImagesWrapper(BackendWrapper2):
 
     def __init__(
         self,
+        method_repository: MethodRepository,
         module_path: str,
         method_name: str,
         comm: Comm,
         out_dir: os.PathLike,
         **kwargs,
     ):
-        super().__init__(module_path, method_name, comm, True, **kwargs)
+        super().__init__(method_repository, module_path, method_name, comm, **kwargs)
         self["out_dir"] = out_dir
         self["comm_rank"] = comm.rank
 
@@ -307,7 +345,11 @@ class ImagesWrapper(BackendWrapper2):
 
 
 def make_backend_wrapper(
-    module_path: str, method_name: str, comm: Comm, cupyrun: bool = True, **kwargs
+    method_repository: MethodRepository,
+    module_path: str,
+    method_name: str,
+    comm: Comm,
+    **kwargs,
 ) -> BackendWrapper2:
     """Factor function to generate the appropriate wrapper based on the module
     path and method name. Clients do not need to be concerned about which particular
@@ -316,14 +358,14 @@ def make_backend_wrapper(
     Parameters
     ----------
 
+    method_repository: MethodRepository
+        Repository of methods that we can use the query properties
     module_path: str
         Path to the module where the method is in python notation, e.g. "httomolibgpu.prep.normalize"
     method_name: str
         Name of the method (function within the given module)
     comm: Comm
         MPI communicator object
-    cupyrun: bool
-        whether the method supports running with CuPy array inputs
     kwargs:
         Arbitrary keyword arguments that get passed to the method as parameters.
 
@@ -336,30 +378,31 @@ def make_backend_wrapper(
 
     if module_path.endswith(".algorithm"):
         return ReconstructionWrapper(
+            method_repository=method_repository,
             module_path=module_path,
             method_name=method_name,
             comm=comm,
-            cupyrun=cupyrun,
             **kwargs,
         )
     if module_path.endswith(".rotation"):
         return RotationWrapper(
+            method_repository=method_repository,
             module_path=module_path,
             method_name=method_name,
             comm=comm,
-            cupyrun=cupyrun,
             **kwargs,
         )
     if method_name == "remove_outlier3d":
         return DezingingWrapper(
+            method_repository=method_repository,
             module_path=module_path,
             method_name=method_name,
             comm=comm,
-            cupyrun=cupyrun,
             **kwargs,
         )
     if module_path.endswith(".images"):
         return ImagesWrapper(
+            method_repository=method_repository,
             module_path=module_path,
             method_name=method_name,
             comm=comm,
@@ -367,10 +410,10 @@ def make_backend_wrapper(
             **kwargs,
         )
     return BackendWrapper2(
+        method_repository=method_repository,
         module_path=module_path,
         method_name=method_name,
         comm=comm,
-        cupyrun=cupyrun,
         **kwargs,
     )
 

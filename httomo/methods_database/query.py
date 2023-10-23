@@ -1,9 +1,11 @@
-from typing import List, Union
+from typing import Dict, List, Literal, Union
 from pathlib import Path
 
 import yaml
+from httomo.methods_query import MethodsQuery
 
-from httomo.utils import log_exception
+from httomo.utils import Pattern, log_exception
+from httomo.wrappers_class import MethodRepository
 
 YAML_DIR = Path(__file__).parent / "packages/"
 
@@ -73,3 +75,53 @@ def get_method_info(module_path: str, method_name: str, attr: str):
         return info[attr]
     except KeyError:
         raise KeyError(f"The attribute {attr} is not present on {method_path}")
+
+
+# Implementation of methods database query class
+class MethodsDatabaseQuery(MethodsQuery):
+    def __init__(self, module_path: str, method_name: str):
+        self.module_path = module_path
+        self.method_name = method_name
+
+    def get_pattern(self) -> Pattern:
+        p = get_method_info(self.module_path, self.method_name, "pattern")
+        if p == "projection":
+            return Pattern.projection
+        if p == "sinogram":
+            return Pattern.sinogram
+        if p == "all":
+            return Pattern.all
+        raise ValueError(
+            f"The pattern {p} that is listed for the method "
+            f"{self.module_path}.{self.method_name} is invalid."
+        )
+
+    def get_output_dims_change(self) -> bool:
+        p = get_method_info(self.module_path, self.method_name, "output_dims_change")
+        return bool(p)
+
+    def get_implementation(self) -> Literal["cpu", "gpu", "gpu_cupy"]:
+        p = get_method_info(self.module_path, self.method_name, "implementation")
+        if p not in ["gpu", "gpu_cupy", "gpu"]:
+            raise ValueError(
+                f"The ipmlementation arch {p} listed for method {self.module_path}.{self.method_name} is invalid"
+            )
+        return p
+
+    def get_memory_gpu_params(
+        self,
+    ) -> MethodsQuery.MemoryGpuDict:
+        p = get_method_info(self.module_path, self.method_name, "memory_gpu")
+        if p is None or p == 'None':
+            return dict()
+        if type(p) == list:
+            # convert to dict
+            out: MethodsQuery.MemoryGpuDict = dict()
+            for item in p:
+                out |= item
+            return out
+        return p
+
+class MethodDatabaseRepository(MethodRepository):
+    def query(self, module_path: str, method_name: str) -> MethodsQuery:
+        return MethodsDatabaseQuery(module_path, method_name)
