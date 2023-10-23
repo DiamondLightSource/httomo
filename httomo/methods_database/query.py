@@ -1,8 +1,8 @@
-from typing import Dict, List, Literal, Union
+from typing import Literal
 from pathlib import Path
 
 import yaml
-from httomo.methods_query import MethodsQuery
+from httomo.methods_query import MemoryGpuDict, MethodsQuery
 
 from httomo.utils import Pattern, log_exception
 from httomo.wrappers_class import MethodRepository
@@ -110,13 +110,13 @@ class MethodsDatabaseQuery(MethodsQuery):
 
     def get_memory_gpu_params(
         self,
-    ) -> MethodsQuery.MemoryGpuDict:
+    ) -> MemoryGpuDict:
         p = get_method_info(self.module_path, self.method_name, "memory_gpu")
         if p is None or p == 'None':
             return dict()
         if type(p) == list:
             # convert to dict
-            out: MethodsQuery.MemoryGpuDict = dict()
+            out: MemoryGpuDict = dict()
             for item in p:
                 out |= item
             return out

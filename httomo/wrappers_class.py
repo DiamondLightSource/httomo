@@ -1,7 +1,6 @@
 import os
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Protocol, Union
 import numpy as np
-from abc import ABC, abstractmethod
 from inspect import signature
 from httomo.dataset import DataSet
 import httomo.globals
@@ -20,10 +19,9 @@ def _gpumem_cleanup():
         cache.clear()
 
 
-class MethodRepository(ABC):
-    @abstractmethod
+class MethodRepository(Protocol):
     def query(self, module_path: str, method_name: str) -> MethodsQuery:
-        pass
+        ...
 
 
 class BackendWrapper2:
