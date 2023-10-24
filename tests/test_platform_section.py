@@ -247,7 +247,7 @@ def test_sectionizer_inherits_loader_pattern(
     assert s.sections[0].pattern == loader_pattern
 
 
-def test_sectionizer_sets_reslize_in_loader(mocker: MockerFixture):
+def test_sectionizer_sets_reslice_in_loader(mocker: MockerFixture):
     p = Pipeline()
     loader = mocker.create_autospec(Loader, instance=True, pattern=Pattern.sinogram)
     p.add_loader(loader)
