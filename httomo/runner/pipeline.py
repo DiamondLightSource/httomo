@@ -1,6 +1,6 @@
-from httomo.loader import Loader
+from httomo.runner.loader import Loader
 from httomo.utils import Pattern
-from httomo.wrappers_class import BackendWrapper2
+from httomo.runner.backend_wrapper import BackendWrapper
 
 from typing import List, Optional
 
@@ -9,7 +9,7 @@ class Pipeline:
     """Represents a pipeline of methods, stored by their wrappers, and the loader"""
 
     def __init__(self):
-        self.methods: List[BackendWrapper2] = []
+        self.methods: List[BackendWrapper] = []
         self.loader: Optional[Loader] = None
 
     def add_loader(self, loader: Loader):
@@ -42,5 +42,5 @@ class Pipeline:
                 "Attempt to set loader reslice property, but no loader has be set"
             )
 
-    def append_method(self, method: BackendWrapper2):
+    def append_method(self, method: BackendWrapper):
         self.methods.append(method)

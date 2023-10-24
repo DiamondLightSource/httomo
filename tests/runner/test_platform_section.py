@@ -1,10 +1,10 @@
 import pytest
 from pytest_mock import MockerFixture
-from httomo.pipeline import Pipeline
-from httomo.platform_section import PlatformSectionizer
-from httomo.loader import Loader
+from httomo.runner.pipeline import Pipeline
+from httomo.runner.platform_section import PlatformSectionizer
+from httomo.runner.loader import Loader
 from httomo.utils import Pattern
-from httomo.wrappers_class import BackendWrapper2
+from httomo.runner.backend_wrapper import BackendWrapper
 
 
 def make_test_method(
@@ -13,9 +13,9 @@ def make_test_method(
     pattern=Pattern.projection,
     method_name="testmethod",
     **kwargs,
-) -> BackendWrapper2:
+) -> BackendWrapper:
     mock = mocker.create_autospec(
-        BackendWrapper2,
+        BackendWrapper,
         instance=True,
         method_name=method_name,
         pattern=pattern,

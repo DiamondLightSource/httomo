@@ -2,10 +2,10 @@ from typing import Literal
 from pathlib import Path
 
 import yaml
-from httomo.methods_query import MemoryGpuDict, MethodsQuery
+from httomo.runner.methods_repository_interface import MemoryGpuDict, MethodsQuery
 
 from httomo.utils import Pattern, log_exception
-from httomo.wrappers_class import MethodRepository
+from httomo.runner.methods_repository_interface import MethodRepository
 
 YAML_DIR = Path(__file__).parent / "packages/"
 

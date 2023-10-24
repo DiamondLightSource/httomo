@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from httomo.utils import xp, gpu_enabled
-from httomo.dataset import DataSet
+from httomo.runner.dataset import DataSet
 
 
 @pytest.fixture

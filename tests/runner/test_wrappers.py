@@ -1,38 +1,12 @@
-import inspect
 from mpi4py import MPI
 import numpy as np
 import httomo
-from httomo.dataset import DataSet
+from httomo.runner.dataset import DataSet
+from httomo.runner.backend_wrapper import make_backend_wrapper
+from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import Pattern, xp, gpu_enabled
 from pytest_mock import MockerFixture
 import pytest
-
-from httomo.wrappers_class import BackendWrapper, MethodRepository, make_backend_wrapper
-
-
-def test_tomopy_wrapper():
-    wrp = BackendWrapper("tomopy", "recon", "algorithm", "recon", MPI.COMM_WORLD)
-    assert inspect.ismodule(wrp.module)
-
-
-def test_httomolib_wrapper():
-    wrp = BackendWrapper(
-        "httomolib", "misc", "images", "save_to_images", MPI.COMM_WORLD
-    )
-    assert inspect.ismodule(wrp.module)
-
-
-@pytest.mark.skipif(
-    not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
-    reason="skipped as cupy is not available",
-)
-@pytest.mark.cupy
-def test_httomolibgpu_wrapper():
-    wrp = BackendWrapper(
-        "httomolibgpu", "prep", "normalize", "normalize", MPI.COMM_WORLD
-    )
-    assert inspect.ismodule(wrp.module)
-
 
 # def test_httomolibgpu_wrapper_max_slices_gpu():
 #     wrp = HttomolibgpuWrapper("prep", "normalize", "normalize", MPI.COMM_WORLD)

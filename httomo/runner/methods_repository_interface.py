@@ -25,3 +25,8 @@ class MethodsQuery(Protocol):
     def get_memory_gpu_params(self) -> MemoryGpuDict:
         """Get the parameters for the GPU memory estimation"""
         ...
+
+
+class MethodRepository(Protocol):
+    def query(self, module_path: str, method_name: str) -> MethodsQuery:
+        ...

@@ -1,9 +1,9 @@
 from typing import Iterator, List
 
 import mpi4py
-from httomo.pipeline import Pipeline
+from httomo.runner.pipeline import Pipeline
 from httomo.utils import Colour, Pattern, log_once
-from httomo.wrappers_class import BackendWrapper2
+from httomo.runner.backend_wrapper import BackendWrapper
 
 
 class PlatformSection:
@@ -13,7 +13,7 @@ class PlatformSection:
         pattern: Pattern,
         reslice: bool,
         max_slices: int,
-        methods: List[BackendWrapper2],
+        methods: List[BackendWrapper],
     ):
         self.gpu = gpu
         self.pattern = pattern
@@ -21,7 +21,7 @@ class PlatformSection:
         self.max_slices = max_slices
         self.methods = methods
 
-    def __iter__(self) -> Iterator[BackendWrapper2]:
+    def __iter__(self) -> Iterator[BackendWrapper]:
         return iter(self.methods)
 
     def __len__(self) -> int:
@@ -43,7 +43,7 @@ class PlatformSectionizer:
     ) -> List[PlatformSection]:
         sections: List[PlatformSection] = []
 
-        def should_save_after(method: BackendWrapper2) -> bool:
+        def should_save_after(method: BackendWrapper) -> bool:
             params = method.config_params
             return (
                 save_all
@@ -58,7 +58,7 @@ class PlatformSectionizer:
         method = next(itermethods)  # first method processed directly
         current_gpu = method.is_gpu
         current_pattern = method.pattern
-        current_methods: List[BackendWrapper2] = [method]
+        current_methods: List[BackendWrapper] = [method]
         save_result_after = should_save_after(method)
 
         def finish_section(needs_reslice=False):

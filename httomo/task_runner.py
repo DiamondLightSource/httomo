@@ -37,7 +37,7 @@ from httomo.utils import (
     log_once,
     remove_ansi_escape_sequences,
 )
-from httomo.wrappers_class import _gpumem_cleanup
+from httomo.runner.gpu_utils import gpumem_cleanup
 from httomo.yaml_loader import YamlLoader
 from httomo.pipeline_reader import PipelineReader, PipelineReaderInterface
 
@@ -457,7 +457,7 @@ def run_tasks(
             # delete allocated memory pointers to free up the memory
             run_method_info.dict_httomo_params["data"] = None
             # now flushing the GPU memory
-            _gpumem_cleanup()
+            gpumem_cleanup()
             
         ##************* BLOCKS LOOP IS COMPLETE *************##
         # If the completed section contained a recon method, then the array
