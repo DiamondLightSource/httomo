@@ -5,7 +5,15 @@ from inspect import signature
 from httomo.dataset import DataSet
 import httomo.globals
 from httomo.methods_query import MethodsQuery
-from httomo.utils import Colour, log_exception, log_once, log_rank, gpu_enabled, xp
+from httomo.utils import (
+    Colour,
+    Pattern,
+    log_exception,
+    log_once,
+    log_rank,
+    gpu_enabled,
+    xp,
+)
 from httomo.data import mpiutil
 
 from mpi4py.MPI import Comm
@@ -73,7 +81,7 @@ class BackendWrapper2:
         # get all the method parameter names, so we know which to set on calling it
         sig = signature(self.method)
         self.parameters = list(sig.parameters.keys())
-        # check if the kwargs are actually supported by the method
+        # check if the given kwargs are actually supported by the method
         self._config_params = kwargs
         self._check_config_params()
 
@@ -83,14 +91,23 @@ class BackendWrapper2:
         self.output_dims_change = query.get_output_dims_change()
         self.implementation = query.get_implementation()
         self.memory_gpu = query.get_memory_gpu_params()
-        self.cupyrun = self.implementation == "gpu_cupy"
-        self.is_cpu = self.implementation == "cpu"
-        self.is_gpu = not self.is_cpu
 
         if gpu_enabled:
             self.num_gpus = xp.cuda.runtime.getDeviceCount()
             _id = httomo.globals.gpu_id
             self.gpu_id = mpiutil.local_rank % self.num_gpus if _id == -1 else _id
+
+    @property
+    def cupyrun(self) -> bool:
+        return self.implementation == "gpu_cupy"
+
+    @property
+    def is_cpu(self) -> bool:
+        return self.implementation == "cpu"
+
+    @property
+    def is_gpu(self) -> bool:
+        return not self.is_cpu
 
     def __getitem__(self, key: str) -> DictValues:
         """Get a parameter for the method using dictionary notation (wrapper["param"])"""
@@ -102,7 +119,7 @@ class BackendWrapper2:
         self._check_config_params()
 
     @property
-    def config_params(self):
+    def config_params(self) -> Dict[str, Any]:
         """Access a copy of the configuration parameters (cannot be modified directly)"""
         return {**self._config_params}
 

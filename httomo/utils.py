@@ -58,7 +58,7 @@ def log_once(output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0) -> No
     colour : str, optional
         The colour of the output.
     level : int, optional
-        The level of the log message. 0 is info, 1 is debug.
+        The level of the log message. 0 is info, 1 is debug, 3 is warning.
     """
     if mpiutil.rank == 0:
         if isinstance(output, list):
@@ -69,11 +69,12 @@ def log_once(output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0) -> No
             output = f"{colour}{output}{Colour.END}"
 
         if httomo.globals.logger is not None:
-            (
+            if level == 1:
                 httomo.globals.logger.debug(output)
-                if level == 1
-                else httomo.globals.logger.info(output)
-            )
+            elif level == 2:
+                httomo.globals.logger.warn(output)
+            else:
+                httomo.globals.logger.info(output)
 
 
 def log_rank(output: Any, comm: Comm) -> None:
