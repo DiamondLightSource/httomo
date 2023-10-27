@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from importlib import import_module
 from inspect import signature
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import TypeAlias, Dict, List, Optional, Tuple
 
 import numpy as np
 from httomolib.misc.images import save_to_images
@@ -39,6 +39,9 @@ from httomo.utils import (
 from httomo.wrappers_class import BackendWrapper, _gpumem_cleanup
 from httomo.yaml_utils import open_yaml_config
 supporting_module_path = "httomo.methods_database.packages.external."
+
+
+SliceIndices: TypeAlias = List[Tuple[int, int, int]]
 
 
 def run_tasks(
@@ -242,20 +245,11 @@ def run_tasks(
         indices_start = 0
         indices_end = int(section.max_slices)
         slc_indices = [slice(None)] * len(data_shape)
-        slc_indices_pad = [slice(None)] * len(data_shape)
         for it_blocks in range(iterations_for_blocks):
             # Preparing indices for the slicing of the data in blocks
-            slc_indices[slicing_dim_section] = slice(int(indices_start), int(indices_end), 1)
-
-            if section.padding > 0:
-                indices_start_pad = indices_start
-                indices_end_pad = indices_end
-                # We also need to take padding into the account here
-                if (indices_start - section.padding) >= 0:
-                    indices_start_pad = indices_start - section.padding
-                if (indices_end + section.padding) < data_shape[slicing_dim_section]:
-                    indices_end_pad = indices_end + section.padding
-                slc_indices_pad[slicing_dim_section] = slice(int(indices_start_pad), int(indices_end_pad), 1)
+            slc_indices[slicing_dim_section] = _get_slc_indices(
+                section, data_shape, slicing_dim_section, indices_start, indices_end
+            )
 
             ##---------- LOOP OVER _METHODS_ IN THE BLOCK ------------##
             for m_ind, methodfunc_sect in enumerate(section.methods):
@@ -316,10 +310,9 @@ def run_tasks(
                     # Assign the block of data on a CPU to `data` parameter of
                     # the method; this should happen once in the beginning of
                     # the loop over methods
-                    if section.padding > 0:
-                        run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices_pad)]
-                    else:
-                        run_method_info.dict_httomo_params["data"] = data_full_section[tuple(slc_indices)]
+                    run_method_info.dict_httomo_params["data"] = data_full_section[
+                        tuple(slc_indices)
+                    ]
                 else:
                     # Initialise with result from the previous method                    
                     run_method_info.dict_httomo_params["data"] = res                    
@@ -361,10 +354,7 @@ def run_tasks(
                             dict_datasets_pipeline[run_method_info.data_out] = res_param                       
                     # passing the data to the next method (or initialise res)
                     if m_ind == 0:
-                        if section.padding > 0:
-                            res = data_full_section[tuple(slc_indices_pad)]
-                        else:
-                            res = data_full_section[tuple(slc_indices)]
+                        res = data_full_section[tuple(slc_indices)]
                 elif method_name == "save_to_images":
                     # just executing the wrapper (no output)
                     func_wrapper(
@@ -374,10 +364,7 @@ def run_tasks(
                         )
                     # passing the data to the next method (or initialise res)
                     if m_ind == 0:
-                        if section.padding > 0:
-                            res = data_full_section[tuple(slc_indices_pad)]
-                        else:
-                            res = data_full_section[tuple(slc_indices)]
+                        res = data_full_section[tuple(slc_indices)]
                 else:
                     # overriding the result with an output of a method
                     res = func_wrapper(
@@ -412,16 +399,14 @@ def run_tasks(
     
             ##************* METHODS LOOP IS COMPLETE *************##            
             # cropping indices for a block if the block-data is padded
-            if indices_start != 0:
-                indices_block_start_crop = section.padding
-            else:
-                indices_block_start_crop = 0
-            if indices_end != data_shape[slicing_dim_section]:
-                indices_block_end_crop = res.shape[slicing_dim_section]- section.padding
-            else:
-                indices_block_end_crop  = res.shape[slicing_dim_section]
-            slc_block_cropping_indices = [slice(None)] * len(res.shape)
-            slc_block_cropping_indices[slicing_dim_section] = slice(int(indices_block_start_crop), int(indices_block_end_crop), 1)
+            slc_block_cropping_indices = _get_crop_indices(
+                section,
+                data_shape,
+                slicing_dim_section,
+                res,
+                indices_start,
+                indices_end,
+            )
             # Saving the processed block (the block is in the CPU memory)
             if not contains_recon:
                 data_full_section[tuple(slc_indices)] = res[tuple(slc_block_cropping_indices)]
@@ -488,8 +473,76 @@ def run_tasks(
         end_str = f"~~~ Pipeline finished ~~~ took {elapsed_time} sec to run!"
         log_once(end_str, comm=comm, colour=Colour.BVIOLET)
         #: remove ansi escape sequences from the log file
-        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")    
-    
+        remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
+
+
+def _get_slc_indices(
+    section: PlatformSection,
+    data_shape: Tuple,
+    slicing_dim_section: int,
+    indices_start: int,
+    indices_end: int,
+) -> SliceIndices:
+    """ Return slice boundaries for slicing data
+    Args:
+        section: Section of data
+        data_shape:
+        slicing_dim_section: Dimension in which to slice
+        indices_start: Start indices for the slicing of the data
+        indices_end: End indices for the slicing of the data
+
+    Returns:
+        SliceIndices:
+    """
+    indices_start_pad = indices_start
+    indices_end_pad = indices_end
+    if section.padding > 0:
+        # We also need to take padding into the account here
+        if (indices_start - section.padding) >= 0:
+            indices_start_pad = indices_start - section.padding
+        if (indices_end + section.padding) < data_shape[slicing_dim_section]:
+            indices_end_pad = indices_end + section.padding
+    return slice(int(indices_start_pad), int(indices_end_pad), 1)
+
+
+def _get_crop_indices(
+    section: PlatformSection,
+    data_shape: Tuple,
+    slicing_dim_section: int,
+    res: int,
+    indices_start: int,
+    indices_end: int,
+) -> SliceIndices:
+    """Return cropping boundary
+
+    Parameters
+    ----------
+        section: Section of data
+        data_shape:
+        slicing_dim_section: Dimension in which to slice
+        res: Result
+        indices_start: Start indices for the slicing of the data
+        indices_end: End indices for the slicing of the data
+
+    Returns
+    --------
+        SliceIndices:
+    """
+    slc_block_cropping_indices = [slice(None)] * len(res.shape)
+    if indices_start != 0:
+        indices_block_start_crop = section.padding
+    else:
+        indices_block_start_crop = 0
+    if indices_end != data_shape[slicing_dim_section]:
+        indices_block_end_crop = res.shape[slicing_dim_section] - section.padding
+    else:
+        indices_block_end_crop = res.shape[slicing_dim_section]
+    slc_block_cropping_indices[slicing_dim_section] = slice(
+        int(indices_block_start_crop), int(indices_block_end_crop), 1
+    )
+    return slc_block_cropping_indices
+
+
 def _initialise_datasets_and_stats(
     yaml_config: Path,
 ) -> tuple[Dict[str, None], List[Dict]]:
