@@ -54,14 +54,14 @@ def run_tasks(
 
     Parameters
     ----------
-    in_file : Path
+    in_file
         The file to read data from.
-    yaml_config : Path
+    yaml_config
         The file containing the processing pipeline info as YAML.
-    save_all : bool
+    save_all
         Specifies if intermediate datasets should be saved for all tasks in the
         pipeline.
-    reslice_dir : Optional[Path]
+    reslice_dir
         Path where to store the reslice intermediate files, or None if reslicing
         should be done in-memory.
     """
@@ -484,15 +484,23 @@ def _get_slc_indices(
     indices_end: int,
 ) -> SliceIndices:
     """ Return slice boundaries for slicing data
-    Args:
-        section: Section of data
-        data_shape:
-        slicing_dim_section: Dimension in which to slice
-        indices_start: Start indices for the slicing of the data
-        indices_end: End indices for the slicing of the data
 
-    Returns:
-        SliceIndices:
+    Parameters
+    ----------
+    section
+        Section of data.
+    data_shape
+    slicing_dim_section
+        Dimension in which to slice.
+    indices_start
+        Start indices for the slicing of the data.
+    indices_end
+        End indices for the slicing of the data.
+
+    Returns
+    -------
+    SliceIndices
+        List of indices tuples
     """
     indices_start_pad = indices_start
     indices_end_pad = indices_end
@@ -517,16 +525,23 @@ def _get_crop_indices(
 
     Parameters
     ----------
-        section: Section of data
-        data_shape:
-        slicing_dim_section: Dimension in which to slice
-        res: Result
-        indices_start: Start indices for the slicing of the data
-        indices_end: End indices for the slicing of the data
+    section
+        Section of data.
+    data_shape
+    slicing_dim_section
+        Dimension in which to slice.
+    res
+        Result
+    indices_start
+        Start indices for the slicing of the data.
+    indices_end
+        End indices for the slicing of the data.
 
     Returns
     --------
-        SliceIndices:
+    SliceIndices
+        List of indices tuples.
+
     """
     slc_block_cropping_indices = [slice(None)] * len(res.shape)
     if indices_start != 0:
@@ -551,7 +566,7 @@ def _initialise_datasets_and_stats(
 
     Parameters
     ----------
-    yaml_config : Path
+    yaml_config
         The file containing the processing pipeline info as YAML
 
     Returns
@@ -607,14 +622,12 @@ def _get_method_funcs(yaml_config: Path, comm: MPI.Comm) -> List[MethodFunc]:
     pipeline.
 
     Parameters
-    ==========
-
-    yaml_config : Path
+    ----------
+    yaml_config
         The file containing the processing pipeline info as YAML
 
     Returns
-    =======
-
+    -------
     List[MethodFunc]
         A list describing each method function with its properties
     """
