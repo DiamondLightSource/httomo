@@ -12,7 +12,7 @@ from mpi4py.MPI import Comm
 
 import os
 from inspect import signature
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 
 class BackendWrapper:
@@ -75,6 +75,8 @@ class BackendWrapper:
         self.implementation = query.get_implementation()
         self.memory_gpu = query.get_memory_gpu_params()
 
+        self._side_output: Dict[str, Any] = dict()
+
         if gpu_enabled:
             self.num_gpus = xp.cuda.runtime.getDeviceCount()
             _id = httomo.globals.gpu_id
@@ -116,13 +118,18 @@ class BackendWrapper:
             if k not in self.parameters:
                 raise ValueError(f"Unsupported keyword argument given: {k}")
 
-    def _build_kwargs(self, dict_params: DictType, dataset: DataSet) -> Dict[str, Any]:
-        # first parameter is always the data
+    def _build_kwargs(
+        self, dict_params: DictType, dataset: Optional[DataSet] = None
+    ) -> Dict[str, Any]:
+        # first parameter is always the data (if given)
         ret: Dict[str, Any] = dict()
-        ret[self.parameters[0]] = dataset.data
+        startidx = 0
+        if dataset is not None:
+            ret[self.parameters[startidx]] = dataset.data
+            startidx += 1
         # other parameters are looked up by name
-        for p in self.parameters[1:]:
-            if p in dir(dataset):
+        for p in self.parameters[startidx:]:
+            if dataset is not None and p in dir(dataset):
                 ret[p] = getattr(dataset, p)
             elif p in dict_params:
                 ret[p] = dict_params[p]
@@ -187,7 +194,7 @@ class BackendWrapper:
         """Override this method for functions that have a side output. The returned dictionary
         will be merged with the dict_params parameter passed to execute for all methods that
         follow in the pipeline"""
-        return dict()
+        return self._side_output
 
     def _transfer_data(self, dataset: DataSet):
         if not self.cupyrun:
@@ -224,16 +231,6 @@ class ReconstructionWrapper(BackendWrapper):
     """Wraps reconstruction functions, limiting the length of the angles array
     before calling the method."""
 
-    def __init__(
-        self,
-        method_repository: MethodRepository,
-        module_path: str,
-        method_name: str,
-        comm: Comm,
-        **kwargs,
-    ):
-        super().__init__(method_repository, module_path, method_name, comm, **kwargs)
-
     def _preprocess_data(self, dataset: DataSet) -> DataSet:
         # for 360 degrees data the angular dimension will be truncated while angles are not.
         # Truncating angles if the angular dimension has got a different size
@@ -250,17 +247,6 @@ class RotationWrapper(BackendWrapper):
     but have a side output for the center of rotation data (handling both 180 and 360).
     """
 
-    def __init__(
-        self,
-        method_repository: MethodRepository,
-        module_path: str,
-        method_name: str,
-        comm: Comm,
-        **kwargs,
-    ):
-        super().__init__(method_repository, module_path, method_name, comm, **kwargs)
-        self._side_output: Dict[str, Any] = dict()
-
     def _process_return_type(self, ret: Any, input_dataset: DataSet) -> DataSet:
         if type(ret) == float:
             self._side_output["cor"] = ret
@@ -272,9 +258,6 @@ class RotationWrapper(BackendWrapper):
             self._side_output["overlap_position"] = ret[3]  # float
 
         return input_dataset
-
-    def get_side_output(self) -> Dict[str, Any]:
-        return {**super().get_side_output(), **self._side_output}
 
 
 class DezingingWrapper(BackendWrapper):
@@ -349,7 +332,7 @@ def make_backend_wrapper(
     comm: Comm,
     **kwargs,
 ) -> BackendWrapper:
-    """Factor function to generate the appropriate wrapper based on the module
+    """Factory function to generate the appropriate wrapper based on the module
     path and method name. Clients do not need to be concerned about which particular
     derived class is returned.
 
@@ -370,7 +353,7 @@ def make_backend_wrapper(
     Returns
     -------
 
-    BackendWrapper2
+    BackendWrapper
         An instance of a wrapper class
     """
 

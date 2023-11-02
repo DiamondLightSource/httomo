@@ -1,4 +1,4 @@
-from httomo.runner.loader import Loader
+from httomo.runner.loader import LoaderInterface
 from httomo.utils import Pattern
 from httomo.runner.backend_wrapper import BackendWrapper
 
@@ -9,12 +9,12 @@ class Pipeline:
     """Represents a pipeline of methods, stored by their wrappers, and the loader.
     After creation, the pipeline is immutable."""
 
-    def __init__(self, loader: Loader, methods: List[BackendWrapper]):
+    def __init__(self, loader: LoaderInterface, methods: List[BackendWrapper]):
         self._methods = methods
         self._loader = loader
 
     @property
-    def loader(self) -> Loader:
+    def loader(self) -> LoaderInterface:
         return self._loader
 
     # iterator interface to access the methods

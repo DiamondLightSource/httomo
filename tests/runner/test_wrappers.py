@@ -3,60 +3,11 @@ import numpy as np
 import httomo
 from httomo.runner.dataset import DataSet
 from httomo.runner.backend_wrapper import make_backend_wrapper
-from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import Pattern, xp, gpu_enabled
 from pytest_mock import MockerFixture
 import pytest
 
-# def test_httomolibgpu_wrapper_max_slices_gpu():
-#     wrp = HttomolibgpuWrapper("prep", "normalize", "normalize", MPI.COMM_WORLD)
-#     assert wrp.cupyrun is True
-#     assert wrp.calc_max_slices(0, (100, 100), np.uint8(), 50000)[0] < 100000
-
-
-# def test_httomolibgpu_wrapper_max_slices_passes_kwargs():
-#     from httomolibgpu.prep.normalize import normalize
-
-#     mock_method = mock.Mock()
-#     mockMeta = dataclasses.replace(normalize.meta, calc_max_slices=mock_method)
-#     with mock.patch.object(normalize, "meta", mockMeta):
-#         wrp = HttomolibgpuWrapper("prep", "normalize", "normalize", MPI.COMM_WORLD)
-#         wrp.dict_params = dict(testarg=1, minus_log=True)
-#         wrp.calc_max_slices(0, (100, 100), np.uint8(), 50000)
-
-#     # make sure the default args are called and the args given above are overriding the defaults
-#     mock_method.assert_called_once_with(
-#         0,
-#         (100, 100),
-#         np.uint8(),
-#         50000,
-#         cutoff=10.0,
-#         minus_log=True,
-#         testarg=1,
-#         nonnegativity=False,
-#         remove_nans=False,
-#     )
-
-
-def make_mock_repo(
-    mocker: MockerFixture,
-    pattern=Pattern.sinogram,
-    output_dims_change=False,
-    implementation="cpu",
-    memory_gpu={"datasets": ["tomo"], "multipliers": [1.2], "methods": ["direct"]},
-) -> MethodRepository:
-    """Makes a mock MethodRepository that returns the given properties on any query"""
-    mock_repo = mocker.MagicMock()
-    mock_query = mocker.MagicMock()
-    mocker.patch.object(mock_repo, "query", return_value=mock_query)
-    mocker.patch.object(mock_query, "get_pattern", return_value=pattern)
-    mocker.patch.object(
-        mock_query, "get_output_dims_change", return_value=output_dims_change
-    )
-    mocker.patch.object(mock_query, "get_implementation", return_value=implementation)
-    mocker.patch.object(mock_query, "get_memory_gpu_params", return_value=memory_gpu)
-    return mock_repo
-
+from tests.runner.testing_utils import make_mock_repo
 
 @pytest.fixture
 def dummy_dataset() -> DataSet:
