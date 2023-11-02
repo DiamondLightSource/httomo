@@ -9,7 +9,15 @@ MemoryGpuDict: TypeAlias = Dict[
 ]
 
 
-class MethodsQuery(Protocol):
+class MethodQuery(Protocol):
+    """An interface to query information about a single method.
+    It is used by the backend wrapper classes to determine required information.
+
+    Note: Implementers might get the information from different places, such as
+    YAML files, decorators, etc, and it might also be hardcoded for specific ones.
+
+    """
+
     def get_pattern(self) -> Pattern:
         """Return the pattern of the method"""
         ...
@@ -28,5 +36,12 @@ class MethodsQuery(Protocol):
 
 
 class MethodRepository(Protocol):
-    def query(self, module_path: str, method_name: str) -> MethodsQuery:
+    """Factory method class which can obtain a query object for each method.
+    It is representing a whole collection of methods and can create
+    queries for each of them from various sources.
+    """
+
+    def query(self, module_path: str, method_name: str) -> MethodQuery:
+        """Obtain a query object for a specifc method. Depending on the
+        method given, it may create different types of MethodQuery objects"""
         ...

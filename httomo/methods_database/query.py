@@ -2,7 +2,7 @@ from typing import Literal
 from pathlib import Path
 
 import yaml
-from httomo.runner.methods_repository_interface import MemoryGpuDict, MethodsQuery
+from httomo.runner.methods_repository_interface import MemoryGpuDict, MethodQuery
 
 from httomo.utils import Pattern, log_exception
 from httomo.runner.methods_repository_interface import MethodRepository
@@ -78,7 +78,7 @@ def get_method_info(module_path: str, method_name: str, attr: str):
 
 
 # Implementation of methods database query class
-class MethodsDatabaseQuery(MethodsQuery):
+class MethodsDatabaseQuery(MethodQuery):
     def __init__(self, module_path: str, method_name: str):
         self.module_path = module_path
         self.method_name = method_name
@@ -123,5 +123,5 @@ class MethodsDatabaseQuery(MethodsQuery):
         return p
 
 class MethodDatabaseRepository(MethodRepository):
-    def query(self, module_path: str, method_name: str) -> MethodsQuery:
+    def query(self, module_path: str, method_name: str) -> MethodQuery:
         return MethodsDatabaseQuery(module_path, method_name)

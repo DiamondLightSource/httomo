@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock import MockerFixture
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.platform_section import PlatformSectionizer
+from httomo.runner.platform_section import sectionize
 from httomo.runner.loader import Loader
 from httomo.utils import Pattern
 from httomo.runner.backend_wrapper import BackendWrapper
@@ -29,64 +29,77 @@ def make_test_method(
 
 
 def test_determine_single_method(mocker: MockerFixture):
-    p = Pipeline()
-    p.add_loader(mocker.create_autospec(Loader, instance=True, pattern=Pattern.all))
-    p.append_method(make_test_method(mocker, method_name="testmethod"))
-    s = PlatformSectionizer(p, False)
+    p = Pipeline(
+        loader=mocker.create_autospec(Loader, instance=True, pattern=Pattern.all),
+        methods=[make_test_method(mocker, method_name="testmethod")],
+    )
+    s = sectionize(p, False)
     assert len(s) == 1
-    assert s.sections[0].methods[0].method_name == "testmethod"
+    assert s[0].methods[0].method_name == "testmethod"
 
 
 def test_sectionizer_can_iterate_saveall(mocker: MockerFixture):
-    p = Pipeline()
-    p.add_loader(mocker.create_autospec(Loader, instance=True, pattern=Pattern.all))
-    for i in range(3):
-        method = make_test_method(mocker, method_name=f"testmethod{i}")
-        p.append_method(method)
-    s = PlatformSectionizer(p, True)
+    p = Pipeline(
+        loader=mocker.create_autospec(Loader, instance=True, pattern=Pattern.all),
+        methods=[
+            make_test_method(mocker, method_name=f"testmethod{i}") for i in range(3)
+        ],
+    )
+
+    s = sectionize(p, True)
     assert len(s) == 3
     methodnames = [m.methods[0].method_name for m in s]
     assert methodnames == ["testmethod0", "testmethod1", "testmethod2"]
 
 
 def test_sectionizer_two_cpu(mocker: MockerFixture):
-    p = Pipeline()
-    p.add_loader(mocker.create_autospec(Loader, instance=True, pattern=Pattern.all))
-    p.append_method(make_test_method(mocker, pattern=Pattern.projection))
-    p.append_method(make_test_method(mocker, pattern=Pattern.projection))
-    s = PlatformSectionizer(p, False)
+    p = Pipeline(
+        loader=mocker.create_autospec(Loader, instance=True, pattern=Pattern.all),
+        methods=[
+            make_test_method(mocker, pattern=Pattern.projection),
+            make_test_method(mocker, pattern=Pattern.projection),
+        ],
+    )
+    s = sectionize(p, False)
     assert len(s) == 1
-    s0 = s.sections[0]
+    s0 = s[0]
     assert len(s0) == 2
     assert s0.pattern == Pattern.projection
 
 
 def test_sectionizer_pattern_change(mocker: MockerFixture):
-    p = Pipeline()
-    p.add_loader(mocker.create_autospec(Loader, instance=True, pattern=Pattern.all))
-    p.append_method(make_test_method(mocker, pattern=Pattern.projection))
-    p.append_method(make_test_method(mocker, pattern=Pattern.sinogram))
-    s = PlatformSectionizer(p, False)
+    p = Pipeline(
+        loader=mocker.create_autospec(Loader, instance=True, pattern=Pattern.all),
+        methods=[
+            make_test_method(mocker, pattern=Pattern.projection),
+            make_test_method(mocker, pattern=Pattern.sinogram),
+        ],
+    )
+    s = sectionize(p, False)
     assert len(s) == 2
-    s0 = s.sections[0]
+    s0 = s[0]
     assert len(s0) == 1
     assert s0.pattern == Pattern.projection
-    s1 = s.sections[1]
+    s1 = s[1]
     assert len(s1) == 1
     assert s1.pattern == Pattern.sinogram
 
 
 def test_sectionizer_platform_change(mocker: MockerFixture):
-    p = Pipeline()
-    p.add_loader(mocker.create_autospec(Loader, instance=True, pattern=Pattern.all))
-    p.append_method(make_test_method(mocker, gpu=True))
-    p.append_method(make_test_method(mocker, gpu=False))
-    s = PlatformSectionizer(p, False)
+    p = Pipeline(
+        loader=mocker.create_autospec(Loader, instance=True, pattern=Pattern.all),
+        methods=[
+            make_test_method(mocker, gpu=True),
+            make_test_method(mocker, gpu=False),
+        ],
+    )
+
+    s = sectionize(p, False)
     assert len(s) == 2
-    s0 = s.sections[0]
+    s0 = s[0]
     assert len(s0) == 1
     assert s0.gpu is True
-    s1 = s.sections[1]
+    s1 = s[1]
     assert len(s1) == 1
     assert s1.gpu is False
 
@@ -115,15 +128,18 @@ def test_determine_platform_sections_pattern_all_combine(
     pattern2: Pattern,
     expected: Pattern,
 ):
-    p = Pipeline()
     loader = mocker.create_autospec(Loader, instance=True, pattern=loader_pattern)
-    p.add_loader(loader)
-    p.append_method(make_test_method(mocker, pattern=pattern1))
-    p.append_method(make_test_method(mocker, pattern=pattern2))
+    p = Pipeline(
+        loader=loader,
+        methods=[
+            make_test_method(mocker, pattern=pattern1),
+            make_test_method(mocker, pattern=pattern2),
+        ],
+    )
 
-    s = PlatformSectionizer(p, False)
+    s = sectionize(p, False)
     assert len(s) == 1
-    s0 = s.sections[0]
+    s0 = s[0]
     assert s0.gpu is False
     assert len(s0) == 2
     assert s0.pattern == expected
@@ -131,41 +147,39 @@ def test_determine_platform_sections_pattern_all_combine(
 
 
 def test_sectionizer_save_result_triggers_new_section(mocker: MockerFixture):
-    p = Pipeline()
-    p.add_loader(mocker.create_autospec(Loader, instance=True, pattern=Pattern.all))
-    p.append_method(
-        make_test_method(mocker, pattern=Pattern.projection, save_result=True)
+    p = Pipeline(
+        loader=mocker.create_autospec(Loader, instance=True, pattern=Pattern.all),
+        methods=[
+            make_test_method(mocker, pattern=Pattern.projection, save_result=True),
+            make_test_method(mocker, pattern=Pattern.projection),
+            make_test_method(mocker, pattern=Pattern.projection, save_result=True),
+            make_test_method(mocker, pattern=Pattern.projection),
+        ],
     )
-    p.append_method(make_test_method(mocker, pattern=Pattern.projection))
-    p.append_method(
-        make_test_method(mocker, pattern=Pattern.projection, save_result=True)
-    )
-    p.append_method(make_test_method(mocker, pattern=Pattern.projection))
 
-    s = PlatformSectionizer(p, False)
+    s = sectionize(p, False)
     assert len(s) == 3
-    assert len(s.sections[0]) == 1
-    assert len(s.sections[1]) == 2
-    assert len(s.sections[2]) == 1
+    assert len(s[0]) == 1
+    assert len(s[1]) == 2
+    assert len(s[2]) == 1
 
 
 def test_sectionizer_global_stats_triggers_new_section(mocker: MockerFixture):
-    p = Pipeline()
-    p.add_loader(mocker.create_autospec(Loader, instance=True, pattern=Pattern.all))
-    p.append_method(
-        make_test_method(mocker, pattern=Pattern.projection, glob_stats=True)
+    p = Pipeline(
+        loader=mocker.create_autospec(Loader, instance=True, pattern=Pattern.all),
+        methods=[
+            make_test_method(mocker, pattern=Pattern.projection, glob_stats=True),
+            make_test_method(mocker, pattern=Pattern.projection),
+            make_test_method(mocker, pattern=Pattern.projection, glob_stats=True),
+            make_test_method(mocker, pattern=Pattern.projection),
+        ],
     )
-    p.append_method(make_test_method(mocker, pattern=Pattern.projection))
-    p.append_method(
-        make_test_method(mocker, pattern=Pattern.projection, glob_stats=True)
-    )
-    p.append_method(make_test_method(mocker, pattern=Pattern.projection))
 
-    s = PlatformSectionizer(p, False)
+    s = sectionize(p, False)
     assert len(s) == 3
-    assert len(s.sections[0]) == 1
-    assert len(s.sections[1]) == 2
-    assert len(s.sections[2]) == 1
+    assert len(s[0]) == 1
+    assert len(s[1]) == 2
+    assert len(s[2]) == 1
 
 
 @pytest.mark.parametrize(
@@ -194,17 +208,20 @@ def test_sectionizer_global_stats_triggers_new_section(mocker: MockerFixture):
 def test_sectionizer_needs_reslice(
     mocker: MockerFixture, pattern1: Pattern, pattern2: Pattern, needs_reslice: bool
 ):
-    p = Pipeline()
     loader = mocker.create_autospec(Loader, instance=True, pattern=Pattern.all)
-    p.add_loader(loader)
-    p.append_method(make_test_method(mocker, pattern=pattern1, gpu=True))
-    p.append_method(make_test_method(mocker, pattern=pattern2, gpu=False))
+    p = Pipeline(
+        loader=loader,
+        methods=[
+            make_test_method(mocker, pattern=pattern1, gpu=True),
+            make_test_method(mocker, pattern=pattern2, gpu=False),
+        ],
+    )
 
-    s = PlatformSectionizer(p, False)
+    s = sectionize(p, False)
     assert len(s) == 2
-    assert s.sections[0].reslice == needs_reslice
-    assert s.sections[1].reslice is False
-    assert loader.pattern == s.sections[0].pattern
+    assert s[0].reslice == needs_reslice
+    assert s[1].reslice is False
+    assert loader.pattern == s[0].pattern
 
 
 @pytest.mark.parametrize(
@@ -215,18 +232,21 @@ def test_sectionizer_needs_reslice(
 def test_sectionizer_inherits_pattern_from_before_if_all(
     mocker: MockerFixture, pattern: Pattern
 ):
-    p = Pipeline()
     loader = mocker.create_autospec(Loader, instance=True, pattern=Pattern.projection)
-    p.add_loader(loader)
-    p.append_method(make_test_method(mocker, pattern=pattern, gpu=True))
-    p.append_method(make_test_method(mocker, pattern=Pattern.all, gpu=False))
+    p = Pipeline(
+        loader=loader,
+        methods=[
+            make_test_method(mocker, pattern=pattern, gpu=True),
+            make_test_method(mocker, pattern=Pattern.all, gpu=False),
+        ],
+    )
 
-    s = PlatformSectionizer(p, False)
+    s = sectionize(p, False)
     assert len(s) == 2
-    assert s.sections[0].reslice is False
-    assert s.sections[1].reslice is False
+    assert s[0].reslice is False
+    assert s[1].reslice is False
     assert (
-        s.sections[1].pattern == Pattern.projection
+        s[1].pattern == Pattern.projection
         if pattern == Pattern.all
         else pattern
     )
@@ -236,25 +256,26 @@ def test_sectionizer_inherits_pattern_from_before_if_all(
 def test_sectionizer_inherits_loader_pattern(
     mocker: MockerFixture, loader_pattern: Pattern
 ):
-    p = Pipeline()
-    loader = mocker.create_autospec(Loader, instance=True, pattern=loader_pattern)
-    p.add_loader(loader)
-    p.append_method(make_test_method(mocker, pattern=Pattern.all, gpu=True))
+    p = Pipeline(
+        loader=mocker.create_autospec(Loader, instance=True, pattern=loader_pattern),
+        methods=[make_test_method(mocker, pattern=Pattern.all, gpu=True)],
+    )
 
-    s = PlatformSectionizer(p, False)
+    s = sectionize(p, False)
     assert len(s) == 1
-    assert s.sections[0].reslice is False
-    assert s.sections[0].pattern == loader_pattern
+    assert s[0].reslice is False
+    assert s[0].pattern == loader_pattern
 
 
 def test_sectionizer_sets_reslice_in_loader(mocker: MockerFixture):
-    p = Pipeline()
     loader = mocker.create_autospec(Loader, instance=True, pattern=Pattern.sinogram)
-    p.add_loader(loader)
-    p.append_method(make_test_method(mocker, pattern=Pattern.projection, gpu=True))
+    p = Pipeline(
+        loader=loader,
+        methods=[make_test_method(mocker, pattern=Pattern.projection, gpu=True)],
+    )
 
-    s = PlatformSectionizer(p, False)
+    s = sectionize(p, False)
     assert len(s) == 1
-    assert s.sections[0].reslice is False
+    assert s[0].reslice is False
     assert loader.pattern == Pattern.sinogram
     assert loader.reslice is True

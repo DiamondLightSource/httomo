@@ -58,7 +58,7 @@ def log_once(output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0) -> No
     colour : str, optional
         The colour of the output.
     level : int, optional
-        The level of the log message. 0 is info, 1 is debug, 3 is warning.
+        The level of the log message. 0 is info, 1 is debug, 2 is warning.
     """
     if mpiutil.rank == 0:
         if isinstance(output, list):

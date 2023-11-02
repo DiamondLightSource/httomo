@@ -2,18 +2,27 @@ from httomo.runner.loader import Loader
 from httomo.utils import Pattern
 from httomo.runner.backend_wrapper import BackendWrapper
 
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 
 class Pipeline:
-    """Represents a pipeline of methods, stored by their wrappers, and the loader"""
+    """Represents a pipeline of methods, stored by their wrappers, and the loader.
+    After creation, the pipeline is immutable."""
 
-    def __init__(self):
-        self.methods: List[BackendWrapper] = []
-        self.loader: Optional[Loader] = None
+    def __init__(self, loader: Loader, methods: List[BackendWrapper]):
+        self._methods = methods
+        self._loader = loader
 
-    def add_loader(self, loader: Loader):
-        self.loader = loader
+    @property
+    def loader(self) -> Loader:
+        return self._loader
+
+    # iterator interface to access the methods
+    def __iter__(self) -> Iterator[BackendWrapper]:
+        return iter(self._methods)
+
+    def __len__(self) -> int:
+        return len(self._methods)
 
     @property
     def loader_pattern(self) -> Pattern:
@@ -24,6 +33,8 @@ class Pipeline:
 
     @loader_pattern.setter
     def loader_pattern(self, pattern: Pattern):
+        """Although the pipeline is largely immutable, this setter is needed as the
+        actual pattern is set after processing the full pipeline"""
         if self.loader is not None:
             self.loader.pattern = pattern
         else:
@@ -35,12 +46,11 @@ class Pipeline:
 
     @loader_reslice.setter
     def loader_reslice(self, reslice: bool):
+        """Although the pipeline is largely immutable, this setter is needed as the
+        information whether reslicing is required after the loader is set later"""
         if self.loader is not None:
             self.loader.reslice = reslice
         else:
             raise ValueError(
                 "Attempt to set loader reslice property, but no loader has be set"
             )
-
-    def append_method(self, method: BackendWrapper):
-        self.methods.append(method)
