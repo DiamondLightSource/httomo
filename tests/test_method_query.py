@@ -60,6 +60,8 @@ def test_database_query_object():
     assert query.get_pattern() == Pattern.projection
     assert query.get_output_dims_change() is False
     assert query.get_implementation() == "gpu_cupy"
-    assert set(query.get_memory_gpu_params().keys()) == set(
-        ["datasets", "multipliers", "methods"]
-    )
+    mempars = query.get_memory_gpu_params()
+    assert len(mempars) == 3
+    assert set(p.dataset for p in mempars) == set(["tomo", "flats", "darks"])
+    assert all(p.method == "direct" for p in mempars)
+    assert all(p.multiplier >= 1.0 for p in mempars)

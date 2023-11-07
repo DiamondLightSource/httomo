@@ -6,12 +6,14 @@ import numpy as np
 
 from httomo.data.hdf.loaders import LoaderData
 from httomo.runner.loader import make_loader
-from tests.runner.testing_utils import make_mock_repo
+from .testing_utils import make_mock_repo
 
 
 def test_loader_load_produces_dataset(mocker: MockerFixture):
     class FakeModule:
         def fake_loader(name, in_file: Union[os.PathLike, str]) -> LoaderData:
+            assert name == "dataset"
+            assert in_file == "some_test_file"
             return LoaderData(
                 data=np.ones((10,10,10), dtype=np.float32),
                 flats=2*np.ones((10,10), dtype=np.float32),

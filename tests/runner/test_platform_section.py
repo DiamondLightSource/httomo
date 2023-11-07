@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.platform_section import sectionize
 from httomo.utils import Pattern
-from tests.runner.testing_utils import make_test_loader, make_test_method
+from .testing_utils import make_test_loader, make_test_method
 
 def test_determine_single_method(mocker: MockerFixture):
     p = Pipeline(
@@ -256,3 +256,19 @@ def test_sectionizer_sets_reslice_in_loader(mocker: MockerFixture):
     assert s[0].reslice is False
     assert loader.pattern == Pattern.sinogram
     assert loader.reslice is True
+
+def test_sectionizer_preprocess_in_own_section(mocker: MockerFixture):
+    loader = make_test_loader(mocker)
+    p = Pipeline(
+        loader=loader,
+        methods=[
+            make_test_method(mocker, pattern=Pattern.projection),
+            make_test_method(mocker, pattern=Pattern.projection)
+        ],
+        main_pipeline_start=1
+    )
+    
+    s = sectionize(p, False)
+    assert len(s) == 2
+    assert s[0].reslice is False
+    assert s[1].reslice is False

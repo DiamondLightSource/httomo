@@ -1,4 +1,5 @@
-from typing import Dict, List, Literal, Protocol, Union
+from dataclasses import dataclass, field
+from typing import Dict, List, Literal, Optional, Protocol, Union
 from typing_extensions import TypeAlias
 
 from httomo.utils import Pattern
@@ -7,6 +8,12 @@ from httomo.utils import Pattern
 MemoryGpuDict: TypeAlias = Dict[
     Literal["datasets", "multipliers", "methods"], List[Union[str, int, float]]
 ]
+
+@dataclass
+class GpuMemoryRequirement:
+    dataset: Union[Literal["data"], Literal["tomo"], Literal["darks"], Literal["flats"]] = "tomo"
+    multiplier: Optional[float] = 1.0
+    method: Union[Literal["direct"], Literal["module"]] = "direct"
 
 
 class MethodQuery(Protocol):
@@ -30,7 +37,7 @@ class MethodQuery(Protocol):
         """Check for implementation of the method"""
         ...
 
-    def get_memory_gpu_params(self) -> MemoryGpuDict:
+    def get_memory_gpu_params(self) -> List[GpuMemoryRequirement]:
         """Get the parameters for the GPU memory estimation"""
         ...
 

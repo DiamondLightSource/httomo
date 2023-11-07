@@ -7,17 +7,7 @@ from httomo.utils import Pattern, xp, gpu_enabled
 from pytest_mock import MockerFixture
 import pytest
 
-from tests.runner.testing_utils import make_mock_repo
-
-@pytest.fixture
-def dummy_dataset() -> DataSet:
-    return DataSet(
-        data=np.ones((10, 10, 10)),
-        angles=np.ones((20,)),
-        flats=3 * np.ones((10, 10)),
-        darks=2 * np.ones((10, 10)),
-    )
-
+from .testing_utils import make_mock_repo
 
 def test_basewrapper_execute_transfers_to_gpu(
     dummy_dataset: DataSet, mocker: MockerFixture

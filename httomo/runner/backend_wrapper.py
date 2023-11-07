@@ -198,6 +198,7 @@ class BackendWrapper:
 
     def _transfer_data(self, dataset: DataSet):
         if not self.cupyrun:
+            dataset.to_cpu()  # TODO: confirm this
             return dataset
         if not gpu_enabled:
             no_gpulog_str = "GPU is not available, please use only CPU methods"

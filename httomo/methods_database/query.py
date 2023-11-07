@@ -1,8 +1,8 @@
-from typing import Literal
+from typing import List, Literal
 from pathlib import Path
 
 import yaml
-from httomo.runner.methods_repository_interface import MemoryGpuDict, MethodQuery
+from httomo.runner.methods_repository_interface import GpuMemoryRequirement, MethodQuery
 
 from httomo.utils import Pattern, log_exception
 from httomo.runner.methods_repository_interface import MethodRepository
@@ -110,17 +110,21 @@ class MethodsDatabaseQuery(MethodQuery):
 
     def get_memory_gpu_params(
         self,
-    ) -> MemoryGpuDict:
+    ) -> List[GpuMemoryRequirement]:
         p = get_method_info(self.module_path, self.method_name, "memory_gpu")
         if p is None or p == 'None':
-            return dict()
+            return []
         if type(p) == list:
-            # convert to dict
-            out: MemoryGpuDict = dict()
+            # convert to dict first
+            dd = dict()
             for item in p:
-                out |= item
-            return out
-        return p
+                dd |= item
+        else:
+            dd = p
+        # now iterate and make it into one
+        assert len(dd["datasets"]) == len(dd["multipliers"]) == len(dd["methods"]), "Invalid data"
+        return [GpuMemoryRequirement(dataset=d, multiplier=dd["multipliers"][i], method=dd["methods"][i])
+                for i, d in enumerate(dd["datasets"])]
 
 class MethodDatabaseRepository(MethodRepository):
     def query(self, module_path: str, method_name: str) -> MethodQuery:

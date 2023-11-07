@@ -66,21 +66,21 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
             PlatformSection(current_gpu, pattern, needs_reslice, 0, current_methods)
         )
 
-    for _, method in enumerate(itermethods, 1):
+    for i, method in enumerate(itermethods, 1):
         pattern_changed = not is_pattern_compatible(current_pattern, method.pattern)
         platform_changed = method.is_gpu != current_gpu
+        start_main_pipeline = i == pipeline.main_pipeline_start
 
-        if save_result_after or pattern_changed or platform_changed:
+        if save_result_after or pattern_changed or platform_changed or start_main_pipeline:
             finish_section(pattern_changed)
             current_gpu = method.is_gpu
             current_pattern = method.pattern
             current_methods = [method]
-            save_result_after = should_save_after(method)
         else:
             current_methods.append(method)
-            save_result_after = should_save_after(method)
             if current_pattern == Pattern.all:
                 current_pattern = method.pattern
+        save_result_after = should_save_after(method)
 
     finish_section()
 

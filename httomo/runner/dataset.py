@@ -23,6 +23,8 @@ class DataSet:
 
     generic_array: TypeAlias = Union[xp.ndarray, np.ndarray]
 
+    # TODO: Think about whether detector_x, detector_y, angles_total should be here?
+
     def __init__(
         self,
         data: generic_array,
@@ -113,6 +115,11 @@ class DataSet:
         if not gpu_enabled:
             return False
         return getattr(self._data, "device", None) is not None
+
+    @property
+    def is_cpu(self) -> bool:
+        """Check if arrays are currently residing on CPU"""
+        return not self.is_gpu
 
     def lock(self):
         """Makes angles, darks and flats read-only, to avoid coding errors.

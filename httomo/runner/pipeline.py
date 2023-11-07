@@ -9,13 +9,19 @@ class Pipeline:
     """Represents a pipeline of methods, stored by their wrappers, and the loader.
     After creation, the pipeline is immutable."""
 
-    def __init__(self, loader: LoaderInterface, methods: List[BackendWrapper]):
+    def __init__(self, loader: LoaderInterface, methods: List[BackendWrapper],
+                 main_pipeline_start: int = 0):
         self._methods = methods
         self._loader = loader
+        self._main_pipeline_start = main_pipeline_start
 
     @property
     def loader(self) -> LoaderInterface:
         return self._loader
+
+    @property
+    def main_pipeline_start(self) -> int:
+        return self._main_pipeline_start
 
     # iterator interface to access the methods
     def __iter__(self) -> Iterator[BackendWrapper]:

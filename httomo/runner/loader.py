@@ -1,4 +1,4 @@
-from typing import Any, Protocol
+from typing import Any, Dict, Protocol
 from mpi4py import MPI
 from httomo.data.hdf.loaders import LoaderData
 from httomo.runner.dataset import DataSet
@@ -16,8 +16,12 @@ class LoaderInterface(Protocol):
 
     pattern: Pattern
     reslice: bool
+    method_name: str
 
     def load(self) -> DataSet:
+        ...
+        
+    def get_side_output(self) -> Dict[str, Any]:
         ...
 
 
@@ -73,6 +77,8 @@ def make_loader(
     Loader
         An instance of a loader class (which is also a BackendWrapper)
     """
+    
+    # TODO: add the loader extra parameters when calling this - in_file, dimension, etc.
     
     # note: once we have different kinds of loaders, this function can 
     # be used like the make_backend_wrapper factory function

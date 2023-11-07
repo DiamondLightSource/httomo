@@ -28,9 +28,11 @@ def make_test_method(
 
 
 def make_test_loader(
-    mocker: MockerFixture, pattern: Pattern = Pattern.all
+    mocker: MockerFixture, pattern: Pattern = Pattern.all, method_name="testloader"
 ) -> LoaderInterface:
-    return mocker.create_autospec(LoaderInterface, instance=True, pattern=pattern)
+    return mocker.create_autospec(
+        LoaderInterface, instance=True, pattern=pattern, method_name=method_name
+    )
 
 
 def make_mock_repo(
@@ -51,3 +53,5 @@ def make_mock_repo(
     mocker.patch.object(mock_query, "get_implementation", return_value=implementation)
     mocker.patch.object(mock_query, "get_memory_gpu_params", return_value=memory_gpu)
     return mock_repo
+
+
