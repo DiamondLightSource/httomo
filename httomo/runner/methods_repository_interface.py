@@ -1,13 +1,9 @@
-from dataclasses import dataclass, field
-from typing import Dict, List, Literal, Optional, Protocol, Union
-from typing_extensions import TypeAlias
+import numpy as np
+from dataclasses import dataclass
+from typing import List, Literal, Optional, Protocol, Tuple, Union
 
 from httomo.utils import Pattern
 
-
-MemoryGpuDict: TypeAlias = Dict[
-    Literal["datasets", "multipliers", "methods"], List[Union[str, int, float]]
-]
 
 @dataclass
 class GpuMemoryRequirement:
@@ -41,6 +37,13 @@ class MethodQuery(Protocol):
         """Get the parameters for the GPU memory estimation"""
         ...
 
+    def calculate_memory_bytes(self, non_slice_dims_shape: Tuple[int, int], dtype: np.dtype, **kwargs) -> Tuple[int, int]:
+        """Calculate the memory required in bytes, returning bytes method and subtract bytes tuple"""
+        ...
+        
+    def calculate_output_dims(self, non_slice_dims_shape: Tuple[int, int], **kwargs) -> Tuple[int, int]:
+        """Calculate size of the non-slice dimensions for this method"""
+        ...
 
 class MethodRepository(Protocol):
     """Factory method class which can obtain a query object for each method.

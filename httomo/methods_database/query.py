@@ -1,5 +1,7 @@
-from typing import List, Literal
+from types import ModuleType
+from typing import Callable, List, Literal, Tuple
 from pathlib import Path
+import numpy as np
 
 import yaml
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement, MethodQuery
@@ -112,7 +114,7 @@ class MethodsDatabaseQuery(MethodQuery):
         self,
     ) -> List[GpuMemoryRequirement]:
         p = get_method_info(self.module_path, self.method_name, "memory_gpu")
-        if p is None or p == 'None':
+        if p is None or p == "None":
             return []
         if type(p) == list:
             # convert to dict first
@@ -122,9 +124,44 @@ class MethodsDatabaseQuery(MethodQuery):
         else:
             dd = p
         # now iterate and make it into one
-        assert len(dd["datasets"]) == len(dd["multipliers"]) == len(dd["methods"]), "Invalid data"
-        return [GpuMemoryRequirement(dataset=d, multiplier=dd["multipliers"][i], method=dd["methods"][i])
-                for i, d in enumerate(dd["datasets"])]
+        assert (
+            len(dd["datasets"]) == len(dd["multipliers"]) == len(dd["methods"])
+        ), "Invalid data"
+        return [
+            GpuMemoryRequirement(
+                dataset=d, multiplier=dd["multipliers"][i], method=dd["methods"][i]
+            )
+            for i, d in enumerate(dd["datasets"])
+        ]
+
+    def calculate_memory_bytes(
+        self, non_slice_dims_shape: Tuple[int, int], dtype: np.dtype, **kwargs
+    ) -> Tuple[int, int]:
+        smodule = self._import_supporting_funcs_module()
+        module_mem: Callable = getattr(
+            smodule, "_calc_memory_bytes_" + self.method_name
+        )
+        memory_bytes: Tuple[int, int] = module_mem(
+            non_slice_dims_shape, dtype, **kwargs
+        )
+        return memory_bytes
+
+    def calculate_output_dims(
+        self, non_slice_dims_shape: Tuple[int, int], **kwargs
+    ) -> Tuple[int, int]:
+        smodule = self._import_supporting_funcs_module()
+        module_mem: Callable = getattr(smodule, "_calc_output_dim_" + self.method_name)
+        return module_mem(non_slice_dims_shape, **kwargs)
+
+    def _import_supporting_funcs_module(self) -> ModuleType:
+        from importlib import import_module
+
+        module_mem_path = "httomo.methods_database.packages.external."
+        path = self.module_path.split(".")
+        path.insert(1, "supporting_funcs")
+        module_mem_path += ".".join(path)
+        return import_module(module_mem_path)
+
 
 class MethodDatabaseRepository(MethodRepository):
     def query(self, module_path: str, method_name: str) -> MethodQuery:

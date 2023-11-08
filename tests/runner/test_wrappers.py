@@ -1,13 +1,16 @@
+from typing import List
 from mpi4py import MPI
 import numpy as np
 import httomo
 from httomo.runner.dataset import DataSet
 from httomo.runner.backend_wrapper import make_backend_wrapper
+from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.utils import Pattern, xp, gpu_enabled
 from pytest_mock import MockerFixture
 import pytest
 
 from .testing_utils import make_mock_repo
+
 
 def test_basewrapper_execute_transfers_to_gpu(
     dummy_dataset: DataSet, mocker: MockerFixture
@@ -18,7 +21,10 @@ def test_basewrapper_execute_transfers_to_gpu(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        make_mock_repo(mocker, implementation="gpu_cupy"), "module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker, implementation="gpu_cupy"),
+        "module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
     )
     dataset = wrp.execute(dummy_dataset)
 
@@ -34,7 +40,10 @@ def test_basewrapper_execute_calls_pre_post_process(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        make_mock_repo(mocker, implementation="gpu_cupy"), "module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker, implementation="gpu_cupy"),
+        "module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
     )
     prep = mocker.patch.object(wrp, "_preprocess_data", return_value=dummy_dataset)
     post = mocker.patch.object(wrp, "_postprocess_data", return_value=dummy_dataset)
@@ -112,7 +121,10 @@ def test_wrapper_sets_config_params_setter(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "param_tester", MPI.COMM_WORLD, 
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "param_tester",
+        MPI.COMM_WORLD,
     )
     wrp["param"] = 42
     wrp.execute(dummy_dataset)
@@ -131,7 +143,10 @@ def test_wrapper_sets_config_params_append_dict(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "param_tester", MPI.COMM_WORLD,
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "param_tester",
+        MPI.COMM_WORLD,
     )
     wrp.append_config_params({"param1": 42, "param2": 43})
     wrp.execute(dummy_dataset)
@@ -309,19 +324,28 @@ def test_wrapper_images_leaves_gpudata(mocker: MockerFixture, dummy_dataset: Dat
         assert new_dataset.is_gpu is True
 
 
-@pytest.mark.parametrize("implementation,is_cpu,is_gpu,cupyrun", [
-    ("cpu", True, False, False),
-    ("gpu", False, True, False),
-    ("gpu_cupy", False, True, True)
-])
-def test_wrapper_method_queries(mocker: MockerFixture, implementation: str, is_cpu: bool, is_gpu: bool, cupyrun: bool):
+@pytest.mark.parametrize(
+    "implementation,is_cpu,is_gpu,cupyrun",
+    [
+        ("cpu", True, False, False),
+        ("gpu", False, True, False),
+        ("gpu_cupy", False, True, True),
+    ],
+)
+def test_wrapper_method_queries(
+    mocker: MockerFixture,
+    implementation: str,
+    is_cpu: bool,
+    is_gpu: bool,
+    cupyrun: bool,
+):
     class FakeModule:
         def test_method(data):
             return data
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
-    memory_gpu = {"datasets": ["tomo"], "multipliers": [1.2], "methods": ["direct"]}
+    memory_gpu = [GpuMemoryRequirement(dataset="tomo", multiplier=1.2, method="direct")]
     wrp = make_backend_wrapper(
         make_mock_repo(
             mocker,
@@ -342,3 +366,170 @@ def test_wrapper_method_queries(mocker: MockerFixture, implementation: str, is_c
     assert wrp.is_gpu == is_gpu
     assert wrp.cupyrun == cupyrun
     assert wrp.memory_gpu == memory_gpu
+
+
+@pytest.mark.parametrize("implementation", ["cpu", "gpu", "gpu_cupy"])
+@pytest.mark.parametrize(
+    "memory_gpu",
+    [[GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")], []],
+)
+def test_wrapper_calculate_max_slices_direct(
+    mocker: MockerFixture,
+    dummy_dataset: DataSet,
+    implementation: str,
+    memory_gpu: List[GpuMemoryRequirement],
+):
+    class FakeModule:
+        def test_method(data):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    wrp = make_backend_wrapper(
+        make_mock_repo(
+            mocker,
+            pattern=Pattern.projection,
+            output_dims_change=True,
+            implementation=implementation,
+            memory_gpu=memory_gpu,
+        ),
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+    )
+    shape = list(dummy_dataset.data.shape)
+    shape.pop(0)
+    databytes = shape[0] * shape[1] * dummy_dataset.data.itemsize
+    max_slices_expected = 5
+    multiplier = memory_gpu[0].multiplier if memory_gpu != [] else 1
+    available_memory_in = int(databytes * max_slices_expected * multiplier)
+    max_slices, available_memory = wrp.calculate_max_slices(
+        dummy_dataset, shape, available_memory_in
+    )
+
+    if gpu_enabled and implementation != "cpu":
+        assert max_slices == max_slices_expected
+    else:
+        assert max_slices > dummy_dataset.data.shape[0]
+    assert available_memory == available_memory_in
+
+
+def test_wrapper_calculate_max_slices_direct_flats_darks(
+    mocker: MockerFixture, dummy_dataset: DataSet
+):
+    class FakeModule:
+        def test_method(data):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    memory_gpu = [
+        GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct"),
+        GpuMemoryRequirement(dataset="flats", multiplier=1.1, method="direct"),
+        GpuMemoryRequirement(dataset="darks", multiplier=1.2, method="direct"),
+    ]
+    wrp = make_backend_wrapper(
+        make_mock_repo(
+            mocker,
+            pattern=Pattern.projection,
+            output_dims_change=True,
+            implementation="gpu_cupy",
+            memory_gpu=memory_gpu,
+        ),
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+    )
+    shape = list(dummy_dataset.data.shape)
+    shape.pop(0)
+    databytes = shape[0] * shape[1] * dummy_dataset.data.itemsize
+    max_slices_expected = 5
+    multiplier = memory_gpu[0].multiplier
+    available_memory_in = int(databytes * max_slices_expected * multiplier)
+    available_memory_adjusted = (
+        available_memory_in
+        + dummy_dataset.flats.nbytes * memory_gpu[1].multiplier
+        + dummy_dataset.darks.nbytes * memory_gpu[2].multiplier
+    )
+    max_slices, available_memory = wrp.calculate_max_slices(
+        dummy_dataset, shape, available_memory_adjusted
+    )
+
+    if gpu_enabled:
+        assert max_slices == max_slices_expected
+    else:
+        assert max_slices > dummy_dataset.data.shape[0]
+    assert available_memory == available_memory_in
+
+
+def test_wrapper_calculate_max_slices_module(
+    mocker: MockerFixture, dummy_dataset: DataSet
+):
+    class FakeModule:
+        def test_method(data):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    memory_gpu = [
+        GpuMemoryRequirement(dataset="tomo", multiplier=None, method="module")
+    ]
+    wrp = make_backend_wrapper(
+        make_mock_repo(
+            mocker,
+            pattern=Pattern.projection,
+            output_dims_change=True,
+            implementation="gpu_cupy",
+            memory_gpu=memory_gpu,
+        ),
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+    )
+    memcalc_mock = mocker.patch.object(
+        wrp.query, "calculate_memory_bytes", return_value=(1234, 5678)
+    )
+    shape = list(dummy_dataset.data.shape)
+    shape.pop(0)
+    max_slices, available_memory = wrp.calculate_max_slices(
+        dummy_dataset, tuple(shape), 1_000_000_000
+    )
+
+    if gpu_enabled:
+        assert max_slices == (1_000_000_000 - 5678) // 1234
+        assert available_memory == 1_000_000_000
+        memcalc_mock.assert_called_once_with(tuple(shape), dummy_dataset.data.dtype)
+    else:
+        assert max_slices > dummy_dataset.data.shape[0]
+        assert available_memory == 1_000_000_000
+
+
+def test_wrapper_calculate_output_dims(mocker: MockerFixture):
+    class FakeModule:
+        def test_method(data, testparam):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    memory_gpu = []
+    wrp = make_backend_wrapper(
+        make_mock_repo(
+            mocker,
+            pattern=Pattern.projection,
+            output_dims_change=True,
+            implementation="gpu_cupy",
+            memory_gpu=memory_gpu,
+        ),
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+    )
+    wrp["testparam"] = 32
+
+    memcalc_mock = mocker.patch.object(
+        wrp.query, "calculate_output_dims", return_value=(1234, 5678)
+    )
+
+    dims = wrp.calculate_output_dims((10, 10))
+
+    assert dims == (1234, 5678)
+    memcalc_mock.assert_called_with((10, 10), testparam=32)

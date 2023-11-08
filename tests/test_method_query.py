@@ -1,6 +1,7 @@
+from pytest_mock import MockerFixture
 from httomo.methods_database.query import MethodsDatabaseQuery, get_method_info
 import pytest
-
+import numpy as np
 from httomo.utils import Pattern
 
 
@@ -65,3 +66,46 @@ def test_database_query_object():
     assert set(p.dataset for p in mempars) == set(["tomo", "flats", "darks"])
     assert all(p.method == "direct" for p in mempars)
     assert all(p.multiplier >= 1.0 for p in mempars)
+
+
+def test_database_query_calculate_memory(mocker: MockerFixture):
+    class FakeModule:
+        def _calc_memory_bytes_testmethod(non_slice_dims_shape, dtype, testparam):
+            assert non_slice_dims_shape == (
+                42,
+                3,
+            )
+            assert dtype == np.float32
+            assert testparam == 42.0
+            return 10, 20
+
+    importmock = mocker.patch("importlib.import_module", return_value=FakeModule)
+    query = MethodsDatabaseQuery("sample.module.path", "testmethod")
+
+    mem = query.calculate_memory_bytes((42, 3), np.float32, testparam=42.0)
+
+    importmock.assert_called_with(
+        "httomo.methods_database.packages.external.sample.supporting_funcs.module.path"
+    )
+    assert mem == (10, 20)
+
+
+def test_database_query_calculate_output_dims(mocker: MockerFixture):
+    class FakeModule:
+        def _calc_output_dim_testmethod(non_slice_dims_shape, testparam):
+            assert non_slice_dims_shape == (
+                42,
+                3,
+            )
+            assert testparam == 42.0
+            return 10, 20
+
+    importmock = mocker.patch("importlib.import_module", return_value=FakeModule)
+    query = MethodsDatabaseQuery("sample.module.path", "testmethod")
+
+    dims = query.calculate_output_dims((42, 3), testparam=42.0)
+
+    importmock.assert_called_with(
+        "httomo.methods_database.packages.external.sample.supporting_funcs.module.path"
+    )
+    assert dims == (10, 20)

@@ -12,7 +12,7 @@ from mpi4py.MPI import Comm
 
 import os
 from inspect import signature
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 
 class BackendWrapper:
@@ -69,11 +69,11 @@ class BackendWrapper:
         self._check_config_params()
 
         # assign method properties from the methods repository
-        query = method_repository.query(module_path, method_name)
-        self.pattern = query.get_pattern()
-        self.output_dims_change = query.get_output_dims_change()
-        self.implementation = query.get_implementation()
-        self.memory_gpu = query.get_memory_gpu_params()
+        self.query = method_repository.query(module_path, method_name)
+        self.pattern = self.query.get_pattern()
+        self.output_dims_change = self.query.get_output_dims_change()
+        self.implementation = self.query.get_implementation()
+        self.memory_gpu = self.query.get_memory_gpu_params()
 
         self._side_output: Dict[str, Any] = dict()
 
@@ -226,6 +226,63 @@ class BackendWrapper:
         """Hook for derived classes to implement postprocessing steps, after the method has been
         called"""
         return dataset
+
+    def calculate_output_dims(self, non_slice_dims_shape: Tuple[int, int]) -> Tuple[int, int]:
+        """Calculate the dimensions of the output for this method"""
+        if self.output_dims_change:
+            return self.query.calculate_output_dims(non_slice_dims_shape, **self.config_params)
+        
+        return non_slice_dims_shape
+    
+    def calculate_max_slices(
+        self,
+        dataset: DataSet,
+        non_slice_dims_shape: Tuple[int, int],
+        available_memory: int,
+    ) -> Tuple[int, int]:
+        """If it runs on GPU, determine the maximum number of slices that can fit in the
+        available memory in bytes, and return a tuple of
+        
+        (max_slices, available_memory)
+        
+        The available memory may have been adjusted for the methods that follow, in case
+        something persists afterwards.
+        """
+        if self.is_cpu or not gpu_enabled:
+            return int(100e9), available_memory
+
+        # if we have no information, we assume in-place operation with no extra memory
+        if len(self.memory_gpu) == 0:
+            return available_memory // (np.prod(non_slice_dims_shape) * dataset.data.itemsize), available_memory
+        
+        memory_bytes_method = 0
+        for field in self.memory_gpu:
+            subtract_bytes = 0
+            # loop over the dataset names given in the library file and extracting
+            # the corresponding dimensions from the available datasets
+            if field.dataset in ["flats", "darks"]:
+                # for normalisation module dealing with flats and darks separately
+                array: np.ndarray = getattr(dataset, field.dataset)
+                available_memory -= int(field.multiplier * array.nbytes)
+            else:
+                # deal with the rest of the data
+                if field.method == "direct":
+                    # this calculation assumes a direct (simple) correspondence through multiplier
+                    memory_bytes_method += int(
+                        field.multiplier
+                        * np.prod(non_slice_dims_shape)
+                        * dataset.data.itemsize
+                    )
+                else:
+                    (
+                        memory_bytes_method,
+                        subtract_bytes,
+                    ) = self.query.calculate_memory_bytes(
+                        non_slice_dims_shape, dataset.data.dtype, **self.config_params
+                    )
+
+        return (available_memory - subtract_bytes) // memory_bytes_method, available_memory
+
 
 
 class ReconstructionWrapper(BackendWrapper):
