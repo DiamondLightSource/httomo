@@ -9,8 +9,12 @@ class Pipeline:
     """Represents a pipeline of methods, stored by their wrappers, and the loader.
     After creation, the pipeline is immutable."""
 
-    def __init__(self, loader: LoaderInterface, methods: List[BackendWrapper],
-                 main_pipeline_start: int = 0):
+    def __init__(
+        self,
+        loader: LoaderInterface,
+        methods: List[BackendWrapper],
+        main_pipeline_start: int = 0,
+    ):
         self._methods = methods
         self._loader = loader
         self._main_pipeline_start = main_pipeline_start
@@ -32,19 +36,13 @@ class Pipeline:
 
     @property
     def loader_pattern(self) -> Pattern:
-        if self.loader is not None:
-            return self.loader.pattern
-        else:
-            raise ValueError("Attempt to get loader pattern, but no loader has be set")
+        return self.loader.pattern
 
     @loader_pattern.setter
     def loader_pattern(self, pattern: Pattern):
         """Although the pipeline is largely immutable, this setter is needed as the
         actual pattern is set after processing the full pipeline"""
-        if self.loader is not None:
-            self.loader.pattern = pattern
-        else:
-            raise ValueError("Attempt to set loader pattern, but no loader has be set")
+        self.loader.pattern = pattern
 
     @property
     def loader_reslice(self) -> bool:
@@ -54,9 +52,4 @@ class Pipeline:
     def loader_reslice(self, reslice: bool):
         """Although the pipeline is largely immutable, this setter is needed as the
         information whether reslicing is required after the loader is set later"""
-        if self.loader is not None:
-            self.loader.reslice = reslice
-        else:
-            raise ValueError(
-                "Attempt to set loader reslice property, but no loader has be set"
-            )
+        self.loader.reslice = reslice

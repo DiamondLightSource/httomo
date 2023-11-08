@@ -15,13 +15,11 @@ def get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
         from httomo.data.mpiutil import local_rank
 
         dev = cp.cuda.Device(local_rank)
-        # first, let's make some space
-        pool = cp.get_default_memory_pool()
-        pool.free_all_blocks()
-        cache = cp.fft.config.get_plan_cache()
-        cache.clear()
-        available_memory = dev.mem_info[0] + pool.free_bytes()
-        return int(available_memory * (1 - safety_margin_percent / 100.0))
+        with dev:
+            gpumem_cleanup()
+            pool = cp.get_default_memory_pool()
+            available_memory = dev.mem_info[0] + pool.free_bytes()
+            return int(available_memory * (1 - safety_margin_percent / 100.0))
     except:
         return int(100e9)  # arbitrarily high number - only used if GPU isn't available
 

@@ -74,6 +74,25 @@ def test_wrapper_fails_with_wrong_returntype(
     assert "return type" in str(e)
 
 
+@pytest.mark.skipif(
+    not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
+    reason="skipped as cupy is not available",
+)
+def test_wrapper_sets_gpuid(mocker: MockerFixture, dummy_dataset: DataSet):
+    class FakeModule:
+        def fake_method(data, gpu_id: int):
+            assert gpu_id == 4
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+    )
+
+    wrp.gpu_id = 4
+    wrp.execute(dummy_dataset)
+
+
 def test_wrapper_different_data_parameter_name(
     mocker: MockerFixture, dummy_dataset: DataSet
 ):
@@ -130,6 +149,25 @@ def test_wrapper_sets_config_params_setter(
     wrp.execute(dummy_dataset)
 
     assert wrp["param"] == 42
+
+
+def test_wrapper_sets_config_params_setter_not_in_arguments(
+    mocker: MockerFixture, dummy_dataset: DataSet
+):
+    class FakeModule:
+        def param_tester(data, param):
+            assert param == 42
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "param_tester",
+        MPI.COMM_WORLD,
+    )
+    with pytest.raises(ValueError):
+        wrp["param_not_existing"] = 42
 
 
 def test_wrapper_sets_config_params_append_dict(
@@ -533,3 +571,29 @@ def test_wrapper_calculate_output_dims(mocker: MockerFixture):
 
     assert dims == (1234, 5678)
     memcalc_mock.assert_called_with((10, 10), testparam=32)
+
+
+def test_wrapper_calculate_output_dims_no_change(mocker: MockerFixture):
+    class FakeModule:
+        def test_method(data, testparam):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    memory_gpu = []
+    wrp = make_backend_wrapper(
+        make_mock_repo(
+            mocker,
+            pattern=Pattern.projection,
+            output_dims_change=False,
+            implementation="gpu_cupy",
+            memory_gpu=memory_gpu,
+        ),
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+    )
+
+    dims = wrp.calculate_output_dims((10, 10))
+
+    assert dims == (10, 10)

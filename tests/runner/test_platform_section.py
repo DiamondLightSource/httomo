@@ -1,9 +1,10 @@
 import pytest
 from pytest_mock import MockerFixture
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.platform_section import sectionize
+from httomo.runner.platform_section import sectionize, PlatformSection
 from httomo.utils import Pattern
 from .testing_utils import make_test_loader, make_test_method
+
 
 def test_determine_single_method(mocker: MockerFixture):
     p = Pipeline(
@@ -27,6 +28,23 @@ def test_sectionizer_can_iterate_saveall(mocker: MockerFixture):
     assert len(s) == 3
     methodnames = [m.methods[0].method_name for m in s]
     assert methodnames == ["testmethod0", "testmethod1", "testmethod2"]
+
+
+def test_platformsection_can_iterate(mocker: MockerFixture):
+    sec = PlatformSection(
+        True,
+        Pattern.projection,
+        False,
+        0,
+        [
+            make_test_method(mocker, method_name="test1"),
+            make_test_method(mocker, method_name="test2"),
+        ],
+    )
+
+    assert len(sec) == 2
+    for i, m in enumerate(sec):
+        assert m.method_name == f"test{i+1}"
 
 
 def test_sectionizer_two_cpu(mocker: MockerFixture):
@@ -222,11 +240,7 @@ def test_sectionizer_inherits_pattern_from_before_if_all(
     assert len(s) == 2
     assert s[0].reslice is False
     assert s[1].reslice is False
-    assert (
-        s[1].pattern == Pattern.projection
-        if pattern == Pattern.all
-        else pattern
-    )
+    assert s[1].pattern == Pattern.projection if pattern == Pattern.all else pattern
 
 
 @pytest.mark.parametrize("loader_pattern", [Pattern.projection, Pattern.sinogram])
@@ -257,17 +271,18 @@ def test_sectionizer_sets_reslice_in_loader(mocker: MockerFixture):
     assert loader.pattern == Pattern.sinogram
     assert loader.reslice is True
 
+
 def test_sectionizer_preprocess_in_own_section(mocker: MockerFixture):
     loader = make_test_loader(mocker)
     p = Pipeline(
         loader=loader,
         methods=[
             make_test_method(mocker, pattern=Pattern.projection),
-            make_test_method(mocker, pattern=Pattern.projection)
+            make_test_method(mocker, pattern=Pattern.projection),
         ],
-        main_pipeline_start=1
+        main_pipeline_start=1,
     )
-    
+
     s = sectionize(p, False)
     assert len(s) == 2
     assert s[0].reslice is False
