@@ -7,7 +7,7 @@ from mpi4py import MPI
 import numpy as np
 import httomo
 from httomo.runner.backend_wrapper import BackendWrapper
-from httomo.runner.chunking import ChunkAggregator, ChunkSplitter
+from httomo.runner.block_split import BlockAggregator, BlockSplitter
 from httomo.runner.dataset import DataSet
 from httomo.runner.gpu_utils import get_available_gpu_memory
 from httomo.runner.loader import LoaderInterface
@@ -60,20 +60,20 @@ class TaskRunner:
             level=1,
         )
 
-        splitter = ChunkSplitter(self.dataset, section.pattern, section.max_slices)
-        aggregator = ChunkAggregator(self.dataset, section.pattern)
-        for chunk in splitter:
-            aggregator.append(self._execute_section_chunk(section, chunk))
+        splitter = BlockSplitter(self.dataset, section.pattern, section.max_slices)
+        aggregator = BlockAggregator(self.dataset, section.pattern)
+        for block in splitter:
+            aggregator.append(self._execute_section_block(section, block))
 
         self.dataset = aggregator.full_dataset
 
-    def _execute_section_chunk(
-        self, section: PlatformSection, chunk: DataSet
+    def _execute_section_block(
+        self, section: PlatformSection, block: DataSet
     ) -> DataSet:
-        # TODO: preprun_method in first chunk?
+        # TODO: preprun_method in first block?
         for i, m in enumerate(section):
-            chunk = self._execute_method(m, self.method_index + i, chunk)
-        return chunk
+            block = self._execute_method(m, self.method_index + i, block)
+        return block
 
     def _log_pipeline(self, str: str, level: int = 0):
         log_once(str, comm=self.comm, colour=Colour.BVIOLET, level=level)

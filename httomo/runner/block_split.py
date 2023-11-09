@@ -4,11 +4,11 @@ from httomo.runner.dataset import DataSet
 from httomo.utils import Pattern, _get_slicing_dim
 
 
-class ChunkSplitter:
-    """Can split a full DataSet object into chunks according to the given max slices
-    per chunk. It provides an iterator interface, so that it can be used as::
+class BlockSplitter:
+    """Can split a full DataSet object into blocks according to the given max slices
+    per block. It provides an iterator interface, so that it can be used as::
 
-         splitter = ChunkSplitter(dataset, pattern, max_slices)
+         splitter = BlockSplitter(dataset, pattern, max_slices)
          for block in splitter:
              process_block(block)
 
@@ -27,7 +27,6 @@ class ChunkSplitter:
         self._num_blocks = math.ceil(
             full_data.data.shape[self._slicing_dim] / self._max_slices
         )
-        self._current: int = 0  # for iterator interface
 
     @property
     def slices_per_block(self) -> int:
@@ -54,7 +53,7 @@ class ChunkSplitter:
         )
 
     def __iter__(self):
-        class ChunkIterator:
+        class BlockIterator:
             def __init__(self, splitter):
                 self.splitter = splitter
                 self._current = 0
@@ -66,11 +65,11 @@ class ChunkSplitter:
                 self._current += 1
                 return v
 
-        return ChunkIterator(self)
+        return BlockIterator(self)
 
 
-class ChunkAggregator:
-    """Aggregates multiply chunks back into the full dataset (after blockwise processing).
+class BlockAggregator:
+    """Aggregates multiple blocks back into the full dataset (after blockwise processing).
     
     Note that the dataset is copied to CPU if not there already
     """

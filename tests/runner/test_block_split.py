@@ -1,23 +1,23 @@
 import numpy as np
 import pytest
-from httomo.runner.chunking import ChunkAggregator, ChunkSplitter
+from httomo.runner.block_split import BlockAggregator, BlockSplitter
 from httomo.runner.dataset import DataSet
 from httomo.utils import Pattern, gpu_enabled, xp
 
 
-def test_chunk_splitter_gives_full_when_fits(dummy_dataset: DataSet):
-    splitter = ChunkSplitter(dummy_dataset, Pattern.projection, 100000000)
+def test_block_splitter_gives_full_when_fits(dummy_dataset: DataSet):
+    splitter = BlockSplitter(dummy_dataset, Pattern.projection, 100000000)
 
     assert splitter.slices_per_block == dummy_dataset.data.shape[0]
     assert len(splitter) == 1
 
 
-def test_chunk_splitter_splits_evenly(dummy_dataset: DataSet):
+def test_block_splitter_splits_evenly(dummy_dataset: DataSet):
     assert (
         dummy_dataset.data.shape[0] % 2 == 0
     ), "explicitly make sure dummy data is even"
 
-    splitter = ChunkSplitter(
+    splitter = BlockSplitter(
         dummy_dataset, Pattern.projection, dummy_dataset.data.shape[0] // 2
     )
 
@@ -25,12 +25,12 @@ def test_chunk_splitter_splits_evenly(dummy_dataset: DataSet):
     assert len(splitter) == 2
 
 
-def test_chunk_splitter_splits_odd(dummy_dataset: DataSet):
+def test_block_splitter_splits_odd(dummy_dataset: DataSet):
     assert (
         dummy_dataset.data.shape[0] % 3 != 0
     ), "explicitly make sure dummy data is not"
 
-    splitter = ChunkSplitter(
+    splitter = BlockSplitter(
         dummy_dataset, Pattern.projection, dummy_dataset.data.shape[0] // 3
     )
 
@@ -38,16 +38,16 @@ def test_chunk_splitter_splits_odd(dummy_dataset: DataSet):
     assert len(splitter) == 4
 
 
-def test_chunk_gives_dataset_full(dummy_dataset: DataSet):
-    splitter = ChunkSplitter(dummy_dataset, Pattern.projection, 100000000)
+def test_block_gives_dataset_full(dummy_dataset: DataSet):
+    splitter = BlockSplitter(dummy_dataset, Pattern.projection, 100000000)
     assert splitter[0].data.shape == dummy_dataset.data.shape
 
 
-def test_chunk_gives_blocks_projection(dummy_dataset: DataSet):
+def test_block_gives_blocks_projection(dummy_dataset: DataSet):
     dummy_dataset.data = np.random.random(dummy_dataset.data.shape).astype(np.float32)
 
     max_slices = dummy_dataset.data.shape[0] // 2
-    splitter = ChunkSplitter(dummy_dataset, Pattern.projection, max_slices)
+    splitter = BlockSplitter(dummy_dataset, Pattern.projection, max_slices)
 
     np.testing.assert_array_equal(
         splitter[0].data, dummy_dataset.data[0:max_slices, :, :]
@@ -57,11 +57,11 @@ def test_chunk_gives_blocks_projection(dummy_dataset: DataSet):
     )
 
 
-def test_chunk_gives_blocks_sino(dummy_dataset: DataSet):
+def test_block_gives_blocks_sino(dummy_dataset: DataSet):
     dummy_dataset.data = np.random.random(dummy_dataset.data.shape).astype(np.float32)
 
     max_slices = dummy_dataset.data.shape[1] // 2
-    splitter = ChunkSplitter(dummy_dataset, Pattern.sinogram, max_slices)
+    splitter = BlockSplitter(dummy_dataset, Pattern.sinogram, max_slices)
 
     np.testing.assert_array_equal(
         splitter[0].data, dummy_dataset.data[:, 0:max_slices, :]
@@ -71,11 +71,11 @@ def test_chunk_gives_blocks_sino(dummy_dataset: DataSet):
     )
 
 
-def test_chunk_gives_blocks_odd(dummy_dataset: DataSet):
+def test_block_gives_blocks_odd(dummy_dataset: DataSet):
     dummy_dataset.data = np.random.random(dummy_dataset.data.shape).astype(np.float32)
 
     max_slices = dummy_dataset.data.shape[0] // 3
-    splitter = ChunkSplitter(dummy_dataset, Pattern.projection, max_slices)
+    splitter = BlockSplitter(dummy_dataset, Pattern.projection, max_slices)
 
     np.testing.assert_array_equal(
         splitter[0].data, dummy_dataset.data[0:max_slices, :, :]
@@ -91,11 +91,11 @@ def test_chunk_gives_blocks_odd(dummy_dataset: DataSet):
     )
 
 
-def test_chunk_can_iterate(dummy_dataset: DataSet):
+def test_block_can_iterate(dummy_dataset: DataSet):
     dummy_dataset.data = np.random.random(dummy_dataset.data.shape).astype(np.float32)
 
     max_slices = dummy_dataset.data.shape[1] // 2
-    splitter = ChunkSplitter(dummy_dataset, Pattern.projection, max_slices)
+    splitter = BlockSplitter(dummy_dataset, Pattern.projection, max_slices)
 
     for i, block in enumerate(splitter):
         np.testing.assert_array_equal(
@@ -104,7 +104,7 @@ def test_chunk_can_iterate(dummy_dataset: DataSet):
 
 
 def test_aggregator_throws_if_unfinished(dummy_dataset: DataSet):
-    aggregator = ChunkAggregator(dummy_dataset, Pattern.projection)
+    aggregator = BlockAggregator(dummy_dataset, Pattern.projection)
     with pytest.raises(ValueError) as e:
         aggregator.full_dataset
 
@@ -112,10 +112,10 @@ def test_aggregator_throws_if_unfinished(dummy_dataset: DataSet):
 
 
 def test_aggregator_throws_if_partially_finished(dummy_dataset: DataSet):
-    splitter = ChunkSplitter(
+    splitter = BlockSplitter(
         dummy_dataset, Pattern.projection, dummy_dataset.data.shape[0] // 2
     )
-    aggregator = ChunkAggregator(dummy_dataset, Pattern.projection)
+    aggregator = BlockAggregator(dummy_dataset, Pattern.projection)
     aggregator.append(splitter[0])
 
     with pytest.raises(ValueError) as e:
@@ -125,7 +125,7 @@ def test_aggregator_throws_if_partially_finished(dummy_dataset: DataSet):
 
 
 def test_aggregator_throws_if_aggregate_too_much(dummy_dataset: DataSet):
-    aggregator = ChunkAggregator(dummy_dataset, Pattern.projection)
+    aggregator = BlockAggregator(dummy_dataset, Pattern.projection)
     aggregator.append(dummy_dataset)
 
     with pytest.raises(ValueError) as e:
@@ -136,8 +136,8 @@ def test_aggregator_throws_if_aggregate_too_much(dummy_dataset: DataSet):
 
 @pytest.mark.parametrize("max_slices", [1, 3, 5, 100000])
 def test_can_aggregate_full(dummy_dataset: DataSet, max_slices: int):
-    splitter = ChunkSplitter(dummy_dataset, Pattern.projection, max_slices)
-    aggregator = ChunkAggregator(dummy_dataset, Pattern.projection)
+    splitter = BlockSplitter(dummy_dataset, Pattern.projection, max_slices)
+    aggregator = BlockAggregator(dummy_dataset, Pattern.projection)
 
     for block in splitter:
         aggregator.append(block)
@@ -151,10 +151,10 @@ def test_can_aggregate_full(dummy_dataset: DataSet, max_slices: int):
 
 
 def test_can_aggregate_changed_dimensions(dummy_dataset: DataSet):
-    splitter = ChunkSplitter(
+    splitter = BlockSplitter(
         dummy_dataset, Pattern.projection, dummy_dataset.data.shape[0] // 2
     )
-    aggregator = ChunkAggregator(dummy_dataset, Pattern.projection)
+    aggregator = BlockAggregator(dummy_dataset, Pattern.projection)
 
     for block in splitter:
         shape = list(block.data.shape)
@@ -173,10 +173,10 @@ def test_can_aggregate_changed_dimensions(dummy_dataset: DataSet):
 
 
 def test_changing_dimensions_in_second_block_fails(dummy_dataset: DataSet):
-    splitter = ChunkSplitter(
+    splitter = BlockSplitter(
         dummy_dataset, Pattern.projection, dummy_dataset.data.shape[0] // 2
     )
-    aggregator = ChunkAggregator(dummy_dataset, Pattern.projection)
+    aggregator = BlockAggregator(dummy_dataset, Pattern.projection)
     aggregator.append(splitter[0])
 
     d = splitter[1]
@@ -198,7 +198,7 @@ def test_changing_dimensions_in_second_block_fails(dummy_dataset: DataSet):
 def test_splitter_moves_to_cpu_if_not_already(dummy_dataset: DataSet):
     dummy_dataset.to_gpu()
     assert dummy_dataset.is_gpu
-    _ = ChunkSplitter(
+    _ = BlockSplitter(
         dummy_dataset, Pattern.projection, dummy_dataset.data.shape[0]
     )
 
@@ -213,6 +213,6 @@ def test_splitter_moves_to_cpu_if_not_already(dummy_dataset: DataSet):
 def test_aggregator_moves_to_cpu_if_not_already(dummy_dataset: DataSet):
     dummy_dataset.to_gpu()
     assert dummy_dataset.is_gpu
-    _ = ChunkAggregator(dummy_dataset, Pattern.projection)
+    _ = BlockAggregator(dummy_dataset, Pattern.projection)
 
     assert dummy_dataset.is_cpu
