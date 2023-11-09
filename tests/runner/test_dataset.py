@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from pytest_mock import MockerFixture
 from httomo.utils import xp, gpu_enabled
 from httomo.runner.dataset import DataSet
 
@@ -12,6 +13,12 @@ def dataset():
     angles = 4 * np.ones((20,), dtype=np.float32)
 
     return DataSet(data, angles, flats, darks)
+
+@pytest.fixture
+def disable_gpu(mocker: MockerFixture):
+    gpu_enabled = mocker.patch("httomo.runner.dataset.gpu_enabled", return_value=False)
+    gpu_enabled.__bool__.return_value = False
+    return gpu_enabled
 
 
 def test_works_with_numpy(dataset):
@@ -45,6 +52,14 @@ def test_data_writeable_numpy(dataset):
     dataset.data[1, 1, 1] = 42.0
 
     assert dataset.data[1, 1, 1] == 42.0
+
+
+def test_raises_error_on_to_gpu_if_no_gpu_available(
+    dataset: DataSet, disable_gpu
+):
+    with pytest.raises(ValueError) as e:
+        dataset.to_gpu()
+    assert "cannot transfer to GPU if not enabled" in str(e)
 
 
 @pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")
@@ -98,7 +113,9 @@ def test_reset_field_gpu(dataset, field):
     with xp.cuda.Device(0):
         dataset.to_gpu()
         dataset.unlock()
-        setattr(dataset, field, 2 * getattr(dataset, field))  # dataset.darks = 2 * dataset.darks
+        setattr(
+            dataset, field, 2 * getattr(dataset, field)
+        )  # dataset.darks = 2 * dataset.darks
         dataset.lock()
 
         xp.testing.assert_array_equal(getattr(dataset, field), 2 * original_value)
@@ -107,13 +124,7 @@ def test_reset_field_gpu(dataset, field):
 
     dataset.to_cpu()
     np.testing.assert_array_equal(getattr(dataset, field), 2 * original_value)
-    
-    # dataset.to_gpu()
-    # dataset.unlock()
-    # dataset.darks = 2 * dataset.darks
-    # dataset.lock()
-    # dataset.to_cpu()
-    # assert dataset.darks == 2 * original_value
+
 
 
 @pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")
@@ -141,7 +152,10 @@ def test_reset_field_on_cpu_with_cached_gpudata(dataset, field):
 @pytest.mark.parametrize(
     "field", ["darks", "flats", "angles", "angles_radians", "dark", "flat"]
 )
-def test_reset_field_numpy(dataset, field):
+@pytest.mark.parametrize("gpu", [True, False])
+def test_reset_field_numpy(dataset, field, gpu, request):
+    if not gpu:
+        request.getfixturevalue("disable_gpu")  # disables GPU conditional on gpu parameter
     dataset.unlock()
     original_value = getattr(dataset, field).ravel()[0]
     setattr(dataset, field, 2 * getattr(dataset, field))
@@ -156,3 +170,4 @@ def test_attributes_array(dataset):
     )
     actual = set(dir(dataset))
     assert actual == expected
+

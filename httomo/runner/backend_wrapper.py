@@ -75,6 +75,9 @@ class BackendWrapper:
         self.implementation = self.query.get_implementation()
         self.memory_gpu = self.query.get_memory_gpu_params()
 
+        if self.is_gpu and not gpu_enabled:
+            raise ValueError("GPU is not available, please use only CPU methods")
+
         self._side_output: Dict[str, Any] = dict()
 
         if gpu_enabled:
@@ -134,12 +137,8 @@ class BackendWrapper:
             elif p in dict_params:
                 ret[p] = dict_params[p]
             elif p == "gpu_id":
-                if gpu_enabled:
-                    ret[p] = self.gpu_id
-                else:
-                    raise ValueError(
-                        f"method {self.method_name} requires gpu_id parameter, but GPU is not enabled"
-                    )
+                assert gpu_enabled, "for methods taking gpu_id as parameter, GPU must be available"
+                ret[p] = self.gpu_id
             else:
                 raise ValueError(f"Cannot map method parameter {p} to a value")
         return ret
@@ -200,10 +199,8 @@ class BackendWrapper:
         if not self.cupyrun:
             dataset.to_cpu()  # TODO: confirm this
             return dataset
-        if not gpu_enabled:
-            no_gpulog_str = "GPU is not available, please use only CPU methods"
-            log_once(no_gpulog_str, self.comm, colour=Colour.BVIOLET, level=1)
-            return dataset
+        
+        assert gpu_enabled, "GPU method used on a system without GPU support"
 
         xp.cuda.Device(self.gpu_id).use()
         gpulog_str = f"Using GPU {self.gpu_id} to transfer data of shape {xp.shape(dataset.data[0])}"

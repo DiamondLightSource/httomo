@@ -112,8 +112,6 @@ class DataSet:
     @property
     def is_gpu(self) -> bool:
         """Check if arrays are currently residing on GPU"""
-        if not gpu_enabled:
-            return False
         return getattr(self._data, "device", None) is not None
 
     @property
@@ -185,6 +183,7 @@ class DataSet:
             raise ValueError(f"attempt to reset {field} in a locked dataset")
         if not gpu_enabled:
             setattr(self, f"_{field}", new_data)
+            return
         if getattr(new_data, "device", None) is not None:
             # got GPU data - mark CPU dirty
             setattr(self, f"_{field}_gpu", new_data)

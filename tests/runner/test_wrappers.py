@@ -74,11 +74,9 @@ def test_wrapper_fails_with_wrong_returntype(
     assert "return type" in str(e)
 
 
-@pytest.mark.skipif(
-    not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
-    reason="skipped as cupy is not available",
-)
 def test_wrapper_sets_gpuid(mocker: MockerFixture, dummy_dataset: DataSet):
+    mocker.patch("httomo.runner.backend_wrapper.gpu_enabled", True)
+
     class FakeModule:
         def fake_method(data, gpu_id: int):
             assert gpu_id == 4
@@ -91,6 +89,43 @@ def test_wrapper_sets_gpuid(mocker: MockerFixture, dummy_dataset: DataSet):
 
     wrp.gpu_id = 4
     wrp.execute(dummy_dataset)
+
+
+def test_wrapper_fails_for_gpumethods_with_no_gpu(mocker: MockerFixture):
+    mocker.patch("httomo.runner.backend_wrapper.gpu_enabled", False)
+
+    class FakeModule:
+        def fake_method(data):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    with pytest.raises(ValueError) as e:
+        make_backend_wrapper(
+            make_mock_repo(mocker, implementation="gpu_cupy"),
+            "mocked_module_path",
+            "fake_method",
+            MPI.COMM_WORLD,
+        )
+
+    assert "GPU is not available" in str(e)
+
+
+def test_wrapper_build_kwargs_parameter_not_given(
+    mocker: MockerFixture, dummy_dataset: DataSet
+):
+    class FakeModule:
+        def fake_method(data, param):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+    )
+    with pytest.raises(ValueError) as e:
+        wrp.execute(dummy_dataset)
+
+    assert "Cannot map method parameter param to a value" in str(e)
 
 
 def test_wrapper_different_data_parameter_name(

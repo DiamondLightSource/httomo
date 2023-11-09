@@ -19,10 +19,10 @@ class LoaderInterface(Protocol):
     method_name: str
 
     def load(self) -> DataSet:
-        ...
-        
+        ...  # pragma: no cover
+
     def get_side_output(self) -> Dict[str, Any]:
-        ...
+        ...  # pragma: no cover
 
 
 class Loader(LoaderInterface, BackendWrapper):
@@ -77,10 +77,10 @@ def make_loader(
     Loader
         An instance of a loader class (which is also a BackendWrapper)
     """
-    
+
     # TODO: add the loader extra parameters when calling this - in_file, dimension, etc.
-    
-    # note: once we have different kinds of loaders, this function can 
+
+    # note: once we have different kinds of loaders, this function can
     # be used like the make_backend_wrapper factory function
 
     return Loader(
