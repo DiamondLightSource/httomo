@@ -11,9 +11,9 @@ class DataSet:
     Flats, darks, and angles are assumed to be read-only - separate copies on
     CPU and GPU are maintained as needed. Depending on where data itself is,
     the flats/darks/angles will be returned on the same device (and cached).
-    
+
     Example::
-       
+
        dataset = DataSet(data, angles, flats, darks)
        dataset.data        # access data
        dataset.to_gpu()    # transfer
@@ -39,6 +39,7 @@ class DataSet:
         self.lock()
         if gpu_enabled:
             import cupy as cp
+
             # cached GPU data - transferred lazily
             self._angles_gpu: Optional[cp.ndarray] = None
             self._flats_gpu: Optional[cp.ndarray] = None
@@ -153,16 +154,37 @@ class DataSet:
             return
         self._data = xp.asnumpy(self._data)
 
+    def make_block(self, dim: int, start: int, length: int):
+        """Create a block from this dataset, which slices in dimension `dim`
+        starting at index `start`, and taking `length` elements.
+        
+        The returned block is a `DataSet` object itself, but it references the
+        original one for the darks/flats/angles arrays and re-use the GPU-cached
+        version of those if needed."""
+        return DataSetBlock(self, dim, start, length)
+
+    @property
+    def is_block(self) -> bool:
+        """Check if this DataSet is a block (output of `make_block`)"""
+        return False
+
     def __dir__(self) -> list[str]:
         """Return only those properties that are relevant for the data"""
         return ["data", "angles", "angles_radians", "darks", "flats", "dark", "flat"]
 
     ###### internal helpers ######
 
-    def _get_value(self, field: str) -> generic_array:
+    def _get_value(
+        self, field: str, data_is_gpu: Optional[bool] = None
+    ) -> generic_array:
         """Helper function to get a field from this object.
-        It uses getattr/setattr a lot, to allow for re-use from all the getters"""
-        if self.is_gpu:
+        It uses getattr/setattr a lot, to allow for re-use from all the getters.
+
+        `data_is_gpu` can be used to tell this method to assume the data array
+        is on GPU or not - it will be used instead of self.is_gpu if given"""
+
+        is_gpu = data_is_gpu if data_is_gpu is not None else self.is_gpu
+        if is_gpu:
             setattr(
                 self,
                 f"_{field}_gpu",
@@ -201,3 +223,39 @@ class DataSet:
             gpuarray.device.id == xp.cuda.Device().id
         ), f"GPU array is on a different GPU (expected: {xp.cuda.Device().id}, actual: {gpuarray.device.id})"
         return gpuarray
+
+
+class DataSetBlock(DataSet):
+    """Represents a slice/block of a dataset, as returned returned by `make_block`
+    in a DataSet object. It is a DataSet (inherits from it) and users can mostly 
+    ignore the fact that it's just a view. 
+    
+    It stores the base object internally and routes all calls for the auxilliary
+    arrays to the base object (darks/flats/angles). It does not store these directly.
+    """
+
+    def __init__(self, base: DataSet, dim: int, start: int, length: int):
+        idx_expr = [slice(None), slice(None), slice(None)]
+        idx_expr[dim] = slice(start, start + length)
+        # we pass an empty size-0 array to base class, as we're not going to use these
+        # fields anyway here (we access the originals via self._base)
+        super().__init__(
+            data=base.data[tuple(idx_expr)],
+            flats=np.empty((0,)),
+            darks=np.empty((0,)),
+            angles=np.empty((0,)),
+        )
+        self._base = base
+
+    @property
+    def is_block(self) -> bool:
+        return True
+
+    def _set_value(self, field: str, new_data: DataSet.generic_array):
+        raise ValueError(f"Cannot update field {field} in a block/slice dataset")
+
+    def _get_value(self, field: str) -> DataSet.generic_array:
+        return self._base._get_value(field, self.is_gpu)
+
+    def make_block(self, dim: int, start: int, length: int):
+        raise ValueError("Cannot slice a dataset that is already a slice")

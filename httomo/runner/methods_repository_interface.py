@@ -5,7 +5,7 @@ from typing import List, Literal, Optional, Protocol, Tuple, Union
 from httomo.utils import Pattern
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpuMemoryRequirement:
     dataset: Literal["data", "tomo", "darks", "flats"] = "tomo"
     multiplier: Optional[float] = 1.0

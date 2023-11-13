@@ -163,18 +163,19 @@ def test_sectionizer_global_stats_triggers_new_section(mocker: MockerFixture):
     p = Pipeline(
         loader=make_test_loader(mocker),
         methods=[
-            make_test_method(mocker, pattern=Pattern.projection, glob_stats=True),
-            make_test_method(mocker, pattern=Pattern.projection),
-            make_test_method(mocker, pattern=Pattern.projection, glob_stats=True),
-            make_test_method(mocker, pattern=Pattern.projection),
+            make_test_method(mocker, pattern=Pattern.projection, glob_stats=True, method_name="m1"),
+            make_test_method(mocker, pattern=Pattern.projection, method_name="m2"),
+            make_test_method(mocker, pattern=Pattern.projection, glob_stats=True, method_name="m3"),
+            make_test_method(mocker, pattern=Pattern.projection, method_name="m4"),
         ],
     )
 
     s = sectionize(p, False)
-    assert len(s) == 3
-    assert len(s[0]) == 1
+    assert len(s) == 2
+    assert len(s[0]) == 2
     assert len(s[1]) == 2
-    assert len(s[2]) == 1
+    assert s[0][0].method_name == "m1"
+    assert s[1][0].method_name == "m3"
 
 
 @pytest.mark.parametrize(

@@ -9,7 +9,7 @@ from httomo.runner.backend_wrapper import BackendWrapper
 class PlatformSection:
     """Represents on section of a pipeline that can be executed on the same platform,
     and has the same dataset pattern."""
-    
+
     def __init__(
         self,
         gpu: bool,
@@ -30,57 +30,56 @@ class PlatformSection:
     def __len__(self) -> int:
         return len(self.methods)
 
+    def __getitem__(self, idx: int) -> BackendWrapper:
+        return self.methods[idx]
+
 
 def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSection]:
     sections: List[PlatformSection] = []
 
-    # The methods below are internal, to reduce duplication and hide them
+    # The functions below are internal to reduce duplication
 
     def should_save_after(method: BackendWrapper) -> bool:
-        params = method.config_params
-        return (
-            save_all
-            or params.get("save_result", False)
-            or params.get("glob_stats", False)
-        )
+        return save_all or method.config_params.get("save_result", False)
+
+    def needs_global_input(method: BackendWrapper) -> bool:
+        return method.config_params.get("glob_stats", False)
 
     def is_pattern_compatible(a: Pattern, b: Pattern) -> bool:
         return a == Pattern.all or b == Pattern.all or a == b
 
-    itermethods = iter(pipeline)
-    # first method processed directly
-    method = next(itermethods)
-    current_gpu = method.is_gpu
-    current_pattern = method.pattern
-    current_methods: List[BackendWrapper] = [method]
-    save_result_after = should_save_after(method)
+    # loop carried variables, to build up the sections
+    current_gpu: bool = False
+    current_pattern: Pattern = pipeline.loader_pattern
+    current_methods: List[BackendWrapper] = []
+    save_previous_result: bool = False
 
     def finish_section(needs_reslice=False):
-        pattern = current_pattern
-        # do the forward propagation of the pattern from loader
-        if pattern == Pattern.all:
-            pattern = (
-                sections[-1].pattern if len(sections) > 0 else pipeline.loader_pattern
+        if len(current_methods) > 0:
+            sections.append(
+                PlatformSection(
+                    current_gpu, current_pattern, needs_reslice, 0, current_methods
+                )
             )
-        sections.append(
-            PlatformSection(current_gpu, pattern, needs_reslice, 0, current_methods)
-        )
 
-    for i, method in enumerate(itermethods, 1):
+    for i, method in enumerate(pipeline):
         pattern_changed = not is_pattern_compatible(current_pattern, method.pattern)
         platform_changed = method.is_gpu != current_gpu
         start_main_pipeline = i == pipeline.main_pipeline_start
+        global_input = needs_global_input(method)
+        start_new_section = global_input or save_previous_result or pattern_changed or platform_changed or start_main_pipeline
 
-        if save_result_after or pattern_changed or platform_changed or start_main_pipeline:
+        if start_new_section:
             finish_section(pattern_changed)
             current_gpu = method.is_gpu
-            current_pattern = method.pattern
+            if method.pattern != Pattern.all:
+                current_pattern = method.pattern
             current_methods = [method]
         else:
             current_methods.append(method)
             if current_pattern == Pattern.all:
                 current_pattern = method.pattern
-        save_result_after = should_save_after(method)
+        save_previous_result = should_save_after(method)
 
     finish_section()
 

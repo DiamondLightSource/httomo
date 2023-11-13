@@ -439,7 +439,7 @@ def run_tasks(
                 data_full_section[tuple(slc_indices)] = res
             else:
                 if recon_arr.shape[0] != res.shape[0]:
-                    # TomoPy returns reconstruction in a different shape from httomolibgpu
+                    # TODO: TomoPy returns reconstruction in a different shape from httomolibgpu
                     recon_arr[tuple(slc_indices)] = xp.swapaxes(res,0,1)
                 else:
                     recon_arr[tuple(slc_indices)] = res

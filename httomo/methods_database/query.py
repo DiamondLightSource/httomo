@@ -104,7 +104,7 @@ class MethodsDatabaseQuery(MethodQuery):
 
     def get_implementation(self) -> Literal["cpu", "gpu", "gpu_cupy"]:
         p = get_method_info(self.module_path, self.method_name, "implementation")
-        if p not in ["gpu", "gpu_cupy", "gpu"]:
+        if p not in ["gpu", "gpu_cupy", "cpu"]:
             raise ValueError(
                 f"The ipmlementation arch {p} listed for method {self.module_path}.{self.method_name} is invalid"
             )

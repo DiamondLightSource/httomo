@@ -107,7 +107,7 @@ class TaskRunner:
         self.method_index += 1
 
     def _execute_method(
-        self, method: Union[BackendWrapper, LoaderInterface], num: int, dataset: DataSet
+        self, method: BackendWrapper, num: int, dataset: DataSet
     ) -> DataSet:
         start_time = self._log_task_start(num, method.pattern, method.method_name)
         dataset = method.execute(dataset)

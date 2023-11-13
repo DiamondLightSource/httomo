@@ -1,3 +1,4 @@
+from httomo._stats.globals import min_max_mean_std
 import httomo.globals
 from httomo.data import mpiutil
 from httomo.runner.dataset import DataSet
@@ -134,6 +135,13 @@ class BackendWrapper:
         for p in self.parameters[startidx:]:
             if dataset is not None and p in dir(dataset):
                 ret[p] = getattr(dataset, p)
+            elif p == "glob_stats":
+                if dict_params.get(p, False):
+                    assert dataset is not None
+                    dataset.to_cpu()
+                    ret[p] = min_max_mean_std(dataset.data, self.comm)
+            elif p == "comm":
+                ret[p] = self.comm
             elif p in dict_params:
                 ret[p] = dict_params[p]
             elif p == "gpu_id":
@@ -252,6 +260,8 @@ class BackendWrapper:
         if len(self.memory_gpu) == 0:
             return available_memory // (np.prod(non_slice_dims_shape) * dataset.data.itemsize), available_memory
         
+        # NOTE: This could go directly into the methodquery / method database,
+        # and here we just call calculated_memory_bytes or something
         memory_bytes_method = 0
         for field in self.memory_gpu:
             subtract_bytes = 0

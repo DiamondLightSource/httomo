@@ -23,7 +23,7 @@ class BlockSplitter:
         self._full_data.to_cpu()
         self._pattern = pattern
         self._slicing_dim = _get_slicing_dim(pattern) - 1
-        self._max_slices = min(max_slices, full_data.data.shape[self._slicing_dim])
+        self._max_slices = int(min(max_slices, full_data.data.shape[self._slicing_dim]))
         self._num_blocks = math.ceil(
             full_data.data.shape[self._slicing_dim] / self._max_slices
         )
@@ -41,15 +41,9 @@ class BlockSplitter:
             1,
         ], "Only supporting slicing in projection and sinogram dimension"
 
-        idx_expr = [slice(None), slice(None), slice(None)]
-        idx_expr[self._slicing_dim] = slice(
-            idx * self.slices_per_block, (idx + 1) * self.slices_per_block
-        )
-        return DataSet(
-            data=self._full_data.data[tuple(idx_expr)],
-            darks=self._full_data.darks,
-            flats=self._full_data.flats,
-            angles=self._full_data.angles,
+        # dim, startidx, length -> DataSet
+        return self._full_data.make_block(
+            self._slicing_dim, idx * self.slices_per_block, self.slices_per_block
         )
 
     def __iter__(self):
@@ -70,9 +64,10 @@ class BlockSplitter:
 
 class BlockAggregator:
     """Aggregates multiple blocks back into the full dataset (after blockwise processing).
-    
+
     Note that the dataset is copied to CPU if not there already
     """
+
     def __init__(self, full_dataset: DataSet, pattern: Pattern):
         self._dataset = full_dataset
         self._dataset.to_cpu()

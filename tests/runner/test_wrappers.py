@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from mpi4py import MPI
 import numpy as np
 import httomo
@@ -109,6 +109,72 @@ def test_wrapper_fails_for_gpumethods_with_no_gpu(mocker: MockerFixture):
         )
 
     assert "GPU is not available" in str(e)
+
+
+def test_wrapper_passes_communicator_if_needed(
+    mocker: MockerFixture, dummy_dataset: DataSet
+):
+    class FakeModule:
+        def fake_method(data, comm: Optional[MPI.Comm] = None):
+            assert comm is not None
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+    )
+
+    wrp.execute(dummy_dataset)
+
+
+def test_wrapper_allows_parameters_with_defaults(
+    mocker: MockerFixture, dummy_dataset: DataSet
+):
+    class FakeModule:
+        def fake_method(data, defaultpar: int = 10):
+            assert defaultpar == 10
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+    )
+
+    wrp.execute(dummy_dataset)
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_wrapper_processes_global_stats(
+    mocker: MockerFixture, dummy_dataset: DataSet, enabled: bool
+):
+    stats_mock = mocker.patch(
+        "httomo.runner.backend_wrapper.min_max_mean_std",
+        return_value=(1.1, 2.2, 3.3, 4.4),
+    )
+
+    class FakeModule:
+        def fake_method(data, glob_stats=None):
+            if enabled:
+                assert glob_stats == (1.1, 2.2, 3.3, 4.4)
+            else:
+                assert glob_stats is None
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        glob_stats=enabled,
+    )
+
+    wrp.execute(dummy_dataset)
+
+    if enabled:
+        stats_mock.assert_called_once()
+    else:
+        stats_mock.assert_not_called()
 
 
 def test_wrapper_build_kwargs_parameter_not_given(
