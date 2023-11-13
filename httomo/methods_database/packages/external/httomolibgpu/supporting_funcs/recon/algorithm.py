@@ -53,22 +53,19 @@ def _calc_memory_bytes_FBP(
         dtype: np.dtype,
         **kwargs,
 ) -> Tuple[int, int]:    
-    DetectorsLengthH = non_slice_dims_shape[1]
+    det_width = non_slice_dims_shape[1]
     output_dims = _calc_output_dim_FBP(non_slice_dims_shape,  **kwargs)
     
     in_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
-    filter_size = (DetectorsLengthH//2+1) * np.float32().itemsize
+    filter_size = (det_width//2+1) * np.float32().itemsize
 
     batch = non_slice_dims_shape[0]
     fftplan_size = cufft_estimate_1d(
-        nx=DetectorsLengthH,
+        nx=det_width,
         fft_type=CufftType.CUFFT_R2C,
         batch=batch,
     )
-    ifft_nx = (
-        DetectorsLengthH//2+1 if DetectorsLengthH % 2 == 0 else
-        (DetectorsLengthH+1)//2
-    )
+    ifft_nx = det_width//2+1 if det_width % 2 == 0 else (det_width+1)//2
     ifftplan_size = cufft_estimate_1d(
         nx=ifft_nx,
         fft_type=CufftType.CUFFT_C2R,
