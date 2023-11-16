@@ -72,13 +72,10 @@ def _calc_memory_bytes_FBP(
         batch=batch*SLICES,
     ) / SLICES
 
-    filtered_in_data = np.prod(non_slice_dims_shape) * np.float32().itemsize
-
     # astra backprojection will generate an output array 
     astra_out_size = (np.prod(output_dims) * np.float32().itemsize)
     tot_memory_bytes = int(
         2*in_slice_size +
-        filtered_in_data +
         fftplan_size +
         ifftplan_size +
         2.5*astra_out_size
