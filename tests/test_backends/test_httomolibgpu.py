@@ -270,15 +270,15 @@ def test_remove_stripe_ti_memoryhook(slices, ensure_clean_memory):
 @pytest.mark.parametrize("recon_size_it", [600, 1200, 2560])
 def test_recon_FBP_memoryhook(slices, recon_size_it, ensure_clean_memory):
     data = cp.random.random_sample((1801, slices, recon_size_it), dtype=np.float32)
-    kwargs={}
-    kwargs['angles'] = np.linspace(0.0 * np.pi / 180.0, 180.0 * np.pi / 180.0, data.shape[0])
-    kwargs['center'] = 500    
-    kwargs['recon_size'] = recon_size_it
-    kwargs['recon_mask_radius'] = 0.8
-    recon_size = data.shape[2]
+    kwargs = {
+        "angles": np.linspace(0.0 * np.pi / 180.0, 180.0 * np.pi / 180.0, data.shape[0]),
+        "center": 500,
+        "recon_size": recon_size_it,
+        "recon_mask_radius": 0.8,
+    }
     hook = MaxMemoryHook()
     with hook:
-        recon_data = FBP(data, **kwargs)
+        _ = FBP(data, **kwargs)
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook   
