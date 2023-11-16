@@ -60,16 +60,17 @@ def _calc_memory_bytes_FBP(
     filter_size = (det_width//2+1) * np.float32().itemsize
 
     batch = non_slice_dims_shape[0]
+    SLICES = 200 # dummy multiplier+divisor to pass large batch size threshold
     fftplan_size = cufft_estimate_1d(
         nx=det_width,
         fft_type=CufftType.CUFFT_R2C,
-        batch=batch,
-    )
+        batch=batch*SLICES,
+    ) / SLICES
     ifftplan_size = cufft_estimate_1d(
         nx=det_width,
         fft_type=CufftType.CUFFT_C2R,
-        batch=batch,
-    )
+        batch=batch*SLICES,
+    ) / SLICES
 
     filtered_in_data = np.prod(non_slice_dims_shape) * np.float32().itemsize
 
