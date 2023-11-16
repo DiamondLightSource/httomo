@@ -115,10 +115,10 @@ def test_normalize_memoryhook_parametrise(slices, ensure_clean_memory):
 
 @pytest.mark.cupy
 @pytest.mark.parametrize("slices", [64, 128])
-@pytest.mark.parametrize("dim_x", [81, 260, 320])
-@pytest.mark.parametrize("dim_y", [340, 135, 96])
+@pytest.mark.parametrize("dim_y", [81, 260, 320])
+@pytest.mark.parametrize("dim_x", [340, 135, 96])
 def test_paganin_filter_tomopy_memoryhook(slices, dim_x, dim_y, ensure_clean_memory):    
-    data = cp.random.random_sample((slices, dim_x, dim_y), dtype=np.float32)
+    data = cp.random.random_sample((slices, dim_y, dim_x), dtype=np.float32)
     hook = MaxMemoryHook()
     with hook:
         data_filtered = paganin_filter_tomopy(cp.copy(data)).get()
@@ -127,7 +127,7 @@ def test_paganin_filter_tomopy_memoryhook(slices, dim_x, dim_y, ensure_clean_mem
     max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook   
     
     # now we estimate how much of the total memory required for this data
-    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_paganin_filter_tomopy((dim_x, dim_y), dtype=np.float32())
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_paganin_filter_tomopy((dim_y, dim_x), dtype=np.float32())
     estimated_memory_mb = round(slices*estimated_memory_bytes / (1024**2), 2)
     max_mem -= subtract_bytes
     max_mem_mb = round(max_mem / (1024**2), 2)
