@@ -59,7 +59,7 @@ def _calc_memory_bytes_paganin_filter_tomopy(
 ) -> Tuple[int, int]:
     # estimate padding size here based on non_slice dimensions
     pad_tup = []
-    for index, element in enumerate(non_slice_dims_shape):
+    for element in non_slice_dims_shape:
         diff = _shift_bit_length(element + 1) - element
         if element % 2 == 0:
             pad_width = diff // 2
