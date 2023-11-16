@@ -34,4 +34,6 @@ def setup_logger(out_dir: Optional[os.PathLike]):
 
     user_logger = logging.getLogger(__file__)
     user_logger.setLevel(logging.DEBUG)
+    
+    logging.getLogger('httomo.runner').setLevel(logging.INFO)
     return user_logger

@@ -190,6 +190,24 @@ def test_changing_dimensions_in_second_block_fails(dummy_dataset: DataSet):
     assert "different shape" in str(e)
 
 
+def test_can_aggregate_changed_datatype(dummy_dataset: DataSet):
+    dummy_dataset.data = dummy_dataset.data.astype(np.uint16)
+    splitter = BlockSplitter(
+        dummy_dataset, Pattern.projection, dummy_dataset.data.shape[0] // 2
+    )
+    aggregator = BlockAggregator(dummy_dataset, Pattern.projection)
+
+    for block in splitter:
+        block.data = block.data.astype(np.float32)
+        aggregator.append(block)
+
+    res = aggregator.full_dataset
+
+    assert res.data.dtype == np.float32
+    # this works because data is all '1' values, so cast doesn't change value
+    np.testing.assert_array_equal(res.data, dummy_dataset.data)
+
+
 @pytest.mark.skipif(
     not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
     reason="skipped as cupy is not available",
@@ -198,9 +216,7 @@ def test_changing_dimensions_in_second_block_fails(dummy_dataset: DataSet):
 def test_splitter_moves_to_cpu_if_not_already(dummy_dataset: DataSet):
     dummy_dataset.to_gpu()
     assert dummy_dataset.is_gpu
-    _ = BlockSplitter(
-        dummy_dataset, Pattern.projection, dummy_dataset.data.shape[0]
-    )
+    _ = BlockSplitter(dummy_dataset, Pattern.projection, dummy_dataset.data.shape[0])
 
     assert dummy_dataset.is_cpu
 

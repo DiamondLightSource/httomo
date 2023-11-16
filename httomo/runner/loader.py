@@ -1,5 +1,6 @@
 from typing import Any, Dict, Protocol
 from mpi4py import MPI
+from mpi4py.MPI import Comm
 from httomo.data.hdf.loaders import LoaderData
 from httomo.runner.dataset import DataSet
 from httomo.runner.methods_repository_interface import MethodRepository
@@ -14,8 +15,8 @@ from httomo.runner.backend_wrapper import BackendWrapper
 class LoaderInterface(Protocol):
     """Interface to a loader object"""
 
-    pattern: Pattern
-    reslice: bool
+    pattern: Pattern = Pattern.all
+    reslice: bool = False
     method_name: str
 
     def load(self) -> DataSet:
@@ -24,11 +25,34 @@ class LoaderInterface(Protocol):
     def get_side_output(self) -> Dict[str, Any]:
         ...  # pragma: no cover
 
+    @property
+    def detector_x(self) -> int:
+        ...  # pragma: no cover
 
-class Loader(LoaderInterface, BackendWrapper):
+    @property
+    def detector_y(self) -> int:
+        ...  # pragma: no cover
+
+
+class Loader(BackendWrapper, LoaderInterface):
     """Using BackendWrapper for convenience only - it has all the logic
     for loading a method and finding all the parameters, etc.
     """
+
+    def __init__(
+        self,
+        method_repository: MethodRepository,
+        module_path: str,
+        method_name: str,
+        comm: Comm,
+        output_mapping: Dict[str, str] = {},
+        **kwargs,
+    ):
+        super().__init__(
+            method_repository, module_path, method_name, comm, output_mapping, **kwargs
+        )
+        self._detector_x = 0
+        self._detector_y = 0
 
     def execute(self, dataset: DataSet) -> DataSet:
         raise NotImplementedError("Cannot execute a loader - please call load")
@@ -44,7 +68,17 @@ class Loader(LoaderInterface, BackendWrapper):
         dataset = DataSet(
             data=ret.data, angles=ret.angles, flats=ret.flats, darks=ret.darks
         )
+        self._detector_x = ret.detector_x
+        self._detector_y = ret.detector_y
         return dataset
+
+    @property
+    def detector_x(self) -> int:
+        return self._detector_x
+
+    @property
+    def detector_y(self) -> int:
+        return self._detector_y
 
 
 def make_loader(

@@ -4,14 +4,15 @@ import numpy
 from mpi4py.MPI import Comm
 
 from httomo.data.hdf._utils.chunk import save_dataset
-from httomo.data.hdf.loaders import LoaderData
 from httomo.utils import Colour, log_once
 
 
 def intermediate_dataset(
     data: numpy.ndarray,
     run_out_dir: Path,
-    loader_info: LoaderData,
+    angles: numpy.ndarray,
+    detector_x: int,
+    detector_y: int,
     comm: Comm,
     task_no: int,
     package_name: str,
@@ -61,4 +62,14 @@ def intermediate_dataset(
     log_once(
         f"Saving intermediate file: {filename}", comm, colour=Colour.LYELLOW, level=1
     )
-    save_dataset(run_out_dir, filename, data, loader_info, slice_dim, chunks_recon, comm=comm)
+    save_dataset(
+        run_out_dir,
+        filename,
+        data,
+        angles,
+        detector_x,
+        detector_y,
+        slice_dim,
+        chunks_recon,
+        comm=comm,
+    )

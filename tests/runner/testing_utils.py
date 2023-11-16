@@ -11,12 +11,14 @@ def make_test_method(
     gpu=False,
     pattern=Pattern.projection,
     method_name="testmethod",
+    module_path="testpath",
     **kwargs,
 ) -> BackendWrapper:
     mock = mocker.create_autospec(
         BackendWrapper,
         instance=True,
         method_name=method_name,
+        module_path=module_path,
         pattern=pattern,
         is_gpu=gpu,
         is_cpu=not gpu,

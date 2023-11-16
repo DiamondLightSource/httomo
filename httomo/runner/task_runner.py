@@ -6,14 +6,20 @@ import os
 from mpi4py import MPI
 import numpy as np
 import httomo
+import logging
+from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
+from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.runner.backend_wrapper import BackendWrapper
 from httomo.runner.block_split import BlockAggregator, BlockSplitter
 from httomo.runner.dataset import DataSet
-from httomo.runner.gpu_utils import get_available_gpu_memory
+from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.platform_section import PlatformSection, sectionize
 from httomo.utils import Colour, Pattern, _get_slicing_dim, log_exception, log_once
+
+
+log = logging.getLogger(__name__)
 
 
 class TaskRunner:
@@ -35,19 +41,90 @@ class TaskRunner:
         self.side_outputs: Dict[str, Any] = dict()
         self.dataset: Optional[DataSet] = None
         self.method_index: int = 1
+        self.reslice_count: int = 0
+        self.has_reslice_warn_printed: bool = False
 
         self.output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
         self.output_colour_list_short = [Colour.GREEN, Colour.CYAN]
 
     def execute(self):
-        if self.comm.rank == 0:
-            self.start_time = MPI.Wtime()
+        self.start_time = MPI.Wtime()
 
         sections = sectionize(self.pipeline, self.save_all)
 
+        last_section: Optional[PlatformSection] = None
         self._prepare()
         for i, section in enumerate(sections):
+            if last_section is not None:
+                self.perform_reslice_if_needed(
+                    last_section=last_section, current_section=section
+                )
             self._execute_section(section, i)
+            gpumem_cleanup()
+            self.check_save_intermediate_results(last_section=section)
+            self.method_index += len(section)
+            last_section = section
+
+    def check_save_intermediate_results(self, last_section: PlatformSection):
+        if not last_section.save_result:
+            return
+        last_method = last_section.methods[-1]
+        if (
+            last_method.method_name == "save_to_images"
+            or "center" in last_method.method_name
+        ):
+            return
+        if self.dataset.data.ndim != 3:
+            return
+
+        slice_dim = _get_slicing_dim(last_section.pattern)
+
+        intermediate_dataset(
+            self.dataset.data,
+            httomo.globals.run_out_dir,
+            self.dataset.angles,
+            self.pipeline.loader.detector_x,
+            self.pipeline.loader.detector_y,
+            self.method_index,
+            last_method.module_path,
+            last_method.method_name,
+            "tomo",
+            slice_dim,
+            last_method.recon_algorithm,
+        )
+
+    def perform_reslice_if_needed(
+        self,
+        last_section: Optional[PlatformSection],
+        current_section: Optional[PlatformSection],
+    ):
+        if last_section is None or not last_section.reslice:
+            return
+        current_slice_dim = _get_slicing_dim(last_section.pattern)
+        next_slice_dim = _get_slicing_dim(current_section.pattern)
+        self.reslice_count += 1
+        if self.reslice_count > 1 and not self.has_reslice_warn_printed:
+            log_once(
+                f"WARNING: Reslicing is performed {self.reslice_count} times. The number of reslices increases the total run time.",
+                comm=self.comm,
+                colour=Colour.RED,
+            )
+            self.has_reslice_warn_printed = True
+
+        self.dataset.to_cpu()
+
+        if self.reslice_dir is None:
+            self.dataset.data = reslice(
+                self.dataset.data, current_slice_dim, next_slice_dim, self.comm
+            )[0]
+        else:
+            self.dataset.data = reslice_filebased(
+                self.dataset.data,
+                current_slice_dim,
+                next_slice_dim,
+                self.comm,
+                self.reslice_dir,
+            )[0]
 
     def _execute_section(self, section: PlatformSection, section_index: int = 0):
         assert self.dataset is not None, "Dataset has not been loaded yet"
@@ -64,29 +141,31 @@ class TaskRunner:
         aggregator = BlockAggregator(self.dataset, section.pattern)
         for block in splitter:
             aggregator.append(self._execute_section_block(section, block))
+            gpumem_cleanup()
 
         self.dataset = aggregator.full_dataset
 
     def _execute_section_block(
         self, section: PlatformSection, block: DataSet
     ) -> DataSet:
-        # TODO: preprun_method in first block?
         for i, m in enumerate(section):
+            log.debug(
+                f"{m.method_name}: input shape, dtype: {block.data.shape}, {block.data.dtype}"
+            )
             block = self._execute_method(m, self.method_index + i, block)
+            log.debug(
+                f"{m.method_name}: output shape, dtype: {block.data.shape}, {block.data.dtype}"
+            )
         return block
 
-    def _log_pipeline(self, str: str, level: int = 0):
-        log_once(str, comm=self.comm, colour=Colour.BVIOLET, level=level)
+    def _log_pipeline(self, str: str, level: int = 0, colour=Colour.BVIOLET):
+        log_once(str, comm=self.comm, colour=colour, level=level)
 
     def _prepare(self):
-        #: add to the console and log file, the full path to the user.log file
-        log_once(
+        self._log_pipeline(
             f"See the full log file at: {httomo.globals.run_out_dir}/user.log",
-            self.comm,
-            colour=Colour.CYAN,
-            level=0,
+            colour=Colour.BVIOLET,
         )
-
         self._check_params_for_sweep()
         self._load_datasets()
 

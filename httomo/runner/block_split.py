@@ -1,8 +1,11 @@
 import math
+from typing import Iterator
 import numpy as np
 from httomo.runner.dataset import DataSet
 from httomo.utils import Pattern, _get_slicing_dim
+import logging
 
+log = logging.getLogger(__name__)
 
 class BlockSplitter:
     """Can split a full DataSet object into blocks according to the given max slices
@@ -46,13 +49,13 @@ class BlockSplitter:
             self._slicing_dim, idx * self.slices_per_block, self.slices_per_block
         )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[DataSet]:
         class BlockIterator:
             def __init__(self, splitter):
                 self.splitter = splitter
                 self._current = 0
 
-            def __next__(self):
+            def __next__(self) -> DataSet:
                 if self._current >= len(self.splitter):
                     raise StopIteration
                 v = self.splitter[self._current]
@@ -74,14 +77,16 @@ class BlockAggregator:
         self._current_idx = 0
         self._slicing_dim = _get_slicing_dim(pattern) - 1
         self._full_size = full_dataset.data.shape[self._slicing_dim]
+        log.debug(f"created aggregator: dim={self._slicing_dim}, full_size={self._full_size}")
 
     def append(self, dataset: DataSet):
         append_size = dataset.data.shape[self._slicing_dim]
+        log.debug(f"appending {append_size}, current={self._current_idx}, full={self._full_size} (dim={self._slicing_dim})")
         if append_size + self._current_idx > self._full_size:
             raise ValueError(
                 f"Cannot append another {append_size} slices - only {self._full_size-self._current_idx} slices left"
             )
-        self._increase_dims_if_needed(dataset.data.shape)
+        self._increase_dims_if_needed(dataset.data.shape, dataset.data.dtype)
         to_idx = [slice(None), slice(None), slice(None)]
         to_idx[self._slicing_dim] = slice(
             self._current_idx, self._current_idx + append_size
@@ -90,20 +95,20 @@ class BlockAggregator:
         self._dataset.data[tuple(to_idx)] = dataset.data
         self._current_idx += append_size
 
-    def _increase_dims_if_needed(self, append_data_shape):
+    def _increase_dims_if_needed(self, append_data_shape: tuple, append_dtype: np.dtype):
         other_dims = np.delete(append_data_shape, self._slicing_dim)
         other_dims_full = np.delete(self._dataset.data.shape, self._slicing_dim)
-        if any(other != this for other, this in zip(other_dims_full, other_dims)):
+        if any(other != this for other, this in zip(other_dims_full, other_dims)) or append_dtype != self._dataset.data.dtype:
             if self._current_idx != 0:
                 raise ValueError(
-                    f"Received block of shape {append_data_shape},"
-                    + f" while full data is of the different shape {self._dataset.data.shape}"
+                    f"Received block of shape {append_data_shape} and type {append_dtype},"
+                    + f" while full data is of the different shape {self._dataset.data.shape} or type {self._dataset.data.dtype}"
                     + " and already has data blocks"
                 )
             new_full_shape = np.insert(other_dims, self._slicing_dim, self._full_size)
             # need a new object, otherwise we might modify the source in-place
             self._dataset = DataSet(
-                data=np.empty(new_full_shape, self._dataset.data.dtype),
+                data=np.empty(new_full_shape, append_dtype),
                 darks=self._dataset.darks,
                 flats=self._dataset.flats,
                 angles=self._dataset.angles,

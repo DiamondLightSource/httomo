@@ -26,6 +26,7 @@ def test_sectionizer_can_iterate_saveall(mocker: MockerFixture):
 
     s = sectionize(p, True)
     assert len(s) == 3
+    assert [k.save_result for k in s] == [True, True, True] 
     methodnames = [m.methods[0].method_name for m in s]
     assert methodnames == ["testmethod0", "testmethod1", "testmethod2"]
 
@@ -155,8 +156,11 @@ def test_sectionizer_save_result_triggers_new_section(mocker: MockerFixture):
     s = sectionize(p, False)
     assert len(s) == 3
     assert len(s[0]) == 1
+    assert s[0].save_result is True
     assert len(s[1]) == 2
+    assert s[1].save_result is True
     assert len(s[2]) == 1
+    assert s[2].save_result is False
 
 
 def test_sectionizer_global_stats_triggers_new_section(mocker: MockerFixture):

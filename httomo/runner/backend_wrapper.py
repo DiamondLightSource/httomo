@@ -3,6 +3,7 @@ import httomo.globals
 from httomo.data import mpiutil
 from httomo.runner.dataset import DataSet
 from httomo.runner.methods_repository_interface import MethodRepository
+from httomo.runner.output_ref import OutputRef
 from httomo.utils import Colour, gpu_enabled, log_once, log_rank, xp
 from httomo.runner.gpu_utils import gpumem_cleanup
 
@@ -10,10 +11,12 @@ from httomo.runner.gpu_utils import gpumem_cleanup
 import numpy as np
 from mpi4py.MPI import Comm
 
-
+import logging
 import os
-from inspect import signature
+from inspect import Parameter, signature
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+log = logging.getLogger(__name__)
 
 
 class BackendWrapper:
@@ -35,6 +38,7 @@ class BackendWrapper:
         module_path: str,
         method_name: str,
         comm: Comm,
+        output_mapping: Dict[str, str] = {},
         **kwargs,
     ):
         """Constructs a BackendWrapper for a method located in module_path with the name method_name.
@@ -50,6 +54,8 @@ class BackendWrapper:
             Name of the method (function within the given module)
         comm: Comm
             MPI communicator object
+        output_mapping: Dict[str, str]
+            Mapping of side-output names to new ones. Used for propagating side outputs by name.
         **kwargs:
             Additional keyword arguments will be set as configuration parameters for this
             method. Note: The method must actually accept them as parameters.
@@ -64,9 +70,18 @@ class BackendWrapper:
         self.method: Callable = getattr(self.module, method_name)
         # get all the method parameter names, so we know which to set on calling it
         sig = signature(self.method)
-        self.parameters = list(sig.parameters.keys())
+        self.parameters = [
+            k for k, p in sig.parameters.items() if p.kind != Parameter.VAR_KEYWORD
+        ]
+        self._params_with_defaults = [
+            k for k, p in sig.parameters.items() if p.default != Parameter.empty
+        ]
+        self._has_kwargs = any(
+            p.kind == Parameter.VAR_KEYWORD for p in sig.parameters.values()
+        )
         # check if the given kwargs are actually supported by the method
         self._config_params = kwargs
+        self._output_mapping = output_mapping
         self._check_config_params()
 
         # assign method properties from the methods repository
@@ -118,9 +133,17 @@ class BackendWrapper:
         self._check_config_params()
 
     def _check_config_params(self):
+        if self._has_kwargs:
+            return
         for k in self._config_params.keys():
             if k not in self.parameters:
                 raise ValueError(f"Unsupported keyword argument given: {k}")
+
+    @property
+    def recon_algorithm(self) -> Optional[str]:
+        """Determine the recon algorithm used, if the method is reconstruction.
+        Otherwise return None."""
+        return None
 
     def _build_kwargs(
         self, dict_params: DictType, dataset: Optional[DataSet] = None
@@ -132,23 +155,42 @@ class BackendWrapper:
             ret[self.parameters[startidx]] = dataset.data
             startidx += 1
         # other parameters are looked up by name
+        remaining_dict_params = self._resolve_output_refs(dict_params)
         for p in self.parameters[startidx:]:
             if dataset is not None and p in dir(dataset):
                 ret[p] = getattr(dataset, p)
+            elif p == "comm":
+                ret[p] = self.comm
+            elif p == "gpu_id":
+                assert gpu_enabled, "methods with gpu_id parameter require GPU support"
+                ret[p] = self.gpu_id
             elif p == "glob_stats":
-                if dict_params.get(p, False):
+                if remaining_dict_params.get(p, False):
                     assert dataset is not None
                     dataset.to_cpu()
                     ret[p] = min_max_mean_std(dataset.data, self.comm)
-            elif p == "comm":
-                ret[p] = self.comm
-            elif p in dict_params:
-                ret[p] = dict_params[p]
-            elif p == "gpu_id":
-                assert gpu_enabled, "for methods taking gpu_id as parameter, GPU must be available"
-                ret[p] = self.gpu_id
+                else:
+                    assert p in self._params_with_defaults
+            elif p in remaining_dict_params:
+                ret[p] = remaining_dict_params[p]
+            elif p in self._params_with_defaults:
+                pass
             else:
                 raise ValueError(f"Cannot map method parameter {p} to a value")
+            remaining_dict_params.pop(p, None)
+
+        # if method supports kwargs, pass the rest as those
+        if len(remaining_dict_params) > 0 and self._has_kwargs:
+            ret |= remaining_dict_params
+        return ret
+
+    def _resolve_output_refs(self, dict_params: Dict[str, Any]) -> Dict[str, Any]:
+        """Check for OutputRef instances and resolve their value"""
+        ret: Dict[str, Any] = dict()
+        for k, v in dict_params.items():
+            if isinstance(v, OutputRef):
+                v = v.value
+            ret[k] = v
         return ret
 
     def execute(self, dataset: DataSet) -> DataSet:
@@ -194,6 +236,8 @@ class BackendWrapper:
             raise ValueError(
                 f"Invalid return type for method {self.method_name} (in module {self.module_path})"
             )
+        if self.query.swap_dims_on_output():
+            ret = ret.swapaxes(0, 1)
         input_dataset.data = ret
         return input_dataset
 
@@ -201,13 +245,13 @@ class BackendWrapper:
         """Override this method for functions that have a side output. The returned dictionary
         will be merged with the dict_params parameter passed to execute for all methods that
         follow in the pipeline"""
-        return self._side_output
+        return {v: self._side_output[k] for k, v in self._output_mapping.items()}
 
     def _transfer_data(self, dataset: DataSet):
         if not self.cupyrun:
             dataset.to_cpu()  # TODO: confirm this
             return dataset
-        
+
         assert gpu_enabled, "GPU method used on a system without GPU support"
 
         xp.cuda.Device(self.gpu_id).use()
@@ -232,13 +276,17 @@ class BackendWrapper:
         called"""
         return dataset
 
-    def calculate_output_dims(self, non_slice_dims_shape: Tuple[int, int]) -> Tuple[int, int]:
+    def calculate_output_dims(
+        self, non_slice_dims_shape: Tuple[int, int]
+    ) -> Tuple[int, int]:
         """Calculate the dimensions of the output for this method"""
         if self.output_dims_change:
-            return self.query.calculate_output_dims(non_slice_dims_shape, **self.config_params)
-        
+            return self.query.calculate_output_dims(
+                non_slice_dims_shape, **self.config_params
+            )
+
         return non_slice_dims_shape
-    
+
     def calculate_max_slices(
         self,
         dataset: DataSet,
@@ -247,9 +295,9 @@ class BackendWrapper:
     ) -> Tuple[int, int]:
         """If it runs on GPU, determine the maximum number of slices that can fit in the
         available memory in bytes, and return a tuple of
-        
+
         (max_slices, available_memory)
-        
+
         The available memory may have been adjusted for the methods that follow, in case
         something persists afterwards.
         """
@@ -258,10 +306,14 @@ class BackendWrapper:
 
         # if we have no information, we assume in-place operation with no extra memory
         if len(self.memory_gpu) == 0:
-            return available_memory // (np.prod(non_slice_dims_shape) * dataset.data.itemsize), available_memory
-        
+            return (
+                available_memory
+                // (np.prod(non_slice_dims_shape) * dataset.data.itemsize),
+                available_memory,
+            )
+
         # NOTE: This could go directly into the methodquery / method database,
-        # and here we just call calculated_memory_bytes or something
+        # and here we just call calculated_memory_bytes
         memory_bytes_method = 0
         for field in self.memory_gpu:
             subtract_bytes = 0
@@ -288,8 +340,9 @@ class BackendWrapper:
                         non_slice_dims_shape, dataset.data.dtype, **self.config_params
                     )
 
-        return (available_memory - subtract_bytes) // memory_bytes_method, available_memory
-
+        return (
+            available_memory - subtract_bytes
+        ) // memory_bytes_method, available_memory
 
 
 class ReconstructionWrapper(BackendWrapper):
@@ -304,7 +357,26 @@ class ReconstructionWrapper(BackendWrapper):
             dataset.unlock()
             dataset.angles_radians = dataset.angles_radians[0:datashape0]
             dataset.lock()
+        self._input_shape = dataset.data.shape
         return super()._preprocess_data(dataset)
+
+    def _build_kwargs(
+        self, dict_params: BackendWrapper.DictType, dataset: DataSet | None = None
+    ) -> Dict[str, Any]:
+        # for recon methods, we assume that the second parameter is the angles in all cases
+        assert (
+            len(self.parameters) >= 2
+        ), "recon methods always take data + angles as the first 2 parameters"
+        updated_params = {**dict_params, self.parameters[1]: dataset.angles_radians}
+        return super()._build_kwargs(updated_params, dataset)
+
+    @property
+    def recon_algorithm(self) -> Optional[str]:
+        assert "center" in self.parameters, (
+            "All recon methods should have a 'center' parameter, but it doesn't seem"
+            + f" to be the case for {self.module_path}.{self.method_name}"
+        )
+        return self._config_params.get("algorithm", None)
 
 
 class RotationWrapper(BackendWrapper):
@@ -312,16 +384,30 @@ class RotationWrapper(BackendWrapper):
     but have a side output for the center of rotation data (handling both 180 and 360).
     """
 
-    def _process_return_type(self, ret: Any, input_dataset: DataSet) -> DataSet:
-        if type(ret) == float:
-            self._side_output["cor"] = ret
-        elif type(ret) == tuple:
-            # cor, overlap, side, overlap_position - from find_center_360
-            self._side_output["cor"] = ret[0]  # float
-            self._side_output["overlap"] = ret[1]  # float
-            self._side_output["side"] = ret[2]  # 0 | 1 | None
-            self._side_output["overlap_position"] = ret[3]  # float
+    def _build_kwargs(
+        self, dict_params: BackendWrapper.DictType, dataset: DataSet | None = None
+    ) -> Dict[str, Any]:
+        if "ind" not in self.parameters:
+            return super()._build_kwargs(dict_params, dataset)
 
+        # if the function needs "ind" argument, and we either don't give it or have it as "mid",
+        # we set it to the mid point of the data dim 1
+        updated_params = dict_params
+        if not "ind" in dict_params or (
+            dict_params["ind"] == "mid" or dict_params["ind"] is None
+        ):
+            updated_params = {**dict_params, "ind": (dataset.data.shape[1] + 1) // 2}
+        return super()._build_kwargs(updated_params, dataset)
+
+    def _process_return_type(self, ret: Any, input_dataset: DataSet) -> DataSet:
+        if type(ret) == tuple:
+            # cor, overlap, side, overlap_position - from find_center_360
+            self._side_output["cor"] = float(ret[0])
+            self._side_output["overlap"] = float(ret[1])
+            self._side_output["side"] = int(ret[2]) if ret[2] is not None else None
+            self._side_output["overlap_position"] = float(ret[3])  # float
+        else:
+            self._side_output["cor"] = float(ret)
         return input_dataset
 
 
@@ -337,9 +423,12 @@ class DezingingWrapper(BackendWrapper):
         module_path: str,
         method_name: str,
         comm: Comm,
+        output_mapping: Dict[str, str] = {},
         **kwargs,
     ):
-        super().__init__(method_repository, module_path, method_name, comm, **kwargs)
+        super().__init__(
+            method_repository, module_path, method_name, comm, output_mapping, **kwargs
+        )
         assert (
             method_name == "remove_outlier3d"
         ), "Only remove_outlier3d is supported at the moment"
@@ -368,9 +457,12 @@ class ImagesWrapper(BackendWrapper):
         method_name: str,
         comm: Comm,
         out_dir: os.PathLike,
+        output_mapping: Dict[str, str] = {},
         **kwargs,
     ):
-        super().__init__(method_repository, module_path, method_name, comm, **kwargs)
+        super().__init__(
+            method_repository, module_path, method_name, comm, output_mapping, **kwargs
+        )
         self["out_dir"] = out_dir
         self["comm_rank"] = comm.rank
 
@@ -395,6 +487,7 @@ def make_backend_wrapper(
     module_path: str,
     method_name: str,
     comm: Comm,
+    output_mapping: Dict[str, str] = {},
     **kwargs,
 ) -> BackendWrapper:
     """Factory function to generate the appropriate wrapper based on the module
@@ -412,6 +505,9 @@ def make_backend_wrapper(
         Name of the method (function within the given module)
     comm: Comm
         MPI communicator object
+    output_mapping: Dict[str, str]
+        A dictionary mapping output names to translated ones. The side outputs will be renamed
+        as specified, if the parameter is given. If not, no side outputs will be passed on.
     kwargs:
         Arbitrary keyword arguments that get passed to the method as parameters.
 
@@ -428,6 +524,7 @@ def make_backend_wrapper(
             module_path=module_path,
             method_name=method_name,
             comm=comm,
+            output_mapping=output_mapping,
             **kwargs,
         )
     if module_path.endswith(".rotation"):
@@ -436,6 +533,7 @@ def make_backend_wrapper(
             module_path=module_path,
             method_name=method_name,
             comm=comm,
+            output_mapping=output_mapping,
             **kwargs,
         )
     if method_name == "remove_outlier3d":
@@ -444,6 +542,7 @@ def make_backend_wrapper(
             module_path=module_path,
             method_name=method_name,
             comm=comm,
+            output_mapping=output_mapping,
             **kwargs,
         )
     if module_path.endswith(".images"):
@@ -452,6 +551,7 @@ def make_backend_wrapper(
             module_path=module_path,
             method_name=method_name,
             comm=comm,
+            output_mapping=output_mapping,
             out_dir=httomo.globals.run_out_dir,
             **kwargs,
         )
@@ -460,5 +560,6 @@ def make_backend_wrapper(
         module_path=module_path,
         method_name=method_name,
         comm=comm,
+        output_mapping=output_mapping,
         **kwargs,
     )

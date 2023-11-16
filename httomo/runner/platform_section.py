@@ -17,12 +17,14 @@ class PlatformSection:
         reslice: bool,
         max_slices: int,
         methods: List[BackendWrapper],
+        save_result: bool = False
     ):
         self.gpu = gpu
         self.pattern = pattern
         self.reslice = reslice
         self.max_slices = max_slices
         self.methods = methods
+        self.save_result = save_result
 
     def __iter__(self) -> Iterator[BackendWrapper]:
         return iter(self.methods)
@@ -54,11 +56,16 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
     current_methods: List[BackendWrapper] = []
     save_previous_result: bool = False
 
-    def finish_section(needs_reslice=False):
+    def finish_section(needs_reslice=False, should_save_after=False):
         if len(current_methods) > 0:
             sections.append(
                 PlatformSection(
-                    current_gpu, current_pattern, needs_reslice, 0, current_methods
+                    current_gpu,
+                    current_pattern,
+                    needs_reslice,
+                    0,
+                    current_methods,
+                    save_result=should_save_after,
                 )
             )
 
@@ -67,10 +74,16 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
         platform_changed = method.is_gpu != current_gpu
         start_main_pipeline = i == pipeline.main_pipeline_start
         global_input = needs_global_input(method)
-        start_new_section = global_input or save_previous_result or pattern_changed or platform_changed or start_main_pipeline
+        start_new_section = (
+            global_input
+            or save_previous_result
+            or pattern_changed
+            or platform_changed
+            or start_main_pipeline
+        )
 
         if start_new_section:
-            finish_section(pattern_changed)
+            finish_section(pattern_changed, save_previous_result or global_input)
             current_gpu = method.is_gpu
             if method.pattern != Pattern.all:
                 current_pattern = method.pattern
@@ -81,7 +94,7 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
                 current_pattern = method.pattern
         save_previous_result = should_save_after(method)
 
-    finish_section()
+    finish_section(should_save_after=save_previous_result)
 
     _backpropagate_section_patterns(pipeline, sections)
     _finalize_patterns(pipeline, sections)

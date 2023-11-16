@@ -50,7 +50,11 @@ def test_loader_load_produces_dataset(mocker: MockerFixture):
     )
     dataset = loader.load()
 
+    assert loader.detector_x == 5
+    assert loader.detector_y == 14
     np.testing.assert_array_equal(dataset.data, 1.0)
     np.testing.assert_array_equal(dataset.flats, 2.0)
     np.testing.assert_array_equal(dataset.darks, 3.0)
     np.testing.assert_array_equal(dataset.angles, 4.0)
+
+

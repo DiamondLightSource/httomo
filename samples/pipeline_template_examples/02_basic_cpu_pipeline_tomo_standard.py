@@ -6,46 +6,44 @@ import httomo
 from httomo.logger import setup_logger
 
 from httomo.methods_database.query import MethodDatabaseRepository
-from httomo.runner.backend_wrapper import make_backend_wrapper
-from httomo.runner.loader import make_loader
+from httomo.runner.backend_wrapper import BackendWrapper, make_backend_wrapper
+
+from httomo.runner import loader
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.task_runner import TaskRunner
 
+repo = MethodDatabaseRepository()
+comm = MPI.COMM_WORLD
 
-def build_pipeline(in_file: str, comm: MPI.Comm):
-    repo = MethodDatabaseRepository()
+
+def make_method(module_path: str, method_name: str, **kwargs) -> BackendWrapper:
+    return make_backend_wrapper(
+        repo, module_path=module_path, method_name=method_name, comm=comm, **kwargs
+    )
+
+
+def make_loader(module_path: str, method_name: str, **kwargs) -> loader.Loader:
+    return loader.make_loader(
+        repo, module_path=module_path, method_name=method_name, comm=comm, **kwargs
+    )
+
+
+def build_pipeline(in_file: str):
     loader = make_loader(
-        repo,
         "httomo.data.hdf.loaders",
         "standard_tomo",
-        comm,
         name="tomo",
         data_path="entry1/tomo_entry/data/data",
         image_key_path="entry1/tomo_entry/instrument/detector/image_key",
         dimension=1,
-        preview=[dict(), dict(), dict()],
+        preview=[dict(), dict(start=30, stop=60), dict()],
         pad=0,
         in_file=in_file,
     )
-    m_normalize = make_backend_wrapper(
-        repo,
-        module_path="tomopy.prep.normalize",
-        method_name="normalize",
-        comm=comm,
-        cutoff=None,
-    )
-    m_minuslog = make_backend_wrapper(
-        repo,
-        module_path="tomopy.prep.normalize",
-        method_name="minus_log",
-        comm=comm,
-    )
-    m_center = make_backend_wrapper(
-        repo,
-        module_path="tomopy.recon.rotation",
-        method_name="find_center_vo",
-        comm=comm,
+    m_center = make_method(
+        "tomopy.recon.rotation",
+        "find_center_vo",
         ind="mid",
         smin=-50,
         smax=50,
@@ -55,21 +53,30 @@ def build_pipeline(in_file: str, comm: MPI.Comm):
         drop=20,
         output_mapping={"cor": "center_value"},
     )
-    m_recon = make_backend_wrapper(
-        repo,
-        module_path="tomopy.recon.algorithm",
-        method_name="recon",
-        comm=comm,
+    m_normalize = make_method(
+        "tomopy.prep.normalize", "normalize", cutoff=None, averaging="mean"
+    )
+    m_minus_log = make_method("tomopy.prep.normalize", "minus_log")
+    m_remove_stripe = make_method(
+        "tomopy.prep.stripe",
+        "remove_stripe_fw",
+        level=None,
+        wname="db5",
+        sigma=2,
+        pad=True,
+    )
+    m_recon = make_method(
+        "tomopy.recon.algorithm",
+        "recon",
         center=OutputRef(m_center, "center_value"),
         sinogram_order=False,
         algorithm="gridrec",
         init_recon=None,
     )
-    m_save = make_backend_wrapper(
-        repo,
-        module_path="httomolib.misc.images",
-        method_name="save_to_images",
-        comm=comm,
+    m_filter = make_method("tomopy.misc.corr", "median_filter", size=3, axis=0)
+    m_save = make_method(
+        "httomolib.misc.images",
+        "save_to_images",
         subfolder_name="images",
         axis=0,
         file_format="tif",
@@ -78,15 +85,19 @@ def build_pipeline(in_file: str, comm: MPI.Comm):
         perc_range_max=100.0,
         jpeg_quality=95,
     )
-
     return Pipeline(
         loader=loader,
-        methods=[m_normalize, m_minuslog, m_center, m_recon, m_save],
-        main_pipeline_start=3,  
+        methods=[
+            m_center,
+            m_normalize,
+            m_minus_log,
+            m_remove_stripe,
+            m_recon,
+            m_filter,
+            m_save,
+        ],
+        main_pipeline_start=2,
     )
-    # main pipeline:
-    # essence is that if the max_slices calculation depends on an output of another method,
-    # the method needs to be in a new section.
 
 
 if __name__ == "__main__":
@@ -100,12 +111,10 @@ if __name__ == "__main__":
         f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
     )
 
-    comm = MPI.COMM_WORLD
     if comm.rank == 0:
         # Setup global logger object
         httomo.globals.logger = setup_logger(httomo.globals.run_out_dir)
 
-    pipeline = build_pipeline(sys.argv[1], comm)
+    pipeline = build_pipeline(sys.argv[1])
     runner = TaskRunner(pipeline, False)
     runner.execute()
-    

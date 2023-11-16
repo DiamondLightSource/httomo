@@ -61,11 +61,17 @@ def test_database_query_object():
     assert query.get_pattern() == Pattern.projection
     assert query.get_output_dims_change() is False
     assert query.get_implementation() == "gpu_cupy"
+    assert query.swap_dims_on_output() is False
     mempars = query.get_memory_gpu_params()
     assert len(mempars) == 3
     assert set(p.dataset for p in mempars) == set(["tomo", "flats", "darks"])
     assert all(p.method == "direct" for p in mempars)
     assert all(p.multiplier >= 1.0 for p in mempars)
+
+
+def test_database_query_object_recon_swap_output():
+    query = MethodsDatabaseQuery("tomopy.recon.algorithm", "recon")
+    assert query.swap_dims_on_output() is True
 
 
 def test_database_query_calculate_memory(mocker: MockerFixture):

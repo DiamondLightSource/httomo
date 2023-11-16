@@ -162,6 +162,9 @@ class MethodsDatabaseQuery(MethodQuery):
         module_mem_path += ".".join(path)
         return import_module(module_mem_path)
 
+    def swap_dims_on_output(self) -> bool:
+        return self.module_path.startswith("tomopy.recon")
+
 
 class MethodDatabaseRepository(MethodRepository):
     def query(self, module_path: str, method_name: str) -> MethodQuery:

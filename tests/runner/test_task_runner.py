@@ -8,7 +8,7 @@ from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.platform_section import sectionize
 from httomo.runner.task_runner import TaskRunner
-from httomo.utils import xp, gpu_enabled
+from httomo.utils import Pattern, xp, gpu_enabled
 from .testing_utils import make_test_loader, make_test_method
 
 
@@ -118,6 +118,25 @@ def test_can_determine_max_slices_with_gpu_estimator(
         methods[i].calculate_max_slices.assert_called_with(dummy_dataset, (10, 10), ANY)
 
 
+def test_can_determine_max_slices_with_cpu(
+    mocker: MockerFixture, dummy_dataset: DataSet
+):
+    loader = make_test_loader(mocker)
+    loader.load.return_value = dummy_dataset
+    methods = []
+    for i in range(3):
+        method = make_test_method(mocker, gpu=False)
+        methods.append(method)
+    p = Pipeline(loader=loader, methods=methods)
+    t = TaskRunner(p)
+    t._prepare()
+    s = sectionize(p, False)
+    assert s[0].gpu is False
+
+    t.determine_max_slices(s[0], 0)
+    assert s[0].max_slices == dummy_dataset.data.shape[0]
+
+
 def test_calls_update_side_inputs_after_call(
     mocker: MockerFixture, dummy_dataset: DataSet
 ):
@@ -189,3 +208,142 @@ def test_execute_section_calls_blockwise_execute(
     np.testing.assert_allclose(t.dataset.data, original_value * 2)
     calls = [call(ANY, ANY), call(ANY, ANY)]
     block_mock.assert_has_calls(calls)  # make sure we got called twice
+
+
+def test_execute_section_for_block(mocker: MockerFixture, dummy_dataset: DataSet):
+    loader = make_test_loader(mocker)
+    loader.load.return_value = dummy_dataset
+    method1 = make_test_method(mocker, method_name="m1")
+    method2 = make_test_method(mocker, method_name="m2")
+    p = Pipeline(loader=loader, methods=[method1, method2])
+    s = sectionize(p, False)
+    t = TaskRunner(p)
+    t._prepare()
+    exec_method = mocker.patch.object(t, "_execute_method", return_value=dummy_dataset)
+    t._execute_section_block(s[0], dummy_dataset)
+
+    calls = [call(method1, ANY, ANY), call(method2, ANY, ANY)]
+    exec_method.assert_has_calls(calls)
+
+
+@pytest.mark.parametrize("filebased", [False, True])
+def test_does_reslice_when_needed(
+    mocker: MockerFixture, dummy_dataset: DataSet, filebased: bool
+):
+    loader = make_test_loader(mocker)
+    loader.load.return_value = dummy_dataset
+    method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
+    method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
+    p = Pipeline(loader=loader, methods=[method1, method2])
+    reslice_dir = "./current" if filebased else None
+    t = TaskRunner(p, reslice_dir=reslice_dir)
+
+    exec_section = mocker.patch.object(t, "_execute_section")
+    reslice = mocker.patch("httomo.runner.task_runner.reslice")
+    reslice_filebased = mocker.patch("httomo.runner.task_runner.reslice_filebased")
+
+    t.execute()
+
+    exec_section.assert_has_calls([call(ANY, 0), call(ANY, 1)])
+    assert t.reslice_count == 1
+    if filebased:
+        reslice_filebased.assert_called_once_with(ANY, 1, 2, t.comm, reslice_dir)
+    else:
+        reslice.assert_called_once_with(ANY, 1, 2, t.comm)
+
+
+def test_warns_after_multiple_reslices(mocker: MockerFixture, dummy_dataset: DataSet):
+    loader = make_test_loader(mocker)
+    loader.load.return_value = dummy_dataset
+    method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
+    method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
+    method3 = make_test_method(mocker, method_name="m3", pattern=Pattern.projection)
+    p = Pipeline(loader=loader, methods=[method1, method2, method3])
+    t = TaskRunner(p)
+
+    exec_section = mocker.patch.object(t, "_execute_section")
+    reslice = mocker.patch("httomo.runner.task_runner.reslice")
+
+    t.execute()
+
+    exec_section.assert_has_calls([call(ANY, 0), call(ANY, 1), call(ANY, 2)])
+    reslice.assert_called()
+    assert t.reslice_count == 2
+    assert t.has_reslice_warn_printed is True
+
+
+def test_no_reslice_if_not_needed(mocker: MockerFixture, dummy_dataset: DataSet):
+    loader = make_test_loader(mocker)
+    loader.load.return_value = dummy_dataset
+    method1 = make_test_method(mocker, method_name="m1")
+    method2 = make_test_method(mocker, method_name="m2", gpu=True)
+    method3 = make_test_method(mocker, method_name="m3")
+    p = Pipeline(loader=loader, methods=[method1, method2, method3])
+    t = TaskRunner(p)
+
+    exec_section = mocker.patch.object(t, "_execute_section")
+    reslice = mocker.patch("httomo.runner.task_runner.reslice")
+
+    t.execute()
+
+    exec_section.assert_has_calls([call(ANY, 0), call(ANY, 1), call(ANY, 2)])
+    assert t.reslice_count == 0
+    assert t.has_reslice_warn_printed is False
+    reslice.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "method_name,dim,save",
+    [
+        ("m1", 3, True),
+        ("m1", 2, False),
+        ("save_to_images", 3, False),
+        ("find_center_vo", 3, False),
+    ],
+)
+def test_saves_intermediate_results(
+    mocker: MockerFixture,
+    dummy_dataset: DataSet,
+    method_name: str,
+    dim: int,
+    save: bool,
+):
+    if dim != 3:
+        dummy_dataset.data = np.squeeze(dummy_dataset.data[0, :, :])
+    loader = make_test_loader(mocker)
+    loader.load.return_value = dummy_dataset
+    loader.detector_x = 15
+    loader.detector_y = 42
+    method1 = make_test_method(
+        mocker,
+        method_name=method_name,
+        save_result=True,
+        module_path="path1",
+    )
+    method1.recon_algorithm = "testalgo"
+    method2 = make_test_method(mocker, method_name="m2")
+    p = Pipeline(loader=loader, methods=[method1, method2])
+    t = TaskRunner(p)
+
+    exec_section = mocker.patch.object(t, "_execute_section")
+    intermediate_save = mocker.patch("httomo.runner.task_runner.intermediate_dataset")
+
+    t.execute()
+
+    exec_section.assert_has_calls([call(ANY, 0), call(ANY, 1)])
+    if save:
+        intermediate_save.assert_called_once_with(
+            ANY,
+            ANY,
+            ANY,
+            15,
+            42,
+            2,  # loader + method1
+            method1.module_path,
+            method1.method_name,
+            "tomo",
+            1,
+            "testalgo",
+        )
+    else:
+        intermediate_save.assert_not_called()

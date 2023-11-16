@@ -1,15 +1,16 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from mpi4py import MPI
 import numpy as np
 import httomo
 from httomo.runner.dataset import DataSet
 from httomo.runner.backend_wrapper import make_backend_wrapper
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
+from httomo.runner.output_ref import OutputRef
 from httomo.utils import Pattern, xp, gpu_enabled
 from pytest_mock import MockerFixture
 import pytest
 
-from .testing_utils import make_mock_repo
+from .testing_utils import make_mock_repo, make_test_method
 
 
 def test_basewrapper_execute_transfers_to_gpu(
@@ -194,6 +195,42 @@ def test_wrapper_build_kwargs_parameter_not_given(
     assert "Cannot map method parameter param to a value" in str(e)
 
 
+def test_wrapper_access_outputref_params(mocker: MockerFixture, dummy_dataset: DataSet):
+    class FakeModule:
+        def fake_method(data, param):
+            assert param == 42
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+    )
+    m = make_test_method(mocker)
+    m.get_side_output.return_value = {"somepar": 42}
+    wrp["param"] = OutputRef(m, "somepar")
+
+    wrp.execute(dummy_dataset)
+
+
+def test_wrapper_access_outputref_params_kwargs(
+    mocker: MockerFixture, dummy_dataset: DataSet
+):
+    class FakeModule:
+        def fake_method(data, **kwargs):
+            assert kwargs["param"] == 42
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+    )
+    m = make_test_method(mocker)
+    m.get_side_output.return_value = {"somepar": 42}
+    wrp["param"] = OutputRef(m, "somepar")
+
+    wrp.execute(dummy_dataset)
+
+
 def test_wrapper_different_data_parameter_name(
     mocker: MockerFixture, dummy_dataset: DataSet
 ):
@@ -207,6 +244,26 @@ def test_wrapper_different_data_parameter_name(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
     dummy_dataset.data[:] = 42
+    wrp.execute(dummy_dataset)
+
+
+def test_wrapper_for_method_with_kwargs(mocker: MockerFixture, dummy_dataset: DataSet):
+    class FakeModule:
+        def fake_method(data, param, **kwargs):
+            assert param == 42.0
+            assert kwargs == {"extra": 123}
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        param=42.0,
+        extra=123,
+    )
+
     wrp.execute(dummy_dataset)
 
 
@@ -326,10 +383,11 @@ def test_wrapper_handles_reconstruction_angle_reshape(
     mocker: MockerFixture, dummy_dataset: DataSet
 ):
     class FakeModule:
-        def recon_tester(data, angles_radians):
+        # we give the angles a different name on purpose
+        def recon_tester(data, theta):
             np.testing.assert_array_equal(data, 1)
-            np.testing.assert_array_equal(angles_radians, 2)
-            assert data.shape[0] == len(angles_radians)
+            np.testing.assert_array_equal(theta, 2)
+            assert data.shape[0] == len(theta)
             return data
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
@@ -347,6 +405,62 @@ def test_wrapper_handles_reconstruction_angle_reshape(
     wrp.execute(dummy_dataset)
 
 
+def test_wrapper_handles_reconstruction_axisswap(
+    mocker: MockerFixture, dummy_dataset: DataSet
+):
+    class FakeModule:
+        def recon_tester(data, theta):
+            return data.swapaxes(0, 1)
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker),
+        "mocked_module_path.algorithm",
+        "recon_tester",
+        MPI.COMM_WORLD,
+    )
+    dummy_dataset.data = np.ones((13, 14, 15), dtype=np.float32)
+    res = wrp.execute(dummy_dataset)
+
+    assert res.data.shape == (13, 14, 15)
+
+
+def test_wrapper_gives_recon_algorithm(mocker: MockerFixture):
+    class FakeModule:
+        def recon_tester(data, algorithm, center):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker),
+        "test.algorithm",
+        "recon_tester",
+        MPI.COMM_WORLD,
+    )
+
+    assert wrp.recon_algorithm is None
+    wrp["algorithm"] = "testalgo"
+    assert wrp.recon_algorithm == "testalgo"
+
+
+def test_wrapper_gives_no_recon_algorithm_if_not_recon_method(mocker: MockerFixture):
+    class FakeModule:
+        def tester(data, algorithm):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker),
+        "test.something",
+        "tester",
+        MPI.COMM_WORLD,
+    )
+
+    assert wrp.recon_algorithm is None
+    wrp["algorithm"] = "testalgo"
+    assert wrp.recon_algorithm is None
+
+
 def test_wrapper_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
     class FakeModule:
         def rotation_tester(data):
@@ -358,11 +472,12 @@ def test_wrapper_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
         "mocked_module_path.rotation",
         "rotation_tester",
         MPI.COMM_WORLD,
+        output_mapping={"cor": "center"},
     )
 
     new_dataset = wrp.execute(dummy_dataset)
 
-    assert wrp.get_side_output() == {"cor": 42.0}
+    assert wrp.get_side_output() == {"center": 42.0}
     assert new_dataset == dummy_dataset  # note: not a deep comparison
 
 
@@ -378,16 +493,44 @@ def test_wrapper_rotation_360(mocker: MockerFixture, dummy_dataset: DataSet):
         "mocked_module_path.rotation",
         "rotation_tester",
         MPI.COMM_WORLD,
+        output_mapping={
+            "cor": "center",
+            "overlap": "overlap",
+            "overlap_position": "pos",
+        },
     )
     new_dataset = wrp.execute(dummy_dataset)
 
     assert wrp.get_side_output() == {
-        "cor": 42.0,
+        "center": 42.0,
         "overlap": 3.0,
-        "side": 1,
-        "overlap_position": 10.0,
+        "pos": 10.0,
     }
     assert new_dataset == dummy_dataset  # note: not a deep comparison
+
+
+@pytest.mark.parametrize("ind_par", ["mid", 2, None])
+def test_wrapper_rotation_ind_parameter(
+    mocker: MockerFixture, dummy_dataset: DataSet, ind_par: Union[str, int, None]
+):
+    class FakeModule:
+        def rotation_tester(data, ind: int):
+            if ind_par == "mid" or ind_par is None:
+                assert ind == (dummy_dataset.data.shape[1] + 1) // 2
+            else:
+                assert ind == ind_par
+            return 42.0
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker),
+        "mocked_module_path.rotation",
+        "rotation_tester",
+        MPI.COMM_WORLD,
+    )
+    if ind_par is not None:
+        wrp["ind"] = ind_par
+    wrp.execute(dummy_dataset)
 
 
 def test_wrapper_dezinging(mocker: MockerFixture, dummy_dataset: DataSet):
@@ -676,7 +819,7 @@ def test_wrapper_calculate_output_dims(mocker: MockerFixture):
 
 def test_wrapper_calculate_output_dims_no_change(mocker: MockerFixture):
     class FakeModule:
-        def test_method(data, testparam):
+        def test_method(data):
             return data
 
     mocker.patch("importlib.import_module", return_value=FakeModule)

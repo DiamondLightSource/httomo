@@ -170,13 +170,13 @@ def _parse_preview(
             step = slice_info.get("step", None)
 
             warn_on = False
-            if start is not None and start < 0 or start >= data_shape[idx]:
+            if start is not None and (start < 0 or start >= data_shape[idx]):
                 warn_on = True
                 str_warn = (
                     f"The 'start' preview {start} is outside the data dimension range"
                     + f" from 0 to {data_shape[idx]}"
                 )
-            if stop is not None and stop < 0 or stop >= data_shape[idx]:
+            if stop is not None and (stop < 0 or stop >= data_shape[idx]):
                 warn_on = True
                 str_warn = (
                     f"The 'stop' preview {start} is outside the data dimension range"

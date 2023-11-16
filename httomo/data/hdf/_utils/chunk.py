@@ -10,7 +10,9 @@ def save_dataset(
     out_folder: str,
     file_name: str,
     data: ndarray,
-    loader_info: LoaderData,
+    angles: ndarray,
+    detector_x: int,
+    detector_y: int,
     slice_dim: int = 1,
     chunks: Tuple = (150, 150, 10),
     path: str = "/data",
@@ -54,10 +56,10 @@ def save_dataset(
     ) as file:
         dataset = file.create_dataset(path, shape, dtype, chunks=chunks)        
         save_data_parallel(dataset, data, slice_dim)
-        file.create_dataset("/angles", data = loader_info.angles)
+        file.create_dataset("/angles", data = angles)
         file.create_dataset(file_name, data = [0,0])
         g1 = file.create_group('data_dims')
-        g1.create_dataset('detector_x_y',data = [loader_info.detector_x, loader_info.detector_y])
+        g1.create_dataset('detector_x_y',data = [detector_x, detector_y])
 
 def save_data_parallel(
     dataset: h5.Dataset,
