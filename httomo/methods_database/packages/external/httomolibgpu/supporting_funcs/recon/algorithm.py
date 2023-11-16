@@ -65,9 +65,8 @@ def _calc_memory_bytes_FBP(
         fft_type=CufftType.CUFFT_R2C,
         batch=batch,
     )
-    ifft_nx = det_width//2+1 if det_width % 2 == 0 else (det_width+1)//2
     ifftplan_size = cufft_estimate_1d(
-        nx=ifft_nx,
+        nx=det_width,
         fft_type=CufftType.CUFFT_C2R,
         batch=batch,
     )
