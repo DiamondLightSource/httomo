@@ -147,7 +147,7 @@ def test_paganin_filter_tomopy_memoryhook(slices, dim_x, dim_y, ensure_clean_mem
 @pytest.mark.parametrize("dim_x", [81, 260, 320])
 @pytest.mark.parametrize("dim_y", [340, 135, 96])
 def test_paganin_filter_savu_memoryhook(slices, dim_x, dim_y, ensure_clean_memory):    
-    data = cp.random.random_sample((slices, dim_x, dim_y), dtype=np.float32)
+    data = cp.random.random_sample((slices, dim_y, dim_x), dtype=np.float32)
     kwargs = {}
     kwargs["ratio"] = 250.0
     kwargs["energy"] = 53.0
