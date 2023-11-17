@@ -108,7 +108,7 @@ def _calc_memory_bytes_paganin_filter_tomopy(
         input_size +
         in_slice_size +
         out_slice_size +
-        2*complex_slice +
+        complex_slice +
         fftplan_size +
         ifftplan_size +
         res_slice
