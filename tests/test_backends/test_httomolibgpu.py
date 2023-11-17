@@ -121,7 +121,7 @@ def test_paganin_filter_tomopy_memoryhook(slices, dim_x, dim_y, ensure_clean_mem
     data = cp.random.random_sample((slices, dim_y, dim_x), dtype=np.float32)
     hook = MaxMemoryHook()
     with hook:
-        data_filtered = paganin_filter_tomopy(cp.copy(data)).get()
+        _ = paganin_filter_tomopy(cp.copy(data)).get()
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook   
