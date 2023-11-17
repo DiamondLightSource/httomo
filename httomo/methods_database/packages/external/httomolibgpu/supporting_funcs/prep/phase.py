@@ -26,6 +26,9 @@ import numpy as np
 
 from httomolibgpu.prep.phase import _shift_bit_length
 
+from httomo.cufft import CufftType, cufft_estimate_2d
+
+
 __all__ = [
     "_calc_memory_bytes_paganin_filter_savu",
     "_calc_memory_bytes_paganin_filter_tomopy",
@@ -86,12 +89,30 @@ def _calc_memory_bytes_paganin_filter_tomopy(
     
     # FFT needs complex inputs, so copy to complex happens first
     complex_slice = in_slice_size / dtype.itemsize * np.complex64().nbytes
-    fftplan_slice = complex_slice
+
+    # FFT plan estimations
+    ny = non_slice_dims_shape[0] + pad_tup[0][0] + pad_tup[0][1]
+    nx = non_slice_dims_shape[1] + pad_tup[1][0] + pad_tup[1][1]
+    fftplan_size = cufft_estimate_2d(
+        nx=nx,
+        ny=ny,
+        fft_type=CufftType.CUFFT_C2C,
+    )
+    ifftplan_size = fftplan_size
+
     grid_size = np.prod(non_slice_dims_shape) * np.float32().nbytes
     filter_size = grid_size
     res_slice = grid_size
     
-    tot_memory_bytes = int(input_size + in_slice_size + out_slice_size + 2*complex_slice + 0.5*fftplan_slice + res_slice)
+    tot_memory_bytes = int(
+        input_size +
+        in_slice_size +
+        out_slice_size +
+        2*complex_slice +
+        fftplan_size +
+        ifftplan_size +
+        res_slice
+    )
     subtract_bytes = int(filter_size + grid_size)
 
     return (tot_memory_bytes, subtract_bytes)
