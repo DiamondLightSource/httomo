@@ -76,14 +76,14 @@ def _calc_memory_bytes_paganin_filter_tomopy(
 
     input_size = np.prod(non_slice_dims_shape) * dtype.itemsize
 
-    in_slice_size = (
+    padded_size = (
         (non_slice_dims_shape[0] + pad_tup[0][0]+pad_tup[0][1])
         * (non_slice_dims_shape[1] + pad_tup[1][0]+pad_tup[1][1])
         * dtype.itemsize
     )
     
     # FFT needs complex inputs, so copy to complex happens first
-    complex_slice = in_slice_size / dtype.itemsize * np.complex64().nbytes
+    complex_padded_size = padded_size / dtype.itemsize * np.complex64().nbytes
 
     # FFT plan estimations
     ny = non_slice_dims_shape[0] + pad_tup[0][0] + pad_tup[0][1]
@@ -101,8 +101,8 @@ def _calc_memory_bytes_paganin_filter_tomopy(
     
     tot_memory_bytes = int(
         input_size +
-        in_slice_size +
-        complex_slice +
+        padded_size +
+        complex_padded_size +
         fftplan_size +
         ifftplan_size +
         res_slice
