@@ -141,7 +141,7 @@ class BackendWrapper:
             return
         for k in self._config_params.keys():
             if k not in self.parameters:
-                raise ValueError(f"Unsupported keyword argument given: {k}")
+                raise ValueError(f"{self.method_name}: Unsupported keyword argument given: {k}")
 
     @property
     def recon_algorithm(self) -> Optional[str]:
@@ -253,7 +253,7 @@ class BackendWrapper:
 
     def _transfer_data(self, dataset: DataSet):
         if not self.cupyrun:
-            dataset.to_cpu()  # TODO: confirm this
+            dataset.to_cpu()  
             return dataset
 
         assert gpu_enabled, "GPU method used on a system without GPU support"
@@ -435,6 +435,7 @@ class RotationWrapper(BackendWrapper):
         flats1d = 1.0 if flats is None else flats.mean(0, dtype=np.float32)
         darks1d = 0.0 if darks is None else darks.mean(0, dtype=np.float32)
         denom = np.array(flats1d - darks1d)
+        sino = sino.astype(np.float32)
         if np.shape(denom) == tuple():
             sino -= (
                 darks1d / denom

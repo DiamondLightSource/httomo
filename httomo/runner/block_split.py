@@ -91,7 +91,7 @@ class BlockAggregator:
         to_idx[self._slicing_dim] = slice(
             self._current_idx, self._current_idx + append_size
         )
-        # Note that this also does GPU->CPU copy if needed
+        dataset.to_cpu()
         self._dataset.data[tuple(to_idx)] = dataset.data
         self._current_idx += append_size
 
