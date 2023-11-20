@@ -1,4 +1,4 @@
-from typing import Optional, TypeAlias, Union
+from typing import Optional, Tuple, TypeAlias, Union
 from httomo.utils import gpu_enabled, xp
 import numpy as np
 
@@ -31,11 +31,21 @@ class DataSet:
         angles: np.ndarray,
         flats: np.ndarray,
         darks: np.ndarray,
+        global_shape: Tuple[int, int, int] = None,
+        global_index: Tuple[int, int, int] = (0, 0, 0)
     ):
         self._angles = angles
         self._flats = flats
         self._darks = darks
         self._data = data
+
+        self._global_shape = global_shape
+        if self._global_shape is None:
+            self._global_shape = data.shape
+        elif any(i < d for i,d in zip(self._global_shape, data.shape)):
+            raise ValueError(f"A global shape of {self._global_shape} is incompatible with a local shape {data.shape}")
+        self._global_index = global_index
+
         self.lock()
         if gpu_enabled:
             import cupy as cp
@@ -49,6 +59,22 @@ class DataSet:
             self._angles_dirty: bool = False
             self._flats_dirty: bool = False
             self._darks_dirty: bool = False
+
+    @property
+    def global_shape(self) -> Tuple[int, int, int]:
+        """Overall shape of the data, regardless of chunking and blocking"""
+        return self._global_shape
+    
+    @property
+    def shape(self) -> Tuple[int, int, int]:
+        """Shape of this part of the dataset"""
+        return self._data.shape
+    
+    @property
+    def global_index(self) -> Tuple[int, int, int]:
+        """The starting indices in all 3 dimensions of this data block within the
+        global data."""
+        return self._global_index
 
     @property
     def angles(self) -> generic_array:
@@ -237,6 +263,8 @@ class DataSetBlock(DataSet):
     def __init__(self, base: DataSet, dim: int, start: int, length: int):
         idx_expr = [slice(None), slice(None), slice(None)]
         idx_expr[dim] = slice(start, start + length)
+        global_index = [0, 0, 0]
+        global_index[dim] = start
         # we pass an empty size-0 array to base class, as we're not going to use these
         # fields anyway here (we access the originals via self._base)
         super().__init__(
@@ -244,6 +272,8 @@ class DataSetBlock(DataSet):
             flats=np.empty((0,)),
             darks=np.empty((0,)),
             angles=np.empty((0,)),
+            global_shape=base.shape,
+            global_index=tuple(global_index)
         )
         self._base = base
 

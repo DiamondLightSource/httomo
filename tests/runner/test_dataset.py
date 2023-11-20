@@ -8,8 +8,8 @@ from httomo.runner.dataset import DataSet
 @pytest.fixture
 def dataset():
     data = np.ones((10, 10, 10), dtype=np.float32)
-    flats = 2 * np.ones((10, 10), dtype=np.float32)
-    darks = 3 * np.ones((10, 10), dtype=np.float32)
+    flats = 2 * np.ones((2, 10, 10), dtype=np.float32)
+    darks = 3 * np.ones((2, 10, 10), dtype=np.float32)
     angles = 4 * np.ones((20,), dtype=np.float32)
 
     return DataSet(data, angles, flats, darks)
@@ -32,6 +32,39 @@ def test_works_with_numpy(dataset):
     np.testing.assert_array_equal(dataset.angles_radians, 4)
     assert dataset.is_gpu is False
     assert dataset.is_locked is True
+
+
+def test_can_get_shape_info(dataset):
+    assert dataset.global_shape == dataset.data.shape
+    assert dataset.global_index == (0, 0, 0)
+    assert dataset.shape == dataset.global_shape
+
+
+def test_chunked_shape(dataset):
+    d2 = DataSet(
+        data=dataset.data[2:5, :, :],
+        darks=dataset.darks,
+        flats=dataset.flats,
+        angles=dataset.angles,
+        global_shape=dataset.data.shape,
+        global_index=(2, 0, 0),
+    )
+
+    assert d2.global_shape == dataset.data.shape
+    assert d2.global_index == (2, 0, 0)
+    assert d2.shape == np.shape(dataset.data[2:5, :, :])
+
+
+def test_chunked_shape_invalid(dataset):
+    with pytest.raises(ValueError) as e:
+        DataSet(
+            data=dataset.data[2:5, :, :],
+            darks=dataset.darks,
+            flats=dataset.flats,
+            angles=dataset.angles,
+            global_shape=(2, 2, 2),
+        )
+    assert "(2, 2, 2) is incompatible" in str(e)
 
 
 def test_darks_not_writeable_numpy(dataset):
@@ -175,7 +208,9 @@ def test_attributes_array(dataset):
 @pytest.mark.parametrize(
     "dim,start,length", [(0, 0, 3), (0, 3, 2), (1, 0, 4), (1, 3, 1)]
 )
-def test_can_slice_dataset_to_blocks(dataset: DataSet, dim: int, start: int, length: int):
+def test_can_slice_dataset_to_blocks(
+    dataset: DataSet, dim: int, start: int, length: int
+):
     # assign increasing numbers
     dataset.data[:] = np.arange(dataset.data.size, dtype=dataset.data.dtype).reshape(
         dataset.data.shape
@@ -188,10 +223,14 @@ def test_can_slice_dataset_to_blocks(dataset: DataSet, dim: int, start: int, len
         np.testing.assert_array_equal(
             dataset.data[start : start + length, :, :], block.data
         )
+        assert block.global_shape == dataset.shape
+        assert block.global_index == (start, 0, 0)
     else:
         np.testing.assert_array_equal(
             dataset.data[:, start : start + length, :], block.data
         )
+        assert block.global_shape == dataset.shape
+        assert block.global_index == (0, start, 0)
     # make sure the other fields share the same memory address
     assert (
         block.darks.__array_interface__["data"]

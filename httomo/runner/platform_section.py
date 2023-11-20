@@ -98,6 +98,7 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
 
     _backpropagate_section_patterns(pipeline, sections)
     _finalize_patterns(pipeline, sections)
+    _set_method_patterns(sections)
 
     return sections
 
@@ -142,3 +143,9 @@ def _finalize_patterns(
 
     assert all(s.pattern != Pattern.all for s in sections)
     assert pipeline.loader_pattern != Pattern.all
+
+
+def _set_method_patterns(sections: List[PlatformSection]):
+    for s in sections:
+        for m in s:
+            m.pattern = s.pattern

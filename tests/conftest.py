@@ -251,6 +251,6 @@ def dummy_dataset() -> DataSet:
     return DataSet(
         data=np.ones((10, 10, 10)),
         angles=np.ones((20,)),
-        flats=3 * np.ones((10, 10)),
-        darks=2 * np.ones((10, 10)),
+        flats=3 * np.ones((5, 10, 10)),
+        darks=2 * np.ones((5, 10, 10)),
     )

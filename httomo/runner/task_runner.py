@@ -182,6 +182,7 @@ class TaskRunner:
             start_time,
             self.pipeline.loader.pattern,
             self.pipeline.loader.method_name,
+            self.pipeline.loader.package_name
         )
         self.method_index += 1
 
@@ -191,7 +192,7 @@ class TaskRunner:
         start_time = self._log_task_start(num, method.pattern, method.method_name)
         dataset = method.execute(dataset)
         self.update_side_inputs(method.get_side_output())
-        self._log_task_end(num, start_time, method.pattern, method.method_name)
+        self._log_task_end(num, start_time, method.pattern, method.method_name, method.package_name)
         return dataset
 
     def update_side_inputs(self, side_outputs: Dict[str, Any]):
@@ -217,10 +218,10 @@ class TaskRunner:
         )
         return time.perf_counter_ns()
 
-    def _log_task_end(self, num: int, start_time: int, pattern: Pattern, name: str):
+    def _log_task_end(self, num: int, start_time: int, pattern: Pattern, name: str, package: str = 'httomo'):
         output_str_list = [
             f"    Finished task {num} (pattern={pattern.name}): {name} (",
-            "httomo",
+            package,
             f") Took {float(time.perf_counter_ns() - start_time)*1e-6:.2f}ms",
         ]
         log_once(output_str_list, comm=self.comm, colour=self.output_colour_list)

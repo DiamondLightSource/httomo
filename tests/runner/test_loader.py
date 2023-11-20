@@ -31,9 +31,9 @@ def test_loader_load_produces_dataset(mocker: MockerFixture):
             assert in_file == "some_test_file"
             return LoaderData(
                 data=np.ones((10, 10, 10), dtype=np.float32),
-                flats=2 * np.ones((10, 10), dtype=np.float32),
-                darks=3 * np.ones((10, 10), dtype=np.float32),
-                angles=4 * np.ones((10, 10), dtype=np.float32),
+                flats=2 * np.ones((2, 10, 10), dtype=np.float32),
+                darks=3 * np.ones((2, 10, 10), dtype=np.float32),
+                angles=4 * np.ones((10,), dtype=np.float32),
                 angles_total=10,
                 detector_x=5,
                 detector_y=14,
@@ -52,9 +52,9 @@ def test_loader_load_produces_dataset(mocker: MockerFixture):
 
     assert loader.detector_x == 5
     assert loader.detector_y == 14
+    assert dataset.global_index == (0, 0, 0)
+    assert dataset.global_shape == (10, 10, 10)
     np.testing.assert_array_equal(dataset.data, 1.0)
     np.testing.assert_array_equal(dataset.flats, 2.0)
     np.testing.assert_array_equal(dataset.darks, 3.0)
     np.testing.assert_array_equal(dataset.angles, 4.0)
-
-

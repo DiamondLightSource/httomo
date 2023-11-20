@@ -4,9 +4,9 @@ from httomo.data import mpiutil
 from httomo.runner.dataset import DataSet
 from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.runner.output_ref import OutputRef
-from httomo.utils import Colour, gpu_enabled, log_once, log_rank, xp
+from httomo.utils import Colour, Pattern, gpu_enabled, log_once, log_rank, xp
 from httomo.runner.gpu_utils import gpumem_cleanup
-
+from httomo.data.hdf._utils.reslice import single_sino_reslice
 
 import numpy as np
 from mpi4py.MPI import Comm
@@ -112,6 +112,10 @@ class BackendWrapper:
     @property
     def is_gpu(self) -> bool:
         return not self.is_cpu
+
+    @property
+    def package_name(self) -> str:
+        return self.module_path.split(".")[0]
 
     def __getitem__(self, key: str) -> DictValues:
         """Get a parameter for the method using dictionary notation (wrapper["param"])"""
@@ -383,21 +387,62 @@ class RotationWrapper(BackendWrapper):
     """Wraps rotation (centering) methods, which output the original dataset untouched,
     but have a side output for the center of rotation data (handling both 180 and 360).
     """
+    
+    def __init__(self, method_repository: MethodRepository, module_path: str, method_name: str, comm: Comm, output_mapping: Dict[str, str] = {}, **kwargs):
+        super().__init__(method_repository, module_path, method_name, comm, output_mapping, **kwargs)
+        if self.pattern not in [Pattern.sinogram, Pattern.all]:
+            raise NotImplementedError("Base method for rotation wrapper only supports sinogram or all")
+        if self.is_gpu is True:
+            raise NotImplementedError("Rotation wrappers only work on CPU for now, as they don't work with blocked data")
+        # we must use projection in this wrapper now, to determine the full sino slice with MPI
+        # TODO: extend this to support Pattern.all and blocking on GPU
+        self.pattern = Pattern.projection
 
     def _build_kwargs(
         self, dict_params: BackendWrapper.DictType, dataset: DataSet | None = None
     ) -> Dict[str, Any]:
-        if "ind" not in self.parameters:
-            return super()._build_kwargs(dict_params, dataset)
-
         # if the function needs "ind" argument, and we either don't give it or have it as "mid",
         # we set it to the mid point of the data dim 1
         updated_params = dict_params
         if not "ind" in dict_params or (
             dict_params["ind"] == "mid" or dict_params["ind"] is None
         ):
-            updated_params = {**dict_params, "ind": (dataset.data.shape[1] + 1) // 2}
+            updated_params = {**dict_params, "ind": (dataset.data.shape[1] - 1) // 2}
         return super()._build_kwargs(updated_params, dataset)
+
+    def _run_method(self, dataset: DataSet, args: Dict[str, Any]) -> DataSet:
+        assert "ind" in args
+        slice_for_cor = args["ind"]
+        sino_slice = single_sino_reslice(dataset.data, slice_for_cor)
+        res: Optional[Union[tuple, float, np.float32]] = None
+        if self.comm.rank == 0:
+            sino_slice = self.normalize_sino(
+                sino_slice,
+                dataset.flats[:, slice_for_cor, :],
+                dataset.darks[:, slice_for_cor, :],
+            )
+            args["ind"] = 0
+            args[self.parameters[0]] = sino_slice
+            res = self.method(**args)
+        if self.comm.size > 1:
+            res = self.comm.bcast(res, root=0)
+        return self._process_return_type(res, dataset)
+
+    @classmethod
+    def normalize_sino(
+        cls, sino: np.ndarray, flats: Optional[np.ndarray], darks: Optional[np.ndarray]
+    ) -> np.ndarray:
+        flats1d = 1.0 if flats is None else flats.mean(0, dtype=np.float32)
+        darks1d = 0.0 if darks is None else darks.mean(0, dtype=np.float32)
+        denom = np.array(flats1d - darks1d)
+        if np.shape(denom) == tuple():
+            sino -= (
+                darks1d / denom
+            )  # zero denominator not possible with above conditions
+        else:
+            denom[np.where(denom == 0.0)] = 1.0
+            sino -= darks1d / denom
+        return sino[:, np.newaxis, :]
 
     def _process_return_type(self, ret: Any, input_dataset: DataSet) -> DataSet:
         if type(ret) == tuple:

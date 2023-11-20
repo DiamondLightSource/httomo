@@ -139,6 +139,8 @@ def test_determine_platform_sections_pattern_all_combine(
     assert s0.gpu is False
     assert len(s0) == 2
     assert s0.pattern == expected
+    assert s0[0].pattern == expected
+    assert s0[1].pattern == expected
     assert loader.pattern == expected
 
 

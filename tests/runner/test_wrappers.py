@@ -3,7 +3,7 @@ from mpi4py import MPI
 import numpy as np
 import httomo
 from httomo.runner.dataset import DataSet
-from httomo.runner.backend_wrapper import make_backend_wrapper
+from httomo.runner.backend_wrapper import RotationWrapper, make_backend_wrapper
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.output_ref import OutputRef
 from httomo.utils import Pattern, xp, gpu_enabled
@@ -11,6 +11,24 @@ from pytest_mock import MockerFixture
 import pytest
 
 from .testing_utils import make_mock_repo, make_test_method
+
+
+def test_basewrapper_get_name_and_paths(mocker: MockerFixture):
+    class FakeModule:
+        def fake_method(data):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker),
+        "testmodule.path",
+        "fake_method",
+        MPI.COMM_WORLD,
+    )
+
+    assert wrp.method_name == "fake_method"
+    assert wrp.module_path == "testmodule.path"
+    assert wrp.package_name == "testmodule"
 
 
 def test_basewrapper_execute_transfers_to_gpu(
@@ -461,9 +479,161 @@ def test_wrapper_gives_no_recon_algorithm_if_not_recon_method(mocker: MockerFixt
     assert wrp.recon_algorithm is None
 
 
+def test_wrapper_rotation_only_works_on_cpu(mocker: MockerFixture):
+    class FakeModule:
+        def rotation_tester(data, ind=None):
+            return 42.0
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    with pytest.raises(NotImplementedError):
+        make_backend_wrapper(
+            make_mock_repo(mocker, implementation="gpu_cupy"),
+            "mocked_module_path.rotation",
+            "rotation_tester",
+            MPI.COMM_WORLD,
+        )
+
+
+def test_wrapper_rotation_fails_with_projection_method(mocker: MockerFixture):
+    class FakeModule:
+        def rotation_tester(data, ind=None):
+            return 42.0
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    with pytest.raises(NotImplementedError):
+        make_backend_wrapper(
+            make_mock_repo(mocker, pattern=Pattern.projection),
+            "mocked_module_path.rotation",
+            "rotation_tester",
+            MPI.COMM_WORLD,
+        )
+
+
+@pytest.mark.parametrize("rank", [0, 1])
+@pytest.mark.parametrize("ind_par", ["mid", 2, None])
+def test_wrapper_rotation_gathers_single_sino_slice(
+    mocker: MockerFixture,
+    dummy_dataset: DataSet,
+    rank: int,
+    ind_par: Union[str, int, None],
+):
+    class FakeModule:
+        def rotation_tester(data, ind=None):
+            assert rank == 0  # for rank 1, it shouldn't be called
+            assert data.ndim == 2  # for 1 slice only
+            return 42.0
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker),
+        "mocked_module_path.rotation",
+        "rotation_tester",
+        MPI.COMM_WORLD,
+    )
+    if ind_par is not None:
+        wrp["ind"] = ind_par
+    reslice = mocker.patch(
+        "httomo.runner.backend_wrapper.single_sino_reslice",
+        return_value=dummy_dataset.data[:, 2, :],
+    )
+    normalize = mocker.patch.object(
+        wrp, "normalize_sino", return_value=dummy_dataset.data[:, 2, :]
+    )
+    comm = mocker.patch.object(wrp, "comm")
+    comm.rank = rank
+    comm.size = 2
+    comm.bcast.return_value = 42.0
+
+    res = wrp.execute(dummy_dataset)
+
+    assert wrp.pattern == Pattern.projection
+    np.testing.assert_array_equal(res.data, dummy_dataset.data)
+
+    if ind_par == "mid" or ind_par is None:
+        reslice.assert_called_once_with(
+            dummy_dataset.data, (dummy_dataset.data.shape[1] - 1) // 2
+        )
+    else:
+        reslice.assert_called_once_with(dummy_dataset.data, ind_par)
+    if rank == 0:
+        normalize.assert_called_once()
+    else:
+        normalize.assert_not_called()
+
+
+def test_wrapper_rotation_normalize_sino_no_darks_flats():
+    ret = RotationWrapper.normalize_sino(
+        np.ones((10, 10), dtype=np.float32), None, None
+    )
+
+    assert ret.shape == (10, 1, 10)
+    np.testing.assert_allclose(np.squeeze(ret), 1.0)
+
+
+def test_wrapper_rotation_normalize_sino_same_darks_flats():
+    ret = RotationWrapper.normalize_sino(
+        np.ones((10, 10), dtype=np.float32),
+        0.5
+        * np.ones(
+            (
+                10,
+                10,
+            ),
+            dtype=np.float32,
+        ),
+        0.5
+        * np.ones(
+            (
+                10,
+                10,
+            ),
+            dtype=np.float32,
+        ),
+    )
+
+    assert ret.shape == (10, 1, 10)
+    np.testing.assert_allclose(ret, 0.5)
+
+
+def test_wrapper_rotation_normalize_sino_scalar():
+    ret = RotationWrapper.normalize_sino(
+        np.ones((10, 10), dtype=np.float32),
+        0.5
+        * np.ones(
+            (
+                10,
+                10,
+            ),
+            dtype=np.float32,
+        ),
+        0.5
+        * np.ones(
+            (
+                10,
+                10,
+            ),
+            dtype=np.float32,
+        ),
+    )
+
+    assert ret.shape == (10, 1, 10)
+    np.testing.assert_allclose(ret, 0.5)
+
+
+def test_wrapper_rotation_normalize_sino_different_darks_flats():
+    ret = RotationWrapper.normalize_sino(
+        2.0 * np.ones((10, 10), dtype=np.float32),
+        1.0 * np.ones((10, 10), dtype=np.float32),
+        0.5 * np.ones((10, 10), dtype=np.float32),
+    )
+
+    assert ret.shape == (10, 1, 10)
+    np.testing.assert_allclose(np.squeeze(ret), 1.0)
+
+
 def test_wrapper_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
     class FakeModule:
-        def rotation_tester(data):
+        def rotation_tester(data, ind):
             return 42.0  # center of rotation
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
@@ -473,6 +643,7 @@ def test_wrapper_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
         "rotation_tester",
         MPI.COMM_WORLD,
         output_mapping={"cor": "center"},
+        ind=5,
     )
 
     new_dataset = wrp.execute(dummy_dataset)
@@ -483,7 +654,7 @@ def test_wrapper_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
 
 def test_wrapper_rotation_360(mocker: MockerFixture, dummy_dataset: DataSet):
     class FakeModule:
-        def rotation_tester(data):
+        def rotation_tester(data, ind):
             # cor, overlap, side, overlap_position - from find_center_360
             return 42.0, 3.0, 1, 10.0
 
@@ -498,6 +669,7 @@ def test_wrapper_rotation_360(mocker: MockerFixture, dummy_dataset: DataSet):
             "overlap": "overlap",
             "overlap_position": "pos",
         },
+        ind=5,
     )
     new_dataset = wrp.execute(dummy_dataset)
 
@@ -507,30 +679,6 @@ def test_wrapper_rotation_360(mocker: MockerFixture, dummy_dataset: DataSet):
         "pos": 10.0,
     }
     assert new_dataset == dummy_dataset  # note: not a deep comparison
-
-
-@pytest.mark.parametrize("ind_par", ["mid", 2, None])
-def test_wrapper_rotation_ind_parameter(
-    mocker: MockerFixture, dummy_dataset: DataSet, ind_par: Union[str, int, None]
-):
-    class FakeModule:
-        def rotation_tester(data, ind: int):
-            if ind_par == "mid" or ind_par is None:
-                assert ind == (dummy_dataset.data.shape[1] + 1) // 2
-            else:
-                assert ind == ind_par
-            return 42.0
-
-    mocker.patch("importlib.import_module", return_value=FakeModule)
-    wrp = make_backend_wrapper(
-        make_mock_repo(mocker),
-        "mocked_module_path.rotation",
-        "rotation_tester",
-        MPI.COMM_WORLD,
-    )
-    if ind_par is not None:
-        wrp["ind"] = ind_par
-    wrp.execute(dummy_dataset)
 
 
 def test_wrapper_dezinging(mocker: MockerFixture, dummy_dataset: DataSet):

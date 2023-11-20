@@ -1,10 +1,11 @@
 from typing import Any, Dict, Protocol
 from mpi4py import MPI
 from mpi4py.MPI import Comm
+from httomo.data.hdf._utils.chunk import get_data_shape_and_offset
 from httomo.data.hdf.loaders import LoaderData
 from httomo.runner.dataset import DataSet
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import Pattern
+from httomo.utils import Pattern, _get_slicing_dim
 
 
 import os
@@ -18,6 +19,7 @@ class LoaderInterface(Protocol):
     pattern: Pattern = Pattern.all
     reslice: bool = False
     method_name: str
+    package_name: str = 'httomo'
 
     def load(self) -> DataSet:
         ...  # pragma: no cover
@@ -65,8 +67,11 @@ class Loader(BackendWrapper, LoaderInterface):
         return dataset
 
     def _process_loader_data(self, ret: LoaderData) -> DataSet:
+        full_shape, start_indices = get_data_shape_and_offset(ret.data, _get_slicing_dim(self.pattern) - 1, self.comm)
         dataset = DataSet(
-            data=ret.data, angles=ret.angles, flats=ret.flats, darks=ret.darks
+            data=ret.data, angles=ret.angles, flats=ret.flats, darks=ret.darks,
+            global_index=start_indices,
+            global_shape=full_shape
         )
         self._detector_x = ret.detector_x
         self._detector_y = ret.detector_y
