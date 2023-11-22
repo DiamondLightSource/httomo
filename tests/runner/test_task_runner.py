@@ -333,17 +333,18 @@ def test_saves_intermediate_results(
     exec_section.assert_has_calls([call(ANY, 0), call(ANY, 1)])
     if save:
         intermediate_save.assert_called_once_with(
-            ANY,
-            ANY,
-            ANY,
-            15,
-            42,
-            2,  # loader + method1
-            method1.module_path,
-            method1.method_name,
-            "tomo",
-            1,
-            "testalgo",
+            ANY,  # data
+            ANY,  # run_out_dir
+            ANY,  # angles
+            15,  # detector_x
+            42,  # detector_y
+            ANY,  # comm
+            2,  # method index: loader + method1
+            method1.package_name,  # package_name
+            method1.method_name,  # method_name
+            "tomo",  # dataset name
+            1,  # slicing dim
+            "testalgo",  # algo name
         )
     else:
         intermediate_save.assert_not_called()

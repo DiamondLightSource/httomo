@@ -85,8 +85,9 @@ class TaskRunner:
             self.dataset.angles,
             self.pipeline.loader.detector_x,
             self.pipeline.loader.detector_y,
+            self.comm,
             self.method_index,
-            last_method.module_path,
+            last_method.package_name,
             last_method.method_name,
             "tomo",
             slice_dim,
@@ -191,7 +192,8 @@ class TaskRunner:
     ) -> DataSet:
         start_time = self._log_task_start(num, method.pattern, method.method_name)
         dataset = method.execute(dataset)
-        self.update_side_inputs(method.get_side_output())
+        if dataset.is_last_in_chunk:
+            self.update_side_inputs(method.get_side_output())
         self._log_task_end(num, start_time, method.pattern, method.method_name, method.package_name)
         return dataset
 

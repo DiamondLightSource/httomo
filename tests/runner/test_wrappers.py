@@ -1,4 +1,5 @@
 from typing import List, Optional, Union
+from unittest.mock import ANY
 from mpi4py import MPI
 import numpy as np
 import httomo
@@ -479,21 +480,6 @@ def test_wrapper_gives_no_recon_algorithm_if_not_recon_method(mocker: MockerFixt
     assert wrp.recon_algorithm is None
 
 
-def test_wrapper_rotation_only_works_on_cpu(mocker: MockerFixture):
-    class FakeModule:
-        def rotation_tester(data, ind=None):
-            return 42.0
-
-    mocker.patch("importlib.import_module", return_value=FakeModule)
-    with pytest.raises(NotImplementedError):
-        make_backend_wrapper(
-            make_mock_repo(mocker, implementation="gpu_cupy"),
-            "mocked_module_path.rotation",
-            "rotation_tester",
-            MPI.COMM_WORLD,
-        )
-
-
 def test_wrapper_rotation_fails_with_projection_method(mocker: MockerFixture):
     class FakeModule:
         def rotation_tester(data, ind=None):
@@ -509,18 +495,13 @@ def test_wrapper_rotation_fails_with_projection_method(mocker: MockerFixture):
         )
 
 
-@pytest.mark.parametrize("rank", [0, 1])
-@pytest.mark.parametrize("ind_par", ["mid", 2, None])
-def test_wrapper_rotation_gathers_single_sino_slice(
-    mocker: MockerFixture,
-    dummy_dataset: DataSet,
-    rank: int,
-    ind_par: Union[str, int, None],
+def test_wrapper_rotation_accumulates_blocks(
+    mocker: MockerFixture, dummy_dataset: DataSet
 ):
     class FakeModule:
         def rotation_tester(data, ind=None):
-            assert rank == 0  # for rank 1, it shouldn't be called
             assert data.ndim == 2  # for 1 slice only
+            np.testing.assert_array_equal(data, dummy_dataset.data[:, 4, :])
             return 42.0
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
@@ -529,15 +510,67 @@ def test_wrapper_rotation_gathers_single_sino_slice(
         "mocked_module_path.rotation",
         "rotation_tester",
         MPI.COMM_WORLD,
+        output_mapping={"cor": "cor"},
+    )
+    normalize = mocker.patch.object(
+        wrp, "normalize_sino", side_effect=lambda sino, flats, darks: sino
+    )
+    # generate varying numbers so the comparison above works
+    dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
+        dummy_dataset.shape
+    )
+    b1 = dummy_dataset.make_block(0, 0, dummy_dataset.shape[0] // 2)
+    b2 = dummy_dataset.make_block(
+        0, dummy_dataset.shape[0] // 2, dummy_dataset.shape[0] // 2
+    )
+    wrp.execute(b1)
+    normalize.assert_not_called()
+    wrp.execute(b2)
+    normalize.assert_called_once()
+    assert wrp.get_side_output() == {"cor": 42.0}
+
+
+@pytest.mark.parametrize("gpu", [False, True])
+@pytest.mark.parametrize("rank", [0, 1])
+@pytest.mark.parametrize("ind_par", ["mid", 2, None])
+def test_wrapper_rotation_gathers_single_sino_slice(
+    mocker: MockerFixture,
+    dummy_dataset: DataSet,
+    rank: int,
+    ind_par: Union[str, int, None],
+    gpu: bool
+):
+    class FakeModule:
+        def rotation_tester(data, ind=None):
+            assert rank == 0  # for rank 1, it shouldn't be called
+            assert data.ndim == 2  # for 1 slice only
+            assert ind == 0
+            if ind_par == "mid" or ind_par is None:
+                xp.testing.assert_array_equal(
+                    dummy_dataset.data[:, (dummy_dataset.data.shape[1] - 1) // 2, :],
+                    data,
+                )
+            else:
+                xp.testing.assert_array_equal(dummy_dataset.data[:, ind_par, :], data)
+            return 42.0
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_backend_wrapper(
+        make_mock_repo(mocker, implementation="gpu_cupy"),
+        "mocked_module_path.rotation",
+        "rotation_tester",
+        MPI.COMM_WORLD,
     )
     if ind_par is not None:
         wrp["ind"] = ind_par
-    reslice = mocker.patch(
-        "httomo.runner.backend_wrapper.single_sino_reslice",
-        return_value=dummy_dataset.data[:, 2, :],
+    dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
+        dummy_dataset.shape
     )
+    if gpu:
+        dummy_dataset.to_gpu()
+    mocker.patch.object(wrp, "_gather_sino_slice", side_effect=lambda s: wrp.sino)
     normalize = mocker.patch.object(
-        wrp, "normalize_sino", return_value=dummy_dataset.data[:, 2, :]
+        wrp, "normalize_sino", side_effect=lambda sino, f, d: sino
     )
     comm = mocker.patch.object(wrp, "comm")
     comm.rank = rank
@@ -547,18 +580,48 @@ def test_wrapper_rotation_gathers_single_sino_slice(
     res = wrp.execute(dummy_dataset)
 
     assert wrp.pattern == Pattern.projection
-    np.testing.assert_array_equal(res.data, dummy_dataset.data)
-
-    if ind_par == "mid" or ind_par is None:
-        reslice.assert_called_once_with(
-            dummy_dataset.data, (dummy_dataset.data.shape[1] - 1) // 2
-        )
-    else:
-        reslice.assert_called_once_with(dummy_dataset.data, ind_par)
+    xp.testing.assert_array_equal(res.data, dummy_dataset.data)
+    comm.bcast.assert_called_once()
     if rank == 0:
         normalize.assert_called_once()
     else:
         normalize.assert_not_called()
+
+
+@pytest.mark.parametrize("rank", [0, 1])
+def test_wrapper_gather_sino_slice(mocker: MockerFixture, rank: int):
+    class FakeModule:
+        def rotation_tester(data, ind=None):
+            return 42.0
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp: RotationWrapper = make_backend_wrapper(
+        make_mock_repo(mocker),
+        "mocked_module_path.rotation",
+        "rotation_tester",
+        MPI.COMM_WORLD,
+    )
+    if rank == 0:
+        wrp.sino = np.arange(2 * 6, dtype=np.float32).reshape((2, 6))
+    else:
+        wrp.sino = np.arange(2 * 6, 5 * 6, dtype=np.float32).reshape((3, 6))
+    comm = mocker.patch.object(wrp, "comm")
+    comm.rank = rank
+    comm.size = 2
+    if rank == 0:
+        comm.gather.return_value = [2 * 6, 3 * 6]
+    else:
+        comm.gather.return_value = [2 * 6]
+
+    res = wrp._gather_sino_slice((5, 13, 6))
+
+    comm.Gatherv.assert_called_once()
+    if rank == 0:
+        assert res.shape == (5, 6)
+        comm.gather.assert_called_once_with(2 * 6)
+    else:
+        assert res is None
+        comm.gather.assert_called_once_with(3 * 6)
 
 
 def test_wrapper_rotation_normalize_sino_no_darks_flats():
@@ -629,6 +692,23 @@ def test_wrapper_rotation_normalize_sino_different_darks_flats():
 
     assert ret.shape == (10, 1, 10)
     np.testing.assert_allclose(np.squeeze(ret), 1.0)
+
+@pytest.mark.skipif(
+    not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
+    reason="skipped as cupy is not available",
+)
+@pytest.mark.cupy
+def test_wrapper_rotation_normalize_sino_different_darks_flats_gpu():
+    ret = RotationWrapper.normalize_sino(
+        2.0 * xp.ones((10, 10), dtype=np.float32),
+        1.0 * xp.ones((10, 10), dtype=np.float32),
+        0.5 * xp.ones((10, 10), dtype=np.float32),
+    )
+
+    assert ret.shape == (10, 1, 10)
+    assert getattr(ret, "device", None) is not None
+    xp.testing.assert_allclose(xp.squeeze(ret), 1.0)
+
 
 
 def test_wrapper_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
@@ -703,6 +783,12 @@ def test_wrapper_dezinging(mocker: MockerFixture, dummy_dataset: DataSet):
 
     # we double them all, so we expect all 3 to be twice the input
     np.testing.assert_array_equal(newset.data, 2)
+    np.testing.assert_array_equal(newset.flats, 6)
+    np.testing.assert_array_equal(newset.darks, 8)
+
+    # it should only update the darks/flats once, but still apply to the data
+    newset = wrp.execute(newset)
+    np.testing.assert_array_equal(newset.data, 4)
     np.testing.assert_array_equal(newset.flats, 6)
     np.testing.assert_array_equal(newset.darks, 8)
 
@@ -801,7 +887,9 @@ def test_wrapper_method_queries(
 @pytest.mark.parametrize("implementation", ["cpu", "gpu", "gpu_cupy"])
 @pytest.mark.parametrize(
     "memory_gpu",
-    [[GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")], []],
+    [[GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")], 
+     [GpuMemoryRequirement(dataset="tomo", multiplier=0.0, method="direct")],
+     []],
 )
 def test_wrapper_calculate_max_slices_direct(
     mocker: MockerFixture,
@@ -833,6 +921,8 @@ def test_wrapper_calculate_max_slices_direct(
     max_slices_expected = 5
     multiplier = memory_gpu[0].multiplier if memory_gpu != [] else 1
     available_memory_in = int(databytes * max_slices_expected * multiplier)
+    if available_memory_in == 0:
+        available_memory_in = 5
     max_slices, available_memory = wrp.calculate_max_slices(
         dummy_dataset, shape, available_memory_in
     )

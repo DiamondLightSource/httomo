@@ -1,7 +1,8 @@
+from mpi4py import MPI
 from httomo._stats.globals import min_max_mean_std
 import httomo.globals
 from httomo.data import mpiutil
-from httomo.runner.dataset import DataSet
+from httomo.runner.dataset import DataSet, DataSetBlock
 from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.runner.output_ref import OutputRef
 from httomo.utils import Colour, Pattern, gpu_enabled, log_once, log_rank, xp
@@ -141,7 +142,9 @@ class BackendWrapper:
             return
         for k in self._config_params.keys():
             if k not in self.parameters:
-                raise ValueError(f"{self.method_name}: Unsupported keyword argument given: {k}")
+                raise ValueError(
+                    f"{self.method_name}: Unsupported keyword argument given: {k}"
+                )
 
     @property
     def recon_algorithm(self) -> Optional[str]:
@@ -253,7 +256,7 @@ class BackendWrapper:
 
     def _transfer_data(self, dataset: DataSet):
         if not self.cupyrun:
-            dataset.to_cpu()  
+            dataset.to_cpu()
             return dataset
 
         assert gpu_enabled, "GPU method used on a system without GPU support"
@@ -344,6 +347,9 @@ class BackendWrapper:
                         non_slice_dims_shape, dataset.data.dtype, **self.config_params
                     )
 
+        if memory_bytes_method == 0:
+            return available_memory - subtract_bytes, available_memory
+        
         return (
             available_memory - subtract_bytes
         ) // memory_bytes_method, available_memory
@@ -386,17 +392,38 @@ class ReconstructionWrapper(BackendWrapper):
 class RotationWrapper(BackendWrapper):
     """Wraps rotation (centering) methods, which output the original dataset untouched,
     but have a side output for the center of rotation data (handling both 180 and 360).
+
+    It wraps the actual algorithm to find the center and does more. In particular:
+    - takes a single sinogram from the full dataset (across all MPI processes)
+    - normalises it
+    - calls the center-finding algorithm on this normalised data slice
+    - outputs the center of rotation as a side output
+
+    For block-wise processing support, it accumulates the sinogram in-memory in the method
+    until the sinogram is complete for the current process. Then it uses MPI to add the data
+    from the other processes to it.
     """
-    
-    def __init__(self, method_repository: MethodRepository, module_path: str, method_name: str, comm: Comm, output_mapping: Dict[str, str] = {}, **kwargs):
-        super().__init__(method_repository, module_path, method_name, comm, output_mapping, **kwargs)
+
+    def __init__(
+        self,
+        method_repository: MethodRepository,
+        module_path: str,
+        method_name: str,
+        comm: Comm,
+        output_mapping: Dict[str, str] = {},
+        **kwargs,
+    ):
+        super().__init__(
+            method_repository, module_path, method_name, comm, output_mapping, **kwargs
+        )
         if self.pattern not in [Pattern.sinogram, Pattern.all]:
-            raise NotImplementedError("Base method for rotation wrapper only supports sinogram or all")
-        if self.is_gpu is True:
-            raise NotImplementedError("Rotation wrappers only work on CPU for now, as they don't work with blocked data")
+            raise NotImplementedError(
+                "Base method for rotation wrapper only supports sinogram or all"
+            )
         # we must use projection in this wrapper now, to determine the full sino slice with MPI
-        # TODO: extend this to support Pattern.all and blocking on GPU
+        # TODO: extend this to support Pattern.all
         self.pattern = Pattern.projection
+        self.sino: Optional[np.ndarray] = None
 
     def _build_kwargs(
         self, dict_params: BackendWrapper.DictType, dataset: DataSet | None = None
@@ -407,13 +434,51 @@ class RotationWrapper(BackendWrapper):
         if not "ind" in dict_params or (
             dict_params["ind"] == "mid" or dict_params["ind"] is None
         ):
-            updated_params = {**dict_params, "ind": (dataset.data.shape[1] - 1) // 2}
+            updated_params = {**dict_params, "ind": (dataset.global_shape[1] - 1) // 2}
         return super()._build_kwargs(updated_params, dataset)
+
+    def _gather_sino_slice(self, global_shape: Tuple[int, int]):
+        if self.comm.size == 1:
+            return self.sino
+
+        # now aggregate with MPI
+        if self.comm.rank == 0:
+            recvbuf = np.empty(global_shape[0] * global_shape[2], dtype=np.float32)
+        else:
+            recvbuf = None
+        sendbuf = self.sino.reshape(self.sino.size)
+        sizes_rec = self.comm.gather(sendbuf.size)
+        self.comm.Gatherv(
+            (sendbuf, self.sino.size, MPI.FLOAT),
+            (recvbuf, sizes_rec, MPI.FLOAT),
+            root=0,
+        )
+        if self.comm.rank == 0:
+            return recvbuf.reshape((global_shape[0], global_shape[2]))
+        else:
+            return None
 
     def _run_method(self, dataset: DataSet, args: Dict[str, Any]) -> DataSet:
         assert "ind" in args
         slice_for_cor = args["ind"]
-        sino_slice = single_sino_reslice(dataset.data, slice_for_cor)
+        # append to internal sinogram, until we have the last block
+        if self.sino is None:
+            self.sino = np.empty(
+                (dataset.chunk_shape[0], dataset.chunk_shape[2]), dtype=np.float32
+            )
+        data = dataset.data[:, slice_for_cor, :]
+        if dataset.is_gpu:
+            data = data.get()
+        self.sino[
+            dataset.chunk_index[0] : dataset.chunk_index[0] + dataset.shape[0], :
+        ] = data
+
+        if not dataset.is_last_in_chunk:  # exit if we didn't process all blocks yet
+            return dataset
+
+        sino_slice = self._gather_sino_slice(dataset.global_shape)
+
+        # now calculate the center of rotation on rank 0 and broadcast
         res: Optional[Union[tuple, float, np.float32]] = None
         if self.comm.rank == 0:
             sino_slice = self.normalize_sino(
@@ -421,6 +486,8 @@ class RotationWrapper(BackendWrapper):
                 dataset.flats[:, slice_for_cor, :],
                 dataset.darks[:, slice_for_cor, :],
             )
+            if self.cupyrun:
+                sino_slice = xp.asarray(sino_slice)
             args["ind"] = 0
             args[self.parameters[0]] = sino_slice
             res = self.method(**args)
@@ -434,13 +501,17 @@ class RotationWrapper(BackendWrapper):
     ) -> np.ndarray:
         flats1d = 1.0 if flats is None else flats.mean(0, dtype=np.float32)
         darks1d = 0.0 if darks is None else darks.mean(0, dtype=np.float32)
-        denom = np.array(flats1d - darks1d)
+        denom = flats1d - darks1d
         sino = sino.astype(np.float32)
         if np.shape(denom) == tuple():
-            sino -= (
-                darks1d / denom
-            )  # zero denominator not possible with above conditions
+            sino -= darks1d  # denominator is always 1
+        elif getattr(denom, "device", None) is not None:
+            # GPU
+            denom[xp.where(denom == 0.0)] = 1.0
+            sino = xp.asarray(sino)
+            sino -= darks1d / denom
         else:
+            # CPU
             denom[np.where(denom == 0.0)] = 1.0
             sino -= darks1d / denom
         return sino[:, np.newaxis, :]
@@ -478,16 +549,22 @@ class DezingingWrapper(BackendWrapper):
         assert (
             method_name == "remove_outlier3d"
         ), "Only remove_outlier3d is supported at the moment"
+        self._flats_darks_processed = False
 
-    def execute(self, dataset: DataSet) -> DataSet:
+    def execute(self, dataset: Union[DataSetBlock, DataSet]) -> DataSet:
         # check if data needs to be transfered host <-> device
         dataset = self._transfer_data(dataset)
 
         dataset.data = self.method(dataset.data, **self._config_params)
-        dataset.unlock()
-        dataset.darks = self.method(dataset.darks, **self._config_params)
-        dataset.flats = self.method(dataset.flats, **self._config_params)
-        dataset.lock()
+        if not self._flats_darks_processed:
+            darks = self.method(dataset.darks, **self._config_params)
+            flats = self.method(dataset.flats, **self._config_params)
+            ds = dataset.base if isinstance(dataset, DataSetBlock) else dataset
+            ds.unlock()
+            ds.darks = darks
+            ds.flats = flats
+            ds.lock()
+            self._flats_darks_processed = True
 
         return dataset
 

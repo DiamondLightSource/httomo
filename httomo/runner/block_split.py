@@ -106,12 +106,15 @@ class BlockAggregator:
                     + " and already has data blocks"
                 )
             new_full_shape = np.insert(other_dims, self._slicing_dim, self._full_size)
+            new_global_shape = np.insert(other_dims, self._slicing_dim, self._dataset.global_shape[self._slicing_dim])
             # need a new object, otherwise we might modify the source in-place
             self._dataset = DataSet(
                 data=np.empty(new_full_shape, append_dtype),
                 darks=self._dataset.darks,
                 flats=self._dataset.flats,
                 angles=self._dataset.angles,
+                global_index=self._dataset.global_index,
+                global_shape=tuple(new_global_shape)
             )
 
     @property

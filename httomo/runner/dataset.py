@@ -32,7 +32,7 @@ class DataSet:
         flats: np.ndarray,
         darks: np.ndarray,
         global_shape: Tuple[int, int, int] = None,
-        global_index: Tuple[int, int, int] = (0, 0, 0)
+        global_index: Tuple[int, int, int] = (0, 0, 0),
     ):
         self._angles = angles
         self._flats = flats
@@ -42,8 +42,10 @@ class DataSet:
         self._global_shape = global_shape
         if self._global_shape is None:
             self._global_shape = data.shape
-        elif any(i < d for i,d in zip(self._global_shape, data.shape)):
-            raise ValueError(f"A global shape of {self._global_shape} is incompatible with a local shape {data.shape}")
+        elif any(i < d for i, d in zip(self._global_shape, data.shape)):
+            raise ValueError(
+                f"A global shape of {self._global_shape} is incompatible with a local shape {data.shape}"
+            )
         self._global_index = global_index
 
         self.lock()
@@ -51,12 +53,10 @@ class DataSet:
             import cupy as cp
 
             # cached GPU data - transferred lazily
-            self._angles_gpu: Optional[cp.ndarray] = None
             self._flats_gpu: Optional[cp.ndarray] = None
             self._darks_gpu: Optional[cp.ndarray] = None
             # keep track if fields have been reset on GPU, to ensure
             # transferring back to CPU if needed
-            self._angles_dirty: bool = False
             self._flats_dirty: bool = False
             self._darks_dirty: bool = False
 
@@ -64,12 +64,12 @@ class DataSet:
     def global_shape(self) -> Tuple[int, int, int]:
         """Overall shape of the data, regardless of chunking and blocking"""
         return self._global_shape
-    
+
     @property
     def shape(self) -> Tuple[int, int, int]:
         """Shape of this part of the dataset"""
         return self._data.shape
-    
+
     @property
     def global_index(self) -> Tuple[int, int, int]:
         """The starting indices in all 3 dimensions of this data block within the
@@ -77,20 +77,35 @@ class DataSet:
         return self._global_index
 
     @property
-    def angles(self) -> generic_array:
+    def chunk_index(self) -> Tuple[int, int, int]:
+        """The index of this dataset within the chunk handled by the current process"""
+        return (0, 0, 0)
+
+    @property
+    def chunk_shape(self) -> Tuple[int, int, int]:
+        """Shape of the full chunk handled by the current process"""
+        return self.shape
+
+    @property
+    def is_last_in_chunk(self) -> bool:
+        """Check if the current dataset is the final one for the chunk handled by the current process"""
+        return True
+
+    @property
+    def angles(self) -> np.ndarray:
         return self._get_value("angles")
 
     @angles.setter
-    def angles(self, new_data: generic_array):
+    def angles(self, new_data: np.ndarray):
         self._set_value("angles", new_data)
 
     @property
-    def angles_radians(self) -> generic_array:
+    def angles_radians(self) -> np.ndarray:
         """Alias for angles"""
         return self.angles
 
     @angles_radians.setter
-    def angles_radians(self, new_data: generic_array):
+    def angles_radians(self, new_data: np.ndarray):
         """Alias setter for angles"""
         self.angles = new_data
 
@@ -183,7 +198,7 @@ class DataSet:
     def make_block(self, dim: int, start: int, length: int):
         """Create a block from this dataset, which slices in dimension `dim`
         starting at index `start`, and taking `length` elements.
-        
+
         The returned block is a `DataSet` object itself, but it references the
         original one for the darks/flats/angles arrays and re-use the GPU-cached
         version of those if needed."""
@@ -209,6 +224,10 @@ class DataSet:
         `data_is_gpu` can be used to tell this method to assume the data array
         is on GPU or not - it will be used instead of self.is_gpu if given"""
 
+        # angles always stay on CPU
+        if field == "angles":
+            return getattr(self, f"_{field}")
+
         is_gpu = data_is_gpu if data_is_gpu is not None else self.is_gpu
         if is_gpu:
             setattr(
@@ -229,7 +248,10 @@ class DataSet:
         It is a helper used in the setters for darks, flats, angles"""
         if self.is_locked:
             raise ValueError(f"attempt to reset {field} in a locked dataset")
-        if not gpu_enabled:
+        if not gpu_enabled or field == "angles":
+            assert (
+                getattr(new_data, "device", None) is None
+            ), f"GPU array for CPU-only field {field}"
             setattr(self, f"_{field}", new_data)
             return
         if getattr(new_data, "device", None) is not None:
@@ -253,9 +275,9 @@ class DataSet:
 
 class DataSetBlock(DataSet):
     """Represents a slice/block of a dataset, as returned returned by `make_block`
-    in a DataSet object. It is a DataSet (inherits from it) and users can mostly 
-    ignore the fact that it's just a view. 
-    
+    in a DataSet object. It is a DataSet (inherits from it) and users can mostly
+    ignore the fact that it's just a view.
+
     It stores the base object internally and routes all calls for the auxilliary
     arrays to the base object (darks/flats/angles). It does not store these directly.
     """
@@ -263,8 +285,8 @@ class DataSetBlock(DataSet):
     def __init__(self, base: DataSet, dim: int, start: int, length: int):
         idx_expr = [slice(None), slice(None), slice(None)]
         idx_expr[dim] = slice(start, start + length)
-        global_index = [0, 0, 0]
-        global_index[dim] = start
+        global_index = list(base.global_index)
+        global_index[dim] += start
         # we pass an empty size-0 array to base class, as we're not going to use these
         # fields anyway here (we access the originals via self._base)
         super().__init__(
@@ -272,14 +294,41 @@ class DataSetBlock(DataSet):
             flats=np.empty((0,)),
             darks=np.empty((0,)),
             angles=np.empty((0,)),
-            global_shape=base.shape,
-            global_index=tuple(global_index)
+            global_shape=base.global_shape,
+            global_index=tuple(global_index),
         )
         self._base = base
+        idx = [0, 0, 0]
+        idx[dim] = start
+        self._chunk_index = tuple(idx)
+        self._dim = dim
 
     @property
     def is_block(self) -> bool:
         return True
+
+    @property
+    def chunk_index(self) -> Tuple[int, int, int]:
+        """The index of this dataset within the chunk handled by the current process"""
+        return self._chunk_index
+
+    @property
+    def chunk_shape(self) -> Tuple[int, int, int]:
+        """Shape of the full chunk handled by the current process"""
+        return self._base.shape
+
+    @property
+    def is_last_in_chunk(self) -> bool:
+        """Check if the current dataset is the final one for the chunk handled by the current process"""
+        return (
+            self.chunk_index[self._dim] + self.shape[self._dim]
+            == self.chunk_shape[self._dim]
+        )
+
+    @property
+    def base(self) -> DataSet:
+        """Get the original (unblocked) dataset"""
+        return self._base
 
     def _set_value(self, field: str, new_data: DataSet.generic_array):
         raise ValueError(f"Cannot update field {field} in a block/slice dataset")

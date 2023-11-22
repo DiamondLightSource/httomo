@@ -232,3 +232,69 @@ def test_aggregator_moves_to_cpu_if_not_already(dummy_dataset: DataSet):
     _ = BlockAggregator(dummy_dataset, Pattern.projection)
 
     assert dummy_dataset.is_cpu
+
+
+@pytest.mark.parametrize("max_slices", [1, 3, 5, 100000])
+def test_preserves_global_slice_info(dummy_dataset: DataSet, max_slices: int):
+    dummy_dataset = DataSet(
+        data=dummy_dataset.data,
+        flats=dummy_dataset.flats,
+        darks=dummy_dataset.darks,
+        angles=dummy_dataset.angles,
+        global_index=(10, 0, 0),  # 10 slices from global start
+        global_shape=(  # global shape is 20 more slices than local
+            20 + dummy_dataset.shape[0],
+            dummy_dataset.shape[1],
+            dummy_dataset.shape[2],
+        ),
+    )
+    splitter = BlockSplitter(dummy_dataset, Pattern.projection, max_slices)
+    aggregator = BlockAggregator(dummy_dataset, Pattern.projection)
+
+    count = 10
+    for block in splitter:
+        assert block.shape[1:] == dummy_dataset.shape[1:]
+        assert block.shape[0] <= dummy_dataset.shape[0]
+        assert block.shape[0] <= max_slices
+        assert block.global_index == (count, 0, 0)
+        assert block.global_shape == dummy_dataset.global_shape
+        aggregator.append(block)
+        count += block.shape[0]
+
+    res = aggregator.full_dataset
+
+    assert res.global_shape == dummy_dataset.global_shape
+    assert res.global_index == (10, 0, 0)
+
+
+def test_preserves_global_slice_info_changed_dims(dummy_dataset: DataSet):
+    dummy_dataset = DataSet(
+        data=dummy_dataset.data,
+        flats=dummy_dataset.flats,
+        darks=dummy_dataset.darks,
+        angles=dummy_dataset.angles,
+        global_index=(10, 0, 0),  # 10 slices from global start
+        global_shape=(  # global shape is 20 more slices than local
+            20 + dummy_dataset.shape[0],
+            dummy_dataset.shape[1],
+            dummy_dataset.shape[2],
+        ),
+    )
+
+    splitter = BlockSplitter(
+        dummy_dataset, Pattern.projection, dummy_dataset.data.shape[0] // 2
+    )
+    aggregator = BlockAggregator(dummy_dataset, Pattern.projection)
+
+    for block in splitter:
+        shape = list(block.data.shape)
+        shape[1] += 3
+        shape[2] += 5
+        block.data = 2.0 * np.ones(tuple(shape), dtype=block.data.dtype)
+        aggregator.append(block)
+
+    res = aggregator.full_dataset
+
+    assert res.global_shape == (dummy_dataset.global_shape[0], dummy_dataset.global_shape[1] + 3, dummy_dataset.global_shape[2] + 5)
+    assert res.global_index == (10, 0, 0)
+    

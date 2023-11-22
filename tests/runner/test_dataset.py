@@ -103,13 +103,21 @@ def test_gpu_transfer_and_back(dataset):
         assert dataset.data.device.id == 0
         assert dataset.is_gpu is True
         assert dataset.flats.device.id == 0
-        assert dataset.angles.device.id == 0
         assert dataset.darks.device.id == 0
-        assert dataset.angles_radians.device.id == 0
 
         dataset.to_cpu()
 
         assert dataset.is_gpu is False
+
+
+@pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")
+@pytest.mark.cupy
+def test_angles_stay_on_cpu(dataset):
+    with xp.cuda.Device(0):
+        dataset.to_gpu()
+
+        assert getattr(dataset.angles, "device", None) is None
+        assert getattr(dataset.angles_radians, "device", None) is None
 
 
 @pytest.mark.skipif(
@@ -137,9 +145,7 @@ def test_reset_field_while_locked(dataset, field):
 
 @pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")
 @pytest.mark.cupy
-@pytest.mark.parametrize(
-    "field", ["darks", "flats", "angles", "angles_radians", "dark", "flat"]
-)
+@pytest.mark.parametrize("field", ["darks", "flats", "dark", "flat"])
 def test_reset_field_gpu(dataset, field):
     original_value = getattr(dataset, field).ravel()[0]
     with xp.cuda.Device(0):
@@ -160,9 +166,7 @@ def test_reset_field_gpu(dataset, field):
 
 @pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")
 @pytest.mark.cupy
-@pytest.mark.parametrize(
-    "field", ["darks", "flats", "angles", "angles_radians", "dark", "flat"]
-)
+@pytest.mark.parametrize("field", ["darks", "flats", "dark", "flat"])
 def test_reset_field_on_cpu_with_cached_gpudata(dataset, field):
     original_value = getattr(dataset, field).ravel()[0]
     with xp.cuda.Device(0):
@@ -219,17 +223,23 @@ def test_can_slice_dataset_to_blocks(
 
     assert block.is_block is True
     assert dataset.is_block is False
+    assert block.base.shape == dataset.shape
+    assert block.global_shape == dataset.shape
+    assert block.chunk_shape == dataset.shape
+    assert dataset.chunk_shape == dataset.shape
+    assert block.chunk_index == block.global_index
+    assert dataset.chunk_index == (0, 0, 0)
+    assert dataset.is_last_in_chunk is True
+    assert block.is_last_in_chunk is False
     if dim == 0:
         np.testing.assert_array_equal(
             dataset.data[start : start + length, :, :], block.data
         )
-        assert block.global_shape == dataset.shape
         assert block.global_index == (start, 0, 0)
     else:
         np.testing.assert_array_equal(
             dataset.data[:, start : start + length, :], block.data
         )
-        assert block.global_shape == dataset.shape
         assert block.global_index == (0, start, 0)
     # make sure the other fields share the same memory address
     assert (
@@ -244,6 +254,12 @@ def test_can_slice_dataset_to_blocks(
         block.angles.__array_interface__["data"]
         == dataset.angles.__array_interface__["data"]
     )
+
+
+def test_is_last_block_in_chunk_property(dataset: DataSet):
+    assert dataset.is_last_in_chunk is True
+    assert dataset.make_block(0, dataset.shape[0] - 2, 2).is_last_in_chunk is True
+    assert dataset.make_block(0, dataset.shape[0] - 4, 2).is_last_in_chunk is False
 
 
 def test_cannot_slice_a_block(dataset: DataSet):
@@ -269,25 +285,21 @@ def test_a_block_reuses_base_cached_gpu_fields(dataset: DataSet):
         dataset.to_gpu()
         darks_orig = dataset.darks
         flats_orig = dataset.flats
-        angles_orig = dataset.angles
         dataset.to_cpu()
 
         block = dataset.make_block(0, 1, 2)
         block.to_gpu()
         darks_new = block.darks
         flats_new = block.flats
-        angles_new = block.angles
 
         assert block.is_gpu is True
         # check that they are on the right device
         assert block.data.device.id == 0
         assert block.flats.device.id == 0
         assert block.darks.device.id == 0
-        assert block.angles.device.id == 0
         # check that cupy arrays are pointing to the same GPU memory
         assert darks_orig.data == darks_new.data
         assert flats_orig.data == flats_new.data
-        assert angles_orig.data == angles_new.data
 
 
 @pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")

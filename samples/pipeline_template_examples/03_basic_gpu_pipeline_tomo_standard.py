@@ -41,9 +41,8 @@ def build_pipeline(in_file: str):
         pad=0,
         in_file=in_file,
     )
-    # m_dezinging = make_method("httomolibgpu.misc.corr", "remove_outlier3d", kernel_size=3, dif=0.1)
     m_center = make_method(
-        "tomopy.recon.rotation",   # GPU not supported now, to avoid blocking
+        "httomolibgpu.recon.rotation",  
         "find_center_vo",
         ind="mid",
         smin=-50,
@@ -54,6 +53,7 @@ def build_pipeline(in_file: str):
         drop=20,
         output_mapping={"cor": "center_value"},
     )
+    m_dezinging = make_method("httomolibgpu.misc.corr", "remove_outlier3d", kernel_size=3, dif=0.1)
     m_normalize = make_method(
         "httomolibgpu.prep.normalize", "normalize", cutoff=10.0, minus_log=True, nonnegativity=False
     )
@@ -85,8 +85,8 @@ def build_pipeline(in_file: str):
     return Pipeline(
         loader=loader,
         methods=[
-            # m_dezinging,
             m_center,
+            m_dezinging,
             m_normalize,
             m_remove_stripe,
             m_recon,
