@@ -295,7 +295,7 @@ class DataSetBlock(DataSet):
             darks=np.empty((0,)),
             angles=np.empty((0,)),
             global_shape=base.global_shape,
-            global_index=tuple(global_index),
+            global_index=tuple(global_index),  # type: ignore
         )
         self._base = base
         idx = [0, 0, 0]
