@@ -54,6 +54,9 @@ class BlockSplitter:
             def __init__(self, splitter):
                 self.splitter = splitter
                 self._current = 0
+                
+            def __iter__(self) -> 'BlockIterator':
+                return self
 
             def __next__(self) -> DataSet:
                 if self._current >= len(self.splitter):
