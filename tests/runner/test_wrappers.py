@@ -397,9 +397,9 @@ def test_wrapper_passes_darks_flats_to_normalize(
 
     importmock.assert_called_once_with("mocked_module_path")
 
-
+@pytest.mark.parametrize("block", [False, True])
 def test_wrapper_handles_reconstruction_angle_reshape(
-    mocker: MockerFixture, dummy_dataset: DataSet
+    mocker: MockerFixture, dummy_dataset: DataSet, block: bool
 ):
     class FakeModule:
         # we give the angles a different name on purpose
@@ -420,8 +420,10 @@ def test_wrapper_handles_reconstruction_angle_reshape(
     dummy_dataset.unlock()
     dummy_dataset.angles[:] = 2
     dummy_dataset.lock()
+    
+    input = dummy_dataset.make_block(0, 0, 3) if block else dummy_dataset
 
-    wrp.execute(dummy_dataset)
+    wrp.execute(input)
 
 
 def test_wrapper_handles_reconstruction_axisswap(
