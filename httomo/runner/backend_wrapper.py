@@ -30,7 +30,7 @@ class BackendWrapper:
         wrapper["parameter"] = value
     """
 
-    DictValues = Union[str, bool, int, float, os.PathLike]
+    DictValues = Union[str, bool, int, float, os.PathLike, np.ndarray, xp.ndarray]
     DictType = Dict[str, Union[DictValues, List[DictValues]]]
 
     def __init__(
@@ -327,12 +327,14 @@ class BackendWrapper:
             # loop over the dataset names given in the library file and extracting
             # the corresponding dimensions from the available datasets
             if field.dataset in ["flats", "darks"]:
+                assert field.multiplier is not None
                 # for normalisation module dealing with flats and darks separately
                 array: np.ndarray = getattr(dataset, field.dataset)
                 available_memory -= int(field.multiplier * array.nbytes)
             else:
                 # deal with the rest of the data
                 if field.method == "direct":
+                    assert field.multiplier is not None
                     # this calculation assumes a direct (simple) correspondence through multiplier
                     memory_bytes_method += int(
                         field.multiplier
@@ -349,7 +351,7 @@ class BackendWrapper:
 
         if memory_bytes_method == 0:
             return available_memory - subtract_bytes, available_memory
-        
+
         return (
             available_memory - subtract_bytes
         ) // memory_bytes_method, available_memory
@@ -364,15 +366,17 @@ class ReconstructionWrapper(BackendWrapper):
         # Truncating angles if the angular dimension has got a different size
         datashape0 = dataset.data.shape[0]
         if datashape0 != len(dataset.angles_radians):
-            dataset.unlock()
-            dataset.angles_radians = dataset.angles_radians[0:datashape0]
-            dataset.lock()
+            ds = dataset.base if isinstance(dataset, DataSetBlock) else dataset
+            ds.unlock()
+            ds.angles_radians = dataset.angles_radians[0:datashape0]
+            ds.lock()
         self._input_shape = dataset.data.shape
         return super()._preprocess_data(dataset)
 
     def _build_kwargs(
-        self, dict_params: BackendWrapper.DictType, dataset: DataSet | None = None
+        self, dict_params: BackendWrapper.DictType, dataset: Optional[DataSet] = None
     ) -> Dict[str, Any]:
+        assert dataset is not None, "Reconstruction wrappers require a dataset"
         # for recon methods, we assume that the second parameter is the angles in all cases
         assert (
             len(self.parameters) >= 2
@@ -426,8 +430,11 @@ class RotationWrapper(BackendWrapper):
         self.sino: Optional[np.ndarray] = None
 
     def _build_kwargs(
-        self, dict_params: BackendWrapper.DictType, dataset: DataSet | None = None
+        self, dict_params: BackendWrapper.DictType, dataset: Optional[DataSet] = None
     ) -> Dict[str, Any]:
+        assert (
+            dataset is not None
+        ), "Rotation wrapper cannot work without a dataset input"
         # if the function needs "ind" argument, and we either don't give it or have it as "mid",
         # we set it to the mid point of the data dim 1
         updated_params = dict_params
@@ -437,25 +444,28 @@ class RotationWrapper(BackendWrapper):
             updated_params = {**dict_params, "ind": (dataset.global_shape[1] - 1) // 2}
         return super()._build_kwargs(updated_params, dataset)
 
-    def _gather_sino_slice(self, global_shape: Tuple[int, int]):
+    def _gather_sino_slice(self, global_shape: Tuple[int, int, int]):
+        assert self.sino is not None
         if self.comm.size == 1:
             return self.sino
 
         # now aggregate with MPI
-        if self.comm.rank == 0:
-            recvbuf = np.empty(global_shape[0] * global_shape[2], dtype=np.float32)
-        else:
-            recvbuf = None
         sendbuf = self.sino.reshape(self.sino.size)
         sizes_rec = self.comm.gather(sendbuf.size)
-        self.comm.Gatherv(
-            (sendbuf, self.sino.size, MPI.FLOAT),
-            (recvbuf, sizes_rec, MPI.FLOAT),
-            root=0,
-        )
         if self.comm.rank == 0:
+            recvbuf = np.empty(global_shape[0] * global_shape[2], dtype=np.float32)
+            self.comm.Gatherv(
+                (sendbuf, self.sino.size, MPI.FLOAT),
+                (recvbuf, sizes_rec, MPI.FLOAT),
+                root=0,
+            )
             return recvbuf.reshape((global_shape[0], global_shape[2]))
         else:
+            self.comm.Gatherv(
+                (sendbuf, self.sino.size, MPI.FLOAT),
+                (None, sizes_rec, MPI.FLOAT),
+                root=0,
+            )
             return None
 
     def _run_method(self, dataset: DataSet, args: Dict[str, Any]) -> DataSet:
