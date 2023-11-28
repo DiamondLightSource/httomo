@@ -1,3 +1,4 @@
+from os import PathLike
 from pathlib import Path
 from typing import Optional, Tuple
 from mpi4py import MPI
@@ -15,7 +16,7 @@ def reslice(
     current_slice_dim: int,
     next_slice_dim: int,
     comm: Comm,
-) -> Tuple[numpy.ndarray, int]:
+) -> Tuple[numpy.ndarray, int, int]:
     """Reslice data by using in-memory MPI directives.
 
     Parameters
@@ -31,9 +32,9 @@ def reslice(
         The MPI communicator to be used.
 
     Returns:
-    tuple[numpy.ndarray, int]:
-        A tuple containing the resliced data and the dimension along which it is
-        now sliced.
+    tuple[numpy.ndarray, int, int]:
+        A tuple containing the resliced data, the dimension along which it is
+        now sliced, and the starting index in slicing dimension for the current process.
     """
     log_once(
         f"<-------Reslicing/rechunking the data-------->",
@@ -50,7 +51,7 @@ def reslice(
             colour=Colour.BLUE,
             level=1,
         )
-        return data, next_slice_dim
+        return data, next_slice_dim, 0
 
     # Get shape of full/unsplit data, in order to set the chunk shape based on
     # the dims of the full data rather than of the split data
@@ -68,7 +69,8 @@ def reslice(
         mpiutil.alltoall(to_scatter), axis=current_slice_dim - 1
     )
 
-    return new_data, next_slice_dim
+    start_idx = 0 if comm.rank == 0 else split_indices[comm.rank-1]
+    return new_data, next_slice_dim, start_idx
 
 
 def reslice_filebased(
@@ -79,8 +81,8 @@ def reslice_filebased(
     detector_x: int,
     detector_y: int,
     comm: Comm,
-    reslice_dir: Path,
-) -> Tuple[numpy.ndarray, int]:
+    reslice_dir: PathLike,
+) -> Tuple[numpy.ndarray, int, int]:
     """Reslice data by writing to hdf5 store with data chunked along a different
     dimension, and reading back along the new chunking dimension.
     Parameters
@@ -103,9 +105,9 @@ def reslice_filebased(
     comm : Comm
         The MPI communicator to be used.
     Returns:
-    tuple[numpy.ndarray, int]:
+    tuple[numpy.ndarray, int, int]:
         A tuple containing the resliced data and the dimension along which it is
-        now sliced.
+        now sliced and the start index in that dimension.
     """
     # Get shape of full/unsplit data, in order to set the chunk shape based on
     # the dims of the full data rather than of the split data
@@ -113,16 +115,9 @@ def reslice_filebased(
 
     # Calculate the chunk size for the resliced data
     slices_no_in_chunks = 1
-    if next_slice_dim == 1:
-        # Chunk along projection (rotation angle) dimension
-        chunks_data = (slices_no_in_chunks, data_shape[1], data_shape[2])
-    elif next_slice_dim == 2:
-        # Chunk along sinogram (detector y) dimension
-        chunks_data = (data_shape[0], slices_no_in_chunks, data_shape[2])
-    else:
-        # Chunk along detector x dimension
-        chunks_data = (data_shape[0], data_shape[1], slices_no_in_chunks)
-
+    chunks_data = list(data_shape)
+    chunks_data[next_slice_dim - 1] = slices_no_in_chunks
+    
     log_once(
         f"<-------Reslicing/rechunking the data-------->",
         comm,
@@ -136,20 +131,17 @@ def reslice_filebased(
         reslice_dir,
         "intermediate.h5",
         data,
-        angles,
-        detector_x,
-        detector_y,
-        current_slice_dim,
-        chunks_data,
+        slice_dim=current_slice_dim,
+        chunks=tuple(chunks_data),
         reslice=True,
         comm=comm,
     )
     # Read data back along the new slicing dimension
-    data = load.load_data(
+    data, start_idx = load.load_data(
         f"{reslice_dir}/intermediate.h5", next_slice_dim, "/data", comm=comm
     )
 
-    return data, next_slice_dim
+    return data, next_slice_dim, start_idx
 
 def single_sino_reslice(
     data: numpy.ndarray,
@@ -192,4 +184,7 @@ def single_sino_reslice(
     )
 
     if mpiutil.rank == 0:
+        assert recvbuf is not None
         return recvbuf.reshape((data_shape[0], data_shape[2]))
+    else:
+        return None
