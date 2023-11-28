@@ -135,7 +135,7 @@ def standard_tomo(
         comm=comm,
     )
     log_rank(f"Pad values are {pad_values}.", comm)
-    data = load.load_data(
+    data, _ = load.load_data(
         str(in_file), dim, data_path, preview=preview_str, pad=pad_values, comm=comm
     )
 

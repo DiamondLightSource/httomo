@@ -99,6 +99,7 @@ class TaskRunner:
         last_section: Optional[PlatformSection],
         current_section: Optional[PlatformSection],
     ):
+        assert self.dataset is not None
         if last_section is None or not last_section.reslice:
             return
         current_slice_dim = _get_slicing_dim(last_section.pattern)
