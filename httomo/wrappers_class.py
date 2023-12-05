@@ -1,29 +1,33 @@
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Callable, Dict, Union
 import numpy as np
-import inspect
-from inspect import Parameter, signature
+from inspect import signature
+from httomo.runner.gpu_utils import gpumem_cleanup
 import httomo.globals
-from httomo.utils import Colour, log_exception, log_once, log_rank, gpu_enabled, xp
+from httomo.utils import (
+    Colour,
+    log_exception,
+    log_once,
+    log_rank,
+    gpu_enabled,
+    xp,
+)
 from httomo.data import mpiutil
 
 from mpi4py.MPI import Comm
-
-
-def _gpumem_cleanup():
-    """cleans up GPU memory and also the FFT plan cache"""
-    if gpu_enabled:
-        xp.get_default_memory_pool().free_all_blocks()
-        cache = xp.fft.config.get_plan_cache()
-        cache.clear()
 
 
 class BaseWrapper:
     """A parent class for all wrappers in httomo that use external modules."""
 
     def __init__(
-        self, backend_name: str, module_name: str, function_name: str, method_name: str, comm: Comm
+        self,
+        backend_name: str,
+        module_name: str,
+        function_name: str,
+        method_name: str,
+        comm: Comm,
     ):
-        self.comm = comm        
+        self.comm = comm
         self.module: Any = None
         self.dict_params: Dict[str, Any] = {}
         if gpu_enabled:
@@ -42,10 +46,12 @@ class BaseWrapper:
             no_gpulog_str = "GPU is not available, please use only CPU methods"
             log_once(no_gpulog_str, self.comm, colour=Colour.BVIOLET, level=1)
             return args
-        xp.cuda.Device(self.gpu_id).use()        
-        gpulog_str = f"Using GPU {self.gpu_id} to transfer data of shape {xp.shape(args[0])}"
+        xp.cuda.Device(self.gpu_id).use()
+        gpulog_str = (
+            f"Using GPU {self.gpu_id} to transfer data of shape {xp.shape(args[0])}"
+        )
         log_rank(gpulog_str, comm=self.comm)
-        _gpumem_cleanup()
+        gpumem_cleanup()
         if self.cupyrun:
             if len(args) == 1:
                 return xp.asarray(args[0])
@@ -86,15 +92,15 @@ class BaseWrapper:
         data = self._transfer_data(data)
 
         data = getattr(self.module, method_name)(data, **dict_params_method)
-        
+
         if cupyrun and return_numpy:
             # if data in CuPy array but we need numpy
-            return data.get() # get numpy
+            return data.get()  # get numpy
         elif cupyrun and not return_numpy:
             # if data in CuPy array and we need it
-            return data # return CuPy array
+            return data  # return CuPy array
         else:
-            return data # return numpy
+            return data  # return numpy
 
     def _execute_normalize(
         self,
@@ -127,15 +133,15 @@ class BaseWrapper:
         data = getattr(self.module, method_name)(
             data, flats, darks, **dict_params_method
         )
-        
+
         if cupyrun and return_numpy:
             # if data in CuPy array but we need numpy
-            return data.get() # get numpy
+            return data.get()  # get numpy
         elif cupyrun and not return_numpy:
             # if data in CuPy array and we need it
-            return data # return CuPy array
+            return data  # return CuPy array
         else:
-            return data # return numpy        
+            return data  # return numpy
 
     def _execute_reconstruction(
         self,
@@ -175,15 +181,15 @@ class BaseWrapper:
 
         data = getattr(self.module, method_name)(
             data, angles_radians, **dict_params_method
-        )        
+        )
         if cupyrun and return_numpy:
             # if data in CuPy array but we need numpy
-            return data.get() # get numpy
+            return data.get()  # get numpy
         elif cupyrun and not return_numpy:
             # if data in CuPy array and we need it
-            return data # return CuPy array
+            return data  # return CuPy array
         else:
-            return data # return numpy
+            return data  # return numpy
 
     def _execute_rotation(
         self,
@@ -192,7 +198,7 @@ class BaseWrapper:
         data: xp.ndarray,
         return_numpy: bool,
         cupyrun: bool,
-    ) -> tuple | Any:
+    ) -> Union[tuple, Any]:
         """The center of rotation wrapper.
 
         Args:
@@ -229,10 +235,11 @@ class BaseWrapper:
         elif method_name == "find_center_vo":
             rot_center = method_func(data, **dict_params_method)
             log_once(
-                    f"###____The center of rotation for 180 degrees sinogram is {rot_center}____###",
-                    comm=self.comm,
-                    colour=Colour.LYELLOW,
-                    level=1,)
+                f"###____The center of rotation for 180 degrees sinogram is {rot_center}____###",
+                comm=self.comm,
+                colour=Colour.LYELLOW,
+                level=1,
+            )
             return rot_center
         else:
             err_str = f"Invalid method name: {method_name}"
@@ -266,7 +273,7 @@ class BaseWrapper:
         self.cupyrun = cupyrun
         # check where data needs to be transfered host <-> device
         data = self._transfer_data(data)
-                
+
         if gpu_enabled:
             data = getattr(self.module, method_name)(
                 xp.asnumpy(data), out_dir, comm_rank=comm.rank, **dict_params_method
@@ -282,7 +289,12 @@ class BackendWrapper(BaseWrapper):
     """A class that wraps backend functions for httomo"""
 
     def __init__(
-        self, backend_name: str, module_name: str, function_name: str, method_name: str, comm: Comm
+        self,
+        backend_name: str,
+        module_name: str,
+        function_name: str,
+        method_name: str,
+        comm: Comm,
     ):
         super().__init__(backend_name, module_name, function_name, method_name, comm)
 
@@ -295,12 +307,17 @@ class BackendWrapper(BaseWrapper):
             self.module = getattr(
                 import_module(backend_name + "." + module_name), function_name
             )
-            # deal with special cases 
+            # deal with special cases
             if function_name == "normalize":
                 if method_name != "minus_log":
                     func = getattr(self.module, method_name)
                     sig_params = signature(func).parameters
-                    if "darks" or "dark" in sig_params and "flats" or "flat" in sig_params:
+                    if (
+                        "darks"
+                        or "dark" in sig_params
+                        and "flats"
+                        or "flat" in sig_params
+                    ):
                         self.wrapper_method = super()._execute_normalize
             if function_name == "algorithm":
                 self.wrapper_method = super()._execute_reconstruction

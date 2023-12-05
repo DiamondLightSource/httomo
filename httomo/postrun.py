@@ -2,16 +2,14 @@
 Module containing postrun functionality for the methods in the HTTomo pipeline.
 This includes saving the results - hdf5 datasets, tiff images, etc.
 """
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 import numpy as np
-from httomolib.misc.images import save_to_images
 from mpi4py import MPI
 
 import httomo.globals
 from httomo.common import MethodFunc, RunMethodInfo, PlatformSection
 from httomo.data.hdf.loaders import LoaderData
-from httomo.data.hdf._utils.chunk import get_data_shape, save_dataset
 from httomo.data.hdf._utils.save import intermediate_dataset
 from httomo.utils import _get_slicing_dim
 
@@ -43,7 +41,9 @@ def postrun_method(
             intermediate_dataset(
                 dict_datasets_pipeline[run_method_info.data_out],
                 httomo.globals.run_out_dir,
-                loader_info,
+                loader_info.angles,
+                loader_info.detector_x,
+                loader_info.detector_y,
                 comm,
                 run_method_info.task_idx_global,
                 run_method_info.package_name,

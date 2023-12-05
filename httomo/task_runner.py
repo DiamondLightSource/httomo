@@ -2,16 +2,11 @@ import dataclasses
 import multiprocessing
 import time
 import math
-import copy
-from collections.abc import Callable
-from dataclasses import dataclass, field
 from importlib import import_module
-from inspect import signature
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from httomolib.misc.images import save_to_images
 from mpi4py import MPI
 from numpy import ndarray
 
@@ -22,10 +17,7 @@ import httomo.globals
 import httomo.preprocess
 from httomo._stats.globals import min_max_mean_std
 from httomo.common import LoaderInfo, MethodFunc, PlatformSection, PreProcessInfo, ResliceInfo, RunMethodInfo
-from httomo.data.hdf._utils.chunk import get_data_shape, save_dataset
 from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
-from httomo.data.hdf._utils.save import intermediate_dataset
-from httomo.data.hdf.loaders import LoaderData
 from httomo.methods_database.query import get_method_info
 from httomo.postrun import postrun_method
 from httomo.prerun import prerun_method
@@ -37,7 +29,7 @@ from httomo.utils import (
     log_once,
     remove_ansi_escape_sequences,
 )
-from httomo.wrappers_class import _gpumem_cleanup
+from httomo.runner.gpu_utils import gpumem_cleanup
 from httomo.yaml_loader import YamlLoader
 from httomo.pipeline_reader import PipelineReader, PipelineReaderInterface
 
@@ -439,7 +431,7 @@ def run_tasks(
                 data_full_section[tuple(slc_indices)] = res
             else:
                 if recon_arr.shape[0] != res.shape[0]:
-                    # TomoPy returns reconstruction in a different shape from httomolibgpu
+                    # TODO: 
                     recon_arr[tuple(slc_indices)] = xp.swapaxes(res,0,1)
                 else:
                     recon_arr[tuple(slc_indices)] = res
@@ -457,7 +449,7 @@ def run_tasks(
             # delete allocated memory pointers to free up the memory
             run_method_info.dict_httomo_params["data"] = None
             # now flushing the GPU memory
-            _gpumem_cleanup()
+            gpumem_cleanup()
             
         ##************* BLOCKS LOOP IS COMPLETE *************##
         # If the completed section contained a recon method, then the array

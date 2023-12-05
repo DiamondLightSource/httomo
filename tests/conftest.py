@@ -8,6 +8,7 @@ import numpy as np
 
 import pytest
 import yaml
+from httomo.runner.dataset import DataSet
 
 from httomo.yaml_loader import YamlLoader
 
@@ -114,6 +115,25 @@ def host_data(data_file):
 def data(host_data, ensure_clean_memory):
     import cupy as cp
     return cp.asarray(host_data)
+
+@pytest.fixture
+def host_angles(data_file):
+    return np.float32(np.copy(data_file["angles"]))
+
+@pytest.fixture
+@pytest.mark.cupy
+def angles(host_angles, ensure_clean_memory):
+    import cupy as cp
+    return cp.asarray(host_angles)
+
+@pytest.fixture
+def host_angles_radians(host_angles):
+    return host_angles
+
+@pytest.fixture
+@pytest.mark.cupy
+def angles_radians(angles):
+    return angles
 
 @pytest.fixture
 def host_flats(data_file):
@@ -224,3 +244,13 @@ def yaml_loader() -> type[YamlLoader]:
     YamlLoader.add_constructor("!Sweep", YamlLoader.sweep_manual)
     YamlLoader.add_constructor("!SweepRange", YamlLoader.sweep_range)
     return YamlLoader
+
+
+@pytest.fixture
+def dummy_dataset() -> DataSet:
+    return DataSet(
+        data=np.ones((10, 10, 10)),
+        angles=np.ones((20,)),
+        flats=3 * np.ones((5, 10, 10)),
+        darks=2 * np.ones((5, 10, 10)),
+    )

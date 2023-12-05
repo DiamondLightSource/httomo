@@ -58,7 +58,7 @@ def log_once(output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0) -> No
     colour : str, optional
         The colour of the output.
     level : int, optional
-        The level of the log message. 0 is info, 1 is debug.
+        The level of the log message. 0 is info, 1 is debug, 2 is warning.
     """
     if mpiutil.rank == 0:
         if isinstance(output, list):
@@ -69,11 +69,12 @@ def log_once(output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0) -> No
             output = f"{colour}{output}{Colour.END}"
 
         if httomo.globals.logger is not None:
-            (
+            if level == 1:
                 httomo.globals.logger.debug(output)
-                if level == 1
-                else httomo.globals.logger.info(output)
-            )
+            elif level == 2:
+                httomo.globals.logger.warn(output)
+            else:
+                httomo.globals.logger.info(output)
 
 
 def log_rank(output: Any, comm: Comm) -> None:
@@ -169,13 +170,13 @@ def _parse_preview(
             step = slice_info.get("step", None)
 
             warn_on = False
-            if start is not None and start < 0 or start >= data_shape[idx]:
+            if start is not None and (start < 0 or start >= data_shape[idx]):
                 warn_on = True
                 str_warn = (
                     f"The 'start' preview {start} is outside the data dimension range"
                     + f" from 0 to {data_shape[idx]}"
                 )
-            if stop is not None and stop < 0 or stop >= data_shape[idx]:
+            if stop is not None and (stop < 0 or stop >= data_shape[idx]):
                 warn_on = True
                 str_warn = (
                     f"The 'stop' preview {start} is outside the data dimension range"

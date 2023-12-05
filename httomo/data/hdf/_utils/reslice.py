@@ -15,7 +15,7 @@ def reslice(
     current_slice_dim: int,
     next_slice_dim: int,
     comm: Comm,
-) -> Tuple[numpy.ndarray]:
+) -> Tuple[numpy.ndarray, int]:
     """Reslice data by using in-memory MPI directives.
 
     Parameters

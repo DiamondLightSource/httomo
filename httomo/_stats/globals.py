@@ -1,9 +1,10 @@
+from typing import Tuple
 import numpy as np
 from mpi4py import MPI
 from mpi4py.MPI import Comm
 
 
-def min_max_mean_std(data: np.ndarray, comm: Comm):
+def min_max_mean_std(data: np.ndarray, comm: Comm) -> Tuple[float, float, float, float]:
     """calculating global statistics of the given array    
     Args:
         data: (np.ndarray): a numpy array
