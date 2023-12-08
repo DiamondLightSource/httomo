@@ -1,7 +1,6 @@
-- tomopy.sim.project:
-    add_drift:
-      data_in: tomo
-      data_out: tomo
-      amp: 0.2
-      period: 50
-      mean: 1
+- method: add_drift
+  module_path: tomopy.sim.project
+  parameters:
+    amp: 0.2
+    period: 50
+    mean: 1

@@ -1,0 +1,5 @@
+- method: init_tomo
+  module_path: tomopy.recon.algorithm
+  parameters:
+    sinogram_order: REQUIRED
+    sharedmem: true

@@ -1,4 +1,4 @@
-- method: remove_outlier1d
+- method: remove_outlier_cuda
   module_path: tomopy.misc.corr
   parameters:
     dif: REQUIRED
