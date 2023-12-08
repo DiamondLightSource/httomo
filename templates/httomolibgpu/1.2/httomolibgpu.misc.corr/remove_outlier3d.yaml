@@ -1,6 +1,5 @@
-- httomolibgpu.misc.corr:
-    remove_outlier3d:
-      data_in: tomo
-      data_out: tomo
-      kernel_size: 3
-      dif: 0.1
+- method: remove_outlier3d
+  module_path: httomolibgpu.misc.corr
+  parameters:
+    kernel_size: 3
+    dif: 0.1

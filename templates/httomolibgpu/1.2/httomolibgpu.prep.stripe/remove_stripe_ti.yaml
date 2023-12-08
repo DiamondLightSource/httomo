@@ -1,5 +1,4 @@
-- httomolibgpu.prep.stripe:
-    remove_stripe_ti:
-      data_in: tomo
-      data_out: tomo
-      beta: 0.1
+- method: remove_stripe_ti
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    beta: 0.1
