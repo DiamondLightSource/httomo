@@ -110,7 +110,7 @@ def _set_param_value(k: int, v: int, params_dict: Dict):
         params_dict["#additional parameters"] = "AVAILABLE"
     elif str(k) == "center":
         # Temporary value
-        params_dict[str(k)] = "$ {{centering.side_outputs.centre_of_rotation}}"
+        params_dict[str(k)] = "${{centering.side_outputs.centre_of_rotation}}"
     else:
         params_dict[str(k)] = v.default
 
