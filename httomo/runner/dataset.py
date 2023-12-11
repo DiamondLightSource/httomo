@@ -396,7 +396,7 @@ class FullFileDataSet(DataSet):
 
     @property
     def shape(self) -> Tuple[int, int, int]:
-        return self._chunk_shape
+        return self._global_shape
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:

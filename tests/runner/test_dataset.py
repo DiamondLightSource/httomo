@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pytest_mock import MockerFixture
 from httomo.utils import xp, gpu_enabled
-from httomo.runner.dataset import DataSet
+from httomo.runner.dataset import DataSet, FullFileDataSet
 
 
 @pytest.fixture
@@ -313,3 +313,22 @@ def test_block_caches_in_base_on_gpu_access(dataset: DataSet):
         darks_orig = dataset.darks
 
         assert darks_orig.data == darks_new.data
+
+
+def test_fullfiledataset_has_correct_shapes():
+    CHUNK_SHAPE = (5, 10, 10)
+    GLOBAL_DATA_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_DATA_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_DATA_SHAPE
+    )
+    dummy_dataset = FullFileDataSet(
+        data=global_data,
+        angles=np.ones((20,)),
+        flats=3 * np.ones((5, 10, 10)),
+        darks=2 * np.ones((5, 10, 10)),
+        global_index=(0, 0, 0),
+        chunk_shape=CHUNK_SHAPE,
+    )
+
+    assert dummy_dataset.chunk_shape == CHUNK_SHAPE
+    assert dummy_dataset.shape == GLOBAL_DATA_SHAPE
