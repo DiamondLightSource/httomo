@@ -7,7 +7,7 @@
     - 0
     - 0
     blur: true
-    center: $ {{centering.side_outputs.centre_of_rotation}}
+    center: ${{centering.side_outputs.centre_of_rotation}}
     algorithm: sirt
     upsample_factor: 10
     rin: 0.5
