@@ -345,7 +345,7 @@ class DataSetBlock(DataSet):
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Shape of the full chunk handled by the current process"""
-        return self._base.shape
+        return self._base.chunk_shape
 
     @property
     def is_last_in_chunk(self) -> bool:
