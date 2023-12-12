@@ -332,3 +332,57 @@ def test_fullfiledataset_has_correct_shapes():
 
     assert dummy_dataset.chunk_shape == CHUNK_SHAPE
     assert dummy_dataset.shape == GLOBAL_DATA_SHAPE
+
+
+def test_datasetblock_from_fullfiledataset_has_correct_shapes():
+    CHUNK_SHAPE = (5, 10, 10)
+    GLOBAL_DATA_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_DATA_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_DATA_SHAPE
+    )
+    SLICING_DIM = 0
+    BLOCK_START = 0
+    BLOCK_LENGTH = 2
+    BLOCK_SHAPE = (BLOCK_LENGTH, GLOBAL_DATA_SHAPE[1], GLOBAL_DATA_SHAPE[2])
+
+    dummy_dataset = FullFileDataSet(
+        data=global_data,
+        angles=np.ones((20,)),
+        flats=3 * np.ones((5, 10, 10)),
+        darks=2 * np.ones((5, 10, 10)),
+        global_index=(0, 0, 0),
+        chunk_shape=CHUNK_SHAPE,
+    )
+
+    block = dummy_dataset.make_block(SLICING_DIM, BLOCK_START, BLOCK_LENGTH)
+
+    assert block.shape == BLOCK_SHAPE
+    assert block.chunk_shape == CHUNK_SHAPE
+    assert block.global_shape == GLOBAL_DATA_SHAPE
+
+
+def test_datasetblock_from_dataset_has_correct_shapes():
+    CHUNK_SHAPE = (5, 10, 10)
+    GLOBAL_DATA_SHAPE = (10, 10, 10)
+    chunk_data = np.arange(np.prod(CHUNK_SHAPE), dtype=np.float32).reshape(
+        CHUNK_SHAPE
+    )
+    SLICING_DIM = 0
+    BLOCK_START = 0
+    BLOCK_LENGTH = 2
+    BLOCK_SHAPE = (BLOCK_LENGTH, CHUNK_SHAPE[1], CHUNK_SHAPE[2])
+
+    dummy_dataset = DataSet(
+        data=chunk_data,
+        angles=np.ones((20,)),
+        flats=3 * np.ones((5, 10, 10)),
+        darks=2 * np.ones((5, 10, 10)),
+        global_shape=GLOBAL_DATA_SHAPE,
+        global_index=(0, 0, 0),
+    )
+
+    block = dummy_dataset.make_block(SLICING_DIM, BLOCK_START, BLOCK_LENGTH)
+
+    assert block.shape == BLOCK_SHAPE
+    assert block.chunk_shape == CHUNK_SHAPE
+    assert block.global_shape == GLOBAL_DATA_SHAPE
