@@ -7,7 +7,7 @@ from httomo.data.dataset_store import DataSetStoreReader, DataSetStoreWriter
 from mpi4py import MPI
 import h5py
 
-from httomo.runner.dataset import DataSet
+from httomo.runner.dataset import DataSet, FullFileDataSet
 
 
 def test_writer_can_set_sizes_and_shapes_dim0(tmp_path: PathLike):
@@ -281,17 +281,32 @@ def test_reslice_single_block_multi_process(
     tmp_path: PathLike,
     file_based: bool,
 ):
-    dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
+    global_data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
         dummy_dataset.shape
     )
+    dummy_dataset.data = global_data
     comm = MPI.COMM_WORLD
+
+    GLOBAL_DATA_SHAPE = (10, 10, 10)
+    if file_based is True:
+        # If using hdf5 file as storage underneath data store, then put global data inside a
+        # `FullFileDataSet` object rather than a `DataSet` object
+        dummy_dataset = FullFileDataSet(
+            data=global_data,
+            angles=np.ones((20,)),
+            flats=3 * np.ones((5, 10, 10)),
+            darks=2 * np.ones((5, 10, 10)),
+            global_index=(0, 0, 0) if comm.rank == 0 else (GLOBAL_DATA_SHAPE[0] // 2, 0, 0),
+            chunk_shape=(5, 10, 10),
+        )
+
     assert comm.size == 2
 
     writer = DataSetStoreWriter(
         full_size=dummy_dataset.shape[0],
         slicing_dim=0,
         other_dims=(dummy_dataset.shape[1], dummy_dataset.shape[2]),
-        chunk_size=dummy_dataset.shape[0] // 2,
+        chunk_size=global_data.shape[0] // 2,
         chunk_start=0 if comm.rank == 0 else dummy_dataset.shape[0] // 2,
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
@@ -349,12 +364,12 @@ def test_reslice_single_block_multi_process(
     if comm.rank == 0:
         np.testing.assert_array_equal(
             block.data,
-            dummy_dataset.data[:, 1:3, :],
+            global_data[:, 1:3, :],
         )
     else:
         np.testing.assert_array_equal(
             block.data,
-            dummy_dataset.data[
+            global_data[
                 :, dummy_dataset.shape[1] // 2 + 1 : dummy_dataset.shape[1] // 2 + 3, :
             ],
         )
