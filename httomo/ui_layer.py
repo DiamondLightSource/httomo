@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Protocol, TypeAlias
 from importlib import import_module, util
 import sys
 import os
+import re
 
 from mpi4py import MPI
 from mpi4py.MPI import Comm
@@ -45,10 +46,10 @@ class UiLayer:
         self.comm = comm
         
         root, ext = os.path.splitext(self.tasks_file_path)
-        if ext == '.yaml':
+        if ext in ['.yaml', '.yaml'.upper()]:
             # loading yaml file with tasks provided
             self.PipelineStageConfig = _yaml_loader(self.tasks_file_path)[0]
-        elif ext == '.py':
+        elif ext in ['.py', '.py'.upper()]:
             # loading python file with tasks provided
             self.PipelineStageConfig = _python_tasks_loader(self.tasks_file_path)
         else:
@@ -56,10 +57,10 @@ class UiLayer:
                 f"The extension {ext} of the file {root} with tasks is unknown."
             )
 
-    def build_pipeline(self) -> Pipeline:       
-        output_mapping = {} # TODO
+    def build_pipeline(self) -> Pipeline:
+        side_outputs_collect = [] # saves [task_no, id, side_outputs] for tasks with side_outputs
         methods_list = []
-        for task_conf in self.PipelineStageConfig:
+        for task_no, task_conf in enumerate(self.PipelineStageConfig):
             if "loaders" in task_conf['module_path']:
                 task_conf['parameters']['in_file'] = self.in_data_file
                 # unpack params and initiate a loader
@@ -73,20 +74,35 @@ class UiLayer:
             else:
                 if "parameters" not in task_conf:
                     task_conf['parameters'] = {}
+                if "side_outputs" not in task_conf:
+                    task_conf['side_outputs'] = {}
+                else:
+                    side_outputs_collect.append([task_no, task_conf['id'], task_conf['side_outputs']])
+                # check if there is a reference to side_outputs to cross-link
+                for key, value in task_conf['parameters'].items():
+                    if isinstance(value, str) and value is not None:
+                        if value.find('${{') != -1:                            
+                            result_extr = re.search(r"\{([A-Za-z0-9_.]+)\}", value)
+                            internal_expression=result_extr.group(1)
+                            (ref_id, side_str, ref_arg) = internal_expression.split(".")
+                            # lets find the referred id in "side_outputs_collect"
+                            for items in side_outputs_collect:
+                                if items[1] == ref_id:
+                                    # refer to methods_list[items[0]-1]
+                                    task_conf['parameters'][key] = OutputRef(methods_list[items[0]-1], ref_arg)
                 # unpack params of a method and append to a list of methods
                 method = make_backend_wrapper(
                     self.repo,
                     task_conf['module_path'],
                     task_conf['method'],
                     self.comm,
-                    output_mapping,
+                    task_conf['side_outputs'],
                     **task_conf['parameters'],
                 )
                 methods_list.append(method)
         return Pipeline(
             loader=loader,
             methods=methods_list,
-            main_pipeline_start=1,
         )
 
 def _yaml_loader(file_path: str) -> list:
@@ -103,7 +119,7 @@ def _python_tasks_loader(file_path: str) -> list:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: <script> <yaml_file> <data_file>")
+        print("Usage: <script> <tasks_file> <data_file>")
         exit(1)
 
     out_dir = Path("httomo_out")

@@ -6,7 +6,8 @@ PipelineStageConfig: TypeAlias = List[MethodConfig]
 PipelineConfig: TypeAlias = List[PipelineStageConfig]
 
 # NOTE: when creating a Pythonic pipeline, please use
-# the name "methods_to_list" for the function
+# the function's name "methods_to_list" so it will be 
+# found by the loader
 
 def methods_to_list() -> PipelineConfig:
     """Pythonic way to build a list of tasks
@@ -24,7 +25,7 @@ def methods_to_list() -> PipelineConfig:
                      'name': 'tomo',
                      'data_path': 'entry1/tomo_entry/data/data',
                      'image_key_path': 'entry1/tomo_entry/instrument/detector/image_key',
-                     'rotation_angles': '{"data_path": "/entry1/tomo_entry/data/rotation_angle"}',
+                     'rotation_angles': {"data_path": "/entry1/tomo_entry/data/rotation_angle"},
                      'dimension': 1,
                      'preview': [dict(), dict(), dict()],
                      'pad': 0,
@@ -45,5 +46,33 @@ def methods_to_list() -> PipelineConfig:
         'parameters' : {},
                     }
     full_pipeline.append(method2)
+    method3 = {
+        'method': "find_center_vo",
+        'module_path': "tomopy.recon.rotation",
+        'id': "centering",
+        'parameters' : {
+                     'ind': "mid",
+                     'smin': -50,
+                     'smax': -50,
+                     'srad': 6,
+                     'step': 0.25,
+                     'ratio': 0.5,
+                     'drop': 20,
+                       },
+        'side_outputs': {"cor": "centre_of_rotation"},
+                    }
+    full_pipeline.append(method3)
+    method4 = {
+        'method': "recon",
+        'module_path': "tomopy.recon.algorithm",
+        'parameters' : {
+                     'center': "${{centering.side_outputs.centre_of_rotation}}",
+                     'sinogram_order': False,
+                     'algorithm': "gridrec",
+                     'init_recon': None,
+                       },
+                    }
+    full_pipeline.append(method4)
+
     return full_pipeline
     
