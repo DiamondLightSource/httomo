@@ -1,63 +1,68 @@
-- httomo.data.hdf.loaders:
-    standard_tomo:
-      name: tomo
-      data_path: entry1/tomo_entry/data/data
-      image_key_path: entry1/tomo_entry/instrument/detector/image_key
-      dimension: 1
-      preview:
-        - 
-        - start: 30
-          stop: 60
-        - 
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    angles_path: /entry1/tomo_entry/data/rotation_angle
+    dimension: 1
+    preview:
+      -
+      - start: 30
+        stop: 60
+      -
       pad: 0
-- httomolibgpu.misc.corr:
-    remove_outlier3d:
-      data_in_multi: [tomo, flats, darks]
-      data_out_multi: [tomo, flats, darks]
-      kernel_size: 3
-      dif: 0.1      
-- httomolibgpu.prep.normalize:
-    normalize:
-      data_in: tomo
-      data_out: tomo
-      cutoff: 10.0
-      minus_log: true
-      nonnegativity: false 
-- httomolibgpu.recon.rotation:
-    find_center_360:
-      data_in: tomo
-      data_out: [cor, overlap, side, overlap_position]
-      ind: mid
-      win_width: 10
-      side: null
-      denoise: true
-      norm: false
-      use_overlap: true
-- httomolibgpu.prep.stripe:
-    remove_stripe_based_sorting:
-      data_in: tomo
-      data_out: tomo
-      size: 11
-      dim: 1
-- httomolibgpu.misc.morph:
-    sino_360_to_180:
-      data_in: tomo
-      data_out: tomo
-      overlap: overlap
-      rotation: right 
-- httomolibgpu.recon.algorithm:
-     reconstruct_tomobar:
-       data_in: tomo
-       data_out: tomo
-       center: cor
-       objsize: null
-- httomolib.misc.images:
-    save_to_images:
-      data_in: tomo
-      subfolder_name: images
-      axis: 0
-      file_format: tif
-      bits: 8
-      perc_range_min: 0.0
-      perc_range_max: 100.0
-      jpeg_quality: 95
+- method: remove_outlier3d
+  module_path: httomolibgpu.misc.corr
+  parameters:
+    kernel_size: 3
+    dif: 0.1
+    #data_in_multi: [tomo, flats, darks]
+    #data_out_multi: [tomo, flats, darks]
+- method: normalize
+  module_path: httomolibgpu.prep.normalize
+  parameters:
+    cutoff: 10.0
+    minus_log: true
+    nonnegativity: false
+- method: find_center_360
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    ind: mid
+    win_width: 10
+    side: null
+    denoise: true
+    norm: false
+    use_overlap: true
+  id: centering
+  side_outputs:
+    centre_of_rotation: cor
+    overlap: overlap
+    side: side
+    overlap_position: overlap_position
+- method: remove_stripe_based_sorting
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    size: 11
+    dim: 1
+- method: sino_360_to_180
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    overlap: ${{centering.side_outputs.overlap}}
+    rotation: right
+- method: reconstruct_tomobar # method not present?
+  module_path: tomopy.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    objsize: null
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: 0
+    file_format: tif
+    bits: 8
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    jpeg_quality: 95
+    glob_stats: null

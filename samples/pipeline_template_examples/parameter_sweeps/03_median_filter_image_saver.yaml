@@ -1,29 +1,31 @@
-- httomo.data.hdf.loaders:
-    standard_tomo:
-      name: tomo
-      data_path: entry1/tomo_entry/data/data
-      image_key_path: entry1/tomo_entry/instrument/detector/image_key
-      dimension: 1
-      preview:
-        - 
-        - 
-        - 
-      pad: 0
-- httomolib.misc.corr:
-    median_filter3d:
-      data_in: tomo
-      data_out: tomo
-      kernel_size: !Sweep
-        - 3
-        - 5
-      dif: 0.0
-- httomolib.misc.images:
-    save_to_images:
-      data_in: tomo
-      subfolder_name: images
-      axis: 0
-      file_format: tif
-      bits: 8
-      perc_range_min: 0.0
-      perc_range_max: 100.0
-      jpeg_quality: 95
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    angles_path: /entry1/tomo_entry/data/rotation_angle
+    dimension: 1
+    preview:
+      -
+      -
+      -
+    pad: 0
+- method: median_filter3d
+  module_path: tomopy.misc.corr
+  parameters:
+    size: !Sweep
+      - 3
+      - 5
+    # dif: 0.0 should this be replaced?
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: 0
+    file_format: tif
+    bits: 8
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    jpeg_quality: 95
+    glob_stats: null

@@ -107,7 +107,8 @@ def _set_param_value(k: int, v: int, params_dict: Dict):
     if str(v).find("=") == -1 and str(k) != "kwargs":
         params_dict[str(k)] = "REQUIRED"
     elif str(k) == "kwargs":
-        params_dict["#additional parameters"] = "AVAILABLE"
+        add_str = "\n    #additional parameters: AVAILABLE"
+        params_dict[-1] = add_str
     elif str(k) == "center":
         # Temporary value
         params_dict[str(k)] = "${{centering.side_outputs.centre_of_rotation}}"

@@ -5,4 +5,4 @@
     sinogram_order: false
     algorithm: null
     init_recon: null
-    '#additional parameters': AVAILABLE
+    #additional parameters: AVAILABLE

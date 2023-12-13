@@ -1,60 +1,62 @@
 --- # Loading stage
-- httomo.data.hdf.loaders:
-    standard_tomo:
-      name: tomo
-      data_path: entry1/tomo_entry/data/data
-      image_key_path: entry1/tomo_entry/instrument/detector/image_key
-      dimension: 1
-      preview:
-        - 
-        - 
-        - 
-      pad: 0
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    angles_path: /entry1/tomo_entry/data/rotation_angle
+    dimension: 1
+    preview:
+      -
+      -
+      -
+    pad: 0
 --- # Pre-normalisation / pre-processing stage
-- httomolibgpu.misc.corr:
-    remove_outlier3d:
-      kernel_size: 3
-      dif: 0.1
-- httomolibgpu.recon.rotation:
-    find_center_vo:
-      data_in: tomo
-      data_out: cor
-      ind: mid
-      smin: -50
-      smax: 50
-      srad: 6.0
-      step: 0.25
-      ratio: 0.5
-      drop: 20
+- method: remove_outlier3d
+  module_path: tomopy.misc.corr
+  parameters:
+    dif: 0.1
+    size: 3
+- method: find_center_vo
+  module_path: tomopy.recon.rotation
+  parameters:
+    ind: mid
+    smin: -50
+    smax: 50
+    srad: 6
+    step: 0.25
+    ratio: 0.5
+    drop: 20
+  id: centering
+  side_outputs:
+    centre_of_rotation: cor
 --- # Main processing stage
-- httomolibgpu.prep.normalize:
-    normalize:
-      data_in: tomo
-      data_out: tomo
-      cutoff: 10.0
-      minus_log: true
-      nonnegativity: false
-- httomolibgpu.prep.stripe:
-    remove_stripe_based_sorting:
-      data_in: tomo
-      data_out: tomo
-      size: 11
-      dim: 1
-- httomolibgpu.recon.algorithm:
-    FBP:
-      data_in: tomo
-      data_out: tomo
-      center: cor
-      recon_size: null
-      recon_mask_radius: null
-- httomolib.misc.images:
-    save_to_images:
-      data_in: tomo
-      subfolder_name: images
-      axis: 1
-      file_format: tif
-      bits: 8
-      perc_range_min: 0.0
-      perc_range_max: 100.0
-      jpeg_quality: 95
-      glob_stats: true
+- method: normalize
+  module_path: httomolibgpu.prep.normalize
+  parameters:
+    cutoff: 10.0
+    minus_log: true
+    nonnegativity: false
+    remove_nans: false
+- method: remove_stripe_based_sorting
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    size: 11
+    dim: 1
+- method: FBP
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    objsize: null
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: 1
+    file_format: tif
+    bits: 8
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    jpeg_quality: 95
+    glob_stats: true
