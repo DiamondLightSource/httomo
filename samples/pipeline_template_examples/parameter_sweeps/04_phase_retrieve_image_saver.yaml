@@ -44,7 +44,7 @@
     drop: 20
   id: centering
   side_outputs:
-    centre_of_rotation: cor
+    cor: centre_of_rotation
 - method: recon
   module_path: tomopy.recon.algorithm
   parameters:

@@ -11,7 +11,7 @@
     drop: 20
   id: centering
   side_outputs:
-    centre_of_rotation: cor
+    cor: centre_of_rotation
 --- # main processing
 - method: normalize
   module_path: tomopy.prep.normalize
