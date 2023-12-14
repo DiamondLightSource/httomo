@@ -8,7 +8,7 @@
     darks:
         file: # /path/to/file/containing/darks
         data_path: /exchange/data_dark
-      flats:
+    flats:
         file: # /path/to/file/containing/flats
         data_path: /exchange/data_white_post
     dimension: 1

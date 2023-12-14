@@ -4,14 +4,15 @@
     name: tomo
     data_path: entry1/tomo_entry/data/data
     image_key_path: entry1/tomo_entry/instrument/detector/image_key
-    angles_path: /entry1/tomo_entry/data/rotation_angle
+    rotation_angles:
+        data_path: /entry1/tomo_entry/data/rotation_angle
     dimension: 1
     preview:
       -
       - start: 30
         stop: 60
       -
-      pad: 0
+    pad: 0
 - method: remove_outlier3d
   module_path: httomolibgpu.misc.corr
   parameters:

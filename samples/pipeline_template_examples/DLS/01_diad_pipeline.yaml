@@ -6,13 +6,13 @@
     image_key_path: /entry/instrument/imaging/image_key
     rotation_angles:
         data_path: /entry/imaging_sum/gts_theta_value
-      dimension: 1
-      preview:
-        -
-        - start: 0
-          stop: 20
-        -
-      pad: 0
+    dimension: 1
+    preview:
+      -
+      - start: 0
+        stop: 20
+      -
+    pad: 0
 - method: normalize
   module_path: tomopy.prep.normalize
   parameters:
