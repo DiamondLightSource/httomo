@@ -15,9 +15,9 @@ def methods_to_list() -> PipelineConfig:
     This accompaniments the YAML interface.
 
     Returns:
-        PipelineConfig: A list of tasks that can be executed in Httomo.
+        PipelineConfig: A list of tasks in "full_pipeline_list" that can be executed in Httomo.
     """
-    full_pipeline = []
+    full_pipeline_list = []
     loader = {
         'method': "standard_tomo",
         'module_path': "httomo.data.hdf.loaders",
@@ -31,7 +31,7 @@ def methods_to_list() -> PipelineConfig:
                      'pad': 0,
                        },
                     }
-    full_pipeline.append(loader)
+    full_pipeline_list.append(loader)
     method1 = {
         'method': "normalize",
         'module_path': "tomopy.prep.normalize",
@@ -39,13 +39,13 @@ def methods_to_list() -> PipelineConfig:
                      'cutoff': None,
                        },
                     }
-    full_pipeline.append(method1)
+    full_pipeline_list.append(method1)
     method2 = {
         'method': "minus_log",
         'module_path': "tomopy.prep.normalize",
         'parameters' : {},
                     }
-    full_pipeline.append(method2)
+    full_pipeline_list.append(method2)
     method3 = {
         'method': "find_center_vo",
         'module_path': "tomopy.recon.rotation",
@@ -53,7 +53,7 @@ def methods_to_list() -> PipelineConfig:
         'parameters' : {
                      'ind': "mid",
                      'smin': -50,
-                     'smax': -50,
+                     'smax': 50,
                      'srad': 6,
                      'step': 0.25,
                      'ratio': 0.5,
@@ -61,7 +61,7 @@ def methods_to_list() -> PipelineConfig:
                        },
         'side_outputs': {"cor": "centre_of_rotation"},
                     }
-    full_pipeline.append(method3)
+    full_pipeline_list.append(method3)
     method4 = {
         'method': "recon",
         'module_path': "tomopy.recon.algorithm",
@@ -72,7 +72,21 @@ def methods_to_list() -> PipelineConfig:
                      'init_recon': None,
                        },
                     }
-    full_pipeline.append(method4)
+    full_pipeline_list.append(method4)
+    method5 = {
+        'method': "save_to_images",
+        'module_path': "httomolib.misc.images",
+        'parameters' : {
+                     'subfolder_name': "images",
+                     'axis': 1,
+                     'file_format': "tif",
+                     'bits': 8,
+                     'perc_range_min': 0.0,
+                     'perc_range_max': 100.0,
+                     'jpeg_quality': 95,
+                       },
+                    }
+    full_pipeline_list.append(method5)
 
-    return full_pipeline
+    return full_pipeline_list
     

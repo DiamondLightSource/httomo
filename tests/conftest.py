@@ -225,7 +225,7 @@ def python_pipeline1():
 
 @pytest.fixture
 def yaml_pipeline1():
-    return "samples/pipeline_template_examples/new_syntax_pipeline.yaml"
+    return "samples/pipeline_template_examples/pipeline_cpu1.yaml"
 
 
 @pytest.fixture(scope="session")

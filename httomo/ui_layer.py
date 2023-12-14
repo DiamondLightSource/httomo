@@ -58,8 +58,8 @@ class UiLayer:
             )
 
     def build_pipeline(self) -> Pipeline:
-        side_outputs_collect = [] # saves [task_no, id, side_outputs] for tasks with side_outputs
-        methods_list = []
+        side_outputs_collect: list = [] # saves [task_no, id, side_outputs] for tasks with side_outputs
+        methods_list: list = []
         for task_no, task_conf in enumerate(self.PipelineStageConfig):
             if "loaders" in task_conf['module_path']:
                 task_conf['parameters']['in_file'] = self.in_data_file
@@ -83,7 +83,7 @@ class UiLayer:
                     if isinstance(value, str) and value is not None:
                         if value.find('${{') != -1:                            
                             result_extr = re.search(r"\{([A-Za-z0-9_.]+)\}", value)
-                            internal_expression=result_extr.group(1)
+                            internal_expression = result_extr.group(1)
                             (ref_id, side_str, ref_arg) = internal_expression.split(".")
                             # lets find the referred id in "side_outputs_collect"
                             for items in side_outputs_collect:
@@ -116,29 +116,3 @@ def _python_tasks_loader(file_path: str) -> list:
     module_spec.loader.exec_module(foo)
     tasks_list = list(foo.methods_to_list())
     return tasks_list
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: <script> <tasks_file> <data_file>")
-        exit(1)
-
-    out_dir = Path("httomo_out")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    httomo.globals.run_out_dir = out_dir.joinpath(
-        f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
-    )
-
-    comm = MPI.COMM_WORLD
-    if comm.rank == 0:
-        # Setup global logger object
-        httomo.globals.logger = setup_logger(httomo.globals.run_out_dir)
-
-    from httomo.ui_layer import *
-    
-    initYaml = UiLayer(sys.argv[1], sys.argv[2], comm=comm)
-
-    pipeline = initYaml.build_pipeline()
-
-    #print("done pipeline")
-    runner = TaskRunner(pipeline, False)
-    runner.execute()
