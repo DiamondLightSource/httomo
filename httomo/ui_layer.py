@@ -1,31 +1,18 @@
 import yaml
-from pathlib import Path
 from typing import Any, Dict, List, Protocol, TypeAlias
 from importlib import import_module, util
-import sys
 import os
 import re
 
 from mpi4py import MPI
 from mpi4py.MPI import Comm
 
-import httomo
-from httomo.logger import setup_logger
-
-from httomo.utils import log_exception
 from httomo.methods_database.query import MethodDatabaseRepository
 from httomo.runner.pipeline import Pipeline
 
 from httomo.runner.backend_wrapper import make_backend_wrapper
 from httomo.runner.loader import make_loader
 from httomo.runner.output_ref import OutputRef
-from httomo.runner.task_runner import TaskRunner
-
-from datetime import datetime
-
-MethodConfig: TypeAlias = Dict[str, Dict[str, Any]]
-PipelineStageConfig: TypeAlias = List[MethodConfig]
-PipelineConfig: TypeAlias = List[PipelineStageConfig]
 
 class UiLayer:
     """A common user interface for different front-ends in httomo.
