@@ -107,8 +107,7 @@ def _set_param_value(k: int, v: int, params_dict: Dict):
     if str(v).find("=") == -1 and str(k) != "kwargs":
         params_dict[str(k)] = "REQUIRED"
     elif str(k) == "kwargs":
-        add_str = "\n    #additional parameters: AVAILABLE"
-        params_dict[-1] = add_str
+        params_dict["#additional parameters"] = "AVAILABLE"
     elif str(k) == "center":
         # Temporary value
         params_dict[str(k)] = "${{centering.side_outputs.centre_of_rotation}}"
@@ -142,7 +141,7 @@ def _set_dict_special_cases(method_dict: Dict, method_name: str):
     """
     if method_name in "find_center_vo":
         method_dict["id"] = "centering"
-        method_dict["side_outputs"] = {"centre_of_rotation": "cor"}
+        method_dict["side_outputs"] = {"cor": "centre_of_rotation"}
     if method_name in "find_center_360":
         method_dict["id"] = "centering"
         method_dict["side_outputs"] = {
