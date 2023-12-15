@@ -188,6 +188,7 @@ def _get_discard_keys() -> List[str]:
         "out_dir",
         "angles",
         "gpu_id",
+        "comm"
     ]
     return discard_keys
 

@@ -7,7 +7,6 @@
     dimension: REQUIRED
     preview: REQUIRED
     pad: REQUIRED
-    comm: REQUIRED
     image_key_path: null
     rotation_angles:
       data_path: /entry1/tomo_entry/data/rotation_angle
