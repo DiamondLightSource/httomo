@@ -2,12 +2,13 @@ from pathlib import Path
 from typing import Any, Dict, Literal, Protocol, Tuple
 
 import h5py
+import numpy as np
 from mpi4py import MPI
 from mpi4py.MPI import Comm
 
 from httomo.data.hdf._utils.chunk import get_data_shape_and_offset
 from httomo.data.hdf.loaders import LoaderData
-from httomo.runner.dataset import DataSet
+from httomo.runner.dataset import DataSet, DataSetBlock, FullFileDataSet
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import Pattern, _get_slicing_dim
@@ -170,6 +171,21 @@ class StandardTomoLoader(DataSetSource):
             self._global_shape,
         )
 
+        # TODO: Not implementing fetching of real angles, darks, flats from raw data yet
+        DUMMY_FLATS_LENGTH = DUMMY_DARKS_LENGTH = DUMMY_ANGLES_LENGTH = 10
+        dummy_angles = np.empty(DUMMY_ANGLES_LENGTH)
+        dummy_darks = np.empty(DUMMY_DARKS_LENGTH)
+        dummy_flats = np.empty(DUMMY_FLATS_LENGTH)
+        dataset: h5py.Dataset = self._get_h5py_dataset(in_file, data_path, comm)
+        self._data = FullFileDataSet(
+            data=dataset,
+            angles=dummy_angles,
+            flats=dummy_flats,
+            darks=dummy_darks,
+            global_index=self._chunk_index,
+            chunk_shape=self._chunk_shape,
+        )
+
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
         return self._slicing_dim
@@ -232,3 +248,20 @@ class StandardTomoLoader(DataSetSource):
             global_shape[1],
             global_shape[2],
         )
+
+    def _get_h5py_dataset(
+        self,
+        in_file: Path,
+        data_path: str,
+        comm: MPI.Comm,
+    ) -> h5py.Dataset:
+        """
+        Get an h5py `Dataset` object that represents the data being loaded
+        """
+        f = h5py.File(in_file, "r", driver="mpio", comm=comm)
+        dataset: h5py.Dataset = f[data_path]
+        return dataset
+
+    def read_block(self, start: int, length: int) -> DataSetBlock:
+        block = self._data.make_block(self._slicing_dim, start, length)
+        return block
