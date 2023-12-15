@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ---------------------------------------------------------------------------
-# Created By  : Daniil Kazantsev <scientificsoftware@diamond.ac.uk>
+# Created By  : Tomography Team <scientificsoftware@diamond.ac.uk>
 # Created Date: 14/October/2022
-# version ='0.2'
+# version ='0.3'
 # ---------------------------------------------------------------------------
 """Script that exposes all functions of a given software package as YAML templates.
 

@@ -2,6 +2,6 @@
   module_path: httomolibgpu.recon.algorithm
   parameters:
     center: ${{centering.side_outputs.centre_of_rotation}}
-    objsize: null
+    recon_size: null
     iterations: 300
     nonnegativity: true

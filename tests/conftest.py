@@ -224,9 +224,24 @@ def python_pipeline1():
     return "samples/python_templates/pipeline_cpu1.py"
 
 @pytest.fixture
+def python_pipeline2():
+    return "samples/python_templates/pipeline_cpu2.py"
+
+@pytest.fixture
+def python_pipeline3():
+    return "samples/python_templates/pipeline_gpu1.py"
+
+@pytest.fixture
 def yaml_pipeline1():
     return "samples/pipeline_template_examples/pipeline_cpu1.yaml"
 
+@pytest.fixture
+def yaml_pipeline2():
+    return "samples/pipeline_template_examples/pipeline_cpu2.yaml"
+
+@pytest.fixture
+def yaml_pipeline3():
+    return "samples/pipeline_template_examples/pipeline_gpu1.yaml"
 
 @pytest.fixture(scope="session")
 def distortion_correction_path(test_data_path):

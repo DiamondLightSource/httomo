@@ -26,28 +26,14 @@ def methods_to_list() -> PipelineConfig:
                      'image_key_path': 'entry1/tomo_entry/instrument/detector/image_key',
                      'rotation_angles': {"data_path": "/entry1/tomo_entry/data/rotation_angle"},
                      'dimension': 1,
-                     'preview': [dict(), dict(), dict()],
+                     'preview': [None, None, None],
                      'pad': 0,
                        },
                     }
     full_pipeline_list.append(loader)
     method1 = {
-        'method': "normalize",
-        'module_path': "tomopy.prep.normalize",
-        'parameters' : {
-                     'cutoff': None,
-                       },
-                    }
-    full_pipeline_list.append(method1)
-    method2 = {
-        'method': "minus_log",
-        'module_path': "tomopy.prep.normalize",
-        'parameters' : {},
-                    }
-    full_pipeline_list.append(method2)
-    method3 = {
         'method': "find_center_vo",
-        'module_path': "tomopy.recon.rotation",
+        'module_path': "httomolibgpu.recon.rotation",
         'id': "centering",
         'parameters' : {
                      'ind': "mid",
@@ -60,19 +46,47 @@ def methods_to_list() -> PipelineConfig:
                        },
         'side_outputs': {"cor": "centre_of_rotation"},
                     }
+    full_pipeline_list.append(method1)
+    method2 = {
+        'method': "remove_outlier3d",
+        'module_path': "httomolibgpu.misc.corr",
+        'parameters' : {
+                        'dif': 0.1,
+                        'kernel_size': 3,
+                       },
+                    }
+    full_pipeline_list.append(method2)    
+    method3 = {
+        'method': "normalize",
+        'module_path': "httomolibgpu.prep.normalize",
+        'parameters' : {
+                     'cutoff': 10.0,
+                     'minus_log': True,
+                     'nonnegativity': False,
+                     'remove_nans': False,
+                       },
+                    }
     full_pipeline_list.append(method3)
     method4 = {
-        'method': "recon",
-        'module_path': "tomopy.recon.algorithm",
+        'method': "remove_stripe_based_sorting",
+        'module_path': "httomolibgpu.prep.stripe",
         'parameters' : {
-                     'center': "${{centering.side_outputs.centre_of_rotation}}",
-                     'sinogram_order': False,
-                     'algorithm': "gridrec",
-                     'init_recon': None,
+                     'size': 11,
+                     'dim': 1,
                        },
                     }
     full_pipeline_list.append(method4)
     method5 = {
+        'method': "FBP",
+        'module_path': "httomolibgpu.recon.algorithm",
+        'parameters' : {
+                     'center': "${{centering.side_outputs.centre_of_rotation}}",
+                     'recon_size': None,
+                     'recon_mask_radius': None,
+                       },
+                    }
+    full_pipeline_list.append(method5)
+    method6 = {
         'method': "save_to_images",
         'module_path': "httomolib.misc.images",
         'parameters' : {
@@ -85,7 +99,7 @@ def methods_to_list() -> PipelineConfig:
                      'jpeg_quality': 95,
                        },
                     }
-    full_pipeline_list.append(method5)
+    full_pipeline_list.append(method6)
 
     return full_pipeline_list
     
