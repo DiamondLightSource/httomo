@@ -151,6 +151,10 @@ class StandardTomoLoader(DataSetSource):
             in_file,
             data_path,
         )
+        self._chunk_index = self._calculate_chunk_index(
+            comm,
+            self._global_shape[slicing_dim],
+        )
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
@@ -170,3 +174,24 @@ class StandardTomoLoader(DataSetSource):
             dataset: h5py.Dataset = f[data_path]
             global_shape = dataset.shape
         return global_shape
+
+    @property
+    def chunk_index(self) -> Tuple[int, int, int]:
+        return self._chunk_index
+
+    # TODO: Assume projection slicing dim for now, and therefore make assumptions about chunk
+    # index element ordering
+    # TODO: Assume no previewing/cropping
+    def _calculate_chunk_index(
+        self,
+        comm: MPI.Comm,
+        slicing_dim_length: int
+    ) -> Tuple[int, int, int]:
+        """
+        Calculate the index of the chunk that is associated with the MPI process
+        """
+        rank = comm.rank
+        nprocs = comm.size
+        slicing_dim_chunk_index = round((slicing_dim_length / nprocs) * rank)
+        chunk_index = (slicing_dim_chunk_index, 0, 0)
+        return chunk_index
