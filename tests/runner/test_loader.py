@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Union
 
+import h5py
 from mpi4py import MPI
 import pytest
 from pytest_mock import MockerFixture
@@ -170,3 +171,70 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs(
         comm=COMM,
     )
     assert loader.chunk_shape == CHUNK_SHAPE
+
+
+def test_standard_tomo_loader_read_block_single_proc(
+    standard_data: str,
+    standard_data_path: str,
+):
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+    loader = StandardTomoLoader(
+        in_file=Path(standard_data),
+        data_path=standard_data_path,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+
+    BLOCK_START = 2
+    BLOCK_LENGTH = 4
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+
+    PROJS_START = 0
+    with h5py.File(standard_data, "r") as f:
+        dataset: h5py.Dataset = f[standard_data_path]
+        projs: np.ndarray = dataset[
+            PROJS_START + BLOCK_START: PROJS_START + BLOCK_START + BLOCK_LENGTH
+        ]
+
+    assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    np.testing.assert_array_equal(block.data, projs)
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+def test_standard_tomo_loader_read_block_two_procs(
+    standard_data: str,
+    standard_data_path: str,
+):
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+    loader = StandardTomoLoader(
+        in_file=Path(standard_data),
+        data_path=standard_data_path,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+
+    BLOCK_START = 2
+    BLOCK_LENGTH = 4
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+
+    GLOBAL_DATA_SHAPE = (220, 128, 160)
+    CHUNK_SHAPE = (
+        GLOBAL_DATA_SHAPE[0] // 2,
+        GLOBAL_DATA_SHAPE[1],
+        GLOBAL_DATA_SHAPE[2]
+    )
+
+    projs_start = 0 if COMM.rank == 0 else CHUNK_SHAPE[0]
+    with h5py.File(standard_data, "r") as f:
+        dataset: h5py.Dataset = f[standard_data_path]
+        projs: np.ndarray = dataset[
+            projs_start + BLOCK_START: projs_start + BLOCK_START + BLOCK_LENGTH
+        ]
+
+    assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    np.testing.assert_array_equal(block.data, projs)
