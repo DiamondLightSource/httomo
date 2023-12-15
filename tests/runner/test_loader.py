@@ -129,3 +129,44 @@ def test_standard_tomo_loader_get_chunk_index_two_procs(
         comm=COMM,
     )
     assert loader.chunk_index == chunk_index
+
+
+def test_standard_tomo_loader_get_chunk_shape_single_proc(
+    standard_data: str,
+    standard_data_path: str,
+):
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+    CHUNK_SHAPE = (220, 128, 160)
+    loader = StandardTomoLoader(
+        in_file=Path(standard_data),
+        data_path=standard_data_path,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+    assert loader.chunk_shape == CHUNK_SHAPE
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+def test_standard_tomo_loader_get_chunk_shape_two_procs(
+    standard_data: str,
+    standard_data_path: str,
+):
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+    GLOBAL_DATA_SHAPE = (220, 128, 160)
+    CHUNK_SHAPE = (
+        GLOBAL_DATA_SHAPE[0] // 2,
+        GLOBAL_DATA_SHAPE[1],
+        GLOBAL_DATA_SHAPE[2]
+    )
+    loader = StandardTomoLoader(
+        in_file=Path(standard_data),
+        data_path=standard_data_path,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+    assert loader.chunk_shape == CHUNK_SHAPE

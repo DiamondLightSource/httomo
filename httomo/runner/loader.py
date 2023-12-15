@@ -151,9 +151,23 @@ class StandardTomoLoader(DataSetSource):
             in_file,
             data_path,
         )
-        self._chunk_index = self._calculate_chunk_index(
-            comm,
+
+        chunk_index_slicing_dim = self._calculate_chunk_index_slicing_dim(
+            comm.rank,
+            comm.size,
             self._global_shape[slicing_dim],
+        )
+        next_process_chunk_index_slicing_dim = self._calculate_chunk_index_slicing_dim(
+            comm.rank + 1,
+            comm.size,
+            self._global_shape[slicing_dim],
+        )
+
+        self._chunk_index = self._calculate_chunk_index(chunk_index_slicing_dim)
+        self._chunk_shape = self._calculate_chunk_shape(
+            chunk_index_slicing_dim,
+            next_process_chunk_index_slicing_dim,
+            self._global_shape,
         )
 
     @property
@@ -179,19 +193,42 @@ class StandardTomoLoader(DataSetSource):
     def chunk_index(self) -> Tuple[int, int, int]:
         return self._chunk_index
 
-    # TODO: Assume projection slicing dim for now, and therefore make assumptions about chunk
-    # index element ordering
+    def _calculate_chunk_index_slicing_dim(
+        self,
+        rank: int,
+        nprocs: int,
+        slicing_dim_length: int
+    ) -> int:
+        """
+        Calculate the index of the chunk that is associated with the MPI process in the slicing
+        dimension
+        """
+        return round((slicing_dim_length / nprocs) * rank)
+
+    # TODO: Assume projection slice dim for now, and therefore assume chunk index element
+    # ordering
     # TODO: Assume no previewing/cropping
     def _calculate_chunk_index(
         self,
-        comm: MPI.Comm,
-        slicing_dim_length: int
+        chunk_index_slicing_dim: int,
     ) -> Tuple[int, int, int]:
-        """
-        Calculate the index of the chunk that is associated with the MPI process
-        """
-        rank = comm.rank
-        nprocs = comm.size
-        slicing_dim_chunk_index = round((slicing_dim_length / nprocs) * rank)
-        chunk_index = (slicing_dim_chunk_index, 0, 0)
-        return chunk_index
+        return (chunk_index_slicing_dim, 0, 0)
+
+    @property
+    def chunk_shape(self) -> Tuple[int, int, int]:
+        return self._chunk_shape
+
+    # TODO: Assume projection slice dim for now, and therefore assume chunk shape element
+    # ordering
+    # TODO: Assume no previewing/cropping
+    def _calculate_chunk_shape(
+        self,
+        current_proc_chunk_index: int,
+        next_proc_chunk_index: int,
+        global_shape: Tuple[int, int, int],
+    ) -> Tuple[int, int, int]:
+        return (
+            next_proc_chunk_index - current_proc_chunk_index,
+            global_shape[1],
+            global_shape[2],
+        )
