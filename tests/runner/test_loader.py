@@ -1,5 +1,7 @@
 import os
+from pathlib import Path
 from typing import Union
+
 from mpi4py import MPI
 import pytest
 from pytest_mock import MockerFixture
@@ -60,7 +62,32 @@ def test_loader_load_produces_dataset(mocker: MockerFixture):
     np.testing.assert_array_equal(dataset.angles, 4.0)
 
 
-def test_standard_tomo_loader_get_slicing_dim():
+def test_standard_tomo_loader_get_slicing_dim(
+    standard_data: str,
+    standard_data_path: str,
+):
     SLICING_DIM = 0
-    loader = StandardTomoLoader(slicing_dim=SLICING_DIM)
+    COMM = MPI.COMM_WORLD
+    loader = StandardTomoLoader(
+        in_file=Path(standard_data),
+        data_path=standard_data_path,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
     assert loader.slicing_dim == SLICING_DIM
+
+
+def test_standard_tomo_loader_get_global_shape(
+    standard_data: str,
+    standard_data_path: str,
+):
+    SLICING_DIM = 0
+    GLOBAL_DATA_SHAPE = (220, 128, 160)
+    COMM = MPI.COMM_WORLD
+    loader = StandardTomoLoader(
+        in_file=Path(standard_data),
+        data_path=standard_data_path,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+    assert loader.global_shape == GLOBAL_DATA_SHAPE

@@ -1,5 +1,7 @@
-from typing import Any, Dict, Literal, Protocol
+from pathlib import Path
+from typing import Any, Dict, Literal, Protocol, Tuple
 
+import h5py
 from mpi4py import MPI
 from mpi4py.MPI import Comm
 
@@ -138,10 +140,33 @@ class StandardTomoLoader(DataSetSource):
     """
     def __init__(
         self,
+        in_file: Path,
+        data_path: str,
         slicing_dim: Literal[0, 1, 2],
+        comm: MPI.Comm,
     ) -> None:
         self._slicing_dim = slicing_dim
+        self._global_shape = self._get_global_data_shape(
+            comm,
+            in_file,
+            data_path,
+        )
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
         return self._slicing_dim
+
+    @property
+    def global_shape(self) -> Tuple[int, int, int]:
+        return self._global_shape
+
+    def _get_global_data_shape(
+        self,
+        comm: MPI.Comm,
+        in_file: Path,
+        data_path: str,
+    ) -> Tuple[int, int, int]:
+        with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
+            dataset: h5py.Dataset = f[data_path]
+            global_shape = dataset.shape
+        return global_shape
