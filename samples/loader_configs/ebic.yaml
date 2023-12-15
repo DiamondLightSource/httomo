@@ -2,6 +2,7 @@
   module_path: httomo.data.hdf.loaders
   parameters:
     name: tomo
+    in_file: # /path/to/data_file/
     data_path: /exchange/data
     rotation_angles:
         data_path: /exchange/theta

@@ -2,6 +2,7 @@
   module_path: httomo.data.hdf.loaders
   parameters:
     name: tomo
+    in_file: tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs
     data_path: /1-TempPlugin-tomo/data
     rotation_angles:
       user_defined:

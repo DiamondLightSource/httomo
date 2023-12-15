@@ -2,6 +2,7 @@
   module_path: httomo.data.hdf.loaders
   parameters:
     name: tomo
+    in_file: tests/test_data/k11_diad/k11-18014.nxs
     data_path: /entry/imaging/data
     image_key_path: /entry/instrument/imaging/image_key
     rotation_angles:
