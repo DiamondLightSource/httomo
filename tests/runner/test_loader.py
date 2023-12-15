@@ -7,7 +7,7 @@ import numpy as np
 
 from httomo.data.hdf.loaders import LoaderData
 from httomo.runner.dataset import DataSet
-from httomo.runner.loader import make_loader
+from httomo.runner.loader import StandardTomoLoader, make_loader
 from .testing_utils import make_mock_repo
 
 
@@ -58,3 +58,9 @@ def test_loader_load_produces_dataset(mocker: MockerFixture):
     np.testing.assert_array_equal(dataset.flats, 2.0)
     np.testing.assert_array_equal(dataset.darks, 3.0)
     np.testing.assert_array_equal(dataset.angles, 4.0)
+
+
+def test_standard_tomo_loader_get_slicing_dim():
+    SLICING_DIM = 0
+    loader = StandardTomoLoader(slicing_dim=SLICING_DIM)
+    assert loader.slicing_dim == SLICING_DIM

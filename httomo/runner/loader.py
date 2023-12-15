@@ -1,9 +1,12 @@
-from typing import Any, Dict, Protocol
+from typing import Any, Dict, Literal, Protocol
+
 from mpi4py import MPI
 from mpi4py.MPI import Comm
+
 from httomo.data.hdf._utils.chunk import get_data_shape_and_offset
 from httomo.data.hdf.loaders import LoaderData
 from httomo.runner.dataset import DataSet
+from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import Pattern, _get_slicing_dim
 
@@ -127,3 +130,18 @@ def make_loader(
         comm=comm,
         **kwargs,
     )
+
+
+class StandardTomoLoader(DataSetSource):
+    """
+    Loads an individual block at a time from raw data instead of an entire chunk.
+    """
+    def __init__(
+        self,
+        slicing_dim: Literal[0, 1, 2],
+    ) -> None:
+        self._slicing_dim = slicing_dim
+
+    @property
+    def slicing_dim(self) -> Literal[0, 1, 2]:
+        return self._slicing_dim
