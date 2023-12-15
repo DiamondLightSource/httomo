@@ -29,6 +29,7 @@ import importlib
 import inspect
 import os
 import re
+from typing import List, Dict
 
 import yaml
 
@@ -37,37 +38,14 @@ def yaml_generator(path_to_modules: str, output_folder: str) -> int:
     """function that exposes all method of a given software package as YAML templates
 
     Args:
-        path_to_modules (str): path to the list of modules yaml file
-        output_folder (str): path to output folder with saved templates
+        path_to_modules: path to the list of modules yaml file
+        output_folder: path to output folder with saved templates
 
     Returns:
-        int: returns zero if the processing is succesfull
+        returns zero if the processing is succesfull
     """
-    # Can work with any software in principle,
-    # but for TomoPy and httomolib there are additional keys
-    # that needed to be discarded in templates in order to let
-    # httomo work smoothly.
-    discard_keys = [
-        "tomo",
-        "arr",
-        "prj",
-        "data",
-        "ncore",
-        "nchunk",
-        "flats",
-        "flat",
-        "dark",
-        "darks",
-        "theta",
-        "out",
-        "ang",        
-        "comm_rank",
-        "out_dir",
-        "angles",
-        "gpu_id",
-    ]  # discard from parameters list
-
-    no_data_out_modules = ["save_to_images"]  # discard data_out from certain modules
+    discard_keys = _get_discard_keys()
+    no_data_out_modules = _get_discard_data_out()
 
     # open YAML file with modules to inspect
     with open(path_to_modules, "r") as stream:
@@ -97,16 +75,8 @@ def yaml_generator(path_to_modules: str, output_folder: str) -> int:
             get_method_docs = inspect.getdoc(getattr(imported_module, methods_list[m]))
 
             # put the parameters in the dictionary
-            params_list: list = []
-            params_dict: dict = {}
-            params_dict["data_in"] = "tomo"  # default dataset names
-            # dealing with special cases for "data_out"
-            if method_name not in no_data_out_modules:
-                params_dict["data_out"] = "tomo"
-            if method_name in "find_center_vo":
-                params_dict["data_out"] = "cor"
-            if method_name in "find_center_360":
-                params_dict["data_out"] = ["cor", "overlap", "side", "overlap_position"]
+            params_list: List = []
+            params_dict: Dict = {}
             for k, v in get_method_params.parameters.items():
                 if v is not None:
                     append = True
@@ -115,25 +85,112 @@ def yaml_generator(path_to_modules: str, output_folder: str) -> int:
                             append = False
                             break
                     if append:
-                        if str(v).find("=") == -1 and str(k) != "kwargs":
-                            params_dict[str(k)] = "REQUIRED"
-                        elif str(k) == "kwargs":
-                            params_dict["#additional parameters"] = "AVAILABLE"
-                        else:
-                            params_dict[str(k)] = v.default
-
-            params_list = [{module_name: {method_name: params_dict}}]
-
-            # save the list as a YAML file
-            path_dir = output_folder + "/" + module_name
-            path_file = path_dir + "/" + str(method_name) + ".yaml"
-
-            if not os.path.exists(path_dir):
-                os.makedirs(path_dir)
-
-            with open(path_file, "w") as file:
-                outputs = yaml.dump(params_list, file, sort_keys=False)
+                        _set_param_value(k, v, params_dict)
+            method_dict = {
+                "method": method_name,
+                "module_path": module_name,
+                "parameters": params_dict,
+            }
+            _set_dict_special_cases(method_dict, method_name)
+            params_list = [method_dict]
+            _save_yaml(module_name, method_name, params_list)
     return 0
+
+
+def _set_param_value(k: int, v: int, params_dict: Dict):
+    """Set param value for method inside dictionary
+    Args:
+        k: Method name, dict key
+        v: Method value, dict value
+        params_dict: Parameter dictionary
+    """
+    if str(v).find("=") == -1 and str(k) != "kwargs":
+        params_dict[str(k)] = "REQUIRED"
+    elif str(k) == "kwargs":
+        params_dict["#additional parameters"] = "AVAILABLE"
+    elif str(k) == "center":
+        # Temporary value
+        params_dict[str(k)] = "${{centering.side_outputs.centre_of_rotation}}"
+    else:
+        params_dict[str(k)] = v.default
+
+
+def _save_yaml(module_name: str, method_name: str, params_list: List[str]):
+    """Save the list as a YAML file
+    Args:
+        module_name: Name of module
+        method_name: Name of method
+        params_list: List of parameters
+    """
+    path_dir = output_folder + "/" + module_name
+    path_file = path_dir + "/" + str(method_name) + ".yaml"
+
+    if not os.path.exists(path_dir):
+        os.makedirs(path_dir)
+
+    with open(path_file, "w") as file:
+        outputs = yaml.dump(params_list, file, sort_keys=False)
+
+
+def _set_dict_special_cases(method_dict: Dict, method_name: str):
+    """Dealing with special cases for "data_out"
+
+    Args:
+        method_dict: Dictionary of modules and parameters
+        method_name: Name of method
+    """
+    if method_name in "find_center_vo":
+        method_dict["id"] = "centering"
+        method_dict["side_outputs"] = {"cor": "centre_of_rotation"}
+    if method_name in "find_center_360":
+        method_dict["id"] = "centering"
+        method_dict["side_outputs"] = {
+            "centre_of_rotation": "cor",
+            "overlap": "overlap",
+            "side": "side",
+            "overlap_position": "overlap_position",
+        }
+
+
+def _get_discard_data_out() -> List[str]:
+    """Discard data_out from certain modules
+
+    Returns: list of data_out to discard
+    """
+    discard_data_out = ["save_to_images"]
+    return discard_data_out
+
+
+def _get_discard_keys() -> List[str]:
+    """Can work with any software in principle,
+    but for TomoPy and httomolib there are additional keys
+    that needed to be discarded in templates in order to let
+    httomo work smoothly.
+
+    Returns: List of keys to discard
+    """
+    discard_keys = [
+        "data_in",
+        "tomo",
+        "arr",
+        "prj",
+        "data",
+        "ncore",
+        "nchunk",
+        "flats",
+        "flat",
+        "dark",
+        "darks",
+        "theta",
+        "out",
+        "ang",
+        "comm_rank",
+        "out_dir",
+        "angles",
+        "gpu_id",
+        "comm"
+    ]
+    return discard_keys
 
 
 def get_args():

@@ -1,6 +1,5 @@
-- httomolibgpu.misc.morph:
-    sino_360_to_180:
-      data_in: tomo
-      data_out: tomo
-      overlap: 0
-      rotation: left
+- method: sino_360_to_180
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    overlap: 0
+    rotation: left

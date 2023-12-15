@@ -1,6 +1,5 @@
-- tomopy.prep.stripe:
-    remove_stripe_ti:
-      data_in: tomo
-      data_out: tomo
-      nblock: 0
-      alpha: 1.5
+- method: remove_stripe_ti
+  module_path: tomopy.prep.stripe
+  parameters:
+    nblock: 0
+    alpha: 1.5

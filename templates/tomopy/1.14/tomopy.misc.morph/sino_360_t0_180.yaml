@@ -1,0 +1,5 @@
+- method: sino_360_t0_180
+  module_path: tomopy.misc.morph
+  parameters:
+    overlap: 0
+    rotation: left

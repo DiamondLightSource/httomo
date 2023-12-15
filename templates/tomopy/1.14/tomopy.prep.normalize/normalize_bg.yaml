@@ -1,5 +1,4 @@
-- tomopy.prep.normalize:
-    normalize_bg:
-      data_in: tomo
-      data_out: tomo
-      air: 1
+- method: normalize_bg
+  module_path: tomopy.prep.normalize
+  parameters:
+    air: 1
