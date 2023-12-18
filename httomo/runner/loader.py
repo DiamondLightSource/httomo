@@ -144,6 +144,7 @@ class StandardTomoLoader(DataSetSource):
         in_file: Path,
         data_path: str,
         image_key_path: str,
+        angles_path: str,
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
     ) -> None:
@@ -175,15 +176,20 @@ class StandardTomoLoader(DataSetSource):
             self._global_shape,
         )
 
-        # TODO: Not implementing fetching of real angles, darks, flats from raw data yet
-        DUMMY_FLATS_LENGTH = DUMMY_DARKS_LENGTH = DUMMY_ANGLES_LENGTH = 10
-        dummy_angles = np.empty(DUMMY_ANGLES_LENGTH)
+        angles = self._get_angles(
+            in_file,
+            angles_path,
+            comm,
+        )
+
+        # TODO: Not implementing fetching of real darks, flats from raw data yet
+        DUMMY_FLATS_LENGTH = DUMMY_DARKS_LENGTH = 10
         dummy_darks = np.empty(DUMMY_DARKS_LENGTH)
         dummy_flats = np.empty(DUMMY_FLATS_LENGTH)
         dataset: h5py.Dataset = self._get_h5py_dataset(in_file, data_path, comm)
         self._data = FullFileDataSet(
             data=dataset,
-            angles=dummy_angles,
+            angles=angles,
             flats=dummy_flats,
             darks=dummy_darks,
             global_index=self._chunk_index,
@@ -282,3 +288,12 @@ class StandardTomoLoader(DataSetSource):
             data_indices = np.where(f[image_key_path][:] == 0)[0]
 
         return data_indices.tolist()
+
+    def _get_angles(
+        self,
+        in_file: Path,
+        angles_path: str,
+        comm: MPI.Comm,
+    ) -> np.ndarray:
+        with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
+            return f[angles_path][...]

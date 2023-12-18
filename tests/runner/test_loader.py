@@ -68,12 +68,14 @@ def test_standard_tomo_loader_get_slicing_dim(
     standard_data_path: str,
     standard_image_key_path: str,
 ):
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        angles_path=ANGLES_PATH,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -85,6 +87,7 @@ def test_standard_tomo_loader_get_global_shape(
     standard_data_path: str,
     standard_image_key_path: str,
 ):
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     SLICING_DIM = 0
     GLOBAL_DATA_SHAPE = (180, 128, 160)
     COMM = MPI.COMM_WORLD
@@ -92,6 +95,7 @@ def test_standard_tomo_loader_get_global_shape(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        angles_path=ANGLES_PATH,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -103,6 +107,7 @@ def test_standard_tomo_loader_get_chunk_index_single_proc(
     standard_data_path: str,
     standard_image_key_path: str,
 ):
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     CHUNK_INDEX = (0, 0, 0)
@@ -110,6 +115,7 @@ def test_standard_tomo_loader_get_chunk_index_single_proc(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        angles_path=ANGLES_PATH,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -125,6 +131,7 @@ def test_standard_tomo_loader_get_chunk_index_two_procs(
     standard_data_path: str,
     standard_image_key_path: str,
 ):
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     GLOBAL_DATA_SHAPE = (180, 128, 160)
@@ -134,6 +141,7 @@ def test_standard_tomo_loader_get_chunk_index_two_procs(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        angles_path=ANGLES_PATH,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -145,6 +153,7 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc(
     standard_data_path: str,
     standard_image_key_path: str,
 ):
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     CHUNK_SHAPE = (180, 128, 160)
@@ -152,6 +161,7 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        angles_path=ANGLES_PATH,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -167,6 +177,7 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs(
     standard_data_path: str,
     standard_image_key_path: str,
 ):
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     GLOBAL_DATA_SHAPE = (180, 128, 160)
@@ -179,6 +190,7 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        angles_path=ANGLES_PATH,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -190,12 +202,14 @@ def test_standard_tomo_loader_read_block_single_proc(
     standard_data_path: str,
     standard_image_key_path: str,
 ):
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        angles_path=ANGLES_PATH,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -224,12 +238,14 @@ def test_standard_tomo_loader_read_block_two_procs(
     standard_data_path: str,
     standard_image_key_path: str,
 ):
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        angles_path=ANGLES_PATH,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -261,12 +277,14 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc(
 ):
     DATA_PATH = "/entry/imaging/data"
     IMAGE_KEY_PATH = "/entry/instrument/imaging/image_key"
+    ANGLES_PATH = "/entry/imaging_sum/gts_theta_value"
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
         in_file=Path(diad_data),
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
+        angles_path=ANGLES_PATH,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -297,12 +315,14 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs(
 ):
     DATA_PATH = "/entry/imaging/data"
     IMAGE_KEY_PATH = "/entry/instrument/imaging/image_key"
+    ANGLES_PATH = "/entry/imaging_sum/gts_theta_value"
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
         in_file=Path(diad_data),
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
+        angles_path=ANGLES_PATH,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -330,3 +350,31 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs(
 
     assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
     np.testing.assert_array_equal(block.data, projs)
+
+
+def test_standard_tomo_loader_generates_block_with_angles(
+    standard_data: str,
+    standard_data_path: str,
+    standard_image_key_path: str,
+):
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+    loader = StandardTomoLoader(
+        in_file=Path(standard_data),
+        data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
+        angles_path=ANGLES_PATH,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+
+    BLOCK_START = 0
+    BLOCK_LENGTH = 2
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+
+    with h5py.File(standard_data, "r") as f:
+        dataset: h5py.Dataset = f[ANGLES_PATH]
+        angles = dataset[...]
+
+    np.testing.assert_array_equal(block.angles, angles)
