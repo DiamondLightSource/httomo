@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Literal, Protocol, Tuple
+from typing import Any, Dict, List, Literal, Protocol, Tuple
 
 import h5py
 import numpy as np
@@ -143,10 +143,16 @@ class StandardTomoLoader(DataSetSource):
         self,
         in_file: Path,
         data_path: str,
+        image_key_path: str,
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
     ) -> None:
         self._slicing_dim = slicing_dim
+        self._data_indices = self._get_data_indices(
+            in_file,
+            image_key_path,
+            comm,
+        )
         self._global_shape = self._get_global_data_shape(
             comm,
             in_file,
@@ -156,12 +162,10 @@ class StandardTomoLoader(DataSetSource):
         chunk_index_slicing_dim = self._calculate_chunk_index_slicing_dim(
             comm.rank,
             comm.size,
-            self._global_shape[slicing_dim],
         )
         next_process_chunk_index_slicing_dim = self._calculate_chunk_index_slicing_dim(
             comm.rank + 1,
             comm.size,
-            self._global_shape[slicing_dim],
         )
 
         self._chunk_index = self._calculate_chunk_index(chunk_index_slicing_dim)
@@ -203,7 +207,7 @@ class StandardTomoLoader(DataSetSource):
         with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
             dataset: h5py.Dataset = f[data_path]
             global_shape = dataset.shape
-        return global_shape
+        return (len(self._data_indices), global_shape[1], global_shape[2])
 
     @property
     def chunk_index(self) -> Tuple[int, int, int]:
@@ -213,13 +217,13 @@ class StandardTomoLoader(DataSetSource):
         self,
         rank: int,
         nprocs: int,
-        slicing_dim_length: int
     ) -> int:
         """
         Calculate the index of the chunk that is associated with the MPI process in the slicing
-        dimension
+        dimension, taking potential darks/flats into account
         """
-        return round((slicing_dim_length / nprocs) * rank)
+        shift = round((len(self._data_indices) / nprocs) * rank)
+        return self._data_indices[0] + shift
 
     # TODO: Assume projection slice dim for now, and therefore assume chunk index element
     # ordering
@@ -265,3 +269,16 @@ class StandardTomoLoader(DataSetSource):
     def read_block(self, start: int, length: int) -> DataSetBlock:
         block = self._data.make_block(self._slicing_dim, start, length)
         return block
+
+    # NOTE: This method is largely copied from `load.get_data_indices()`; that function should
+    # be removed in the future if/when `StandardTomoLoader` gets merged.
+    def _get_data_indices(
+        self,
+        in_file: Path,
+        image_key_path: str,
+        comm: MPI.Comm,
+    ) -> List[int]:
+        with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
+            data_indices = np.where(f[image_key_path][:] == 0)[0]
+
+        return data_indices.tolist()
