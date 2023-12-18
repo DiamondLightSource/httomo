@@ -378,3 +378,37 @@ def test_standard_tomo_loader_generates_block_with_angles(
         angles = dataset[...]
 
     np.testing.assert_array_equal(block.angles, angles)
+
+
+def test_standard_tomo_loader_generates_block_with_darks_flats(
+    standard_data: str,
+    standard_data_path: str,
+    standard_image_key_path: str,
+):
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+    loader = StandardTomoLoader(
+        in_file=Path(standard_data),
+        data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
+        angles_path=ANGLES_PATH,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+
+    BLOCK_START = 0
+    BLOCK_LENGTH = 2
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+
+    FLATS_START = 180
+    FLATS_END = 199
+    DARKS_START = 200
+    DARKS_END = 219
+    with h5py.File(standard_data, "r") as f:
+        dataset: h5py.Dataset = f[standard_data_path]
+        flats = dataset[FLATS_START:FLATS_END + 1]
+        darks = dataset[DARKS_START:DARKS_END + 1]
+
+    np.testing.assert_array_equal(block.flats, flats)
+    np.testing.assert_array_equal(block.darks, darks)
