@@ -182,16 +182,19 @@ class StandardTomoLoader(DataSetSource):
             comm,
         )
 
-        # TODO: Not implementing fetching of real darks, flats from raw data yet
-        DUMMY_FLATS_LENGTH = DUMMY_DARKS_LENGTH = 10
-        dummy_darks = np.empty(DUMMY_DARKS_LENGTH)
-        dummy_flats = np.empty(DUMMY_FLATS_LENGTH)
+        darks, flats = self._get_darks_flats(
+            in_file,
+            data_path,
+            image_key_path,
+            comm,
+        )
+
         dataset: h5py.Dataset = self._get_h5py_dataset(in_file, data_path, comm)
         self._data = FullFileDataSet(
             data=dataset,
             angles=angles,
-            flats=dummy_flats,
-            darks=dummy_darks,
+            flats=flats,
+            darks=darks,
             global_index=self._chunk_index,
             chunk_shape=self._chunk_shape,
         )
@@ -297,3 +300,21 @@ class StandardTomoLoader(DataSetSource):
     ) -> np.ndarray:
         with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
             return f[angles_path][...]
+
+    # NOTE: This method is a barebones version of `load.get_darks_flats_together()`. Additions
+    # will be necessary to support more complicated ways of specifying darks/flats.
+    def _get_darks_flats(
+        self,
+        in_file: Path,
+        data_path: str,
+        image_key_path: str,
+        comm: MPI.Comm,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
+            darks_indices = np.where(f[image_key_path][:] == 2)[0]
+            flats_indices = np.where(f[image_key_path][:] == 1)[0]
+            dataset: h5py.Dataset = f[data_path]
+            darks = dataset[darks_indices[0]: darks_indices[-1] + 1, :, :]
+            flats = dataset[flats_indices[0]: flats_indices[-1] + 1, :, :]
+
+        return darks, flats
