@@ -2,14 +2,12 @@
 Module for checking the validity of yaml files.
 """
 import os
-from typing import Any, Generator, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Generator, Iterator, List, Optional, Tuple, TypeAlias
 
 import h5py
 import yaml
 
-from httomo.pipeline_reader import MethodConfig, PipelineConfig
 from httomo.utils import Colour
-from httomo.yaml_loader import YamlLoader
 from httomo.yaml_utils import get_external_package_current_version
 
 __all__ = [
@@ -18,6 +16,9 @@ __all__ = [
     "validate_yaml_config",
 ]
 
+MethodConfig: TypeAlias = Dict[str, Dict[str, Any]]
+PipelineStageConfig: TypeAlias = List[MethodConfig]
+PipelineConfig: TypeAlias = List[PipelineStageConfig]
 
 def sanity_check(conf_generator: Iterator[Any]) -> bool:
     """
@@ -231,7 +232,6 @@ def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
 
 def check_valid_method_parameters(
         conf: PipelineConfig,
-        loader: type[YamlLoader]
 ) -> bool:
     """
     Check each method config in the pipeline against the templates to see if
@@ -243,7 +243,7 @@ def check_valid_method_parameters(
 
     for f in template_yaml_files:
         with open(f, "r") as template:
-            method_dict = yaml.load(template, Loader=loader)[0]
+            method_dict = yaml.load(template, Loader=yaml.FullLoader)[0]
             template_yaml_data_list.append(
                 next(iter(method_dict.values()))
             )
@@ -349,7 +349,6 @@ def _store_hdf5_members(group, members_list, path=""):
 
 def validate_yaml_config(
         yaml_file: os.PathLike,
-        loader: type[YamlLoader],
         in_file: Optional[os.PathLike] = None
 ) -> bool:
     """
@@ -358,11 +357,11 @@ def validate_yaml_config(
     module in `httomo.templates`.
     """
     with open(yaml_file, "r") as f:
-        conf_generator: Iterator[Any] = yaml.load_all(f, Loader=loader)
+        conf_generator: Iterator[Any] = yaml.load_all(f, Loader=yaml.FullLoader)
         is_yaml_ok = sanity_check(conf_generator)
 
     with open(yaml_file, "r") as f:
-        conf = list(yaml.load_all(f, Loader=loader))
+        conf = list(yaml.load_all(f, Loader=yaml.FullLoader))
 
     # Let all checks run before returning with the result, even if some checks
     # fail, to show all errors present in YAML
@@ -375,7 +374,7 @@ def validate_yaml_config(
     if in_file is not None:
         are_hdf5_paths_correct = check_hdf5_paths_against_loader(conf[0][0], str(in_file))
     do_methods_exist = check_methods_exist_in_templates(conf)
-    are_method_params_valid = check_valid_method_parameters(conf, loader)
+    are_method_params_valid = check_valid_method_parameters(conf)
 
     all_checks_pass = is_yaml_ok and \
         are_all_stages_defined and \
