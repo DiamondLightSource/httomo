@@ -66,12 +66,14 @@ def test_loader_load_produces_dataset(mocker: MockerFixture):
 def test_standard_tomo_loader_get_slicing_dim(
     standard_data: str,
     standard_data_path: str,
+    standard_image_key_path: str,
 ):
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -81,13 +83,15 @@ def test_standard_tomo_loader_get_slicing_dim(
 def test_standard_tomo_loader_get_global_shape(
     standard_data: str,
     standard_data_path: str,
+    standard_image_key_path: str,
 ):
     SLICING_DIM = 0
-    GLOBAL_DATA_SHAPE = (220, 128, 160)
+    GLOBAL_DATA_SHAPE = (180, 128, 160)
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -97,6 +101,7 @@ def test_standard_tomo_loader_get_global_shape(
 def test_standard_tomo_loader_get_chunk_index_single_proc(
     standard_data: str,
     standard_data_path: str,
+    standard_image_key_path: str,
 ):
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
@@ -104,6 +109,7 @@ def test_standard_tomo_loader_get_chunk_index_single_proc(
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -117,15 +123,17 @@ def test_standard_tomo_loader_get_chunk_index_single_proc(
 def test_standard_tomo_loader_get_chunk_index_two_procs(
     standard_data: str,
     standard_data_path: str,
+    standard_image_key_path: str,
 ):
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
-    GLOBAL_DATA_SHAPE = (220, 128, 160)
+    GLOBAL_DATA_SHAPE = (180, 128, 160)
 
     chunk_index = (0, 0, 0) if COMM.rank == 0 else (GLOBAL_DATA_SHAPE[0] // 2, 0, 0)
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -135,13 +143,15 @@ def test_standard_tomo_loader_get_chunk_index_two_procs(
 def test_standard_tomo_loader_get_chunk_shape_single_proc(
     standard_data: str,
     standard_data_path: str,
+    standard_image_key_path: str,
 ):
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
-    CHUNK_SHAPE = (220, 128, 160)
+    CHUNK_SHAPE = (180, 128, 160)
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -155,10 +165,11 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc(
 def test_standard_tomo_loader_get_chunk_shape_two_procs(
     standard_data: str,
     standard_data_path: str,
+    standard_image_key_path: str,
 ):
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
-    GLOBAL_DATA_SHAPE = (220, 128, 160)
+    GLOBAL_DATA_SHAPE = (180, 128, 160)
     CHUNK_SHAPE = (
         GLOBAL_DATA_SHAPE[0] // 2,
         GLOBAL_DATA_SHAPE[1],
@@ -167,6 +178,7 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs(
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -176,12 +188,14 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs(
 def test_standard_tomo_loader_read_block_single_proc(
     standard_data: str,
     standard_data_path: str,
+    standard_image_key_path: str,
 ):
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -208,12 +222,14 @@ def test_standard_tomo_loader_read_block_single_proc(
 def test_standard_tomo_loader_read_block_two_procs(
     standard_data: str,
     standard_data_path: str,
+    standard_image_key_path: str,
 ):
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
         in_file=Path(standard_data),
         data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -222,7 +238,7 @@ def test_standard_tomo_loader_read_block_two_procs(
     BLOCK_LENGTH = 4
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
-    GLOBAL_DATA_SHAPE = (220, 128, 160)
+    GLOBAL_DATA_SHAPE = (180, 128, 160)
     CHUNK_SHAPE = (
         GLOBAL_DATA_SHAPE[0] // 2,
         GLOBAL_DATA_SHAPE[1],
@@ -232,6 +248,82 @@ def test_standard_tomo_loader_read_block_two_procs(
     projs_start = 0 if COMM.rank == 0 else CHUNK_SHAPE[0]
     with h5py.File(standard_data, "r") as f:
         dataset: h5py.Dataset = f[standard_data_path]
+        projs: np.ndarray = dataset[
+            projs_start + BLOCK_START: projs_start + BLOCK_START + BLOCK_LENGTH
+        ]
+
+    assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    np.testing.assert_array_equal(block.data, projs)
+
+
+def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc(
+    diad_data: str,
+):
+    DATA_PATH = "/entry/imaging/data"
+    IMAGE_KEY_PATH = "/entry/instrument/imaging/image_key"
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+    loader = StandardTomoLoader(
+        in_file=Path(diad_data),
+        data_path=DATA_PATH,
+        image_key_path=IMAGE_KEY_PATH,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+
+    BLOCK_START = 0
+    BLOCK_LENGTH = 4
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+
+    # Darks/flats are at indices 0 to 99 (and 3101 to 3200), projection data starts at index
+    # 100
+    PROJS_START = 100
+    with h5py.File(diad_data, "r") as f:
+        dataset: h5py.Dataset = f[DATA_PATH]
+        projs: np.ndarray = dataset[
+            PROJS_START + BLOCK_START: PROJS_START + BLOCK_START + BLOCK_LENGTH
+        ]
+
+    assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    np.testing.assert_array_equal(block.data, projs)
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs(
+    diad_data: str,
+):
+    DATA_PATH = "/entry/imaging/data"
+    IMAGE_KEY_PATH = "/entry/instrument/imaging/image_key"
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+    loader = StandardTomoLoader(
+        in_file=Path(diad_data),
+        data_path=DATA_PATH,
+        image_key_path=IMAGE_KEY_PATH,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+
+    BLOCK_START = 2
+    BLOCK_LENGTH = 4
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+
+    GLOBAL_DATA_SHAPE = (3000, 22, 26)
+    CHUNK_SHAPE = (
+        GLOBAL_DATA_SHAPE[0] // 2,
+        GLOBAL_DATA_SHAPE[1],
+        GLOBAL_DATA_SHAPE[2]
+    )
+
+    # Darks/flats are at indices 0 to 99 (and 3101 to 3200), projection data starts at index
+    # 100
+    PROJS_SHIFT = 100
+    projs_start = PROJS_SHIFT if COMM.rank == 0 else PROJS_SHIFT + CHUNK_SHAPE[0]
+    with h5py.File(diad_data, "r") as f:
+        dataset: h5py.Dataset = f[DATA_PATH]
         projs: np.ndarray = dataset[
             projs_start + BLOCK_START: projs_start + BLOCK_START + BLOCK_LENGTH
         ]
