@@ -313,7 +313,6 @@ def test_recon_SIRT_memoryhook(slices, ensure_clean_memory):
                     recon_size=recon_size,
                     iterations=2,
                     nonnegativity=True,
-                    recon_mask_radius = 0.8,
                 )
 
     # make sure estimator function is within range (80% min, 100% max)
@@ -348,7 +347,6 @@ def test_recon_CGLS_memoryhook(slices, ensure_clean_memory):
                     recon_size=recon_size,
                     iterations=2,
                     nonnegativity=True,
-                    recon_mask_radius = 0.8,
                 )
 
     # make sure estimator function is within range (80% min, 100% max)

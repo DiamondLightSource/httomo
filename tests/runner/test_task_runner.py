@@ -240,14 +240,22 @@ def test_does_reslice_when_needed(
 
     exec_section = mocker.patch.object(t, "_execute_section")
     reslice = mocker.patch("httomo.runner.task_runner.reslice")
-    reslice_filebased = mocker.patch("httomo.runner.task_runner.reslice_filebased")
+    reslice_filebased = mocker.patch("httomo.runner.task_runner.reslice_filebased")    
 
     t.execute()
 
     exec_section.assert_has_calls([call(ANY, 0), call(ANY, 1)])
     assert t.reslice_count == 1
     if filebased:
-        reslice_filebased.assert_called_once_with(ANY, 1, 2, t.comm, reslice_dir)
+        reslice_filebased.assert_called_once_with(
+                                                  ANY,
+                                                  1, 
+                                                  2,
+                                                  np.ndarray([1,2]),
+                                                  1,
+                                                  1,
+                                                  t.comm,
+                                                  reslice_dir)
     else:
         reslice.assert_called_once_with(ANY, 1, 2, t.comm)
 

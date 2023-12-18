@@ -10,11 +10,8 @@ import pytest
 import yaml
 from httomo.runner.dataset import DataSet
 
-from httomo.yaml_loader import YamlLoader
-
 
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))
-
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
@@ -67,9 +64,6 @@ def cmd():
         "httomo",
         "run",
         "--save-all",
-        "--ncore",
-        "2",
-        "output_dir/",
     ]
 
 
@@ -259,13 +253,6 @@ def merge_yamls():
             yaml.dump_all(data, file_descriptor)
 
     return _merge_yamls
-
-
-@pytest.fixture
-def yaml_loader() -> type[YamlLoader]:
-    YamlLoader.add_constructor("!Sweep", YamlLoader.sweep_manual)
-    YamlLoader.add_constructor("!SweepRange", YamlLoader.sweep_range)
-    return YamlLoader
 
 
 @pytest.fixture

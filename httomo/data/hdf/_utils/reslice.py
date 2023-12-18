@@ -77,7 +77,7 @@ def reslice_filebased(
     next_slice_dim: int,
     angles: numpy.ndarray,
     detector_x: int,
-    detector_y: int,    
+    detector_y: int,
     comm: Comm,
     reslice_dir: Path,
 ) -> Tuple[numpy.ndarray, int]:
