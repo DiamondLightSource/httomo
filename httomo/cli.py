@@ -2,16 +2,17 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PurePath
 from shutil import copy
-from typing import Optional
+from typing import Optional, Union
 
 import click
 from mpi4py import MPI
 
 import httomo.globals
 from httomo.logger import setup_logger
-from httomo.task_runner import run_tasks
 from httomo.yaml_checker import validate_yaml_config
 from httomo.yaml_loader import YamlLoader
+from httomo.runner.task_runner import TaskRunner
+from httomo.ui_layer import UiLayer
 
 from . import __version__
 
@@ -19,9 +20,11 @@ from . import __version__
 @click.group
 @click.version_option(version=__version__, message="%(version)s")
 def main():
-    """httomo: High Throughput Tomography."""
+    """httomo: Software for High Throughput Tomography in parallel beam.
+     
+      Use `python -m httomo run --help` for more help on the runner. 
+    """
     pass
-
 
 @main.command()
 @click.argument(
@@ -35,38 +38,16 @@ def main():
 def check(yaml_config: Path, in_data: Optional[Path] = None):
     """Check a YAML pipeline file for errors."""
     in_data = str(in_data) if isinstance(in_data, PurePath) else None
-    YamlLoader.add_constructor("!Sweep", YamlLoader.sweep_manual)
-    YamlLoader.add_constructor("!SweepRange", YamlLoader.sweep_range)
     return validate_yaml_config(yaml_config, YamlLoader, in_data)
 
-
 @main.command()
-@click.argument("in_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("in_data_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument(
     "yaml_config", type=click.Path(exists=True, dir_okay=False, path_type=Path)
 )
 @click.argument(
     "out_dir",
     type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
-)
-@click.option(
-    "-d",
-    "--dimension",
-    type=click.IntRange(1, 3),
-    default=1,
-    help="The dimension to slice through.",
-)
-@click.option(
-    "--pad",
-    type=click.INT,
-    default=0,
-    help="The number of slices to pad each block of data.",
-)
-@click.option(
-    "--ncore",
-    type=click.INT,
-    default=1,
-    help=" The number of the CPU cores per process.",
 )
 @click.option(
     "--gpu-id",
@@ -80,19 +61,10 @@ def check(yaml_config: Path, in_data: Optional[Path] = None):
     help="Save intermediate datasets for all tasks in the pipeline.",
 )
 @click.option(
-    "--file-based-reslice",
-    default=None,
-    is_flag=True,
-    help="Reslice using intermediate files (default is in-memory).",
-)
-@click.option(
     "--reslice-dir",
     type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
     default=None,
-    callback=lambda context, param, value: value
-    if value
-    else context.params["out_dir"],
-    help="Directory for reslice intermediate files (defaults to out_dir, only relevant if --reslice is also given)",
+    help="Enable reslicing through the disk by providing a folder path to store intermediate file)",
 )
 @click.option(
     "--output-folder",
@@ -101,16 +73,12 @@ def check(yaml_config: Path, in_data: Optional[Path] = None):
     help="Optionally define the name of the output folder created by HTTomo",
 )
 def run(
-    in_file: Path,
+    in_data_file: Path,
     yaml_config: Path,
     out_dir: Path,
-    dimension: int,
-    pad: int,
-    ncore: int,
     gpu_id: int,
     save_all: bool,
-    file_based_reslice: bool,
-    reslice_dir: Path,
+    reslice_dir: Union[Path, None],
     output_folder: Path,
 ):
     """Run a processing pipeline defined in YAML on input data."""
@@ -146,14 +114,11 @@ def run(
         httomo.globals.gpu_id = gpu_id
 
     except ImportError:
-        pass  # silently pass and run the CPU pipeline
+        pass  # silently pass and run if the CPU pipeline is given
 
-    return run_tasks(
-        in_file,
-        yaml_config,
-        dimension,
-        pad,
-        ncore,
-        save_all,
-        reslice_dir if file_based_reslice else None,
-    )
+    # instantiate UiLayer class for pipeline build
+    init_UiLayer = UiLayer(yaml_config, in_data_file, comm=comm)
+    pipeline = init_UiLayer.build_pipeline()
+
+    runner = TaskRunner(pipeline, save_all, reslice_dir)
+    return runner.execute()

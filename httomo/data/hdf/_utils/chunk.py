@@ -1,4 +1,5 @@
 from typing import Tuple
+from pathlib import Path
 
 import h5py as h5
 from mpi4py import MPI
@@ -7,7 +8,7 @@ from httomo.data.hdf.loaders import LoaderData
 
 
 def save_dataset(
-    out_folder: str,
+    out_folder: Path,
     file_name: str,
     data: ndarray,
     angles: ndarray,
@@ -29,6 +30,12 @@ def save_dataset(
         Name of file to save dataset in.
     data : ndarray
         Data to save to file.
+    angles : ndarray
+        Angles of the loaded dataset.
+    detector_x : int
+        det_x (horizontal) detector of the loaded dataset.
+    detector_y : int
+        det_y (vertical) detector of the loaded dataset.
     loader_info: Dict
         Dictionary with information about the loaded data.
     slice_dim : int

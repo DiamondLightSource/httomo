@@ -1,6 +1,7 @@
 import yaml
-from typing import Any, Dict, List, Protocol, TypeAlias
+from typing import Any, Dict, List, Protocol
 from importlib import import_module, util
+from pathlib import Path
 import os
 import re
 
@@ -22,8 +23,8 @@ class UiLayer:
     
     def __init__(
         self,
-        tasks_file_path: str,
-        in_data_file_path: str,
+        tasks_file_path: Path,
+        in_data_file_path: Path,
         comm: Comm,
     ):   
         
@@ -92,12 +93,12 @@ class UiLayer:
             methods=methods_list,
         )
 
-def _yaml_loader(file_path: str) -> list:
+def _yaml_loader(file_path: Path) -> list:
     with open(file_path, "r") as f:
         tasks_list = list(yaml.load_all(f, Loader=yaml.FullLoader))
     return tasks_list
 
-def _python_tasks_loader(file_path: str) -> list:
+def _python_tasks_loader(file_path: Path) -> list:
     module_spec = util.spec_from_file_location("methods_to_list", file_path)
     foo = util.module_from_spec(module_spec)
     module_spec.loader.exec_module(foo)
