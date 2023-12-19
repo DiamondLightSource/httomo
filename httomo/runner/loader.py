@@ -159,17 +159,15 @@ class StandardTomoLoader(DataSetSource):
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
     ) -> None:
+        self._in_file = in_file
+        self._data_path = data_path
+        self._image_key_path = image_key_path
+        self._angles = angles
         self._slicing_dim = slicing_dim
-        self._data_indices = self._get_data_indices(
-            in_file,
-            image_key_path,
-            comm,
-        )
-        self._global_shape = self._get_global_data_shape(
-            comm,
-            in_file,
-            data_path,
-        )
+        self._comm = comm
+
+        self._data_indices = self._get_data_indices()
+        self._global_shape = self._get_global_data_shape()
 
         chunk_index_slicing_dim = self._calculate_chunk_index_slicing_dim(
             comm.rank,
@@ -184,23 +182,12 @@ class StandardTomoLoader(DataSetSource):
         self._chunk_shape = self._calculate_chunk_shape(
             chunk_index_slicing_dim,
             next_process_chunk_index_slicing_dim,
-            self._global_shape,
         )
 
-        angles_arr = self._get_angles(
-            in_file,
-            angles,
-            comm,
-        )
+        angles_arr = self._get_angles()
+        darks, flats = self._get_darks_flats()
 
-        darks, flats = self._get_darks_flats(
-            in_file,
-            data_path,
-            image_key_path,
-            comm,
-        )
-
-        dataset: h5py.Dataset = self._get_h5py_dataset(in_file, data_path, comm)
+        dataset: h5py.Dataset = self._get_h5py_dataset()
         self._data = FullFileDataSet(
             data=dataset,
             angles=angles_arr,
@@ -218,14 +205,9 @@ class StandardTomoLoader(DataSetSource):
     def global_shape(self) -> Tuple[int, int, int]:
         return self._global_shape
 
-    def _get_global_data_shape(
-        self,
-        comm: MPI.Comm,
-        in_file: Path,
-        data_path: str,
-    ) -> Tuple[int, int, int]:
-        with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
-            dataset: h5py.Dataset = f[data_path]
+    def _get_global_data_shape(self) -> Tuple[int, int, int]:
+        with h5py.File(self._in_file, "r", driver="mpio", comm=self._comm) as f:
+            dataset: h5py.Dataset = f[self._data_path]
             global_shape = dataset.shape
         return (len(self._data_indices), global_shape[1], global_shape[2])
 
@@ -265,25 +247,19 @@ class StandardTomoLoader(DataSetSource):
         self,
         current_proc_chunk_index: int,
         next_proc_chunk_index: int,
-        global_shape: Tuple[int, int, int],
     ) -> Tuple[int, int, int]:
         return (
             next_proc_chunk_index - current_proc_chunk_index,
-            global_shape[1],
-            global_shape[2],
+            self._global_shape[1],
+            self._global_shape[2],
         )
 
-    def _get_h5py_dataset(
-        self,
-        in_file: Path,
-        data_path: str,
-        comm: MPI.Comm,
-    ) -> h5py.Dataset:
+    def _get_h5py_dataset(self) -> h5py.Dataset:
         """
         Get an h5py `Dataset` object that represents the data being loaded
         """
-        f = h5py.File(in_file, "r", driver="mpio", comm=comm)
-        dataset: h5py.Dataset = f[data_path]
+        f = h5py.File(self._in_file, "r", driver="mpio", comm=self._comm)
+        dataset: h5py.Dataset = f[self._data_path]
         return dataset
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
@@ -292,46 +268,30 @@ class StandardTomoLoader(DataSetSource):
 
     # NOTE: This method is largely copied from `load.get_data_indices()`; that function should
     # be removed in the future if/when `StandardTomoLoader` gets merged.
-    def _get_data_indices(
-        self,
-        in_file: Path,
-        image_key_path: str,
-        comm: MPI.Comm,
-    ) -> List[int]:
-        with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
-            data_indices = np.where(f[image_key_path][:] == 0)[0]
+    def _get_data_indices(self) -> List[int]:
+        with h5py.File(self._in_file, "r", driver="mpio", comm=self._comm) as f:
+            data_indices = np.where(f[self._image_key_path][:] == 0)[0]
 
         return data_indices.tolist()
 
-    def _get_angles(
-        self,
-        in_file: Path,
-        config: AnglesConfig,
-        comm: MPI.Comm,
-    ) -> np.ndarray:
-        if isinstance(config, UserDefinedAngles):
+    def _get_angles(self,) -> np.ndarray:
+        if isinstance(self._angles, UserDefinedAngles):
             return np.linspace(
-                config.start_angle,
-                config.stop_angle,
-                config.angles_total,
+                self._angles.start_angle,
+                self._angles.stop_angle,
+                self._angles.angles_total,
             )
 
-        with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
-            return f[config.data_path][...]
+        with h5py.File(self._in_file, "r", driver="mpio", comm=self._comm) as f:
+            return f[self._angles.data_path][...]
 
     # NOTE: This method is a barebones version of `load.get_darks_flats_together()`. Additions
     # will be necessary to support more complicated ways of specifying darks/flats.
-    def _get_darks_flats(
-        self,
-        in_file: Path,
-        data_path: str,
-        image_key_path: str,
-        comm: MPI.Comm,
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
-            darks_indices = np.where(f[image_key_path][:] == 2)[0]
-            flats_indices = np.where(f[image_key_path][:] == 1)[0]
-            dataset: h5py.Dataset = f[data_path]
+    def _get_darks_flats(self) -> Tuple[np.ndarray, np.ndarray]:
+        with h5py.File(self._in_file, "r", driver="mpio", comm=self._comm) as f:
+            darks_indices = np.where(f[self._image_key_path][:] == 2)[0]
+            flats_indices = np.where(f[self._image_key_path][:] == 1)[0]
+            dataset: h5py.Dataset = f[self._data_path]
             darks = dataset[darks_indices[0]: darks_indices[-1] + 1, :, :]
             flats = dataset[flats_indices[0]: flats_indices[-1] + 1, :, :]
 
