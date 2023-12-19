@@ -10,7 +10,7 @@ import numpy as np
 
 from httomo.data.hdf.loaders import LoaderData
 from httomo.runner.dataset import DataSet
-from httomo.runner.loader import RawAngles, StandardTomoLoader, UserDefinedAngles, make_loader
+from httomo.runner.loader import DarksFlatsFileConfig, RawAngles, StandardTomoLoader, UserDefinedAngles, make_loader
 from .testing_utils import make_mock_repo
 
 
@@ -77,6 +77,8 @@ def test_standard_tomo_loader_get_slicing_dim(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -99,6 +101,8 @@ def test_standard_tomo_loader_get_global_shape(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -121,6 +125,8 @@ def test_standard_tomo_loader_get_chunk_index_single_proc(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -149,6 +155,8 @@ def test_standard_tomo_loader_get_chunk_index_two_procs(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -171,6 +179,8 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -202,6 +212,8 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -223,6 +235,8 @@ def test_standard_tomo_loader_read_block_single_proc(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -261,6 +275,8 @@ def test_standard_tomo_loader_read_block_two_procs(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -302,6 +318,8 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc(
         in_file=Path(diad_data),
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -342,6 +360,8 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs(
         in_file=Path(diad_data),
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -386,6 +406,8 @@ def test_standard_tomo_loader_generates_block_with_angles(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -416,6 +438,8 @@ def test_standard_tomo_loader_generates_block_with_darks_flats(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -460,6 +484,8 @@ def test_standard_tomo_loader_user_defined_angles(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
+        darks=None,
+        flats=None,
         angles=USER_DEFINED_ANGLES,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -469,3 +495,50 @@ def test_standard_tomo_loader_user_defined_angles(
     BLOCK_LENGTH = 2
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
     np.testing.assert_array_equal(block.angles, EXPECTED_ANGLES)
+
+
+def test_standard_tomo_loader_get_block_with_darks_flats_separate_file(
+    i12_data: str,
+):
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+    # NOTE: This test data with separate darks/flats also happens to have no angles in it so
+    # we must provide the angles array ourselves, but be aware that this detail is not for any
+    # reason related to what the test is testing, it's just a detail about the test data.
+    USER_DEFINED_ANGLES = UserDefinedAngles(
+        start_angle=0,
+        stop_angle=180,
+        angles_total=724,
+    )
+    DATA_PATH = "/1-TempPlugin-tomo/data"
+    DARKS_CONFIG = DarksFlatsFileConfig(
+        file=Path("tests/test_data/i12/separate_flats_darks/dark_field.h5"),
+        data_path="/1-NoProcessPlugin-tomo/data",
+    )
+    FLATS_CONFIG = DarksFlatsFileConfig(
+        file=Path("tests/test_data/i12/separate_flats_darks/flat_field.h5"),
+        data_path="/1-NoProcessPlugin-tomo/data",
+    )
+    loader = StandardTomoLoader(
+        in_file=Path(i12_data),
+        data_path=DATA_PATH,
+        image_key_path=None,
+        angles=USER_DEFINED_ANGLES,
+        darks=DARKS_CONFIG,
+        flats=FLATS_CONFIG,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+
+    BLOCK_START = 0
+    BLOCK_LENGTH = 2
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+
+    with h5py.File(DARKS_CONFIG.file, "r") as f:
+        darks = f[DARKS_CONFIG.data_path][...]
+
+    with h5py.File(FLATS_CONFIG.file, "r") as f:
+        flats = f[FLATS_CONFIG.data_path][...]
+
+    np.testing.assert_array_equal(block.darks, darks)
+    np.testing.assert_array_equal(block.flats, flats)

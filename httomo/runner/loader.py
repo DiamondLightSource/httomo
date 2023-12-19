@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Literal, NamedTuple, Protocol, Tuple, TypeAlias, Union
+from typing import Any, Dict, List, Literal, NamedTuple, Optional, Protocol, Tuple, TypeAlias, Union
 
 import h5py
 import numpy as np
@@ -135,6 +135,10 @@ def make_loader(
     )
 
 
+class DarksFlatsFileConfig(NamedTuple):
+    file: Path
+    data_path: str
+
 class RawAngles(NamedTuple):
     data_path: str
 
@@ -154,7 +158,9 @@ class StandardTomoLoader(DataSetSource):
         self,
         in_file: Path,
         data_path: str,
-        image_key_path: str,
+        image_key_path: Optional[str],
+        darks: Optional[DarksFlatsFileConfig],
+        flats: Optional[DarksFlatsFileConfig],
         angles: AnglesConfig,
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
@@ -162,6 +168,8 @@ class StandardTomoLoader(DataSetSource):
         self._in_file = in_file
         self._data_path = data_path
         self._image_key_path = image_key_path
+        self._darks_config = darks
+        self._flats_config = flats
         self._angles = angles
         self._slicing_dim = slicing_dim
         self._comm = comm
@@ -270,9 +278,11 @@ class StandardTomoLoader(DataSetSource):
     # be removed in the future if/when `StandardTomoLoader` gets merged.
     def _get_data_indices(self) -> List[int]:
         with h5py.File(self._in_file, "r", driver="mpio", comm=self._comm) as f:
-            data_indices = np.where(f[self._image_key_path][:] == 0)[0]
+            if self._image_key_path is None:
+                data: h5py.Dataset = f[self._data_path]
+                return np.arange(data.shape[0]).tolist()
 
-        return data_indices.tolist()
+            return np.where(f[self._image_key_path][:] == 0)[0].tolist()
 
     def _get_angles(self,) -> np.ndarray:
         if isinstance(self._angles, UserDefinedAngles):
@@ -288,6 +298,21 @@ class StandardTomoLoader(DataSetSource):
     # NOTE: This method is a barebones version of `load.get_darks_flats_together()`. Additions
     # will be necessary to support more complicated ways of specifying darks/flats.
     def _get_darks_flats(self) -> Tuple[np.ndarray, np.ndarray]:
+        if self._darks_config is not None and self._flats_config is not None:
+            darks = self._get_darks_flats_separate(self._darks_config)
+            flats = self._get_darks_flats_separate(self._flats_config)
+            return darks, flats
+
+        return self._get_darks_flats_together()
+
+    def _get_darks_flats_separate(
+        self,
+        config: DarksFlatsFileConfig,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        with h5py.File(config.file, "r", driver="mpio", comm=self._comm) as f:
+            return f[config.data_path][...]
+
+    def _get_darks_flats_together(self) -> Tuple[np.ndarray, np.ndarray]:
         with h5py.File(self._in_file, "r", driver="mpio", comm=self._comm) as f:
             darks_indices = np.where(f[self._image_key_path][:] == 2)[0]
             flats_indices = np.where(f[self._image_key_path][:] == 1)[0]
