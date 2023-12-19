@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Protocol, Tuple
+from typing import Any, Dict, List, Literal, NamedTuple, Protocol, Tuple, TypeAlias, Union
 
 import h5py
 import numpy as np
@@ -135,6 +135,17 @@ def make_loader(
     )
 
 
+class RawAngles(NamedTuple):
+    data_path: str
+
+class UserDefinedAngles(NamedTuple):
+    start_angle: int
+    stop_angle: int
+    angles_total: int
+
+AnglesConfig: TypeAlias = Union[RawAngles, UserDefinedAngles]
+
+
 class StandardTomoLoader(DataSetSource):
     """
     Loads an individual block at a time from raw data instead of an entire chunk.
@@ -144,7 +155,7 @@ class StandardTomoLoader(DataSetSource):
         in_file: Path,
         data_path: str,
         image_key_path: str,
-        angles_path: str,
+        angles: AnglesConfig,
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
     ) -> None:
@@ -176,9 +187,9 @@ class StandardTomoLoader(DataSetSource):
             self._global_shape,
         )
 
-        angles = self._get_angles(
+        angles_arr = self._get_angles(
             in_file,
-            angles_path,
+            angles,
             comm,
         )
 
@@ -192,7 +203,7 @@ class StandardTomoLoader(DataSetSource):
         dataset: h5py.Dataset = self._get_h5py_dataset(in_file, data_path, comm)
         self._data = FullFileDataSet(
             data=dataset,
-            angles=angles,
+            angles=angles_arr,
             flats=flats,
             darks=darks,
             global_index=self._chunk_index,
@@ -295,11 +306,18 @@ class StandardTomoLoader(DataSetSource):
     def _get_angles(
         self,
         in_file: Path,
-        angles_path: str,
+        config: AnglesConfig,
         comm: MPI.Comm,
     ) -> np.ndarray:
+        if isinstance(config, UserDefinedAngles):
+            return np.linspace(
+                config.start_angle,
+                config.stop_angle,
+                config.angles_total,
+            )
+
         with h5py.File(in_file, "r", driver="mpio", comm=comm) as f:
-            return f[angles_path][...]
+            return f[config.data_path][...]
 
     # NOTE: This method is a barebones version of `load.get_darks_flats_together()`. Additions
     # will be necessary to support more complicated ways of specifying darks/flats.
