@@ -10,7 +10,7 @@ import numpy as np
 
 from httomo.data.hdf.loaders import LoaderData
 from httomo.runner.dataset import DataSet
-from httomo.runner.loader import DarksFlatsFileConfig, RawAngles, StandardTomoLoader, UserDefinedAngles, make_loader
+from httomo.runner.loader import DarksFlatsFileConfig, DarksFlatsFileConfig2, RawAngles, StandardTomoLoader, UserDefinedAngles, get_darks_flats, make_loader
 from .testing_utils import make_mock_repo
 
 
@@ -542,3 +542,63 @@ def test_standard_tomo_loader_get_block_with_darks_flats_separate_file(
 
     np.testing.assert_array_equal(block.darks, darks)
     np.testing.assert_array_equal(block.flats, flats)
+
+
+def test_get_darks_flats_same_file_same_dataset(
+    standard_data: str,
+    standard_data_path: str,
+    standard_image_key_path: str,
+):
+    COMM = MPI.COMM_WORLD
+    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig2(
+        file=Path(standard_data),
+        data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
+    )
+
+    loaded_darks, loaded_flats = get_darks_flats(
+        DARKS_CONFIG,
+        FLATS_CONFIG,
+        COMM,
+    )
+
+    FLATS_START = 180
+    FLATS_END = 199
+    DARKS_START = 200
+    DARKS_END = 219
+    with h5py.File(standard_data, "r") as f:
+        dataset: h5py.Dataset = f[standard_data_path]
+        flats = dataset[FLATS_START:FLATS_END + 1]
+        darks = dataset[DARKS_START:DARKS_END + 1]
+
+    np.testing.assert_array_equal(loaded_flats, flats)
+    np.testing.assert_array_equal(loaded_darks, darks)
+
+
+def test_get_darks_flats_different_file():
+    COMM = MPI.COMM_WORLD
+    DARKS_CONFIG = DarksFlatsFileConfig2(
+        file=Path("tests/test_data/i12/separate_flats_darks/dark_field.h5"),
+        data_path="/1-NoProcessPlugin-tomo/data",
+        image_key_path=None,
+    )
+    FLATS_CONFIG = DarksFlatsFileConfig2(
+        file=Path("tests/test_data/i12/separate_flats_darks/flat_field.h5"),
+        data_path="/1-NoProcessPlugin-tomo/data",
+        image_key_path=None,
+    )
+
+    loaded_darks, loaded_flats = get_darks_flats(
+        DARKS_CONFIG,
+        FLATS_CONFIG,
+        COMM,
+    )
+
+    with h5py.File(DARKS_CONFIG.file, "r") as f:
+        darks = f[DARKS_CONFIG.data_path][...]
+
+    with h5py.File(FLATS_CONFIG.file, "r") as f:
+        flats = f[FLATS_CONFIG.data_path][...]
+
+    np.testing.assert_array_equal(loaded_flats, flats)
+    np.testing.assert_array_equal(loaded_darks, darks)
