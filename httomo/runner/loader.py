@@ -192,14 +192,14 @@ class StandardTomoLoader(DataSetSource):
         )
 
         angles_arr = self._get_angles()
-        darks, flats = get_darks_flats(darks, flats, comm)
+        darks_arr, flats_arr = get_darks_flats(darks, flats, comm)
 
         dataset: h5py.Dataset = self._get_h5py_dataset()
         self._data = FullFileDataSet(
             data=dataset,
             angles=angles_arr,
-            flats=flats,
-            darks=darks,
+            flats=flats_arr,
+            darks=darks_arr,
             global_index=self._chunk_index,
             chunk_shape=self._chunk_shape,
         )
