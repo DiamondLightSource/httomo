@@ -67,14 +67,10 @@ def test_standard_tomo_loader_get_slicing_dim(
     standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
@@ -82,8 +78,8 @@ def test_standard_tomo_loader_get_slicing_dim(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
+        darks=standard_data_darks_flats_config,
+        flats=standard_data_darks_flats_config,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -95,14 +91,10 @@ def test_standard_tomo_loader_get_global_shape(
     standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
     )
     SLICING_DIM = 0
     GLOBAL_DATA_SHAPE = (180, 128, 160)
@@ -111,8 +103,8 @@ def test_standard_tomo_loader_get_global_shape(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
+        darks=standard_data_darks_flats_config,
+        flats=standard_data_darks_flats_config,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -124,14 +116,10 @@ def test_standard_tomo_loader_get_chunk_index_single_proc(
     standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
@@ -140,8 +128,8 @@ def test_standard_tomo_loader_get_chunk_index_single_proc(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
+        darks=standard_data_darks_flats_config,
+        flats=standard_data_darks_flats_config,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -157,14 +145,10 @@ def test_standard_tomo_loader_get_chunk_index_two_procs(
     standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
@@ -175,8 +159,8 @@ def test_standard_tomo_loader_get_chunk_index_two_procs(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
+        darks=standard_data_darks_flats_config,
+        flats=standard_data_darks_flats_config,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -188,14 +172,10 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc(
     standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
@@ -204,8 +184,8 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
+        darks=standard_data_darks_flats_config,
+        flats=standard_data_darks_flats_config,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -221,14 +201,10 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs(
     standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
@@ -242,8 +218,8 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
+        darks=standard_data_darks_flats_config,
+        flats=standard_data_darks_flats_config,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -255,14 +231,10 @@ def test_standard_tomo_loader_read_block_single_proc(
     standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
@@ -270,8 +242,8 @@ def test_standard_tomo_loader_read_block_single_proc(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
+        darks=standard_data_darks_flats_config,
+        flats=standard_data_darks_flats_config,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -300,14 +272,10 @@ def test_standard_tomo_loader_read_block_two_procs(
     standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
@@ -315,8 +283,8 @@ def test_standard_tomo_loader_read_block_two_procs(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
+        darks=standard_data_darks_flats_config,
+        flats=standard_data_darks_flats_config,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -446,14 +414,10 @@ def test_standard_tomo_loader_generates_block_with_angles(
     standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
@@ -461,8 +425,8 @@ def test_standard_tomo_loader_generates_block_with_angles(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
+        darks=standard_data_darks_flats_config,
+        flats=standard_data_darks_flats_config,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -483,13 +447,9 @@ def test_standard_tomo_loader_user_defined_angles(
     standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     SLICING_DIM = 0
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-    )
     COMM = MPI.COMM_WORLD
     # Override angles in raw data with the config for some arbitrary array
     USER_DEFINED_ANGLES = UserDefinedAngles(
@@ -506,8 +466,8 @@ def test_standard_tomo_loader_user_defined_angles(
         in_file=Path(standard_data),
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
+        darks=standard_data_darks_flats_config,
+        flats=standard_data_darks_flats_config,
         angles=USER_DEFINED_ANGLES,
         slicing_dim=SLICING_DIM,
         comm=COMM,
@@ -522,18 +482,13 @@ def test_standard_tomo_loader_user_defined_angles(
 def test_get_darks_flats_same_file_same_dataset(
     standard_data: str,
     standard_data_path: str,
-    standard_image_key_path: str,
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     COMM = MPI.COMM_WORLD
-    DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-    )
 
     loaded_darks, loaded_flats = get_darks_flats(
-        DARKS_CONFIG,
-        FLATS_CONFIG,
+        standard_data_darks_flats_config,
+        standard_data_darks_flats_config,
         COMM,
     )
 

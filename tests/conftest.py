@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 import yaml
 from httomo.runner.dataset import DataSet
+from httomo.runner.loader import DarksFlatsFileConfig
 
 from httomo.yaml_loader import YamlLoader
 
@@ -253,4 +254,13 @@ def dummy_dataset() -> DataSet:
         angles=np.ones((20,)),
         flats=3 * np.ones((5, 10, 10)),
         darks=2 * np.ones((5, 10, 10)),
+    )
+
+
+@pytest.fixture
+def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
+    return DarksFlatsFileConfig(
+        file=Path("tests/test_data/tomo_standard.nxs"),
+        data_path="/entry1/tomo_entry/data/data",
+        image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
     )
