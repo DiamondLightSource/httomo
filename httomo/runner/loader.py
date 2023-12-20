@@ -321,3 +321,35 @@ class StandardTomoLoader(DataSetSource):
             flats = dataset[flats_indices[0]: flats_indices[-1] + 1, :, :]
 
         return darks, flats
+
+
+class DarksFlatsFileConfig2(NamedTuple):
+    file: Path
+    data_path: str
+    image_key_path: Optional[str]
+
+
+def get_darks_flats(
+    darks_config: DarksFlatsFileConfig2,
+    flats_config: DarksFlatsFileConfig2,
+    comm: MPI.Comm,
+) -> Tuple[np.ndarray, np.ndarray]:
+    def get_together():
+        with h5py.File(darks_config.file, "r", driver="mpio", comm=comm) as f:
+            darks_indices = np.where(f[darks_config.image_key_path][:] == 2)[0]
+            flats_indices = np.where(f[flats_config.image_key_path][:] == 1)[0]
+            dataset: h5py.Dataset = f[darks_config.data_path]
+            darks = dataset[darks_indices[0]: darks_indices[-1] + 1, :, :]
+            flats = dataset[flats_indices[0]: flats_indices[-1] + 1, :, :]
+        return darks, flats
+
+    def get_separate(config: DarksFlatsFileConfig2):
+        with h5py.File(config.file, "r", driver="mpio", comm=comm) as f:
+            return f[config.data_path][...]
+
+    if darks_config.file != flats_config.file:
+        darks = get_separate(darks_config)
+        flats = get_separate(flats_config)
+        return darks, flats
+
+    return get_together()
