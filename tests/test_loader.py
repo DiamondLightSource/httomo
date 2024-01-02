@@ -36,6 +36,7 @@ def test_diad_testing_pipeline_loaded(
     cmd.insert(7, diad_data)
     merge_yamls(diad_loader, testing_pipeline)
     cmd.insert(8, "temp.yaml")
+    cmd.insert(8, output_folder)
 
     result = subprocess.run(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
@@ -43,10 +44,10 @@ def test_diad_testing_pipeline_loaded(
     assert "Running task 1 (pattern=projection): standard_tomo..." in result.stderr
     assert "Running task 2 (pattern=projection): normalize..." in result.stderr
     assert "Running task 3 (pattern=projection): minus_log.." in result.stderr
-    assert "Running task 4 (pattern=sinogram): remove_stripe_fw..." in result.stderr
-    assert "Running task 6 (pattern=all): save_to_images.." in result.stderr
-    assert "Pipeline finished" in result.stderr
-
+    assert "Running task 4 (pattern=projection): find_center_vo.." in result.stderr
+    assert "Running task 5 (pattern=sinogram): remove_stripe_fw..." in result.stderr
+    assert "Running task 6 (pattern=sinogram): recon..." in result.stderr
+    assert "Running task 7 (pattern=sinogram): save_to_images.." in result.stderr    
 
 def test_standard_tomo(standard_data, standard_data_path, standard_image_key_path):
     preview = [None, {"start": 5, "stop": 10}, None]

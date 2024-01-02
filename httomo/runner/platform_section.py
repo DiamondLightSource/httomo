@@ -42,7 +42,13 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
     # The functions below are internal to reduce duplication
 
     def should_save_after(method: BackendWrapper) -> bool:
-        return save_all or method.config_params.get("save_result", False)
+        if method.config_params.get("save_result"):
+            method._config_params.pop("save_result")
+            return True
+        if save_all:
+            return True
+        else:
+            return False
 
     def needs_global_input(method: BackendWrapper) -> bool:
         return method.config_params.get("glob_stats", False)

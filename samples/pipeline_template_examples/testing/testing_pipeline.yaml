@@ -33,6 +33,7 @@
     sinogram_order: false
     algorithm: gridrec
     init_recon: null
+    save_result: true
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:
