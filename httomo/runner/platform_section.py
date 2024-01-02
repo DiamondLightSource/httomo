@@ -43,7 +43,10 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
 
     def should_save_after(method: BackendWrapper) -> bool:
         if method.config_params.get("save_result"):
-            method._config_params.pop("save_result")
+            try:
+                method._config_params.pop("save_result")
+            except:
+                pass
             return True
         if save_all:
             return True
