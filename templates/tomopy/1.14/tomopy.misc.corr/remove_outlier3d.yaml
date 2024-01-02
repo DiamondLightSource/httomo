@@ -1,6 +1,5 @@
-- tomopy.misc.corr:
-    remove_outlier3d:
-      data_in: tomo
-      data_out: tomo
-      dif: REQUIRED
-      size: 3
+- method: remove_outlier3d
+  module_path: tomopy.misc.corr
+  parameters:
+    dif: REQUIRED
+    size: 3

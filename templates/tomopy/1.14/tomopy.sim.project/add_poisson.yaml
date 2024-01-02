@@ -1,4 +1,3 @@
-- tomopy.sim.project:
-    add_poisson:
-      data_in: tomo
-      data_out: tomo
+- method: add_poisson
+  module_path: tomopy.sim.project
+  parameters: {}

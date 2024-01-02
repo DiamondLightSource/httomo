@@ -1,6 +1,5 @@
-- tomopy.sim.project:
-    add_gaussian:
-      data_in: tomo
-      data_out: tomo
-      mean: 0
-      std: null
+- method: add_gaussian
+  module_path: tomopy.sim.project
+  parameters:
+    mean: 0
+    std: null

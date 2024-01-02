@@ -1,5 +1,4 @@
-- tomopy.misc.corr:
-    sobel_filter:
-      data_in: tomo
-      data_out: tomo
-      axis: 0
+- method: sobel_filter
+  module_path: tomopy.misc.corr
+  parameters:
+    axis: 0

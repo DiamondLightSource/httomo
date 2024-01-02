@@ -76,8 +76,7 @@ def cmd():
 @pytest.fixture
 def standard_data():
     return "tests/test_data/tomo_standard.nxs"
-
-
+    
 @pytest.fixture(scope="session")
 def test_data_path():
     return os.path.join(CUR_DIR, "test_data")
@@ -220,10 +219,33 @@ def sample_pipelines():
 def gpu_pipeline():
     return "samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
 
+@pytest.fixture
+def python_pipeline1():
+    return "samples/python_templates/pipeline_cpu1.py"
+
+@pytest.fixture
+def python_pipeline2():
+    return "samples/python_templates/pipeline_cpu2.py"
+
+@pytest.fixture
+def python_pipeline3():
+    return "samples/python_templates/pipeline_gpu1.py"
+
+@pytest.fixture
+def yaml_pipeline1():
+    return "samples/pipeline_template_examples/pipeline_cpu1.yaml"
+
+@pytest.fixture
+def yaml_pipeline2():
+    return "samples/pipeline_template_examples/pipeline_cpu2.yaml"
+
+@pytest.fixture
+def yaml_pipeline3():
+    return "samples/pipeline_template_examples/pipeline_gpu1.yaml"
+
 @pytest.fixture(scope="session")
 def distortion_correction_path(test_data_path):
     return os.path.join(test_data_path, "distortion-correction")
-
 
 @pytest.fixture
 def merge_yamls():

@@ -1,6 +1,5 @@
-- tomopy.prep.normalize:
-    normalize:
-      data_in: tomo
-      data_out: tomo
-      cutoff: null
-      averaging: mean
+- method: normalize
+  module_path: tomopy.prep.normalize
+  parameters:
+    cutoff: null
+    averaging: mean

@@ -1,6 +1,5 @@
-- tomopy.misc.corr:
-    adjust_range:
-      data_in: tomo
-      data_out: tomo
-      dmin: null
-      dmax: null
+- method: adjust_range
+  module_path: tomopy.misc.corr
+  parameters:
+    dmin: null
+    dmax: null
