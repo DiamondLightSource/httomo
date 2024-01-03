@@ -57,6 +57,7 @@
     algorithm: gridrec
     init_recon: null
     #additional parameters: AVAILABLE
+  save_result: true
 - method: median_filter
   module_path: tomopy.misc.corr
   parameters:

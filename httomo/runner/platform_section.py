@@ -41,16 +41,6 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
 
     # The functions below are internal to reduce duplication
 
-    def should_save_after(method: BackendWrapper) -> bool:
-        if method.config_params.get("save_result"):
-            try:
-                method._config_params.pop("save_result")
-            except:
-                pass
-            return True
-        else:
-            return save_all
-
     def needs_global_input(method: BackendWrapper) -> bool:
         return method.config_params.get("glob_stats", False)
 
@@ -99,7 +89,10 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
             current_methods.append(method)
             if current_pattern == Pattern.all:
                 current_pattern = method.pattern
-        save_previous_result = should_save_after(method)
+        if save_all:
+            save_previous_result = True
+        else:
+            save_previous_result = pipeline._save_results_set[i]
 
     finish_section(should_save_after=save_previous_result)
 
