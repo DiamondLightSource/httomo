@@ -50,6 +50,7 @@
     center: ${{centering.side_outputs.centre_of_rotation}}
     recon_size: null
     recon_mask_radius: null
+  save_result: true
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:

@@ -503,6 +503,9 @@ class RotationWrapper(BackendWrapper):
             res = self.method(**args)
         if self.comm.size > 1:
             res = self.comm.bcast(res, root=0)
+        
+        cor_str = f"The center of rotation for sinogram is {res}"
+        log_rank(cor_str, comm=self.comm)
         return self._process_return_type(res, dataset)
 
     @classmethod

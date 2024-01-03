@@ -84,6 +84,7 @@ def methods_to_list() -> PipelineConfig:
                      'recon_size': None,
                      'recon_mask_radius': None,
                        },
+        'save_result': True,
                     }
     full_pipeline_list.append(method5)
     method6 = {
