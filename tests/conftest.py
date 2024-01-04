@@ -216,27 +216,35 @@ def gpu_pipeline():
     return "samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
 
 @pytest.fixture
-def python_pipeline1():
+def python_cpu_pipeline1():
     return "samples/python_templates/pipeline_cpu1.py"
 
 @pytest.fixture
-def python_pipeline2():
+def python_cpu_pipeline2():
     return "samples/python_templates/pipeline_cpu2.py"
 
 @pytest.fixture
-def python_pipeline3():
+def python_cpu_pipeline3():
+    return "samples/python_templates/pipeline_cpu3.py"
+
+@pytest.fixture
+def python_gpu_pipeline1():
     return "samples/python_templates/pipeline_gpu1.py"
 
 @pytest.fixture
-def yaml_pipeline1():
+def yaml_cpu_pipeline1():
     return "samples/pipeline_template_examples/pipeline_cpu1.yaml"
 
 @pytest.fixture
-def yaml_pipeline2():
+def yaml_cpu_pipeline2():
     return "samples/pipeline_template_examples/pipeline_cpu2.yaml"
 
 @pytest.fixture
-def yaml_pipeline3():
+def yaml_cpu_pipeline3():
+    return "samples/pipeline_template_examples/pipeline_cpu3.yaml"
+
+@pytest.fixture
+def yaml_gpu_pipeline1():
     return "samples/pipeline_template_examples/pipeline_gpu1.yaml"
 
 @pytest.fixture(scope="session")

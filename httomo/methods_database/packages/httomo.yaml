@@ -5,4 +5,10 @@ data:
         pattern: projection
         output_dims_change: False
         implementation: cpu
-        memory_gpu: None
+        memory_gpu: None 
+methods:  
+  calculate_stats:
+    pattern: all
+    output_dims_change: False
+    implementation: cpu
+    memory_gpu: None
