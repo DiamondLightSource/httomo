@@ -145,7 +145,7 @@ def _set_dict_special_cases(method_dict: Dict, method_name: str):
     if method_name in "find_center_360":
         method_dict["id"] = "centering"
         method_dict["side_outputs"] = {
-            "centre_of_rotation": "cor",
+            "cor": "centre_of_rotation",
             "overlap": "overlap",
             "side": "side",
             "overlap_position": "overlap_position",

@@ -1,4 +1,3 @@
---- # Loading stage
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
   parameters:
