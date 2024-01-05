@@ -4,11 +4,13 @@ import os
 import sys
 from pathlib import Path
 from shutil import rmtree
+from typing import Callable, List
 import numpy as np
 
 import pytest
 import yaml
 from httomo.runner.dataset import DataSet
+from httomo.yaml_checker import sanity_check
 from httomo.ui_layer import _yaml_loader
 
 
@@ -268,7 +270,7 @@ def distortion_correction_path(test_data_path):
 def merge_yamls():
     def _merge_yamls(*yamls) -> None:
         """Merge multiple yaml files into one"""
-        data : list = []
+        data : List = []
         for y in yamls:
             curr_yaml_list = _yaml_loader(y)[0]
             for x in curr_yaml_list:
@@ -285,3 +287,28 @@ def dummy_dataset() -> DataSet:
         flats=3 * np.ones((5, 10, 10)),
         darks=2 * np.ones((5, 10, 10)),
     )
+
+
+@pytest.fixture()
+def get_files():
+    def _get_files(dir_path: str, excl: List[str] = []) -> List[str]:
+        """ Returns list of files from provided directory
+
+        Parameters
+        ----------
+        dir_path
+            Directory to search
+        excl
+            Exclude files with a path containing any str in this list
+
+        Returns
+        -------
+        List of file paths
+        """
+        _dir = Path(dir_path).glob("**/*")
+        _files = [
+            str(f) for f in _dir if f.is_file() and not any(st in str(f) for st in excl)
+        ]
+        return _files
+    return _get_files
+
