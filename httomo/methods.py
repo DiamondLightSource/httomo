@@ -23,13 +23,12 @@ def calculate_stats(data: np.ndarray, comm: Comm) -> Tuple[float, float, float, 
     # max/min global values
     minval_glob = comm.allreduce(np.min(data.ravel()), op=MPI.MIN)
     maxval_glob = comm.allreduce(np.max(data.ravel()), op=MPI.MAX)
+    sum_glob = comm.allreduce(np.sum(data.ravel()), op=MPI.SUM)
 
     # mean calculation
-    buf = np.zeros_like(data.ravel())
-    MPI.COMM_WORLD.Allreduce(data.ravel(), buf, op=MPI.SUM)
+    elem_per_process = int(np.prod(np.shape(data)))
     # the total number of elements in the global data 
-    total_elements = MPI.COMM_WORLD.Get_size()
-    buf /= MPI.COMM_WORLD.Get_size()
-    cmean_glob = np.mean(buf)  
+    total_elements = MPI.COMM_WORLD.Get_size()*elem_per_process   
+    cmean_glob =  sum_glob/total_elements
   
     return (minval_glob, maxval_glob, cmean_glob, total_elements)
