@@ -1,6 +1,8 @@
 """
 Some unit tests for the yaml checker
 """
+from typing import Callable
+
 import pytest
 import yaml
 
@@ -17,88 +19,91 @@ from httomo.yaml_checker import (
 )
 
 
-# TODO: yaml checker needs to be modified first 
-"""
-def test_sanity_check(sample_pipelines, yaml_loader: type[YamlLoader]):
+def test_sanity_check(sample_pipelines):
     wrong_indentation_pipeline = (
         sample_pipelines + "testing/wrong_indentation_pipeline.yaml"
     )
     with open(wrong_indentation_pipeline, "r") as f:
-        conf_generator = yaml.load_all(f, Loader=yaml_loader)
+        conf_generator = yaml.load_all(f, Loader=yaml.FullLoader)
         # `assert` needs to be in `with` block for this case, because
         # `conf_generator` is lazy-loaded from the file when converted to a
         # list inside `sanity_check()`
         assert not sanity_check(conf_generator)
 
 
-def test_missing_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
+def test_missing_loader_stage(
+        sample_pipelines: str,
+        load_yaml: Callable
+):
     missing_loader_stage_pipeline = (
         sample_pipelines + "testing/missing_loader_stage.yaml"
     )
-    with open(missing_loader_stage_pipeline, "r") as f:
-        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    conf = load_yaml(missing_loader_stage_pipeline)
     assert not check_all_stages_defined(conf)
 
 
-def test_empty_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
+def test_empty_loader_stage(
+        sample_pipelines: str,
+        load_yaml: Callable
+):
     empty_loader_stage_pipeline = (
         sample_pipelines + "testing/empty_loader_stage.yaml"
     )
-    with open(empty_loader_stage_pipeline, "r") as f:
-        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    conf = load_yaml(empty_loader_stage_pipeline)
     assert not check_all_stages_non_empty(conf)
 
 
-def test_invalid_loader_stage(sample_pipelines, yaml_loader: type[YamlLoader]):
+def test_invalid_loader_stage(
+        sample_pipelines,
+        load_yaml: Callable
+):
     invalid_loader_stage_pipeline = (
         sample_pipelines + "testing/invalid_loader_stage.yaml"
     )
-    with open(invalid_loader_stage_pipeline, "r") as f:
-        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    conf = load_yaml(invalid_loader_stage_pipeline)
     assert not check_loading_stage_one_method(conf)
 
 
-def test_one_method_per_module(more_than_one_method, yaml_loader: type[YamlLoader]):
-    with open(more_than_one_method, "r") as f:
-        conf = list(yaml.load_all(f, Loader=yaml_loader))
+def test_one_method_per_module(
+        more_than_one_method,
+        load_yaml: Callable
+):
+    conf = load_yaml(more_than_one_method)
     assert not check_one_method_per_module(conf)
 
 
 def test_hdf5_paths_against_loader(
         standard_data,
         sample_pipelines,
-        yaml_loader: type[YamlLoader]
+        load_yaml: Callable
 ):
     incorrect_path_pipeline = (
         sample_pipelines + "testing/incorrect_path.yaml"
     )
-    with open(incorrect_path_pipeline, "r") as f:
-        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    conf = load_yaml(incorrect_path_pipeline)
     assert not check_hdf5_paths_against_loader(conf[0][0], standard_data)
 
 
 def test_check_methods_exist_in_templates(
-        sample_pipelines,
-        yaml_loader: type[YamlLoader]
+        sample_pipelines: str,
+        load_yaml: Callable
 ):
     incorrect_method_pipeline = (
         sample_pipelines + "testing/incorrect_method.yaml"
     )
-    with open(incorrect_method_pipeline, "r") as f:
-        conf = list(yaml.load_all(f, Loader=yaml_loader))
+    conf = load_yaml(incorrect_method_pipeline)
     assert not check_methods_exist_in_templates(conf)
 
 
 def test_check_valid_method_parameters(
-        sample_pipelines,
-        yaml_loader: type[YamlLoader]
+        sample_pipelines: str,
+        load_yaml: Callable
 ):
     required_param_pipeline = (
         sample_pipelines + "testing/required_param.yaml"
     )
-    with open(required_param_pipeline, "r") as f:
-        conf = list(yaml.load_all(f, Loader=yaml_loader))
-    assert not check_valid_method_parameters(conf, yaml_loader)
+    conf = load_yaml(required_param_pipeline)
+    assert not check_valid_method_parameters(conf)
 
 
 @pytest.mark.parametrize(
@@ -118,10 +123,9 @@ def test_validate_yaml_config(
     sample_pipelines: str,
     yaml_file: str,
     standard_data: str,
-    expected: bool,
-    yaml_loader: type[YamlLoader]
+    expected: bool
 ):
     yaml_file = sample_pipelines + yaml_file
-    assert validate_yaml_config(yaml_file, yaml_loader, standard_data) == expected
+    assert validate_yaml_config(yaml_file, standard_data) == expected
 
-"""
+
