@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, List
+from typing import List, Dict
 import numpy as np
 
 import pytest
@@ -311,4 +311,24 @@ def get_files():
         ]
         return _files
     return _get_files
+
+
+@pytest.fixture()
+def load_yaml():
+    def _load_yaml(yaml_in: str) -> Dict:
+        """ Loads provided yaml and returns dict
+
+        Parameters
+        ----------
+        yaml_in
+            yaml to load
+
+        Returns
+        -------
+        Dict
+        """
+        with open(yaml_in, "r") as f:
+            conf = list(yaml.load_all(f, Loader=yaml.FullLoader))
+        return conf
+    return _load_yaml
 
