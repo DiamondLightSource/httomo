@@ -158,10 +158,7 @@ def check_hdf5_paths_against_loader(
         "match the paths and keys in the input file (IN_DATA)...",
         colour=Colour.GREEN,
     )
-    module_name = list(conf.keys())[0]
-    method_conf = conf[module_name]
-    method_name = list(method_conf.keys())[0]
-    params = method_conf[method_name]
+    params = conf['parameters']
     _path_keys = [key for key in params if "_path" in key]
     for key in _path_keys:
         if params[key].strip("/") not in hdf5_members:
@@ -208,7 +205,7 @@ def check_valid_method_parameters(
         with open(f, "r") as template:
             method_dict = yaml.load(template, Loader=yaml.FullLoader)[0]
             template_yaml_data_list.append(
-                next(iter(method_dict.values()))
+                next(iter(method_dict['parameters']))
             )
 
     for i, _ in enumerate(modules):
@@ -261,9 +258,8 @@ def _get_pipeline_info(conf: PipelineConfig) -> Tuple[List, List, List]:
     methods: List[MethodConfig] = []
     for stage in conf:
         for module in stage:
-            module_name = list(module.keys())[0]
-            modules.append(module_name)
-            methods.append(module[module_name])
+            modules.append(module['module_path'])
+            methods.append(module['method'])
 
     packages = [
         m.split(".")[0] + "/" + get_external_package_current_version(m.split(".")[0])
