@@ -185,7 +185,7 @@ def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
     for i, f in enumerate(template_yaml_files):
         if not os.path.exists(f):
             _print_with_colour(
-                f"'{modules[i] + '/' + next(iter(methods[i]))}' is not a valid"
+                f"'{modules[i] + '/' + methods[i]}' is not a valid"
                 " path to a method. Please recheck the yaml file."
             )
             return False
@@ -212,7 +212,7 @@ def check_valid_method_parameters(
             )
 
     for i, _ in enumerate(modules):
-        end_str_list = ["Checking '", next(iter(methods[i])), "' and its parameters..."]
+        end_str_list = ["Checking '", methods[i], "' and its parameters..."]
         colours = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
         _print_with_colour(end_str_list, colours)
         d1 = methods[i]
@@ -284,7 +284,7 @@ def _get_yaml_templates(modules: List, methods: List, packages: List) -> List:
     assert os.path.exists(templates_dir)
     return [
         os.path.join(
-            templates_dir, packages[i], modules[i], next(iter(methods[i])) + ".yaml"
+            templates_dir, packages[i], modules[i], methods[i] + ".yaml"
         )
         for i in range(len(modules))
     ]
