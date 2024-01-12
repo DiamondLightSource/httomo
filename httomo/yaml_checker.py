@@ -10,6 +10,8 @@ import yaml
 from httomo.utils import Colour
 from httomo.yaml_utils import get_external_package_current_version
 
+from . import __version__
+
 __all__ = [
     "check_one_method_per_module",
     "sanity_check",
@@ -305,7 +307,7 @@ def _get_pipeline_info(conf: PipelineConfig) -> Tuple[List, List, List]:
     packages = [
         m.split(".")[0] + "/" + get_external_package_current_version(m.split(".")[0])
         if m.split(".")[0] != "httomo"
-        else m.split(".")[0]
+        else m.split(".")[0] + "/" + __version__
         for m in modules
     ]
     return modules, methods, packages
