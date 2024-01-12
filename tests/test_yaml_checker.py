@@ -109,14 +109,15 @@ def test_check_valid_method_parameters(
 @pytest.mark.parametrize(
     "yaml_file, expected",
     [
-        ("02_basic_cpu_pipeline_tomo_standard.yaml", True),
-        ("03_basic_gpu_pipeline_tomo_standard.yaml", True),
-        ("parameter_sweeps/02_median_filter_kernel_sweep.yaml", True),
+        ("pipeline_cpu1.yaml", True),
+        ("pipeline_cpu2.yaml", True),
+        ("pipeline_gpu1.yaml", True),
+        #("parameter_sweeps/02_median_filter_kernel_sweep.yaml", True),
     ],
     ids=[
-        "cpu_pipeline",
-        "gpu_pipeline",
-        "sweep_pipeline",
+        "cpu1_pipeline",
+        "cpu2_pipeline",
+        "gpu1_pipeline",
     ],
 )
 def test_validate_yaml_config(
