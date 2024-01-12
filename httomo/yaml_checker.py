@@ -13,7 +13,6 @@ from httomo.yaml_utils import get_external_package_current_version
 from . import __version__
 
 __all__ = [
-    "check_one_method_per_module",
     "sanity_check",
     "validate_yaml_config",
 ]
@@ -138,44 +137,6 @@ def check_first_stage_has_loader(conf: PipelineConfig) -> bool:
         return False
     _print_with_colour("Loader check successful!!\n", colour=Colour.GREEN)
 
-    return True
-
-
-def check_one_method_per_module(conf: PipelineConfig) -> bool:
-    """
-    Check that we cannot have a yaml file with more than one method
-    being called from one module. For example, we cannot have:
-
-    - tomopy.prep.normalize:
-        normalize:
-          data_in: tomo
-          data_out: tomo
-          cutoff: null
-        minus_log:
-          data_in: tomo
-          data_out: tomo
-    """
-    _print_with_colour(
-        "Checking that YAML_CONFIG includes only one method from each module...\n"
-        "\nDoing a sanity check first...",
-        colour=Colour.GREEN,
-    )
-    for stage in conf:
-        lvalues = [value for d in stage for value in d.values()]
-        for i, d in enumerate(lvalues):
-            assert isinstance(d, dict)
-            if len(d) != 1:
-                _print_with_colour(
-                    f"More than one method is being called from the"
-                    f" module '{next(iter(stage[i]))}'. "
-                    "Please recheck the yaml file."
-                )
-                return False
-
-    _print_with_colour(
-        "'One method per module' check was successfully done...\n",
-        colour=Colour.GREEN,
-    )
     return True
 
 
@@ -371,7 +332,6 @@ def validate_yaml_config(
     are_all_stages_non_empty = check_all_stages_non_empty(conf)
     is_loading_stage_correct_len = check_loading_stage_one_method(conf)
     is_loading_stage_method_correct = check_first_stage_has_loader(conf)
-    is_one_method_per_module = check_one_method_per_module(conf)
     are_hdf5_paths_correct = True
     if in_file is not None:
         are_hdf5_paths_correct = check_hdf5_paths_against_loader(conf[0][0], str(in_file))
@@ -383,7 +343,6 @@ def validate_yaml_config(
         are_all_stages_non_empty and \
         is_loading_stage_correct_len and \
         is_loading_stage_method_correct and \
-        is_one_method_per_module and \
         are_hdf5_paths_correct and \
         do_methods_exist and \
         are_method_params_valid

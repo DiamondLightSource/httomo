@@ -12,7 +12,6 @@ from httomo.yaml_checker import (
     check_hdf5_paths_against_loader,
     check_loading_stage_one_method,
     check_methods_exist_in_templates,
-    check_one_method_per_module,
     check_valid_method_parameters,
     sanity_check,
     validate_yaml_config,
@@ -62,14 +61,6 @@ def test_invalid_loader_stage(
     )
     conf = load_yaml(invalid_loader_stage_pipeline)
     assert not check_loading_stage_one_method(conf)
-
-
-def test_one_method_per_module(
-        more_than_one_method,
-        load_yaml: Callable
-):
-    conf = load_yaml(more_than_one_method)
-    assert not check_one_method_per_module(conf)
 
 
 def test_hdf5_paths_against_loader(
