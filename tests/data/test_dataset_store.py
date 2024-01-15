@@ -5,7 +5,6 @@ import pytest
 from pytest_mock import MockerFixture
 from httomo.data.dataset_store import DataSetStoreReader, DataSetStoreWriter
 from mpi4py import MPI
-import h5py
 
 from httomo.runner.dataset import DataSet, FullFileDataSet
 
@@ -99,6 +98,92 @@ def test_can_write_and_read_blocks(
 
     np.testing.assert_array_equal(rblock1.data, block1.data)
     np.testing.assert_array_equal(rblock2.data, block2.data)
+
+
+@pytest.mark.parametrize("file_based", [False, True])
+def test_write_after_read_throws(
+    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: PathLike, file_based: bool
+):
+    dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
+        dummy_dataset.shape
+    )
+    writer = DataSetStoreWriter(
+        full_size=dummy_dataset.shape[0],
+        slicing_dim=0,
+        other_dims=(dummy_dataset.shape[1], dummy_dataset.shape[2]),
+        chunk_size=4,
+        chunk_start=3,
+        comm=MPI.COMM_WORLD,
+        temppath=tmp_path,
+    )
+    block = dummy_dataset.make_block(0, 0, 4)
+
+    if file_based:
+        mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
+    writer.write_block(block)
+
+    writer.make_reader()
+
+    with pytest.raises(ValueError):
+        writer.write_block(block)
+
+
+def test_writer_closes_file_on_finalize(
+    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: PathLike
+):
+    dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
+        dummy_dataset.shape
+    )
+    writer = DataSetStoreWriter(
+        full_size=dummy_dataset.shape[0],
+        slicing_dim=0,
+        other_dims=(dummy_dataset.shape[1], dummy_dataset.shape[2]),
+        chunk_size=4,
+        chunk_start=3,
+        comm=MPI.COMM_WORLD,
+        temppath=tmp_path,
+    )
+    block = dummy_dataset.make_block(0, 0, 4)
+
+    mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
+    writer.write_block(block)
+    fileclose = mocker.patch.object(writer._h5file, "close")
+    writer.finalize()
+
+    fileclose.assert_called_once()
+
+
+def test_making_reader_closes_file_and_deletes(
+    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: PathLike
+):
+    dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
+        dummy_dataset.shape
+    )
+    writer = DataSetStoreWriter(
+        full_size=dummy_dataset.shape[0],
+        slicing_dim=0,
+        other_dims=(dummy_dataset.shape[1], dummy_dataset.shape[2]),
+        chunk_size=4,
+        chunk_start=3,
+        comm=MPI.COMM_WORLD,
+        temppath=tmp_path,
+    )
+    block = dummy_dataset.make_block(0, 0, 4)
+    mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
+    writer.write_block(block)
+
+    reader = writer.make_reader()
+
+    assert writer._h5file is None
+    assert writer.filename is not None
+    assert writer.filename.exists()
+    assert reader.filename == writer.filename
+    assert reader._h5file is not None
+    assert reader._h5file.get("data", None) is not None
+
+    reader.finalize()
+
+    assert not writer.filename.exists()
 
 
 def test_can_write_and_read_block_with_different_sizes(
@@ -224,9 +309,10 @@ def test_calls_reslice(
     writer.write_block(block2)
 
     reslice_mock = mocker.patch.object(DataSetStoreReader, "_reslice")
+    d = writer._data
     writer.make_reader(new_slicing_dim=1)
 
-    reslice_mock.assert_called_with(0, 1, writer._data)
+    reslice_mock.assert_called_with(0, 1, d)
 
 
 @pytest.mark.parametrize("file_based", [False, True])
@@ -250,6 +336,8 @@ def test_reslice_single_block_single_process(
 
     writer.write_block(dummy_dataset.make_block(0, 0, writer.global_shape[0]))
 
+    assert writer.is_file_based is file_based
+
     reader = writer.make_reader(new_slicing_dim=1)
 
     block = reader.read_block(1, 2)
@@ -263,6 +351,8 @@ def test_reslice_single_block_single_process(
     assert block.shape == (dummy_dataset.shape[0], 2, dummy_dataset.shape[2])
     assert block.chunk_index == (0, 1, 0)
     assert block.chunk_shape == reader.chunk_shape
+
+    assert reader.is_file_based is file_based
 
     np.testing.assert_array_equal(block.data, dummy_dataset.data[:, 1:3, :])
     np.testing.assert_array_equal(block.flats, dummy_dataset.flats)
@@ -296,7 +386,9 @@ def test_reslice_single_block_multi_process(
             angles=np.ones((20,)),
             flats=3 * np.ones((5, 10, 10)),
             darks=2 * np.ones((5, 10, 10)),
-            global_index=(0, 0, 0) if comm.rank == 0 else (GLOBAL_DATA_SHAPE[0] // 2, 0, 0),
+            global_index=(0, 0, 0)
+            if comm.rank == 0
+            else (GLOBAL_DATA_SHAPE[0] // 2, 0, 0),
             chunk_shape=(5, 10, 10),
         )
 
