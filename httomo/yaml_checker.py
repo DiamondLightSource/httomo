@@ -272,7 +272,7 @@ def validate_yaml_config(
         is_yaml_ok = sanity_check(conf_generator)
 
     with open(yaml_file, "r") as f:
-        conf = list(yaml.load_all(f, Loader=yaml.FullLoader))
+        conf = list(yaml.load_all(f, Loader=yaml.FullLoader))[0]
 
     # Let all checks run before returning with the result, even if some checks
     # fail, to show all errors present in YAML

@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Dict
+from typing import Any, Dict, List, TypeAlias
 import numpy as np
 
 import pytest
@@ -12,6 +12,10 @@ import yaml
 from httomo.runner.dataset import DataSet
 from httomo.yaml_checker import sanity_check
 from httomo.ui_layer import _yaml_loader
+
+
+MethodConfig: TypeAlias = Dict[str, Any]
+PipelineConfig: TypeAlias = List[MethodConfig]
 
 
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -315,7 +319,7 @@ def get_files():
 
 @pytest.fixture()
 def load_yaml():
-    def _load_yaml(yaml_in: str) -> Dict:
+    def _load_yaml(yaml_in: str) -> PipelineConfig:
         """ Loads provided yaml and returns dict
 
         Parameters
@@ -325,10 +329,11 @@ def load_yaml():
 
         Returns
         -------
-        Dict
+        PipelineConfig
         """
         with open(yaml_in, "r") as f:
             conf = list(yaml.load_all(f, Loader=yaml.FullLoader))
-        return conf
+        return conf[0]
     return _load_yaml
 
+# separate due to not wanting to test UI function?
