@@ -269,14 +269,13 @@ def test_does_reslice_when_needed(
                                                   ANY,
                                                   1, 
                                                   2,
-                                                  np.ndarray([1,2]),
-                                                  1,
-                                                  1,
+                                                  ANY,
+                                                  10,
+                                                  10,
                                                   t.comm,
                                                   reslice_dir)
     else:
         reslice.assert_called_once_with(ANY, 1, 2, t.comm)
-
 
 def test_warns_after_multiple_reslices(mocker: MockerFixture, dummy_dataset: DataSet):
     loader = make_test_loader(mocker)
