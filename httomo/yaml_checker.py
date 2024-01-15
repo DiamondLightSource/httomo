@@ -16,6 +16,7 @@ __all__ = [
     "check_first_method_is_loader",
     "check_hdf5_paths_against_loader",
     "check_methods_exist_in_templates",
+    "check_no_required_parameter_values",
     "check_valid_method_parameters",
     "sanity_check",
     "validate_yaml_config",
@@ -174,15 +175,6 @@ def check_valid_method_parameters(conf: PipelineConfig) -> bool:
                     )
                     return False
 
-                # there should be no REQUIRED parameters in the YAML_CONFIG file
-                if param_value == "REQUIRED":
-                    _print_with_colour(
-                        f"A value is needed for the parameter '{param}' in the '{method_dict['module_path']}' method."
-                        " Please specify a value instead of 'REQUIRED'."
-                        " Refer to the method docstring for more information."
-                    )
-                    return False
-
                 # skip tuples for !Sweep and !SweepRange
                 if isinstance(param_value, tuple) or None in (
                     param_value,
@@ -196,6 +188,22 @@ def check_valid_method_parameters(conf: PipelineConfig) -> bool:
                             f" is not correct. It should be of type {type(yml_method['parameters'][param])}."
                         )
                         return False
+    return True
+
+
+def check_no_required_parameter_values(conf: PipelineConfig) -> bool:
+    """there should be no REQUIRED parameters in the config pipeline
+    """
+    required_values = {method['method']: param for method in conf
+                       for param, param_value in method['parameters'].items()
+                       if param_value == 'REQUIRED'}
+    for method, param in required_values.items():
+        _print_with_colour(
+            f"A value is needed for the parameter '{param}' in the '{method}' method."
+            " Please specify a value instead of 'REQUIRED'."
+            " Refer to the method docstring for more information."
+        )
+        return False
     return True
 
 
@@ -272,12 +280,14 @@ def validate_yaml_config(
     if in_file is not None:
         are_hdf5_paths_correct = check_hdf5_paths_against_loader(conf, str(in_file))
     do_methods_exist = check_methods_exist_in_templates(conf)
+    are_required_parameters_missing = check_no_required_parameter_values(conf)
     are_method_params_valid = check_valid_method_parameters(conf)
 
     all_checks_pass = is_yaml_ok and \
         is_first_method_loader and \
         are_hdf5_paths_correct and \
         do_methods_exist and \
+        are_required_parameters_missing and \
         are_method_params_valid
 
     if not all_checks_pass:
