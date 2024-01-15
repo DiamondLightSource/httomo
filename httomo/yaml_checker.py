@@ -69,57 +69,9 @@ def sanity_check(conf_generator: Iterator[Any]) -> bool:
             )
         return False
 
-
-def check_all_stages_defined(conf: PipelineConfig) -> bool:
+def check_first_method_is_loader(conf: PipelineConfig) -> bool:
     """
-    Check if all three stages are defined in the YAML (loading, pre-processing,
-    main processing).
-    """
-    assert isinstance(conf, list)
-    if len(conf) != 3:
-        _print_with_colour(
-            "Please make sure to define the three stages in the pipeline YAML "
-            "file:\n"
-            "1) loading\n"
-            "2) pre-processing\n"
-            "3) main processing\n"
-        )
-        return False
-    return True
-
-
-def check_all_stages_non_empty(conf: PipelineConfig) -> bool:
-    """
-    Check if all three stages in the YAML (loading, pre-processing, main
-    processing) are non-empty.
-    """
-    for stage in conf:
-        if stage is None:
-            _print_with_colour(
-                "Please make sure that all three stages in the pipeline YAML "
-                "file are not empty."
-            )
-            return False
-    return True
-
-
-def check_loading_stage_one_method(conf: PipelineConfig) -> bool:
-    """
-    Check that the loading stage in the pipeline YAML has only one method in
-    it.
-    """
-    if len(conf[0]) != 1:
-        _print_with_colour(
-            "Please make sure that the loading stage has only one method in "
-            "it, a loader method."
-        )
-        return False
-    return True
-
-
-def check_first_stage_has_loader(conf: PipelineConfig) -> bool:
-    """
-    Check that the only method in the first stage in the pipeline YAML is a
+    Check that the first method in pipeline is a
     loader.
     """
     first_stage_method = conf[0][0]
@@ -324,10 +276,7 @@ def validate_yaml_config(
 
     # Let all checks run before returning with the result, even if some checks
     # fail, to show all errors present in YAML
-    are_all_stages_defined = check_all_stages_defined(conf)
-    are_all_stages_non_empty = check_all_stages_non_empty(conf)
-    is_loading_stage_correct_len = check_loading_stage_one_method(conf)
-    is_loading_stage_method_correct = check_first_stage_has_loader(conf)
+    is_first_method_loader = check_first_method_is_loader(conf)
     are_hdf5_paths_correct = True
     if in_file is not None:
         are_hdf5_paths_correct = check_hdf5_paths_against_loader(conf[0][0], str(in_file))
@@ -335,10 +284,7 @@ def validate_yaml_config(
     are_method_params_valid = check_valid_method_parameters(conf)
 
     all_checks_pass = is_yaml_ok and \
-        are_all_stages_defined and \
-        are_all_stages_non_empty and \
-        is_loading_stage_correct_len and \
-        is_loading_stage_method_correct and \
+        is_first_method_loader and \
         are_hdf5_paths_correct and \
         do_methods_exist and \
         are_method_params_valid

@@ -7,10 +7,8 @@ import pytest
 import yaml
 
 from httomo.yaml_checker import (
-    check_all_stages_defined,
-    check_all_stages_non_empty,
+    check_first_method_is_loader,
     check_hdf5_paths_against_loader,
-    check_loading_stage_one_method,
     check_methods_exist_in_templates,
     check_valid_method_parameters,
     sanity_check,
@@ -30,37 +28,15 @@ def test_sanity_check(sample_pipelines):
         assert not sanity_check(conf_generator)
 
 
-def test_missing_loader_stage(
+def test_check_first_method_is_loader(
         sample_pipelines: str,
         load_yaml: Callable
 ):
-    missing_loader_stage_pipeline = (
-        sample_pipelines + "testing/missing_loader_stage.yaml"
+    no_loader_method_pipeline = (
+        sample_pipelines + "testing/no_loader_method.yaml"
     )
-    conf = load_yaml(missing_loader_stage_pipeline)
-    assert not check_all_stages_defined(conf)
-
-
-def test_empty_loader_stage(
-        sample_pipelines: str,
-        load_yaml: Callable
-):
-    empty_loader_stage_pipeline = (
-        sample_pipelines + "testing/empty_loader_stage.yaml"
-    )
-    conf = load_yaml(empty_loader_stage_pipeline)
-    assert not check_all_stages_non_empty(conf)
-
-
-def test_invalid_loader_stage(
-        sample_pipelines,
-        load_yaml: Callable
-):
-    invalid_loader_stage_pipeline = (
-        sample_pipelines + "testing/invalid_loader_stage.yaml"
-    )
-    conf = load_yaml(invalid_loader_stage_pipeline)
-    assert not check_loading_stage_one_method(conf)
+    conf = load_yaml(no_loader_method_pipeline)
+    assert not check_first_method_is_loader(conf)
 
 
 def test_hdf5_paths_against_loader(
