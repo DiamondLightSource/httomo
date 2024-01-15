@@ -1,4 +1,3 @@
---- # pre-processing
 - method: normalize
   module_path: tomopy.prep.normalize
   parameters:
@@ -7,7 +6,6 @@
 - method: minus_log
   module_path: tomopy.prep.normalize
   parameters: {}
---- # main processing
 - method: remove_stripe_fw
   module_path: tomopy.prep.stripe
   parameters:
@@ -36,7 +34,7 @@
     algorithm: gridrec
     init_recon: null
     save_result: true
-    #additional parameters': AVAILABLE
+    #additional parameters: AVAILABLE
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:
@@ -48,4 +46,5 @@
     perc_range_max: 100.0
     jpeg_quality: 95
     glob_stats: true
+
 

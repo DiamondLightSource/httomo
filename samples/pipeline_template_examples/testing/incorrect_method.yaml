@@ -1,4 +1,3 @@
---- # loading
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
   parameters:
@@ -15,13 +14,11 @@
         stop: 60
       -
     pad: 0
---- # pre-processing
 - method: median_filters # incorrect method name
   module_path: tomopy.misc.corr
   parameters:
     size: tomo # incorrect size parameter
     axis: 0
---- # main processing
 - method: normalize
   module_path: tomopy.prep.normalize
   parameters:

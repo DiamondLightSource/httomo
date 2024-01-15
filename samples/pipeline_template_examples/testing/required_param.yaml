@@ -1,4 +1,3 @@
---- # loading
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
   parameters:
@@ -11,13 +10,11 @@
     dimension: 1
     # preview: [None, None, None]
     pad: 0
---- # pre-processing
 - method: normalize
   module_path: tomopy.prep.normalize
   parameters:
     cutoff: null
     averaging: mean
---- # main processing
 - method: stripes_mask3d
   module_path: tomopy.prep.stripe
   parameters:

@@ -1,4 +1,3 @@
---- # loading
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
   parameters:
@@ -11,7 +10,6 @@
     dimension: 1
     preview: [None, None, None]
     pad: 0
---- # pre-processing
 - method: normalize
   module_path: tomopy.prep.normalize
   parameters:
@@ -20,7 +18,6 @@
   method: minus_log # more than one method
   module_path: tomopy.prep.normalize
   parameters: {}
---- # main processing
 - method: remove_stripe_fw
   module_path: tomopy.prep.stripe
   parameters:
