@@ -48,7 +48,7 @@ def test_hdf5_paths_against_loader(
         sample_pipelines + "testing/incorrect_path.yaml"
     )
     conf = load_yaml(incorrect_path_pipeline)
-    assert not check_hdf5_paths_against_loader(conf[0][0], standard_data)
+    assert not check_hdf5_paths_against_loader(conf, standard_data)
 
 
 def test_check_methods_exist_in_templates(
