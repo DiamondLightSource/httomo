@@ -404,7 +404,9 @@ class StatsCalcWrapper(BackendWrapper):
     
     def _run_method(self, dataset: DataSet, args: Dict[str, Any]) -> DataSet:
         res = calculate_stats(dataset.data,
-                              comm=self.comm)
+                              comm=self.comm)        
+        stats_str = f"Global min {res[0]}, Global max {res[1]}, Global mean {res[2]}"
+        log_rank(stats_str, comm=self.comm)
         return self._process_return_type(res, dataset)
 
     def _process_return_type(self, ret: Any, input_dataset: DataSet) -> DataSet:

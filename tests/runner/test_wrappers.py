@@ -163,39 +163,25 @@ def test_wrapper_allows_parameters_with_defaults(
     wrp.execute(dummy_dataset)
 
 
-@pytest.mark.parametrize("enabled", [True, False])
-def test_wrapper_processes_global_stats(
-    mocker: MockerFixture, dummy_dataset: DataSet, enabled: bool
-):
-    stats_mock = mocker.patch(
-        "httomo.runner.backend_wrapper.min_max_mean_std",
-        return_value=(1.1, 2.2, 3.3, 4.4),
-    )
-
+def test_wrapper_calculate_stats(mocker: MockerFixture, dummy_dataset: DataSet):
     class FakeModule:
-        def fake_method(data, glob_stats=None):
-            if enabled:
-                assert glob_stats == (1.1, 2.2, 3.3, 4.4)
-            else:
-                assert glob_stats is None
-            return data
+        def calculate_stats_tester(data):
+            return 1.1, 2.1, 3.1, 3
+        
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
         make_mock_repo(mocker),
-        "mocked_module_path",
-        "fake_method",
+        "mocked_module_path.calculate_stats",
+        "calculate_stats_tester",
         MPI.COMM_WORLD,
-        glob_stats=enabled,
+        output_mapping={"glob_stats": "glob_stats"},        
     )
+    new_dataset = wrp.execute(dummy_dataset)
 
-    wrp.execute(dummy_dataset)
-
-    if enabled:
-        stats_mock.assert_called_once()
-    else:
-        stats_mock.assert_not_called()
-
+    assert wrp.get_side_output() == {
+        "glob_stats": (1.1, 2.1, 3.1, 3),
+    }
 
 def test_wrapper_build_kwargs_parameter_not_given(
     mocker: MockerFixture, dummy_dataset: DataSet

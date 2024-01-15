@@ -270,27 +270,20 @@ def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_f
     cmd.insert(8, output_folder)
     subprocess.check_output(cmd)
 
-    # # recurse through output_dir and check that all files are there
-    # files = read_folder("output_dir/")
-    # assert len(files) == 33
+    # recurse through output_dir and check that all files are there
+    files = read_folder("output_dir/")
+    assert len(files) == 130
 
-    # # check the .tif files
-    # tif_files = list(filter(lambda x: ".tif" in x, files))
-    # assert len(tif_files) == 30
-    # #: check that the image size is correct
-    # imarray = np.array(Image.open(tif_files[0]))
-    # assert imarray.shape == (160, 160)
+    # check the .tif files
+    tif_files = list(filter(lambda x: ".tif" in x, files))
+    assert len(tif_files) == 128
+    #: check that the image size is correct
+    imarray = np.array(Image.open(tif_files[0]))
+    assert imarray.shape == (160, 160)
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 1
-
-    for file_to_open in h5_files:
-        if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
-            with h5py.File(file_to_open, "r") as f:
-                assert f["data"].shape == (160, 30, 160)
-                assert f["data"].dtype == np.float32
-                assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6)
+    assert len(h5_files) == 0
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -300,16 +293,13 @@ def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_f
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, 30:60:, :)" in log_contents
+    assert "Preview: (0:180, :, :)" in log_contents
     assert (
-        "Data shape is (180, 30, 160) of type uint16" in log_contents
+        "Data shape is (180, 128, 160) of type uint16" in log_contents
     )
     assert "<-------Reslicing/rechunking the data-------->" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
-    assert "Maximum amount of slices is 30 for section 1" in log_contents
-    assert "Maximum amount of slices is 30 for section 2" in log_contents
-
-
+    assert " Global min -0.015004875138401985, Global max 0.041933752596378326, Global mean 0.0016336187720298768" in log_contents
 
 def test_run_pipeline_gpu1_yaml(cmd, standard_data, yaml_gpu_pipeline1, output_folder):
     cmd.pop(4)  #: don't save all
