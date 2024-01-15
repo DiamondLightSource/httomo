@@ -8,7 +8,7 @@ from mpi4py import MPI
 
 from httomo.ui_layer import UiLayer
 
-def test_pipeline_cpu1l(standard_data, yaml_pipeline1):
+def test_pipeline_cpu1(standard_data, yaml_pipeline1):
     """Testing existing yaml pipelines by reading them and generating Pipelines
     """
 

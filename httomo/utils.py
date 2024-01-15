@@ -272,7 +272,7 @@ def remove_ansi_escape_sequences(filename):
     """
     Remove ANSI escape sequences from a file.
     """
-    ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
+    ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")    
     if Path(filename).exists():
         with open(filename, "r") as f:
             lines = f.readlines()

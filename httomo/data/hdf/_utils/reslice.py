@@ -75,6 +75,9 @@ def reslice_filebased(
     data: numpy.ndarray,
     current_slice_dim: int,
     next_slice_dim: int,
+    angles: numpy.ndarray,
+    detector_x: int,
+    detector_y: int,
     comm: Comm,
     reslice_dir: Path,
 ) -> Tuple[numpy.ndarray, int]:
@@ -91,6 +94,12 @@ def reslice_filebased(
     next_slice_dim : int
         The dimension along which the data should be sliced after re-chunking
         and saving.
+    angles : ndarray
+        Angles of the loaded dataset.
+    detector_x : int
+        det_x (horizontal) detector of the loaded dataset.
+    detector_y : int
+        det_y (vertical) detector of the loaded dataset.        
     comm : Comm
         The MPI communicator to be used.
     Returns:
@@ -127,6 +136,9 @@ def reslice_filebased(
         reslice_dir,
         "intermediate.h5",
         data,
+        angles,
+        detector_x,
+        detector_y,
         current_slice_dim,
         chunks_data,
         reslice=True,
@@ -138,7 +150,6 @@ def reslice_filebased(
     )
 
     return data, next_slice_dim
-
 
 def single_sino_reslice(
     data: numpy.ndarray,
@@ -181,4 +192,7 @@ def single_sino_reslice(
     )
 
     if mpiutil.rank == 0:
+        assert recvbuf is not None
         return recvbuf.reshape((data_shape[0], data_shape[2]))
+    else:
+        return None

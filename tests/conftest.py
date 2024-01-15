@@ -9,12 +9,10 @@ import numpy as np
 import pytest
 import yaml
 from httomo.runner.dataset import DataSet
-
-from httomo.yaml_loader import YamlLoader
+from httomo.ui_layer import _yaml_loader
 
 
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))
-
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
@@ -57,6 +55,7 @@ def output_folder():
                 path.unlink()
             elif path.is_dir():
                 rmtree(path)
+    return str(Path("output_dir").resolve())
 
 
 @pytest.fixture
@@ -67,9 +66,6 @@ def cmd():
         "httomo",
         "run",
         "--save-all",
-        "--ncore",
-        "2",
-        "output_dir/",
     ]
 
 
@@ -251,22 +247,14 @@ def distortion_correction_path(test_data_path):
 def merge_yamls():
     def _merge_yamls(*yamls) -> None:
         """Merge multiple yaml files into one"""
-        data = []
+        data : list = []
         for y in yamls:
-            with open(y, "r") as file_descriptor:
-                data.extend(yaml.load_all(file_descriptor, Loader=yaml.SafeLoader))
+            curr_yaml_list = _yaml_loader(y)[0]
+            for x in curr_yaml_list:
+                data.append(x)
         with open("temp.yaml", "w") as file_descriptor:
-            yaml.dump_all(data, file_descriptor)
-
+            yaml.dump(data, file_descriptor)
     return _merge_yamls
-
-
-@pytest.fixture
-def yaml_loader() -> type[YamlLoader]:
-    YamlLoader.add_constructor("!Sweep", YamlLoader.sweep_manual)
-    YamlLoader.add_constructor("!SweepRange", YamlLoader.sweep_range)
-    return YamlLoader
-
 
 @pytest.fixture
 def dummy_dataset() -> DataSet:

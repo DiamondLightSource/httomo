@@ -1,6 +1,7 @@
 import yaml
-from typing import Any, Dict, List, Protocol, TypeAlias
+from typing import Any, Dict, List, Protocol
 from importlib import import_module, util
+from pathlib import Path
 import os
 import re
 
@@ -22,8 +23,8 @@ class UiLayer:
     
     def __init__(
         self,
-        tasks_file_path: str,
-        in_data_file_path: str,
+        tasks_file_path: Path,
+        in_data_file_path: Path,
         comm: Comm,
     ):   
         
@@ -46,6 +47,7 @@ class UiLayer:
 
     def build_pipeline(self) -> Pipeline:
         side_outputs_collect: list = [] # saves [task_no, id, side_outputs] for tasks with side_outputs
+        save_result_collect: list = [] 
         methods_list: list = []
         for task_no, task_conf in enumerate(self.PipelineStageConfig):
             if "loaders" in task_conf['module_path']:
@@ -61,6 +63,10 @@ class UiLayer:
             else:
                 if "parameters" not in task_conf:
                     task_conf['parameters'] = {}
+                if "save_result" not in task_conf:
+                    save_result_collect.append(False)
+                else:
+                    save_result_collect.append(task_conf['save_result'])
                 if "side_outputs" not in task_conf:
                     task_conf['side_outputs'] = {}
                 else:
@@ -90,14 +96,15 @@ class UiLayer:
         return Pipeline(
             loader=loader,
             methods=methods_list,
+            save_results_set=save_result_collect,
         )
 
-def _yaml_loader(file_path: str) -> list:
+def _yaml_loader(file_path: Path) -> list:
     with open(file_path, "r") as f:
         tasks_list = list(yaml.load_all(f, Loader=yaml.FullLoader))
     return tasks_list
 
-def _python_tasks_loader(file_path: str) -> list:
+def _python_tasks_loader(file_path: Path) -> list:
     module_spec = util.spec_from_file_location("methods_to_list", file_path)
     foo = util.module_from_spec(module_spec)
     module_spec.loader.exec_module(foo)

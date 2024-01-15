@@ -123,6 +123,9 @@ class TaskRunner:
                 self.dataset.data,
                 current_slice_dim,
                 next_slice_dim,
+                self.dataset.angles,
+                self.dataset.__dict__['_global_shape'][2],
+                self.dataset.__dict__['_global_shape'][1],
                 self.comm,
                 self.reslice_dir,
             )[0]

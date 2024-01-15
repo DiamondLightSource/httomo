@@ -91,6 +91,7 @@ def methods_to_list() -> PipelineConfig:
                      'algorithm': "gridrec",
                      'init_recon': None,
                        },
+        'save_result' : True,
                     }
     full_pipeline_list.append(method6)
     method7 = {

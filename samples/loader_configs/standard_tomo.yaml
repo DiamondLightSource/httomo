@@ -1,4 +1,3 @@
---- # loading
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
   parameters:
@@ -11,7 +10,7 @@
     dimension: 1
     preview:
       -
-      - start: 0
-        stop: 3
+      - start: 57
+        stop: 60
       -
     pad: 0
