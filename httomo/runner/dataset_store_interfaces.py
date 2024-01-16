@@ -41,7 +41,7 @@ from httomo.runner.dataset import DataSetBlock
 # - the loader wrapper can implement the source interface
 # - perhaps the method wrapper for saving intermediate files could use an instance of
 #   the sink interface - with some setting to definitely write to files.
-#   finalise would take care of making sure that everything is written to disk in the end
+#   finalize would take care of making sure that everything is written to disk in the end
 
 
 class DataSetSource(Protocol):
@@ -75,6 +75,11 @@ class DataSetSource(Protocol):
         i.e. mean different things in different processes."""
         ...
 
+    def finalize(self):
+        """Method intended to be called after reading all blocks is done,
+        to give implementations a chance to close files, free memory, etc."""
+        ...
+
 
 class DataSetSink(Protocol):
     @property
@@ -103,7 +108,7 @@ class DataSetSink(Protocol):
         in the current slicing dimension."""
         ...
 
-    def finalise(self):
+    def finalize(self):
         """Method intended to be called after writing all blocks is done,
         to give implementations a chance to write everything to disk and close the file,
         etc."""

@@ -10,6 +10,7 @@ from httomo.runner.dataset_store_interfaces import DataSetSink, DataSetSource
 from mpi4py import MPI
 import numpy as np
 from numpy.typing import DTypeLike
+import weakref
 
 """
 This is from the final handover call:
@@ -80,9 +81,7 @@ This is from the final handover call:
 """
 
 # Notes:
-# - the fullfiledataset is not closed / deleted properly at the end
 # - if MemoryError is thrown in one process, all others should also use the file
-# - there is 1 failing test for rank 1, somehow not getting the correct data
 # - refactoring the nested if into separate function is badly needed
 
 
@@ -119,8 +118,22 @@ class DataSetStoreWriter(DataSetSink):
         self._chunk_shape: Tuple[int, int, int] = tuple(chunk)  # type: ignore
         self._chunk_idx: Tuple[int, int, int] = tuple(idx)  # type: ignore
         self._temppath = temppath
+        self._readonly = False
+        self._h5file: Optional[h5py.File] = None
+        self._h5filename: Optional[Path] = None
 
         self._data: Optional[DataSet] = None
+        
+        # make sure finalize is called when this object is garbage-collected
+        weakref.finalize(self, self.finalize)
+
+    @property
+    def is_file_based(self) -> bool:
+        return self._h5filename is not None
+    
+    @property
+    def filename(self) -> Optional[Path]:
+        return self._h5filename
 
     @property
     def comm(self) -> MPI.Comm:
@@ -143,6 +156,8 @@ class DataSetStoreWriter(DataSetSink):
         return self._slicing_dim
 
     def write_block(self, dataset: DataSetBlock):
+        if self._readonly:
+            raise ValueError("Cannot write after creating a reader")
         dataset.to_cpu()
         start = max(dataset.chunk_index)
         if self._data is None:
@@ -184,7 +199,8 @@ class DataSetStoreWriter(DataSetSink):
         filename = str(Path(self._temppath) / f"httom_tmpstore_{time.time_ns()}.hdf5")
         filename = self.comm.bcast(filename, root=0)
         
-        return Path(filename)
+        self._h5filename = Path(filename)
+        return self._h5filename
 
     def _create_new_data(self, dataset: DataSet):
         try:
@@ -226,9 +242,8 @@ class DataSetStoreWriter(DataSetSink):
         """Convenience method to enable mocking easily"""
         return np.empty(chunk_shape, dtype)
 
-    @classmethod
     def _create_h5_data(
-        cls,
+        self,
         global_shape: Tuple[int, int, int],
         dtype: DTypeLike,
         file: PathLike,
@@ -238,13 +253,13 @@ class DataSetStoreWriter(DataSetSink):
         The returned data object behaves like a numpy array, so can be used freely within
         a DataSet."""
 
-        f = h5py.File(file, "w", driver="mpio", comm=comm)
+        self._h5file = h5py.File(file, "w", driver="mpio", comm=comm)
         # set how data should be chunked when saving
         # chunks = list(global_shape)
         # chunks[slicing_dim] = 1
         # TODO: best first measure performance impact
         # probably good chunk is (4, 4, <detector_x>)
-        h5data = f.create_dataset("data", global_shape, dtype)
+        h5data = self._h5file.create_dataset("data", global_shape, dtype)
 
         return h5data
 
@@ -252,10 +267,20 @@ class DataSetStoreWriter(DataSetSink):
         self, new_slicing_dim: Optional[Literal[0, 1, 2]] = None
     ) -> "DataSetStoreReader":
         """Create a reader from this writer, reading from the same store"""
-        return DataSetStoreReader(self, new_slicing_dim)
+        self._readonly = True
+        if self._h5file is not None:
+            self._h5file.close()
+            self._h5file = None
+        reader = DataSetStoreReader(self, new_slicing_dim)
+        # make sure finalize is called when reader object is garbage-collected
+        weakref.finalize(reader, reader.finalize)
+        return reader
 
-    def finalise(self):
-        pass
+    def finalize(self):
+        self._data = None
+        if self._h5file is not None:
+            self._h5file.close()
+            self._h5file = None
 
 
 class DataSetStoreReader(DataSetSource):
@@ -274,15 +299,38 @@ class DataSetStoreReader(DataSetSource):
             raise ValueError(
                 "Cannot create DataSetStoreReader when no data has been written"
             )
+            
+        self._h5file: Optional[h5py.File] = None
+        self._h5filename: Optional[Path] = None
+        source_data = source._data
+        if source.is_file_based:
+            self._h5filename = source.filename
+            self._h5file = h5py.File(source.filename, "r", driver="mpio", comm=self._comm)
+            source_data = FullFileDataSet(
+                data=self._h5file["data"],
+                angles=source._data.angles,
+                flats=source._data.flats,
+                darks=source._data.darks,
+                global_index=source.chunk_index,
+                chunk_shape=source.chunk_shape,
+            )
 
         if slicing_dim is None or slicing_dim == source.slicing_dim:
             self._slicing_dim = source.slicing_dim
-            self._data = source._data
+            self._data = source_data
         else:
-            self._data = self._reslice(source.slicing_dim, slicing_dim, source._data)
+            self._data = self._reslice(source.slicing_dim, slicing_dim, source_data)
             self._slicing_dim = slicing_dim
 
-        source.finalise()
+        source.finalize()
+
+    @property
+    def is_file_based(self) -> bool:
+        return self._h5filename is not None
+    
+    @property
+    def filename(self) -> Optional[Path]:
+        return self._h5filename
 
     @property
     def global_shape(self) -> Tuple[int, int, int]:
@@ -358,3 +406,13 @@ class DataSetStoreReader(DataSetSource):
         block = self._data.make_block(self._slicing_dim, start, length)
 
         return block
+    
+    def finalize(self):
+        self._data = None
+        if self._h5file is not None:
+            self._h5file.close()
+            self._h5file = None
+        # also delete the file
+        if self._h5filename is not None and self._comm.rank == 0:
+            self._h5filename.unlink()
+            self._h5filename = None
