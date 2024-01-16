@@ -165,22 +165,22 @@ def test_wrapper_allows_parameters_with_defaults(
 
 def test_wrapper_calculate_stats(mocker: MockerFixture, dummy_dataset: DataSet):
     class FakeModule:
-        def calculate_stats_tester(data):
-            return 1.1, 2.1, 3.1, 3
+        def calculate_stats(data):
+            return data
         
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_backend_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path.calculate_stats",
-        "calculate_stats_tester",
+        "calculate_stats",
         MPI.COMM_WORLD,
         output_mapping={"glob_stats": "glob_stats"},        
     )
     new_dataset = wrp.execute(dummy_dataset)
 
     assert wrp.get_side_output() == {
-        "glob_stats": (1.1, 2.1, 3.1, 3),
+        "glob_stats": (1.0, 1.0, 1.0, 1000),
     }
 
 def test_wrapper_build_kwargs_parameter_not_given(
