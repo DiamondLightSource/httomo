@@ -53,7 +53,7 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
     current_methods: List[BackendWrapper] = []
     save_previous_result: bool = False
 
-    def finish_section(needs_reslice=False, should_save_after=False):
+    def finish_section(needs_reslice=False, save_previous_result=False):
         if len(current_methods) > 0:
             sections.append(
                 PlatformSection(
@@ -62,7 +62,7 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
                     needs_reslice,
                     0,
                     current_methods,
-                    save_result=should_save_after,
+                    save_result=save_previous_result,
                 )
             )
 
@@ -80,7 +80,7 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
         )
 
         if start_new_section:
-            finish_section(pattern_changed, save_previous_result or global_input)
+            finish_section(pattern_changed, save_previous_result)
             current_gpu = method.is_gpu
             if method.pattern != Pattern.all:
                 current_pattern = method.pattern
@@ -94,7 +94,7 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
         else:
             save_previous_result = pipeline._save_results_set[i]
 
-    finish_section(should_save_after=save_previous_result)
+    finish_section(save_previous_result=save_previous_result)
 
     _backpropagate_section_patterns(pipeline, sections)
     _finalize_patterns(pipeline, sections)

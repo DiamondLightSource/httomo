@@ -23,7 +23,7 @@ def test_sectionizer_can_iterate_saveall(mocker: MockerFixture):
         methods=[
             make_test_method(mocker, method_name=f"testmethod{i}") for i in range(3)
         ],
-        save_results_set=[False],
+        save_results_set=[False, False, False],
     )
 
     s = sectionize(p, True)

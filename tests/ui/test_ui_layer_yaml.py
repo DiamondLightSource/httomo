@@ -1,19 +1,12 @@
-from unittest import mock
-from pytest_mock import MockerFixture
-
-
-import numpy as np
-import pytest
 from mpi4py import MPI
-
 from httomo.ui_layer import UiLayer
 
-def test_pipeline_cpu1(standard_data, yaml_pipeline1):
+def test_pipeline_cpu1(standard_data, yaml_cpu_pipeline1):
     """Testing existing yaml pipelines by reading them and generating Pipelines
     """
 
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(yaml_pipeline1, standard_data, comm=comm)
+    LayerUI = UiLayer(yaml_cpu_pipeline1, standard_data, comm=comm)
 
     pipeline = LayerUI.build_pipeline()
 
@@ -33,11 +26,11 @@ def test_pipeline_cpu1(standard_data, yaml_pipeline1):
     assert LayerUI.PipelineStageConfig[5]['module_path'] == 'httomolib.misc.images'
 
 
-def test_pipeline_cpu1_outref(standard_data, yaml_pipeline1):
+def test_pipeline_cpu1_outref(standard_data, yaml_cpu_pipeline1):
     """Testing OutputRef.
     """
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(yaml_pipeline1, standard_data, comm=comm)
+    LayerUI = UiLayer(yaml_cpu_pipeline1, standard_data, comm=comm)
 
     pipeline = LayerUI.build_pipeline()
     
@@ -45,12 +38,12 @@ def test_pipeline_cpu1_outref(standard_data, yaml_pipeline1):
     assert obj.mapped_output_name == 'centre_of_rotation'
 
 
-def test_pipeline_cpu2_yaml(standard_data, yaml_pipeline2):
+def test_pipeline_cpu2_yaml(standard_data, yaml_cpu_pipeline2):
     """Testing existing python pipelines by reading them and generating Pipelines
     """
 
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(yaml_pipeline2, standard_data, comm=comm)
+    LayerUI = UiLayer(yaml_cpu_pipeline2, standard_data, comm=comm)
 
     pipeline = LayerUI.build_pipeline()
 
@@ -71,17 +64,18 @@ def test_pipeline_cpu2_yaml(standard_data, yaml_pipeline2):
     assert LayerUI.PipelineStageConfig[5]['module_path'] == 'tomopy.prep.stripe'
     assert LayerUI.PipelineStageConfig[6]['method'] == 'recon'
     assert LayerUI.PipelineStageConfig[6]['module_path'] == 'tomopy.recon.algorithm'
+    assert LayerUI.PipelineStageConfig[6]['save_result'] == True
     assert LayerUI.PipelineStageConfig[7]['method'] == 'median_filter'
     assert LayerUI.PipelineStageConfig[7]['module_path'] == 'tomopy.misc.corr'
     assert LayerUI.PipelineStageConfig[8]['method'] == 'save_to_images'
     assert LayerUI.PipelineStageConfig[8]['module_path'] == 'httomolib.misc.images'
 
 
-def test_pipeline_cpu2_outref(standard_data, yaml_pipeline2):
+def test_pipeline_cpu2_outref(standard_data, yaml_cpu_pipeline2):
     """Testing OutputRef.
     """
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(yaml_pipeline2, standard_data, comm=comm)
+    LayerUI = UiLayer(yaml_cpu_pipeline2, standard_data, comm=comm)
 
     pipeline = LayerUI.build_pipeline()
     
@@ -89,12 +83,53 @@ def test_pipeline_cpu2_outref(standard_data, yaml_pipeline2):
     assert obj.mapped_output_name == 'centre_of_rotation' 
 
 
-def test_pipeline_gpu1(standard_data, yaml_pipeline3):
+def test_pipeline_cpu3_yaml(standard_data, yaml_cpu_pipeline3):
     """Testing existing python pipelines by reading them and generating Pipelines
     """
 
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(yaml_pipeline3, standard_data, comm=comm)
+    LayerUI = UiLayer(yaml_cpu_pipeline3, standard_data, comm=comm)
+
+    pipeline = LayerUI.build_pipeline()
+
+    assert len(pipeline._methods) == 7
+    assert LayerUI.PipelineStageConfig[0]['method'] == 'standard_tomo'
+    assert LayerUI.PipelineStageConfig[0]['module_path'] == 'httomo.data.hdf.loaders'
+    assert LayerUI.PipelineStageConfig[0]['parameters']['preview'] == [None, None, None]
+    assert LayerUI.PipelineStageConfig[1]['method'] == 'find_center_vo'
+    assert LayerUI.PipelineStageConfig[1]['module_path'] == 'tomopy.recon.rotation'    
+    assert LayerUI.PipelineStageConfig[1]['side_outputs'] == {'cor' : 'centre_of_rotation'}
+    assert LayerUI.PipelineStageConfig[2]['method'] == 'remove_outlier'
+    assert LayerUI.PipelineStageConfig[2]['module_path'] == 'tomopy.misc.corr'    
+    assert LayerUI.PipelineStageConfig[3]['method'] == 'normalize'
+    assert LayerUI.PipelineStageConfig[3]['module_path'] == 'tomopy.prep.normalize'
+    assert LayerUI.PipelineStageConfig[4]['method'] == 'minus_log'
+    assert LayerUI.PipelineStageConfig[4]['module_path'] == 'tomopy.prep.normalize'
+    assert LayerUI.PipelineStageConfig[5]['method'] == 'recon'
+    assert LayerUI.PipelineStageConfig[5]['module_path'] == 'tomopy.recon.algorithm'
+    assert LayerUI.PipelineStageConfig[6]['method'] == 'calculate_stats'
+    assert LayerUI.PipelineStageConfig[6]['module_path'] == 'httomo.methods'
+    assert LayerUI.PipelineStageConfig[6]['side_outputs'] == {'glob_stats' : 'glob_stats'}
+    assert LayerUI.PipelineStageConfig[7]['method'] == 'save_to_images'
+    assert LayerUI.PipelineStageConfig[7]['module_path'] == 'httomolib.misc.images'
+
+def test_pipeline_cpu3_outref(standard_data, yaml_cpu_pipeline3):
+    """Testing OutputRef.
+    """
+    comm = MPI.COMM_WORLD
+    LayerUI = UiLayer(yaml_cpu_pipeline3, standard_data, comm=comm)
+
+    pipeline = LayerUI.build_pipeline()
+    
+    obj = LayerUI.PipelineStageConfig[7]['parameters']['glob_stats']
+    assert obj.mapped_output_name == 'glob_stats'
+
+def test_pipeline_gpu1(standard_data, yaml_gpu_pipeline1):
+    """Testing existing python pipelines by reading them and generating Pipelines
+    """
+
+    comm = MPI.COMM_WORLD
+    LayerUI = UiLayer(yaml_gpu_pipeline1, standard_data, comm=comm)
 
     pipeline = LayerUI.build_pipeline()
 
@@ -117,11 +152,11 @@ def test_pipeline_gpu1(standard_data, yaml_pipeline3):
     assert LayerUI.PipelineStageConfig[6]['module_path'] == 'httomolib.misc.images'
 
 
-def test_pipeline_gpu1_outref(standard_data, yaml_pipeline3):
+def test_pipeline_gpu1_outref(standard_data, yaml_gpu_pipeline1):
     """Testing OutputRef.
     """
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(yaml_pipeline3, standard_data, comm=comm)
+    LayerUI = UiLayer(yaml_gpu_pipeline1, standard_data, comm=comm)
 
     pipeline = LayerUI.build_pipeline()
     

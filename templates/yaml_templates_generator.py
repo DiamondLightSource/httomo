@@ -22,7 +22,7 @@
 """Script that exposes all functions of a given software package as YAML templates.
 
 Please run the generator as:
-python -m yaml_templates_generator -m /path/to/modules.yml -o /path/to/output/
+    python -m yaml_templates_generator -m /path/to/modules.yml -o /path/to/output/
 """
 import argparse
 import importlib
@@ -111,6 +111,8 @@ def _set_param_value(k: int, v: int, params_dict: Dict):
     elif str(k) == "center":
         # Temporary value
         params_dict[str(k)] = "${{centering.side_outputs.centre_of_rotation}}"
+    elif str(k) == "glob_stats":        
+        params_dict[str(k)] = "${{statistics.side_outputs.glob_stats}}"        
     else:
         params_dict[str(k)] = v.default
 
@@ -150,7 +152,9 @@ def _set_dict_special_cases(method_dict: Dict, method_name: str):
             "side": "side",
             "overlap_position": "overlap_position",
         }
-
+    if method_name in "calculate_stats":
+        method_dict["id"] = "statistics"
+        method_dict["side_outputs"] = {"glob_stats": "glob_stats"}
 
 def _get_discard_data_out() -> List[str]:
     """Discard data_out from certain modules
