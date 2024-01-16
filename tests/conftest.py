@@ -336,4 +336,3 @@ def load_yaml():
         return conf[0]
     return _load_yaml
 
-# separate due to not wanting to test UI function?

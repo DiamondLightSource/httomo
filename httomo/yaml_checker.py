@@ -13,11 +13,6 @@ from httomo.yaml_utils import get_external_package_current_version
 from . import __version__
 
 __all__ = [
-    "check_first_method_is_loader",
-    "check_hdf5_paths_against_loader",
-    "check_methods_exist_in_templates",
-    "check_no_required_parameter_values",
-    "check_valid_method_parameters",
     "sanity_check",
     "validate_yaml_config",
 ]
@@ -133,13 +128,13 @@ def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
     checking if they exist in the template YAML files.
     """
     packages = _get_package_info(conf)
-    template_yaml_files = _get_yaml_templates(conf, packages)
+    template_yaml_files = _get_template_yaml(conf, packages)
 
     for i, f in enumerate(template_yaml_files):
         if not os.path.exists(f):
             _print_with_colour(
                 f"'{conf[i]['module_path'] + '/' + conf[i]['method']}' is not a valid"
-                " path to a method. Please recheck the yaml file."
+                " method. Please recheck the yaml file."
             )
             return False
 
@@ -148,46 +143,64 @@ def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
 
 def check_valid_method_parameters(conf: PipelineConfig) -> bool:
     """
-    Check each method config in the pipeline against the templates to see if
-    the given parameter names are valid.
+    Check each method config in the current pipeline against the template yaml files
+    to see if the given parameter values are valid.
     """
-    packages = _get_package_info(conf)
-    template_yaml_files = _get_yaml_templates(conf, packages)
-    template_yaml_conf: PipelineConfig = []
-
-    for f in template_yaml_files:
-        with open(f, "r") as template:
-            tmp_conf = yaml.load(template, Loader=yaml.FullLoader)[0]
-            template_yaml_conf.append(tmp_conf)
-
+    template_yaml_conf = _get_template_yaml_conf(conf)
     for method_dict in conf:
         end_str_list = ["Checking '", method_dict['method'], "' and its parameters..."]
         colours = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
         _print_with_colour(end_str_list, colours)
-        for param, param_value in method_dict['parameters'].items():
-            assert isinstance(param, str)
-            yml_method_list = [md for md in template_yaml_conf
-                               if md['method'] == method_dict['method']]
-            for yml_method in yml_method_list:
-                if param not in yml_method['parameters'].keys():
-                    _print_with_colour(
-                        f"Parameter '{param}' in the '{method_dict['method']}' method is not valid."
-                    )
-                    return False
+        yml_method_list = [yml_method_dict for yml_method_dict in template_yaml_conf
+                           if (yml_method_dict['method'] == method_dict['method'])
+                           & (yml_method_dict['module_path'] == method_dict['module_path'])]
+        invalid_type_dict = {p: yml_method_dict for yml_method_dict in yml_method_list
+                             for p, v in method_dict['parameters'].items()
+                             if (yml_method_dict['parameters'][p] != "REQUIRED")
+                             & (not isinstance(v, type(yml_method_dict['parameters'][p])))
+                             & (None not in (yml_method_dict['parameters'][p], v))}
+        # TODO if 'required' then the type is lost, this invalid type is not caught
+        for p, yd in invalid_type_dict.items():
+            _print_with_colour(
+                f"Value assigned to parameter '{p}' in the '{method_dict['method']}' method"
+                f" is not correct. It should be of type {type(yd['parameters'][p])}."
+            )
+            return False
+    return True
 
-                # skip tuples for !Sweep and !SweepRange
-                if isinstance(param_value, tuple) or None in (
-                    param_value,
-                    yml_method['parameters'][param],
-                ):
-                    continue
-                if yml_method['parameters'][param] != "REQUIRED":
-                    if not isinstance(param_value, type(yml_method['parameters'][param])):
-                        _print_with_colour(
-                            f"Value assigned to parameter '{param}' in the '{method_dict['method']}' method"
-                            f" is not correct. It should be of type {type(yml_method['parameters'][param])}."
-                        )
-                        return False
+
+def check_parameter_names_are_known(conf: PipelineConfig) -> bool:
+    """
+    Check if the parameter name of config methods exists in yaml template method parameters
+    """
+    template_yaml_conf = _get_template_yaml_conf(conf)
+    for method_dict in conf:
+        yml_method_list = [yml_method_dict for yml_method_dict in template_yaml_conf
+                           if (yml_method_dict['method'] == method_dict['method'])
+                           & (yml_method_dict['module_path'] == method_dict['module_path'])]
+        unknown_param_dict = [p for yml_method in yml_method_list
+                              for p, v in method_dict['parameters'].items()
+                              if p not in yml_method['parameters'].keys()]
+        for p in unknown_param_dict:
+            _print_with_colour(
+                f"Parameter '{p}' in the '{method_dict['method']}' method is not valid."
+            )
+            return False
+    return True
+
+
+def check_parameter_names_are_str(conf: PipelineConfig) -> bool:
+    """Parameter names should be type string
+    """
+    non_str_param_names = {method['method']: param for method in conf
+                           for param, param_value in method['parameters'].items()
+                           if not isinstance(param, str)}
+    for method, param in non_str_param_names.items():
+        _print_with_colour(
+            f"A string is needed for the parameter name '{param}' in the '{method}' method."
+            " Refer to the method docstring for more information."
+        )
+        return False
     return True
 
 
@@ -207,6 +220,29 @@ def check_no_required_parameter_values(conf: PipelineConfig) -> bool:
     return True
 
 
+def _get_template_yaml_conf(conf: PipelineConfig) -> PipelineConfig:
+    """Get the pipeline config method dictionaries from template yaml files
+
+    Parameters
+    ----------
+    conf
+       The list of method dictionaries in the pipeline
+        this specifies which yaml template methods to get
+
+    Returns
+    -------
+    list of method dictionaries which is loaded from yaml templates
+    """
+    packages = _get_package_info(conf)
+    template_yaml_files = _get_template_yaml(conf, packages)
+    template_yaml_conf: PipelineConfig = []
+    for f in template_yaml_files:
+        tmp_conf =_load_yaml(f)
+        # make an assumption there is one method inside each template
+        template_yaml_conf.append(tmp_conf[0])
+    return template_yaml_conf
+
+
 def _get_package_info(conf: PipelineConfig) -> List:
     """
     Helper function to get packages from module path.
@@ -221,9 +257,9 @@ def _get_package_info(conf: PipelineConfig) -> List:
     return packages
 
 
-def _get_yaml_templates(conf: PipelineConfig, packages: List) -> List:
+def _get_template_yaml(conf: PipelineConfig, packages: List) -> List:
     """
-    Helper function that fetches YAML template files associated with methods
+    Helper function that fetches template YAML file names associated with methods
     passed.
     """
     parent_dir = os.path.dirname(os.path.abspath("__file__"))
@@ -257,6 +293,23 @@ def _store_hdf5_members(group, members_list, path=""):
             members_list.append((new_path, value))
 
 
+def _load_yaml(yaml_in: str) -> PipelineConfig:
+    """ Loads provided yaml and returns dict
+
+    Parameters
+    ----------
+    yaml_in
+        yaml to load
+
+    Returns
+    -------
+    PipelineConfig
+    """
+    with open(yaml_in, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml.FullLoader))
+    return conf[0]
+
+
 def validate_yaml_config(
         yaml_file: os.PathLike,
         in_file: Optional[os.PathLike] = None
@@ -270,8 +323,7 @@ def validate_yaml_config(
         conf_generator: Iterator[Any] = yaml.load_all(f, Loader=yaml.FullLoader)
         is_yaml_ok = sanity_check(conf_generator)
 
-    with open(yaml_file, "r") as f:
-        conf = list(yaml.load_all(f, Loader=yaml.FullLoader))[0]
+    conf = _load_yaml(yaml_file)
 
     # Let all checks run before returning with the result, even if some checks
     # fail, to show all errors present in YAML
@@ -280,6 +332,8 @@ def validate_yaml_config(
     if in_file is not None:
         are_hdf5_paths_correct = check_hdf5_paths_against_loader(conf, str(in_file))
     do_methods_exist = check_methods_exist_in_templates(conf)
+    are_param_names_known = check_parameter_names_are_known(conf)
+    are_param_names_type_str = check_parameter_names_are_str(conf)
     are_required_parameters_missing = check_no_required_parameter_values(conf)
     are_method_params_valid = check_valid_method_parameters(conf)
 
@@ -287,6 +341,8 @@ def validate_yaml_config(
         is_first_method_loader and \
         are_hdf5_paths_correct and \
         do_methods_exist and \
+        are_param_names_known and \
+        are_param_names_type_str and \
         are_required_parameters_missing and \
         are_method_params_valid
 

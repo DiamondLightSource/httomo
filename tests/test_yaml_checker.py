@@ -10,6 +10,8 @@ from httomo.yaml_checker import (
     check_first_method_is_loader,
     check_hdf5_paths_against_loader,
     check_methods_exist_in_templates,
+    check_parameter_names_are_known,
+    check_parameter_names_are_str,
     check_no_required_parameter_values,
     check_valid_method_parameters,
     sanity_check,
@@ -61,6 +63,28 @@ def test_check_methods_exist_in_templates(
     )
     conf = load_yaml(incorrect_method_pipeline)
     assert not check_methods_exist_in_templates(conf)
+
+
+def test_check_parameter_names_are_known(
+        sample_pipelines: str,
+        load_yaml: Callable
+):
+    required_param_pipeline = (
+        sample_pipelines + "testing/unknown_param.yaml"
+    )
+    conf = load_yaml(required_param_pipeline)
+    assert not check_parameter_names_are_known(conf)
+
+
+def test_check_parameter_names_are_str(
+        sample_pipelines: str,
+        load_yaml: Callable
+):
+    required_param_pipeline = (
+        sample_pipelines + "testing/non_str_param_name.yaml"
+    )
+    conf = load_yaml(required_param_pipeline)
+    assert not check_parameter_names_are_str(conf)
 
 
 def test_check_no_required_parameter_values(

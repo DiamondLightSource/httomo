@@ -1,0 +1,26 @@
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    in_file: tests/test_data/tomo_standard.nxs
+    data_path: /entry1/tomo_entry/data/data
+    image_key_path: /entry1/tomo_entry/instrument/detector/image_key
+    # rotation_angles:
+    #        data_path: /entry1/tomo_entry/data/rotation_angle
+    dimension: 1
+    # preview: [None, None, None]
+    pad: 0
+- method: normalize
+  module_path: tomopy.prep.normalize
+  parameters:
+    cutoff: null
+    averaging: mean
+- method: stripes_mask3d
+  module_path: tomopy.prep.stripe
+  parameters:
+    weights: 0.0
+    unknown_threshold: 0.6
+    min_stripe_length: 20
+    min_stripe_depth: 10
+    min_stripe_width: 5
+    sensitivity_perc: 85.0
