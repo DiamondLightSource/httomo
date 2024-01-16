@@ -97,16 +97,27 @@ def test_check_no_required_parameter_values(
     conf = load_yaml(required_param_pipeline)
     assert not check_no_required_parameter_values(conf)
 
-
+@pytest.mark.parametrize(
+    "yaml_file, expected",
+    [
+        ("testing/invalid_param_1.yaml", False),
+        ("testing/invalid_param_2.yaml", True),
+        # currently parameters with REQUIRED in templates are not caught with invalid types
+    ],
+    ids=[
+        "invalid_value_type",
+        "invalid_value_with_required_type",
+    ],
+)
 def test_check_valid_method_parameters(
         sample_pipelines: str,
-        load_yaml: Callable
+        load_yaml: Callable,
+        yaml_file: str,
+        expected: bool,
 ):
-    invalid_param_pipeline = (
-        sample_pipelines + "testing/invalid_param_1.yaml"
-    )
+    invalid_param_pipeline = sample_pipelines + yaml_file
     conf = load_yaml(invalid_param_pipeline)
-    assert not check_valid_method_parameters(conf)
+    assert check_valid_method_parameters(conf) == expected
 
 
 @pytest.mark.parametrize(

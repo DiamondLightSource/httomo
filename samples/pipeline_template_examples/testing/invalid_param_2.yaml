@@ -18,8 +18,8 @@
 - method: stripes_mask3d
   module_path: tomopy.prep.stripe
   parameters:
-    weights: 0.0
-    threshold: fifty # invalid str type
+    weights: fifty # invalid value due to REQUIRED str type in template
+    threshold: 0.6
     min_stripe_length: 20
     min_stripe_depth: 10
     min_stripe_width: 5
