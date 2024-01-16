@@ -12,6 +12,8 @@ import numpy as np
 from numpy.typing import DTypeLike
 import weakref
 
+from httomo.utils import Colour, log_once
+
 """
 This is from the final handover call:
 
@@ -123,14 +125,14 @@ class DataSetStoreWriter(DataSetSink):
         self._h5filename: Optional[Path] = None
 
         self._data: Optional[DataSet] = None
-        
+
         # make sure finalize is called when this object is garbage-collected
         weakref.finalize(self, self.finalize)
 
     @property
     def is_file_based(self) -> bool:
         return self._h5filename is not None
-    
+
     @property
     def filename(self) -> Optional[Path]:
         return self._h5filename
@@ -190,7 +192,9 @@ class DataSetStoreWriter(DataSetSink):
         assert self._data is not None  # after the above methods, this must be set
         start_idx = [0, 0, 0]
         start_idx[self._slicing_dim] = start
-        self._data.set_data_block((start_idx[0], start_idx[1], start_idx[2]), dataset.data)
+        self._data.set_data_block(
+            (start_idx[0], start_idx[1], start_idx[2]), dataset.data
+        )
 
     def _get_global_h5_filename(self) -> PathLike:
         """Creates a temporary h5 file to back the storage (using nanoseconds timestamp
@@ -198,11 +202,15 @@ class DataSetStoreWriter(DataSetSink):
         """
         filename = str(Path(self._temppath) / f"httom_tmpstore_{time.time_ns()}.hdf5")
         filename = self.comm.bcast(filename, root=0)
-        
+
         self._h5filename = Path(filename)
         return self._h5filename
 
     def _create_new_data(self, dataset: DataSet):
+        # reduce memory errors across all processes - if any has a memory problem,
+        # all should use a file
+        sendBuffer = np.zeros(1, dtype=bool)
+        recvBuffer = np.zeros(1, dtype=bool)
         try:
             data = self._create_numpy_data(self.chunk_shape, dataset.data.dtype)
             self._data = DataSet(
@@ -211,14 +219,23 @@ class DataSetStoreWriter(DataSetSink):
                 flats=dataset.flats,
                 darks=dataset.darks,
                 global_shape=self._full_shape,
-                global_index=self.chunk_index
+                global_index=self.chunk_index,
             )
         except MemoryError:
+            sendBuffer[0] = True
+
+        # do a logical or of all the memory errors across the processes
+        self.comm.Allreduce([sendBuffer, MPI.BOOL], [recvBuffer, MPI.BOOL], MPI.LOR)
+
+        if bool(recvBuffer[0]) is True:
+            log_once(
+                "Chunk does not fit in memory - using a file-based store",
+                self.comm,
+                Colour.YELLOW,
+                level=2,
+            )
             # we create a full file dataset, i.e. file-based,
             # with the full global shape in it
-            # TODO: MPI processes need to sync up - if alloc fails on one, all 
-            # of them need to use the file!
-            # TODO: the file needs to be deleted at the end
             data = self._create_h5_data(
                 self.global_shape,
                 dataset.data.dtype,
@@ -233,7 +250,6 @@ class DataSetStoreWriter(DataSetSink):
                 global_index=self.chunk_index,
                 chunk_shape=self.chunk_shape,
             )
-        
 
     @classmethod
     def _create_numpy_data(
@@ -299,13 +315,15 @@ class DataSetStoreReader(DataSetSource):
             raise ValueError(
                 "Cannot create DataSetStoreReader when no data has been written"
             )
-            
+
         self._h5file: Optional[h5py.File] = None
         self._h5filename: Optional[Path] = None
         source_data = source._data
         if source.is_file_based:
             self._h5filename = source.filename
-            self._h5file = h5py.File(source.filename, "r", driver="mpio", comm=self._comm)
+            self._h5file = h5py.File(
+                source.filename, "r", driver="mpio", comm=self._comm
+            )
             source_data = FullFileDataSet(
                 data=self._h5file["data"],
                 angles=source._data.angles,
@@ -327,7 +345,7 @@ class DataSetStoreReader(DataSetSource):
     @property
     def is_file_based(self) -> bool:
         return self._h5filename is not None
-    
+
     @property
     def filename(self) -> Optional[Path]:
         return self._h5filename
@@ -371,7 +389,7 @@ class DataSetStoreReader(DataSetSource):
                 idx = [0, 0, 0]
                 idx[new_slicing_dim] = startidx
                 self._chunk_idx = (idx[0], idx[1], idx[2])
-                return  DataSet(
+                return DataSet(
                     data=array,
                     angles=data.angles,
                     darks=data.darks,
@@ -380,7 +398,7 @@ class DataSetStoreReader(DataSetSource):
                     global_index=self._chunk_idx,
                 )
             else:
-                # we have a full, file-based dataset - all we have to do 
+                # we have a full, file-based dataset - all we have to do
                 # is calculate the new chunk shape and start index
                 rank = self._comm.rank
                 nproc = self._comm.size
@@ -388,8 +406,8 @@ class DataSetStoreReader(DataSetSource):
                 startidx = round((length / nproc) * rank)
                 stopidx = round((length / nproc) * (rank + 1))
                 chunk_shape = list(self._full_shape)
-                chunk_shape[new_slicing_dim] = stopidx-startidx
-                self._chunk_shape = (chunk_shape[0], chunk_shape[1], chunk_shape[2]) 
+                chunk_shape[new_slicing_dim] = stopidx - startidx
+                self._chunk_shape = (chunk_shape[0], chunk_shape[1], chunk_shape[2])
                 idx = [0, 0, 0]
                 idx[new_slicing_dim] = startidx
                 self._chunk_idx = (idx[0], idx[1], idx[2])
@@ -399,14 +417,14 @@ class DataSetStoreReader(DataSetSource):
                     flats=data.flats,
                     darks=data.darks,
                     global_index=self._chunk_idx,
-                    chunk_shape=self._chunk_shape
+                    chunk_shape=self._chunk_shape,
                 )
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
         block = self._data.make_block(self._slicing_dim, start, length)
 
         return block
-    
+
     def finalize(self):
         self._data = None
         if self._h5file is not None:

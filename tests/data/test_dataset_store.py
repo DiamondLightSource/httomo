@@ -364,12 +364,12 @@ def test_reslice_single_block_single_process(
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
-@pytest.mark.parametrize("file_based", [False, True])
+@pytest.mark.parametrize("file_based", ["ram", "unified", "single"])
 def test_reslice_single_block_multi_process(
     mocker: MockerFixture,
     dummy_dataset: DataSet,
     tmp_path: PathLike,
-    file_based: bool,
+    file_based: str,
 ):
     global_data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
         dummy_dataset.shape
@@ -378,7 +378,7 @@ def test_reslice_single_block_multi_process(
     comm = MPI.COMM_WORLD
 
     GLOBAL_DATA_SHAPE = (10, 10, 10)
-    if file_based is True:
+    if file_based != "ram":
         # If using hdf5 file as storage underneath data store, then put global data inside a
         # `FullFileDataSet` object rather than a `DataSet` object
         dummy_dataset = FullFileDataSet(
@@ -404,17 +404,17 @@ def test_reslice_single_block_multi_process(
         temppath=tmp_path,
     )
 
-    if file_based:
+    if file_based == "unified":
         mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
-        # make sure the h5 file is created with the real communicator + broadcasting works
+    elif file_based == "single" and comm.rank == 1:
+        mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
 
-    if not file_based:
+    if file_based == "ram":
         reslice_mock = mocker.patch("httomo.data.dataset_store.reslice")
-    else:
-        pass
+
     if comm.rank == 0:
         writer.write_block(dummy_dataset.make_block(0, 0, writer.chunk_shape[0]))
-        if not file_based:
+        if file_based == "ram":
             reslice_mock.return_value = (
                 dummy_dataset.data[:, 0 : dummy_dataset.shape[1] // 2, :],
                 2,
@@ -422,7 +422,7 @@ def test_reslice_single_block_multi_process(
             )
     else:
         writer.write_block(dummy_dataset.make_block(0, 0, writer.chunk_shape[0]))
-        if not file_based:
+        if file_based == "ram":
             reslice_mock.return_value = (
                 dummy_dataset.data[:, dummy_dataset.shape[1] // 2 :, :],
                 2,
@@ -451,7 +451,7 @@ def test_reslice_single_block_multi_process(
     assert block.chunk_index == (0, 1, 0)
     assert block.chunk_shape == reader.chunk_shape
 
-    if not file_based:
+    if file_based == "ram":
         reslice_mock.assert_called_once_with(ANY, 1, 2, ANY)
     if comm.rank == 0:
         np.testing.assert_array_equal(
