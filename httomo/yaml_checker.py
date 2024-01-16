@@ -141,34 +141,6 @@ def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
     return True
 
 
-def check_valid_method_parameters(conf: PipelineConfig) -> bool:
-    """
-    Check each method config in the current pipeline against the template yaml files
-    to see if the given parameter values are valid.
-    """
-    template_yaml_conf = _get_template_yaml_conf(conf)
-    for method_dict in conf:
-        end_str_list = ["Checking '", method_dict['method'], "' and its parameters..."]
-        colours = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
-        _print_with_colour(end_str_list, colours)
-        yml_method_list = [yml_method_dict for yml_method_dict in template_yaml_conf
-                           if (yml_method_dict['method'] == method_dict['method'])
-                           & (yml_method_dict['module_path'] == method_dict['module_path'])]
-        invalid_type_dict = {p: yml_method_dict for yml_method_dict in yml_method_list
-                             for p, v in method_dict['parameters'].items()
-                             if (yml_method_dict['parameters'][p] != "REQUIRED")
-                             & (not isinstance(v, type(yml_method_dict['parameters'][p])))
-                             & (None not in (yml_method_dict['parameters'][p], v))}
-        # TODO if 'required' then the type is lost, this invalid type is not caught
-        for p, yd in invalid_type_dict.items():
-            _print_with_colour(
-                f"Value assigned to parameter '{p}' in the '{method_dict['method']}' method"
-                f" is not correct. It should be of type {type(yd['parameters'][p])}."
-            )
-            return False
-    return True
-
-
 def check_parameter_names_are_known(conf: PipelineConfig) -> bool:
     """
     Check if the parameter name of config methods exists in yaml template method parameters
@@ -335,7 +307,6 @@ def validate_yaml_config(
     are_param_names_known = check_parameter_names_are_known(conf)
     are_param_names_type_str = check_parameter_names_are_str(conf)
     are_required_parameters_missing = check_no_required_parameter_values(conf)
-    are_method_params_valid = check_valid_method_parameters(conf)
 
     all_checks_pass = is_yaml_ok and \
         is_first_method_loader and \
@@ -343,8 +314,7 @@ def validate_yaml_config(
         do_methods_exist and \
         are_param_names_known and \
         are_param_names_type_str and \
-        are_required_parameters_missing and \
-        are_method_params_valid
+        are_required_parameters_missing
 
     if not all_checks_pass:
         return False
