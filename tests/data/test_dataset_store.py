@@ -8,6 +8,7 @@ from httomo.data.dataset_store import DataSetStoreReader, DataSetStoreWriter
 from mpi4py import MPI
 
 from httomo.runner.dataset import DataSet, FullFileDataSet
+from httomo.runner.dataset_store_interfaces import DataSetSink
 
 
 def test_writer_can_set_sizes_and_shapes_dim0(tmp_path: PathLike):
@@ -365,109 +366,100 @@ def test_reslice_single_block_single_process(
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
-@pytest.mark.parametrize("out_of_memory_ranks", [
-    [],
-    [1], 
-    [0, 1]
-])
+@pytest.mark.parametrize("out_of_memory_ranks", [[], [1], [0, 1]])
 def test_reslice_single_block_multi_process(
     mocker: MockerFixture,
-    dummy_dataset: DataSet,
     tmp_path: PathLike,
     out_of_memory_ranks: List[int],
 ):
-    global_data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
-        dummy_dataset.shape
-    )
-    dummy_dataset.data = global_data
-    comm = MPI.COMM_WORLD
-
+    ########### ARRANGE DATA and mocks
+    
     GLOBAL_DATA_SHAPE = (10, 10, 10)
-    if len(out_of_memory_ranks) > 0:
-        # If using hdf5 file as storage underneath data store, then put global data inside a
-        # `FullFileDataSet` object rather than a `DataSet` object
-        dummy_dataset = FullFileDataSet(
-            data=global_data,
-            angles=np.ones((20,)),
-            flats=3 * np.ones((5, 10, 10)),
-            darks=2 * np.ones((5, 10, 10)),
-            global_index=(0, 0, 0)
-            if comm.rank == 0
-            else (GLOBAL_DATA_SHAPE[0] // 2, 0, 0),
-            chunk_shape=(5, 10, 10),
-        )
-
+    global_data = np.arange(np.prod(GLOBAL_DATA_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_DATA_SHAPE
+    )
+    angles = np.ones((20,))
+    flats = 3 * np.ones((5, 10, 10))
+    darks = 2 * np.ones((5, 10, 10))
+    comm = MPI.COMM_WORLD
     assert comm.size == 2
 
+    # start idx and size in slicing dim 0 for the writer
+    chunk_start=0 if comm.rank == 0 else GLOBAL_DATA_SHAPE[0] // 2
+    chunk_size=GLOBAL_DATA_SHAPE[0] // 2
+    
+    dataset = DataSet(
+            data=global_data[chunk_start: chunk_start+chunk_size, :, :],
+            angles=angles,
+            flats=flats,
+            darks=darks,
+            global_shape=GLOBAL_DATA_SHAPE,
+            global_index=(chunk_start, 0, 0),
+    )
+    
+    # mock any calls to the MPI-based reslice function (it may not be called if using a file)
+    reslice_mock = mocker.patch("httomo.data.dataset_store.reslice")
+    reslice_mock.return_value = (
+        global_data[:, chunk_start: chunk_start+chunk_size, :],
+        2,
+        chunk_start,
+    )
+    
     writer = DataSetStoreWriter(
-        full_size=dummy_dataset.shape[0],
+        full_size=GLOBAL_DATA_SHAPE[0],
         slicing_dim=0,
-        other_dims=(dummy_dataset.shape[1], dummy_dataset.shape[2]),
-        chunk_size=global_data.shape[0] // 2,
-        chunk_start=0 if comm.rank == 0 else dummy_dataset.shape[0] // 2,
+        other_dims=(GLOBAL_DATA_SHAPE[1], GLOBAL_DATA_SHAPE[2]),
+        chunk_size=chunk_size,
+        chunk_start=chunk_start,
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
     )
-
+    
     if comm.rank in out_of_memory_ranks:
+        # make it throw an exception, so it reverts to file-based store
         mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
 
-    if len(out_of_memory_ranks) == 0:
-        reslice_mock = mocker.patch("httomo.data.dataset_store.reslice")
+    ############# ACT 
 
-    if comm.rank == 0:
-        writer.write_block(dummy_dataset.make_block(0, 0, writer.chunk_shape[0]))
-        if len(out_of_memory_ranks) == 0:
-            reslice_mock.return_value = (
-                dummy_dataset.data[:, 0 : dummy_dataset.shape[1] // 2, :],
-                2,
-                0,
-            )
-    else:
-        writer.write_block(dummy_dataset.make_block(0, 0, writer.chunk_shape[0]))
-        if len(out_of_memory_ranks) == 0:
-            reslice_mock.return_value = (
-                dummy_dataset.data[:, dummy_dataset.shape[1] // 2 :, :],
-                2,
-                dummy_dataset.shape[1] // 2,
-            )
-
+    # write full chunk-sized block 
+    writer.write_block(dataset.make_block(0, 0, writer.chunk_shape[0]))
     reader = writer.make_reader(new_slicing_dim=1)
+    # read a smaller block, starting at index 1
     block = reader.read_block(1, 2)
 
+    ############ ASSERT
+
     assert reader.slicing_dim == 1
+    assert reader.global_shape == GLOBAL_DATA_SHAPE
     assert reader.global_shape == writer.global_shape
     assert reader.chunk_shape == (
-        dummy_dataset.shape[0],
-        dummy_dataset.shape[1] // 2,
-        dummy_dataset.shape[2],
+        GLOBAL_DATA_SHAPE[0],
+        GLOBAL_DATA_SHAPE[1] // 2,
+        GLOBAL_DATA_SHAPE[2],
     )
-    if comm.rank == 0:
-        assert writer.chunk_index == (0, 0, 0)
-        assert reader.chunk_index == (0, 0, 0)
-    else:
-        assert writer.chunk_index == (dummy_dataset.shape[0] // 2, 0, 0)
-        assert reader.chunk_index == (0, dummy_dataset.shape[1] // 2, 0)
-
     assert block.global_shape == reader.global_shape
-    assert block.shape == (dummy_dataset.shape[0], 2, dummy_dataset.shape[2])
+    assert block.shape == (GLOBAL_DATA_SHAPE[0], 2, GLOBAL_DATA_SHAPE[2])
     assert block.chunk_index == (0, 1, 0)
     assert block.chunk_shape == reader.chunk_shape
 
+    np.testing.assert_array_equal(block.flats, flats)
+    np.testing.assert_array_equal(block.darks, darks)
+    np.testing.assert_array_equal(block.angles, angles)
+
     if len(out_of_memory_ranks) == 0:
         reslice_mock.assert_called_once_with(ANY, 1, 2, ANY)
+
     if comm.rank == 0:
-        np.testing.assert_array_equal(
-            block.data,
-            global_data[:, 1:3, :],
-        )
-    else:
+        assert writer.chunk_index == (0, 0, 0)
+        assert reader.chunk_index == (0, 0, 0)
+        np.testing.assert_array_equal(block.data, global_data[:, 1:3, :])
+
+    elif comm.rank == 1:
+        assert writer.chunk_index == (GLOBAL_DATA_SHAPE[0] // 2, 0, 0)
+        assert reader.chunk_index == (0, GLOBAL_DATA_SHAPE[1] // 2, 0)
         np.testing.assert_array_equal(
             block.data,
             global_data[
-                :, dummy_dataset.shape[1] // 2 + 1 : dummy_dataset.shape[1] // 2 + 3, :
+                :, GLOBAL_DATA_SHAPE[1] // 2 + 1 : GLOBAL_DATA_SHAPE[1] // 2 + 3, :
             ],
         )
-    np.testing.assert_array_equal(block.flats, dummy_dataset.flats)
-    np.testing.assert_array_equal(block.darks, dummy_dataset.darks)
-    np.testing.assert_array_equal(block.angles, dummy_dataset.angles)
