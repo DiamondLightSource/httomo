@@ -11,3 +11,6 @@ python_templates:
   - pipeline_cpu2.py (same pipeline as pipeline_cpu1.yaml)
   - pipeline_cpu3.py (same pipeline as pipeline_cpu1.yaml)
   - pipeline_gpu1.py (same pipeline as pipeline_cpu1.yaml)
+
+DLS-specific:
+  - 01_diad_pipeline_gpu.yaml: GPU-based pipeline using httomolibgpu for DIAD data. Global statistics is used. 

@@ -72,7 +72,11 @@ def cmd():
 @pytest.fixture
 def standard_data():
     return "tests/test_data/tomo_standard.nxs"
-    
+
+@pytest.fixture
+def data360():
+    return "tests/test_data/360scan/360scan.hdf"
+
 @pytest.fixture(scope="session")
 def test_data_path():
     return os.path.join(CUR_DIR, "test_data")
@@ -182,6 +186,11 @@ def diad_loader():
 
 
 @pytest.fixture
+def diad_pipeline_gpu():
+    return "samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
+
+
+@pytest.fixture
 def i12_data():
     return "tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
 
@@ -246,6 +255,10 @@ def yaml_cpu_pipeline3():
 @pytest.fixture
 def yaml_gpu_pipeline1():
     return "samples/pipeline_template_examples/pipeline_gpu1.yaml"
+
+@pytest.fixture
+def yaml_gpu_pipeline360_2():
+    return "samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml"
 
 @pytest.fixture(scope="session")
 def distortion_correction_path(test_data_path):

@@ -187,7 +187,7 @@ def _parse_preview(
                 str_warn = "The 'step' in preview cannot be negative"
 
             if warn_on:
-                log_exception(str_warn, comm=comm, colour=Colour.BACKG_RED, level=1)
+                log_exception(str_warn, colour=Colour.BACKG_RED)
                 raise ValueError("Preview error: " + str_warn)
 
             start_str = f"{start if start is not None else ''}"

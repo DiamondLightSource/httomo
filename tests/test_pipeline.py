@@ -640,6 +640,45 @@ def test_diad_testing_pipeline_output(
         "Reslicing not necessary, as there is only one process" in log_contents
     )
 
+def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder):
+    cmd.pop(4)  #: don't save all
+    cmd.insert(6, diad_data)
+    cmd.insert(7, diad_pipeline_gpu)
+    cmd.insert(8, output_folder)
+    subprocess.check_output(cmd)
+
+    # recurse through output_dir and check that all files are there
+    files = read_folder("output_dir/")
+    assert len(files) == 10
+
+    #: check the generated h5 files
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    log_files = list(filter(lambda x: ".log" in x, files))
+    assert len(log_files) == 1
+
+    log_contents = _get_log_contents(log_files[0])
+
+    assert "The full dataset shape is (3201, 22, 26)" in log_contents
+    assert (
+        "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in log_contents
+    )
+    assert "Path to data: /entry/imaging/data" in log_contents
+    assert "Preview: (100:3101, 8:15:, :)" in log_contents
+    assert (
+        "Data shape is (3001, 7, 26) of type uint16" in log_contents
+    )
+    assert (
+        "Saving intermediate file: 5-httomolibgpu-FBP-tomo.h5" in log_contents
+    )
+    assert (
+            "Global min -0.00561" in log_contents
+        )
+    assert (
+            "Global max 0.006643" in log_contents
+        )
+
 # @pytest.mark.preview
 # def test_sweep_range_pipeline_with_step_absent(
 #     cmd, standard_data, sample_pipelines, output_folder
