@@ -450,7 +450,6 @@ def test_full_integration_with_reslice(
         assert writer.chunk_index == (0, 0, 0)
         assert reader.chunk_index == (0, 0, 0)
         np.testing.assert_array_equal(block.data, global_data[:, 1:3, :])
-
     elif comm.rank == 1:
         assert writer.chunk_index == (GLOBAL_DATA_SHAPE[0] // 2, 0, 0)
         assert reader.chunk_index == (0, GLOBAL_DATA_SHAPE[1] // 2, 0)
