@@ -19,7 +19,7 @@ def make_standard_tomo_loader() -> StandardTomoLoader:
     Create an instance of `StandardTomoLoader` with some commonly used default values for
     loading the test data `tomo_standard.nxs`.
     """
-    IN_FILE_PATH = Path("tests/test_data/tomo_standard.nxs")
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
     DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
         file=IN_FILE_PATH,
         data_path="/entry1/tomo_entry/data/data",
@@ -93,9 +93,9 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs():
 
 
 def test_standard_tomo_loader_read_block_single_proc(
-    standard_data: str,
     standard_data_path: str,
 ):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
     SLICING_DIM = 0
     BLOCK_START = 2
     BLOCK_LENGTH = 4
@@ -104,7 +104,7 @@ def test_standard_tomo_loader_read_block_single_proc(
     loader = make_standard_tomo_loader()
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
-    with h5py.File(standard_data, "r") as f:
+    with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[standard_data_path]
         projs: np.ndarray = dataset[
             PROJS_START + BLOCK_START: PROJS_START + BLOCK_START + BLOCK_LENGTH
@@ -119,9 +119,9 @@ def test_standard_tomo_loader_read_block_single_proc(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
 def test_standard_tomo_loader_read_block_two_procs(
-    standard_data: str,
     standard_data_path: str,
 ):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
 
@@ -139,7 +139,7 @@ def test_standard_tomo_loader_read_block_two_procs(
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
     projs_start = 0 if COMM.rank == 0 else CHUNK_SHAPE[0]
-    with h5py.File(standard_data, "r") as f:
+    with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[standard_data_path]
         projs: np.ndarray = dataset[
             projs_start + BLOCK_START: projs_start + BLOCK_START + BLOCK_LENGTH
@@ -149,23 +149,22 @@ def test_standard_tomo_loader_read_block_two_procs(
     np.testing.assert_array_equal(block.data, projs)
 
 
-def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc(
-    diad_data: str,
-):
+def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/k11_diad/k11-18014.nxs"
     DATA_PATH = "/entry/imaging/data"
     IMAGE_KEY_PATH = "/entry/instrument/imaging/image_key"
     ANGLES_CONFIG = RawAngles(
         data_path="/entry/imaging_sum/gts_theta_value"
     )
     DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(diad_data),
+        file=IN_FILE_PATH,
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
-        in_file=Path(diad_data),
+        in_file=IN_FILE_PATH,
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
         darks=DARKS_CONFIG,
@@ -182,7 +181,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc(
     # Darks/flats are at indices 0 to 99 (and 3101 to 3200), projection data starts at index
     # 100
     PROJS_START = 100
-    with h5py.File(diad_data, "r") as f:
+    with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[DATA_PATH]
         projs: np.ndarray = dataset[
             PROJS_START + BLOCK_START: PROJS_START + BLOCK_START + BLOCK_LENGTH
@@ -196,23 +195,22 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc(
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
-def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs(
-    diad_data: str,
-):
+def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/k11_diad/k11-18014.nxs"
     DATA_PATH = "/entry/imaging/data"
     IMAGE_KEY_PATH = "/entry/instrument/imaging/image_key"
     ANGLES_CONFIG = RawAngles(
         data_path="/entry/imaging_sum/gts_theta_value"
     )
     DARKS_CONFIG = FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(diad_data),
+        file=IN_FILE_PATH,
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
-        in_file=Path(diad_data),
+        in_file=IN_FILE_PATH,
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
         darks=DARKS_CONFIG,
@@ -237,7 +235,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs(
     # 100
     PROJS_SHIFT = 100
     projs_start = PROJS_SHIFT if COMM.rank == 0 else PROJS_SHIFT + CHUNK_SHAPE[0]
-    with h5py.File(diad_data, "r") as f:
+    with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[DATA_PATH]
         projs: np.ndarray = dataset[
             projs_start + BLOCK_START: projs_start + BLOCK_START + BLOCK_LENGTH
@@ -247,9 +245,8 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs(
     np.testing.assert_array_equal(block.data, projs)
 
 
-def test_standard_tomo_loader_generates_block_with_angles(
-    standard_data: str,
-):
+def test_standard_tomo_loader_generates_block_with_angles():
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
     ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     BLOCK_START = 0
     BLOCK_LENGTH = 2
@@ -257,7 +254,7 @@ def test_standard_tomo_loader_generates_block_with_angles(
     loader = make_standard_tomo_loader()
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
-    with h5py.File(standard_data, "r") as f:
+    with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[ANGLES_PATH]
         angles = dataset[...]
 
@@ -265,7 +262,6 @@ def test_standard_tomo_loader_generates_block_with_angles(
 
 
 def test_standard_tomo_loader_user_defined_angles(
-    standard_data: str,
     standard_data_path: str,
     standard_image_key_path: str,
     standard_data_darks_flats_config: DarksFlatsFileConfig,
@@ -284,7 +280,7 @@ def test_standard_tomo_loader_user_defined_angles(
         USER_DEFINED_ANGLES.angles_total,
     )
     loader = StandardTomoLoader(
-        in_file=Path(standard_data),
+        in_file=Path(__file__).parent.parent / "test_data/tomo_standard.nxs",
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
         darks=standard_data_darks_flats_config,
@@ -301,10 +297,10 @@ def test_standard_tomo_loader_user_defined_angles(
 
 
 def test_get_darks_flats_same_file_same_dataset(
-    standard_data: str,
     standard_data_path: str,
     standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
     COMM = MPI.COMM_WORLD
 
     loaded_darks, loaded_flats = get_darks_flats(
@@ -317,7 +313,7 @@ def test_get_darks_flats_same_file_same_dataset(
     FLATS_END = 199
     DARKS_START = 200
     DARKS_END = 219
-    with h5py.File(standard_data, "r") as f:
+    with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[standard_data_path]
         flats = dataset[FLATS_START:FLATS_END + 1]
         darks = dataset[DARKS_START:DARKS_END + 1]
@@ -329,12 +325,12 @@ def test_get_darks_flats_same_file_same_dataset(
 def test_get_darks_flats_different_file():
     COMM = MPI.COMM_WORLD
     DARKS_CONFIG = DarksFlatsFileConfig(
-        file=Path("tests/test_data/i12/separate_flats_darks/dark_field.h5"),
+        file=Path(__file__).parent.parent / "test_data/i12/separate_flats_darks/dark_field.h5",
         data_path="/1-NoProcessPlugin-tomo/data",
         image_key_path=None,
     )
     FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path("tests/test_data/i12/separate_flats_darks/flat_field.h5"),
+        file=Path(__file__).parent.parent / "test_data/i12/separate_flats_darks/flat_field.h5",
         data_path="/1-NoProcessPlugin-tomo/data",
         image_key_path=None,
     )
