@@ -14,77 +14,48 @@ from httomo.runner.loader import DarksFlatsFileConfig, RawAngles, StandardTomoLo
 from ..testing_utils import make_mock_repo
 
 
-def test_standard_tomo_loader_get_slicing_dim(
-    standard_data: str,
-    standard_data_path: str,
-    standard_image_key_path: str,
-    standard_data_darks_flats_config: DarksFlatsFileConfig,
-):
+def make_standard_tomo_loader() -> StandardTomoLoader:
+    """
+    Create an instance of `StandardTomoLoader` with some commonly used default values for
+    loading the test data `tomo_standard.nxs`.
+    """
+    IN_FILE_PATH = Path("tests/test_data/tomo_standard.nxs")
+    DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
+        file=IN_FILE_PATH,
+        data_path="/entry1/tomo_entry/data/data",
+        image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
+    )
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
-        in_file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-        darks=standard_data_darks_flats_config,
-        flats=standard_data_darks_flats_config,
+        in_file=IN_FILE_PATH,
+        data_path=DARKS_FLATS_CONFIG.data_path,
+        image_key_path=DARKS_FLATS_CONFIG.image_key_path,
+        darks=DARKS_FLATS_CONFIG,
+        flats=DARKS_FLATS_CONFIG,
         angles=ANGLES_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
-    assert loader.slicing_dim == SLICING_DIM
+    return loader
+
+def test_standard_tomo_loader_get_slicing_dim():
+    loader = make_standard_tomo_loader()
+    assert loader.slicing_dim == 0
 
 
-def test_standard_tomo_loader_get_global_shape(
-    standard_data: str,
-    standard_data_path: str,
-    standard_image_key_path: str,
-    standard_data_darks_flats_config: DarksFlatsFileConfig,
-):
-    ANGLES_CONFIG = RawAngles(
-        data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    SLICING_DIM = 0
+def test_standard_tomo_loader_get_global_shape():
+    loader = make_standard_tomo_loader()
     GLOBAL_DATA_SHAPE = (180, 128, 160)
-    COMM = MPI.COMM_WORLD
-    loader = StandardTomoLoader(
-        in_file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-        darks=standard_data_darks_flats_config,
-        flats=standard_data_darks_flats_config,
-        angles=ANGLES_CONFIG,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
     assert loader.global_shape == GLOBAL_DATA_SHAPE
 
 
-def test_standard_tomo_loader_get_chunk_index_single_proc(
-    standard_data: str,
-    standard_data_path: str,
-    standard_image_key_path: str,
-    standard_data_darks_flats_config: DarksFlatsFileConfig,
-):
-    ANGLES_CONFIG = RawAngles(
-        data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    SLICING_DIM = 0
-    COMM = MPI.COMM_WORLD
+def test_standard_tomo_loader_get_chunk_index_single_proc():
+    loader = make_standard_tomo_loader()
     CHUNK_INDEX = (0, 0, 0)
-    loader = StandardTomoLoader(
-        in_file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-        darks=standard_data_darks_flats_config,
-        flats=standard_data_darks_flats_config,
-        angles=ANGLES_CONFIG,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
     assert loader.chunk_index == CHUNK_INDEX
 
 
@@ -92,55 +63,17 @@ def test_standard_tomo_loader_get_chunk_index_single_proc(
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
-def test_standard_tomo_loader_get_chunk_index_two_procs(
-    standard_data: str,
-    standard_data_path: str,
-    standard_image_key_path: str,
-    standard_data_darks_flats_config: DarksFlatsFileConfig,
-):
-    ANGLES_CONFIG = RawAngles(
-        data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    SLICING_DIM = 0
+def test_standard_tomo_loader_get_chunk_index_two_procs():
     COMM = MPI.COMM_WORLD
     GLOBAL_DATA_SHAPE = (180, 128, 160)
-
     chunk_index = (0, 0, 0) if COMM.rank == 0 else (GLOBAL_DATA_SHAPE[0] // 2, 0, 0)
-    loader = StandardTomoLoader(
-        in_file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-        darks=standard_data_darks_flats_config,
-        flats=standard_data_darks_flats_config,
-        angles=ANGLES_CONFIG,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
+    loader = make_standard_tomo_loader()
     assert loader.chunk_index == chunk_index
 
 
-def test_standard_tomo_loader_get_chunk_shape_single_proc(
-    standard_data: str,
-    standard_data_path: str,
-    standard_image_key_path: str,
-    standard_data_darks_flats_config: DarksFlatsFileConfig,
-):
-    ANGLES_CONFIG = RawAngles(
-        data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    SLICING_DIM = 0
-    COMM = MPI.COMM_WORLD
+def test_standard_tomo_loader_get_chunk_shape_single_proc():
     CHUNK_SHAPE = (180, 128, 160)
-    loader = StandardTomoLoader(
-        in_file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-        darks=standard_data_darks_flats_config,
-        flats=standard_data_darks_flats_config,
-        angles=ANGLES_CONFIG,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
+    loader = make_standard_tomo_loader()
     assert loader.chunk_shape == CHUNK_SHAPE
 
 
@@ -148,63 +81,29 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc(
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
-def test_standard_tomo_loader_get_chunk_shape_two_procs(
-    standard_data: str,
-    standard_data_path: str,
-    standard_image_key_path: str,
-    standard_data_darks_flats_config: DarksFlatsFileConfig,
-):
-    ANGLES_CONFIG = RawAngles(
-        data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    SLICING_DIM = 0
-    COMM = MPI.COMM_WORLD
+def test_standard_tomo_loader_get_chunk_shape_two_procs():
     GLOBAL_DATA_SHAPE = (180, 128, 160)
     CHUNK_SHAPE = (
         GLOBAL_DATA_SHAPE[0] // 2,
         GLOBAL_DATA_SHAPE[1],
         GLOBAL_DATA_SHAPE[2]
     )
-    loader = StandardTomoLoader(
-        in_file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-        darks=standard_data_darks_flats_config,
-        flats=standard_data_darks_flats_config,
-        angles=ANGLES_CONFIG,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
+    loader = make_standard_tomo_loader()
     assert loader.chunk_shape == CHUNK_SHAPE
 
 
 def test_standard_tomo_loader_read_block_single_proc(
     standard_data: str,
     standard_data_path: str,
-    standard_image_key_path: str,
-    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
-    ANGLES_CONFIG = RawAngles(
-        data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
     SLICING_DIM = 0
-    COMM = MPI.COMM_WORLD
-    loader = StandardTomoLoader(
-        in_file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-        darks=standard_data_darks_flats_config,
-        flats=standard_data_darks_flats_config,
-        angles=ANGLES_CONFIG,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
-
     BLOCK_START = 2
     BLOCK_LENGTH = 4
+    PROJS_START = 0
+
+    loader = make_standard_tomo_loader()
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
-    PROJS_START = 0
     with h5py.File(standard_data, "r") as f:
         dataset: h5py.Dataset = f[standard_data_path]
         projs: np.ndarray = dataset[
@@ -222,28 +121,12 @@ def test_standard_tomo_loader_read_block_single_proc(
 def test_standard_tomo_loader_read_block_two_procs(
     standard_data: str,
     standard_data_path: str,
-    standard_image_key_path: str,
-    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
-    ANGLES_CONFIG = RawAngles(
-        data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
-    loader = StandardTomoLoader(
-        in_file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-        darks=standard_data_darks_flats_config,
-        flats=standard_data_darks_flats_config,
-        angles=ANGLES_CONFIG,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
 
     BLOCK_START = 2
     BLOCK_LENGTH = 4
-    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
     GLOBAL_DATA_SHAPE = (180, 128, 160)
     CHUNK_SHAPE = (
@@ -251,6 +134,9 @@ def test_standard_tomo_loader_read_block_two_procs(
         GLOBAL_DATA_SHAPE[1],
         GLOBAL_DATA_SHAPE[2]
     )
+
+    loader = make_standard_tomo_loader()
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
     projs_start = 0 if COMM.rank == 0 else CHUNK_SHAPE[0]
     with h5py.File(standard_data, "r") as f:
@@ -363,32 +249,16 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs(
 
 def test_standard_tomo_loader_generates_block_with_angles(
     standard_data: str,
-    standard_data_path: str,
-    standard_image_key_path: str,
-    standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
-    ANGLES_CONFIG = RawAngles(
-        data_path="/entry1/tomo_entry/data/rotation_angle"
-    )
-    SLICING_DIM = 0
-    COMM = MPI.COMM_WORLD
-    loader = StandardTomoLoader(
-        in_file=Path(standard_data),
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-        darks=standard_data_darks_flats_config,
-        flats=standard_data_darks_flats_config,
-        angles=ANGLES_CONFIG,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
-
+    ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     BLOCK_START = 0
     BLOCK_LENGTH = 2
+
+    loader = make_standard_tomo_loader()
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
     with h5py.File(standard_data, "r") as f:
-        dataset: h5py.Dataset = f[ANGLES_CONFIG.data_path]
+        dataset: h5py.Dataset = f[ANGLES_PATH]
         angles = dataset[...]
 
     np.testing.assert_array_equal(block.angles, angles)
