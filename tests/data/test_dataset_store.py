@@ -403,7 +403,7 @@ def test_full_integration_with_reslice(
         other_dims=(GLOBAL_DATA_SHAPE[1], GLOBAL_DATA_SHAPE[2]),
         chunk_size=chunk_size,
         chunk_start=chunk_start,
-        comm=MPI.COMM_WORLD,
+        comm=comm,
         temppath=tmp_path,
     )
 
