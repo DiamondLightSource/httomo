@@ -367,13 +367,13 @@ def test_reslice_single_block_single_process(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
 @pytest.mark.parametrize("out_of_memory_ranks", [[], [1], [0, 1]])
-def test_reslice_single_block_multi_process(
+def test_full_integration_with_reslice(
     mocker: MockerFixture,
     tmp_path: PathLike,
     out_of_memory_ranks: List[int],
 ):
     ########### ARRANGE DATA and mocks
-    
+
     GLOBAL_DATA_SHAPE = (10, 10, 10)
     global_data = np.arange(np.prod(GLOBAL_DATA_SHAPE), dtype=np.float32).reshape(
         GLOBAL_DATA_SHAPE
@@ -385,26 +385,18 @@ def test_reslice_single_block_multi_process(
     assert comm.size == 2
 
     # start idx and size in slicing dim 0 for the writer
-    chunk_start=0 if comm.rank == 0 else GLOBAL_DATA_SHAPE[0] // 2
-    chunk_size=GLOBAL_DATA_SHAPE[0] // 2
-    
+    chunk_start = 0 if comm.rank == 0 else GLOBAL_DATA_SHAPE[0] // 2
+    chunk_size = GLOBAL_DATA_SHAPE[0] // 2
+
     dataset = DataSet(
-            data=global_data[chunk_start: chunk_start+chunk_size, :, :],
-            angles=angles,
-            flats=flats,
-            darks=darks,
-            global_shape=GLOBAL_DATA_SHAPE,
-            global_index=(chunk_start, 0, 0),
+        data=global_data[chunk_start : chunk_start + chunk_size, :, :],
+        angles=angles,
+        flats=flats,
+        darks=darks,
+        global_shape=GLOBAL_DATA_SHAPE,
+        global_index=(chunk_start, 0, 0),
     )
-    
-    # mock any calls to the MPI-based reslice function (it may not be called if using a file)
-    reslice_mock = mocker.patch("httomo.data.dataset_store.reslice")
-    reslice_mock.return_value = (
-        global_data[:, chunk_start: chunk_start+chunk_size, :],
-        2,
-        chunk_start,
-    )
-    
+
     writer = DataSetStoreWriter(
         full_size=GLOBAL_DATA_SHAPE[0],
         slicing_dim=0,
@@ -414,14 +406,14 @@ def test_reslice_single_block_multi_process(
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
     )
-    
+
     if comm.rank in out_of_memory_ranks:
         # make it throw an exception, so it reverts to file-based store
         mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
 
-    ############# ACT 
+    ############# ACT
 
-    # write full chunk-sized block 
+    # write full chunk-sized block
     writer.write_block(dataset.make_block(0, 0, writer.chunk_shape[0]))
     reader = writer.make_reader(new_slicing_dim=1)
     # read a smaller block, starting at index 1
@@ -445,9 +437,6 @@ def test_reslice_single_block_multi_process(
     np.testing.assert_array_equal(block.flats, flats)
     np.testing.assert_array_equal(block.darks, darks)
     np.testing.assert_array_equal(block.angles, angles)
-
-    if len(out_of_memory_ranks) == 0:
-        reslice_mock.assert_called_once_with(ANY, 1, 2, ANY)
 
     if comm.rank == 0:
         assert writer.chunk_index == (0, 0, 0)
