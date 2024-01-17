@@ -366,7 +366,15 @@ def test_reslice_single_block_single_process(
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
-@pytest.mark.parametrize("out_of_memory_ranks", [[], [1], [0, 1]])
+@pytest.mark.parametrize(
+    "out_of_memory_ranks",
+    [[], [1], [0, 1]],
+    ids=[
+        "out_of_memory=none",
+        "out_of_memory=one process",
+        "out_of_memory=both processes",
+    ],
+)
 def test_full_integration_with_reslice(
     mocker: MockerFixture,
     tmp_path: PathLike,
