@@ -208,6 +208,20 @@ def check_no_duplicated_keys(f: str) -> bool:
     return True
 
 
+def check_keys(conf: PipelineConfig) -> bool:
+    """There should be three main keys in each method
+    """
+    required_keys = ["method", "module_path", "parameters"]
+    for method in conf:
+        all_keys = method.keys()
+        if not all(k in all_keys for k in required_keys):
+            missing_keys = set(required_keys) - set(all_keys)
+            _print_with_colour(f"Missing keys:")
+            print(*missing_keys, sep=", ")
+            return False
+    return True
+
+
 def _get_template_yaml_conf(conf: PipelineConfig) -> PipelineConfig:
     """Get the pipeline config method dictionaries from template yaml files
 
@@ -328,6 +342,7 @@ def validate_yaml_config(
     do_methods_exist = check_methods_exist_in_templates(conf)
     are_param_names_known = check_parameter_names_are_known(conf)
     are_param_names_type_str = check_parameter_names_are_str(conf)
+    required_keys_present = check_keys(conf)
     are_required_parameters_missing = check_no_required_parameter_values(conf)
 
     all_checks_pass = is_yaml_ok and \
@@ -337,6 +352,7 @@ def validate_yaml_config(
         do_methods_exist and \
         are_param_names_known and \
         are_param_names_type_str and \
+        required_keys_present and \
         are_required_parameters_missing
 
     if not all_checks_pass:

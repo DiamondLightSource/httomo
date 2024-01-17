@@ -14,6 +14,7 @@ from httomo.yaml_checker import (
     check_parameter_names_are_str,
     check_no_required_parameter_values,
     check_no_duplicated_keys,
+    check_keys,
     sanity_check,
     validate_yaml_config,
 )
@@ -106,6 +107,17 @@ def test_check_no_duplicated_keys(
         sample_pipelines + "testing/duplicated_key.yaml"
     )
     assert not check_no_duplicated_keys(required_param_pipeline)
+
+
+def test_check_keys(
+        sample_pipelines: str,
+        load_yaml: Callable
+):
+    required_param_pipeline = (
+        sample_pipelines + "testing/required_keys.yaml"
+    )
+    conf = load_yaml(required_param_pipeline)
+    assert not check_keys(conf)
 
 
 @pytest.mark.parametrize(
