@@ -192,6 +192,22 @@ def check_no_required_parameter_values(conf: PipelineConfig) -> bool:
     return True
 
 
+def check_no_duplicated_keys(f: str) -> bool:
+    """there should be no duplicate keys in yaml file
+    Parameters
+    ----------
+    f
+        yaml file to check
+    """
+    try:
+        conf = _load_yaml(f, loader=UniqueKeyLoader)
+    except ValueError as e:
+        # duplicate key found
+        _print_with_colour(str(e), colour=Colour.GREEN)
+        return False
+    return True
+
+
 def _get_template_yaml_conf(conf: PipelineConfig) -> PipelineConfig:
     """Get the pipeline config method dictionaries from template yaml files
 
@@ -265,20 +281,25 @@ def _store_hdf5_members(group, members_list, path=""):
             members_list.append((new_path, value))
 
 
-def _load_yaml(yaml_in: str) -> PipelineConfig:
+def _load_yaml(
+        yaml_in: str,
+        loader: yaml.Loader = yaml.FullLoader
+)-> PipelineConfig:
     """ Loads provided yaml and returns dict
 
     Parameters
     ----------
     yaml_in
         yaml to load
+    loader
+        yaml loader to use
 
     Returns
     -------
     PipelineConfig
     """
     with open(yaml_in, "r") as f:
-        conf = list(yaml.load_all(f, Loader=yaml.FullLoader))
+        conf = list(yaml.load_all(f, Loader=loader))
     return conf[0]
 
 
@@ -295,6 +316,7 @@ def validate_yaml_config(
         conf_generator: Iterator[Any] = yaml.load_all(f, Loader=yaml.FullLoader)
         is_yaml_ok = sanity_check(conf_generator)
 
+    are_keys_duplicated = check_no_duplicated_keys(yaml_file)
     conf = _load_yaml(yaml_file)
 
     # Let all checks run before returning with the result, even if some checks
@@ -309,6 +331,7 @@ def validate_yaml_config(
     are_required_parameters_missing = check_no_required_parameter_values(conf)
 
     all_checks_pass = is_yaml_ok and \
+        are_keys_duplicated and \
         is_first_method_loader and \
         are_hdf5_paths_correct and \
         do_methods_exist and \
@@ -325,3 +348,16 @@ def validate_yaml_config(
     )
     _print_with_colour(end_str, colour=Colour.BVIOLET)
     return True
+
+
+class UniqueKeyLoader(yaml.SafeLoader):
+    """Check for duplicate keys in yaml"""
+    def construct_mapping(self, node, deep=False):
+        mapping = set()
+        for key_node, value_node in node.value:
+            each_key = self.construct_object(key_node, deep=deep)
+            if each_key in mapping:
+                raise ValueError(f"Duplicate Key: {each_key}"
+                                 f" found{key_node.end_mark}")
+            mapping.add(each_key)
+        return super().construct_mapping(node, deep)
