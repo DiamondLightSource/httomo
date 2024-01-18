@@ -679,6 +679,45 @@ def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder)
             "Global max 0.006643" in log_contents
         )
 
+
+def test_run_pipeline_360deg_gpu2(cmd, data360, yaml_gpu_pipeline360_2, output_folder):
+    cmd.pop(4)  #: don't save all
+    cmd.insert(6, data360)
+    cmd.insert(7, yaml_gpu_pipeline360_2)
+    cmd.insert(8, output_folder)
+    subprocess.check_output(cmd)
+
+    # recurse through output_dir and check that all files are there
+    files = read_folder("output_dir/")
+    assert len(files) == 6
+
+    #: check the generated h5 files
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    log_files = list(filter(lambda x: ".log" in x, files))
+    assert len(log_files) == 1
+
+    log_contents = _get_log_contents(log_files[0])
+
+    assert "The full dataset shape is (3751, 3, 2560)" in log_contents
+    assert (
+        "Loading data: tests/test_data/360scan/360scan.hdf" in log_contents
+    )
+    assert "Path to data: entry1/tomo_entry/data/data" in log_contents
+    assert (
+        "Data shape is (3601, 3, 2560) of type uint16" in log_contents
+    )
+    assert (
+        "Saving intermediate file: 5-httomolibgpu-FBP-tomo.h5" in log_contents
+    )
+    assert (
+            "Global min -0.000412" in log_contents
+        )
+    assert (
+            "Global max 0.003134" in log_contents
+    )
+
 # @pytest.mark.preview
 # def test_sweep_range_pipeline_with_step_absent(
 #     cmd, standard_data, sample_pipelines, output_folder

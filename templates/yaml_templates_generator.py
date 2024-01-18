@@ -111,8 +111,10 @@ def _set_param_value(k: int, v: int, params_dict: Dict):
     elif str(k) == "center":
         # Temporary value
         params_dict[str(k)] = "${{centering.side_outputs.centre_of_rotation}}"
-    elif str(k) == "glob_stats":        
-        params_dict[str(k)] = "${{statistics.side_outputs.glob_stats}}"        
+    elif str(k) == "glob_stats":
+        params_dict[str(k)] = "${{statistics.side_outputs.glob_stats}}"
+    elif str(k) == "overlap":
+        params_dict[str(k)] = "${{centering.side_outputs.overlap}}"
     else:
         params_dict[str(k)] = v.default
 
@@ -174,6 +176,7 @@ def _get_discard_keys() -> List[str]:
     Returns: List of keys to discard
     """
     discard_keys = [
+        "in_file",
         "data_in",
         "tomo",
         "arr",

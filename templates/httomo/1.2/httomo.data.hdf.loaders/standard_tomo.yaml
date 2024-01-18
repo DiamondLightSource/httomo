@@ -2,7 +2,6 @@
   module_path: httomo.data.hdf.loaders
   parameters:
     name: REQUIRED
-    in_file: REQUIRED
     data_path: REQUIRED
     dimension: REQUIRED
     preview: REQUIRED
