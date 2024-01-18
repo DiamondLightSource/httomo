@@ -94,6 +94,9 @@ class StandardTomoLoader(DataSetSource):
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
     ) -> None:
+        if slicing_dim != 0:
+            raise NotImplementedError("Only slicing dim 0 is currently supported")
+
         self._in_file = in_file
         self._data_path = data_path
         self._image_key_path = image_key_path
