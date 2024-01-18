@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from typing import Union
+from unittest import mock
 
 import h5py
 from mpi4py import MPI
@@ -43,18 +44,30 @@ def make_standard_tomo_loader() -> StandardTomoLoader:
     return loader
 
 def test_standard_tomo_loader_get_slicing_dim():
-    loader = make_standard_tomo_loader()
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = make_standard_tomo_loader()
     assert loader.slicing_dim == 0
 
 
 def test_standard_tomo_loader_get_global_shape():
-    loader = make_standard_tomo_loader()
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = make_standard_tomo_loader()
     GLOBAL_DATA_SHAPE = (180, 128, 160)
     assert loader.global_shape == GLOBAL_DATA_SHAPE
 
 
 def test_standard_tomo_loader_get_chunk_index_single_proc():
-    loader = make_standard_tomo_loader()
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = make_standard_tomo_loader()
     CHUNK_INDEX = (0, 0, 0)
     assert loader.chunk_index == CHUNK_INDEX
 
@@ -67,13 +80,21 @@ def test_standard_tomo_loader_get_chunk_index_two_procs():
     COMM = MPI.COMM_WORLD
     GLOBAL_DATA_SHAPE = (180, 128, 160)
     chunk_index = (0, 0, 0) if COMM.rank == 0 else (GLOBAL_DATA_SHAPE[0] // 2, 0, 0)
-    loader = make_standard_tomo_loader()
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = make_standard_tomo_loader()
     assert loader.chunk_index == chunk_index
 
 
 def test_standard_tomo_loader_get_chunk_shape_single_proc():
     CHUNK_SHAPE = (180, 128, 160)
-    loader = make_standard_tomo_loader()
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = make_standard_tomo_loader()
     assert loader.chunk_shape == CHUNK_SHAPE
 
 
@@ -88,7 +109,11 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs():
         GLOBAL_DATA_SHAPE[1],
         GLOBAL_DATA_SHAPE[2]
     )
-    loader = make_standard_tomo_loader()
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = make_standard_tomo_loader()
     assert loader.chunk_shape == CHUNK_SHAPE
 
 
@@ -101,7 +126,12 @@ def test_standard_tomo_loader_read_block_single_proc(
     BLOCK_LENGTH = 4
     PROJS_START = 0
 
-    loader = make_standard_tomo_loader()
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = make_standard_tomo_loader()
+
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
     with h5py.File(IN_FILE_PATH, "r") as f:
@@ -135,7 +165,12 @@ def test_standard_tomo_loader_read_block_two_procs(
         GLOBAL_DATA_SHAPE[2]
     )
 
-    loader = make_standard_tomo_loader()
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = make_standard_tomo_loader()
+
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
     projs_start = 0 if COMM.rank == 0 else CHUNK_SHAPE[0]
@@ -163,16 +198,21 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
-    loader = StandardTomoLoader(
-        in_file=IN_FILE_PATH,
-        data_path=DATA_PATH,
-        image_key_path=IMAGE_KEY_PATH,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
-        angles=ANGLES_CONFIG,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
+
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = StandardTomoLoader(
+            in_file=IN_FILE_PATH,
+            data_path=DATA_PATH,
+            image_key_path=IMAGE_KEY_PATH,
+            darks=DARKS_CONFIG,
+            flats=FLATS_CONFIG,
+            angles=ANGLES_CONFIG,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+        )
 
     BLOCK_START = 0
     BLOCK_LENGTH = 4
@@ -209,16 +249,21 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
     )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
-    loader = StandardTomoLoader(
-        in_file=IN_FILE_PATH,
-        data_path=DATA_PATH,
-        image_key_path=IMAGE_KEY_PATH,
-        darks=DARKS_CONFIG,
-        flats=FLATS_CONFIG,
-        angles=ANGLES_CONFIG,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
+
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = StandardTomoLoader(
+            in_file=IN_FILE_PATH,
+            data_path=DATA_PATH,
+            image_key_path=IMAGE_KEY_PATH,
+            darks=DARKS_CONFIG,
+            flats=FLATS_CONFIG,
+            angles=ANGLES_CONFIG,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+        )
 
     BLOCK_START = 2
     BLOCK_LENGTH = 4
@@ -251,7 +296,12 @@ def test_standard_tomo_loader_generates_block_with_angles():
     BLOCK_START = 0
     BLOCK_LENGTH = 2
 
-    loader = make_standard_tomo_loader()
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = make_standard_tomo_loader()
+
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
     with h5py.File(IN_FILE_PATH, "r") as f:
@@ -279,16 +329,21 @@ def test_standard_tomo_loader_user_defined_angles(
         USER_DEFINED_ANGLES.stop_angle,
         USER_DEFINED_ANGLES.angles_total,
     )
-    loader = StandardTomoLoader(
-        in_file=Path(__file__).parent.parent / "test_data/tomo_standard.nxs",
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-        darks=standard_data_darks_flats_config,
-        flats=standard_data_darks_flats_config,
-        angles=USER_DEFINED_ANGLES,
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-    )
+
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = StandardTomoLoader(
+            in_file=Path(__file__).parent.parent / "test_data/tomo_standard.nxs",
+            data_path=standard_data_path,
+            image_key_path=standard_image_key_path,
+            darks=standard_data_darks_flats_config,
+            flats=standard_data_darks_flats_config,
+            angles=USER_DEFINED_ANGLES,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+        )
 
     BLOCK_START = 0
     BLOCK_LENGTH = 2
