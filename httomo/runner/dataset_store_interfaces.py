@@ -105,7 +105,10 @@ class DataSetSink(Protocol):
 
     def write_block(self, dataset: DataSetBlock):
         """Writes a block to the store, starting at the index in dataset.chunk_index,
-        in the current slicing dimension."""
+        in the current slicing dimension.
+        
+        NOTE: Implementers should make sure to move the dataset to CPU if required - 
+        it may be on GPU when this method is called."""
         ...
 
     def finalize(self):
