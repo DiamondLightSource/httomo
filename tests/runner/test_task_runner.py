@@ -21,7 +21,7 @@ def test_check_params_for_sweep_raises_exception(mocker: MockerFixture):
                 testparam=(
                     1,
                     2,
-                ),        
+                ),
             )
         ],
         save_results_set=[False],
@@ -40,9 +40,9 @@ def test_can_load_datasets(mocker: MockerFixture):
         angles=np.ones((10,)),
     )
     loader.load.return_value = dataset
-    p = Pipeline(loader=loader,
-                 methods=[make_test_method(mocker)],
-                 save_results_set=[False])
+    p = Pipeline(
+        loader=loader, methods=[make_test_method(mocker)], save_results_set=[False]
+    )
     t = TaskRunner(p)
     t._prepare()
 
@@ -66,9 +66,7 @@ def test_can_determine_max_slices_no_gpu_estimator(mocker: MockerFixture):
     loader.load.return_value = dataset
     method = make_test_method(mocker, gpu=True)
     method.memory_gpu = []
-    p = Pipeline(loader=loader, 
-                 methods=[method],
-                 save_results_set=[False])
+    p = Pipeline(loader=loader, methods=[method], save_results_set=[False])
     t = TaskRunner(p)
     t._prepare()
     s = sectionize(p, False)
@@ -106,9 +104,7 @@ def test_can_determine_max_slices_with_gpu_estimator(
         method.calculate_max_slices.return_value = (max_slices, 1000000)
         methods.append(method)
         save_results_list.append(False)
-    p = Pipeline(loader=loader, 
-                 methods=methods,
-                 save_results_set=save_results_list)
+    p = Pipeline(loader=loader, methods=methods, save_results_set=save_results_list)
     t = TaskRunner(p)
     t._prepare()
     s = sectionize(p, False)
@@ -136,9 +132,7 @@ def test_can_determine_max_slices_with_cpu(
     for i in range(3):
         method = make_test_method(mocker, gpu=False)
         methods.append(method)
-    p = Pipeline(loader=loader,
-                 methods=methods,
-                 save_results_set=[False, False, False])
+    p = Pipeline(loader=loader, methods=methods, save_results_set=[False, False, False])
     t = TaskRunner(p)
     t._prepare()
     s = sectionize(p, False)
@@ -161,9 +155,9 @@ def test_calls_update_side_inputs_after_call(
     method1.get_side_output.return_value = side_outputs
     method2 = make_test_method(mocker)
 
-    p = Pipeline(loader=loader,
-                 methods=[method1, method2],
-                 save_results_set=[False, False])
+    p = Pipeline(
+        loader=loader, methods=[method1, method2], save_results_set=[False, False]
+    )
     t = TaskRunner(p)
     spy = mocker.patch.object(t, "update_side_inputs")
     t._prepare()
@@ -182,8 +176,11 @@ def test_update_side_inputs_updates_downstream_methods(mocker: MockerFixture):
     method3 = make_test_method(mocker, method_name="m3")
     method3.parameters = ["answer", "other", "whatever"]
 
-    p = Pipeline(loader=loader, methods=[method1, method2, method3],
-                 save_results_set=[False, False, False])
+    p = Pipeline(
+        loader=loader,
+        methods=[method1, method2, method3],
+        save_results_set=[False, False, False],
+    )
     t = TaskRunner(p)
     t.method_index = 2  # pretend we're after executing method1
     t.update_side_inputs(side_outputs)
@@ -200,8 +197,7 @@ def test_execute_section_calls_blockwise_execute(
     loader = make_test_loader(mocker)
     loader.load.return_value = dummy_dataset
     method = make_test_method(mocker, method_name="m1")
-    p = Pipeline(loader=loader, methods=[method],
-                 save_results_set=[False])
+    p = Pipeline(loader=loader, methods=[method], save_results_set=[False])
     s = sectionize(p, False)
     t = TaskRunner(p)
     t._prepare()
@@ -230,8 +226,9 @@ def test_execute_section_for_block(mocker: MockerFixture, dummy_dataset: DataSet
     loader.load.return_value = dummy_dataset
     method1 = make_test_method(mocker, method_name="m1")
     method2 = make_test_method(mocker, method_name="m2")
-    p = Pipeline(loader=loader, methods=[method1, method2],
-                 save_results_set=[False, False])
+    p = Pipeline(
+        loader=loader, methods=[method1, method2], save_results_set=[False, False]
+    )
     s = sectionize(p, False)
     t = TaskRunner(p)
     t._prepare()
@@ -250,15 +247,15 @@ def test_does_reslice_when_needed(
     loader.load.return_value = dummy_dataset
     method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
     method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
-    p = Pipeline(loader=loader, 
-                 methods=[method1, method2],
-                 save_results_set=[False, False])
+    p = Pipeline(
+        loader=loader, methods=[method1, method2], save_results_set=[False, False]
+    )
     reslice_dir = "./current" if filebased else None
     t = TaskRunner(p, reslice_dir=reslice_dir)
 
     exec_section = mocker.patch.object(t, "_execute_section")
     reslice = mocker.patch("httomo.runner.task_runner.reslice")
-    reslice_filebased = mocker.patch("httomo.runner.task_runner.reslice_filebased")    
+    reslice_filebased = mocker.patch("httomo.runner.task_runner.reslice_filebased")
 
     t.execute()
 
@@ -266,16 +263,11 @@ def test_does_reslice_when_needed(
     assert t.reslice_count == 1
     if filebased:
         reslice_filebased.assert_called_once_with(
-                                                  ANY,
-                                                  1, 
-                                                  2,
-                                                  ANY,
-                                                  10,
-                                                  10,
-                                                  t.comm,
-                                                  reslice_dir)
+            ANY, 1, 2, dummy_dataset.angles, 10, 10, t.comm, reslice_dir
+        )
     else:
         reslice.assert_called_once_with(ANY, 1, 2, t.comm)
+
 
 def test_warns_after_multiple_reslices(mocker: MockerFixture, dummy_dataset: DataSet):
     loader = make_test_loader(mocker)
@@ -283,8 +275,11 @@ def test_warns_after_multiple_reslices(mocker: MockerFixture, dummy_dataset: Dat
     method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
     method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
     method3 = make_test_method(mocker, method_name="m3", pattern=Pattern.projection)
-    p = Pipeline(loader=loader, methods=[method1, method2, method3],
-                 save_results_set=[False, False, False])
+    p = Pipeline(
+        loader=loader,
+        methods=[method1, method2, method3],
+        save_results_set=[False, False, False],
+    )
     t = TaskRunner(p)
 
     exec_section = mocker.patch.object(t, "_execute_section")
@@ -304,8 +299,11 @@ def test_no_reslice_if_not_needed(mocker: MockerFixture, dummy_dataset: DataSet)
     method1 = make_test_method(mocker, method_name="m1")
     method2 = make_test_method(mocker, method_name="m2", gpu=True)
     method3 = make_test_method(mocker, method_name="m3")
-    p = Pipeline(loader=loader, methods=[method1, method2, method3],
-                 save_results_set=[False, False, False])
+    p = Pipeline(
+        loader=loader,
+        methods=[method1, method2, method3],
+        save_results_set=[False, False, False],
+    )
     t = TaskRunner(p)
 
     exec_section = mocker.patch.object(t, "_execute_section")
@@ -348,8 +346,9 @@ def test_saves_intermediate_results(
     )
     method1.recon_algorithm = "testalgo"
     method2 = make_test_method(mocker, method_name="m2")
-    p = Pipeline(loader=loader, methods=[method1, method2],
-                 save_results_set=[True, False])
+    p = Pipeline(
+        loader=loader, methods=[method1, method2], save_results_set=[True, False]
+    )
     t = TaskRunner(p)
 
     exec_section = mocker.patch.object(t, "_execute_section")

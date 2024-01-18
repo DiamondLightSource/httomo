@@ -29,8 +29,12 @@ def intermediate_dataset(
         The data to be written.
     run_out_dir : Path
         The directory to write the file to.
-    loader_info: Dict
-        Dictionary with information about the loaded data.
+    angles : numpy.ndarray
+        Projection angles array.
+    detector_x : int
+        Horizontal detector dimension.
+    detector_y : int
+        Vertical detector dimension.
     comm : Comm
         The MPI communicator to use.
     task_no : int
