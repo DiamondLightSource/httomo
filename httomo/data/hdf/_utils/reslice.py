@@ -192,7 +192,4 @@ def single_sino_reslice(
     )
 
     if mpiutil.rank == 0:
-        assert recvbuf is not None
         return recvbuf.reshape((data_shape[0], data_shape[2]))
-    else:
-        return None
