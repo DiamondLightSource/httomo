@@ -172,7 +172,7 @@ class DataSet:
     def is_cpu(self) -> bool:
         """Check if arrays are currently residing on CPU"""
         return not self.is_gpu
-    
+
     @property
     def is_full(self) -> bool:
         """Check if the dataset is the full global data"""
@@ -213,13 +213,16 @@ class DataSet:
             return
         self._data = xp.asnumpy(self._data)
 
-    def make_block(self, dim: int, start: int, length: int):
+    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
         """Create a block from this dataset, which slices in dimension `dim`
-        starting at index `start`, and taking `length` elements.
+        starting at index `start`, and taking `length` elements (if it's not given,
+        it uses the remaining length of the block after `start`).
 
         The returned block is a `DataSet` object itself, but it references the
         original one for the darks/flats/angles arrays and re-use the GPU-cached
         version of those if needed."""
+        if length is None:
+            length = self.chunk_shape[dim] - start
         return DataSetBlock(self, dim, start, length)
 
     @property
@@ -331,7 +334,7 @@ class DataSetBlock(DataSet):
     @property
     def is_block(self) -> bool:
         return True
-    
+
     @property
     def is_full(self) -> bool:
         """Check if the dataset is the full global data"""
@@ -368,7 +371,7 @@ class DataSetBlock(DataSet):
     ) -> DataSet.generic_array:
         return self._base._get_value(field, self.is_gpu if is_gpu is None else is_gpu)
 
-    def make_block(self, dim: int, start: int, length: int):
+    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
         raise ValueError("Cannot slice a dataset that is already a slice")
 
 
@@ -401,7 +404,7 @@ class FullFileDataSet(DataSet):
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         return self._chunk_shape
-    
+
     @property
     def is_full(self) -> bool:
         return True
@@ -461,4 +464,3 @@ class FullFileDataSet(DataSet):
         start2 += self._global_index[2]
         stop2 += self._global_index[2]
         return self._data[start0:stop0, start1:stop1, start2:stop2]
-    

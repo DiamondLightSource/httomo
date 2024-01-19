@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Literal, Tuple
 
 from mpi4py.MPI import Comm
 
@@ -213,7 +213,7 @@ class Pattern(Enum):
     all = 2
 
 
-def _get_slicing_dim(pattern: Pattern) -> int:
+def _get_slicing_dim(pattern: Pattern) -> Literal[1, 2]:
     """Assuming 3D projection data with the axes ordered as
     - axis 0 = rotation angle
     - axis 1 = detector y

@@ -43,7 +43,7 @@ class BlockSplitter:
         len = min(self.slices_per_block, self._chunk_size - start)
         return self._source.read_block(start, len)
 
-    def __iter__(self) -> Iterator[DataSet]:
+    def __iter__(self) -> Iterator[DataSetBlock]:
         class BlockIterator:
             def __init__(self, splitter):
                 self.splitter = splitter
@@ -52,7 +52,7 @@ class BlockSplitter:
             def __iter__(self) -> 'BlockIterator':
                 return self
 
-            def __next__(self) -> DataSet:
+            def __next__(self) -> DataSetBlock:
                 if self._current >= len(self.splitter):
                     raise StopIteration
                 v = self.splitter[self._current]

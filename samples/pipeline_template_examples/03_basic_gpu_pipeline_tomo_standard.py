@@ -23,9 +23,19 @@ def make_method(module_path: str, method_name: str, **kwargs) -> BackendWrapper:
     )
 
 
-def make_loader(module_path: str, method_name: str, **kwargs) -> loader.Loader:
-    return loader.make_loader(
-        repo, module_path=module_path, method_name=method_name, comm=comm, **kwargs
+def make_loader(module_path: str, method_name: str, **kwargs) -> loader.LoaderInterface:
+    return loader.StandardLoaderWrapper(
+        comm=comm,
+        in_file=kwargs["in_file"],
+        data_path=kwargs["data_path"],
+        image_key_path=kwargs["image_key_path"],
+        darks=loader.DarksFlatsFileConfig(
+            kwargs["in_file"], kwargs["data_path"], kwargs["image_key_path"]
+        ),
+        flats=loader.DarksFlatsFileConfig(
+            kwargs["in_file"], kwargs["data_path"], kwargs["image_key_path"]
+        ),
+        angles=loader.RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle"),
     )
 
 
@@ -42,7 +52,7 @@ def build_pipeline(in_file: str):
         in_file=in_file,
     )
     m_center = make_method(
-        "httomolibgpu.recon.rotation",  
+        "httomolibgpu.recon.rotation",
         "find_center_vo",
         ind="mid",
         smin=-50,
@@ -53,15 +63,18 @@ def build_pipeline(in_file: str):
         drop=20,
         output_mapping={"cor": "center_value"},
     )
-    m_dezinging = make_method("httomolibgpu.misc.corr", "remove_outlier3d", kernel_size=3, dif=0.1)
+    m_dezinging = make_method(
+        "httomolibgpu.misc.corr", "remove_outlier3d", kernel_size=3, dif=0.1
+    )
     m_normalize = make_method(
-        "httomolibgpu.prep.normalize", "normalize", cutoff=10.0, minus_log=True, nonnegativity=False
+        "httomolibgpu.prep.normalize",
+        "normalize",
+        cutoff=10.0,
+        minus_log=True,
+        nonnegativity=False,
     )
     m_remove_stripe = make_method(
-        "httomolibgpu.prep.stripe",
-        "remove_stripe_based_sorting",
-        size=11, 
-        dim=1
+        "httomolibgpu.prep.stripe", "remove_stripe_based_sorting", size=11, dim=1
     )
     m_recon = make_method(
         "httomolibgpu.recon.algorithm",
@@ -80,7 +93,7 @@ def build_pipeline(in_file: str):
         perc_range_min=0.0,
         perc_range_max=100.0,
         jpeg_quality=95,
-        glob_stats=True
+        glob_stats=True,
     )
     return Pipeline(
         loader=loader,
@@ -112,5 +125,5 @@ if __name__ == "__main__":
         httomo.globals.logger = setup_logger(httomo.globals.run_out_dir)
 
     pipeline = build_pipeline(sys.argv[1])
-    runner = TaskRunner(pipeline, False)
+    runner = TaskRunner(pipeline, httomo.globals.run_out_dir, False)
     runner.execute()

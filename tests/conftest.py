@@ -250,10 +250,10 @@ def yaml_loader() -> type[YamlLoader]:
 @pytest.fixture
 def dummy_dataset() -> DataSet:
     return DataSet(
-        data=np.ones((10, 10, 10)),
-        angles=np.ones((20,)),
-        flats=3 * np.ones((5, 10, 10)),
-        darks=2 * np.ones((5, 10, 10)),
+        data=np.ones((10, 10, 10), dtype=np.float32),
+        angles=np.ones((20,), dtype=np.float32),
+        flats=3 * np.ones((5, 10, 10), dtype=np.float32),
+        darks=2 * np.ones((5, 10, 10), dtype=np.float32),
     )
 
 
