@@ -1,3 +1,4 @@
+import weakref
 from pathlib import Path
 from typing import (
     Any,
@@ -135,6 +136,8 @@ class StandardTomoLoader(DataSetSource):
             global_index=self._chunk_index,
             chunk_shape=self._chunk_shape,
         )
+
+        weakref.finalize(self, self.finalize)
 
     @property
     def dtype(self) -> np.dtype:
