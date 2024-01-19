@@ -46,7 +46,7 @@ def test_basewrapper_execute_transfers_to_gpu(
         "fake_method",
         MPI.COMM_WORLD,
     )
-    dataset = wrp.execute(dummy_dataset)
+    dataset = wrp.execute(dummy_dataset.make_block(0))
 
     assert dataset.is_gpu == gpu_enabled
 
@@ -65,15 +65,16 @@ def test_basewrapper_execute_calls_pre_post_process(
         "fake_method",
         MPI.COMM_WORLD,
     )
-    prep = mocker.patch.object(wrp, "_preprocess_data", return_value=dummy_dataset)
-    post = mocker.patch.object(wrp, "_postprocess_data", return_value=dummy_dataset)
-    trans = mocker.patch.object(wrp, "_transfer_data", return_value=dummy_dataset)
+    block = dummy_dataset.make_block(0)
+    prep = mocker.patch.object(wrp, "_preprocess_data", return_value=block)
+    post = mocker.patch.object(wrp, "_postprocess_data", return_value=block)
+    trans = mocker.patch.object(wrp, "_transfer_data", return_value=block)
 
-    wrp.execute(dummy_dataset)
+    wrp.execute(block)
 
-    prep.assert_called_once_with(dummy_dataset)
-    post.assert_called_once_with(dummy_dataset)
-    trans.assert_called_once_with(dummy_dataset)
+    prep.assert_called_once_with(block)
+    post.assert_called_once_with(block)
+    trans.assert_called_once_with(block)
 
 
 def test_wrapper_fails_with_wrong_returntype(
@@ -90,7 +91,7 @@ def test_wrapper_fails_with_wrong_returntype(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
     with pytest.raises(ValueError) as e:
-        wrp.execute(dummy_dataset)
+        wrp.execute(dummy_dataset.make_block(0))
     assert "return type" in str(e)
 
 
@@ -108,7 +109,7 @@ def test_wrapper_sets_gpuid(mocker: MockerFixture, dummy_dataset: DataSet):
     )
 
     wrp.gpu_id = 4
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
 
 def test_wrapper_fails_for_gpumethods_with_no_gpu(mocker: MockerFixture):
@@ -144,7 +145,7 @@ def test_wrapper_passes_communicator_if_needed(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
 
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
 
 def test_wrapper_allows_parameters_with_defaults(
@@ -160,7 +161,7 @@ def test_wrapper_allows_parameters_with_defaults(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
 
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
 
 def test_wrapper_calculate_stats(mocker: MockerFixture, dummy_dataset: DataSet):
@@ -195,7 +196,7 @@ def test_wrapper_build_kwargs_parameter_not_given(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
     with pytest.raises(ValueError) as e:
-        wrp.execute(dummy_dataset)
+        wrp.execute(dummy_dataset.make_block(0))
 
     assert "Cannot map method parameter param to a value" in str(e)
 
@@ -211,10 +212,10 @@ def test_wrapper_access_outputref_params(mocker: MockerFixture, dummy_dataset: D
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
     m = make_test_method(mocker)
-    m.get_side_output.return_value = {"somepar": 42}
+    mocker.patch.object(m, "get_side_output", return_value={"somepar": 42})
     wrp["param"] = OutputRef(m, "somepar")
 
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
 
 def test_wrapper_access_outputref_params_kwargs(
@@ -230,10 +231,10 @@ def test_wrapper_access_outputref_params_kwargs(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
     m = make_test_method(mocker)
-    m.get_side_output.return_value = {"somepar": 42}
+    mocker.patch.object(m, "get_side_output", return_value={"somepar": 42})
     wrp["param"] = OutputRef(m, "somepar")
 
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
 
 def test_wrapper_different_data_parameter_name(
@@ -249,7 +250,7 @@ def test_wrapper_different_data_parameter_name(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
     dummy_dataset.data[:] = 42
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
 
 def test_wrapper_for_method_with_kwargs(mocker: MockerFixture, dummy_dataset: DataSet):
@@ -269,7 +270,7 @@ def test_wrapper_for_method_with_kwargs(mocker: MockerFixture, dummy_dataset: Da
         extra=123,
     )
 
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
 
 def test_wrapper_sets_config_params_constructor(
@@ -288,7 +289,7 @@ def test_wrapper_sets_config_params_constructor(
         MPI.COMM_WORLD,
         param=42,
     )
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
     assert wrp["param"] == 42
 
@@ -309,7 +310,7 @@ def test_wrapper_sets_config_params_setter(
         MPI.COMM_WORLD,
     )
     wrp["param"] = 42
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
     assert wrp["param"] == 42
 
@@ -350,7 +351,7 @@ def test_wrapper_sets_config_params_append_dict(
         MPI.COMM_WORLD,
     )
     wrp.append_config_params({"param1": 42, "param2": 43})
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
     assert wrp["param1"] == 42
     assert wrp["param2"] == 43
@@ -379,13 +380,13 @@ def test_wrapper_passes_darks_flats_to_normalize(
     dummy_dataset.flats[:] = 3
     dummy_dataset.lock()
 
-    wrp.execute(dummy_dataset)
+    wrp.execute(dummy_dataset.make_block(0))
 
     importmock.assert_called_once_with("mocked_module_path")
 
-@pytest.mark.parametrize("block", [False, True])
+
 def test_wrapper_handles_reconstruction_angle_reshape(
-    mocker: MockerFixture, dummy_dataset: DataSet, block: bool
+    mocker: MockerFixture, dummy_dataset: DataSet
 ):
     class FakeModule:
         # we give the angles a different name on purpose
@@ -406,9 +407,8 @@ def test_wrapper_handles_reconstruction_angle_reshape(
     dummy_dataset.unlock()
     dummy_dataset.angles[:] = 2
     dummy_dataset.lock()
-    
-    input = dummy_dataset.make_block(0, 0, 3) if block else dummy_dataset
 
+    input = dummy_dataset.make_block(0, 0, 3)
     wrp.execute(input)
 
 
@@ -426,8 +426,13 @@ def test_wrapper_handles_reconstruction_axisswap(
         "recon_tester",
         MPI.COMM_WORLD,
     )
-    dummy_dataset.data = np.ones((13, 14, 15), dtype=np.float32)
-    res = wrp.execute(dummy_dataset)
+    dummy_dataset = DataSet(
+        data=np.ones((13, 14, 15), dtype=np.float32),
+        angles=dummy_dataset.angles,
+        flats=dummy_dataset.flats,
+        darks=dummy_dataset.darks,
+    )
+    res = wrp.execute(dummy_dataset.make_block(0))
 
     assert res.data.shape == (13, 14, 15)
 
@@ -526,7 +531,7 @@ def test_wrapper_rotation_gathers_single_sino_slice(
     dummy_dataset: DataSet,
     rank: int,
     ind_par: Union[str, int, None],
-    gpu: bool
+    gpu: bool,
 ):
     class FakeModule:
         def rotation_tester(data, ind=None):
@@ -549,6 +554,7 @@ def test_wrapper_rotation_gathers_single_sino_slice(
         "rotation_tester",
         MPI.COMM_WORLD,
     )
+    assert isinstance(wrp, RotationWrapper)
     if ind_par is not None:
         wrp["ind"] = ind_par
     dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
@@ -565,7 +571,7 @@ def test_wrapper_rotation_gathers_single_sino_slice(
     comm.size = 2
     comm.bcast.return_value = 42.0
 
-    res = wrp.execute(dummy_dataset)
+    res = wrp.execute(dummy_dataset.make_block(0))
 
     assert wrp.pattern == Pattern.projection
     xp.testing.assert_array_equal(res.data, dummy_dataset.data)
@@ -583,12 +589,13 @@ def test_wrapper_gather_sino_slice(mocker: MockerFixture, rank: int):
             return 42.0
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
-    wrp: RotationWrapper = make_backend_wrapper(
+    wrp = make_backend_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path.rotation",
         "rotation_tester",
         MPI.COMM_WORLD,
     )
+    assert isinstance(wrp, RotationWrapper)
     if rank == 0:
         wrp.sino = np.arange(2 * 6, dtype=np.float32).reshape((2, 6))
     else:
@@ -681,6 +688,7 @@ def test_wrapper_rotation_normalize_sino_different_darks_flats():
     assert ret.shape == (10, 1, 10)
     np.testing.assert_allclose(np.squeeze(ret), 1.0)
 
+
 @pytest.mark.skipif(
     not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
     reason="skipped as cupy is not available",
@@ -698,7 +706,6 @@ def test_wrapper_rotation_normalize_sino_different_darks_flats_gpu():
     xp.testing.assert_allclose(xp.squeeze(ret), 1.0)
 
 
-
 def test_wrapper_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
     class FakeModule:
         def rotation_tester(data, ind):
@@ -714,10 +721,11 @@ def test_wrapper_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
         ind=5,
     )
 
-    new_dataset = wrp.execute(dummy_dataset)
+    block = dummy_dataset.make_block(0)
+    new_block = wrp.execute(block)
 
     assert wrp.get_side_output() == {"center": 42.0}
-    assert new_dataset == dummy_dataset  # note: not a deep comparison
+    assert new_block == block  # note: not a deep comparison
 
 
 def test_wrapper_rotation_360(mocker: MockerFixture, dummy_dataset: DataSet):
@@ -739,14 +747,15 @@ def test_wrapper_rotation_360(mocker: MockerFixture, dummy_dataset: DataSet):
         },
         ind=5,
     )
-    new_dataset = wrp.execute(dummy_dataset)
+    block = dummy_dataset.make_block(0)
+    new_block = wrp.execute(block)
 
     assert wrp.get_side_output() == {
         "center": 42.0,
         "overlap": 3.0,
         "pos": 10.0,
     }
-    assert new_dataset == dummy_dataset  # note: not a deep comparison
+    assert new_block == block  # note: not a deep comparison
 
 
 def test_wrapper_dezinging(mocker: MockerFixture, dummy_dataset: DataSet):
@@ -767,18 +776,24 @@ def test_wrapper_dezinging(mocker: MockerFixture, dummy_dataset: DataSet):
     dummy_dataset.darks[:] = 4
     dummy_dataset.lock()
 
-    newset = wrp.execute(dummy_dataset)
+    block1 = dummy_dataset.make_block(0, 0, 2)
+    newblock1 = wrp.execute(block1)
 
     # we double them all, so we expect all 3 to be twice the input
-    np.testing.assert_array_equal(newset.data, 2)
-    np.testing.assert_array_equal(newset.flats, 6)
-    np.testing.assert_array_equal(newset.darks, 8)
+    np.testing.assert_array_equal(newblock1.data, 2)
+    np.testing.assert_array_equal(newblock1.flats, 6)
+    np.testing.assert_array_equal(newblock1.darks, 8)
 
     # it should only update the darks/flats once, but still apply to the data
-    newset = wrp.execute(newset)
-    np.testing.assert_array_equal(newset.data, 4)
-    np.testing.assert_array_equal(newset.flats, 6)
-    np.testing.assert_array_equal(newset.darks, 8)
+    block2 = dummy_dataset.make_block(0, 2, 2)
+    newblock2 = wrp.execute(block2)
+    np.testing.assert_array_equal(newblock2.data, 2)
+    np.testing.assert_array_equal(newblock2.flats, 6)
+    np.testing.assert_array_equal(newblock2.darks, 8)
+
+    # the flats, darks in original dataset should have changed by reference
+    np.testing.assert_array_equal(dummy_dataset.flats, 6)
+    np.testing.assert_array_equal(dummy_dataset.darks, 8)
 
 
 def test_wrapper_save_to_images(mocker: MockerFixture, dummy_dataset: DataSet):
@@ -799,9 +814,10 @@ def test_wrapper_save_to_images(mocker: MockerFixture, dummy_dataset: DataSet):
         axis=1,
         file_format="tif",
     )
-    newset = wrp.execute(dummy_dataset)
+    block = dummy_dataset.make_block(0)
+    newblock = wrp.execute(block)
 
-    assert newset == dummy_dataset
+    assert newblock == block
 
 
 @pytest.mark.skipif(
@@ -823,7 +839,7 @@ def test_wrapper_images_leaves_gpudata(mocker: MockerFixture, dummy_dataset: Dat
     )
     with xp.cuda.Device(0):
         dummy_dataset.to_gpu()
-        new_dataset = wrp.execute(dummy_dataset)
+        new_dataset = wrp.execute(dummy_dataset.make_block(0))
 
         assert new_dataset.is_gpu is True
 
@@ -875,9 +891,11 @@ def test_wrapper_method_queries(
 @pytest.mark.parametrize("implementation", ["cpu", "gpu", "gpu_cupy"])
 @pytest.mark.parametrize(
     "memory_gpu",
-    [[GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")], 
-     [GpuMemoryRequirement(dataset="tomo", multiplier=0.0, method="direct")],
-     []],
+    [
+        [GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")],
+        [GpuMemoryRequirement(dataset="tomo", multiplier=0.0, method="direct")],
+        [],
+    ],
 )
 def test_wrapper_calculate_max_slices_direct(
     mocker: MockerFixture,
@@ -903,8 +921,9 @@ def test_wrapper_calculate_max_slices_direct(
         "test_method",
         MPI.COMM_WORLD,
     )
-    shape = list(dummy_dataset.data.shape)
-    shape.pop(0)
+    shape_t = list(dummy_dataset.data.shape)
+    shape_t.pop(0)
+    shape = (shape_t[0], shape_t[1])
     databytes = shape[0] * shape[1] * dummy_dataset.data.itemsize
     max_slices_expected = 5
     multiplier = memory_gpu[0].multiplier if memory_gpu != [] else 1
@@ -912,7 +931,11 @@ def test_wrapper_calculate_max_slices_direct(
     if available_memory_in == 0:
         available_memory_in = 5
     max_slices, available_memory = wrp.calculate_max_slices(
-        dummy_dataset, shape, available_memory_in
+        dummy_dataset.data.dtype,
+        shape,
+        available_memory_in,
+        dummy_dataset.darks,
+        dummy_dataset.flats,
     )
 
     if gpu_enabled and implementation != "cpu":
@@ -947,8 +970,9 @@ def test_wrapper_calculate_max_slices_direct_flats_darks(
         "test_method",
         MPI.COMM_WORLD,
     )
-    shape = list(dummy_dataset.data.shape)
-    shape.pop(0)
+    shape_t = list(dummy_dataset.data.shape)
+    shape_t.pop(0)
+    shape = (shape_t[0], shape_t[1])
     databytes = shape[0] * shape[1] * dummy_dataset.data.itemsize
     max_slices_expected = 5
     multiplier = memory_gpu[0].multiplier
@@ -959,7 +983,11 @@ def test_wrapper_calculate_max_slices_direct_flats_darks(
         + dummy_dataset.darks.nbytes * memory_gpu[2].multiplier
     )
     max_slices, available_memory = wrp.calculate_max_slices(
-        dummy_dataset, shape, available_memory_adjusted
+        dummy_dataset.data.dtype,
+        shape,
+        available_memory_adjusted,
+        dummy_dataset.darks,
+        dummy_dataset.flats,
     )
 
     if gpu_enabled:
@@ -996,10 +1024,15 @@ def test_wrapper_calculate_max_slices_module(
     memcalc_mock = mocker.patch.object(
         wrp.query, "calculate_memory_bytes", return_value=(1234, 5678)
     )
-    shape = list(dummy_dataset.data.shape)
-    shape.pop(0)
+    shape_t = list(dummy_dataset.data.shape)
+    shape_t.pop(0)
+    shape = (shape_t[0], shape_t[1])
     max_slices, available_memory = wrp.calculate_max_slices(
-        dummy_dataset, tuple(shape), 1_000_000_000
+        dummy_dataset.data.dtype,
+        shape,
+        1_000_000_000,
+        dummy_dataset.darks,
+        dummy_dataset.flats,
     )
 
     if gpu_enabled:
@@ -1018,7 +1051,7 @@ def test_wrapper_calculate_output_dims(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
-    memory_gpu = []
+    memory_gpu: List[GpuMemoryRequirement] = []
     wrp = make_backend_wrapper(
         make_mock_repo(
             mocker,
@@ -1050,7 +1083,7 @@ def test_wrapper_calculate_output_dims_no_change(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
-    memory_gpu = []
+    memory_gpu: List[GpuMemoryRequirement] = []
     wrp = make_backend_wrapper(
         make_mock_repo(
             mocker,

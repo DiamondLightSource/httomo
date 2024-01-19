@@ -2,7 +2,7 @@ from mpi4py import MPI
 from httomo.methods import calculate_stats
 import httomo.globals
 from httomo.data import mpiutil
-from httomo.runner.dataset import DataSet, DataSetBlock
+from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.runner.output_ref import OutputRef
 from httomo.utils import Colour, Pattern, gpu_enabled, log_once, log_rank, xp
@@ -153,7 +153,7 @@ class BackendWrapper:
         return None
 
     def _build_kwargs(
-        self, dict_params: DictType, dataset: Optional[DataSet] = None
+        self, dict_params: DictType, dataset: Optional[DataSetBlock] = None
     ) -> Dict[str, Any]:
         # first parameter is always the data (if given)
         ret: Dict[str, Any] = dict()
@@ -193,7 +193,7 @@ class BackendWrapper:
             ret[k] = v
         return ret
 
-    def execute(self, dataset: DataSet) -> DataSet:
+    def execute(self, dataset: DataSetBlock) -> DataSetBlock:
         """Execute functions for external packages.
 
         Developer note: Derived classes may override this function or any of the methods
@@ -202,13 +202,13 @@ class BackendWrapper:
         Parameters
         ----------
 
-        dataset: DataSet
+        dataset: DataSetBlock
             A numpy or cupy dataset, mutable (method might work in-place).
 
         Returns
         -------
 
-        DataSet
+        DataSetBlock
             A CPU or GPU-based dataset object with the output
         """
 
@@ -220,15 +220,15 @@ class BackendWrapper:
 
         return dataset
 
-    def _run_method(self, dataset: DataSet, args: Dict[str, Any]) -> DataSet:
+    def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
         """Runs the actual method - override if special handling is required
         Or side outputs are produced."""
         ret = self.method(**args)
         dataset = self._process_return_type(ret, dataset)
         return dataset
 
-    def _process_return_type(self, ret: Any, input_dataset: DataSet) -> DataSet:
-        """Checks return type of method call and assigns/creates return DataSet object.
+    def _process_return_type(self, ret: Any, input_dataset: DataSetBlock) -> DataSetBlock:
+        """Checks return type of method call and assigns/creates return DataSetBlock object.
         Override this method if a return type different from ndarray is produced and
         needs to be processed in some way.
         """
@@ -247,7 +247,7 @@ class BackendWrapper:
         follow in the pipeline"""
         return {v: self._side_output[k] for k, v in self._output_mapping.items()}
 
-    def _transfer_data(self, dataset: DataSet):
+    def _transfer_data(self, dataset: DataSetBlock):
         if not self.cupyrun:
             dataset.to_cpu()
             return dataset
@@ -266,12 +266,12 @@ class BackendWrapper:
         dictionary, for example to rename some of them or inspect them in some way"""
         return dict_params
 
-    def _preprocess_data(self, dataset: DataSet) -> DataSet:
+    def _preprocess_data(self, dataset: DataSetBlock) -> DataSetBlock:
         """Hook for derived classes to implement proprocessing steps, after the data has been
         transferred and before the method is called"""
         return dataset
 
-    def _postprocess_data(self, dataset: DataSet) -> DataSet:
+    def _postprocess_data(self, dataset: DataSetBlock) -> DataSetBlock:
         """Hook for derived classes to implement postprocessing steps, after the method has been
         called"""
         return dataset
@@ -289,9 +289,11 @@ class BackendWrapper:
 
     def calculate_max_slices(
         self,
-        dataset: DataSet,
+        data_dtype: np.dtype,
         non_slice_dims_shape: Tuple[int, int],
         available_memory: int,
+        darks: np.ndarray,
+        flats: np.ndarray,
     ) -> Tuple[int, int]:
         """If it runs on GPU, determine the maximum number of slices that can fit in the
         available memory in bytes, and return a tuple of
@@ -307,8 +309,8 @@ class BackendWrapper:
         # if we have no information, we assume in-place operation with no extra memory
         if len(self.memory_gpu) == 0:
             return (
-                available_memory
-                // (np.prod(non_slice_dims_shape) * dataset.data.itemsize),
+                int(available_memory
+                // (np.prod(non_slice_dims_shape) * data_dtype.itemsize)),
                 available_memory,
             )
 
@@ -322,7 +324,7 @@ class BackendWrapper:
             if field.dataset in ["flats", "darks"]:
                 assert field.multiplier is not None
                 # for normalisation module dealing with flats and darks separately
-                array: np.ndarray = getattr(dataset, field.dataset)
+                array: np.ndarray = flats if field.dataset == "flats" else darks
                 available_memory -= int(field.multiplier * array.nbytes)
             else:
                 # deal with the rest of the data
@@ -332,14 +334,14 @@ class BackendWrapper:
                     memory_bytes_method += int(
                         field.multiplier
                         * np.prod(non_slice_dims_shape)
-                        * dataset.data.itemsize
+                        * data_dtype.itemsize
                     )
                 else:
                     (
                         memory_bytes_method,
                         subtract_bytes,
                     ) = self.query.calculate_memory_bytes(
-                        non_slice_dims_shape, dataset.data.dtype, **self.config_params
+                        non_slice_dims_shape, data_dtype, **self.config_params
                     )
 
         if memory_bytes_method == 0:
@@ -354,7 +356,7 @@ class ReconstructionWrapper(BackendWrapper):
     """Wraps reconstruction functions, limiting the length of the angles array
     before calling the method."""
 
-    def _preprocess_data(self, dataset: DataSet) -> DataSet:
+    def _preprocess_data(self, dataset: DataSetBlock) -> DataSetBlock:
         # for 360 degrees data the angular dimension will be truncated while angles are not.
         # Truncating angles if the angular dimension has got a different size
         datashape0 = dataset.data.shape[0]
@@ -367,7 +369,7 @@ class ReconstructionWrapper(BackendWrapper):
         return super()._preprocess_data(dataset)
 
     def _build_kwargs(
-        self, dict_params: BackendWrapper.DictType, dataset: Optional[DataSet] = None
+        self, dict_params: BackendWrapper.DictType, dataset: Optional[DataSetBlock] = None
     ) -> Dict[str, Any]:
         assert dataset is not None, "Reconstruction wrappers require a dataset"
         # for recon methods, we assume that the second parameter is the angles in all cases
@@ -451,7 +453,7 @@ class RotationWrapper(BackendWrapper):
         self.sino: Optional[np.ndarray] = None
 
     def _build_kwargs(
-        self, dict_params: BackendWrapper.DictType, dataset: Optional[DataSet] = None
+        self, dict_params: BackendWrapper.DictType, dataset: Optional[DataSetBlock] = None
     ) -> Dict[str, Any]:
         assert (
             dataset is not None
@@ -489,7 +491,7 @@ class RotationWrapper(BackendWrapper):
             )
             return None
 
-    def _run_method(self, dataset: DataSet, args: Dict[str, Any]) -> DataSet:
+    def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
         assert "ind" in args
         slice_for_cor = args["ind"]
         # append to internal sinogram, until we have the last block
@@ -550,7 +552,7 @@ class RotationWrapper(BackendWrapper):
             sino -= darks1d / denom
         return sino[:, np.newaxis, :]
 
-    def _process_return_type(self, ret: Any, input_dataset: DataSet) -> DataSet:
+    def _process_return_type(self, ret: Any, input_dataset: DataSetBlock) -> DataSetBlock:
         if type(ret) == tuple:
             # cor, overlap, side, overlap_position - from find_center_360
             self._side_output["cor"] = float(ret[0])
@@ -585,7 +587,7 @@ class DezingingWrapper(BackendWrapper):
         ), "Only remove_outlier3d is supported at the moment"
         self._flats_darks_processed = False
 
-    def execute(self, dataset: Union[DataSetBlock, DataSet]) -> DataSet:
+    def execute(self, dataset: DataSetBlock) -> DataSetBlock:
         # check if data needs to be transfered host <-> device
         dataset = self._transfer_data(dataset)
 
@@ -593,7 +595,7 @@ class DezingingWrapper(BackendWrapper):
         if not self._flats_darks_processed:
             darks = self.method(dataset.darks, **self._config_params)
             flats = self.method(dataset.flats, **self._config_params)
-            ds = dataset.base if isinstance(dataset, DataSetBlock) else dataset
+            ds = dataset.base
             ds.unlock()
             ds.darks = darks
             ds.flats = flats
@@ -627,8 +629,8 @@ class ImagesWrapper(BackendWrapper):
     # but gives the method a CPU copy of the data.
     def execute(
         self,
-        dataset: DataSet,
-    ) -> DataSet:
+        dataset: DataSetBlock,
+    ) -> DataSetBlock:
         args = self._build_kwargs(self._transform_params(self._config_params), dataset)
         if dataset.is_gpu:
             # give method a CPU copy of the data
