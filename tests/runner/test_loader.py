@@ -351,6 +351,14 @@ def test_standard_tomo_loader_user_defined_angles(
     np.testing.assert_array_equal(block.angles, EXPECTED_ANGLES)
 
 
+
+def test_standard_tomo_loader_closes_file(mocker: MockerFixture):
+    loader = make_standard_tomo_loader()
+    file_close = mocker.patch.object(loader._h5file, "close")
+    loader.finalize()
+    file_close.assert_called_once()
+
+
 def test_get_darks_flats_same_file_same_dataset(
     standard_data_path: str,
     standard_data_darks_flats_config: DarksFlatsFileConfig,

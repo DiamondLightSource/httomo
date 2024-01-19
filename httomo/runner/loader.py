@@ -230,7 +230,7 @@ class StandardTomoLoader(DataSetSource):
         return self._h5file[self._angles.data_path][...]
 
     def finalize(self):
-        pass
+        self._h5file.close()
 
 
 def get_darks_flats(
