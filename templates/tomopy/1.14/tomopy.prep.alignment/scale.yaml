@@ -1,4 +1,3 @@
-- tomopy.prep.alignment:
-    scale:
-      data_in: tomo
-      data_out: tomo
+- method: scale
+  module_path: tomopy.prep.alignment
+  parameters: {}

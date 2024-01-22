@@ -1,9 +1,8 @@
-- tomopy.sim.project:
-    project:
-      data_in: tomo
-      data_out: tomo
-      obj: REQUIRED
-      center: null
-      emission: true
-      pad: true
-      sinogram_order: false
+- method: project
+  module_path: tomopy.sim.project
+  parameters:
+    obj: REQUIRED
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    emission: true
+    pad: true
+    sinogram_order: false

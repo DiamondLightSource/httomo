@@ -1,0 +1,19 @@
+This needs to be converted to Documentation file where details for every sample are exposed:
+
+pipeline_template_examples:
+  - pipeline_cpu1.yaml: Basic TomoPy (CPU-only) reconstruction pipeline for the classical 180 degrees scan
+  - pipeline_cpu2.yaml: More advanced TomoPy reconstruction pipeline for the classical 180 degrees scan. The result of the data is now saved as hdf5 file in the reconstruction module. 
+  - pipeline_cpu3.yaml: TomoPy-CPU pipeline (180 scan) but using `calculate_stats` module to extract global statistics in order to be passed to `save_to_images` function which uses it for data normalisation when saving images.
+  - pipeline_gpu1.yaml: A basic GPU-driven pipeline which uses functions from the httomolibgpu library.
+  - pipeline_360deg_gpu2: GPU-driven pipeline for 360 data (extract of real data from i12) which estimates CoR and overlap and then stitches the 360 sinogram into the classical 180-degrees sinogram. Reconstructs and saves images. Extensive use of side_outputs and refrencing. 
+
+
+DLS-specific:
+  - 01_diad_pipeline_gpu.yaml: GPU-based pipeline using httomolibgpu for DIAD data. Global statistics and referencing is used. 
+
+python_templates:
+  - pipeline_cpu1.py (same pipeline as pipeline_cpu1.yaml)
+  - pipeline_cpu2.py (same pipeline as pipeline_cpu1.yaml)
+  - pipeline_cpu3.py (same pipeline as pipeline_cpu1.yaml)
+  - pipeline_gpu1.py (same pipeline as pipeline_cpu1.yaml)
+

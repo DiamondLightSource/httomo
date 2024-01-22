@@ -1,6 +1,5 @@
-- tomopy.prep.alignment:
-    blur_edges:
-      data_in: tomo
-      data_out: tomo
-      low: 0
-      high: 0.8
+- method: blur_edges
+  module_path: tomopy.prep.alignment
+  parameters:
+    low: 0
+    high: 0.8

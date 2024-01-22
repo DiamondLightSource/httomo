@@ -1,4 +1,3 @@
-- tomopy.prep.normalize:
-    minus_log:
-      data_in: tomo
-      data_out: tomo
+- method: minus_log
+  module_path: tomopy.prep.normalize
+  parameters: {}

@@ -1,6 +1,5 @@
-- tomopy.misc.morph:
-    downsample:
-      data_in: tomo
-      data_out: tomo
-      level: 1
-      axis: 2
+- method: downsample
+  module_path: tomopy.misc.morph
+  parameters:
+    level: 1
+    axis: 2

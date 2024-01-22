@@ -1,0 +1,13 @@
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: REQUIRED
+    data_path: REQUIRED
+    dimension: REQUIRED
+    preview: REQUIRED
+    pad: REQUIRED
+    image_key_path: null
+    rotation_angles:
+      data_path: /entry1/tomo_entry/data/rotation_angle
+    ignore_darks: false
+    ignore_flats: false

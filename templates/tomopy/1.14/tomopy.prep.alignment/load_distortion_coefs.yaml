@@ -1,0 +1,4 @@
+- method: load_distortion_coefs
+  module_path: tomopy.prep.alignment
+  parameters:
+    file_path: REQUIRED
