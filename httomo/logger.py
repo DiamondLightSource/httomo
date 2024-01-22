@@ -9,7 +9,7 @@ def setup_logger(out_dir: Optional[os.PathLike]):
     out_path = Path(out_dir)
     
     # Create timestamped output directory
-    Path.mkdir(out_path)
+    Path.mkdir(out_path, exist_ok=True)
 
     # Create empty `user.log` file
     user_log_path = out_path / "user.log"

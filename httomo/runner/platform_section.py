@@ -17,7 +17,8 @@ class PlatformSection:
         reslice: bool,
         max_slices: int,
         methods: List[BackendWrapper],
-        save_result: bool = False
+        save_result: bool = False,
+        is_last: bool = False
     ):
         self.gpu = gpu
         self.pattern = pattern
@@ -25,6 +26,7 @@ class PlatformSection:
         self.max_slices = max_slices
         self.methods = methods
         self.save_result = save_result
+        self.is_last = is_last
 
     def __iter__(self) -> Iterator[BackendWrapper]:
         return iter(self.methods)
@@ -95,6 +97,7 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
             save_previous_result = pipeline._save_results_set[i]
 
     finish_section(save_previous_result=save_previous_result)
+    sections[-1].is_last = True
 
     _backpropagate_section_patterns(pipeline, sections)
     _finalize_patterns(pipeline, sections)

@@ -1,6 +1,12 @@
+from typing import List, Optional
 from httomo.runner.backend_wrapper import BackendWrapper
+from httomo.runner.dataset import DataSet
+from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
-from httomo.runner.methods_repository_interface import MethodRepository
+from httomo.runner.methods_repository_interface import (
+    GpuMemoryRequirement,
+    MethodRepository,
+)
 from httomo.utils import Pattern
 
 from pytest_mock import MockerFixture
@@ -30,19 +36,56 @@ def make_test_method(
 
 
 def make_test_loader(
-    mocker: MockerFixture, pattern: Pattern = Pattern.all, method_name="testloader"
+    mocker: MockerFixture,
+    dataset: Optional[DataSet] = None,
+    pattern: Pattern = Pattern.all,
+    method_name="testloader",
 ) -> LoaderInterface:
-    return mocker.create_autospec(
-        LoaderInterface, instance=True, pattern=pattern, method_name=method_name
+    interface: LoaderInterface = mocker.create_autospec(
+        LoaderInterface,
+        instance=True,
+        pattern=pattern,
+        method_name=method_name,
+        reslice=False,
     )
+    if dataset is not None:
+
+        def mock_make_data_source() -> DataSetSource:
+            ret = mocker.create_autospec(
+                DataSetSource,
+                global_shape=dataset.global_shape,
+                dtype=dataset.data.dtype,
+                chunk_shape=dataset.chunk_shape,
+                chunk_index=dataset.chunk_index,
+                slicing_dim=1 if interface.pattern == Pattern.sinogram else 0,
+                darks=dataset.darks,
+                flats=dataset.flats,
+            )
+            mocker.patch.object(
+                ret,
+                "read_block",
+                side_effect=lambda start, length: dataset.make_block(
+                    1 if interface.pattern == Pattern.sinogram else 0, start, length
+                ),
+            )
+            return ret
+
+        mocker.patch.object(
+            interface,
+            "make_data_source",
+            side_effect=mock_make_data_source,
+        )
+    return interface
 
 
 def make_mock_repo(
     mocker: MockerFixture,
     pattern=Pattern.sinogram,
-    output_dims_change=False,
-    implementation="cpu",
-    memory_gpu={"datasets": ["tomo"], "multipliers": [1.2], "methods": ["direct"]},
+    output_dims_change: bool = False,
+    implementation: str = "cpu",
+    memory_gpu: List[GpuMemoryRequirement] = [
+        GpuMemoryRequirement(dataset="tomo", multiplier=1.2, method="direct")
+    ],
 ) -> MethodRepository:
     """Makes a mock MethodRepository that returns the given properties on any query"""
     mock_repo = mocker.MagicMock()
@@ -55,5 +98,3 @@ def make_mock_repo(
     mocker.patch.object(mock_query, "get_implementation", return_value=implementation)
     mocker.patch.object(mock_query, "get_memory_gpu_params", return_value=memory_gpu)
     return mock_repo
-
-

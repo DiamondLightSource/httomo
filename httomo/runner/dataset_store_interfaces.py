@@ -1,4 +1,6 @@
-from typing import Literal, Protocol, Tuple
+import abc
+from typing import Literal, Optional, Protocol, Tuple
+import numpy as np
 
 from httomo.runner.dataset import DataSetBlock
 
@@ -49,67 +51,130 @@ class DataSetSource(Protocol):
     the data can be read in *blocks*, sliced in the given slicing dimension"""
 
     @property
+    def dtype(self) -> np.dtype:
+        ...  # pragma: no cover
+    
+    @property
     def global_shape(self) -> Tuple[int, int, int]:
         """Global data shape across all processes that we eventually have to read."""
-        ...
+        ...  # pragma: no cover
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Returns the shape of a chunk, i.e. the data processed in the current
         MPI process (whether it fits in memory or not)"""
-        ...
+        ...  # pragma: no cover
 
     @property
     def chunk_index(self) -> Tuple[int, int, int]:
         """Returns the start index of the chunk within the global data array"""
-        ...
+        ...  # pragma: no cover
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
         """Slicing dimension - 0, 1, or 2"""
-        ...
+        ...  # pragma: no cover
+        
+    @property
+    def darks(self) -> np.ndarray:
+        """Darks array"""
+        ...  # pragma: no cover
+        
+    @property
+    def flats(self) -> np.ndarray:
+        """Flats array"""
+        ...  # pragma: no cover
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
         """Reads a block from the dataset, starting at `start` of length `length`,
         in the current slicing dimension. Note that `start` is chunk-based,
         i.e. mean different things in different processes."""
-        ...
+        ...  # pragma: no cover
 
     def finalize(self):
         """Method intended to be called after reading all blocks is done,
         to give implementations a chance to close files, free memory, etc."""
-        ...
+        ...  # pragma: no cover
 
 
 class DataSetSink(Protocol):
     @property
     def global_shape(self) -> Tuple[int, int, int]:
         """Global data shape across all processes that we eventually have to write."""
-        ...
+        ...  # pragma: no cover
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Returns the shape of a chunk, i.e. the data processed in the current
         MPI process (whether it fits in memory or not)"""
-        ...
+        ...  # pragma: no cover
 
     @property
     def chunk_index(self) -> Tuple[int, int, int]:
         """Returns the start index of the chunk within the global data array"""
-        ...
+        ...  # pragma: no cover
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
         """Slicing dimension - 0, 1, or 2"""
-        ...
+        ...  # pragma: no cover
 
     def write_block(self, dataset: DataSetBlock):
         """Writes a block to the store, starting at the index in dataset.chunk_index,
-        in the current slicing dimension."""
-        ...
+        in the current slicing dimension.
+
+        NOTE: Implementers should make sure to move the dataset to CPU if required -
+        it may be on GPU when this method is called."""
+        ...  # pragma: no cover
 
     def finalize(self):
         """Method intended to be called after writing all blocks is done,
         to give implementations a chance to write everything to disk and close the file,
         etc."""
-        ...
+        ...  # pragma: no cover
+        
+class StoreBasedDataSetSink(DataSetSink):
+    """Interface for a DataSetSink that is store-based, i.e. where it's possible to construct
+       a reader from the same data store that this sink has been written first"""
+       
+    @abc.abstractmethod
+    def make_reader(
+        self, new_slicing_dim: Optional[Literal[0, 1, 2]] = None
+    ) -> DataSetSource:
+        """Method to make a source from this sink, which will read the data that was written,
+        possibly in a new slicing dimension"""
+        ...  # pragma: no cover
+
+
+class DummySink(DataSetSink):
+    """DataSetSink that does nothing - it purely drops the data"""
+
+    def __init__(self, slicing_dim: Literal[0, 1, 2]):
+        self._global_shape: Tuple[int, int, int] = (0, 0, 0)
+        self._chunk_index: Tuple[int, int, int] = (0, 0, 0)
+        self._chunk_shape: Tuple[int, int, int] = (0, 0, 0)
+        self._slicing_dim = slicing_dim
+
+    @property
+    def global_shape(self) -> Tuple[int, int, int]:
+        return self._global_shape
+
+    @property
+    def chunk_shape(self) -> Tuple[int, int, int]:
+        return self._chunk_shape
+
+    @property
+    def chunk_index(self) -> Tuple[int, int, int]:
+        return self._chunk_index
+
+    @property
+    def slicing_dim(self) -> Literal[0, 1, 2]:
+        return self._slicing_dim
+
+    def write_block(self, dataset: DataSetBlock):
+        self._global_shape = dataset.global_shape
+        self._chunk_shape = dataset.chunk_shape
+        self._chunk_index = dataset.chunk_index
+
+    def finalize(self):
+        pass

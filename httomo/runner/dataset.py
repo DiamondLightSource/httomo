@@ -1,4 +1,5 @@
-from typing import Optional, Tuple, TypeAlias, Union
+from typing import Optional, Tuple, Union
+from typing_extensions import TypeAlias
 from httomo.utils import gpu_enabled, xp
 import numpy as np
 
@@ -178,6 +179,11 @@ class DataSet:
         """Check if the dataset is the full global data"""
         return False
 
+    @property
+    def is_full(self) -> bool:
+        """Check if the dataset is the full global data"""
+        return False
+
     def lock(self):
         """Makes angles, darks and flats read-only, to avoid coding errors.
         Note: this is the default in the constructor - only the the data array is writable
@@ -213,13 +219,16 @@ class DataSet:
             return
         self._data = xp.asnumpy(self._data)
 
-    def make_block(self, dim: int, start: int, length: int):
+    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
         """Create a block from this dataset, which slices in dimension `dim`
-        starting at index `start`, and taking `length` elements.
+        starting at index `start`, and taking `length` elements (if it's not given,
+        it uses the remaining length of the block after `start`).
 
         The returned block is a `DataSet` object itself, but it references the
         original one for the darks/flats/angles arrays and re-use the GPU-cached
         version of those if needed."""
+        if length is None:
+            length = self.chunk_shape[dim] - start
         return DataSetBlock(self, dim, start, length)
 
     @property
@@ -338,6 +347,11 @@ class DataSetBlock(DataSet):
         return False
 
     @property
+    def is_full(self) -> bool:
+        """Check if the dataset is the full global data"""
+        return False
+
+    @property
     def chunk_index(self) -> Tuple[int, int, int]:
         """The index of this dataset within the chunk handled by the current process"""
         return self._chunk_index
@@ -368,7 +382,7 @@ class DataSetBlock(DataSet):
     ) -> DataSet.generic_array:
         return self._base._get_value(field, self.is_gpu if is_gpu is None else is_gpu)
 
-    def make_block(self, dim: int, start: int, length: int):
+    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
         raise ValueError("Cannot slice a dataset that is already a slice")
 
 
@@ -461,4 +475,3 @@ class FullFileDataSet(DataSet):
         start2 += self._global_index[2]
         stop2 += self._global_index[2]
         return self._data[start0:stop0, start1:stop1, start2:stop2]
-    

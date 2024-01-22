@@ -28,7 +28,7 @@ def test_sectionizer_can_iterate_saveall(mocker: MockerFixture):
 
     s = sectionize(p, True)
     assert len(s) == 3
-    assert [k.save_result for k in s] == [True, True, True] 
+    assert [k.save_result for k in s] == [True, True, True]
     methodnames = [m.methods[0].method_name for m in s]
     assert methodnames == ["testmethod0", "testmethod1", "testmethod2"]
 
@@ -129,7 +129,7 @@ def test_determine_platform_sections_pattern_all_combine(
     pattern2: Pattern,
     expected: Pattern,
 ):
-    loader = make_test_loader(mocker, loader_pattern)
+    loader = make_test_loader(mocker, pattern=loader_pattern)
     p = Pipeline(
         loader=loader,
         methods=[
@@ -177,9 +177,13 @@ def test_sectionizer_global_stats_triggers_new_section(mocker: MockerFixture):
     p = Pipeline(
         loader=make_test_loader(mocker),
         methods=[
-            make_test_method(mocker, pattern=Pattern.projection, glob_stats=True, method_name="m1"),
+            make_test_method(
+                mocker, pattern=Pattern.projection, glob_stats=True, method_name="m1"
+            ),
             make_test_method(mocker, pattern=Pattern.projection, method_name="m2"),
-            make_test_method(mocker, pattern=Pattern.projection, glob_stats=True, method_name="m3"),
+            make_test_method(
+                mocker, pattern=Pattern.projection, glob_stats=True, method_name="m3"
+            ),
             make_test_method(mocker, pattern=Pattern.projection, method_name="m4"),
         ],
         save_results_set=[False, False, False, False],
@@ -244,7 +248,7 @@ def test_sectionizer_needs_reslice(
 def test_sectionizer_inherits_pattern_from_before_if_all(
     mocker: MockerFixture, pattern: Pattern
 ):
-    loader = make_test_loader(mocker, Pattern.projection)
+    loader = make_test_loader(mocker, pattern=Pattern.projection)
     p = Pipeline(
         loader=loader,
         methods=[
@@ -275,6 +279,30 @@ def test_sectionizer_inherits_loader_pattern(
     assert len(s) == 1
     assert s[0].reslice is False
     assert s[0].pattern == loader_pattern
+
+
+def test_sectionizer_sets_islast_single(mocker: MockerFixture):
+    p = Pipeline(
+        loader=make_test_loader(mocker, pattern=Pattern.projection),
+        methods=[make_test_method(mocker, pattern=Pattern.projection, gpu=True)],
+    )
+    s = sectionize(p, False)
+
+    assert s[-1].is_last is True
+
+
+def test_sectionizer_sets_islast_multiple(mocker: MockerFixture):
+    p = Pipeline(
+        loader=make_test_loader(mocker, pattern=Pattern.projection),
+        methods=[
+            make_test_method(mocker, pattern=Pattern.projection, gpu=True),
+            make_test_method(mocker, pattern=Pattern.sinogram, gpu=True),
+        ],
+    )
+    s = sectionize(p, False)
+
+    assert s[0].is_last is False
+    assert s[1].is_last is True
 
 
 def test_sectionizer_sets_reslice_in_loader(mocker: MockerFixture):
