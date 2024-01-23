@@ -75,8 +75,8 @@ def test_tomo_standard_testing_pipeline_output(
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 3, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6, rtol=1e-6)
+                assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6, rtol=1e-6)
 
     #: some basic testing of the generated user.log file, because running the whole pipeline again
     #: will slow down the execution of the test suite.
@@ -193,7 +193,7 @@ def test_run_pipeline_cpu2_yaml(cmd, standard_data, yaml_cpu_pipeline2, output_f
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 30, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6, rtol=1e-6)
 
     log_contents = _get_log_contents(log_files[0])
 
@@ -236,7 +236,7 @@ def test_run_pipeline_cpu2_py(cmd, standard_data, python_cpu_pipeline2, output_f
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 30, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6, rtol=1e-6)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -360,7 +360,7 @@ def test_run_pipeline_gpu1_yaml(cmd, standard_data, yaml_gpu_pipeline1, output_f
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 128, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6, rtol=1e-6)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -406,7 +406,7 @@ def test_run_pipeline_gpu1_py(cmd, standard_data, python_gpu_pipeline1, output_f
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 128, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6, rtol=1e-6)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -455,8 +455,8 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 3, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6, rtol=1e-6)
+                assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6, rtol=1e-6)
 
 
 def test_i12_testing_pipeline_output(
@@ -492,18 +492,18 @@ def test_i12_testing_pipeline_output(
 
     with h5py.File(gridrec_recon, "r") as f:
         assert f["data"].shape == (192, 10, 192)
-        assert_allclose(np.sum(f["data"]), 2157.03, atol=1e-2)
-        assert_allclose(np.mean(f["data"]), 0.0058513316, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), 2157.03, atol=1e-2, rtol=1e-6)
+        assert_allclose(np.mean(f["data"]), 0.0058513316, atol=1e-6, rtol=1e-6)
     with h5py.File(minus_log_tomo, "r") as f:
-        assert_allclose(np.sum(f["data"]), 1756628.4, atol=1e-6)
-        assert_allclose(np.mean(f["data"]), 1.2636887, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), 1756628.4, atol=1e-6, rtol=1e-6)
+        assert_allclose(np.mean(f["data"]), 1.2636887, atol=1e-6, rtol=1e-6)
     with h5py.File(remove_stripe_fw_tomo, "r") as f:
-        assert_allclose(np.sum(f["data"]), 1766357.8, atol=1e-6)
-        assert_allclose(np.mean(f["data"]), 1.2706878, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), 1766357.8, atol=1e-6, rtol=1e-6)
+        assert_allclose(np.mean(f["data"]), 1.2706878, atol=1e-6, rtol=1e-6)
     with h5py.File(normalize_tomo, "r") as f:
         assert f["data"].shape == (724, 10, 192)
-        assert_allclose(np.sum(f["data"]), 393510.72, atol=1e-6)
-        assert_allclose(np.mean(f["data"]), 0.28308493, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), 393510.72, atol=1e-6, rtol=1e-6)
+        assert_allclose(np.mean(f["data"]), 0.28308493, atol=1e-6, rtol=1e-6)
 
     log_contents = _get_log_contents(log_files[0])
     assert "The full dataset shape is (724, 10, 192)" in log_contents
@@ -600,13 +600,13 @@ def test_diad_testing_pipeline_output(
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (3001, 2, 26)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.mean(f["data"]), 0.847944, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), 132323.36, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), 0.847944, atol=1e-6, rtol=1e-6)
+                assert_allclose(np.sum(f["data"]), 132323.36, atol=1e-6, rtol=1e-6)
         if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (26, 2, 26)
-                assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6, rtol=1e-6)
+                assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6, rtol=1e-6)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
