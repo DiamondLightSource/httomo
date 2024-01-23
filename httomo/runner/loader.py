@@ -33,16 +33,16 @@ class LoaderInterface(Protocol):
     # Patterns the loader supports
     pattern: Pattern = Pattern.all
     # Information if a reslice is needed after it (in case it doesn't support all patterns)
-    reslice: bool = False 
+    reslice: bool = False
     # purely informational, for use by the logger
     method_name: str
     package_name: str = "httomo"
 
     def make_data_source(self) -> DataSetSource:
         """Create a dataset source that can produce blocks of data from the file.
-           
-           This will be called after the patterns and sections have been determined,
-           just before the execution of the first section starts."""
+
+        This will be called after the patterns and sections have been determined,
+        just before the execution of the first section starts."""
         ...  # pragma: no cover
 
     @property
@@ -54,7 +54,7 @@ class LoaderInterface(Protocol):
     def detector_y(self) -> int:
         """detector y-dimension of the loaded data"""
         ...  # pragma: no cover
-        
+
     @property
     def angles_total(self) -> int:
         """angles dimension of the loaded data"""
@@ -137,11 +137,11 @@ class StandardTomoLoader(DataSetSource):
     @property
     def dtype(self) -> np.dtype:
         return self._data.data.dtype
-    
+
     @property
     def flats(self) -> np.ndarray:
         return self._data.flats
-    
+
     @property
     def darks(self) -> np.ndarray:
         return self._data.darks
@@ -317,7 +317,52 @@ class StandardLoaderWrapper(LoaderInterface):
     @property
     def detector_y(self) -> int:
         return self._detector_y
-    
+
     @property
     def angles_total(self) -> int:
         return self._angles_total
+
+
+def make_loader(
+    repo: MethodRepository, module_path: str, method_name: str, comm: MPI.Comm, **kwargs
+) -> LoaderInterface:
+    """Produces a loader interface. Only StandardTomoWrapper is supported right now,
+    and this method has been added for backwards compatibility. Supporting other loaders
+    is a topic that still needs to be explored."""
+    
+    if "standard_tomo" not in method_name:
+        raise NotImplementedError("Only the standard_tomo loader is currently supported")
+
+    # the following will raise KeyError if not present
+    in_file = kwargs["in_file"]
+    data_path = kwargs["data_path"]
+    image_key_path = kwargs["image_key_path"]
+    rotation_angles = kwargs["rotation_angles"]
+    angles_path = rotation_angles["data_path"]
+    # these will have defaults if not given
+    darks: dict = kwargs.get("darks", dict())
+    darks_file = darks.get("file", in_file)
+    darks_path = darks.get("data_path", data_path)
+    darks_image_key = darks.get("image_key_path", image_key_path)
+    flats: dict = kwargs.get("darks", dict())
+    flats_file = flats.get("file", in_file)
+    flats_path = flats.get("data_path", data_path)
+    flats_image_key = flats.get("image_key_path", image_key_path)
+    # TODO: handle these
+    dimension = int(kwargs.get("dimension", 1)) - 1
+    preview = kwargs.get("preview", (None, None, None))
+    pad = int(kwargs.get("pad", 0))
+
+    return StandardLoaderWrapper(
+        comm,
+        in_file=in_file,
+        data_path=data_path,
+        image_key_path=image_key_path,
+        darks=DarksFlatsFileConfig(
+            file=darks_file, data_path=darks_path, image_key_path=darks_image_key
+        ),
+        flats=DarksFlatsFileConfig(
+            file=flats_file, data_path=flats_path, image_key_path=flats_image_key
+        ),
+        angles=RawAngles(data_path=angles_path),
+    )

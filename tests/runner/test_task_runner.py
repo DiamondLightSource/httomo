@@ -190,7 +190,7 @@ def test_update_side_inputs_updates_downstream_methods(
         methods=[method1, method2, method3],
         save_results_set=[False, False, False],
     )
-    t = TaskRunner(p)
+    t = TaskRunner(p, reslice_dir=tmp_path)
     t.method_index = 2  # pretend we're after executing method1
     t.update_side_inputs(side_outputs)
 

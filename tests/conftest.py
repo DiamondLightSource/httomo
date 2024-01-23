@@ -10,6 +10,7 @@ import pytest
 import yaml
 from httomo.runner.dataset import DataSet
 from httomo.runner.loader import DarksFlatsFileConfig
+from httomo.ui_layer import _yaml_loader
 
 
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))

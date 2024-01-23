@@ -285,6 +285,7 @@ def test_sectionizer_sets_islast_single(mocker: MockerFixture):
     p = Pipeline(
         loader=make_test_loader(mocker, pattern=Pattern.projection),
         methods=[make_test_method(mocker, pattern=Pattern.projection, gpu=True)],
+        save_results_set=[False]
     )
     s = sectionize(p, False)
 
@@ -298,6 +299,7 @@ def test_sectionizer_sets_islast_multiple(mocker: MockerFixture):
             make_test_method(mocker, pattern=Pattern.projection, gpu=True),
             make_test_method(mocker, pattern=Pattern.sinogram, gpu=True),
         ],
+        save_results_set=[False, False]
     )
     s = sectionize(p, False)
 
