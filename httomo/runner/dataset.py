@@ -179,10 +179,6 @@ class DataSet:
         """Check if the dataset is the full global data"""
         return False
 
-    @property
-    def is_full(self) -> bool:
-        """Check if the dataset is the full global data"""
-        return False
 
     def lock(self):
         """Makes angles, darks and flats read-only, to avoid coding errors.
@@ -346,10 +342,6 @@ class DataSetBlock(DataSet):
         """Check if the dataset is the full global data"""
         return False
 
-    @property
-    def is_full(self) -> bool:
-        """Check if the dataset is the full global data"""
-        return False
 
     @property
     def chunk_index(self) -> Tuple[int, int, int]:
