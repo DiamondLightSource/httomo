@@ -6,7 +6,7 @@ from mpi4py import MPI
 import httomo
 import logging
 from httomo.data.dataset_store import DataSetStoreWriter
-from httomo.runner.backend_wrapper import BackendWrapper
+from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.block_split import BlockSplitter
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import (
@@ -188,7 +188,7 @@ class TaskRunner:
         self.method_index += 1
 
     def _execute_method(
-        self, method: BackendWrapper, num: int, dataset: DataSetBlock
+        self, method: MethodWrapper, num: int, dataset: DataSetBlock
     ) -> DataSetBlock:
         start_time = self._log_task_start(num, method.pattern, method.method_name)
         dataset = method.execute(dataset)

@@ -1,6 +1,6 @@
 from httomo.runner.loader import LoaderInterface
 from httomo.utils import Pattern
-from httomo.runner.backend_wrapper import BackendWrapper
+from httomo.runner.method_wrapper import MethodWrapper
 
 from typing import Iterator, List, Optional
 
@@ -12,7 +12,7 @@ class Pipeline:
     def __init__(
         self,
         loader: LoaderInterface,
-        methods: List[BackendWrapper],
+        methods: List[MethodWrapper],
         save_results_set: List = [],
         main_pipeline_start: int = 0,
     ):
@@ -30,7 +30,7 @@ class Pipeline:
         return self._main_pipeline_start
 
     # iterator interface to access the methods
-    def __iter__(self) -> Iterator[BackendWrapper]:
+    def __iter__(self) -> Iterator[MethodWrapper]:
         return iter(self._methods)
 
     def __len__(self) -> int:

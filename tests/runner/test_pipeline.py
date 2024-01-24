@@ -2,7 +2,7 @@ from pytest_mock import MockerFixture
 
 from httomo.runner.pipeline import Pipeline
 from httomo.utils import Pattern
-from .testing_utils import make_test_loader, make_test_method
+from ..testing_utils import make_test_loader, make_test_method
 
 
 def test_pipeline_get_loader_properties(mocker: MockerFixture):

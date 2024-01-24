@@ -15,8 +15,8 @@ from httomo.runner.pipeline import Pipeline
 from httomo.runner.platform_section import sectionize
 from httomo.runner.task_runner import TaskRunner
 from httomo.utils import Pattern, xp, gpu_enabled
-from httomo.runner.backend_wrapper import BackendWrapper
-from .testing_utils import make_test_loader, make_test_method
+from httomo.runner.method_wrapper import MethodWrapper
+from ..testing_utils import make_test_loader, make_test_method
 
 
 def test_check_params_for_sweep_raises_exception(
@@ -90,7 +90,7 @@ def test_can_determine_max_slices_with_gpu_estimator(
     dummy_dataset: DataSet,
 ):
     loader = make_test_loader(mocker, dummy_dataset)
-    methods: List[BackendWrapper] = []
+    methods: List[MethodWrapper] = []
     calc_dims_mocks = []
     calc_max_slices_mocks = []
     save_results_list = []

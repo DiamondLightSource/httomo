@@ -11,7 +11,7 @@ import numpy as np
 from httomo.data.hdf.loaders import LoaderData
 from httomo.runner.dataset import DataSet
 from httomo.runner.loader import DarksFlatsFileConfig, RawAngles, StandardTomoLoader, UserDefinedAngles, get_darks_flats
-from .testing_utils import make_mock_repo
+from ..testing_utils import make_mock_repo
 
 
 def test_standard_tomo_loader_get_slicing_dim(

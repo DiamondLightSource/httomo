@@ -1,0 +1,367 @@
+import httomo.globals
+from httomo.data import mpiutil
+from httomo.runner.dataset import DataSetBlock
+from httomo.runner.gpu_utils import gpumem_cleanup
+from httomo.runner.method_wrapper import MethodParameterDictType, MethodParameterValues, MethodWrapper
+from httomo.runner.methods_repository_interface import MethodRepository
+from httomo.runner.output_ref import OutputRef
+from httomo.utils import gpu_enabled, log_rank, xp
+
+
+import numpy as np
+from mpi4py.MPI import Comm
+
+
+from inspect import Parameter, signature
+from typing import Any, Callable, Dict, Optional, Tuple
+
+
+class GenericMethodWrapper(MethodWrapper):
+    """Defines a generic method backend wrapper in httomo which is used by task runner.
+
+    Method parameters (configuration parameters, usually set by the user) can be set either
+    using keyword arguments to the constructor, or by using conventional dictionary set/get methods
+    like::
+
+        wrapper["parameter"] = value
+    """
+
+    @classmethod
+    def should_select_this_class(cls, module_path: str, method_name: str) -> bool:
+        """Method to dermine if this class should be used for wrapper instantiation,
+        given the module path and method name.
+
+        The make_method_wrapper function will iterate through all subclasses and evaluate this
+        condition in the order of declaration, falling back to GenericMethodWrapper if all
+        evaluate to False.
+
+        Therefore, deriving classes should override this method to indicate the criteria
+        when they should be instantiated.
+        """
+        return False
+
+    def __init__(
+        self,
+        method_repository: MethodRepository,
+        module_path: str,
+        method_name: str,
+        comm: Comm,
+        output_mapping: Dict[str, str] = {},
+        **kwargs,
+    ):
+        """Constructs a MethodWrapper for a method located in module_path with the name method_name.
+
+        Parameters
+        ----------
+
+        method_repository: MethodRepository
+            Repository that can be used to build queries about method attributes
+        module_path: str
+            Path to the module where the method is in python notation, e.g. "httomolibgpu.prep.normalize"
+        method_name: str
+            Name of the method (function within the given module)
+        comm: Comm
+            MPI communicator object
+        output_mapping: Dict[str, str]
+            Mapping of side-output names to new ones. Used for propagating side outputs by name.
+        **kwargs:
+            Additional keyword arguments will be set as configuration parameters for this
+            method. Note: The method must actually accept them as parameters.
+        """
+
+        self.comm = comm
+        self._module_path = module_path
+        self._method_name = method_name
+        from importlib import import_module
+
+        self.module = import_module(module_path)
+        self.method: Callable = getattr(self.module, method_name)
+        # get all the method parameter names, so we know which to set on calling it
+        sig = signature(self.method)
+        self.parameters = [
+            k for k, p in sig.parameters.items() if p.kind != Parameter.VAR_KEYWORD
+        ]
+        self._params_with_defaults = [
+            k for k, p in sig.parameters.items() if p.default != Parameter.empty
+        ]
+        self._has_kwargs = any(
+            p.kind == Parameter.VAR_KEYWORD for p in sig.parameters.values()
+        )
+        # check if the given kwargs are actually supported by the method
+        self._config_params = kwargs
+        self._output_mapping = output_mapping
+        self._check_config_params()
+
+        # assign method properties from the methods repository
+        self.query = method_repository.query(module_path, method_name)
+        self.pattern = self.query.get_pattern()
+        self.output_dims_change = self.query.get_output_dims_change()
+        self.implementation = self.query.get_implementation()
+        self.memory_gpu = self.query.get_memory_gpu_params()
+
+        if self.is_gpu and not gpu_enabled:
+            raise ValueError("GPU is not available, please use only CPU methods")
+
+        self._side_output: Dict[str, Any] = dict()
+
+        if gpu_enabled:
+            self.num_gpus = xp.cuda.runtime.getDeviceCount()
+            _id = httomo.globals.gpu_id
+            self.gpu_id = mpiutil.local_rank % self.num_gpus if _id == -1 else _id
+
+    @property
+    def cupyrun(self) -> bool:
+        return self.implementation == "gpu_cupy"
+
+    @property
+    def is_cpu(self) -> bool:
+        return self.implementation == "cpu"
+
+    @property
+    def is_gpu(self) -> bool:
+        return not self.is_cpu
+
+    @property
+    def method_name(self) -> str:
+        return self._method_name
+    
+    @property
+    def module_path(self) -> str:
+        return self._module_path
+
+    @property
+    def package_name(self) -> str:
+        return self.module_path.split(".")[0]
+
+    def __getitem__(self, key: str) -> MethodParameterValues:
+        """Get a parameter for the method using dictionary notation (wrapper["param"])"""
+        return self._config_params[key]
+
+    def __setitem__(self, key: str, value: MethodParameterValues):
+        """Set a parameter for the method using dictionary notation (wrapper["param"] = 42)"""
+        self._config_params[key] = value
+        self._check_config_params()
+
+    @property
+    def config_params(self) -> Dict[str, Any]:
+        """Access a copy of the configuration parameters (cannot be modified directly)"""
+        return {**self._config_params}
+
+    def append_config_params(self, params: MethodParameterDictType):
+        """Append configuration parameters to the existing config_params"""
+        self._config_params |= params
+        self._check_config_params()
+
+    def _check_config_params(self):
+        if self._has_kwargs:
+            return
+        for k in self._config_params.keys():
+            if k not in self.parameters:
+                raise ValueError(
+                    f"{self.method_name}: Unsupported keyword argument given: {k}"
+                )
+
+    @property
+    def recon_algorithm(self) -> Optional[str]:
+        """Determine the recon algorithm used, if the method is reconstruction.
+        Otherwise return None."""
+        return None
+
+    def _build_kwargs(
+        self, dict_params: MethodParameterDictType, dataset: Optional[DataSetBlock] = None
+    ) -> Dict[str, Any]:
+        # first parameter is always the data (if given)
+        ret: Dict[str, Any] = dict()
+        startidx = 0
+        if dataset is not None:
+            ret[self.parameters[startidx]] = dataset.data
+            startidx += 1
+        # other parameters are looked up by name
+        remaining_dict_params = self._resolve_output_refs(dict_params)
+        for p in self.parameters[startidx:]:
+            if dataset is not None and p in dir(dataset):
+                ret[p] = getattr(dataset, p)
+            elif p == "comm":
+                ret[p] = self.comm
+            elif p == "gpu_id":
+                assert gpu_enabled, "methods with gpu_id parameter require GPU support"
+                ret[p] = self.gpu_id
+            elif p in remaining_dict_params:
+                ret[p] = remaining_dict_params[p]
+            elif p in self._params_with_defaults:
+                pass
+            else:
+                raise ValueError(f"Cannot map method parameter {p} to a value")
+            remaining_dict_params.pop(p, None)
+
+        # if method supports kwargs, pass the rest as those
+        if len(remaining_dict_params) > 0 and self._has_kwargs:
+            ret |= remaining_dict_params
+        return ret
+
+    def _resolve_output_refs(self, dict_params: Dict[str, Any]) -> Dict[str, Any]:
+        """Check for OutputRef instances and resolve their value"""
+        ret: Dict[str, Any] = dict()
+        for k, v in dict_params.items():
+            if isinstance(v, OutputRef):
+                v = v.value
+            ret[k] = v
+        return ret
+
+    def execute(self, dataset: DataSetBlock) -> DataSetBlock:
+        """Execute functions for external packages.
+
+        Developer note: Derived classes may override this function or any of the methods
+        it uses to modify behaviour.
+
+        Parameters
+        ----------
+
+        dataset: DataSetBlock
+            A numpy or cupy dataset, mutable (method might work in-place).
+
+        Returns
+        -------
+
+        DataSetBlock
+            A CPU or GPU-based dataset object with the output
+        """
+
+        dataset = self._transfer_data(dataset)
+        dataset = self._preprocess_data(dataset)
+        args = self._build_kwargs(self._transform_params(self._config_params), dataset)
+        dataset = self._run_method(dataset, args)
+        dataset = self._postprocess_data(dataset)
+
+        return dataset
+
+    def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
+        """Runs the actual method - override if special handling is required
+        Or side outputs are produced."""
+        ret = self.method(**args)
+        dataset = self._process_return_type(ret, dataset)
+        return dataset
+
+    def _process_return_type(self, ret: Any, input_dataset: DataSetBlock) -> DataSetBlock:
+        """Checks return type of method call and assigns/creates return DataSetBlock object.
+        Override this method if a return type different from ndarray is produced and
+        needs to be processed in some way.
+        """
+        if type(ret) != np.ndarray and type(ret) != xp.ndarray:
+            raise ValueError(
+                f"Invalid return type for method {self.method_name} (in module {self.module_path})"
+            )
+        if self.query.swap_dims_on_output():
+            ret = ret.swapaxes(0, 1)
+        input_dataset.data = ret
+        return input_dataset
+
+    def get_side_output(self) -> Dict[str, Any]:
+        """Override this method for functions that have a side output. The returned dictionary
+        will be merged with the dict_params parameter passed to execute for all methods that
+        follow in the pipeline"""
+        return {v: self._side_output[k] for k, v in self._output_mapping.items()}
+
+    def _transfer_data(self, dataset: DataSetBlock):
+        if not self.cupyrun:
+            dataset.to_cpu()
+            return dataset
+
+        assert gpu_enabled, "GPU method used on a system without GPU support"
+
+        xp.cuda.Device(self.gpu_id).use()
+        gpulog_str = f"Using GPU {self.gpu_id} to transfer data of shape {xp.shape(dataset.data[0])}"
+        log_rank(gpulog_str, comm=self.comm)
+        gpumem_cleanup()
+        dataset.to_gpu()
+        return dataset
+
+    def _transform_params(self, dict_params: MethodParameterDictType) -> MethodParameterDictType:
+        """Hook for derived classes, for transforming the names of the possible method parameters
+        dictionary, for example to rename some of them or inspect them in some way"""
+        return dict_params
+
+    def _preprocess_data(self, dataset: DataSetBlock) -> DataSetBlock:
+        """Hook for derived classes to implement proprocessing steps, after the data has been
+        transferred and before the method is called"""
+        return dataset
+
+    def _postprocess_data(self, dataset: DataSetBlock) -> DataSetBlock:
+        """Hook for derived classes to implement postprocessing steps, after the method has been
+        called"""
+        return dataset
+
+    def calculate_output_dims(
+        self, non_slice_dims_shape: Tuple[int, int]
+    ) -> Tuple[int, int]:
+        """Calculate the dimensions of the output for this method"""
+        if self.output_dims_change:
+            return self.query.calculate_output_dims(
+                non_slice_dims_shape, **self.config_params
+            )
+
+        return non_slice_dims_shape
+
+    def calculate_max_slices(
+        self,
+        data_dtype: np.dtype,
+        non_slice_dims_shape: Tuple[int, int],
+        available_memory: int,
+        darks: np.ndarray,
+        flats: np.ndarray,
+    ) -> Tuple[int, int]:
+        """If it runs on GPU, determine the maximum number of slices that can fit in the
+        available memory in bytes, and return a tuple of
+
+        (max_slices, available_memory)
+
+        The available memory may have been adjusted for the methods that follow, in case
+        something persists afterwards.
+        """
+        if self.is_cpu or not gpu_enabled:
+            return int(100e9), available_memory
+
+        # if we have no information, we assume in-place operation with no extra memory
+        if len(self.memory_gpu) == 0:
+            return (
+                int(available_memory
+                // (np.prod(non_slice_dims_shape) * data_dtype.itemsize)),
+                available_memory,
+            )
+
+        # NOTE: This could go directly into the methodquery / method database,
+        # and here we just call calculated_memory_bytes
+        memory_bytes_method = 0
+        for field in self.memory_gpu:
+            subtract_bytes = 0
+            # loop over the dataset names given in the library file and extracting
+            # the corresponding dimensions from the available datasets
+            if field.dataset in ["flats", "darks"]:
+                assert field.multiplier is not None
+                # for normalisation module dealing with flats and darks separately
+                array: np.ndarray = flats if field.dataset == "flats" else darks
+                available_memory -= int(field.multiplier * array.nbytes)
+            else:
+                # deal with the rest of the data
+                if field.method == "direct":
+                    assert field.multiplier is not None
+                    # this calculation assumes a direct (simple) correspondence through multiplier
+                    memory_bytes_method += int(
+                        field.multiplier
+                        * np.prod(non_slice_dims_shape)
+                        * data_dtype.itemsize
+                    )
+                else:
+                    (
+                        memory_bytes_method,
+                        subtract_bytes,
+                    ) = self.query.calculate_memory_bytes(
+                        non_slice_dims_shape, data_dtype, **self.config_params
+                    )
+
+        if memory_bytes_method == 0:
+            return available_memory - subtract_bytes, available_memory
+
+        return (
+            available_memory - subtract_bytes
+        ) // memory_bytes_method, available_memory

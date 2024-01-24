@@ -11,7 +11,7 @@ from mpi4py.MPI import Comm
 from httomo.methods_database.query import MethodDatabaseRepository
 from httomo.runner.pipeline import Pipeline
 
-from httomo.runner.backend_wrapper import make_backend_wrapper
+from httomo.method_wrappers import make_method_wrapper
 from httomo.runner.loader import make_loader
 from httomo.runner.output_ref import OutputRef
 
@@ -84,7 +84,7 @@ class UiLayer:
                                     # refer to methods_list[items[0]-1]
                                     task_conf['parameters'][key] = OutputRef(methods_list[items[0]-1], ref_arg)
                 # unpack params of a method and append to a list of methods
-                method = make_backend_wrapper(
+                method = make_method_wrapper(
                     self.repo,
                     task_conf['module_path'],
                     task_conf['method'],

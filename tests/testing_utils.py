@@ -1,5 +1,5 @@
 from typing import List, Optional
-from httomo.runner.backend_wrapper import BackendWrapper
+from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.dataset import DataSet
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
@@ -19,9 +19,9 @@ def make_test_method(
     method_name="testmethod",
     module_path="testpath",
     **kwargs,
-) -> BackendWrapper:
+) -> MethodWrapper:
     mock = mocker.create_autospec(
-        BackendWrapper,
+        MethodWrapper,
         instance=True,
         method_name=method_name,
         module_path=module_path,

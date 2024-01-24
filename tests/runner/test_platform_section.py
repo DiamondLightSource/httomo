@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.platform_section import sectionize, PlatformSection
 from httomo.utils import Pattern
-from .testing_utils import make_test_loader, make_test_method
+from ..testing_utils import make_test_loader, make_test_method
 
 
 def test_determine_single_method(mocker: MockerFixture):

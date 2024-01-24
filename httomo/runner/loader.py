@@ -24,7 +24,7 @@ from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import Pattern, _get_slicing_dim
 
-from httomo.runner.backend_wrapper import BackendWrapper
+from httomo.runner.method_wrapper import MethodWrapper
 
 
 class LoaderInterface(Protocol):
