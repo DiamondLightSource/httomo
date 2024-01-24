@@ -78,6 +78,47 @@ class UserDefinedAngles(NamedTuple):
 
 AnglesConfig: TypeAlias = Union[RawAngles, UserDefinedAngles]
 
+class PreviewDimConfig(NamedTuple):
+    start: int
+    stop: int
+
+class PreviewConfig(NamedTuple):
+    angles: PreviewDimConfig
+    detector_y: PreviewDimConfig
+    detector_x: PreviewDimConfig
+
+class Preview:
+    def __init__(
+        self,
+        preview_config: PreviewConfig,
+        dataset: h5py.Dataset,
+    ) -> None:
+        self.config = preview_config
+        self._dataset = dataset
+        self._check_within_data_bounds()
+
+    def _check_within_data_bounds(self) -> None:
+        shape = self._dataset.shape
+        if self.config.angles.stop > shape[0]:
+            raise ValueError(
+                f"Preview indices in angles dim exceed bounds of data: "
+                f"start={self.config.angles.start}, stop={self.config.angles.stop}"
+            )
+
+        if self.config.detector_y.stop > shape[1]:
+            raise ValueError(
+                f"Preview indices in det y dim exceed bounds of data: "
+                f"start={self.config.detector_y.start}, "
+                f"stop={self.config.detector_y.stop}"
+            )
+
+        if self.config.detector_x.stop > shape[2]:
+            raise ValueError(
+                f"Preview indices in det x dim exceed bounds of data: "
+                f"start={self.config.detector_x.start}, "
+                f"stop={self.config.detector_x.stop}"
+            )
+
 
 class StandardTomoLoader(DataSetSource):
     """
