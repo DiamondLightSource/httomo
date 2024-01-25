@@ -33,6 +33,9 @@ class Pipeline:
 
     def __len__(self) -> int:
         return len(self._methods)
+    
+    def __getitem__(self, idx: int) -> MethodWrapper:
+        return self._methods[idx]
 
     @property
     def loader_pattern(self) -> Pattern:
