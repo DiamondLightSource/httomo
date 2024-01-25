@@ -434,6 +434,7 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
 )
 def test_preview_bound_checking(
     standard_data_path: str,
+    standard_image_key_path: str,
     preview_config: PreviewConfig,
     is_error_expected: bool,
     err_str: str,
@@ -441,14 +442,49 @@ def test_preview_bound_checking(
     IN_FILE = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
     f = h5py.File(IN_FILE, "r")
     dataset = f[standard_data_path]
+    image_key = f[standard_image_key_path]
 
     if is_error_expected:
         with pytest.raises(ValueError, match=err_str):
-            _ = Preview(preview_config, dataset)
+            _ = Preview(
+                preview_config=preview_config,
+                dataset=dataset,
+                image_key=image_key,
+            )
     else:
-        preview = Preview(preview_config, dataset)
+        preview = Preview(
+            preview_config=preview_config,
+            dataset=dataset,
+            image_key=image_key,
+        )
         assert preview.config == preview_config
 
+    f.close()
+
+
+def test_preview_calculate_data_indices_excludes_darks_flats(
+    standard_data_path: str,
+    standard_image_key_path:str,
+):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+    f = h5py.File(IN_FILE_PATH, "r")
+    dataset = f[standard_data_path]
+    image_key = f[standard_image_key_path]
+    all_indices: np.ndarray = image_key[:]
+    data_indices = np.where(all_indices == 0)[0]
+
+    config = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=220),
+        detector_y=PreviewDimConfig(start=0, stop=128),
+        detector_x=PreviewDimConfig(start=0, stop=160),
+    )
+    preview = Preview(
+        preview_config=config,
+        dataset=dataset,
+        image_key=image_key,
+    )
+    assert not np.array_equal(preview.data_indices, all_indices)
+    assert np.array_equal(preview.data_indices, data_indices)
     f.close()
 
 
