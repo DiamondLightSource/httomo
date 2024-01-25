@@ -9,8 +9,7 @@ from ..testing_utils import make_test_loader, make_test_method
 def test_determine_single_method(mocker: MockerFixture):
     p = Pipeline(
         loader=make_test_loader(mocker),
-        methods=[make_test_method(mocker, method_name="testmethod")],
-        save_results_set=[False],
+        methods=[make_test_method(mocker, method_name="testmethod")]
     )
     s = sectionize(p, False)
     assert len(s) == 1
@@ -22,8 +21,7 @@ def test_sectionizer_can_iterate_saveall(mocker: MockerFixture):
         loader=make_test_loader(mocker),
         methods=[
             make_test_method(mocker, method_name=f"testmethod{i}") for i in range(3)
-        ],
-        save_results_set=[False, False, False],
+        ]
     )
 
     s = sectionize(p, True)
@@ -56,8 +54,7 @@ def test_sectionizer_two_cpu(mocker: MockerFixture):
         methods=[
             make_test_method(mocker, pattern=Pattern.projection),
             make_test_method(mocker, pattern=Pattern.projection),
-        ],
-        save_results_set=[False, False],
+        ]
     )
     s = sectionize(p, False)
     assert len(s) == 1
@@ -72,8 +69,7 @@ def test_sectionizer_pattern_change(mocker: MockerFixture):
         methods=[
             make_test_method(mocker, pattern=Pattern.projection),
             make_test_method(mocker, pattern=Pattern.sinogram),
-        ],
-        save_results_set=[False, False],
+        ]
     )
     s = sectionize(p, False)
     assert len(s) == 2
@@ -91,8 +87,7 @@ def test_sectionizer_platform_change(mocker: MockerFixture):
         methods=[
             make_test_method(mocker, gpu=True),
             make_test_method(mocker, gpu=False),
-        ],
-        save_results_set=[False, False],
+        ]
     )
 
     s = sectionize(p, False)
@@ -135,9 +130,7 @@ def test_determine_platform_sections_pattern_all_combine(
         methods=[
             make_test_method(mocker, pattern=pattern1),
             make_test_method(mocker, pattern=pattern2),
-        ],
-        save_results_set=[False, False]
-
+        ]
     )
 
     s = sectionize(p, False)
@@ -155,12 +148,11 @@ def test_sectionizer_save_result_triggers_new_section(mocker: MockerFixture):
     p = Pipeline(
         loader=make_test_loader(mocker),
         methods=[
-            make_test_method(mocker, pattern=Pattern.projection),
-            make_test_method(mocker, pattern=Pattern.projection),
-            make_test_method(mocker, pattern=Pattern.projection),
-            make_test_method(mocker, pattern=Pattern.projection),
-        ],
-        save_results_set=[True, False, True, False],
+            make_test_method(mocker, pattern=Pattern.projection, save_result=True),
+            make_test_method(mocker, pattern=Pattern.projection, save_result=False),
+            make_test_method(mocker, pattern=Pattern.projection, save_result=True),
+            make_test_method(mocker, pattern=Pattern.projection, save_result=False),
+        ]
     )
 
     s = sectionize(p, False)
@@ -185,8 +177,7 @@ def test_sectionizer_global_stats_triggers_new_section(mocker: MockerFixture):
                 mocker, pattern=Pattern.projection, glob_stats=True, method_name="m3"
             ),
             make_test_method(mocker, pattern=Pattern.projection, method_name="m4"),
-        ],
-        save_results_set=[False, False, False, False],
+        ]
     )
 
     s = sectionize(p, False)
@@ -229,8 +220,7 @@ def test_sectionizer_needs_reslice(
         methods=[
             make_test_method(mocker, pattern=pattern1, gpu=True),
             make_test_method(mocker, pattern=pattern2, gpu=False),
-        ],
-        save_results_set=[False, False],
+        ]
     )
 
     s = sectionize(p, False)
@@ -254,8 +244,7 @@ def test_sectionizer_inherits_pattern_from_before_if_all(
         methods=[
             make_test_method(mocker, pattern=pattern, gpu=True),
             make_test_method(mocker, pattern=Pattern.all, gpu=False),
-        ],
-        save_results_set=[False, False],
+        ]
     )
 
     s = sectionize(p, False)
@@ -271,8 +260,7 @@ def test_sectionizer_inherits_loader_pattern(
 ):
     p = Pipeline(
         loader=make_test_loader(mocker, pattern=loader_pattern),
-        methods=[make_test_method(mocker, pattern=Pattern.all, gpu=True)],
-        save_results_set=[False],
+        methods=[make_test_method(mocker, pattern=Pattern.all, gpu=True)]
     )
 
     s = sectionize(p, False)
@@ -284,8 +272,7 @@ def test_sectionizer_inherits_loader_pattern(
 def test_sectionizer_sets_islast_single(mocker: MockerFixture):
     p = Pipeline(
         loader=make_test_loader(mocker, pattern=Pattern.projection),
-        methods=[make_test_method(mocker, pattern=Pattern.projection, gpu=True)],
-        save_results_set=[False]
+        methods=[make_test_method(mocker, pattern=Pattern.projection, gpu=True)]
     )
     s = sectionize(p, False)
 
@@ -298,8 +285,7 @@ def test_sectionizer_sets_islast_multiple(mocker: MockerFixture):
         methods=[
             make_test_method(mocker, pattern=Pattern.projection, gpu=True),
             make_test_method(mocker, pattern=Pattern.sinogram, gpu=True),
-        ],
-        save_results_set=[False, False]
+        ]
     )
     s = sectionize(p, False)
 
@@ -311,8 +297,7 @@ def test_sectionizer_sets_reslice_in_loader(mocker: MockerFixture):
     loader = make_test_loader(mocker, pattern=Pattern.sinogram)
     p = Pipeline(
         loader=loader,
-        methods=[make_test_method(mocker, pattern=Pattern.projection, gpu=True)],
-        save_results_set=[False],
+        methods=[make_test_method(mocker, pattern=Pattern.projection, gpu=True)]
     )
 
     s = sectionize(p, False)
@@ -330,7 +315,6 @@ def test_sectionizer_preprocess_in_own_section(mocker: MockerFixture):
             make_test_method(mocker, pattern=Pattern.projection),
             make_test_method(mocker, pattern=Pattern.projection),
         ],
-        save_results_set=[False, False],
         main_pipeline_start=1,
     )
 

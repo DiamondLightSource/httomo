@@ -18,6 +18,7 @@ def make_test_method(
     pattern=Pattern.projection,
     method_name="testmethod",
     module_path="testpath",
+    save_result=False,
     **kwargs,
 ) -> MethodWrapper:
     mock = mocker.create_autospec(
@@ -28,6 +29,7 @@ def make_test_method(
         pattern=pattern,
         is_gpu=gpu,
         is_cpu=not gpu,
+        save_result=save_result,
         config_params=kwargs,
         __getitem__=lambda _, k: kwargs[k],  # return kwargs value from dict access
     )

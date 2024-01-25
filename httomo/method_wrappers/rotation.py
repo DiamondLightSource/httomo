@@ -38,11 +38,12 @@ class RotationWrapper(GenericMethodWrapper):
         module_path: str,
         method_name: str,
         comm: Comm,
+        save_result: Optional[bool] = None,
         output_mapping: Dict[str, str] = {},
         **kwargs,
     ):
         super().__init__(
-            method_repository, module_path, method_name, comm, output_mapping, **kwargs
+            method_repository, module_path, method_name, comm, save_result, output_mapping, **kwargs
         )
         if self.pattern not in [Pattern.sinogram, Pattern.all]:
             raise NotImplementedError(

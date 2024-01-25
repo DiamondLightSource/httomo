@@ -15,6 +15,16 @@ class MethodWrapper(Protocol):
     methods in a generic way."""
     
     @property
+    def task_id(self) -> str:
+        """Returns the task id for this method"""
+        ... # pragma: nocover
+        
+    @property
+    def save_result(self) -> bool:
+        """Whether to save the result of this method to intermediate files"""
+        ... # pragma: nocover
+    
+    @property
     def method_name(self) -> str:
         """Returns the name of the method function"""
         ... # pragma: nocover

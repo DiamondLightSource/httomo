@@ -5,22 +5,26 @@ misc:
       output_dims_change: False
       implementation: cpu
       memory_gpu: None
+      save_result_default: False
   images:
     save_to_images:
       pattern: all
       output_dims_change: False
       implementation: cpu
       memory_gpu: None
+      save_result_default: False
   segm:
     binary_thresholding:
       pattern: all
       output_dims_change: False
       implementation: cpu
       memory_gpu: None
+      save_result_default: False
 prep:
   phase:
     paganin_filter:
       pattern: projection
       output_dims_change: False
       implementation: cpu
-      memory_gpu: None      
+      memory_gpu: None
+      save_result_default: False

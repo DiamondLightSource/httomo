@@ -13,12 +13,10 @@ class Pipeline:
         self,
         loader: LoaderInterface,
         methods: List[MethodWrapper],
-        save_results_set: List = [],
         main_pipeline_start: int = 0,
     ):
         self._methods = methods
         self._loader = loader
-        self._save_results_set = save_results_set
         self._main_pipeline_start = main_pipeline_start
 
     @property

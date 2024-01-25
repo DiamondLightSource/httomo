@@ -12,7 +12,7 @@ import httomo.method_wrappers.rotation  # noqa: F401; pylint: disable=unused-var
 import httomo.method_wrappers.stats_calc  # noqa: F401; pylint: disable=unused-variable
 
 from mpi4py.MPI import Comm
-from typing import Dict
+from typing import Dict, Optional
 
 
 def make_method_wrapper(
@@ -20,6 +20,7 @@ def make_method_wrapper(
     module_path: str,
     method_name: str,
     comm: Comm,
+    save_result: Optional[bool] = None,
     output_mapping: Dict[str, str] = {},
     **kwargs,
 ) -> MethodWrapper:
@@ -38,6 +39,9 @@ def make_method_wrapper(
         Name of the method (function within the given module)
     comm: Comm
         MPI communicator object
+    save_result: Optional[bool]
+            Should the method's result be saved to an intermediate h5 file? If not given (or None),
+            it queries the method database for the default value.
     output_mapping: Dict[str, str]
         A dictionary mapping output names to translated ones. The side outputs will be renamed
         as specified, if the parameter is given. If not, no side outputs will be passed on.
@@ -67,6 +71,7 @@ def make_method_wrapper(
         module_path=module_path,
         method_name=method_name,
         comm=comm,
+        save_result=save_result,
         output_mapping=output_mapping,
         **kwargs,
     )

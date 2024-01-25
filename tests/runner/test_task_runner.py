@@ -32,8 +32,7 @@ def test_check_params_for_sweep_raises_exception(
                     2,
                 ),
             )
-        ],
-        save_results_set=[False],
+        ]
     )
     t = TaskRunner(p, reslice_dir=tmp_path)
     with pytest.raises(ValueError) as e:
@@ -43,7 +42,7 @@ def test_check_params_for_sweep_raises_exception(
 def test_can_load_datasets(mocker: MockerFixture, tmp_path: PathLike):
     loader = make_test_loader(mocker)
     mksrc = mocker.patch.object(loader, "make_data_source")
-    p = Pipeline(loader=loader, methods=[make_test_method(mocker)], save_results_set=[False])
+    p = Pipeline(loader=loader, methods=[make_test_method(mocker)])
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
 
@@ -61,7 +60,7 @@ def test_can_determine_max_slices_no_gpu_estimator(
     loader = make_test_loader(mocker, dummy_dataset)
     method = make_test_method(mocker, gpu=True)
     method.memory_gpu = []
-    p = Pipeline(loader=loader, methods=[method], save_results_set=[False])
+    p = Pipeline(loader=loader, methods=[method])
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
     s = sectionize(p, False)
@@ -93,7 +92,6 @@ def test_can_determine_max_slices_with_gpu_estimator(
     methods: List[MethodWrapper] = []
     calc_dims_mocks = []
     calc_max_slices_mocks = []
-    save_results_list = []
     for i, max_slices in enumerate(max_slices_methods):
         method = make_test_method(mocker, gpu=True)
         method.memory_gpu = [
@@ -108,8 +106,7 @@ def test_can_determine_max_slices_with_gpu_estimator(
             )
         )
         methods.append(method)
-        save_results_list.append(False)
-    p = Pipeline(loader=loader, methods=methods, save_results_set=save_results_list)
+    p = Pipeline(loader=loader, methods=methods)
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
     s = sectionize(p, False)
@@ -139,7 +136,7 @@ def test_can_determine_max_slices_with_cpu(
     for _ in range(3):
         method = make_test_method(mocker, gpu=False)
         methods.append(method)
-    p = Pipeline(loader=loader, methods=methods, save_results_set=[False, False, False])
+    p = Pipeline(loader=loader, methods=methods)
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
     s = sectionize(p, False)
@@ -162,7 +159,7 @@ def test_calls_update_side_inputs_after_call(
     mocker.patch.object(method1, "get_side_output", return_value=side_outputs)
     method2 = make_test_method(mocker)
 
-    p = Pipeline(loader=loader, methods=[method1, method2], save_results_set=[False, False])
+    p = Pipeline(loader=loader, methods=[method1, method2])
     t = TaskRunner(p, reslice_dir=tmp_path)
     spy = mocker.patch.object(t, "update_side_inputs")
     t._prepare()
@@ -187,8 +184,7 @@ def test_update_side_inputs_updates_downstream_methods(
 
     p = Pipeline(
         loader=loader,
-        methods=[method1, method2, method3],
-        save_results_set=[False, False, False],
+        methods=[method1, method2, method3]
     )
     t = TaskRunner(p, reslice_dir=tmp_path)
     t.method_index = 2  # pretend we're after executing method1
@@ -205,7 +201,7 @@ def test_execute_section_calls_blockwise_execute(
     original_value = dummy_dataset.data[0, 0, 0]  # it has all the same number
     loader = make_test_loader(mocker, dummy_dataset)
     method = make_test_method(mocker, method_name="m1")
-    p = Pipeline(loader=loader, methods=[method], save_results_set=[False])
+    p = Pipeline(loader=loader, methods=[method])
     s = sectionize(p, False)
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
@@ -240,7 +236,7 @@ def test_execute_section_for_block(
     method1 = make_test_method(mocker, method_name="m1")
     method2 = make_test_method(mocker, method_name="m2")
     p = Pipeline(
-        loader=loader, methods=[method1, method2], save_results_set=[False, False]
+        loader=loader, methods=[method1, method2]
     )
     s = sectionize(p, False)
     t = TaskRunner(p, reslice_dir=tmp_path)
@@ -263,7 +259,7 @@ def test_does_reslice_when_needed(
     method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
     block2 = dummy_dataset.make_block(1)
     mocker.patch.object(method2, "execute", return_value=block2)
-    p = Pipeline(loader=loader, methods=[method1, method2], save_results_set=[False, False])
+    p = Pipeline(loader=loader, methods=[method1, method2])
     t = TaskRunner(p, reslice_dir=tmp_path)
 
     t.execute()
@@ -290,8 +286,7 @@ def test_warns_with_multiple_reslices(
     method3 = make_test_method(mocker, method_name="m3", pattern=Pattern.projection)
     p = Pipeline(
         loader=loader,
-        methods=[method1, method2, method3],
-        save_results_set=[False, False, False],
+        methods=[method1, method2, method3]
     )
     t = TaskRunner(p, reslice_dir=tmp_path)
 
@@ -334,7 +329,7 @@ def test_saves_intermediate_results(
     method1.recon_algorithm = "testalgo"
     method2 = make_test_method(mocker, method_name="m2")
     p = Pipeline(
-        loader=loader, methods=[method1, method2], save_results_set=[True, False]
+        loader=loader, methods=[method1, method2]
     )
     t = TaskRunner(p)
 

@@ -9,7 +9,7 @@ from mpi4py.MPI import Comm
 
 
 import os
-from typing import Dict
+from typing import Dict, Optional
 
 
 class ImagesWrapper(GenericMethodWrapper):
@@ -26,12 +26,13 @@ class ImagesWrapper(GenericMethodWrapper):
         module_path: str,
         method_name: str,
         comm: Comm,
-        out_dir: os.PathLike = httomo.globals.run_out_dir,
+        save_result: Optional[bool] = None,
         output_mapping: Dict[str, str] = {},
+        out_dir: os.PathLike = httomo.globals.run_out_dir,
         **kwargs,
     ):
         super().__init__(
-            method_repository, module_path, method_name, comm, output_mapping, **kwargs
+            method_repository, module_path, method_name, comm, save_result, output_mapping, **kwargs
         )
         self["out_dir"] = out_dir
         self["comm_rank"] = comm.rank

@@ -109,6 +109,9 @@ class MethodsDatabaseQuery(MethodQuery):
                 f"The ipmlementation arch {p} listed for method {self.module_path}.{self.method_name} is invalid"
             )
         return p
+    
+    def save_result_default(self) -> bool:
+        return get_method_info(self.module_path, self.method_name, "save_result_default")
 
     def get_memory_gpu_params(
         self,

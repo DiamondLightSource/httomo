@@ -46,6 +46,7 @@ class GenericMethodWrapper(MethodWrapper):
         module_path: str,
         method_name: str,
         comm: Comm,
+        save_result: Optional[bool] = None,
         output_mapping: Dict[str, str] = {},
         **kwargs,
     ):
@@ -62,6 +63,9 @@ class GenericMethodWrapper(MethodWrapper):
             Name of the method (function within the given module)
         comm: Comm
             MPI communicator object
+        save_result: Optional[bool]
+            Should the method's result be saved to an intermediate h5 file? If not given (or None),
+            it queries the method database for the default value.
         output_mapping: Dict[str, str]
             Mapping of side-output names to new ones. Used for propagating side outputs by name.
         **kwargs:
@@ -98,6 +102,7 @@ class GenericMethodWrapper(MethodWrapper):
         self.output_dims_change = self.query.get_output_dims_change()
         self.implementation = self.query.get_implementation()
         self.memory_gpu = self.query.get_memory_gpu_params()
+        self._save_result = self.query.save_result_default() if save_result is None else save_result
 
         if self.is_gpu and not gpu_enabled:
             raise ValueError("GPU is not available, please use only CPU methods")
@@ -108,6 +113,14 @@ class GenericMethodWrapper(MethodWrapper):
             self.num_gpus = xp.cuda.runtime.getDeviceCount()
             _id = httomo.globals.gpu_id
             self.gpu_id = mpiutil.local_rank % self.num_gpus if _id == -1 else _id
+
+    @property
+    def task_id(self) -> str:
+        return ""
+        
+    @property
+    def save_result(self) -> bool:
+        return self._save_result
 
     @property
     def cupyrun(self) -> bool:

@@ -47,7 +47,6 @@ class UiLayer:
 
     def build_pipeline(self) -> Pipeline:
         side_outputs_collect: list = [] # saves [task_no, id, side_outputs] for tasks with side_outputs
-        save_result_collect: list = [] 
         methods_list: list = []
         for task_no, task_conf in enumerate(self.PipelineStageConfig):
             if "loaders" in task_conf['module_path']:
@@ -63,10 +62,6 @@ class UiLayer:
             else:
                 if "parameters" not in task_conf:
                     task_conf['parameters'] = {}
-                if "save_result" not in task_conf:
-                    save_result_collect.append(False)
-                else:
-                    save_result_collect.append(task_conf['save_result'])
                 if "side_outputs" not in task_conf:
                     task_conf['side_outputs'] = {}
                 else:
@@ -90,13 +85,13 @@ class UiLayer:
                     task_conf['method'],
                     self.comm,
                     task_conf['side_outputs'],
+                    save_result=task_conf.get('save_result', None),
                     **task_conf['parameters'],
                 )
                 methods_list.append(method)
         return Pipeline(
             loader=loader,
-            methods=methods_list,
-            save_results_set=save_result_collect,
+            methods=methods_list
         )
 
 def _yaml_loader(file_path: Path) -> list:

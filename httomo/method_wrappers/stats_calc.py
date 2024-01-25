@@ -8,7 +8,7 @@ from httomo.utils import log_rank
 from mpi4py.MPI import Comm
 from mpi4py import MPI
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 
 class StatsCalcWrapper(GenericMethodWrapper):
@@ -29,11 +29,12 @@ class StatsCalcWrapper(GenericMethodWrapper):
         module_path: str,
         method_name: str,
         comm: Comm,
+        save_result: Optional[bool] = None,
         output_mapping: Dict[str, str] = {},
         **kwargs,
     ):
         super().__init__(
-            method_repository, module_path, method_name, comm, output_mapping, **kwargs
+            method_repository, module_path, method_name, comm, save_result, output_mapping, **kwargs
         )
         self._min = float("inf")
         self._max = float("-inf")

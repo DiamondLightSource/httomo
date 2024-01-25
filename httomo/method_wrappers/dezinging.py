@@ -3,7 +3,7 @@ from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import MethodRepository
 
 from mpi4py.MPI import Comm
-from typing import Dict
+from typing import Dict, Optional
 
 
 class DezingingWrapper(GenericMethodWrapper):
@@ -22,11 +22,12 @@ class DezingingWrapper(GenericMethodWrapper):
         module_path: str,
         method_name: str,
         comm: Comm,
+        save_result: Optional[bool] = None,
         output_mapping: Dict[str, str] = {},
         **kwargs,
     ):
         super().__init__(
-            method_repository, module_path, method_name, comm, output_mapping, **kwargs
+            method_repository, module_path, method_name, comm, save_result, output_mapping, **kwargs
         )
         assert (
             method_name == "remove_outlier3d"

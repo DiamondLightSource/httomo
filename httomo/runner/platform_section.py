@@ -91,10 +91,8 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
             current_methods.append(method)
             if current_pattern == Pattern.all:
                 current_pattern = method.pattern
-        if save_all:
-            save_previous_result = True
-        else:
-            save_previous_result = pipeline._save_results_set[i]
+        save_previous_result = save_all or method.save_result
+        
 
     finish_section(save_previous_result=save_previous_result)
     sections[-1].is_last = True
