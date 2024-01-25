@@ -92,10 +92,13 @@ class Preview:
         self,
         preview_config: PreviewConfig,
         dataset: h5py.Dataset,
+        image_key: h5py.Dataset,
     ) -> None:
         self.config = preview_config
         self._dataset = dataset
+        self._image_key = image_key
         self._check_within_data_bounds()
+        self._data_indices = self._calculate_data_indices()
 
     def _check_within_data_bounds(self) -> None:
         shape = self._dataset.shape
@@ -118,6 +121,19 @@ class Preview:
                 f"start={self.config.detector_x.start}, "
                 f"stop={self.config.detector_x.stop}"
             )
+
+    def _calculate_data_indices(self) -> List[int]:
+        hdf5_data_indices = np.where(
+            self._image_key[:] == 0
+        )[0].tolist()
+        preview_data_indices = np.arange(
+            self.config.angles.start, self.config.angles.stop
+        )
+        return np.intersect1d(hdf5_data_indices, preview_data_indices).tolist()
+
+    @property
+    def data_indices(self) -> List[int]:
+        return self._data_indices
 
 
 class StandardTomoLoader(DataSetSource):
