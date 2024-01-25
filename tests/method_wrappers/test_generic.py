@@ -96,10 +96,15 @@ def test_generic_fails_with_wrong_returntype(
 
 def test_generic_sets_gpuid(mocker: MockerFixture, dummy_dataset: DataSet):
     mocker.patch("httomo.method_wrappers.generic.gpu_enabled", True)
+    mocker.patch(
+        "httomo.method_wrappers.generic.xp.cuda.runtime.getDeviceCount", return_value=4
+    )
+    mocker.patch("httomo.method_wrappers.generic.httomo.globals.gpu_id", -1)
+    mocker.patch("httomo.method_wrappers.generic.mpiutil.local_rank", 3)
 
     class FakeModule:
         def fake_method(data, gpu_id: int):
-            assert gpu_id == 4
+            assert gpu_id == 3
             return data
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
@@ -107,7 +112,6 @@ def test_generic_sets_gpuid(mocker: MockerFixture, dummy_dataset: DataSet):
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
 
-    wrp.gpu_id = 4
     wrp.execute(dummy_dataset.make_block(0))
 
 
@@ -529,20 +533,21 @@ def test_generic_calculate_max_slices_module(
     memory_gpu = [
         GpuMemoryRequirement(dataset="tomo", multiplier=None, method="module")
     ]
+    repo = make_mock_repo(
+        mocker,
+        pattern=Pattern.projection,
+        output_dims_change=True,
+        implementation="gpu_cupy",
+        memory_gpu=memory_gpu,
+    )
+    memcalc_mock = mocker.patch.object(
+        repo.query("", ""), "calculate_memory_bytes", return_value=(1234, 5678)
+    )
     wrp = make_method_wrapper(
-        make_mock_repo(
-            mocker,
-            pattern=Pattern.projection,
-            output_dims_change=True,
-            implementation="gpu_cupy",
-            memory_gpu=memory_gpu,
-        ),
+        repo,
         "mocked_module_path",
         "test_method",
         MPI.COMM_WORLD,
-    )
-    memcalc_mock = mocker.patch.object(
-        wrp.query, "calculate_memory_bytes", return_value=(1234, 5678)
     )
     shape_t = list(dummy_dataset.data.shape)
     shape_t.pop(0)
@@ -572,23 +577,23 @@ def test_generic_calculate_output_dims(mocker: MockerFixture):
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
     memory_gpu: List[GpuMemoryRequirement] = []
+    repo = make_mock_repo(
+        mocker,
+        pattern=Pattern.projection,
+        output_dims_change=True,
+        implementation="gpu_cupy",
+        memory_gpu=memory_gpu,
+    )
+    memcalc_mock = mocker.patch.object(
+        repo.query("", ""), "calculate_output_dims", return_value=(1234, 5678)
+    )
     wrp = make_method_wrapper(
-        make_mock_repo(
-            mocker,
-            pattern=Pattern.projection,
-            output_dims_change=True,
-            implementation="gpu_cupy",
-            memory_gpu=memory_gpu,
-        ),
+        repo,
         "mocked_module_path",
         "test_method",
         MPI.COMM_WORLD,
     )
     wrp["testparam"] = 32
-
-    memcalc_mock = mocker.patch.object(
-        wrp.query, "calculate_output_dims", return_value=(1234, 5678)
-    )
 
     dims = wrp.calculate_output_dims((10, 10))
 

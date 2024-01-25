@@ -1,10 +1,12 @@
 from httomo.runner.dataset import DataSetBlock
-from httomo.utils import xp
+from httomo.runner.methods_repository_interface import GpuMemoryRequirement
+from httomo.utils import Pattern, xp
 
 import numpy as np
+from mpi4py import MPI
 
 import os
-from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Protocol, Tuple, Union
 
 MethodParameterValues = Union[str, bool, int, float, os.PathLike, np.ndarray, xp.ndarray]
 MethodParameterDictType = Dict[str, Union[MethodParameterValues, List[MethodParameterValues]]]
@@ -14,11 +16,41 @@ class MethodWrapper(Protocol):
     """Interface for method wrappers, that is used by the pipeline and task runners to execute
     methods in a generic way."""
     
+    # read/write properties
+    task_id: str
+    pattern: Pattern
+    
+    # read-only properties
     @property
-    def task_id(self) -> str:
-        """Returns the task id for this method"""
-        ... # pragma: nocover
+    def comm(self) -> MPI.Comm:
+        """The MPI communicator used"""
+        ...
+    
+    @property
+    def method(self) -> Callable:
+        """The actual method underlying this wrapper"""
+        ...
+    
+    @property
+    def parameters(self) -> List[str]:
+        """List of parameter names of the underlying method"""
+        ...  # pragma: nocover
+
+    @property
+    def memory_gpu(self) -> List[GpuMemoryRequirement]:
+        """Memory requirements for GPU execution"""
+        ...  # pragma: nocover
         
+    @property
+    def implementation(self) -> Literal["gpu", "cpu", "gpu_cupy"]:
+        """Implementation of this method"""
+        ...  # pragma: nocover
+        
+    @property
+    def output_dims_change(self) -> bool:
+        """Whether output dimensions change after executing this method"""
+        ...  # pragma: nocover
+    
     @property
     def save_result(self) -> bool:
         """Whether to save the result of this method to intermediate files"""
@@ -54,6 +86,18 @@ class MethodWrapper(Protocol):
         """True if this is a GPU method"""
         ... # pragma: nocover
     
+    @property
+    def config_params(self) -> Dict[str, Any]:
+        """Access a copy of the configuration parameters (cannot be modified directly)"""
+        ... # pragma: nocover
+        
+    @property
+    def recon_algorithm(self) -> Optional[str]:
+        """Determine the recon algorithm used, if the method is reconstruction.
+        Otherwise return None."""
+        ... # pragma: nocover
+
+    # Methods
 
     def __getitem__(self, key: str) -> MethodParameterValues:
         """Get a parameter for the method using dictionary notation (wrapper["param"])"""
@@ -63,20 +107,11 @@ class MethodWrapper(Protocol):
         """Set a parameter for the method using dictionary notation (wrapper["param"] = 42)"""
         ... # pragma: nocover
 
-    @property
-    def config_params(self) -> Dict[str, Any]:
-        """Access a copy of the configuration parameters (cannot be modified directly)"""
-        ... # pragma: nocover
 
     def append_config_params(self, params: MethodParameterDictType):
         """Appends to the configuration parameters all values that are in the given dictionary"""
         ... # pragma: nocover
         
-    @property
-    def recon_algorithm(self) -> Optional[str]:
-        """Determine the recon algorithm used, if the method is reconstruction.
-        Otherwise return None."""
-        ... # pragma: nocover
 
     def execute(self, dataset: DataSetBlock) -> DataSetBlock:
         """Execute the method.

@@ -176,10 +176,10 @@ def test_update_side_inputs_updates_downstream_methods(
     side_outputs = {"answer": 42, "other": "xxx"}
     method1 = make_test_method(mocker, method_name="m1")
     method2 = make_test_method(mocker, method_name="m2")
-    method2.parameters = ["answer"]
+    mocker.patch.object(method2, "parameters", ["answer"])
     setitem2 = mocker.patch.object(method2, "__setitem__")
     method3 = make_test_method(mocker, method_name="m3")
-    method3.parameters = ["answer", "other", "whatever"]
+    mocker.patch.object(method3, "parameters", ["answer", "other", "whatever"])
     setitem3 = mocker.patch.object(method3, "__setitem__")
 
     p = Pipeline(

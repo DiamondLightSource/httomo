@@ -3,7 +3,7 @@ from httomo.data import mpiutil
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.gpu_utils import gpumem_cleanup
 from httomo.runner.method_wrapper import MethodParameterDictType, MethodParameterValues, MethodWrapper
-from httomo.runner.methods_repository_interface import MethodRepository
+from httomo.runner.methods_repository_interface import GpuMemoryRequirement, MethodRepository
 from httomo.runner.output_ref import OutputRef
 from httomo.utils import gpu_enabled, log_rank, xp
 
@@ -13,7 +13,7 @@ from mpi4py.MPI import Comm
 
 
 from inspect import Parameter, signature
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 
 class GenericMethodWrapper(MethodWrapper):
@@ -73,16 +73,16 @@ class GenericMethodWrapper(MethodWrapper):
             method. Note: The method must actually accept them as parameters.
         """
 
-        self.comm = comm
+        self._comm = comm
         self._module_path = module_path
         self._method_name = method_name
         from importlib import import_module
 
-        self.module = import_module(module_path)
-        self.method: Callable = getattr(self.module, method_name)
+        self._module = import_module(module_path)
+        self._method: Callable = getattr(self._module, method_name)
         # get all the method parameter names, so we know which to set on calling it
-        sig = signature(self.method)
-        self.parameters = [
+        sig = signature(self._method)
+        self._parameters = [
             k for k, p in sig.parameters.items() if p.kind != Parameter.VAR_KEYWORD
         ]
         self._params_with_defaults = [
@@ -91,18 +91,21 @@ class GenericMethodWrapper(MethodWrapper):
         self._has_kwargs = any(
             p.kind == Parameter.VAR_KEYWORD for p in sig.parameters.values()
         )
+        
+        self.task_id = kwargs.pop("task_id", "")
+        
         # check if the given kwargs are actually supported by the method
         self._config_params = kwargs
         self._output_mapping = output_mapping
         self._check_config_params()
 
         # assign method properties from the methods repository
-        self.query = method_repository.query(module_path, method_name)
-        self.pattern = self.query.get_pattern()
-        self.output_dims_change = self.query.get_output_dims_change()
-        self.implementation = self.query.get_implementation()
-        self.memory_gpu = self.query.get_memory_gpu_params()
-        self._save_result = self.query.save_result_default() if save_result is None else save_result
+        self._query = method_repository.query(module_path, method_name)
+        self.pattern = self._query.get_pattern()
+        self._output_dims_change = self._query.get_output_dims_change()
+        self._implementation = self._query.get_implementation()
+        self._memory_gpu = self._query.get_memory_gpu_params()
+        self._save_result = self._query.save_result_default() if save_result is None else save_result
 
         if self.is_gpu and not gpu_enabled:
             raise ValueError("GPU is not available, please use only CPU methods")
@@ -110,13 +113,33 @@ class GenericMethodWrapper(MethodWrapper):
         self._side_output: Dict[str, Any] = dict()
 
         if gpu_enabled:
-            self.num_gpus = xp.cuda.runtime.getDeviceCount()
+            self._num_gpus = xp.cuda.runtime.getDeviceCount()
             _id = httomo.globals.gpu_id
-            self.gpu_id = mpiutil.local_rank % self.num_gpus if _id == -1 else _id
+            self._gpu_id = mpiutil.local_rank % self._num_gpus if _id == -1 else _id
 
     @property
-    def task_id(self) -> str:
-        return ""
+    def comm(self) -> Comm:
+        return self._comm
+
+    @property
+    def method(self) -> Callable:
+        return self._method
+
+    @property
+    def parameters(self) -> List[str]:
+        return self._parameters
+
+    @property
+    def memory_gpu(self) -> List[GpuMemoryRequirement]:
+        return self._memory_gpu
+        
+    @property
+    def implementation(self) -> Literal["gpu", "cpu", "gpu_cupy"]:
+        return self._implementation
+        
+    @property
+    def output_dims_change(self) -> bool:
+        return self._output_dims_change
         
     @property
     def save_result(self) -> bool:
@@ -144,7 +167,7 @@ class GenericMethodWrapper(MethodWrapper):
 
     @property
     def package_name(self) -> str:
-        return self.module_path.split(".")[0]
+        return self._module_path.split(".")[0]
 
     def __getitem__(self, key: str) -> MethodParameterValues:
         """Get a parameter for the method using dictionary notation (wrapper["param"])"""
@@ -171,7 +194,7 @@ class GenericMethodWrapper(MethodWrapper):
         for k in self._config_params.keys():
             if k not in self.parameters:
                 raise ValueError(
-                    f"{self.method_name}: Unsupported keyword argument given: {k}"
+                    f"{self._method_name}: Unsupported keyword argument given: {k}"
                 )
 
     @property
@@ -198,7 +221,7 @@ class GenericMethodWrapper(MethodWrapper):
                 ret[p] = self.comm
             elif p == "gpu_id":
                 assert gpu_enabled, "methods with gpu_id parameter require GPU support"
-                ret[p] = self.gpu_id
+                ret[p] = self._gpu_id
             elif p in remaining_dict_params:
                 ret[p] = remaining_dict_params[p]
             elif p in self._params_with_defaults:
@@ -251,7 +274,7 @@ class GenericMethodWrapper(MethodWrapper):
     def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
         """Runs the actual method - override if special handling is required
         Or side outputs are produced."""
-        ret = self.method(**args)
+        ret = self._method(**args)
         dataset = self._process_return_type(ret, dataset)
         return dataset
 
@@ -262,9 +285,9 @@ class GenericMethodWrapper(MethodWrapper):
         """
         if type(ret) != np.ndarray and type(ret) != xp.ndarray:
             raise ValueError(
-                f"Invalid return type for method {self.method_name} (in module {self.module_path})"
+                f"Invalid return type for method {self._method_name} (in module {self._module_path})"
             )
-        if self.query.swap_dims_on_output():
+        if self._query.swap_dims_on_output():
             ret = ret.swapaxes(0, 1)
         input_dataset.data = ret
         return input_dataset
@@ -282,8 +305,8 @@ class GenericMethodWrapper(MethodWrapper):
 
         assert gpu_enabled, "GPU method used on a system without GPU support"
 
-        xp.cuda.Device(self.gpu_id).use()
-        gpulog_str = f"Using GPU {self.gpu_id} to transfer data of shape {xp.shape(dataset.data[0])}"
+        xp.cuda.Device(self._gpu_id).use()
+        gpulog_str = f"Using GPU {self._gpu_id} to transfer data of shape {xp.shape(dataset.data[0])}"
         log_rank(gpulog_str, comm=self.comm)
         gpumem_cleanup()
         dataset.to_gpu()
@@ -309,7 +332,7 @@ class GenericMethodWrapper(MethodWrapper):
     ) -> Tuple[int, int]:
         """Calculate the dimensions of the output for this method"""
         if self.output_dims_change:
-            return self.query.calculate_output_dims(
+            return self._query.calculate_output_dims(
                 non_slice_dims_shape, **self.config_params
             )
 
@@ -368,7 +391,7 @@ class GenericMethodWrapper(MethodWrapper):
                     (
                         memory_bytes_method,
                         subtract_bytes,
-                    ) = self.query.calculate_memory_bytes(
+                    ) = self._query.calculate_memory_bytes(
                         non_slice_dims_shape, data_dtype, **self.config_params
                     )
 

@@ -88,11 +88,14 @@ def test_rotation_gathers_single_sino_slice(
             return 42.0
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
+    comm = mocker.MagicMock()
+    comm.rank = rank
+    comm.size = 2
     wrp = make_method_wrapper(
         make_mock_repo(mocker, implementation="gpu_cupy"),
         "mocked_module_path.rotation",
         "rotation_tester",
-        MPI.COMM_WORLD,
+        comm,
     )
     assert isinstance(wrp, RotationWrapper)
     if ind_par is not None:
@@ -106,9 +109,7 @@ def test_rotation_gathers_single_sino_slice(
     normalize = mocker.patch.object(
         wrp, "normalize_sino", side_effect=lambda sino, f, d: sino
     )
-    comm = mocker.patch.object(wrp, "comm")
-    comm.rank = rank
-    comm.size = 2
+    
     comm.bcast.return_value = 42.0
 
     res = wrp.execute(dummy_dataset.make_block(0))
@@ -129,20 +130,21 @@ def test_rotation_gather_sino_slice(mocker: MockerFixture, rank: int):
             return 42.0
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
+    comm = mocker.MagicMock()
+    comm.rank = rank
+    comm.size = 2
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path.rotation",
         "rotation_tester",
-        MPI.COMM_WORLD,
+        comm,
     )
     assert isinstance(wrp, RotationWrapper)
     if rank == 0:
         wrp.sino = np.arange(2 * 6, dtype=np.float32).reshape((2, 6))
     else:
         wrp.sino = np.arange(2 * 6, 5 * 6, dtype=np.float32).reshape((3, 6))
-    comm = mocker.patch.object(wrp, "comm")
-    comm.rank = rank
-    comm.size = 2
+    
     if rank == 0:
         comm.gather.return_value = [2 * 6, 3 * 6]
     else:
