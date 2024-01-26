@@ -11,6 +11,7 @@ from tests.testing_utils import make_test_method
 # TODO: add files with invalid syntax
 # TODO: test duplicate task ids
 
+
 @pytest.mark.parametrize("version", ["python", "yaml"])
 def test_can_read_cpu1_python(python_cpu_pipeline1, yaml_cpu_pipeline1, version):
     if version == "python":
@@ -158,7 +159,7 @@ def test_uilayer_fails_with_nonexistant_file(file: str):
     comm = MPI.COMM_NULL
     with pytest.raises(FileNotFoundError):
         UiLayer(Path(file), Path("doesnt_matter"), comm=comm)
-    
+
 
 def test_pipeline_build_no_loader(python_cpu_pipeline1, standard_data):
     comm = MPI.COMM_NULL
@@ -196,12 +197,11 @@ def test_pipeline_build_cpu1(
             assert pipeline[i].task_id == f"task_{i+1}"
         else:
             assert pipeline[i].task_id == "centering"
-            
+
     ref = pipeline[3]["center"]
     assert isinstance(ref, OutputRef)
     assert ref.mapped_output_name == "centre_of_rotation"
     assert ref.method.method_name == "find_center_vo"
-    
 
 
 @pytest.mark.parametrize("version", ["python", "yaml"])

@@ -51,25 +51,23 @@ class UiLayer:
     def build_pipeline(self) -> Pipeline:
         loader = self._setup_loader()
 
-        # Now go through methods[1:] and build methods list
-        
         # saves map {task_id -> method} map
         methods_list: List[MethodWrapper] = []
         method_id_map: Dict[str, MethodWrapper] = dict()
-        for task_no, task_conf in islice(enumerate(self.PipelineStageConfig), 1, None):
+        for i, task_conf in enumerate(self.PipelineStageConfig[1:]):
             parameters = task_conf.get("parameters", dict())
             _update_side_output_references(parameters, method_id_map)
             # unpack params of a method and append to a list of methods
             method = make_method_wrapper(
-                    method_repository=self.repo,
-                    module_path=task_conf["module_path"],
-                    method_name=task_conf["method"],
-                    comm=self.comm,
-                    save_result=task_conf.get("save_result", None),
-                    output_mapping=task_conf.get("side_outputs", dict()),
-                    task_id=task_conf.get("id", f"task_{task_no}"),
-                    **parameters,
-                )
+                method_repository=self.repo,
+                module_path=task_conf["module_path"],
+                method_name=task_conf["method"],
+                comm=self.comm,
+                save_result=task_conf.get("save_result", None),
+                output_mapping=task_conf.get("side_outputs", dict()),
+                task_id=task_conf.get("id", f"task_{i+1}"),
+                **parameters,
+            )
             if method.task_id in method_id_map:
                 raise ValueError(f"duplicate id {method.task_id} in pipeline")
             method_id_map[method.task_id] = method
@@ -94,8 +92,7 @@ class UiLayer:
 
 
 def _update_side_output_references(
-    parameters: dict,
-    method_id_map: Dict[str, MethodWrapper]
+    parameters: dict, method_id_map: Dict[str, MethodWrapper]
 ):
     pattern = re.compile(r"^\$\{\{([A-Za-z0-9_.]+)\}\}$")
     # check if there is a reference to side_outputs to cross-link
@@ -117,7 +114,7 @@ def _update_side_output_references(
             raise ValueError(
                 f"could not find method referenced by {internal_expression}"
             )
-        
+
         parameters[key] = OutputRef(method, ref_arg)
 
 
