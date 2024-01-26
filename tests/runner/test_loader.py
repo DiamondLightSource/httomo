@@ -488,6 +488,28 @@ def test_preview_calculate_data_indices_excludes_darks_flats(
     f.close()
 
 
+def test_preview_with_no_image_key():
+    IN_FILE_PATH = (
+        Path(__file__).parent.parent /
+            "test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
+    )
+    f = h5py.File(IN_FILE_PATH, "r")
+    DATA_PATH = "1-TempPlugin-tomo/data"
+    ANGLES, DET_Y, DET_X = (724, 10, 192)
+    expected_indices = list(range(ANGLES))
+    config = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=ANGLES),
+        detector_y=PreviewDimConfig(start=0, stop=DET_Y),
+        detector_x=PreviewDimConfig(start=0, stop=DET_X),
+    )
+    preview = Preview(
+        preview_config=config,
+        dataset=f[DATA_PATH],
+        image_key=None,
+    )
+    assert np.array_equal(preview.data_indices, expected_indices)
+
+
 def test_get_darks_flats_same_file_same_dataset(
     standard_data_path: str,
     standard_data_darks_flats_config: DarksFlatsFileConfig,

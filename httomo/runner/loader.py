@@ -92,7 +92,7 @@ class Preview:
         self,
         preview_config: PreviewConfig,
         dataset: h5py.Dataset,
-        image_key: h5py.Dataset,
+        image_key: Optional[h5py.Dataset],
     ) -> None:
         self.config = preview_config
         self._dataset = dataset
@@ -123,13 +123,19 @@ class Preview:
             )
 
     def _calculate_data_indices(self) -> List[int]:
-        hdf5_data_indices = np.where(
-            self._image_key[:] == 0
-        )[0].tolist()
+        if self._image_key is not None:
+            indices = np.where(
+                self._image_key[:] == 0
+            )[0].tolist()
+        else:
+            no_of_angles = self._dataset.shape[0]
+            indices = list(range(no_of_angles))
+
         preview_data_indices = np.arange(
             self.config.angles.start, self.config.angles.stop
         )
-        return np.intersect1d(hdf5_data_indices, preview_data_indices).tolist()
+
+        return np.intersect1d(indices, preview_data_indices).tolist()
 
     @property
     def data_indices(self) -> List[int]:
