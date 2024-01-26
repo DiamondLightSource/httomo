@@ -93,11 +93,11 @@ class DataSet:
 
     @property
     def angles(self) -> np.ndarray:
-        return self._get_value("angles")
+        return self.get_value("angles")
 
     @angles.setter
     def angles(self, new_data: np.ndarray):
-        self._set_value("angles", new_data)
+        self.set_value("angles", new_data)
 
     @property
     def angles_radians(self) -> np.ndarray:
@@ -111,11 +111,11 @@ class DataSet:
 
     @property
     def darks(self) -> generic_array:
-        return self._get_value("darks")
+        return self.get_value("darks")
 
     @darks.setter
     def darks(self, new_data: generic_array):
-        self._set_value("darks", new_data)
+        self.set_value("darks", new_data)
 
     @property
     def dark(self) -> generic_array:
@@ -128,11 +128,11 @@ class DataSet:
 
     @property
     def flats(self) -> generic_array:
-        return self._get_value("flats")
+        return self.get_value("flats")
 
     @flats.setter
     def flats(self, new_data: generic_array):
-        self._set_value("flats", new_data)
+        self.set_value("flats", new_data)
 
     @property
     def flat(self) -> generic_array:
@@ -238,7 +238,7 @@ class DataSet:
 
     ###### internal helpers ######
 
-    def _get_value(
+    def get_value(
         self, field: str, data_is_gpu: Optional[bool] = None
     ) -> generic_array:
         """Helper function to get a field from this object.
@@ -266,7 +266,7 @@ class DataSet:
             setattr(self, f"_{field}_dirty", False)
         return getattr(self, f"_{field}")
 
-    def _set_value(self, field: str, new_data: generic_array):
+    def set_value(self, field: str, new_data: generic_array):
         """Sets a value of a field in this object, only if unlocked.
         It is a helper used in the setters for darks, flats, angles"""
         if self.is_locked:
@@ -366,13 +366,13 @@ class DataSetBlock(DataSet):
         """Get the original (unblocked) dataset"""
         return self._base
 
-    def _set_value(self, field: str, new_data: DataSet.generic_array):
+    def set_value(self, field: str, new_data: DataSet.generic_array):
         raise ValueError(f"Cannot update field {field} in a block/slice dataset")
 
-    def _get_value(
+    def get_value(
         self, field: str, is_gpu: Optional[bool] = None
     ) -> DataSet.generic_array:
-        return self._base._get_value(field, self.is_gpu if is_gpu is None else is_gpu)
+        return self._base.get_value(field, self.is_gpu if is_gpu is None else is_gpu)
 
     def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
         raise ValueError("Cannot slice a dataset that is already a slice")
