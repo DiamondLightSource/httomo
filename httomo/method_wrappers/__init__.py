@@ -10,6 +10,7 @@ import httomo.method_wrappers.images  # noqa: F401; pylint: disable=unused-varia
 import httomo.method_wrappers.reconstruction  # noqa: F401; pylint: disable=unused-variable
 import httomo.method_wrappers.rotation  # noqa: F401; pylint: disable=unused-variable
 import httomo.method_wrappers.stats_calc  # noqa: F401; pylint: disable=unused-variable
+import httomo.method_wrappers.save_intermediate  # noqa: F401; pylint: disable=unused-variable
 
 from mpi4py.MPI import Comm
 from typing import Dict, Optional
