@@ -38,7 +38,7 @@ class GenericMethodWrapper(MethodWrapper):
         Therefore, deriving classes should override this method to indicate the criteria
         when they should be instantiated.
         """
-        return False
+        return False  # pragma: no cover
 
     def __init__(
         self,

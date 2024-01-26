@@ -121,7 +121,7 @@ class MethodsDatabaseQuery(MethodQuery):
             return []
         if type(p) == list:
             # convert to dict first
-            dd = dict()
+            dd: dict = dict()
             for item in p:
                 dd |= item
         else:

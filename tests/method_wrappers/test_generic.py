@@ -2,6 +2,7 @@ from typing import List, Optional
 
 import numpy as np
 from httomo.method_wrappers import make_method_wrapper
+from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSet
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.output_ref import OutputRef
@@ -25,11 +26,12 @@ def test_generic_get_name_and_paths(mocker: MockerFixture):
         "fake_method",
         MPI.COMM_WORLD,
     )
-
+    assert isinstance(wrp, GenericMethodWrapper)
     assert wrp.method_name == "fake_method"
     assert wrp.module_path == "testmodule.path"
     assert wrp.package_name == "testmodule"
     assert wrp.task_id == ""
+    assert wrp.save_result is False
 
 
 def test_generic_set_task_id(mocker: MockerFixture):
