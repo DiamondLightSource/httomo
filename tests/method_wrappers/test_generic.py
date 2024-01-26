@@ -29,7 +29,24 @@ def test_generic_get_name_and_paths(mocker: MockerFixture):
     assert wrp.method_name == "fake_method"
     assert wrp.module_path == "testmodule.path"
     assert wrp.package_name == "testmodule"
+    assert wrp.task_id == ""
 
+
+def test_generic_set_task_id(mocker: MockerFixture):
+    class FakeModule:
+        def fake_method(data):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker),
+        "testmodule.path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        task_id="fake_method_id"
+    )
+    
+    assert wrp.task_id == "fake_method_id"
 
 def test_generic_execute_transfers_to_gpu(
     dummy_dataset: DataSet, mocker: MockerFixture

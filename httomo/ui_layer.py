@@ -1,3 +1,4 @@
+from itertools import islice
 import yaml
 from typing import Any, Dict, List, Optional, Protocol, Tuple
 from importlib import import_module, util
@@ -28,8 +29,9 @@ class UiLayer:
         tasks_file_path: Path,
         in_data_file_path: Path,
         comm: Comm,
+        repo=MethodDatabaseRepository(),
     ):
-        self.repo = MethodDatabaseRepository()
+        self.repo = repo
         self.tasks_file_path = tasks_file_path
         self.in_data_file = in_data_file_path
         self.comm = comm
@@ -47,47 +49,55 @@ class UiLayer:
             )
 
     def build_pipeline(self) -> Pipeline:
+        loader = self._setup_loader()
+
+        # Now go through methods[1:] and build methods list
         side_outputs_collect: List[
             Tuple[int, str, dict]
         ] = []  # saves [task_no, id, side_outputs] for tasks with side_outputs
         methods_list: List[MethodWrapper] = []
-        loader: Optional[LoaderInterface] = None
-        for task_no, task_conf in enumerate(self.PipelineStageConfig):
+        for task_no, task_conf in islice(enumerate(self.PipelineStageConfig), 1, None):
+            if "side_outputs" in task_conf:
+                assert (
+                    "id" in task_conf
+                ), "methods with side outputs require an id field"
+                side_outputs_collect.append(
+                    (task_no, task_conf["id"], task_conf["side_outputs"])
+                )
             parameters = task_conf.get("parameters", dict())
-            if "loaders" in task_conf["module_path"]:
-                parameters["in_file"] = self.in_data_file
-                # unpack params and initiate a loader
-                loader = make_loader(
-                    self.repo,
-                    task_conf["module_path"],
-                    task_conf["method"],
-                    self.comm,
-                    **parameters,
-                )
-            else:
-                if "side_outputs" not in task_conf:
-                    task_conf["side_outputs"] = {}
-                else:
-                    side_outputs_collect.append(
-                        (task_no, task_conf["id"], task_conf["side_outputs"])
-                    )
-                _update_side_output_references(
-                    parameters, side_outputs_collect, methods_list
-                )
-                # unpack params of a method and append to a list of methods
-                method = make_method_wrapper(
+            _update_side_output_references(
+                parameters, side_outputs_collect, methods_list
+            )
+            # unpack params of a method and append to a list of methods
+            methods_list.append(
+                make_method_wrapper(
                     method_repository=self.repo,
                     module_path=task_conf["module_path"],
                     method_name=task_conf["method"],
                     comm=self.comm,
                     save_result=task_conf.get("save_result", None),
-                    output_mapping=task_conf["side_outputs"],
+                    output_mapping=task_conf.get("side_outputs", dict()),
+                    task_id=task_conf.get("id", f"task_{task_no}"),
                     **parameters,
                 )
-                methods_list.append(method)
-        if loader is None:
-            raise ValueError("Got pipeline with no loader")
+            )
+
         return Pipeline(loader=loader, methods=methods_list)
+
+    def _setup_loader(self) -> LoaderInterface:
+        task_conf = self.PipelineStageConfig[0]
+        if "loaders" not in task_conf["module_path"]:
+            raise ValueError("Got pipeline with no loader (must be first method)")
+        loader = make_loader(
+            self.repo,
+            task_conf["module_path"],
+            task_conf["method"],
+            self.comm,
+            in_file=self.in_data_file,
+            **task_conf.get("parameters", dict()),
+        )
+
+        return loader
 
 
 def _update_side_output_references(
@@ -130,11 +140,9 @@ def _yaml_loader(file_path: Path) -> list:
 
 def _python_tasks_loader(file_path: Path) -> list:
     module_spec = util.spec_from_file_location("methods_to_list", file_path)
-    if module_spec is None:
-        raise ValueError("Could not read module spec")
+    assert module_spec is not None, "error reading module spec"
     foo = util.module_from_spec(module_spec)
-    if module_spec.loader is None:
-        raise ValueError("Module spec has no loader")
+    assert module_spec.loader is not None, "module spec has no loader"
     module_spec.loader.exec_module(foo)
     tasks_list = list(foo.methods_to_list())
     return tasks_list
