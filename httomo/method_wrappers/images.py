@@ -2,7 +2,7 @@ import httomo.globals
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import xp
+from httomo.utils import _get_slicing_dim, xp
 
 
 from mpi4py.MPI import Comm
@@ -32,10 +32,17 @@ class ImagesWrapper(GenericMethodWrapper):
         **kwargs,
     ):
         super().__init__(
-            method_repository, module_path, method_name, comm, save_result, output_mapping, **kwargs
+            method_repository,
+            module_path,
+            method_name,
+            comm,
+            save_result,
+            output_mapping,
+            **kwargs,
         )
         self["out_dir"] = out_dir
-        self["comm_rank"] = comm.rank
+        if "comm_rank" in self.parameters:
+            self["comm_rank"] = comm.rank
 
     # Images execute is leaving original data on the device where it is,
     # but gives the method a CPU copy of the data.
@@ -43,7 +50,14 @@ class ImagesWrapper(GenericMethodWrapper):
         self,
         dataset: DataSetBlock,
     ) -> DataSetBlock:
-        args = self._build_kwargs(self._transform_params(self._config_params), dataset)
+        if "offset" in self.parameters:
+            config_params = {
+                **self._config_params,
+                "offset": dataset.global_index[_get_slicing_dim(self.pattern) - 1],
+            }
+        else:
+            config_params = self._config_params
+        args = self._build_kwargs(self._transform_params(config_params), dataset)
         if dataset.is_gpu:
             # give method a CPU copy of the data
             args[self.parameters[0]] = xp.asnumpy(dataset.data)

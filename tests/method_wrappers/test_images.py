@@ -13,10 +13,11 @@ from pytest_mock import MockerFixture
 
 def test_save_to_images(mocker: MockerFixture, dummy_dataset: DataSet):
     class FakeModule:
-        def save_to_images(data, out_dir, comm_rank, axis, file_format):
+        def save_to_images(data, out_dir, comm_rank, axis, file_format, offset):
             np.testing.assert_array_equal(data, 1)
             assert out_dir == httomo.globals.run_out_dir
             assert comm_rank == MPI.COMM_WORLD.rank
+            assert offset == 2
             assert axis == 1
             assert file_format == "tif"
 
@@ -31,7 +32,8 @@ def test_save_to_images(mocker: MockerFixture, dummy_dataset: DataSet):
     )
     assert isinstance(wrp, ImagesWrapper)
     
-    block = dummy_dataset.make_block(0)
+    # images is a sinogram method - slice in that dim
+    block = dummy_dataset.make_block(1, 2)
     newblock = wrp.execute(block)
 
     assert newblock == block
