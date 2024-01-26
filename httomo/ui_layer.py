@@ -52,25 +52,15 @@ class UiLayer:
         loader = self._setup_loader()
 
         # Now go through methods[1:] and build methods list
-        side_outputs_collect: List[
-            Tuple[int, str, dict]
-        ] = []  # saves [task_no, id, side_outputs] for tasks with side_outputs
+        
+        # saves map {task_id -> method} map
         methods_list: List[MethodWrapper] = []
+        method_id_map: Dict[str, MethodWrapper] = dict()
         for task_no, task_conf in islice(enumerate(self.PipelineStageConfig), 1, None):
-            if "side_outputs" in task_conf:
-                assert (
-                    "id" in task_conf
-                ), "methods with side outputs require an id field"
-                side_outputs_collect.append(
-                    (task_no, task_conf["id"], task_conf["side_outputs"])
-                )
             parameters = task_conf.get("parameters", dict())
-            _update_side_output_references(
-                parameters, side_outputs_collect, methods_list
-            )
+            _update_side_output_references(parameters, method_id_map)
             # unpack params of a method and append to a list of methods
-            methods_list.append(
-                make_method_wrapper(
+            method = make_method_wrapper(
                     method_repository=self.repo,
                     module_path=task_conf["module_path"],
                     method_name=task_conf["method"],
@@ -80,7 +70,10 @@ class UiLayer:
                     task_id=task_conf.get("id", f"task_{task_no}"),
                     **parameters,
                 )
-            )
+            if method.task_id in method_id_map:
+                raise ValueError(f"duplicate id {method.task_id} in pipeline")
+            method_id_map[method.task_id] = method
+            methods_list.append(method)
 
         return Pipeline(loader=loader, methods=methods_list)
 
@@ -102,8 +95,7 @@ class UiLayer:
 
 def _update_side_output_references(
     parameters: dict,
-    side_outputs_collect: List[Tuple[int, str, dict]],
-    methods_list: List[MethodWrapper],
+    method_id_map: Dict[str, MethodWrapper]
 ):
     pattern = re.compile(r"^\$\{\{([A-Za-z0-9_.]+)\}\}$")
     # check if there is a reference to side_outputs to cross-link
@@ -120,16 +112,13 @@ def _update_side_output_references(
                 "Config error: output references must be of the form <id>.side_outputs.<name>"
             )
 
-        # lets find the referred id in "side_outputs_collect"
-        try:
-            item = next(filter(lambda x: x[1] == ref_id, side_outputs_collect))
-        except StopIteration:
+        method = method_id_map.get(ref_id, None)
+        if method is None:
             raise ValueError(
-                f"could not find side output referenced by {internal_expression}"
+                f"could not find method referenced by {internal_expression}"
             )
-
-        # refer to methods_list[items[0]-1]
-        parameters[key] = OutputRef(methods_list[item[0] - 1], ref_arg)
+        
+        parameters[key] = OutputRef(method, ref_arg)
 
 
 def _yaml_loader(file_path: Path) -> list:

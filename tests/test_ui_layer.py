@@ -284,7 +284,7 @@ def test_pipeline_build_cpu3(
 )
 def test_update_side_output_references_invalid(refvalue: str):
     parameters = {"refkey": refvalue}
-    ui_layer._update_side_output_references(parameters, [], [])
+    ui_layer._update_side_output_references(parameters, {})
 
     assert parameters == {"refkey": refvalue}  # not updated
 
@@ -292,7 +292,7 @@ def test_update_side_output_references_invalid(refvalue: str):
 def test_update_side_output_references_normal(mocker: MockerFixture):
     parameters = {"refkey": "${{testid.side_outputs.value}}"}
     ui_layer._update_side_output_references(
-        parameters, [(1, "testid", {"value": "v"})], [make_test_method(mocker)]
+        parameters, dict(testid=make_test_method(mocker))
     )
 
     obj = parameters["refkey"]
@@ -303,7 +303,7 @@ def test_update_side_output_references_normal(mocker: MockerFixture):
 def test_update_side_output_references_nosidestr():
     parameters = {"refkey": "${{testid.side_typo_outputs.value}}"}
     with pytest.raises(ValueError) as e:
-        ui_layer._update_side_output_references(parameters, [], [])
+        ui_layer._update_side_output_references(parameters, {})
     assert "side_outputs" in str(e)
 
 
@@ -311,7 +311,7 @@ def test_update_side_output_references_notfound(mocker: MockerFixture):
     parameters = {"refkey": "${{testid123.side_outputs.value}}"}
     with pytest.raises(ValueError) as e:
         ui_layer._update_side_output_references(
-            parameters, [(1, "testid", {"value": "v"})], [make_test_method(mocker)]
+            parameters, dict(testid=make_test_method(mocker))
         )
 
-    assert "could not find side output" in str(e)
+    assert "could not find method referenced" in str(e)
