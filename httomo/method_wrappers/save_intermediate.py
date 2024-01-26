@@ -30,7 +30,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
                  comm: Comm, 
                  save_result: Optional[bool] = None,
                  output_mapping: Dict[str, str] = {}, 
-                 out_dir: os.PathLike = httomo.globals.run_out_dir,
+                 out_dir: Optional[os.PathLike] = None,
                  prev_method: Optional[MethodWrapper] = None,
                  loader: Optional[LoaderInterface] = None,
                  **kwargs):
@@ -43,9 +43,17 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         if prev_method.recon_algorithm is not None:
             filename += f"-{prev_method.recon_algorithm}"
         
+        if out_dir is None:
+            out_dir = httomo.globals.run_out_dir
+        assert out_dir is not None
         self._file = h5py.File(f"{out_dir}/{filename}.h5", "w", driver="mpio", comm=comm)
         # make sure file gets closed properly
         weakref.finalize(self, self._file.close)
+        
+    def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
+        # pass the full block, not just the data array to the function
+        args[self.parameters[0]] = dataset
+        return super()._run_method(dataset, args)
         
     def _transform_params(self, dict_params: MethodParameterDictType) -> MethodParameterDictType:
         dict_params = super()._transform_params(dict_params).copy()

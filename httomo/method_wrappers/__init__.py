@@ -61,11 +61,10 @@ def make_method_wrapper(
     cls: type[GenericMethodWrapper] = GenericMethodWrapper
     for c in GenericMethodWrapper.__subclasses__():
         if c.should_select_this_class(module_path, method_name):
-            if cls != GenericMethodWrapper:
-                raise ValueError(
-                    f"The values returned from should_select_this_class('{module_path}', '{method_name}')"
-                    + f" are ambigious between {c.__name__} and {cls.__name__}"
-                )
+            assert cls != GenericMethodWrapper, (
+                f"The values returned from should_select_this_class('{module_path}', '{method_name}')"
+                + f" are ambigious between {c.__name__} and {cls.__name__}"
+            )
             cls = c
     return cls(
         method_repository=method_repository,

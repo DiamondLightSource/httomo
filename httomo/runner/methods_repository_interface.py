@@ -39,7 +39,7 @@ class MethodQuery(Protocol):
         
     def save_result_default(self) -> bool:
         """Check if this method saves results by default"""
-        ...  # pragam: no cover
+        ...  # pragma: no cover
 
     def swap_dims_on_output(self) -> bool:
         """Check if the output 3D array needs to wap axis 0 and 1 to match httomolib.

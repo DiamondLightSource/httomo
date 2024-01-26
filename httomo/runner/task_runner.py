@@ -31,10 +31,8 @@ class TaskRunner:
         self,
         pipeline: Pipeline,
         reslice_dir: os.PathLike,
-        save_all: bool = False,
     ):
         self.pipeline = pipeline
-        self.save_all = save_all
         self.reslice_dir = reslice_dir
         self.comm = MPI.COMM_WORLD
 
@@ -57,11 +55,10 @@ class TaskRunner:
         for i, section in enumerate(sections):
             self._execute_section(section, i)
             gpumem_cleanup()
-            self.check_save_intermediate_results(last_section=section)
             self.method_index += len(section)
             
     def _sectionize(self) -> List[PlatformSection]:
-        sections = sectionize(self.pipeline, self.save_all)
+        sections = sectionize(self.pipeline)
         num_reslices = len([s for s in sections if s.reslice]) 
         if self.pipeline.loader_reslice:
             num_reslices += 1
@@ -73,36 +70,6 @@ class TaskRunner:
             )
 
         return sections
-
-    def check_save_intermediate_results(self, last_section: PlatformSection):
-        if not last_section.save_result:
-            return
-        last_method = last_section.methods[-1]
-        if (
-            last_method.method_name == "save_to_images"
-            or "center" in last_method.method_name
-        ):
-            return
-
-        slice_dim = _get_slicing_dim(last_section.pattern)
-        assert self.sink is not None
-
-        raise NotImplementedError("saving intermediate datasets is not implemented yet")
-
-        # intermediate_dataset(
-        #     self.source.,
-        #     httomo.globals.run_out_dir,
-        #     self.dataset.angles,
-        #     self.pipeline.loader.detector_x,
-        #     self.pipeline.loader.detector_y,
-        #     self.comm,
-        #     self.method_index,
-        #     last_method.package_name,
-        #     last_method.method_name,
-        #     "tomo",
-        #     slice_dim,
-        #     last_method.recon_algorithm,
-        # )
 
     def _execute_section(self, section: PlatformSection, section_index: int = 0):
         self._setup_source_sink(section)

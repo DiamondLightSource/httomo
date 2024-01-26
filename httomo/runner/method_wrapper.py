@@ -24,12 +24,12 @@ class MethodWrapper(Protocol):
     @property
     def comm(self) -> MPI.Comm:
         """The MPI communicator used"""
-        ...
+        ...  # pragma: no cover
     
     @property
     def method(self) -> Callable:
         """The actual method underlying this wrapper"""
-        ...
+        ...  # pragma: no cover
     
     @property
     def parameters(self) -> List[str]:

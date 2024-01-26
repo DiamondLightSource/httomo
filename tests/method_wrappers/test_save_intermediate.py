@@ -8,7 +8,8 @@ import h5py
 from mpi4py import MPI
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.method_wrapper import MethodWrapper
-from tests.testing_utils import make_mock_repo
+from ..testing_utils import make_mock_repo
+import httomo
 
 
 def test_save_intermediate(
@@ -22,6 +23,7 @@ def test_save_intermediate(
         def save_intermediate_data(
             block, file: h5py.File, path: str, detector_x: int, detector_y: int
         ):
+            assert isinstance(block, DataSetBlock)
             assert Path(file.filename).name == "task1-testpackage-testmethod-XXX.h5"
             assert detector_x == 10
             assert detector_y == 20
@@ -50,3 +52,37 @@ def test_save_intermediate(
     res = wrp.execute(block)
 
     assert res == block
+
+def test_save_intermediate_defaults_out_dir(
+    mocker: MockerFixture, tmp_path: Path
+):
+    loader: LoaderInterface = mocker.create_autospec(
+        LoaderInterface, instance=True, detector_x=10, detector_y=20
+    )
+
+    class FakeModule:
+        def save_intermediate_data(
+            block, file: h5py.File, path: str, detector_x: int, detector_y: int
+        ):
+            pass
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    prev_method = mocker.create_autospec(
+        MethodWrapper,
+        instance=True,
+        task_id="task1",
+        package_name="testpackage",
+        method_name="testmethod",
+        recon_algorithm="XXX",
+    )
+    mocker.patch.object(httomo.globals, "run_out_dir", tmp_path)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, implementation="gpu_cupy"),
+        "httomo.methods",
+        "save_intermediate_data",
+        MPI.COMM_WORLD,
+        loader=loader,
+        prev_method=prev_method,
+    )
+    assert isinstance(wrp, SaveIntermediateFilesWrapper)
+    assert wrp._file.filename.startswith(str(tmp_path))

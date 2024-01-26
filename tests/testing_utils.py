@@ -19,8 +19,11 @@ def make_test_method(
     method_name="testmethod",
     module_path="testpath",
     save_result=False,
+    task_id:Optional[str]=None,
     **kwargs,
 ) -> MethodWrapper:
+    if task_id is None:
+        task_id = f"task_{method_name}"
     mock = mocker.create_autospec(
         MethodWrapper,
         instance=True,
@@ -30,6 +33,7 @@ def make_test_method(
         is_gpu=gpu,
         is_cpu=not gpu,
         save_result=save_result,
+        task_id=task_id,
         config_params=kwargs,
         __getitem__=lambda _, k: kwargs[k],  # return kwargs value from dict access
     )

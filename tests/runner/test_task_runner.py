@@ -32,7 +32,7 @@ def test_check_params_for_sweep_raises_exception(
                     2,
                 ),
             )
-        ]
+        ],
     )
     t = TaskRunner(p, reslice_dir=tmp_path)
     with pytest.raises(ValueError) as e:
@@ -182,10 +182,7 @@ def test_update_side_inputs_updates_downstream_methods(
     mocker.patch.object(method3, "parameters", ["answer", "other", "whatever"])
     setitem3 = mocker.patch.object(method3, "__setitem__")
 
-    p = Pipeline(
-        loader=loader,
-        methods=[method1, method2, method3]
-    )
+    p = Pipeline(loader=loader, methods=[method1, method2, method3])
     t = TaskRunner(p, reslice_dir=tmp_path)
     t.method_index = 2  # pretend we're after executing method1
     t.update_side_inputs(side_outputs)
@@ -235,9 +232,7 @@ def test_execute_section_for_block(
     loader = make_test_loader(mocker, dummy_dataset)
     method1 = make_test_method(mocker, method_name="m1")
     method2 = make_test_method(mocker, method_name="m2")
-    p = Pipeline(
-        loader=loader, methods=[method1, method2]
-    )
+    p = Pipeline(loader=loader, methods=[method1, method2])
     s = sectionize(p, False)
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
@@ -271,23 +266,22 @@ def test_does_reslice_when_needed(
     assert t.sink.slicing_dim == 1
 
 
-@pytest.mark.parametrize("loader_pattern,reslices", [
-    (Pattern.all, 2),
-    (Pattern.projection, 2),
-    (Pattern.sinogram, 3)
-])
+@pytest.mark.parametrize(
+    "loader_pattern,reslices",
+    [(Pattern.all, 2), (Pattern.projection, 2), (Pattern.sinogram, 3)],
+)
 def test_warns_with_multiple_reslices(
-    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: PathLike, loader_pattern: Pattern,
-    reslices: int
+    mocker: MockerFixture,
+    dummy_dataset: DataSet,
+    tmp_path: PathLike,
+    loader_pattern: Pattern,
+    reslices: int,
 ):
     loader = make_test_loader(mocker, dummy_dataset, pattern=loader_pattern)
     method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
     method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
     method3 = make_test_method(mocker, method_name="m3", pattern=Pattern.projection)
-    p = Pipeline(
-        loader=loader,
-        methods=[method1, method2, method3]
-    )
+    p = Pipeline(loader=loader, methods=[method1, method2, method3])
     t = TaskRunner(p, reslice_dir=tmp_path)
 
     spy = mocker.patch("httomo.runner.task_runner.log_once")
@@ -297,62 +291,3 @@ def test_warns_with_multiple_reslices(
     spy.assert_called()
     args, kwargs = spy.call_args
     assert f"Reslicing will be performed {reslices} times" in args[0]
-
-
-@pytest.mark.parametrize(
-    "method_name,dim,save",
-    [
-        ("m1", 3, True),
-        ("m1", 2, False),
-        ("save_to_images", 3, False),
-        ("find_center_vo", 3, False),
-    ],
-)
-def test_saves_intermediate_results(
-    mocker: MockerFixture,
-    dummy_dataset: DataSet,
-    method_name: str,
-    dim: int,
-    save: bool,
-):
-    if dim != 3:
-        dummy_dataset.data = np.squeeze(dummy_dataset.data[0, :, :])
-    loader = make_test_loader(mocker)
-    loader.load.return_value = dummy_dataset
-    loader.detector_x = 15
-    loader.detector_y = 42
-    method1 = make_test_method(
-        mocker,
-        method_name=method_name,
-        module_path="path1",
-    )
-    method1.recon_algorithm = "testalgo"
-    method2 = make_test_method(mocker, method_name="m2")
-    p = Pipeline(
-        loader=loader, methods=[method1, method2]
-    )
-    t = TaskRunner(p)
-
-    exec_section = mocker.patch.object(t, "_execute_section")
-    intermediate_save = mocker.patch("httomo.runner.task_runner.intermediate_dataset")
-
-    t.execute()
-
-    exec_section.assert_has_calls([call(ANY, 0), call(ANY, 1)])
-    if save:
-        intermediate_save.assert_called_once_with(
-            ANY,  # data
-            ANY,  # run_out_dir
-            ANY,  # angles
-            15,  # detector_x
-            42,  # detector_y
-            ANY,  # comm
-            2,  # method index: loader + method1
-            method1.package_name,  # package_name
-            method1.method_name,  # method_name
-            "tomo",  # dataset name
-            1,  # slicing dim
-            "testalgo",  # algo name
-        )
-    else:
-        intermediate_save.assert_not_called()

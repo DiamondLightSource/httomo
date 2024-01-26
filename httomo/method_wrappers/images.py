@@ -28,7 +28,7 @@ class ImagesWrapper(GenericMethodWrapper):
         comm: Comm,
         save_result: Optional[bool] = None,
         output_mapping: Dict[str, str] = {},
-        out_dir: os.PathLike = httomo.globals.run_out_dir,
+        out_dir: Optional[os.PathLike] = None,
         **kwargs,
     ):
         super().__init__(
@@ -40,7 +40,7 @@ class ImagesWrapper(GenericMethodWrapper):
             output_mapping,
             **kwargs,
         )
-        self["out_dir"] = out_dir
+        self["out_dir"] = out_dir if out_dir is not None else httomo.globals.run_out_dir
         if "comm_rank" in self.parameters:
             self["comm_rank"] = comm.rank
 

@@ -14,3 +14,9 @@ methods:
     implementation: cpu
     memory_gpu: None
     save_result_default: False
+  save_intermediate_data:
+    pattern: all
+    output_dims_change: False
+    implementation: cpu
+    memory_gpu: None
+    save_result_default: False

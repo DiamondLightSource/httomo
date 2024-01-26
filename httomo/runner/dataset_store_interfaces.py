@@ -177,4 +177,4 @@ class DummySink(DataSetSink):
         self._chunk_index = dataset.chunk_index
 
     def finalize(self):
-        pass
+        pass  # pragma: no cover

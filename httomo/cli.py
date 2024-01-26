@@ -1,7 +1,9 @@
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PurePath
 from shutil import copy
+import tempfile
 from typing import Optional, Union
 
 import click
@@ -9,6 +11,7 @@ from mpi4py import MPI
 
 import httomo.globals
 from httomo.logger import setup_logger
+from httomo.transform_layer import TransformLayer
 from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
 from httomo.ui_layer import UiLayer
@@ -100,9 +103,17 @@ def run(
     init_UiLayer = UiLayer(yaml_config, in_data_file, comm=comm)
     pipeline = init_UiLayer.build_pipeline()
     
-    # Run the pipeline using Taskrunner
-    runner = TaskRunner(pipeline, save_all, reslice_dir)
-    return runner.execute()
+    # perform transformations on pipeline
+    tr = TransformLayer(comm=comm, save_all=save_all)
+    pipeline = tr.transform(pipeline)
+    
+    # Run the pipeline using Taskrunner, with temp dir or reslice dir
+    ctx: AbstractContextManager = nullcontext(reslice_dir)
+    if reslice_dir is None:
+        ctx = tempfile.TemporaryDirectory() 
+    with ctx as tmp_dir:
+        runner = TaskRunner(pipeline, Path(tmp_dir))
+        return runner.execute()
 
 def _check_yaml(yaml_config: Path, in_data: Path):
     """Check a YAML pipeline file for errors."""    

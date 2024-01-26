@@ -271,7 +271,7 @@ def merge_yamls():
         """Merge multiple yaml files into one"""
         data : list = []
         for y in yamls:
-            curr_yaml_list = _yaml_loader(y)[0]
+            curr_yaml_list = _yaml_loader(y)
             for x in curr_yaml_list:
                 data.append(x)
         with open("temp.yaml", "w") as file_descriptor:

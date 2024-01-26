@@ -79,12 +79,13 @@ class UiLayer:
         task_conf = self.PipelineStageConfig[0]
         if "loaders" not in task_conf["module_path"]:
             raise ValueError("Got pipeline with no loader (must be first method)")
+        parameters = task_conf.get("parameters", dict())
+        parameters["in_file"] = self.in_data_file
         loader = make_loader(
             self.repo,
             task_conf["module_path"],
             task_conf["method"],
             self.comm,
-            in_file=self.in_data_file,
             **task_conf.get("parameters", dict()),
         )
 

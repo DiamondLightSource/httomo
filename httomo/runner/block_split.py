@@ -50,7 +50,7 @@ class BlockSplitter:
                 self._current = 0
                 
             def __iter__(self) -> 'BlockIterator':
-                return self
+                return self  # pragma: no cover
 
             def __next__(self) -> DataSetBlock:
                 if self._current >= len(self.splitter):

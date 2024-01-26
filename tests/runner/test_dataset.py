@@ -231,6 +231,8 @@ def test_can_slice_dataset_to_blocks(
     assert dataset.chunk_index == (0, 0, 0)
     assert dataset.is_last_in_chunk is True
     assert block.is_last_in_chunk is False
+    assert block.is_full is False
+    assert dataset.is_full is False
     if dim == 0:
         np.testing.assert_array_equal(
             dataset.data[start : start + length, :, :], block.data
@@ -386,3 +388,6 @@ def test_datasetblock_from_dataset_has_correct_shapes():
     assert block.shape == BLOCK_SHAPE
     assert block.chunk_shape == CHUNK_SHAPE
     assert block.global_shape == GLOBAL_DATA_SHAPE
+
+
+# TODO: the FullFileDataSet needs tests for setting the data (and set_block)
