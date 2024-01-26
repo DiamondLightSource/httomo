@@ -9,7 +9,6 @@ import pytest
 from tests.testing_utils import make_test_method
 
 # TODO: add files with invalid syntax
-# TODO: test duplicate task ids
 
 
 @pytest.mark.parametrize("version", ["python", "yaml"])
@@ -173,6 +172,20 @@ def test_pipeline_build_no_loader(python_cpu_pipeline1, standard_data):
         LayerUI.build_pipeline()
 
     assert "no loader" in str(e)
+    
+def test_pipeline_build_duplicate_id(python_cpu_pipeline1, standard_data):
+    comm = MPI.COMM_NULL
+    LayerUI = UiLayer(
+        python_cpu_pipeline1,
+        standard_data,
+        comm=comm,
+    )
+    LayerUI.PipelineStageConfig[1]["id"] = "testid"
+    LayerUI.PipelineStageConfig[2]["id"] = "testid"
+    with pytest.raises(ValueError) as e:
+        LayerUI.build_pipeline()
+
+    assert "duplicate id" in str(e)
 
 
 @pytest.mark.parametrize("version", ["python", "yaml"])
