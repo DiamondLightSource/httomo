@@ -4,7 +4,7 @@ from pytest_mock import MockerFixture
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.pipeline import Pipeline
 from httomo.transform_layer import TransformLayer
-from tests.testing_utils import make_mock_repo, make_test_method
+from .testing_utils import make_mock_repo, make_test_method
 from mpi4py import MPI
 
 

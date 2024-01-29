@@ -33,7 +33,7 @@ class Pipeline:
 
     def __len__(self) -> int:
         return len(self._methods)
-    
+
     def __getitem__(self, idx: int) -> MethodWrapper:
         return self._methods[idx]
 
@@ -46,13 +46,3 @@ class Pipeline:
         """Although the pipeline is largely immutable, this setter is needed as the
         actual pattern is set after processing the full pipeline"""
         self.loader.pattern = pattern
-
-    @property
-    def loader_reslice(self) -> bool:
-        return self.loader.reslice if self.loader is not None else False
-
-    @loader_reslice.setter
-    def loader_reslice(self, reslice: bool):
-        """Although the pipeline is largely immutable, this setter is needed as the
-        information whether reslicing is required after the loader is set later"""
-        self.loader.reslice = reslice

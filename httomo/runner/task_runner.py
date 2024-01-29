@@ -1,6 +1,6 @@
 from itertools import islice
 import time
-from typing import Any, Dict, Literal, Optional, List, Tuple, Union
+from typing import Any, Dict, Literal, Optional, List, Union
 import os
 from mpi4py import MPI
 import httomo
@@ -59,12 +59,11 @@ class TaskRunner:
             
     def _sectionize(self) -> List[PlatformSection]:
         sections = sectionize(self.pipeline)
-        num_reslices = len([s for s in sections if s.reslice]) 
-        if self.pipeline.loader_reslice:
-            num_reslices += 1
-        if num_reslices > 1:
+        self._log_pipeline(f"Pipeline has been separated into {len(sections)} sections")
+        num_stores = len(sections) - 1 
+        if num_stores > 1:
             log_once(
-                f"WARNING: Reslicing will be performed {num_reslices} times. The number of reslices increases the total run time.",
+                f"WARNING: Reslicing will be performed {num_stores} times. The number of reslices increases the total run time.",
                 comm=self.comm,
                 colour=Colour.RED,
             )
@@ -121,7 +120,7 @@ class TaskRunner:
             log.debug(
                 f"{m.method_name}: input shape, dtype: {block.data.shape}, {block.data.dtype}"
             )
-            block = self._execute_method(m, self.method_index + i, block)
+            block = self._execute_method(m, block)
             log.debug(
                 f"{m.method_name}: output shape, dtype: {block.data.shape}, {block.data.dtype}"
             )
@@ -140,13 +139,13 @@ class TaskRunner:
 
     def _load_datasets(self):
         start_time = self._log_task_start(
-            self.method_index,
+            "loader",
             self.pipeline.loader.pattern,
             self.pipeline.loader.method_name,
         )
         self.source = self.pipeline.loader.make_data_source()
         self._log_task_end(
-            self.method_index,
+            "loader",
             start_time,
             self.pipeline.loader.pattern,
             self.pipeline.loader.method_name,
@@ -155,14 +154,14 @@ class TaskRunner:
         self.method_index += 1
 
     def _execute_method(
-        self, method: MethodWrapper, num: int, dataset: DataSetBlock
+        self, method: MethodWrapper, dataset: DataSetBlock
     ) -> DataSetBlock:
-        start_time = self._log_task_start(num, method.pattern, method.method_name)
+        start_time = self._log_task_start(method.task_id, method.pattern, method.method_name)
         dataset = method.execute(dataset)
         if dataset.is_last_in_chunk:
             self.update_side_inputs(method.get_side_output())
         self._log_task_end(
-            num, start_time, method.pattern, method.method_name, method.package_name
+            method.task_id, start_time, method.pattern, method.method_name, method.package_name
         )
         return dataset
 
@@ -180,9 +179,9 @@ class TaskRunner:
                 if k in m.parameters:
                     m[k] = v
 
-    def _log_task_start(self, num: int, pattern: Pattern, name: str) -> int:
+    def _log_task_start(self, id: str, pattern: Pattern, name: str) -> int:
         log_once(
-            f"Running task {num} (pattern={pattern.name}): {name}...",
+            f"Running {id} (pattern={pattern.name}): {name}...",
             self.comm,
             colour=Colour.LIGHT_BLUE,
             level=0,
@@ -191,14 +190,14 @@ class TaskRunner:
 
     def _log_task_end(
         self,
-        num: int,
+        id: str,
         start_time: int,
         pattern: Pattern,
         name: str,
         package: str = "httomo",
     ):
         output_str_list = [
-            f"    Finished task {num} (pattern={pattern.name}): {name} (",
+            f"    Finished {id} (pattern={pattern.name}): {name} (",
             package,
             f") Took {float(time.perf_counter_ns() - start_time)*1e-6:.2f}ms",
         ]
@@ -228,11 +227,9 @@ class TaskRunner:
         data_shape = self.source.chunk_shape
 
         max_slices = data_shape[slicing_dim]
-        if not section.gpu:
+        if len(section) == 0:
             section.max_slices = max_slices
             return
-
-        ###### GPU ##################
 
         nsl_dim_l = list(data_shape)
         nsl_dim_l.pop(slicing_dim)

@@ -113,7 +113,7 @@ dev-gpu = [
 [tool.mypy]
 # Ignore missing stubs for modules we use
 ignore_missing_imports = true
-python_version = 3.9  # make sure we're compatible with 3.9
+python_version = "3.9"  # make sure we're compatible with 3.9
 plugins = 'numpy.typing.mypy_plugin'
 
 [tool.isort]

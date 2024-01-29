@@ -6,7 +6,7 @@ from httomo.ui_layer import UiLayer
 from httomo import ui_layer
 import pytest
 
-from tests.testing_utils import make_test_method
+from .testing_utils import make_test_method
 
 # TODO: add files with invalid syntax
 

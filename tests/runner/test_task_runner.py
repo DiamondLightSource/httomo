@@ -1,15 +1,11 @@
-import logging
 from os import PathLike
 from typing import List
 from unittest.mock import ANY, call
 import pytest
 import numpy as np
 from pytest_mock import MockerFixture
-import httomo
 from httomo.data.dataset_store import DataSetStoreWriter
-from httomo.logger import setup_logger
 from httomo.runner.dataset import DataSet, DataSetBlock
-from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.platform_section import sectionize
@@ -58,13 +54,11 @@ def test_can_determine_max_slices_no_gpu_estimator(
     mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
 ):
     loader = make_test_loader(mocker, dummy_dataset)
-    method = make_test_method(mocker, gpu=True)
-    method.memory_gpu = []
+    method = make_test_method(mocker, gpu=True, memory_gpu=[])
     p = Pipeline(loader=loader, methods=[method])
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
-    s = sectionize(p, False)
-    assert s[0].gpu is True
+    s = sectionize(p)
 
     t.determine_max_slices(s[0], 0)
 
@@ -94,9 +88,11 @@ def test_can_determine_max_slices_with_gpu_estimator(
     calc_max_slices_mocks = []
     for i, max_slices in enumerate(max_slices_methods):
         method = make_test_method(mocker, gpu=True)
-        method.memory_gpu = [
-            GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")
-        ]
+        mocker.patch.object(
+            method,
+            "memory_gpu",
+            [GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")],
+        )
         calc_dims_mocks.append(
             mocker.patch.object(method, "calculate_output_dims", return_value=(10, 10))
         )
@@ -109,8 +105,9 @@ def test_can_determine_max_slices_with_gpu_estimator(
     p = Pipeline(loader=loader, methods=methods)
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
-    s = sectionize(p, False)
-    assert s[0].gpu is True
+    s = sectionize(
+        p,
+    )
     assert len(s[0]) == len(max_slices_methods)
     shape = (dummy_dataset.shape[1], dummy_dataset.shape[2])
 
@@ -139,8 +136,7 @@ def test_can_determine_max_slices_with_cpu(
     p = Pipeline(loader=loader, methods=methods)
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
-    s = sectionize(p, False)
-    assert s[0].gpu is False
+    s = sectionize(p)
 
     t.determine_max_slices(s[0], 0)
     assert s[0].max_slices == dummy_dataset.shape[0]
@@ -163,7 +159,7 @@ def test_calls_update_side_inputs_after_call(
     t = TaskRunner(p, reslice_dir=tmp_path)
     spy = mocker.patch.object(t, "update_side_inputs")
     t._prepare()
-    t._execute_method(method1, 2, block)
+    t._execute_method(method1, block)
 
     spy.assert_called_with(side_outputs)
     t.side_outputs == side_outputs
@@ -199,12 +195,12 @@ def test_execute_section_calls_blockwise_execute(
     loader = make_test_loader(mocker, dummy_dataset)
     method = make_test_method(mocker, method_name="m1")
     p = Pipeline(loader=loader, methods=[method])
-    s = sectionize(p, False)
+    s = sectionize(p)
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
     # make that do nothing
     mocker.patch.object(t, "determine_max_slices")
-    s[0].max_slices = dummy_dataset.data.shape[0] / 2  # we'll have 2 blocks
+    s[0].max_slices = dummy_dataset.data.shape[0] // 2  # we'll have 2 blocks
 
     # make this function return the block, with data multiplied by 2
     def mul_block_by_two(section, block: DataSetBlock):
@@ -233,14 +229,14 @@ def test_execute_section_for_block(
     method1 = make_test_method(mocker, method_name="m1")
     method2 = make_test_method(mocker, method_name="m2")
     p = Pipeline(loader=loader, methods=[method1, method2])
-    s = sectionize(p, False)
+    s = sectionize(p)
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
     block = dummy_dataset.make_block(0)
     exec_method = mocker.patch.object(t, "_execute_method", return_value=block)
     t._execute_section_block(s[0], block)
 
-    calls = [call(method1, ANY, ANY), call(method2, ANY, ANY)]
+    calls = [call(method1, ANY), call(method2, ANY)]
     exec_method.assert_has_calls(calls)
 
 
