@@ -99,6 +99,7 @@ class Preview:
         self._image_key = image_key
         self._check_within_data_bounds()
         self._data_indices: Optional[List[int]] = None
+        self._global_shape: Optional[Tuple[int, int, int]] = None
 
     def _check_within_data_bounds(self) -> None:
         shape = self._dataset.shape
@@ -145,11 +146,28 @@ class Preview:
 
         return intersection.tolist()
 
+    def _calculate_global_shape(self) -> Tuple[int, int, int]:
+        if self._data_indices is None:
+            self._data_indices = self._calculate_data_indices()
+
+        return (
+            len(self._data_indices),
+            len(range(self.config.detector_y.start, self.config.detector_y.stop)),
+            len(range(self.config.detector_x.start, self.config.detector_x.stop)),
+        )
+
     @property
     def data_indices(self) -> List[int]:
         if self._data_indices is None:
             self._data_indices = self._calculate_data_indices()
         return self._data_indices
+
+
+    @property
+    def global_shape(self) -> Tuple[int, int, int]:
+        if self._global_shape is None:
+            self._global_shape = self._calculate_global_shape()
+        return self._global_shape
 
 
 class StandardTomoLoader(DataSetSource):
