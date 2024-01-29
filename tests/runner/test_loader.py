@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Union
+from typing import Tuple, Union
 from unittest import mock
 
 import h5py
@@ -509,6 +509,34 @@ def test_preview_with_no_image_key():
         image_key=None,
     )
     assert np.array_equal(preview.data_indices, expected_indices)
+
+
+@pytest.mark.parametrize(
+    "previewed_shape",
+    [(100, 128, 160), (180, 10, 160), (180, 128, 10)],
+    ids=["crop_angles_dim", "crop_det_y_dim", "crop_det_x_dim"],
+)
+def test_preview_global_shape(
+    standard_data_path: str,
+    standard_image_key_path:str,
+    previewed_shape: Tuple[int, int, int],
+):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+    f = h5py.File(IN_FILE_PATH, "r")
+    dataset = f[standard_data_path]
+    image_key = f[standard_image_key_path]
+
+    config = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=previewed_shape[0]),
+        detector_y=PreviewDimConfig(start=0, stop=previewed_shape[1]),
+        detector_x=PreviewDimConfig(start=0, stop=previewed_shape[2]),
+    )
+    preview = Preview(
+        preview_config=config,
+        dataset=dataset,
+        image_key=image_key,
+    )
+    assert preview.global_shape == previewed_shape
 
 
 def test_get_darks_flats_same_file_same_dataset(
