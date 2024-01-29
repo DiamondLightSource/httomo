@@ -135,7 +135,15 @@ class Preview:
             self.config.angles.start, self.config.angles.stop
         )
 
-        return np.intersect1d(indices, preview_data_indices).tolist()
+        intersection = np.intersect1d(indices, preview_data_indices)
+        if not np.array_equal(preview_data_indices, intersection):
+            self.config = PreviewConfig(
+                angles=PreviewDimConfig(start=intersection[0], stop=intersection[-1] + 1),
+                detector_y=self.config.detector_y,
+                detector_x=self.config.detector_x,
+            )
+
+        return intersection.tolist()
 
     @property
     def data_indices(self) -> List[int]:
