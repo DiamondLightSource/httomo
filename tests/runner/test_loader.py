@@ -485,6 +485,7 @@ def test_preview_calculate_data_indices_excludes_darks_flats(
     )
     assert not np.array_equal(preview.data_indices, all_indices)
     assert np.array_equal(preview.data_indices, data_indices)
+    assert preview.config.angles == PreviewDimConfig(start=0, stop=180)
     f.close()
 
 
