@@ -1,6 +1,7 @@
-from typing import Iterator, List
+from typing import Iterator, List, Optional
 
 import mpi4py
+from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
 from httomo.utils import Colour, Pattern, log_once
 from httomo.runner.method_wrapper import MethodWrapper
@@ -12,20 +13,14 @@ class PlatformSection:
 
     def __init__(
         self,
-        gpu: bool,
         pattern: Pattern,
-        reslice: bool,
         max_slices: int,
         methods: List[MethodWrapper],
-        save_result: bool = False,
-        is_last: bool = False
+        is_last: bool = False,
     ):
-        self.gpu = gpu
         self.pattern = pattern
-        self.reslice = reslice
         self.max_slices = max_slices
         self.methods = methods
-        self.save_result = save_result
         self.is_last = is_last
 
     def __iter__(self) -> Iterator[MethodWrapper]:
@@ -38,52 +33,41 @@ class PlatformSection:
         return self.methods[idx]
 
 
-def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSection]:
+def sectionize(pipeline: Pipeline) -> List[PlatformSection]:
     sections: List[PlatformSection] = []
 
     # The functions below are internal to reduce duplication
-
-    def needs_global_input(method: MethodWrapper) -> bool:
-        return method.config_params.get("glob_stats", False)
 
     def is_pattern_compatible(a: Pattern, b: Pattern) -> bool:
         return a == Pattern.all or b == Pattern.all or a == b
 
     # loop carried variables, to build up the sections
-    current_gpu: bool = False
     current_pattern: Pattern = pipeline.loader_pattern
     current_methods: List[MethodWrapper] = []
-    save_previous_result: bool = False
 
-    def finish_section(needs_reslice=False, save_previous_result=False):
-        if len(current_methods) > 0:
-            sections.append(
-                PlatformSection(
-                    current_gpu,
-                    current_pattern,
-                    needs_reslice,
-                    0,
-                    current_methods,
-                    save_result=save_previous_result,
-                )
+    def references_previous_method(method: MethodWrapper) -> bool:
+        # find output references in the method's parameters
+        refs = [v for v in method.config_params.values() if isinstance(v, OutputRef)]
+        # see if any of them reference methods in the current method list
+        for r in refs:
+            if r.method in current_methods:
+                return True
+        return False
+
+    def finish_section():
+        sections.append(
+            PlatformSection(
+                current_pattern,
+                0,
+                current_methods,
             )
-
-    for i, method in enumerate(pipeline):
-        pattern_changed = not is_pattern_compatible(current_pattern, method.pattern)
-        platform_changed = method.is_gpu != current_gpu
-        start_main_pipeline = i == pipeline.main_pipeline_start
-        global_input = needs_global_input(method)
-        start_new_section = (
-            global_input
-            or save_previous_result
-            or pattern_changed
-            or platform_changed
-            or start_main_pipeline
         )
 
-        if start_new_section:
-            finish_section(pattern_changed, save_previous_result)
-            current_gpu = method.is_gpu
+    for method in pipeline:
+        if not is_pattern_compatible(
+            current_pattern, method.pattern
+        ) or references_previous_method(method):
+            finish_section()
             if method.pattern != Pattern.all:
                 current_pattern = method.pattern
             current_methods = [method]
@@ -91,10 +75,8 @@ def sectionize(pipeline: Pipeline, save_all: bool = False) -> List[PlatformSecti
             current_methods.append(method)
             if current_pattern == Pattern.all:
                 current_pattern = method.pattern
-        save_previous_result = save_all or method.save_result
-        
 
-    finish_section(save_previous_result=save_previous_result)
+    finish_section()
     sections[-1].is_last = True
 
     _backpropagate_section_patterns(pipeline, sections)

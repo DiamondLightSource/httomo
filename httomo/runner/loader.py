@@ -32,8 +32,6 @@ class LoaderInterface(Protocol):
 
     # Patterns the loader supports
     pattern: Pattern = Pattern.all
-    # Information if a reslice is needed after it (in case it doesn't support all patterns)
-    reslice: bool = False
     # purely informational, for use by the logger
     method_name: str
     package_name: str = "httomo"
@@ -281,7 +279,6 @@ class StandardLoaderWrapper(LoaderInterface):
         angles: AnglesConfig,
     ):
         self.pattern = Pattern.projection
-        self.reslice = False
         self.method_name = "standard_tomo"
         self.package_name = "httomo"
         self._detector_x: int = 0
