@@ -98,7 +98,7 @@ class Preview:
         self._dataset = dataset
         self._image_key = image_key
         self._check_within_data_bounds()
-        self._data_indices = self._calculate_data_indices()
+        self._data_indices: Optional[List[int]] = None
 
     def _check_within_data_bounds(self) -> None:
         shape = self._dataset.shape
@@ -139,6 +139,8 @@ class Preview:
 
     @property
     def data_indices(self) -> List[int]:
+        if self._data_indices is None:
+            self._data_indices = self._calculate_data_indices()
         return self._data_indices
 
 
