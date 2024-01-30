@@ -7,9 +7,13 @@ from httomo.utils import Colour, Pattern, log_once
 from httomo.runner.method_wrapper import MethodWrapper
 
 
-class PlatformSection:
+class Section:
     """Represents on section of a pipeline that can be executed on the same platform,
-    and has the same dataset pattern."""
+    and has the same dataset pattern.
+
+    A new section is added in with the following conditions:
+    - the pattern changed (sino->proj or vice versa)
+    - a side output of a previous method in the same section is referenced"""
 
     def __init__(
         self,
@@ -33,8 +37,13 @@ class PlatformSection:
         return self.methods[idx]
 
 
-def sectionize(pipeline: Pipeline) -> List[PlatformSection]:
-    sections: List[PlatformSection] = []
+def sectionize(pipeline: Pipeline) -> List[Section]:
+    """Separates the pipeline into sections,
+    where a new section is started whenever the pattern has changed
+    of when a side output from a previous method is referenced in the
+    method parameters."""
+
+    sections: List[Section] = []
 
     # The functions below are internal to reduce duplication
 
@@ -55,13 +64,7 @@ def sectionize(pipeline: Pipeline) -> List[PlatformSection]:
         return False
 
     def finish_section():
-        sections.append(
-            PlatformSection(
-                current_pattern,
-                0,
-                current_methods,
-            )
-        )
+        sections.append(Section(current_pattern, 0, current_methods))
 
     for method in pipeline:
         if not is_pattern_compatible(
@@ -86,9 +89,7 @@ def sectionize(pipeline: Pipeline) -> List[PlatformSection]:
     return sections
 
 
-def _backpropagate_section_patterns(
-    pipeline: Pipeline, sections: List[PlatformSection]
-):
+def _backpropagate_section_patterns(pipeline: Pipeline, sections: List[Section]):
     """Performs a backward sweep through the patterns of each section, propagating
     from the last section backwards in case the previous ones have Pattern.all.
     This makes sure the loader eventually gets the pattern that the section that follows
@@ -109,7 +110,7 @@ def _backpropagate_section_patterns(
 
 def _finalize_patterns(
     pipeline: Pipeline,
-    sections: List[PlatformSection],
+    sections: List[Section],
     default_pattern=Pattern.projection,
 ):
     # final possible ambiguity: everything is Pattern.all -> pick projection by default
@@ -128,7 +129,7 @@ def _finalize_patterns(
     assert pipeline.loader_pattern != Pattern.all
 
 
-def _set_method_patterns(sections: List[PlatformSection]):
+def _set_method_patterns(sections: List[Section]):
     for s in sections:
         for m in s:
             m.pattern = s.pattern

@@ -8,7 +8,7 @@ from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.dataset import DataSet, DataSetBlock
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.platform_section import sectionize
+from httomo.runner.section import sectionize
 from httomo.runner.task_runner import TaskRunner
 from httomo.utils import Pattern, xp, gpu_enabled
 from httomo.runner.method_wrapper import MethodWrapper
@@ -142,28 +142,31 @@ def test_can_determine_max_slices_with_cpu(
     assert s[0].max_slices == dummy_dataset.shape[0]
 
 
-def test_calls_update_side_inputs_after_call(
+def test_calls_append_side_outputs_after_last_block(
     mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
 ):
     loader = make_test_loader(mocker, dummy_dataset)
 
     side_outputs = {"answer": 42, "other": "xxx"}
 
-    block = dummy_dataset.make_block(0)
+    block1 = dummy_dataset.make_block(0, 0, dummy_dataset.shape[0]//2)
+    block2 = dummy_dataset.make_block(0, dummy_dataset.shape[0]//2)
     method1 = make_test_method(mocker)
-    mocker.patch.object(method1, "execute", return_value=block)
-    mocker.patch.object(method1, "get_side_output", return_value=side_outputs)
+    mocker.patch.object(method1, "execute", side_effect=[block1, block2])
+    getmock = mocker.patch.object(method1, "get_side_output", return_value=side_outputs)
     method2 = make_test_method(mocker)
 
     p = Pipeline(loader=loader, methods=[method1, method2])
     t = TaskRunner(p, reslice_dir=tmp_path)
-    spy = mocker.patch.object(t, "update_side_inputs")
+    spy = mocker.patch.object(t, "append_side_outputs")
     t._prepare()
-    t._execute_method(method1, block)
+    t._execute_method(method1, block1)
+    t._execute_method(method1, block2)  # this should trigger it
 
-    spy.assert_called_with(side_outputs)
+    getmock.assert_called_once()
+    spy.assert_called_once_with(side_outputs)
     t.side_outputs == side_outputs
-
+    
 
 def test_update_side_inputs_updates_downstream_methods(
     mocker: MockerFixture, tmp_path: PathLike
@@ -180,8 +183,9 @@ def test_update_side_inputs_updates_downstream_methods(
 
     p = Pipeline(loader=loader, methods=[method1, method2, method3])
     t = TaskRunner(p, reslice_dir=tmp_path)
-    t.method_index = 2  # pretend we're after executing method1
-    t.update_side_inputs(side_outputs)
+    t.side_outputs = side_outputs
+    t.set_side_inputs(method2)
+    t.set_side_inputs(method3)
 
     setitem2.assert_called_with("answer", 42)
     method3_calls = [call("answer", 42), call("other", "xxx")]

@@ -42,7 +42,10 @@ class ImagesWrapper(GenericMethodWrapper):
         )
         self["out_dir"] = out_dir if out_dir is not None else httomo.globals.run_out_dir
         if "comm_rank" in self.parameters:
-            self["comm_rank"] = comm.rank
+            raise ValueError(
+                "save_to_images with the comm_rank parameter is broken. " +
+                "Please upgrade to the latest version, taking an offset parameter"
+            )
 
     # Images execute is leaving original data on the device where it is,
     # but gives the method a CPU copy of the data.

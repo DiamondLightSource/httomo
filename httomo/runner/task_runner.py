@@ -17,7 +17,7 @@ from httomo.runner.dataset_store_interfaces import (
 )
 from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.platform_section import PlatformSection, sectionize
+from httomo.runner.section import Section, sectionize
 from httomo.utils import Colour, Pattern, _get_slicing_dim, log_exception, log_once
 
 
@@ -41,7 +41,6 @@ class TaskRunner:
         self.side_outputs: Dict[str, Any] = dict()
         self.source: Optional[DataSetSource] = None
         self.sink: Optional[Union[DataSetSink, StoreBasedDataSetSink]] = None
-        self.method_index: int = 1
 
         self.output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
         self.output_colour_list_short = [Colour.GREEN, Colour.CYAN]
@@ -55,9 +54,11 @@ class TaskRunner:
         for i, section in enumerate(sections):
             self._execute_section(section, i)
             gpumem_cleanup()
-            self.method_index += len(section)
             
-    def _sectionize(self) -> List[PlatformSection]:
+        self.end_time = MPI.Wtime()
+        self._log_pipeline(f"Pipeline finished. Took {self.start_time-self.end_time} seconds")
+            
+    def _sectionize(self) -> List[Section]:
         sections = sectionize(self.pipeline)
         self._log_pipeline(f"Pipeline has been separated into {len(sections)} sections")
         num_stores = len(sections) - 1 
@@ -70,7 +71,7 @@ class TaskRunner:
 
         return sections
 
-    def _execute_section(self, section: PlatformSection, section_index: int = 0):
+    def _execute_section(self, section: Section, section_index: int = 0):
         self._setup_source_sink(section)
         assert self.source is not None, "Dataset has not been loaded yet"
         assert self.sink is not None, "Sink setup failed"
@@ -88,7 +89,7 @@ class TaskRunner:
             self.sink.write_block(self._execute_section_block(section, block))
             gpumem_cleanup()
 
-    def _setup_source_sink(self, section: PlatformSection):
+    def _setup_source_sink(self, section: Section):
         assert self.source is not None, "Dataset has not been loaded yet"
 
         slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
@@ -114,16 +115,11 @@ class TaskRunner:
             )
 
     def _execute_section_block(
-        self, section: PlatformSection, block: DataSetBlock
+        self, section: Section, block: DataSetBlock
     ) -> DataSetBlock:
-        for i, m in enumerate(section):
-            log.debug(
-                f"{m.method_name}: input shape, dtype: {block.data.shape}, {block.data.dtype}"
-            )
-            block = self._execute_method(m, block)
-            log.debug(
-                f"{m.method_name}: output shape, dtype: {block.data.shape}, {block.data.dtype}"
-            )
+        for method in section:
+            self.set_side_inputs(method)
+            block = self._execute_method(method, block)
         return block
 
     def _log_pipeline(self, str: str, level: int = 0, colour=Colour.BVIOLET):
@@ -151,33 +147,31 @@ class TaskRunner:
             self.pipeline.loader.method_name,
             self.pipeline.loader.package_name,
         )
-        self.method_index += 1
 
     def _execute_method(
-        self, method: MethodWrapper, dataset: DataSetBlock
+        self, method: MethodWrapper, block: DataSetBlock
     ) -> DataSetBlock:
         start_time = self._log_task_start(method.task_id, method.pattern, method.method_name)
-        dataset = method.execute(dataset)
-        if dataset.is_last_in_chunk:
-            self.update_side_inputs(method.get_side_output())
+        block = method.execute(block)
+        if block.is_last_in_chunk:
+            self.append_side_outputs(method.get_side_output())
         self._log_task_end(
             method.task_id, start_time, method.pattern, method.method_name, method.package_name
         )
-        return dataset
+        return block
 
-    def update_side_inputs(self, side_outputs: Dict[str, Any]):
-        """Updates the methods not yet executed in the pipeline with the side outputs
-        gathered so far if needed"""
+    def append_side_outputs(self, side_outputs: Dict[str, Any]):
+        """Appends to the side outputs that are available for the next section(s)"""
         if len(side_outputs) == 0:
             return
 
         self.side_outputs |= side_outputs
 
-        # iterate starting after current method index
-        for m in islice(self.pipeline, self.method_index - 1, None):
-            for k, v in self.side_outputs.items():
-                if k in m.parameters:
-                    m[k] = v
+    def set_side_inputs(self, method: MethodWrapper):
+        """Sets the parameters that reference side outputs for this method."""
+        for k, v in self.side_outputs.items():
+            if k in method.parameters:
+                method[k] = v
 
     def _log_task_start(self, id: str, pattern: Pattern, name: str) -> int:
         log_once(
@@ -222,7 +216,7 @@ class TaskRunner:
     def _count_tuple_values(self, d: Dict[str, Any]) -> int:
         return sum(1 for v in d.values() if isinstance(v, tuple))
 
-    def determine_max_slices(self, section: PlatformSection, slicing_dim: int):
+    def determine_max_slices(self, section: Section, slicing_dim: int):
         assert self.source is not None
         data_shape = self.source.chunk_shape
 

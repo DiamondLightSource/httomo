@@ -3,7 +3,7 @@ import pytest
 from pytest_mock import MockerFixture
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.platform_section import sectionize, PlatformSection
+from httomo.runner.section import sectionize, Section
 from httomo.utils import Pattern
 from ..testing_utils import make_test_loader, make_test_method
 
@@ -24,7 +24,7 @@ def test_determine_single_method(mocker: MockerFixture):
 
 
 def test_platformsection_can_iterate(mocker: MockerFixture):
-    sec = PlatformSection(
+    sec = Section(
         pattern=Pattern.projection,
         max_slices=0,
         methods=[
