@@ -183,6 +183,7 @@ class StandardTomoLoader(DataSetSource):
         darks: DarksFlatsFileConfig,
         flats: DarksFlatsFileConfig,
         angles: AnglesConfig,
+        preview_config: PreviewConfig,
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
     ) -> None:
@@ -196,9 +197,14 @@ class StandardTomoLoader(DataSetSource):
         self._slicing_dim = slicing_dim
         self._comm = comm
         self._h5file = h5py.File(in_file, "r", driver="mpio", comm = comm)
+        self._preview = Preview(
+            preview_config=preview_config,
+            dataset=self._h5file[data_path],
+            image_key=self._h5file[image_key_path] if image_key_path is not None else None,
+        )
 
-        self._data_indices = self._get_data_indices()
-        self._global_shape = self._get_global_data_shape()
+        self._data_indices = self._preview.data_indices
+        self._global_shape = self._preview.global_shape
 
         chunk_index_slicing_dim = self._calculate_chunk_index_slicing_dim(
             comm.rank,
@@ -250,11 +256,6 @@ class StandardTomoLoader(DataSetSource):
     def global_shape(self) -> Tuple[int, int, int]:
         return self._global_shape
 
-    def _get_global_data_shape(self) -> Tuple[int, int, int]:
-        dataset: h5py.Dataset = self._h5file[self._data_path]
-        global_shape = dataset.shape
-        return (len(self._data_indices), global_shape[1], global_shape[2])
-
     @property
     def chunk_index(self) -> Tuple[int, int, int]:
         return self._chunk_index
@@ -302,18 +303,7 @@ class StandardTomoLoader(DataSetSource):
         block = self._data.make_block(self._slicing_dim, start, length)
         return block
 
-    # NOTE: This method is largely copied from `load.get_data_indices()`; that function should
-    # be removed in the future if/when `StandardTomoLoader` gets merged.
-    def _get_data_indices(self) -> List[int]:
-        if self._image_key_path is None:
-            data: h5py.Dataset = self._h5file[self._data_path]
-            return np.arange(data.shape[0]).tolist()
-
-        return np.where(self._h5file[self._image_key_path][:] == 0)[0].tolist()
-
-    def _get_angles(
-        self,
-    ) -> np.ndarray:
+    def _get_angles(self) -> np.ndarray:
         if isinstance(self._angles, UserDefinedAngles):
             return np.linspace(
                 self._angles.start_angle,
