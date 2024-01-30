@@ -56,7 +56,7 @@ class TaskRunner:
             gpumem_cleanup()
             
         self.end_time = MPI.Wtime()
-        self._log_pipeline(f"Pipeline finished. Took {self.start_time-self.end_time} seconds")
+        self._log_pipeline(f"Pipeline finished. Took {self.end_time-self.start_time:.3f}s")
             
     def _sectionize(self) -> List[Section]:
         sections = sectionize(self.pipeline)
