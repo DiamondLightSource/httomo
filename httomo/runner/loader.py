@@ -275,12 +275,16 @@ class StandardTomoLoader(DataSetSource):
 
     # TODO: Assume projection slice dim for now, and therefore assume chunk index element
     # ordering
-    # TODO: Assume no previewing/cropping
+    # TODO: Assume no previewing/cropping in angles dimension
     def _calculate_chunk_index(
         self,
         chunk_index_slicing_dim: int,
     ) -> Tuple[int, int, int]:
-        return (chunk_index_slicing_dim, 0, 0)
+        return (
+            chunk_index_slicing_dim,
+            self._preview.config.detector_y.start,
+            self._preview.config.detector_x.start,
+        )
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
