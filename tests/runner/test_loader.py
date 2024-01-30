@@ -29,6 +29,11 @@ def make_standard_tomo_loader() -> StandardTomoLoader:
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
     )
+    PREVIEW_CONFIG = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=180),
+        detector_y=PreviewDimConfig(start=0, stop=128),
+        detector_x=PreviewDimConfig(start=0, stop=160),
+    )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
@@ -38,6 +43,7 @@ def make_standard_tomo_loader() -> StandardTomoLoader:
         darks=DARKS_FLATS_CONFIG,
         flats=DARKS_FLATS_CONFIG,
         angles=ANGLES_CONFIG,
+        preview_config=PREVIEW_CONFIG,
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
@@ -50,16 +56,6 @@ def test_standard_tomo_loader_get_slicing_dim():
     ):
         loader = make_standard_tomo_loader()
     assert loader.slicing_dim == 0
-
-
-def test_standard_tomo_loader_get_global_shape():
-    with mock.patch(
-        "httomo.runner.loader.get_darks_flats",
-        return_value=(np.zeros(1), np.zeros(1)),
-    ):
-        loader = make_standard_tomo_loader()
-    GLOBAL_DATA_SHAPE = (180, 128, 160)
-    assert loader.global_shape == GLOBAL_DATA_SHAPE
 
 
 def test_standard_tomo_loader_get_chunk_index_single_proc():
@@ -196,6 +192,11 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
     )
+    PREVIEW_CONFIG = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=3201),
+        detector_y=PreviewDimConfig(start=0, stop=22),
+        detector_x=PreviewDimConfig(start=0, stop=26),
+    )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
 
@@ -210,6 +211,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
             darks=DARKS_CONFIG,
             flats=FLATS_CONFIG,
             angles=ANGLES_CONFIG,
+            preview_config=PREVIEW_CONFIG,
             slicing_dim=SLICING_DIM,
             comm=COMM,
         )
@@ -247,6 +249,11 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
     )
+    PREVIEW_CONFIG = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=3201),
+        detector_y=PreviewDimConfig(start=0, stop=22),
+        detector_x=PreviewDimConfig(start=0, stop=26),
+    )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
 
@@ -261,6 +268,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
             darks=DARKS_CONFIG,
             flats=FLATS_CONFIG,
             angles=ANGLES_CONFIG,
+            preview_config=PREVIEW_CONFIG,
             slicing_dim=SLICING_DIM,
             comm=COMM,
         )
@@ -316,6 +324,11 @@ def test_standard_tomo_loader_user_defined_angles(
     standard_image_key_path: str,
     standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
+    PREVIEW_CONFIG = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=180),
+        detector_y=PreviewDimConfig(start=0, stop=128),
+        detector_x=PreviewDimConfig(start=0, stop=160),
+    )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
     # Override angles in raw data with the config for some arbitrary array
@@ -340,6 +353,7 @@ def test_standard_tomo_loader_user_defined_angles(
             image_key_path=standard_image_key_path,
             darks=standard_data_darks_flats_config,
             flats=standard_data_darks_flats_config,
+            preview_config=PREVIEW_CONFIG,
             angles=USER_DEFINED_ANGLES,
             slicing_dim=SLICING_DIM,
             comm=COMM,
@@ -366,6 +380,11 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
     ANGLES_CONFIG = RawAngles(
         data_path="/entry1/tomo_entry/data/rotation_angle"
     )
+    PREVIEW_CONFIG = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=180),
+        detector_y=PreviewDimConfig(start=0, stop=128),
+        detector_x=PreviewDimConfig(start=0, stop=160),
+    )
     SLICING_DIM = 1
     COMM = MPI.COMM_WORLD
 
@@ -379,6 +398,7 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
             image_key_path=standard_data_darks_flats_config.image_key_path,
             darks=standard_data_darks_flats_config,
             flats=standard_data_darks_flats_config,
+            preview_config=PREVIEW_CONFIG,
             angles=ANGLES_CONFIG,
             slicing_dim=SLICING_DIM,
             comm=COMM,
