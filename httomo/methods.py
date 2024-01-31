@@ -42,6 +42,10 @@ def _save_dataset_data(dataset: h5py.Dataset, block: DataSetBlock):
     start = np.array(block.global_index)
     stop = start + np.array(block.shape)
     data = block.data if block.is_cpu else xp.asnumpy(block.data)
+    assert stop[0] <= dataset.shape[0]
+    assert stop[1] <= dataset.shape[1]
+    assert stop[2] <= dataset.shape[2]
+    assert dataset.shape == block.global_shape
     dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
 
 

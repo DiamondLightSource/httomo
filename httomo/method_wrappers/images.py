@@ -53,13 +53,13 @@ class ImagesWrapper(GenericMethodWrapper):
         self,
         dataset: DataSetBlock,
     ) -> DataSetBlock:
+        config_params = self._config_params
         if "offset" in self.parameters:
             config_params = {
                 **self._config_params,
                 "offset": dataset.global_index[_get_slicing_dim(self.pattern) - 1],
             }
-        else:
-            config_params = self._config_params
+            
         args = self._build_kwargs(self._transform_params(config_params), dataset)
         if dataset.is_gpu:
             # give method a CPU copy of the data

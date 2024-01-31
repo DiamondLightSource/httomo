@@ -19,7 +19,7 @@ from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import Section, sectionize
 from httomo.utils import Colour, Pattern, _get_slicing_dim, log_exception, log_once
-
+import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -140,6 +140,12 @@ class TaskRunner:
             self.pipeline.loader.method_name,
         )
         self.source = self.pipeline.loader.make_data_source()
+        log_once(
+            f"The full dataset shape is {self.source.global_shape}",
+            comm=self.comm,
+            colour=Colour.LYELLOW,
+            level=1,
+        )
         self._log_task_end(
             "loader",
             start_time,

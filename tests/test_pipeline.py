@@ -106,7 +106,7 @@ def test_run_pipeline_cpu1_yaml(cmd, standard_data, yaml_cpu_pipeline1, output_f
 
     # recurse through output_dir and check that all files are there
     files = read_folder("output_dir/")
-    assert len(files) == 130
+    assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
     # check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -139,7 +139,7 @@ def test_run_pipeline_cpu1_py(cmd, standard_data, python_cpu_pipeline1, output_f
 
     # recurse through output_dir and check that all files are there
     files = read_folder("output_dir/")
-    assert len(files) == 130
+    assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
     # check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -264,7 +264,7 @@ def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_f
 
     # recurse through output_dir and check that all files are there
     files = read_folder("output_dir/")
-    assert len(files) == 130
+    assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
     # check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))
@@ -303,7 +303,7 @@ def test_run_pipeline_cpu3_py(cmd, standard_data, python_cpu_pipeline3, output_f
 
     # recurse through output_dir and check that all files are there
     files = read_folder("output_dir/")
-    assert len(files) == 130
+    assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
     # check the .tif files
     tif_files = list(filter(lambda x: ".tif" in x, files))

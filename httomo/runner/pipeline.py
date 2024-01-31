@@ -12,20 +12,14 @@ class Pipeline:
     def __init__(
         self,
         loader: LoaderInterface,
-        methods: List[MethodWrapper],
-        main_pipeline_start: int = 0,
+        methods: List[MethodWrapper]
     ):
         self._methods = methods
         self._loader = loader
-        self._main_pipeline_start = main_pipeline_start
 
     @property
     def loader(self) -> LoaderInterface:
         return self._loader
-
-    @property
-    def main_pipeline_start(self) -> int:
-        return self._main_pipeline_start
 
     # iterator interface to access the methods
     def __iter__(self) -> Iterator[MethodWrapper]:

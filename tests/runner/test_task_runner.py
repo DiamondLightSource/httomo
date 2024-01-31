@@ -8,7 +8,7 @@ from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.dataset import DataSet, DataSetBlock
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.section import sectionize
+from httomo.runner.section import Section, sectionize
 from httomo.runner.task_runner import TaskRunner
 from httomo.utils import Pattern, xp, gpu_enabled
 from httomo.runner.method_wrapper import MethodWrapper
@@ -46,10 +46,6 @@ def test_can_load_datasets(mocker: MockerFixture, tmp_path: PathLike):
     assert t.source is not None
 
 
-@pytest.mark.skipif(
-    not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
-    reason="skipped as cupy is not available",
-)
 def test_can_determine_max_slices_no_gpu_estimator(
     mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
 ):
@@ -59,6 +55,22 @@ def test_can_determine_max_slices_no_gpu_estimator(
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
     s = sectionize(p)
+
+    t.determine_max_slices(s[0], 0)
+
+    assert s[0].max_slices == dummy_dataset.shape[0]
+
+
+def test_can_determine_max_slices_empty_section(
+    mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
+):
+    loader = make_test_loader(mocker, dummy_dataset)
+    method = make_test_method(mocker, gpu=True, memory_gpu=[])
+    p = Pipeline(loader=loader, methods=[method])
+    t = TaskRunner(p, reslice_dir=tmp_path)
+    t._prepare()
+    s = sectionize(p)
+    s.insert(0, Section(pattern=Pattern.sinogram, max_slices=0, methods=[]))
 
     t.determine_max_slices(s[0], 0)
 

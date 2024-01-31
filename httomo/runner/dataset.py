@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 from typing_extensions import TypeAlias
 from httomo.utils import gpu_enabled, xp
 import numpy as np
@@ -37,15 +37,16 @@ class DataSet:
         self._flats = flats
         self._darks = darks
         self._data = data
+        assert data.ndim == 3, "Only 3D data is supported"
 
         if global_shape is None:
-            self._global_shape = data.shape
+            global_shape = (int(data.shape[0]), int(data.shape[1]), int(data.shape[2]))
         elif any(i < d for i, d in zip(global_shape, data.shape)):
             raise ValueError(
                 f"A global shape of {global_shape} is incompatible with a local shape {data.shape}"
             )
-        else:
-            self._global_shape = global_shape
+
+        self._global_shape: Tuple[int, int, int] = global_shape
         self._global_index = global_index
 
         self.lock()
@@ -68,7 +69,8 @@ class DataSet:
     @property
     def shape(self) -> Tuple[int, int, int]:
         """Shape of this part of the dataset"""
-        return self._data.shape
+        assert self._data.ndim == 3, "only 3D data is supported"
+        return (self._data.shape[0], self._data.shape[1], self._data.shape[2])
 
     @property
     def global_index(self) -> Tuple[int, int, int]:
@@ -149,8 +151,20 @@ class DataSet:
 
     @data.setter
     def data(self, new_data: generic_array):
+        self._set_data(new_data)
+
+    def _set_data(self, new_data: generic_array):
+        # if the shape changed, there should be on dim at least matching (slicing dim)
+        # and the other two may need to be updated
+        global_shape = list(self._global_shape)
+        for dim in range(3):
+            if new_data.shape[dim] != self._data.shape[dim]:
+                assert (
+                    self._global_index[dim] == 0
+                ), "shape in slicing dim changed, which is not allowed"
+                global_shape[dim] = new_data.shape[dim]
         self._data = new_data
-        self._chunk_shape = new_data.shape
+        self._global_shape = (global_shape[0], global_shape[1], global_shape[2])
 
     def get_data_block(
         self, start0: int, stop0: int, start1: int, stop1: int, start2: int, stop2: int
@@ -158,10 +172,14 @@ class DataSet:
         return self._data[start0:stop0, start1:stop1, start2:stop2]
 
     def set_data_block(self, start_idx: Tuple[int, int, int], new_data: generic_array):
+        stopidx = np.array(start_idx) + np.array(new_data.shape)
+        assert stopidx[0] <= self._data.shape[0]
+        assert stopidx[1] <= self._data.shape[1]
+        assert stopidx[2] <= self._data.shape[2]
         self._data[
-            start_idx[0] : start_idx[0] + new_data.shape[0],
-            start_idx[1] : start_idx[1] + new_data.shape[1],
-            start_idx[2] : start_idx[2] + new_data.shape[2],
+            start_idx[0] : stopidx[0],
+            start_idx[1] : stopidx[1],
+            start_idx[2] : stopidx[2],
         ] = new_data
 
     @property
@@ -173,12 +191,11 @@ class DataSet:
     def is_cpu(self) -> bool:
         """Check if arrays are currently residing on CPU"""
         return not self.is_gpu
-    
+
     @property
     def is_full(self) -> bool:
         """Check if the dataset is the full global data"""
         return False
-
 
     def lock(self):
         """Makes angles, darks and flats read-only, to avoid coding errors.
@@ -207,7 +224,7 @@ class DataSet:
         if not gpu_enabled:
             raise ValueError("cannot transfer to GPU if not enabled")
         if not self.is_gpu:
-            self._data = xp.asarray(self.data)
+            self._data = xp.asarray(self.data, order='C')
 
     def to_cpu(self):
         """Transfter dataset to CPU (if not already)"""
@@ -289,7 +306,7 @@ class DataSet:
     def _transfer_if_needed(self, cpuarray: np.ndarray, gpuarray: Optional[xp.ndarray]):
         """Internal helper to transfer flats/darks/angles lazily"""
         if gpuarray is None:
-            gpuarray = xp.asarray(cpuarray)
+            gpuarray = xp.asarray(cpuarray, order='C')
         assert (
             gpuarray.device.id == xp.cuda.Device().id
         ), f"GPU array is on a different GPU (expected: {xp.cuda.Device().id}, actual: {gpuarray.device.id})"
@@ -330,18 +347,18 @@ class DataSetBlock(DataSet):
         self._base = base
         idx = [0, 0, 0]
         idx[dim] = start
+        self._chunk_shape = base.chunk_shape
         self._chunk_index = (idx[0], idx[1], idx[2])
         self._dim = dim
 
     @property
     def is_block(self) -> bool:
         return True
-    
+
     @property
     def is_full(self) -> bool:
         """Check if the dataset is the full global data"""
         return False
-
 
     @property
     def chunk_index(self) -> Tuple[int, int, int]:
@@ -351,7 +368,18 @@ class DataSetBlock(DataSet):
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Shape of the full chunk handled by the current process"""
-        return self._base.chunk_shape
+        return self._chunk_shape
+
+    @property
+    def data(self) -> DataSet.generic_array:
+        return super().data
+
+    @data.setter
+    def data(self, new_data: DataSet.generic_array):
+        super()._set_data(new_data)
+        chunk_shape = np.array(new_data.shape)
+        chunk_shape[self._dim] = self._base.chunk_shape[self._dim]
+        self._chunk_shape = (chunk_shape[0], chunk_shape[1], chunk_shape[2])
 
     @property
     def is_last_in_chunk(self) -> bool:
@@ -407,7 +435,7 @@ class FullFileDataSet(DataSet):
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         return self._chunk_shape
-    
+
     @property
     def is_full(self) -> bool:
         return True

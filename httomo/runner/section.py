@@ -104,8 +104,6 @@ def _backpropagate_section_patterns(pipeline: Pipeline, sections: List[Section])
         last_pattern = s.pattern
     if pipeline.loader_pattern == Pattern.all:
         pipeline.loader_pattern = last_pattern
-    elif pipeline.loader_pattern != last_pattern:
-        pipeline.loader_reslice = True
 
 
 def _finalize_patterns(

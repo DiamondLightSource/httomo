@@ -67,6 +67,36 @@ def test_chunked_shape_invalid(dataset):
     assert "(2, 2, 2) is incompatible" in str(e)
 
 
+def test_setting_data_updates_global_shape(dataset):
+    oldshape = np.array(dataset.shape)
+    newshape = (oldshape[0], oldshape[1] + 5, oldshape[2])
+    newdata = np.ones(newshape, dtype=np.float32)
+    dataset.data = newdata
+
+    assert dataset.shape == newshape
+    assert dataset.global_shape == newshape
+    assert dataset.global_index == (0, 0, 0)
+
+
+def test_setting_data_updates_global_shape_chunked(dataset):
+    d2 = DataSet(
+        data=dataset.data[2:5, :, :],
+        darks=dataset.darks,
+        flats=dataset.flats,
+        angles=dataset.angles,
+        global_shape=dataset.data.shape,
+        global_index=(2, 0, 0),
+    )
+    oldshape = np.array(d2.shape)
+    newshape = (oldshape[0], oldshape[1] + 5, oldshape[2])
+    newdata = np.ones(newshape, dtype=np.float32)
+    d2.data = newdata
+
+    assert d2.shape == newshape
+    assert d2.global_shape == (dataset.data.shape[0], newshape[1], newshape[2])
+    assert d2.global_index == (2, 0, 0)
+
+
 def test_darks_not_writeable_numpy(dataset):
     with pytest.raises(ValueError):
         dataset.darks[1, 1] = 42.0
@@ -317,6 +347,28 @@ def test_block_caches_in_base_on_gpu_access(dataset: DataSet):
         assert darks_orig.data == darks_new.data
 
 
+def test_setting_data_in_block_updates_global_shape(dataset):
+    d2 = DataSet(
+        data=dataset.data[2:6, :, :],
+        darks=dataset.darks,
+        flats=dataset.flats,
+        angles=dataset.angles,
+        global_shape=dataset.data.shape,
+        global_index=(2, 0, 0),
+    )
+    block = d2.make_block(0, 1, 2)
+    oldshape = np.array(block.shape)
+    newshape = (oldshape[0], oldshape[1] + 5, oldshape[2])
+    newdata = np.ones(newshape, dtype=np.float32)
+    block.data = newdata
+
+    assert block.shape == newshape
+    assert block.chunk_shape == (d2.shape[0], newshape[1], newshape[2])
+    assert block.global_shape == (dataset.data.shape[0], newshape[1], newshape[2])
+    assert block.global_index == (3, 0, 0)
+    assert block.chunk_index == (1, 0, 0)
+
+
 def test_fullfiledataset_has_correct_shapes():
     CHUNK_SHAPE = (5, 10, 10)
     GLOBAL_DATA_SHAPE = (10, 10, 10)
@@ -334,6 +386,7 @@ def test_fullfiledataset_has_correct_shapes():
 
     assert dummy_dataset.chunk_shape == CHUNK_SHAPE
     assert dummy_dataset.shape == GLOBAL_DATA_SHAPE
+    assert dummy_dataset.is_full is True
 
 
 def test_datasetblock_from_fullfiledataset_has_correct_shapes():
@@ -366,9 +419,7 @@ def test_datasetblock_from_fullfiledataset_has_correct_shapes():
 def test_datasetblock_from_dataset_has_correct_shapes():
     CHUNK_SHAPE = (5, 10, 10)
     GLOBAL_DATA_SHAPE = (10, 10, 10)
-    chunk_data = np.arange(np.prod(CHUNK_SHAPE), dtype=np.float32).reshape(
-        CHUNK_SHAPE
-    )
+    chunk_data = np.arange(np.prod(CHUNK_SHAPE), dtype=np.float32).reshape(CHUNK_SHAPE)
     SLICING_DIM = 0
     BLOCK_START = 0
     BLOCK_LENGTH = 2
@@ -390,4 +441,92 @@ def test_datasetblock_from_dataset_has_correct_shapes():
     assert block.global_shape == GLOBAL_DATA_SHAPE
 
 
-# TODO: the FullFileDataSet needs tests for setting the data (and set_block)
+def test_fullfile_dataset_can_set_full_data():
+    CHUNK_SHAPE = (5, 10, 10)
+    GLOBAL_DATA_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_DATA_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_DATA_SHAPE
+    )
+    dataset = FullFileDataSet(
+        data=global_data.copy(),
+        angles=np.ones((20,)),
+        flats=3 * np.ones((5, 10, 10)),
+        darks=2 * np.ones((5, 10, 10)),
+        global_index=(0, 0, 0),
+        chunk_shape=CHUNK_SHAPE,
+    )
+
+    dataset.data = np.ones(CHUNK_SHAPE, dtype=np.float32)
+
+    np.testing.assert_array_equal(dataset._data[: CHUNK_SHAPE[0], :, :], 1)
+    np.testing.assert_array_equal(
+        dataset._data[CHUNK_SHAPE[0] :, :, :], global_data[CHUNK_SHAPE[0] :, :, :]
+    )
+
+
+def test_fullfile_dataset_cannot_change_shape():
+    CHUNK_SHAPE = (5, 10, 10)
+    GLOBAL_DATA_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_DATA_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_DATA_SHAPE
+    )
+    dataset = FullFileDataSet(
+        data=global_data.copy(),
+        angles=np.ones((20,)),
+        flats=3 * np.ones((5, 10, 10)),
+        darks=2 * np.ones((5, 10, 10)),
+        global_index=(0, 0, 0),
+        chunk_shape=CHUNK_SHAPE,
+    )
+
+    with pytest.raises(ValueError) as e:
+        dataset.data = np.ones(
+            (CHUNK_SHAPE[0], CHUNK_SHAPE[1] + 10, CHUNK_SHAPE[2]), dtype=np.float32
+        )
+
+    assert "changing shape" in str(e)
+
+
+def test_fullfile_dataset_cannot_change_dtype():
+    CHUNK_SHAPE = (5, 10, 10)
+    GLOBAL_DATA_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_DATA_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_DATA_SHAPE
+    )
+    dataset = FullFileDataSet(
+        data=global_data.copy(),
+        angles=np.ones((20,)),
+        flats=3 * np.ones((5, 10, 10)),
+        darks=2 * np.ones((5, 10, 10)),
+        global_index=(0, 0, 0),
+        chunk_shape=CHUNK_SHAPE,
+    )
+
+    with pytest.raises(ValueError) as e:
+        dataset.data = np.ones(CHUNK_SHAPE, dtype=np.float64)
+
+    assert "changing the datatype" in str(e)
+    
+
+@pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")
+@pytest.mark.cupy
+def test_fullfile_dataset_transfers_to_cpu():
+    CHUNK_SHAPE = (5, 10, 10)
+    GLOBAL_DATA_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_DATA_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_DATA_SHAPE
+    )
+    dataset = FullFileDataSet(
+        data=global_data.copy(),
+        angles=np.ones((20,)),
+        flats=3 * np.ones((5, 10, 10)),
+        darks=2 * np.ones((5, 10, 10)),
+        global_index=(0, 0, 0),
+        chunk_shape=CHUNK_SHAPE,
+    )
+    
+    dataset.data = xp.ones(CHUNK_SHAPE, dtype=np.float32)
+    
+    np.testing.assert_array_equal(dataset._data[: CHUNK_SHAPE[0], :, :], 1)
+    
+

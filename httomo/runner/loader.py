@@ -326,9 +326,11 @@ def make_loader(
     """Produces a loader interface. Only StandardTomoWrapper is supported right now,
     and this method has been added for backwards compatibility. Supporting other loaders
     is a topic that still needs to be explored."""
-    
+
     if "standard_tomo" not in method_name:
-        raise NotImplementedError("Only the standard_tomo loader is currently supported")
+        raise NotImplementedError(
+            "Only the standard_tomo loader is currently supported"
+        )
 
     # the following will raise KeyError if not present
     in_file = kwargs["in_file"]
