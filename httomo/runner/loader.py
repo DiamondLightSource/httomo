@@ -224,7 +224,7 @@ class StandardTomoLoader(DataSetSource):
         angles_arr = self._get_angles()
         darks_arr, flats_arr = get_darks_flats(darks, flats, comm)
 
-        dataset: h5py.Dataset = self._h5file[data_path]
+        dataset: h5py.Dataset = self._get_data()
         self._data = FullFileDataSet(
             data=dataset,
             angles=angles_arr,
@@ -319,6 +319,9 @@ class StandardTomoLoader(DataSetSource):
 
     def finalize(self):
         self._h5file.close()
+
+    def _get_data(self) -> h5py.Dataset:
+        return self._h5file[self._data_path]
 
 
 def get_darks_flats(
