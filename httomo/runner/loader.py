@@ -291,7 +291,7 @@ class StandardTomoLoader(DataSetSource):
 
     # TODO: Assume projection slice dim for now, and therefore assume chunk shape element
     # ordering
-    # TODO: Assume no previewing/cropping
+    # TODO: Assume no previewing/cropping in angles dimension
     def _calculate_chunk_shape(
         self,
         current_proc_chunk_index: int,
