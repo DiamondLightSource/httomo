@@ -227,6 +227,64 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc():
     assert loader.chunk_shape == CHUNK_SHAPE
 
 
+@pytest.mark.parametrize(
+    "preview_config, expected_chunk_shape",
+    [
+        (
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=180),
+                detector_y=PreviewDimConfig(start=5, stop=15),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+            (180, 10, 160),
+        ),
+        (
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=180),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=5, stop=15),
+            ),
+            (180, 128, 10),
+        ),
+    ],
+    ids=["crop_det_y", "crop_det_x"],
+)
+def test_standard_tomo_loader_previewed_get_chunk_shape_single_proc(
+    standard_data_path: str,
+    standard_image_key_path: str,
+    preview_config: PreviewConfig,
+    expected_chunk_shape: Tuple[int, int, int],
+):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+    DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
+        file=IN_FILE_PATH,
+        data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
+    )
+    ANGLES_CONFIG = RawAngles(
+        data_path="/entry1/tomo_entry/data/rotation_angle"
+    )
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = StandardTomoLoader(
+            in_file=IN_FILE_PATH,
+            data_path=DARKS_FLATS_CONFIG.data_path,
+            image_key_path=DARKS_FLATS_CONFIG.image_key_path,
+            darks=DARKS_FLATS_CONFIG,
+            flats=DARKS_FLATS_CONFIG,
+            angles=ANGLES_CONFIG,
+            preview_config=preview_config,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+        )
+
+    assert loader.chunk_shape == expected_chunk_shape
+
 @pytest.mark.mpi
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
@@ -244,6 +302,69 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs():
     ):
         loader = make_standard_tomo_loader()
     assert loader.chunk_shape == CHUNK_SHAPE
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+@pytest.mark.parametrize(
+    "preview_config, expected_chunk_shape",
+    [
+        (
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=180),
+                detector_y=PreviewDimConfig(start=5, stop=15),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+            (90, 10, 160),
+        ),
+        (
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=180),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=5, stop=15),
+            ),
+            (90, 128, 10),
+        ),
+    ],
+    ids=["crop_det_y", "crop_det_x"],
+)
+def test_standard_tomo_loader_previewed_get_chunk_shape_two_procs(
+    standard_data_path: str,
+    standard_image_key_path: str,
+    preview_config: PreviewConfig,
+    expected_chunk_shape: Tuple[int, int, int],
+):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+    DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
+        file=IN_FILE_PATH,
+        data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
+    )
+    ANGLES_CONFIG = RawAngles(
+        data_path="/entry1/tomo_entry/data/rotation_angle"
+    )
+    SLICING_DIM = 0
+    COMM = MPI.COMM_WORLD
+
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = StandardTomoLoader(
+            in_file=IN_FILE_PATH,
+            data_path=DARKS_FLATS_CONFIG.data_path,
+            image_key_path=DARKS_FLATS_CONFIG.image_key_path,
+            darks=DARKS_FLATS_CONFIG,
+            flats=DARKS_FLATS_CONFIG,
+            angles=ANGLES_CONFIG,
+            preview_config=preview_config,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+        )
+
+    assert loader.chunk_shape == expected_chunk_shape
 
 
 def test_standard_tomo_loader_read_block_single_proc(
