@@ -228,7 +228,7 @@ class TaskRunner:
 
         max_slices = data_shape[slicing_dim]
         if len(section) == 0:
-            section.max_slices = max_slices
+            section.max_slices = min(httomo.globals.MAX_CPU_SLICES, max_slices)
             return
 
         nsl_dim_l = list(data_shape)
@@ -244,11 +244,13 @@ class TaskRunner:
         max_slices_methods = [max_slices] * len(section)
 
         # loop over all methods in section
+        has_gpu = False
         for idx, m in enumerate(section):
             if len(m.memory_gpu) == 0:
                 max_slices_methods[idx] = max_slices
                 continue
 
+            has_gpu = has_gpu or m.is_gpu
             output_dims = m.calculate_output_dims(non_slice_dims_shape)
             (slices_estimated, available_memory) = m.calculate_max_slices(
                 self.source.dtype,
@@ -260,4 +262,7 @@ class TaskRunner:
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims
 
-        section.max_slices = min(max_slices_methods)
+        if not has_gpu:
+            section.max_slices = min(min(max_slices_methods), httomo.globals.MAX_CPU_SLICES)
+        else:
+            section.max_slices = min(max_slices_methods)

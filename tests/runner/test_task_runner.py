@@ -4,6 +4,7 @@ from unittest.mock import ANY, call
 import pytest
 import numpy as np
 from pytest_mock import MockerFixture
+import httomo
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.dataset import DataSet, DataSetBlock
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
@@ -61,9 +62,12 @@ def test_can_determine_max_slices_no_gpu_estimator(
     assert s[0].max_slices == dummy_dataset.shape[0]
 
 
+@pytest.mark.parametrize("slices", [10, 500])
 def test_can_determine_max_slices_empty_section(
-    mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
+    mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet, slices: int
 ):
+    dummy_dataset.data = np.ones((slices, 10, 10), dtype=np.float32)
+
     loader = make_test_loader(mocker, dummy_dataset)
     method = make_test_method(mocker, gpu=True, memory_gpu=[])
     p = Pipeline(loader=loader, methods=[method])
@@ -74,7 +78,7 @@ def test_can_determine_max_slices_empty_section(
 
     t.determine_max_slices(s[0], 0)
 
-    assert s[0].max_slices == dummy_dataset.shape[0]
+    assert s[0].max_slices == min(dummy_dataset.shape[0], httomo.globals.MAX_CPU_SLICES)
 
 
 @pytest.mark.skipif(
@@ -154,6 +158,25 @@ def test_can_determine_max_slices_with_cpu(
     assert s[0].max_slices == dummy_dataset.shape[0]
 
 
+def test_can_determine_max_slices_with_cpu_large(
+    mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
+):
+    mocker.patch.object(httomo.globals, "MAX_CPU_SLICES", 16)
+    dummy_dataset.data = np.ones((500, 10, 10), dtype=np.float32)
+    loader = make_test_loader(mocker, dummy_dataset)
+    methods = []
+    for _ in range(3):
+        method = make_test_method(mocker, gpu=False)
+        methods.append(method)
+    p = Pipeline(loader=loader, methods=methods)
+    t = TaskRunner(p, reslice_dir=tmp_path)
+    t._prepare()
+    s = sectionize(p)
+
+    t.determine_max_slices(s[0], 0)
+    assert s[0].max_slices == 16
+
+
 def test_calls_append_side_outputs_after_last_block(
     mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
 ):
@@ -161,8 +184,8 @@ def test_calls_append_side_outputs_after_last_block(
 
     side_outputs = {"answer": 42, "other": "xxx"}
 
-    block1 = dummy_dataset.make_block(0, 0, dummy_dataset.shape[0]//2)
-    block2 = dummy_dataset.make_block(0, dummy_dataset.shape[0]//2)
+    block1 = dummy_dataset.make_block(0, 0, dummy_dataset.shape[0] // 2)
+    block2 = dummy_dataset.make_block(0, dummy_dataset.shape[0] // 2)
     method1 = make_test_method(mocker)
     mocker.patch.object(method1, "execute", side_effect=[block1, block2])
     getmock = mocker.patch.object(method1, "get_side_output", return_value=side_outputs)
@@ -178,7 +201,7 @@ def test_calls_append_side_outputs_after_last_block(
     getmock.assert_called_once()
     spy.assert_called_once_with(side_outputs)
     t.side_outputs == side_outputs
-    
+
 
 def test_update_side_inputs_updates_downstream_methods(
     mocker: MockerFixture, tmp_path: PathLike
