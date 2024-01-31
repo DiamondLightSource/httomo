@@ -7,8 +7,12 @@ from typing import Any, Dict, Generator, Iterator, List, Optional, Tuple, TypeAl
 import h5py
 import yaml
 
+from pathlib import Path
+
 from httomo.utils import Colour
-from httomo.yaml_utils import get_external_package_current_version
+from httomo.yaml_utils import get_packages_current_version
+from httomo.ui_layer import _yaml_loader
+
 
 from . import __version__
 
@@ -19,6 +23,7 @@ __all__ = [
 
 MethodConfig: TypeAlias = Dict[str, Any]
 PipelineConfig: TypeAlias = List[MethodConfig]
+
 
 def sanity_check(conf_generator: Iterator[Any]) -> bool:
     """
@@ -68,13 +73,14 @@ def sanity_check(conf_generator: Iterator[Any]) -> bool:
             )
         return False
 
+
 def check_first_method_is_loader(conf: PipelineConfig) -> bool:
     """
     Check that the first method in pipeline is a
     loader.
     """
     first_stage = conf[0]
-    module_path = first_stage['module_path']
+    module_path = first_stage["module_path"]
 
     _print_with_colour(
         "Checking that the first method in the pipeline is a loader...",
@@ -91,10 +97,7 @@ def check_first_method_is_loader(conf: PipelineConfig) -> bool:
     return True
 
 
-def check_hdf5_paths_against_loader(
-        conf: PipelineConfig,
-        in_file_path: str
-) -> bool:
+def check_hdf5_paths_against_loader(conf: PipelineConfig, in_file_path: str) -> bool:
     """
     Check that the hdf5 paths given as parameters to the loader indeed exist in
     the given data file.
@@ -109,7 +112,7 @@ def check_hdf5_paths_against_loader(
         "match the paths and keys in the input file (IN_DATA)...",
         colour=Colour.GREEN,
     )
-    params = conf[0]['parameters']
+    params = conf[0]["parameters"]
     _path_keys = [key for key in params if "_path" in key]
     for key in _path_keys:
         if params[key].strip("/") not in hdf5_members:
@@ -147,12 +150,18 @@ def check_parameter_names_are_known(conf: PipelineConfig) -> bool:
     """
     template_yaml_conf = _get_template_yaml_conf(conf)
     for method_dict in conf:
-        yml_method_list = [yml_method_dict for yml_method_dict in template_yaml_conf
-                           if (yml_method_dict['method'] == method_dict['method'])
-                           & (yml_method_dict['module_path'] == method_dict['module_path'])]
-        unknown_param_dict = [p for yml_method in yml_method_list
-                              for p, v in method_dict['parameters'].items()
-                              if p not in yml_method['parameters'].keys()]
+        yml_method_list = [
+            yml_method_dict
+            for yml_method_dict in template_yaml_conf
+            if (yml_method_dict["method"] == method_dict["method"])
+            & (yml_method_dict["module_path"] == method_dict["module_path"])
+        ]
+        unknown_param_dict = [
+            p
+            for yml_method in yml_method_list
+            for p, v in method_dict["parameters"].items()
+            if p not in yml_method["parameters"].keys()
+        ]
         for p in unknown_param_dict:
             _print_with_colour(
                 f"Parameter '{p}' in the '{method_dict['method']}' method is not valid."
@@ -162,11 +171,13 @@ def check_parameter_names_are_known(conf: PipelineConfig) -> bool:
 
 
 def check_parameter_names_are_str(conf: PipelineConfig) -> bool:
-    """Parameter names should be type string
-    """
-    non_str_param_names = {method['method']: param for method in conf
-                           for param, param_value in method['parameters'].items()
-                           if not isinstance(param, str)}
+    """Parameter names should be type string"""
+    non_str_param_names = {
+        method["method"]: param
+        for method in conf
+        for param, param_value in method["parameters"].items()
+        if not isinstance(param, str)
+    }
     for method, param in non_str_param_names.items():
         _print_with_colour(
             f"A string is needed for the parameter name '{param}' in the '{method}' method."
@@ -177,11 +188,13 @@ def check_parameter_names_are_str(conf: PipelineConfig) -> bool:
 
 
 def check_no_required_parameter_values(conf: PipelineConfig) -> bool:
-    """there should be no REQUIRED parameters in the config pipeline
-    """
-    required_values = {method['method']: param for method in conf
-                       for param, param_value in method['parameters'].items()
-                       if param_value == 'REQUIRED'}
+    """there should be no REQUIRED parameters in the config pipeline"""
+    required_values = {
+        method["method"]: param
+        for method in conf
+        for param, param_value in method["parameters"].items()
+        if param_value == "REQUIRED"
+    }
     for method, param in required_values.items():
         _print_with_colour(
             f"A value is needed for the parameter '{param}' in the '{method}' method."
@@ -192,7 +205,7 @@ def check_no_required_parameter_values(conf: PipelineConfig) -> bool:
     return True
 
 
-def check_no_duplicated_keys(f: str) -> bool:
+def check_no_duplicated_keys(f: Path) -> bool:
     """there should be no duplicate keys in yaml file
     Parameters
     ----------
@@ -200,7 +213,7 @@ def check_no_duplicated_keys(f: str) -> bool:
         yaml file to check
     """
     try:
-        conf = _load_yaml(f, loader=UniqueKeyLoader)
+        conf = _yaml_loader(f, loader=UniqueKeyLoader)[0]
     except ValueError as e:
         # duplicate key found
         _print_with_colour(str(e), colour=Colour.GREEN)
@@ -209,8 +222,7 @@ def check_no_duplicated_keys(f: str) -> bool:
 
 
 def check_keys(conf: PipelineConfig) -> bool:
-    """There should be three main keys in each method
-    """
+    """There should be three main keys in each method"""
     required_keys = ["method", "module_path", "parameters"]
     for method in conf:
         all_keys = method.keys()
@@ -239,7 +251,7 @@ def _get_template_yaml_conf(conf: PipelineConfig) -> PipelineConfig:
     template_yaml_files = _get_template_yaml(conf, packages)
     template_yaml_conf: PipelineConfig = []
     for f in template_yaml_files:
-        tmp_conf =_load_yaml(f)
+        tmp_conf = _yaml_loader(f)[0]
         # make an assumption there is one method inside each template
         template_yaml_conf.append(tmp_conf[0])
     return template_yaml_conf
@@ -249,11 +261,13 @@ def _get_package_info(conf: PipelineConfig) -> List:
     """
     Helper function to get packages from module path.
     """
-    modules = [m['module_path'] for m in conf]
+    modules = [m["module_path"] for m in conf]
     packages = [
-        m.split(".")[0] + "/" + get_external_package_current_version(m.split(".")[0])
+        m.split(".")[0] + "/" + get_packages_current_version(m.split(".")[0])
         if m.split(".")[0] != "httomo"
-        else m.split(".")[0] + "/" + __version__
+        else m.split(".")[0]
+        + "/"
+        + get_packages_current_version(m.split(".")[0], type_p="httomo")
         for m in modules
     ]
     return packages
@@ -269,7 +283,10 @@ def _get_template_yaml(conf: PipelineConfig, packages: List) -> List:
     assert os.path.exists(templates_dir)
     return [
         os.path.join(
-            templates_dir, packages[i], conf[i]['module_path'], conf[i]['method'] + ".yaml"
+            templates_dir,
+            packages[i],
+            conf[i]["module_path"],
+            conf[i]["method"] + ".yaml",
         )
         for i in range(len(conf))
     ]
@@ -295,32 +312,7 @@ def _store_hdf5_members(group, members_list, path=""):
             members_list.append((new_path, value))
 
 
-def _load_yaml(
-        yaml_in: str,
-        loader: yaml.Loader = yaml.FullLoader
-)-> PipelineConfig:
-    """ Loads provided yaml and returns dict
-
-    Parameters
-    ----------
-    yaml_in
-        yaml to load
-    loader
-        yaml loader to use
-
-    Returns
-    -------
-    PipelineConfig
-    """
-    with open(yaml_in, "r") as f:
-        conf = list(yaml.load_all(f, Loader=loader))
-    return conf[0]
-
-
-def validate_yaml_config(
-        yaml_file: os.PathLike,
-        in_file: Optional[os.PathLike] = None
-) -> bool:
+def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> bool:
     """
     Check that the modules, methods, and parameters in the `YAML_CONFIG` file
     are valid, and adhere to the same structure as in each corresponding
@@ -331,7 +323,7 @@ def validate_yaml_config(
         is_yaml_ok = sanity_check(conf_generator)
 
     are_keys_duplicated = check_no_duplicated_keys(yaml_file)
-    conf = _load_yaml(yaml_file)
+    conf = _yaml_loader(yaml_file)[0]
 
     # Let all checks run before returning with the result, even if some checks
     # fail, to show all errors present in YAML
@@ -345,15 +337,17 @@ def validate_yaml_config(
     required_keys_present = check_keys(conf)
     are_required_parameters_missing = check_no_required_parameter_values(conf)
 
-    all_checks_pass = is_yaml_ok and \
-        are_keys_duplicated and \
-        is_first_method_loader and \
-        are_hdf5_paths_correct and \
-        do_methods_exist and \
-        are_param_names_known and \
-        are_param_names_type_str and \
-        required_keys_present and \
-        are_required_parameters_missing
+    all_checks_pass = (
+        is_yaml_ok
+        and are_keys_duplicated
+        and is_first_method_loader
+        and are_hdf5_paths_correct
+        and do_methods_exist
+        and are_param_names_known
+        and are_param_names_type_str
+        and required_keys_present
+        and are_required_parameters_missing
+    )
 
     if not all_checks_pass:
         return False
@@ -368,12 +362,14 @@ def validate_yaml_config(
 
 class UniqueKeyLoader(yaml.SafeLoader):
     """Check for duplicate keys in yaml"""
+
     def construct_mapping(self, node, deep=False):
         mapping = set()
         for key_node, value_node in node.value:
             each_key = self.construct_object(key_node, deep=deep)
             if each_key in mapping:
-                raise ValueError(f"Duplicate Key: {each_key}"
-                                 f" found{key_node.end_mark}")
+                raise ValueError(
+                    f"Duplicate Key: {each_key}" f" found{key_node.end_mark}"
+                )
             mapping.add(each_key)
         return super().construct_mapping(node, deep)
