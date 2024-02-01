@@ -808,12 +808,10 @@ def test_get_darks_flats_same_file_same_dataset(
     standard_data_darks_flats_config: DarksFlatsFileConfig,
 ):
     IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
-    COMM = MPI.COMM_WORLD
 
     loaded_darks, loaded_flats = get_darks_flats(
         standard_data_darks_flats_config,
         standard_data_darks_flats_config,
-        COMM,
     )
 
     FLATS_START = 180
@@ -830,7 +828,6 @@ def test_get_darks_flats_same_file_same_dataset(
 
 
 def test_get_darks_flats_different_file():
-    COMM = MPI.COMM_WORLD
     DARKS_CONFIG = DarksFlatsFileConfig(
         file=Path(__file__).parent.parent / "test_data/i12/separate_flats_darks/dark_field.h5",
         data_path="/1-NoProcessPlugin-tomo/data",
@@ -845,7 +842,6 @@ def test_get_darks_flats_different_file():
     loaded_darks, loaded_flats = get_darks_flats(
         DARKS_CONFIG,
         FLATS_CONFIG,
-        COMM,
     )
 
     with h5py.File(DARKS_CONFIG.file, "r") as f:
