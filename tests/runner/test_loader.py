@@ -380,7 +380,7 @@ def test_standard_tomo_loader_read_block_single_proc(
             PROJS_START + BLOCK_START: PROJS_START + BLOCK_START + BLOCK_LENGTH
         ]
 
-    assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    assert block.data.shape[SLICING_DIM] == BLOCK_LENGTH
     np.testing.assert_array_equal(block.data, projs)
 
 
@@ -420,7 +420,7 @@ def test_standard_tomo_loader_read_block_two_procs(
             projs_start + BLOCK_START: projs_start + BLOCK_START + BLOCK_LENGTH
         ]
 
-    assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    assert block.data.shape[SLICING_DIM] == BLOCK_LENGTH
     np.testing.assert_array_equal(block.data, projs)
 
 
@@ -473,7 +473,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
             PROJS_START + BLOCK_START: PROJS_START + BLOCK_START + BLOCK_LENGTH
         ]
 
-    assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    assert block.data.shape[SLICING_DIM] == BLOCK_LENGTH
     np.testing.assert_array_equal(block.data, projs)
 
 
@@ -538,7 +538,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
             projs_start + BLOCK_START: projs_start + BLOCK_START + BLOCK_LENGTH
         ]
 
-    assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    assert block.data.shape[SLICING_DIM] == BLOCK_LENGTH
     np.testing.assert_array_equal(block.data, projs)
 
 
