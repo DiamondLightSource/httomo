@@ -604,7 +604,12 @@ def test_standard_tomo_loader_user_defined_angles(
 
 
 def test_standard_tomo_loader_closes_file(mocker: MockerFixture):
-    loader = make_standard_tomo_loader()
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = make_standard_tomo_loader()
+
     file_close = mocker.patch.object(loader._h5file, "close")
     loader.finalize()
     file_close.assert_called_once()
