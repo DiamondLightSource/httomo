@@ -72,7 +72,7 @@ class SummaryMonitor(MonitoringInterface):
                 f"  Total device2host time: {self._d2h:>10.3f}s",
                 f"  Total sources time    : {self._sources:>10.3f}s",
                 f"  Total sinks time      : {self._sinks:>10.3f}s",
-                f"  Other overheads       : {self._total_agg - sum([self._methods_cpu, self._sources, self._sinks, self._h2d, self._d2h]):>10.3f}s",
+                f"  Other overheads       : {self._total_agg - sum([self._methods_cpu, self._sources, self._sinks]):>10.3f}s",
                 f"  ------------------------" + "-" * 15,
                 f"  Total pipeline time   : {self._total_agg:>10.3f}s",
                 f"  Total wall time       : {self._total:>10.3f}s"
