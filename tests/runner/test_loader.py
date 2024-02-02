@@ -321,39 +321,99 @@ def test_standard_tomo_loader_read_block_single_proc(
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
+@pytest.mark.parametrize(
+    "preview_config",
+    [
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=128),
+            detector_x=PreviewDimConfig(start=0, stop=160),
+        ),
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=10),
+            detector_x=PreviewDimConfig(start=0, stop=160),
+        ),
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=10, stop=20),
+            detector_x=PreviewDimConfig(start=0, stop=160),
+        ),
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=128),
+            detector_x=PreviewDimConfig(start=0, stop=10),
+        ),
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=128),
+            detector_x=PreviewDimConfig(start=10, stop=20),
+        ),
+    ],
+    ids=[
+        "no_cropping",
+        "crop_det_y_start_0",
+        "crop_det_y_start_10",
+        "crop_det_x_start_0",
+        "crop_det_x_start_10",
+    ],
+)
 def test_standard_tomo_loader_read_block_two_procs(
     standard_data_path: str,
+    standard_image_key_path: str,
+    preview_config: PreviewConfig,
 ):
     IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+    DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
+        file=IN_FILE_PATH,
+        data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
+    )
+    ANGLES_CONFIG = RawAngles(
+        data_path="/entry1/tomo_entry/data/rotation_angle"
+    )
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
 
     BLOCK_START = 2
     BLOCK_LENGTH = 4
-
-    GLOBAL_DATA_SHAPE = (180, 128, 160)
-    CHUNK_SHAPE = (
-        GLOBAL_DATA_SHAPE[0] // 2,
-        GLOBAL_DATA_SHAPE[1],
-        GLOBAL_DATA_SHAPE[2]
+    expected_block_shape = (
+        BLOCK_LENGTH,
+        preview_config.detector_y.stop - preview_config.detector_y.start,
+        preview_config.detector_x.stop - preview_config.detector_x.start,
     )
 
     with mock.patch(
         "httomo.runner.loader.get_darks_flats",
         return_value=(np.zeros(1), np.zeros(1)),
     ):
-        loader = make_standard_tomo_loader()
+        loader = StandardTomoLoader(
+            in_file=IN_FILE_PATH,
+            data_path=DARKS_FLATS_CONFIG.data_path,
+            image_key_path=DARKS_FLATS_CONFIG.image_key_path,
+            darks=DARKS_FLATS_CONFIG,
+            flats=DARKS_FLATS_CONFIG,
+            angles=ANGLES_CONFIG,
+            preview_config=preview_config,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+        )
 
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
-    projs_start = 0 if COMM.rank == 0 else CHUNK_SHAPE[0]
+    projs_start = (
+        preview_config.angles.start if COMM.rank == 0 else
+        (preview_config.angles.stop - preview_config.angles.start) // 2
+    )
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[standard_data_path]
         projs: np.ndarray = dataset[
-            projs_start + BLOCK_START: projs_start + BLOCK_START + BLOCK_LENGTH
+            projs_start + BLOCK_START: projs_start + BLOCK_START + BLOCK_LENGTH,
+            preview_config.detector_y.start : preview_config.detector_y.stop,
+            preview_config.detector_x.start : preview_config.detector_x.stop,
         ]
 
-    assert block.data.shape[SLICING_DIM] == BLOCK_LENGTH
+    assert block.data.shape == expected_block_shape
     np.testing.assert_array_equal(block.data, projs)
 
 
