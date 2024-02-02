@@ -133,7 +133,7 @@ class DataSetSink(Protocol):
         etc."""
         ...  # pragma: no cover
         
-class StoreBasedDataSetSink(DataSetSink):
+class ReadableDataSetSink(DataSetSink):
     """Interface for a DataSetSink that is store-based, i.e. where it's possible to construct
        a reader from the same data store that this sink has been written first"""
        

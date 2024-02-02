@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile, TemporaryFile, mkstemp
 from typing import IO, BinaryIO, Literal, Optional, Tuple
 from httomo.data.hdf._utils.reslice import reslice
 from httomo.runner.dataset import DataSet, DataSetBlock, FullFileDataSet
-from httomo.runner.dataset_store_interfaces import DataSetSink, DataSetSource, StoreBasedDataSetSink
+from httomo.runner.dataset_store_interfaces import DataSetSink, DataSetSource, ReadableDataSetSink
 from mpi4py import MPI
 import numpy as np
 from numpy.typing import DTypeLike
@@ -86,7 +86,7 @@ This is from the final handover call:
 # - refactoring the nested if into separate function is badly needed
 
 
-class DataSetStoreWriter(StoreBasedDataSetSink):
+class DataSetStoreWriter(ReadableDataSetSink):
     """A DataSetSink that can be used to store block-wise data in the current chunk (for the current process).
 
     It uses memory by default - but if there's a memory allocation error, a temporary h5 file is used

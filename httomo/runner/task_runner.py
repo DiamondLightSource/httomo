@@ -13,7 +13,7 @@ from httomo.runner.dataset_store_interfaces import (
     DataSetSink,
     DataSetSource,
     DummySink,
-    StoreBasedDataSetSink,
+    ReadableDataSetSink,
 )
 from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.runner.pipeline import Pipeline
@@ -40,7 +40,7 @@ class TaskRunner:
         self.global_stats: List = []
         self.side_outputs: Dict[str, Any] = dict()
         self.source: Optional[DataSetSource] = None
-        self.sink: Optional[Union[DataSetSink, StoreBasedDataSetSink]] = None
+        self.sink: Optional[Union[DataSetSink, ReadableDataSetSink]] = None
 
         self.output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
         self.output_colour_list_short = [Colour.GREEN, Colour.CYAN]
@@ -97,7 +97,7 @@ class TaskRunner:
         if self.sink is not None:
             # we have a store-based sink from the last section - use that to determine
             # the source for this one
-            assert isinstance(self.sink, StoreBasedDataSetSink)
+            assert isinstance(self.sink, ReadableDataSetSink)
             self.source = self.sink.make_reader(slicing_dim_section)
 
         if section.is_last:
