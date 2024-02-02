@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.utils import Pattern, xp
@@ -11,6 +12,13 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Protocol, Tuple
 MethodParameterValues = Union[str, bool, int, float, os.PathLike, np.ndarray, xp.ndarray]
 MethodParameterDictType = Dict[str, Union[MethodParameterValues, List[MethodParameterValues]]]
 
+
+@dataclass
+class GpuTimeInfo:
+    """Captures the time spent on GPU"""
+    kernel: float = 0.0
+    host2device: float = 0.0
+    device2host: float = 0.0
 
 class MethodWrapper(Protocol):
     """Interface for method wrappers, that is used by the pipeline and task runners to execute
@@ -86,6 +94,11 @@ class MethodWrapper(Protocol):
         """True if this is a GPU method"""
         ... # pragma: nocover
     
+    @property
+    def gpu_time(self) -> GpuTimeInfo:
+        """Get the time spent on GPU in the last call to execute"""
+        ... # pragma: nocover
+        
     @property
     def config_params(self) -> Dict[str, Any]:
         """Access a copy of the configuration parameters (cannot be modified directly)"""

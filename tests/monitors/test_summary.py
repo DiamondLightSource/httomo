@@ -53,7 +53,7 @@ def test_summary_monitor_records_and_displays_data_mpi():
     # everything gets reported twice - once in each process - and the write_results should aggregate
     # in process 0
     mon.report_method_block(
-        "method1", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0
+        "method1", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0, 0.1, 0.2
     )
     mon.report_source_block(
         "loader", "method1", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 4.0
@@ -74,6 +74,10 @@ def test_summary_monitor_records_and_displays_data_mpi():
         assert " 84.0" in data
         assert "methods GPU time" in data
         assert " 4.0" in data
+        assert "host2device" in data
+        assert " 0.2" in data
+        assert "device2host" in data
+        assert " 0.4" in data
         assert "sources time" in data
         assert " 8.0" in data
         assert "sinks time" in data

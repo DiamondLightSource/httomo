@@ -21,9 +21,15 @@ def calculate_stats(
         tuple[(float, float, float, int)]: (min, max, sum, total_elements)
     """
 
-    data = np.nan_to_num(data, copy=False, nan=0.0, posinf=0, neginf=0)
+    # do this whereever the data is at the moment (GPU/CPU)
+    if getattr(data, "device", None) is not None:
+        # GPU
+        data = xp.nan_to_num(data, copy=False, nan=0.0, posinf=0, neginf=0)
+    else:
+        # CPU
+        data = np.nan_to_num(data, copy=False, nan=0.0, posinf=0, neginf=0)
 
-    return (np.min(data), np.max(data), np.sum(data), data.size)
+    return (float(data.min()), float(data.max()), float(data.sum()), data.size)
 
 
 def save_intermediate_data(

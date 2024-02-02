@@ -53,6 +53,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
     def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
         # pass the full block, not just the data array to the function
         args[self.parameters[0]] = dataset
+        # TODO: capture the potential GPU->CPU transfer time in _save_dataset_data
         return super()._run_method(dataset, args)
         
     def _transform_params(self, dict_params: MethodParameterDictType) -> MethodParameterDictType:

@@ -3,14 +3,16 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PurePath
 from shutil import copy
+import sys
 import tempfile
-from typing import Optional, Union
+from typing import List, Optional, TextIO, Union
 
 import click
 from mpi4py import MPI
 
 import httomo.globals
 from httomo.logger import setup_logger
+from httomo.monitors import MONITORS_MAP, make_monitors
 from httomo.transform_layer import TransformLayer
 from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
@@ -63,6 +65,20 @@ def main():
     default=64,
     help="Maximum number of slices to use for a block for CPU-only sections (default: 64)"
 )
+@click.option(
+    "--monitor",
+    type=click.STRING,
+    multiple=True,
+    default=[],
+    help=("Add monitor to the runner (can be given multiple times). " + 
+          f"Available monitors: {', '.join(MONITORS_MAP.keys())}")
+)
+@click.option(
+    "--monitor-output",
+    type=click.File('w'),
+    default=sys.stdout,
+    help="File to store the monitoring output. Defaults to '-', which denotes stdout"
+)
 def run(
     in_data_file: Path,
     yaml_config: Path,
@@ -70,7 +86,9 @@ def run(
     gpu_id: int,
     save_all: bool,
     reslice_dir: Union[Path, None],
-    max_cpu_slices: int
+    max_cpu_slices: int,
+    monitor: List[str],
+    monitor_output: TextIO
 ):
     """Run a pipeline defined in YAML on input data."""
 
@@ -123,12 +141,16 @@ def run(
     pipeline = tr.transform(pipeline)
 
     # Run the pipeline using Taskrunner, with temp dir or reslice dir
+    mon = make_monitors(monitor)
     ctx: AbstractContextManager = nullcontext(reslice_dir)
     if reslice_dir is None:
         ctx = tempfile.TemporaryDirectory()
     with ctx as tmp_dir:
-        runner = TaskRunner(pipeline, Path(tmp_dir))
-        return runner.execute()
+        runner = TaskRunner(pipeline, Path(tmp_dir), monitor=mon)
+        runner.execute()
+        if mon is not None:
+            mon.write_results(monitor_output)
+        
 
 
 def _check_yaml(yaml_config: Path, in_data: Path):

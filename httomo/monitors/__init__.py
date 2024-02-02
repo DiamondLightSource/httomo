@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from httomo.monitors.aggregate import AggregateMonitoring
 from httomo.monitors.benchmark import BenchmarkMonitoring
 from httomo.monitors.summary import SummaryMonitor
@@ -10,7 +10,10 @@ MONITORS_MAP = {
     "summary": SummaryMonitor
 }
 
-def make_monitors(monitor_descriptors: List[str]) -> MonitoringInterface:
+def make_monitors(monitor_descriptors: List[str]) -> Optional[MonitoringInterface]:
+    if len(monitor_descriptors) == 0:
+        return None
+    
     monitors: List[MonitoringInterface] = []
     for descriptor in monitor_descriptors:
         if descriptor not in MONITORS_MAP:

@@ -21,7 +21,9 @@ class BenchmarkMonitoring(MonitoringInterface):
         block_idx_chunk: Tuple[int, int, int],
         block_idx_global: Tuple[int, int, int],
         cpu_time: float,
-        gpu_time: float = 0.0,
+        gpu_kernel_time: float = 0.0,
+        gpu_h2d_time: float = 0.0,
+        gpu_d2h_time: float = 0.0
     ):
         self._data.append(
             OrderedDict(
@@ -38,7 +40,9 @@ class BenchmarkMonitoring(MonitoringInterface):
                     ("Block dim y", str(block_dims[1])),
                     ("Block dim x", str(block_dims[2])),
                     ("CPU time", str(cpu_time)),
-                    ("GPU time", str(gpu_time)),
+                    ("GPU kernel time", str(gpu_kernel_time)),
+                    ("GPU H2D time", str(gpu_h2d_time)),
+                    ("GPU D2H time", str(gpu_d2h_time)),
                 ]
             )
         )
@@ -68,7 +72,9 @@ class BenchmarkMonitoring(MonitoringInterface):
                     ("Block dim y", str(block_dims[1])),
                     ("Block dim x", str(block_dims[2])),
                     ("CPU time", str(cpu_time)),
-                    ("GPU time", "0.0"),
+                    ("GPU kernel time", "0.0"),
+                    ("GPU H2D time", "0.0"),
+                    ("GPU D2H time", "0.0"),
                 ]
             )
         )
@@ -98,7 +104,9 @@ class BenchmarkMonitoring(MonitoringInterface):
                     ("Block dim y", str(block_dims[1])),
                     ("Block dim x", str(block_dims[2])),
                     ("CPU time", str(cpu_time)),
-                    ("GPU time", "0.0"),
+                    ("GPU kernel time", "0.0"),
+                    ("GPU H2D time", "0.0"),
+                    ("GPU D2H time", "0.0"),
                 ]
             )
         )
@@ -119,7 +127,9 @@ class BenchmarkMonitoring(MonitoringInterface):
                     ("Block dim y", ""),
                     ("Block dim x", ""),
                     ("CPU time", str(cpu_time)),
-                    ("GPU time", "0.0"),
+                    ("GPU kernel time", "0.0"),
+                    ("GPU H2D time", "0.0"),
+                    ("GPU D2H time", "0.0"),
                 ]
             )
         )

@@ -8,10 +8,10 @@ from httomo.monitors.benchmark import BenchmarkMonitoring
 def test_benchmark_monitor_records_and_displays_data():
     mon = BenchmarkMonitoring()
     mon.report_method_block(
-        "method1", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0
+        "method1", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0, 0.1, 0.2
     )
     mon.report_method_block(
-        "method2", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0
+        "method2", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0, 0.1, 0.2
     )
     mon.report_source_block(
         "loader", "method1", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 4.0
@@ -40,11 +40,13 @@ def test_benchmark_monitor_records_and_displays_data():
         "Block dim y",
         "Block dim x",
         "CPU time",
-        "GPU time",
+        "GPU kernel time",
+        "GPU H2D time",
+        "GPU D2H time"
     ])
 
-    assert "42.0,2.0" in data[1]
-    assert "42.0,2.0" in data[2]
+    assert "42.0,2.0,0.1,0.2" in data[1]
+    assert "42.0,2.0,0.1,0.2" in data[2]
     assert "4.0,0.0" in data[3]
     assert "4.0,0.0" in data[4]
     assert "3.0,0.0" in data[5]
@@ -62,7 +64,7 @@ def test_summary_monitor_records_and_displays_data_mpi():
     # everything gets reported twice - once in each process - and the write_results should aggregate
     # in process 0
     mon.report_method_block(
-        "method1", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0
+        "method1", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0, 0.1, 0.2
     )
     mon.report_source_block(
         "loader", "method1", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 4.0
@@ -90,11 +92,13 @@ def test_summary_monitor_records_and_displays_data_mpi():
             "Block dim y",
             "Block dim x",
             "CPU time",
-            "GPU time",
+            "GPU kernel time",
+            "GPU H2D time",
+            "GPU D2H time"
         ])
 
         for rank in [0, 1]:
-            assert "42.0,2.0" in data[1+rank*4]
+            assert "42.0,2.0,0.1,0.2" in data[1+rank*4]
             assert f"method,{rank},method1" in data[1+rank*4]
             assert "4.0,0.0" in data[2+rank*4]
             assert f"source,{rank},loader" in data[2+rank*4]

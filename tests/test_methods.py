@@ -6,7 +6,7 @@ import pytest
 from mpi4py import MPI
 import h5py
 
-from httomo.utils import gpu_enabled
+from httomo.utils import gpu_enabled, xp
 from httomo.runner.dataset import DataSet
 
 
@@ -26,6 +26,18 @@ def test_calculate_stats_with_nan_and_inf():
     ret = calculate_stats(data)
 
     assert ret == (-10.0, 19.0, expected, 30)
+
+
+@pytest.mark.skipif(
+    not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
+    reason="skipped as cupy is not available",
+)
+@pytest.mark.cupy
+def test_calculate_status_gpu():
+    data = xp.arange(30, dtype=np.float32).reshape((2, 3, 5)) - 10.0
+    ret = calculate_stats(data)
+
+    assert ret == (-10.0, 19.0, np.sum(data.get()), 30)
 
 
 @pytest.mark.parametrize("gpu", [False, True])

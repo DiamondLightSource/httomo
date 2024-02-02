@@ -16,7 +16,9 @@ class AggregateMonitoring(MonitoringInterface):
         block_idx_chunk: Tuple[int, int, int],
         block_idx_global: Tuple[int, int, int],
         cpu_time: float,
-        gpu_time: float = 0.0,
+        gpu_kernel_time: float = 0.0,
+        gpu_h2d_time: float = 0.0,
+        gpu_d2h_time: float = 0.0,
     ):
         for m in self._monitors:
             m.report_method_block(
@@ -28,7 +30,9 @@ class AggregateMonitoring(MonitoringInterface):
                 block_idx_chunk,
                 block_idx_global,
                 cpu_time,
-                gpu_time,
+                gpu_kernel_time,
+                gpu_h2d_time,
+                gpu_d2h_time,
             )
 
     def report_source_block(

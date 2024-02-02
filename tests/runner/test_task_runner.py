@@ -8,11 +8,12 @@ import httomo
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.dataset import DataSet, DataSetBlock
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
+from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import Section, sectionize
 from httomo.runner.task_runner import TaskRunner
 from httomo.utils import Pattern, xp, gpu_enabled
-from httomo.runner.method_wrapper import MethodWrapper
+from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from ..testing_utils import make_test_loader, make_test_method
 
 
@@ -177,6 +178,13 @@ def test_can_determine_max_slices_with_cpu_large(
     assert s[0].max_slices == 16
 
 
+def test_append_side_outputs(mocker: MockerFixture, tmp_path: PathLike):
+    p = Pipeline(make_test_loader(mocker), methods=[])
+    t = TaskRunner(p, reslice_dir=tmp_path)
+    t.append_side_outputs({"answer": 42.0, "other": "xxx"})
+    assert t.side_outputs == {"answer": 42.0, "other": "xxx"}
+    
+
 def test_calls_append_side_outputs_after_last_block(
     mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
 ):
@@ -226,8 +234,36 @@ def test_update_side_inputs_updates_downstream_methods(
     method3_calls = [call("answer", 42), call("other", "xxx")]
     setitem3.assert_has_calls(method3_calls)
 
+def test_execute_method_updates_monitor(
+    mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
+):
+    loader = make_test_loader(mocker, dummy_dataset)
+    method1 = make_test_method(mocker)
+    mocker.patch.object(method1, "gpu_time", GpuTimeInfo(kernel=42.0, device2host=1.0, host2device=2.0))
+    mon = mocker.create_autospec(MonitoringInterface, instance=True)
+    p = Pipeline(loader=loader, methods=[method1])
+    t = TaskRunner(p, reslice_dir=tmp_path, monitor=mon)
+    t._prepare()
+    block = dummy_dataset.make_block(0)
+    mocker.patch.object(method1, "execute", return_value=block)
+    t._execute_method(method1, block)
 
-def test_execute_section_calls_blockwise_execute(
+    mon.report_method_block.assert_called_once_with(
+        method1.method_name,
+        method1.module_path,
+        method1.task_id,
+        0,
+        block.shape,
+        block.chunk_index,
+        block.global_index,
+        ANY,
+        42.0,
+        2.0,
+        1.0
+    )
+
+
+def test_execute_section_calls_blockwise_execute_and_monitors(
     mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: PathLike
 ):
     original_value = dummy_dataset.data[0, 0, 0]  # it has all the same number
@@ -235,7 +271,8 @@ def test_execute_section_calls_blockwise_execute(
     method = make_test_method(mocker, method_name="m1")
     p = Pipeline(loader=loader, methods=[method])
     s = sectionize(p)
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    mon = mocker.create_autospec(MonitoringInterface, instance=True)
+    t = TaskRunner(p, reslice_dir=tmp_path, monitor=mon)
     t._prepare()
     # make that do nothing
     mocker.patch.object(t, "determine_max_slices")
@@ -259,6 +296,8 @@ def test_execute_section_calls_blockwise_execute(
     np.testing.assert_allclose(data.data, original_value * 2)
     calls = [call(ANY, ANY), call(ANY, ANY)]
     block_mock.assert_has_calls(calls)  # make sure we got called twice
+    assert mon.report_source_block.call_count == 2
+    assert mon.report_sink_block.call_count == 2
 
 
 def test_execute_section_for_block(
@@ -279,7 +318,7 @@ def test_execute_section_for_block(
     exec_method.assert_has_calls(calls)
 
 
-def test_does_reslice_when_needed(
+def test_does_reslice_when_needed_and_reports_time(
     mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: PathLike
 ):
     loader = make_test_loader(mocker, dummy_dataset)
@@ -290,7 +329,8 @@ def test_does_reslice_when_needed(
     block2 = dummy_dataset.make_block(1)
     mocker.patch.object(method2, "execute", return_value=block2)
     p = Pipeline(loader=loader, methods=[method1, method2])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    mon = mocker.create_autospec(MonitoringInterface, instance=True)
+    t = TaskRunner(p, reslice_dir=tmp_path, monitor=mon)
 
     t.execute()
 
@@ -299,6 +339,8 @@ def test_does_reslice_when_needed(
     assert t.sink is not None
     assert t.source.slicing_dim == 1
     assert t.sink.slicing_dim == 1
+    
+    mon.report_total_time.assert_called_once()
 
 
 @pytest.mark.parametrize(

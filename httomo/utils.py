@@ -1,6 +1,8 @@
+from contextlib import contextmanager
 import re
 from enum import Enum
 from pathlib import Path
+from time import perf_counter_ns
 from typing import Any, Callable, Dict, List, Literal, Tuple
 
 from mpi4py.MPI import Comm
@@ -279,3 +281,41 @@ def remove_ansi_escape_sequences(filename):
         with open(filename, "w") as f:
             for line in lines:
                 f.write(ansi_escape.sub("", line))
+
+
+class catchtime:
+    """A context manager to measure ns-accurate time for the context block.
+    
+    Usage:
+        with catchtime() as t:
+            ...
+            
+        print(t.elapsed)
+    """
+    def __enter__(self):
+        self.start = perf_counter_ns()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.elapsed = (perf_counter_ns() - self.start) * 1e-9
+    
+
+class catch_gputime:
+    def __enter__(self):
+        if gpu_enabled:
+            self.start = xp.cuda.Event()
+            self.start.record()
+        return self
+            
+    def __exit__(self, type, value, traceback):
+        if gpu_enabled:
+            self.end = xp.cuda.Event()
+            self.end.record()
+    
+    @property
+    def elapsed(self) -> float:
+        if gpu_enabled:
+            self.end.synchronize()
+            return xp.cuda.get_elapsed_time(self.start, self.end) * 1e-3
+        else:
+            return 0.0

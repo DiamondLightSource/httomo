@@ -243,7 +243,7 @@ def get_darks_flats(
     comm: MPI.Comm,
 ) -> Tuple[np.ndarray, np.ndarray]:
     def get_together():
-        with h5py.File(darks_config.file, "r", driver="mpio", comm=comm) as f:
+        with h5py.File(darks_config.file, "r") as f:
             darks_indices = np.where(f[darks_config.image_key_path][:] == 2)[0]
             flats_indices = np.where(f[flats_config.image_key_path][:] == 1)[0]
             dataset: h5py.Dataset = f[darks_config.data_path]
@@ -252,7 +252,7 @@ def get_darks_flats(
         return darks, flats
 
     def get_separate(config: DarksFlatsFileConfig):
-        with h5py.File(config.file, "r", driver="mpio", comm=comm) as f:
+        with h5py.File(config.file, "r") as f:
             return f[config.data_path][...]
 
     if darks_config.file != flats_config.file:
