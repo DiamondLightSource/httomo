@@ -84,19 +84,17 @@ def test_standard_tomo_loader_get_chunk_index_two_procs():
     assert loader.chunk_index == chunk_index
 
 
-def test_standard_tomo_loader_get_chunk_shape_single_proc():
-    CHUNK_SHAPE = (180, 128, 160)
-    with mock.patch(
-        "httomo.runner.loader.get_darks_flats",
-        return_value=(np.zeros(1), np.zeros(1)),
-    ):
-        loader = make_standard_tomo_loader()
-    assert loader.chunk_shape == CHUNK_SHAPE
-
-
 @pytest.mark.parametrize(
     "preview_config, expected_chunk_shape",
     [
+        (
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=180),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+            (180, 128, 160),
+        ),
         (
             PreviewConfig(
                 angles=PreviewDimConfig(start=0, stop=180),
@@ -114,9 +112,9 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc():
             (180, 128, 10),
         ),
     ],
-    ids=["crop_det_y", "crop_det_x"],
+    ids=["no_cropping", "crop_det_y", "crop_det_x"],
 )
-def test_standard_tomo_loader_previewed_get_chunk_shape_single_proc(
+def test_standard_tomo_loader_get_chunk_shape_single_proc(
     standard_data_path: str,
     standard_image_key_path: str,
     preview_config: PreviewConfig,
