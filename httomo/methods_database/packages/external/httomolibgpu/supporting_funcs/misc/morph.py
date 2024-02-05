@@ -18,32 +18,27 @@
 # Created By  : Tomography Team at DLS <scientificsoftware@diamond.ac.uk>
 # Created Date: 21 September 2023
 # ---------------------------------------------------------------------------
-"""Modules for memory estimation for stripe removal methods"""
+"""Modules for memory estimation for morph functions"""
 
 import math
 from typing import Tuple
 import numpy as np
 
-
 __all__ = [
-    "_calc_memory_bytes_remove_stripe_ti",
+    "_calc_memory_bytes_data_scaler",
 ]
 
 
-def _calc_memory_bytes_remove_stripe_ti(
+def _calc_memory_bytes_data_scaler(
     non_slice_dims_shape: Tuple[int, int],
     dtype: np.dtype,
     **kwargs,
 ) -> Tuple[int, int]:
-    # This is admittedly a rough estimation, but it should be about right
-    gamma_mem = non_slice_dims_shape[1] * np.float64().itemsize
+    newshape = kwargs["newshape"]
+    axis = kwargs["axis"]
+    input_size = np.prod(non_slice_dims_shape) * dtype.itemsize
+    output_size = np.prod(newshape) * dtype.itemsize
+    grid_xi = 2 * output_size
 
-    in_slice_mem = np.prod(non_slice_dims_shape) * dtype.itemsize
-    slice_mean_mem = non_slice_dims_shape[1] * dtype.itemsize * 2
-    slice_fft_plan_mem = slice_mean_mem * 3.5
-    extra_temp_mem = slice_mean_mem * 8
-
-    tot_memory_bytes = int(
-        in_slice_mem + slice_mean_mem + slice_fft_plan_mem + extra_temp_mem
-    )
-    return (tot_memory_bytes, gamma_mem)
+    tot_memory_bytes = input_size + output_size + grid_xi
+    return (tot_memory_bytes, 0)
