@@ -25,20 +25,26 @@ from typing import Tuple
 import numpy as np
 
 __all__ = [
-    "_calc_memory_bytes_data_scaler",
+    "_calc_memory_bytes_data_resampler",
 ]
 
 
-def _calc_memory_bytes_data_scaler(
+def _calc_memory_bytes_data_resampler(
     non_slice_dims_shape: Tuple[int, int],
     dtype: np.dtype,
     **kwargs,
 ) -> Tuple[int, int]:
     newshape = kwargs["newshape"]
-    axis = kwargs["axis"]
+    method = kwargs["method"]
+    
     input_size = np.prod(non_slice_dims_shape) * dtype.itemsize
+    xi = 2 * np.prod(newshape) * np.float64().nbytes
     output_size = np.prod(newshape) * dtype.itemsize
-    grid_xi = 2 * output_size
 
-    tot_memory_bytes = input_size + output_size + grid_xi
+    if method == 'nearest':
+        interpolator = 5 * xi
+    if method == 'linear':
+        interpolator = 6 * xi
+
+    tot_memory_bytes = input_size + output_size + xi + interpolator
     return (tot_memory_bytes, 0)

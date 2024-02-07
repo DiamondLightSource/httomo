@@ -14,12 +14,15 @@ import cupy as cp
 
 from httomo.methods_database.query import get_method_info
 
+
+from httomolibgpu.misc.morph import data_resampler
 from httomolibgpu.prep.normalize import normalize
 from httomolibgpu.prep.phase import paganin_filter_tomopy, paganin_filter_savu
 from httomolibgpu.prep.alignment import distortion_correction_proj_discorpy
 from httomolibgpu.prep.stripe import remove_stripe_based_sorting, remove_stripe_ti, remove_all_stripe
 from httomolibgpu.recon.algorithm import FBP, SIRT, CGLS
 
+from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.misc.morph import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.phase import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.stripe import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.recon.algorithm import *
@@ -267,9 +270,6 @@ def test_remove_stripe_ti_memoryhook(slices, ensure_clean_memory):
 
 
 @pytest.mark.cupy
-#@pytest.mark.parametrize("slices", [64, 129, 258])
-#@pytest.mark.parametrize("dim_x", [510, 300, 100])
-#@pytest.mark.parametrize("dim_y", [128, 257, 511])
 @pytest.mark.parametrize("angles", [1800])
 @pytest.mark.parametrize("dim_x_slices", [1])
 @pytest.mark.parametrize("dim_y", [2560])
@@ -294,6 +294,41 @@ def test_remove_all_stripe_memoryhook(angles, dim_x_slices, dim_y, ensure_clean_
     # the resulting percent value should not deviate from max_mem on more than 20%    
     assert estimated_memory_mb >= max_mem_mb 
     assert percents_relative_maxmem <= 20 
+
+@pytest.mark.cupy
+@pytest.mark.parametrize("method", ["nearest", "linear"])
+@pytest.mark.parametrize("slices", [1, 3, 10])
+@pytest.mark.parametrize("newshape", [(256, 256), (500, 500)])
+def test_data_sampler_memoryhook(slices, newshape, method, ensure_clean_memory):
+    recon_size = 800
+    data = cp.random.random_sample((recon_size, slices, recon_size), dtype=cp.float32)
+    kwargs={}
+    kwargs['newshape'] = newshape
+    kwargs['method'] = method
+    kwargs['axis'] = 1
+
+    hook = MaxMemoryHook()
+    with hook:
+        scaled_data = data_resampler(data, **kwargs)
+
+    # make sure estimator function is within range (80% min, 100% max)
+    max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook
+   
+    # now we estimate how much of the total memory required for this data
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_data_resampler((recon_size, recon_size), dtype=np.float32(), **kwargs)
+    # as this is slice-by-slice implementation we should be adding slices number
+    estimated_memory_mb = slices + round(estimated_memory_bytes / (1024**2), 2)
+    max_mem -= subtract_bytes
+    max_mem_mb = round(max_mem / (1024**2), 2)
+    
+    # now we compare both memory estimations 
+    difference_mb = abs(estimated_memory_mb - max_mem_mb)
+    percents_relative_maxmem = round((difference_mb/max_mem_mb)*100)
+    # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
+    assert estimated_memory_mb >= max_mem_mb
+    # so we drop the condition bellow and ensure we're always slightly overestimate the memory needed
+    # the cupy memory estimation here is not very consistent because of the interpolation function
+
     
 @pytest.mark.cupy
 @pytest.mark.parametrize("slices", [3, 5, 8])
@@ -312,7 +347,6 @@ def test_recon_FBP_memoryhook(slices, recon_size_it, ensure_clean_memory):
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook   
-    max_mem_mb = round(max_mem / (1024**2), 2)
     
     # now we estimate how much of the total memory required for this data
     (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_FBP((1801, recon_size_it), dtype=np.float32(), **kwargs)

@@ -25,7 +25,7 @@ misc:
         - datasets: [tomo]
         - multipliers: [2.2]
         - methods: [direct]
-    data_scaler:
+    data_resampler:
       pattern: all
       output_dims_change: True
       implementation: gpu_cupy
@@ -86,6 +86,14 @@ prep:
         - datasets: [tomo]
         - multipliers: [None]
         - methods: [module]
+    remove_all_stripe:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: gpu_cupy
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [33]
+        - methods: [direct]     
 recon:
   algorithm:
     FBP:
