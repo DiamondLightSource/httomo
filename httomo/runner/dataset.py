@@ -166,11 +166,6 @@ class DataSet:
         self._data = new_data
         self._global_shape = (global_shape[0], global_shape[1], global_shape[2])
 
-    def get_data_block(
-        self, start0: int, stop0: int, start1: int, stop1: int, start2: int, stop2: int
-    ) -> generic_array:
-        return self._data[start0:stop0, start1:stop1, start2:stop2]
-
     def set_data_block(self, start_idx: Tuple[int, int, int], new_data: generic_array):
         stopidx = np.array(start_idx) + np.array(new_data.shape)
         assert stopidx[0] <= self._data.shape[0]
@@ -242,7 +237,25 @@ class DataSet:
         version of those if needed."""
         if length is None:
             length = self.chunk_shape[dim] - start
-        return DataSetBlock(self, dim, start, length)
+
+        slices = [
+            slice(0, self.shape[0]),
+            slice(0, self.shape[1]),
+            slice(0, self.shape[2]),
+        ]
+        slices[dim] = slice(start, start + length)
+        global_index = list(self._global_index)
+        global_index[dim] += start
+        chunk_index = [0, 0, 0]
+        chunk_index[dim] += start
+        return DataSetBlock(
+            base=self,
+            data=self._data[slices[0], slices[1], slices[2]],
+            dim=dim,
+            global_shape=self.global_shape,
+            global_index=tuple(global_index),
+            chunk_index=tuple(chunk_index),
+        )
 
     @property
     def is_block(self) -> bool:
@@ -322,34 +335,29 @@ class DataSetBlock(DataSet):
     arrays to the base object (darks/flats/angles). It does not store these directly.
     """
 
-    def __init__(self, base: DataSet, dim: int, start: int, length: int):
-        idx_expr = [(0, base.shape[0]), (0, base.shape[1]), (0, base.shape[2])]
-        idx_expr[dim] = (start, start + length)
-        global_index = list(base.global_index)
-        global_index[dim] += start
+    def __init__(
+        self,
+        base: DataSet,
+        data: np.ndarray,
+        dim: int,
+        global_shape: Tuple[int, int, int],
+        global_index: Tuple[int, int, int],
+        chunk_index: Tuple[int, int, int],
+    ):
+        self._base = base
+        self._chunk_index = chunk_index
+        self._chunk_shape = base.chunk_shape
+        self._dim = dim
         # we pass an empty size-0 array to base class, as we're not going to use these
         # fields anyway here (we access the originals via self._base)
         super().__init__(
-            data=base.get_data_block(
-                idx_expr[0][0],
-                idx_expr[0][1],
-                idx_expr[1][0],
-                idx_expr[1][1],
-                idx_expr[2][0],
-                idx_expr[2][1],
-            ),
+            data=data,
             flats=np.empty((0,)),
             darks=np.empty((0,)),
             angles=np.empty((0,)),
-            global_shape=base.global_shape,
-            global_index=(global_index[0], global_index[1], global_index[2]),
+            global_shape=global_shape,
+            global_index=global_index,
         )
-        self._base = base
-        idx = [0, 0, 0]
-        idx[dim] = start
-        self._chunk_shape = base.chunk_shape
-        self._chunk_index = (idx[0], idx[1], idx[2])
-        self._dim = dim
 
     @property
     def is_block(self) -> bool:
@@ -486,14 +494,3 @@ class FullFileDataSet(DataSet):
             + start_idx[2]
             + new_data.shape[2],
         ] = new_data
-
-    def get_data_block(
-        self, start0: int, stop0: int, start1: int, stop1: int, start2: int, stop2: int
-    ) -> DataSet.generic_array:
-        start0 += self._global_index[0]
-        stop0 += self._global_index[0]
-        start1 += self._global_index[1]
-        stop1 += self._global_index[1]
-        start2 += self._global_index[2]
-        stop2 += self._global_index[2]
-        return self._data[start0:stop0, start1:stop1, start2:stop2]
