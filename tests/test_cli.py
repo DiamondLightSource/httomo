@@ -65,11 +65,10 @@ def test_cli_pass_output_folder(
 """
 
 @pytest.mark.cupy
-def test_cli_pass_gpu_id(cmd, standard_data, standard_loader):
-    output_dir = "output_dir"  # dir created by the `output_folder` fixture
+def test_cli_pass_gpu_id(cmd, standard_data, standard_loader, output_folder):
     cmd.insert(4, standard_data)
     cmd.insert(5, standard_loader)
-    cmd.insert(6, output_dir)
+    cmd.insert(6, output_folder)
     cmd.insert(7, "--gpu-id")
     cmd.insert(8, "100")
 

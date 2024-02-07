@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile, TemporaryFile, mkstemp
 from typing import IO, BinaryIO, Literal, Optional, Tuple
 from httomo.data.hdf._utils.reslice import reslice
 from httomo.runner.dataset import DataSet, DataSetBlock, FullFileDataSet
-from httomo.runner.dataset_store_interfaces import DataSetSink, DataSetSource
+from httomo.runner.dataset_store_interfaces import DataSetSink, DataSetSource, ReadableDataSetSink
 from mpi4py import MPI
 import numpy as np
 from numpy.typing import DTypeLike
@@ -83,11 +83,10 @@ This is from the final handover call:
 """
 
 # Notes:
-# - if MemoryError is thrown in one process, all others should also use the file
 # - refactoring the nested if into separate function is badly needed
 
 
-class DataSetStoreWriter(DataSetSink):
+class DataSetStoreWriter(ReadableDataSetSink):
     """A DataSetSink that can be used to store block-wise data in the current chunk (for the current process).
 
     It uses memory by default - but if there's a memory allocation error, a temporary h5 file is used
@@ -281,7 +280,7 @@ class DataSetStoreWriter(DataSetSink):
 
     def make_reader(
         self, new_slicing_dim: Optional[Literal[0, 1, 2]] = None
-    ) -> "DataSetStoreReader":
+    ) -> DataSetSource:
         """Create a reader from this writer, reading from the same store"""
         self._readonly = True
         if self._h5file is not None:
@@ -342,6 +341,18 @@ class DataSetStoreReader(DataSetSource):
 
         source.finalize()
 
+    @property
+    def dtype(self) -> np.dtype:
+        return self._data.data.dtype
+    
+    @property
+    def darks(self) -> np.ndarray:
+        return self._data.darks
+    
+    @property
+    def flats(self) -> np.ndarray:
+        return self._data.flats
+    
     @property
     def is_file_based(self) -> bool:
         return self._h5filename is not None

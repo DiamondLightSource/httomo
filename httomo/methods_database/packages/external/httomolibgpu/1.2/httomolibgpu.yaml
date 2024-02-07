@@ -4,6 +4,7 @@ misc:
       pattern: all
       output_dims_change: False      
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [2.1]
@@ -12,6 +13,7 @@ misc:
       pattern: all
       output_dims_change: False      
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [2.1]
@@ -21,6 +23,7 @@ misc:
       pattern: sinogram
       output_dims_change: False      
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [2.2]
@@ -31,6 +34,7 @@ prep:
       pattern: projection
       output_dims_change: False      
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo, flats, darks]
         - multipliers: [2, 1.075, 1.075]
@@ -40,6 +44,7 @@ prep:
       pattern: projection
       output_dims_change: False      
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -48,6 +53,7 @@ prep:
       pattern: projection
       output_dims_change: False      
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -57,6 +63,7 @@ prep:
       pattern: projection
       output_dims_change: False      
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [1.2]
@@ -66,6 +73,7 @@ prep:
       pattern: sinogram
       output_dims_change: False      
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [1.17]
@@ -74,6 +82,7 @@ prep:
       pattern: sinogram
       output_dims_change: False
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -84,6 +93,7 @@ recon:
       pattern: sinogram
       output_dims_change: True
       implementation: gpu_cupy
+      save_result_default: True
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -92,6 +102,7 @@ recon:
       pattern: sinogram
       output_dims_change: True
       implementation: gpu_cupy
+      save_result_default: True
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [8]
@@ -100,6 +111,7 @@ recon:
       pattern: sinogram
       output_dims_change: True
       implementation: gpu_cupy
+      save_result_default: True
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [10]
@@ -109,6 +121,7 @@ recon:
       pattern: sinogram
       output_dims_change: False
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [0]
@@ -117,6 +130,7 @@ recon:
       pattern: sinogram
       output_dims_change: False
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [0]

@@ -1,4 +1,5 @@
-from typing import Optional, Tuple, TypeAlias, Union
+from typing import List, Optional, Tuple, Union
+from typing_extensions import TypeAlias
 from httomo.utils import gpu_enabled, xp
 import numpy as np
 
@@ -36,15 +37,16 @@ class DataSet:
         self._flats = flats
         self._darks = darks
         self._data = data
+        assert data.ndim == 3, "Only 3D data is supported"
 
         if global_shape is None:
-            self._global_shape = data.shape
+            global_shape = (int(data.shape[0]), int(data.shape[1]), int(data.shape[2]))
         elif any(i < d for i, d in zip(global_shape, data.shape)):
             raise ValueError(
                 f"A global shape of {global_shape} is incompatible with a local shape {data.shape}"
             )
-        else:
-            self._global_shape = global_shape
+
+        self._global_shape: Tuple[int, int, int] = global_shape
         self._global_index = global_index
 
         self.lock()
@@ -67,7 +69,8 @@ class DataSet:
     @property
     def shape(self) -> Tuple[int, int, int]:
         """Shape of this part of the dataset"""
-        return self._data.shape
+        assert self._data.ndim == 3, "only 3D data is supported"
+        return (self._data.shape[0], self._data.shape[1], self._data.shape[2])
 
     @property
     def global_index(self) -> Tuple[int, int, int]:
@@ -92,11 +95,11 @@ class DataSet:
 
     @property
     def angles(self) -> np.ndarray:
-        return self._get_value("angles")
+        return self.get_value("angles")
 
     @angles.setter
     def angles(self, new_data: np.ndarray):
-        self._set_value("angles", new_data)
+        self.set_value("angles", new_data)
 
     @property
     def angles_radians(self) -> np.ndarray:
@@ -110,11 +113,11 @@ class DataSet:
 
     @property
     def darks(self) -> generic_array:
-        return self._get_value("darks")
+        return self.get_value("darks")
 
     @darks.setter
     def darks(self, new_data: generic_array):
-        self._set_value("darks", new_data)
+        self.set_value("darks", new_data)
 
     @property
     def dark(self) -> generic_array:
@@ -127,11 +130,11 @@ class DataSet:
 
     @property
     def flats(self) -> generic_array:
-        return self._get_value("flats")
+        return self.get_value("flats")
 
     @flats.setter
     def flats(self, new_data: generic_array):
-        self._set_value("flats", new_data)
+        self.set_value("flats", new_data)
 
     @property
     def flat(self) -> generic_array:
@@ -148,8 +151,20 @@ class DataSet:
 
     @data.setter
     def data(self, new_data: generic_array):
+        self._set_data(new_data)
+
+    def _set_data(self, new_data: generic_array):
+        # if the shape changed, there should be on dim at least matching (slicing dim)
+        # and the other two may need to be updated
+        global_shape = list(self._global_shape)
+        for dim in range(3):
+            if new_data.shape[dim] != self._data.shape[dim]:
+                assert (
+                    self._global_index[dim] == 0
+                ), "shape in slicing dim changed, which is not allowed"
+                global_shape[dim] = new_data.shape[dim]
         self._data = new_data
-        self._chunk_shape = new_data.shape
+        self._global_shape = (global_shape[0], global_shape[1], global_shape[2])
 
     def get_data_block(
         self, start0: int, stop0: int, start1: int, stop1: int, start2: int, stop2: int
@@ -157,10 +172,14 @@ class DataSet:
         return self._data[start0:stop0, start1:stop1, start2:stop2]
 
     def set_data_block(self, start_idx: Tuple[int, int, int], new_data: generic_array):
+        stopidx = np.array(start_idx) + np.array(new_data.shape)
+        assert stopidx[0] <= self._data.shape[0]
+        assert stopidx[1] <= self._data.shape[1]
+        assert stopidx[2] <= self._data.shape[2]
         self._data[
-            start_idx[0] : start_idx[0] + new_data.shape[0],
-            start_idx[1] : start_idx[1] + new_data.shape[1],
-            start_idx[2] : start_idx[2] + new_data.shape[2],
+            start_idx[0] : stopidx[0],
+            start_idx[1] : stopidx[1],
+            start_idx[2] : stopidx[2],
         ] = new_data
 
     @property
@@ -172,7 +191,7 @@ class DataSet:
     def is_cpu(self) -> bool:
         """Check if arrays are currently residing on CPU"""
         return not self.is_gpu
-    
+
     @property
     def is_full(self) -> bool:
         """Check if the dataset is the full global data"""
@@ -205,7 +224,7 @@ class DataSet:
         if not gpu_enabled:
             raise ValueError("cannot transfer to GPU if not enabled")
         if not self.is_gpu:
-            self._data = xp.asarray(self.data)
+            self._data = xp.asarray(self.data, order='C')
 
     def to_cpu(self):
         """Transfter dataset to CPU (if not already)"""
@@ -213,13 +232,16 @@ class DataSet:
             return
         self._data = xp.asnumpy(self._data)
 
-    def make_block(self, dim: int, start: int, length: int):
+    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
         """Create a block from this dataset, which slices in dimension `dim`
-        starting at index `start`, and taking `length` elements.
+        starting at index `start`, and taking `length` elements (if it's not given,
+        it uses the remaining length of the block after `start`).
 
         The returned block is a `DataSet` object itself, but it references the
         original one for the darks/flats/angles arrays and re-use the GPU-cached
         version of those if needed."""
+        if length is None:
+            length = self.chunk_shape[dim] - start
         return DataSetBlock(self, dim, start, length)
 
     @property
@@ -233,7 +255,7 @@ class DataSet:
 
     ###### internal helpers ######
 
-    def _get_value(
+    def get_value(
         self, field: str, data_is_gpu: Optional[bool] = None
     ) -> generic_array:
         """Helper function to get a field from this object.
@@ -261,7 +283,7 @@ class DataSet:
             setattr(self, f"_{field}_dirty", False)
         return getattr(self, f"_{field}")
 
-    def _set_value(self, field: str, new_data: generic_array):
+    def set_value(self, field: str, new_data: generic_array):
         """Sets a value of a field in this object, only if unlocked.
         It is a helper used in the setters for darks, flats, angles"""
         if self.is_locked:
@@ -284,7 +306,7 @@ class DataSet:
     def _transfer_if_needed(self, cpuarray: np.ndarray, gpuarray: Optional[xp.ndarray]):
         """Internal helper to transfer flats/darks/angles lazily"""
         if gpuarray is None:
-            gpuarray = xp.asarray(cpuarray)
+            gpuarray = xp.asarray(cpuarray, order='C')
         assert (
             gpuarray.device.id == xp.cuda.Device().id
         ), f"GPU array is on a different GPU (expected: {xp.cuda.Device().id}, actual: {gpuarray.device.id})"
@@ -325,13 +347,14 @@ class DataSetBlock(DataSet):
         self._base = base
         idx = [0, 0, 0]
         idx[dim] = start
+        self._chunk_shape = base.chunk_shape
         self._chunk_index = (idx[0], idx[1], idx[2])
         self._dim = dim
 
     @property
     def is_block(self) -> bool:
         return True
-    
+
     @property
     def is_full(self) -> bool:
         """Check if the dataset is the full global data"""
@@ -345,7 +368,18 @@ class DataSetBlock(DataSet):
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Shape of the full chunk handled by the current process"""
-        return self._base.chunk_shape
+        return self._chunk_shape
+
+    @property
+    def data(self) -> DataSet.generic_array:
+        return super().data
+
+    @data.setter
+    def data(self, new_data: DataSet.generic_array):
+        super()._set_data(new_data)
+        chunk_shape = np.array(new_data.shape)
+        chunk_shape[self._dim] = self._base.chunk_shape[self._dim]
+        self._chunk_shape = (chunk_shape[0], chunk_shape[1], chunk_shape[2])
 
     @property
     def is_last_in_chunk(self) -> bool:
@@ -360,15 +394,15 @@ class DataSetBlock(DataSet):
         """Get the original (unblocked) dataset"""
         return self._base
 
-    def _set_value(self, field: str, new_data: DataSet.generic_array):
+    def set_value(self, field: str, new_data: DataSet.generic_array):
         raise ValueError(f"Cannot update field {field} in a block/slice dataset")
 
-    def _get_value(
+    def get_value(
         self, field: str, is_gpu: Optional[bool] = None
     ) -> DataSet.generic_array:
-        return self._base._get_value(field, self.is_gpu if is_gpu is None else is_gpu)
+        return self._base.get_value(field, self.is_gpu if is_gpu is None else is_gpu)
 
-    def make_block(self, dim: int, start: int, length: int):
+    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
         raise ValueError("Cannot slice a dataset that is already a slice")
 
 
@@ -401,7 +435,7 @@ class FullFileDataSet(DataSet):
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         return self._chunk_shape
-    
+
     @property
     def is_full(self) -> bool:
         return True
@@ -461,4 +495,3 @@ class FullFileDataSet(DataSet):
         start2 += self._global_index[2]
         stop2 += self._global_index[2]
         return self._data[start0:stop0, start1:stop1, start2:stop2]
-    

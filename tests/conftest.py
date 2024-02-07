@@ -9,8 +9,8 @@ import numpy as np
 import pytest
 import yaml
 from httomo.runner.dataset import DataSet
-from httomo.ui_layer import _yaml_loader
 from httomo.runner.loader import DarksFlatsFileConfig
+from httomo.ui_layer import _yaml_loader
 
 
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -271,7 +271,7 @@ def merge_yamls():
         """Merge multiple yaml files into one"""
         data : list = []
         for y in yamls:
-            curr_yaml_list = _yaml_loader(y)[0]
+            curr_yaml_list = _yaml_loader(y)
             for x in curr_yaml_list:
                 data.append(x)
         with open("temp.yaml", "w") as file_descriptor:
@@ -281,10 +281,19 @@ def merge_yamls():
 @pytest.fixture
 def dummy_dataset() -> DataSet:
     return DataSet(
-        data=np.ones((10, 10, 10)),
-        angles=np.ones((20,)),
-        flats=3 * np.ones((5, 10, 10)),
-        darks=2 * np.ones((5, 10, 10)),
+        data=np.ones((10, 10, 10), dtype=np.float32),
+        angles=np.ones((20,), dtype=np.float32),
+        flats=3 * np.ones((5, 10, 10), dtype=np.float32),
+        darks=2 * np.ones((5, 10, 10), dtype=np.float32),
+    )
+
+
+@pytest.fixture
+def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
+    return DarksFlatsFileConfig(
+        file=Path("tests/test_data/tomo_standard.nxs"),
+        data_path="/entry1/tomo_entry/data/data",
+        image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
     )
 
 

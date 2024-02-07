@@ -1,5 +1,16 @@
 from pathlib import Path
-from typing import Any, Dict, List, Literal, NamedTuple, Optional, Protocol, Tuple, TypeAlias, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    NamedTuple,
+    Optional,
+    Protocol,
+    Tuple,
+    TypeAlias,
+    Union,
+)
 
 import h5py
 import numpy as np
@@ -13,126 +24,39 @@ from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import Pattern, _get_slicing_dim
 
-
-import os
-
-from httomo.runner.backend_wrapper import BackendWrapper
+from httomo.runner.method_wrapper import MethodWrapper
 
 
 class LoaderInterface(Protocol):
     """Interface to a loader object"""
 
+    # Patterns the loader supports
     pattern: Pattern = Pattern.all
-    reslice: bool = False
+    # purely informational, for use by the logger
     method_name: str
-    package_name: str = 'httomo'
+    package_name: str = "httomo"
 
-    def load(self) -> DataSet:
-        ...  # pragma: no cover
+    def make_data_source(self) -> DataSetSource:
+        """Create a dataset source that can produce blocks of data from the file.
 
-    def get_side_output(self) -> Dict[str, Any]:
+        This will be called after the patterns and sections have been determined,
+        just before the execution of the first section starts."""
         ...  # pragma: no cover
 
     @property
     def detector_x(self) -> int:
+        """detector x-dimension of the loaded data"""
         ...  # pragma: no cover
 
     @property
     def detector_y(self) -> int:
+        """detector y-dimension of the loaded data"""
         ...  # pragma: no cover
 
-
-class Loader(BackendWrapper, LoaderInterface):
-    """Using BackendWrapper for convenience only - it has all the logic
-    for loading a method and finding all the parameters, etc.
-    """
-
-    def __init__(
-        self,
-        method_repository: MethodRepository,
-        module_path: str,
-        method_name: str,
-        comm: Comm,
-        output_mapping: Dict[str, str] = {},
-        **kwargs,
-    ):
-        super().__init__(
-            method_repository, module_path, method_name, comm, output_mapping, **kwargs
-        )
-        self._detector_x = 0
-        self._detector_y = 0
-
-    def execute(self, dataset: DataSet) -> DataSet:
-        raise NotImplementedError("Cannot execute a loader - please call load")
-
-    def load(self) -> DataSet:
-        args = self._build_kwargs(self._transform_params(self._config_params))
-        ret: LoaderData = self.method(**args)
-        dataset = self._process_loader_data(ret)
-        dataset = self._postprocess_data(dataset)
-        return dataset
-
-    def _process_loader_data(self, ret: LoaderData) -> DataSet:
-        full_shape, start_indices = get_data_shape_and_offset(ret.data, _get_slicing_dim(self.pattern) - 1, self.comm)
-        dataset = DataSet(
-            data=ret.data, angles=ret.angles, flats=ret.flats, darks=ret.darks,
-            global_index=start_indices,
-            global_shape=full_shape
-        )
-        self._detector_x = ret.detector_x
-        self._detector_y = ret.detector_y
-        return dataset
-
     @property
-    def detector_x(self) -> int:
-        return self._detector_x
-
-    @property
-    def detector_y(self) -> int:
-        return self._detector_y
-
-
-def make_loader(
-    method_repository: MethodRepository,
-    module_path: str,
-    method_name: str,
-    comm: MPI.Comm,
-    **kwargs,
-) -> Loader:
-    """Factory function to generate the appropriate wrapper based on the module
-    path and method name for loaders.
-
-    Parameters
-    ----------
-
-    method_repository: MethodRepository
-        Repository of methods that we can use the query properties
-    module_path: str
-        Path to the module where the method is in python notation, e.g. "httomolibgpu.prep.normalize"
-    method_name: str
-        Name of the method (function within the given module)
-    comm: Comm
-        MPI communicator object
-    kwargs:
-        Arbitrary keyword arguments that get passed to the method as parameters.
-
-    Returns
-    -------
-
-    Loader
-        An instance of a loader class (which is also a BackendWrapper)
-    """
-
-    # note: once we have different kinds of loaders, this function can
-    # be used like the make_backend_wrapper factory function
-
-    return Loader(
-        method_repository=method_repository,
-        module_path=module_path,
-        method_name=method_name,
-        comm=comm,
-        **kwargs,
-    )
+    def angles_total(self) -> int:
+        """angles dimension of the loaded data"""
+        ...  # pragma: no cover
 
 
 class DarksFlatsFileConfig(NamedTuple):
@@ -140,13 +64,16 @@ class DarksFlatsFileConfig(NamedTuple):
     data_path: str
     image_key_path: Optional[str]
 
+
 class RawAngles(NamedTuple):
     data_path: str
+
 
 class UserDefinedAngles(NamedTuple):
     start_angle: int
     stop_angle: int
     angles_total: int
+
 
 AnglesConfig: TypeAlias = Union[RawAngles, UserDefinedAngles]
 
@@ -155,6 +82,7 @@ class StandardTomoLoader(DataSetSource):
     """
     Loads an individual block at a time from raw data instead of an entire chunk.
     """
+
     def __init__(
         self,
         in_file: Path,
@@ -203,6 +131,18 @@ class StandardTomoLoader(DataSetSource):
             global_index=self._chunk_index,
             chunk_shape=self._chunk_shape,
         )
+
+    @property
+    def dtype(self) -> np.dtype:
+        return self._data.data.dtype
+
+    @property
+    def flats(self) -> np.ndarray:
+        return self._data.flats
+
+    @property
+    def darks(self) -> np.ndarray:
+        return self._data.darks
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
@@ -283,7 +223,9 @@ class StandardTomoLoader(DataSetSource):
 
             return np.where(f[self._image_key_path][:] == 0)[0].tolist()
 
-    def _get_angles(self,) -> np.ndarray:
+    def _get_angles(
+        self,
+    ) -> np.ndarray:
         if isinstance(self._angles, UserDefinedAngles):
             return np.linspace(
                 self._angles.start_angle,
@@ -293,6 +235,9 @@ class StandardTomoLoader(DataSetSource):
 
         with h5py.File(self._in_file, "r", driver="mpio", comm=self._comm) as f:
             return f[self._angles.data_path][...]
+
+    def finalize(self):
+        pass
 
 
 def get_darks_flats(
@@ -305,8 +250,8 @@ def get_darks_flats(
             darks_indices = np.where(f[darks_config.image_key_path][:] == 2)[0]
             flats_indices = np.where(f[flats_config.image_key_path][:] == 1)[0]
             dataset: h5py.Dataset = f[darks_config.data_path]
-            darks = dataset[darks_indices[0]: darks_indices[-1] + 1, :, :]
-            flats = dataset[flats_indices[0]: flats_indices[-1] + 1, :, :]
+            darks = dataset[darks_indices[0] : darks_indices[-1] + 1, :, :]
+            flats = dataset[flats_indices[0] : flats_indices[-1] + 1, :, :]
         return darks, flats
 
     def get_separate(config: DarksFlatsFileConfig):
@@ -319,3 +264,104 @@ def get_darks_flats(
         return darks, flats
 
     return get_together()
+
+
+class StandardLoaderWrapper(LoaderInterface):
+    def __init__(
+        self,
+        comm: Comm,
+        # parameters that should be adjustable from YAML
+        in_file: Path,
+        data_path: str,
+        image_key_path: Optional[str],
+        darks: DarksFlatsFileConfig,
+        flats: DarksFlatsFileConfig,
+        angles: AnglesConfig,
+    ):
+        self.pattern = Pattern.projection
+        self.method_name = "standard_tomo"
+        self.package_name = "httomo"
+        self._detector_x: int = 0
+        self._detector_y: int = 0
+        self._angles_total: int = 0
+        self.comm = comm
+        self.in_file = in_file
+        self.data_path = data_path
+        self.image_key_path = image_key_path
+        self.darks = darks
+        self.flats = flats
+        self.angles = angles
+
+    def make_data_source(self) -> DataSetSource:
+        assert self.pattern in [Pattern.sinogram, Pattern.projection]
+        loader = StandardTomoLoader(
+            self.in_file,
+            self.data_path,
+            self.image_key_path,
+            self.darks,
+            self.flats,
+            self.angles,
+            1 if self.pattern == Pattern.sinogram else 0,
+            self.comm,
+        )
+        (self._angles_total, self._detector_y, self._detector_x) = loader.global_shape
+        return loader
+
+    @property
+    def detector_x(self) -> int:
+        return self._detector_x
+
+    @property
+    def detector_y(self) -> int:
+        return self._detector_y
+
+    @property
+    def angles_total(self) -> int:
+        return self._angles_total
+
+
+def make_loader(
+    repo: MethodRepository, module_path: str, method_name: str, comm: MPI.Comm, **kwargs
+) -> LoaderInterface:
+    """Produces a loader interface. Only StandardTomoWrapper is supported right now,
+    and this method has been added for backwards compatibility. Supporting other loaders
+    is a topic that still needs to be explored."""
+
+    if "standard_tomo" not in method_name:
+        raise NotImplementedError(
+            "Only the standard_tomo loader is currently supported"
+        )
+
+    # the following will raise KeyError if not present
+    in_file = kwargs["in_file"]
+    data_path = kwargs["data_path"]
+    image_key_path = kwargs["image_key_path"]
+    rotation_angles = kwargs["rotation_angles"]
+    angles_path = rotation_angles["data_path"]
+    # these will have defaults if not given
+    darks: dict = kwargs.get("darks", dict())
+    darks_file = darks.get("file", in_file)
+    darks_path = darks.get("data_path", data_path)
+    darks_image_key = darks.get("image_key_path", image_key_path)
+    flats: dict = kwargs.get("darks", dict())
+    flats_file = flats.get("file", in_file)
+    flats_path = flats.get("data_path", data_path)
+    flats_image_key = flats.get("image_key_path", image_key_path)
+    # TODO: handle these
+    dimension = int(kwargs.get("dimension", 1)) - 1
+    preview = kwargs.get("preview", (None, None, None))
+    pad = int(kwargs.get("pad", 0))
+
+    return StandardLoaderWrapper(
+        comm,
+        in_file=in_file,
+        data_path=data_path,
+        image_key_path=image_key_path,
+        darks=DarksFlatsFileConfig(
+            file=darks_file, data_path=darks_path, image_key_path=darks_image_key
+        ),
+        flats=DarksFlatsFileConfig(
+            file=flats_file, data_path=flats_path, image_key_path=flats_image_key
+        ),
+        angles=RawAngles(data_path=angles_path),
+    )
