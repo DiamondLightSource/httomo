@@ -664,7 +664,7 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
                 detector_x=PreviewDimConfig(start=0, stop=160),
             ),
             True,
-            "Preview indices in det y dim exceed bounds of data: start=0, stop=129",
+            "Preview indices in detector_y dim exceed bounds of data: start=0, stop=129",
         ),
         (
             PreviewConfig(
@@ -673,7 +673,7 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
                 detector_x=PreviewDimConfig(start=0, stop=161),
             ),
             True,
-            "Preview indices in det x dim exceed bounds of data: start=0, stop=161",
+            "Preview indices in detector_x dim exceed bounds of data: start=0, stop=161",
         ),
         (
             PreviewConfig(
@@ -691,7 +691,7 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
                 detector_x=PreviewDimConfig(start=0, stop=160),
             ),
             True,
-            "Start index in preview indices for det y dim is >= stop index: start=60, stop=50",
+            "Start index in preview indices for detector_y dim is >= stop index: start=60, stop=50",
         ),
         (
             PreviewConfig(
@@ -700,7 +700,7 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
                 detector_x=PreviewDimConfig(start=50, stop=0),
             ),
             True,
-            "Start index in preview indices for det x dim is >= stop index: start=50, stop=0",
+            "Start index in preview indices for detector_x dim is >= stop index: start=50, stop=0",
         ),
         (
             PreviewConfig(
