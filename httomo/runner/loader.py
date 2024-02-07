@@ -109,6 +109,12 @@ class Preview:
                 f"start={self.config.angles.start}, stop={self.config.angles.stop}"
             )
 
+        if self.config.angles.start >= self.config.angles.stop:
+            raise ValueError(
+                f"Start index in preview indices for angles dim is >= stop index: "
+                f"start={self.config.angles.start}, stop={self.config.angles.stop}"
+            )
+
         if self.config.detector_y.stop > shape[1]:
             raise ValueError(
                 f"Preview indices in det y dim exceed bounds of data: "
@@ -116,11 +122,23 @@ class Preview:
                 f"stop={self.config.detector_y.stop}"
             )
 
+        if self.config.detector_y.start >= self.config.detector_y.stop:
+            raise ValueError(
+                f"Start index in preview indices for det y dim is >= stop index: "
+                f"start={self.config.detector_y.start}, stop={self.config.detector_y.stop}"
+            )
+
         if self.config.detector_x.stop > shape[2]:
             raise ValueError(
                 f"Preview indices in det x dim exceed bounds of data: "
                 f"start={self.config.detector_x.start}, "
                 f"stop={self.config.detector_x.stop}"
+            )
+
+        if self.config.detector_x.start >= self.config.detector_x.stop:
+            raise ValueError(
+                f"Start index in preview indices for det x dim is >= stop index: "
+                f"start={self.config.detector_x.start}, stop={self.config.detector_x.stop}"
             )
 
     def _calculate_data_indices(self) -> List[int]:
