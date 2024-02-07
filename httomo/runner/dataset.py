@@ -239,11 +239,14 @@ class DataSet:
             length = self.chunk_shape[dim] - start
 
         slices = [
-            slice(0, self.shape[0]),
-            slice(0, self.shape[1]),
-            slice(0, self.shape[2]),
+            slice(self.global_index[0], self.global_index[0] + self.chunk_shape[0]),
+            slice(self.global_index[1], self.global_index[1] + self.chunk_shape[1]),
+            slice(self.global_index[2], self.global_index[2] + self.chunk_shape[2]),
         ]
-        slices[dim] = slice(start, start + length)
+        slices[dim] = slice(
+            self.global_index[dim] + start,
+            self.global_index[dim] + start + length,
+        )
         global_index = list(self._global_index)
         global_index[dim] += start
         chunk_index = [0, 0, 0]
