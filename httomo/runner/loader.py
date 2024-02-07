@@ -103,42 +103,29 @@ class Preview:
 
     def _check_within_data_bounds(self) -> None:
         shape = self._dataset.shape
-        if self.config.angles.stop > shape[0]:
-            raise ValueError(
-                f"Preview indices in angles dim exceed bounds of data: "
-                f"start={self.config.angles.start}, stop={self.config.angles.stop}"
+        for i, field in enumerate(self.config._fields):
+            self._check_dimension(
+                name=field,
+                config=getattr(self.config, field),
+                length=shape[i],
             )
 
-        if self.config.angles.start >= self.config.angles.stop:
+    def _check_dimension(
+        self,
+        name: str,
+        config: PreviewDimConfig,
+        length: int,
+    ) -> None:
+        if config.stop > length:
             raise ValueError(
-                f"Start index in preview indices for angles dim is >= stop index: "
-                f"start={self.config.angles.start}, stop={self.config.angles.stop}"
+                f"Preview indices in {name} dim exceed bounds of data: "
+                f"start={config.start}, " f"stop={config.stop}"
             )
 
-        if self.config.detector_y.stop > shape[1]:
+        if config.start >= config.stop:
             raise ValueError(
-                f"Preview indices in det y dim exceed bounds of data: "
-                f"start={self.config.detector_y.start}, "
-                f"stop={self.config.detector_y.stop}"
-            )
-
-        if self.config.detector_y.start >= self.config.detector_y.stop:
-            raise ValueError(
-                f"Start index in preview indices for det y dim is >= stop index: "
-                f"start={self.config.detector_y.start}, stop={self.config.detector_y.stop}"
-            )
-
-        if self.config.detector_x.stop > shape[2]:
-            raise ValueError(
-                f"Preview indices in det x dim exceed bounds of data: "
-                f"start={self.config.detector_x.start}, "
-                f"stop={self.config.detector_x.stop}"
-            )
-
-        if self.config.detector_x.start >= self.config.detector_x.stop:
-            raise ValueError(
-                f"Start index in preview indices for det x dim is >= stop index: "
-                f"start={self.config.detector_x.start}, stop={self.config.detector_x.stop}"
+                f"Start index in preview indices for {name} dim is >= stop index: "
+                f"start={config.start}, stop={config.stop}"
             )
 
     def _calculate_data_indices(self) -> List[int]:
