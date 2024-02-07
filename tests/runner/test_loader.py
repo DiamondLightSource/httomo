@@ -359,6 +359,32 @@ def test_standard_tomo_loader_closes_file(mocker: MockerFixture):
     file_close.assert_called_once()
 
 
+def test_standard_tomo_loader_raises_error_slicing_dim(
+    standard_data_darks_flats_config: DarksFlatsFileConfig,
+):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+    ANGLES_CONFIG = RawAngles(
+        data_path="/entry1/tomo_entry/data/rotation_angle"
+    )
+    SLICING_DIM = 1
+    COMM = MPI.COMM_WORLD
+
+    with mock.patch(
+        "httomo.runner.loader.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ), pytest.raises(NotImplementedError):
+        _ = StandardTomoLoader(
+            in_file=IN_FILE_PATH,
+            data_path=standard_data_darks_flats_config.data_path,
+            image_key_path=standard_data_darks_flats_config.image_key_path,
+            darks=standard_data_darks_flats_config,
+            flats=standard_data_darks_flats_config,
+            angles=ANGLES_CONFIG,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+        )
+
+
 def test_get_darks_flats_same_file_same_dataset(
     standard_data_path: str,
     standard_data_darks_flats_config: DarksFlatsFileConfig,
