@@ -677,6 +677,33 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
         ),
         (
             PreviewConfig(
+                angles=PreviewDimConfig(start=220, stop=220),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=0, stop=161),
+            ),
+            True,
+            "Start index in preview indices for angles dim is >= stop index: start=220, stop=220",
+        ),
+        (
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=220),
+                detector_y=PreviewDimConfig(start=60, stop=50),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+            True,
+            "Start index in preview indices for det y dim is >= stop index: start=60, stop=50",
+        ),
+        (
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=220),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=50, stop=0),
+            ),
+            True,
+            "Start index in preview indices for det x dim is >= stop index: start=50, stop=0",
+        ),
+        (
+            PreviewConfig(
                 angles=PreviewDimConfig(start=0, stop=220),
                 detector_y=PreviewDimConfig(start=0, stop=128),
                 detector_x=PreviewDimConfig(start=0, stop=160),
@@ -689,6 +716,9 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
         "incorrect_angles_bounds",
         "incorrect_det_y_bounds",
         "incorrect_det_x_bounds",
+        "start_geq_stop_det_angles_bounds",
+        "start_geq_stop_det_y_bounds",
+        "start_geq_stop_det_x_bounds",
         "all_correct_bounds",
     ],
 )
