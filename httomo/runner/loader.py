@@ -157,8 +157,8 @@ class Preview:
 
         return (
             len(self._data_indices),
-            len(range(self.config.detector_y.start, self.config.detector_y.stop)),
-            len(range(self.config.detector_x.start, self.config.detector_x.stop)),
+            self.config.detector_y.stop - self.config.detector_y.start,
+            self.config.detector_x.stop - self.config.detector_x.start,
         )
 
     @property
