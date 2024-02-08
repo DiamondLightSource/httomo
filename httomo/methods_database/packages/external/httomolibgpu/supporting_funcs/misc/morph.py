@@ -26,7 +26,12 @@ import numpy as np
 
 __all__ = [
     "_calc_memory_bytes_data_resampler",
+    "_calc_output_dim_data_resampler",
 ]
+
+
+def _calc_output_dim_data_resampler(non_slice_dims_shape, **kwargs):
+    return kwargs["newshape"]
 
 
 def _calc_memory_bytes_data_resampler(
@@ -35,16 +40,16 @@ def _calc_memory_bytes_data_resampler(
     **kwargs,
 ) -> Tuple[int, int]:
     newshape = kwargs["newshape"]
-    method = kwargs["method"]
+    interpolation = kwargs["interpolation"]
 
     input_size = np.prod(non_slice_dims_shape) * dtype.itemsize
     xi = 2 * np.prod(newshape) * dtype.itemsize
     output_size = np.prod(newshape) * dtype.itemsize
 
     # interpolation happens in 2d so we should allocate for it, the exact value is unknown
-    if method == "nearest":
+    if interpolation == "nearest":
         interpolator = 3 * (input_size + output_size)
-    if method == "linear":
+    if interpolation == "linear":
         interpolator = 4 * (input_size + output_size)
 
     tot_memory_bytes = input_size + output_size + interpolator

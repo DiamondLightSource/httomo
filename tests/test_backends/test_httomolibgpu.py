@@ -392,15 +392,15 @@ def test_remove_all_stripe_memoryhook(angles, dim_x_slices, dim_y, ensure_clean_
 
 
 @pytest.mark.cupy
-@pytest.mark.parametrize("method", ["nearest", "linear"])
+@pytest.mark.parametrize("interpolation", ["nearest", "linear"])
 @pytest.mark.parametrize("slices", [1, 3, 10])
-@pytest.mark.parametrize("newshape", [(256, 256), (500, 500), (1000, 1000)])
-def test_data_sampler_memoryhook(slices, newshape, method, ensure_clean_memory):
+@pytest.mark.parametrize("newshape", [[256, 256], [500, 500], [1000, 1000]])
+def test_data_sampler_memoryhook(slices, newshape, interpolation, ensure_clean_memory):
     recon_size = 2560
     data = cp.random.random_sample((recon_size, slices, recon_size), dtype=cp.float32)
     kwargs = {}
     kwargs["newshape"] = newshape
-    kwargs["method"] = method
+    kwargs["interpolation"] = interpolation
     kwargs["axis"] = 1
 
     hook = MaxMemoryHook()
