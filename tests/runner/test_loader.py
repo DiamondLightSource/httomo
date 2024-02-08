@@ -406,6 +406,14 @@ def test_standard_tomo_loader_read_block_single_proc(
         preview_config.detector_y.stop - preview_config.detector_y.start,
         preview_config.detector_x.stop - preview_config.detector_x.start,
     )
+    # Index of block relative to the global data
+    expected_global_index = (
+        preview_config.angles.start + BLOCK_START,
+        preview_config.detector_y.start,
+        preview_config.detector_x.start,
+    )
+    # Index of block relative to the chunk it belongs to
+    expected_chunk_index = (BLOCK_START, 0, 0)
 
     with mock.patch(
         "httomo.runner.loader.get_darks_flats",
@@ -433,6 +441,8 @@ def test_standard_tomo_loader_read_block_single_proc(
             preview_config.detector_x.start : preview_config.detector_x.stop,
         ]
 
+    assert block.global_index == expected_global_index
+    assert block.chunk_index == expected_chunk_index
     assert block.data.shape == expected_block_shape
     np.testing.assert_array_equal(block.data, projs)
 
@@ -525,6 +535,15 @@ def test_standard_tomo_loader_read_block_two_procs(
         preview_config.angles.start if COMM.rank == 0 else
         (preview_config.angles.stop - preview_config.angles.start) // 2
     )
+    # Index of block relative to the global data
+    expected_global_index = (
+        projs_start + BLOCK_START,
+        preview_config.detector_y.start,
+        preview_config.detector_x.start,
+    )
+    # Index of block relative to the chunk it belongs to
+    expected_chunk_index = (BLOCK_START, 0, 0)
+
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[standard_data_path]
         projs: np.ndarray = dataset[
@@ -533,6 +552,8 @@ def test_standard_tomo_loader_read_block_two_procs(
             preview_config.detector_x.start : preview_config.detector_x.stop,
         ]
 
+    assert block.global_index == expected_global_index
+    assert block.chunk_index == expected_chunk_index
     assert block.data.shape == expected_block_shape
     np.testing.assert_array_equal(block.data, projs)
 
@@ -580,12 +601,23 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
     # Darks/flats are at indices 0 to 99 (and 3101 to 3200), projection data starts at index
     # 100
     PROJS_START = 100
+    # Index of block relative to the global data
+    expected_global_index = (
+        PROJS_START + BLOCK_START,
+        PREVIEW_CONFIG.detector_y.start,
+        PREVIEW_CONFIG.detector_x.start,
+    )
+    # Index of block relative to the chunk it belongs to
+    expected_chunk_index = (BLOCK_START, 0, 0)
+
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[DATA_PATH]
         projs: np.ndarray = dataset[
             PROJS_START + BLOCK_START: PROJS_START + BLOCK_START + BLOCK_LENGTH
         ]
 
+    assert block.global_index == expected_global_index
+    assert block.chunk_index == expected_chunk_index
     assert block.data.shape[SLICING_DIM] == BLOCK_LENGTH
     np.testing.assert_array_equal(block.data, projs)
 
@@ -645,12 +677,23 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
     # 100
     PROJS_SHIFT = 100
     projs_start = PROJS_SHIFT if COMM.rank == 0 else PROJS_SHIFT + CHUNK_SHAPE[0]
+    # Index of block relative to the global data
+    expected_global_index = (
+        projs_start + BLOCK_START,
+        PREVIEW_CONFIG.detector_y.start,
+        PREVIEW_CONFIG.detector_x.start,
+    )
+    # Index of block relative to the chunk it belongs to
+    expected_chunk_index = (BLOCK_START, 0, 0)
+
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[DATA_PATH]
         projs: np.ndarray = dataset[
             projs_start + BLOCK_START: projs_start + BLOCK_START + BLOCK_LENGTH
         ]
 
+    assert block.global_index == expected_global_index
+    assert block.chunk_index == expected_chunk_index
     assert block.data.shape[SLICING_DIM] == BLOCK_LENGTH
     np.testing.assert_array_equal(block.data, projs)
 
