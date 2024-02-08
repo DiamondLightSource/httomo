@@ -4,15 +4,12 @@ import os
 import sys
 from pathlib import Path
 from shutil import rmtree
-from typing import Any, Dict, List, TypeAlias
+from typing import Any, Callable, Dict, List, TypeAlias
 import numpy as np
 
 import pytest
 import yaml
 from httomo.runner.dataset import DataSet
-from httomo.yaml_checker import sanity_check
-from httomo.ui_layer import _yaml_loader
-
 
 MethodConfig: TypeAlias = Dict[str, Any]
 PipelineConfig: TypeAlias = List[MethodConfig]
@@ -271,12 +268,12 @@ def distortion_correction_path(test_data_path):
     return os.path.join(test_data_path, "distortion-correction")
 
 @pytest.fixture
-def merge_yamls():
+def merge_yamls(load_yaml: Callable):
     def _merge_yamls(*yamls) -> None:
         """Merge multiple yaml files into one"""
         data : List = []
         for y in yamls:
-            curr_yaml_list = _yaml_loader(y)
+            curr_yaml_list = load_yaml(y)
             for x in curr_yaml_list:
                 data.append(x)
         with open("temp.yaml", "w") as file_descriptor:
