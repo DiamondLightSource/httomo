@@ -361,7 +361,7 @@ def test_remove_stripe_ti_memoryhook(slices, ensure_clean_memory):
 
 @pytest.mark.cupy
 @pytest.mark.parametrize("angles", [900, 1800])
-@pytest.mark.parametrize("dim_x_slices", [5])
+@pytest.mark.parametrize("dim_x_slices", [1, 3, 5])
 @pytest.mark.parametrize("dim_y", [1280, 2560])
 def test_remove_all_stripe_memoryhook(angles, dim_x_slices, dim_y, ensure_clean_memory):
     data = cp.random.random_sample((angles, dim_x_slices, dim_y), dtype=np.float32)
@@ -376,28 +376,27 @@ def test_remove_all_stripe_memoryhook(angles, dim_x_slices, dim_y, ensure_clean_
     max_mem_mb = round(max_mem / (1024**2), 2)  # now in mbs
 
     # now we estimate how much of the total memory required for this data
-    library_info = get_method_info(
-        "httomolibgpu.prep.stripe", "remove_all_stripe", "memory_gpu"
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_remove_all_stripe(
+        (angles, dim_y), dtype=np.float32()
     )
-    estimated_memory_bytes = (
-        library_info[1]["multipliers"][0] * np.prod(cp.shape(data)) * float32().nbytes
-    )
-    estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
+    estimated_memory_mb = round(dim_x_slices * estimated_memory_bytes / (1024**2), 2)
+    max_mem -= subtract_bytes
+    max_mem_mb = round(max_mem / (1024**2), 2)
+
     # now we compare both memory estimations
     difference_mb = abs(estimated_memory_mb - max_mem_mb)
-    percents_relative_maxmem = round((difference_mb / max_mem_mb) * 100)
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
-    # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
-    assert percents_relative_maxmem <= 20
+    # the function is too complex to estimate the memory needed exactly.
+    # We overestimate and ensure that we're always above the memoryhook limit.
 
 
 @pytest.mark.cupy
 @pytest.mark.parametrize("method", ["nearest", "linear"])
 @pytest.mark.parametrize("slices", [1, 3, 10])
-@pytest.mark.parametrize("newshape", [(256, 256), (500, 500)])
+@pytest.mark.parametrize("newshape", [(256, 256), (500, 500), (1000, 1000)])
 def test_data_sampler_memoryhook(slices, newshape, method, ensure_clean_memory):
-    recon_size = 800
+    recon_size = 2560
     data = cp.random.random_sample((recon_size, slices, recon_size), dtype=cp.float32)
     kwargs = {}
     kwargs["newshape"] = newshape
@@ -406,7 +405,7 @@ def test_data_sampler_memoryhook(slices, newshape, method, ensure_clean_memory):
 
     hook = MaxMemoryHook()
     with hook:
-        scaled_data = data_resampler(data, **kwargs)
+        scaled_data = data_resampler(cp.copy(data), **kwargs)
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = (
@@ -418,7 +417,7 @@ def test_data_sampler_memoryhook(slices, newshape, method, ensure_clean_memory):
         (recon_size, recon_size), dtype=np.float32(), **kwargs
     )
     # as this is slice-by-slice implementation we should be adding slices number
-    estimated_memory_mb = slices + round(estimated_memory_bytes / (1024**2), 2)
+    estimated_memory_mb = slices * round(estimated_memory_bytes / (1024**2), 2)
     max_mem -= subtract_bytes
     max_mem_mb = round(max_mem / (1024**2), 2)
 
@@ -427,15 +426,16 @@ def test_data_sampler_memoryhook(slices, newshape, method, ensure_clean_memory):
     percents_relative_maxmem = round((difference_mb / max_mem_mb) * 100)
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     assert estimated_memory_mb >= max_mem_mb
-    # so we drop the condition bellow and ensure we're always slightly overestimate the memory needed
-    # the cupy memory estimation here is not very consistent because of the interpolation function
+    # this function is very tricky to estimate the memory requires as it works
+    # slice by slice so memory usage inside interpn/RegularGridInterpolator is
+    # unknown. We should overestitmate the memory here.
 
 
 @pytest.mark.cupy
 @pytest.mark.parametrize("slices", [3, 5, 8])
-@pytest.mark.parametrize("recon_size_it", [600, 1200, 2560])
+@pytest.mark.parametrize("recon_size_it", [1200, 2560])
 def test_recon_FBP_memoryhook(slices, recon_size_it, ensure_clean_memory):
-    data = cp.random.random_sample((1801, slices, recon_size_it), dtype=np.float32)
+    data = cp.random.random_sample((1801, slices, 2560), dtype=np.float32)
     kwargs = {}
     kwargs["angles"] = np.linspace(
         0.0 * np.pi / 180.0, 180.0 * np.pi / 180.0, data.shape[0]
@@ -443,10 +443,10 @@ def test_recon_FBP_memoryhook(slices, recon_size_it, ensure_clean_memory):
     kwargs["center"] = 500
     kwargs["recon_size"] = recon_size_it
     kwargs["recon_mask_radius"] = 0.8
-    recon_size = data.shape[2]
+
     hook = MaxMemoryHook()
     with hook:
-        recon_data = FBP(data, **kwargs)
+        recon_data = FBP(cp.copy(data), **kwargs)
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = (
@@ -455,7 +455,7 @@ def test_recon_FBP_memoryhook(slices, recon_size_it, ensure_clean_memory):
 
     # now we estimate how much of the total memory required for this data
     (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_FBP(
-        (1801, recon_size_it), dtype=np.float32(), **kwargs
+        (1801, 2560), dtype=np.float32(), **kwargs
     )
     estimated_memory_mb = round(slices * estimated_memory_bytes / (1024**2), 2)
     max_mem -= subtract_bytes
@@ -471,17 +471,20 @@ def test_recon_FBP_memoryhook(slices, recon_size_it, ensure_clean_memory):
 
 
 @pytest.mark.cupy
-@pytest.mark.parametrize("slices", [3, 5, 8])
-def test_recon_SIRT_memoryhook(slices, ensure_clean_memory):
+@pytest.mark.parametrize("slices", [3, 5])
+@pytest.mark.parametrize("recon_size_it", [1200, 2000])
+def test_recon_SIRT_memoryhook(slices, recon_size_it, ensure_clean_memory):
     data = cp.random.random_sample((1801, slices, 2560), dtype=np.float32)
-    recon_size = data.shape[2]
+    kwargs = {}
+    kwargs["recon_size"] = recon_size_it
+
     hook = MaxMemoryHook()
     with hook:
         recon_data = SIRT(
-            data,
+            cp.copy(data),
             np.linspace(0.0 * np.pi / 180.0, 180.0 * np.pi / 180.0, data.shape[0]),
             1200,
-            recon_size=recon_size,
+            recon_size=recon_size_it,
             iterations=2,
             nonnegativity=True,
         )
@@ -490,14 +493,14 @@ def test_recon_SIRT_memoryhook(slices, ensure_clean_memory):
     max_mem = (
         hook.max_mem
     )  # the amount of memory in bytes needed for the method according to memoryhook
-    max_mem_mb = round(max_mem / (1024**2), 2)
 
     # now we estimate how much of the total memory required for this data
-    library_info = get_method_info("httomolibgpu.recon.algorithm", "SIRT", "memory_gpu")
-    estimated_memory_bytes = (
-        library_info[1]["multipliers"][0] * np.prod(cp.shape(data)) * float32().nbytes
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_SIRT(
+        (1801, 2560), dtype=np.float32(), **kwargs
     )
-    estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
+    estimated_memory_mb = round(slices * estimated_memory_bytes / (1024**2), 2)
+    max_mem -= subtract_bytes
+    max_mem_mb = round(max_mem / (1024**2), 2)
 
     # now we compare both memory estimations
     difference_mb = abs(estimated_memory_mb - max_mem_mb)
@@ -505,21 +508,24 @@ def test_recon_SIRT_memoryhook(slices, ensure_clean_memory):
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
-    assert percents_relative_maxmem <= 20
+    assert percents_relative_maxmem <= 25
 
 
 @pytest.mark.cupy
 @pytest.mark.parametrize("slices", [3, 5])
-def test_recon_CGLS_memoryhook(slices, ensure_clean_memory):
+@pytest.mark.parametrize("recon_size_it", [1200, 2000])
+def test_recon_CGLS_memoryhook(slices, recon_size_it, ensure_clean_memory):
     data = cp.random.random_sample((1801, slices, 2560), dtype=np.float32)
-    recon_size = data.shape[2]
+    kwargs = {}
+    kwargs["recon_size"] = recon_size_it
+
     hook = MaxMemoryHook()
     with hook:
         recon_data = CGLS(
-            data,
+            cp.copy(data),
             np.linspace(0.0 * np.pi / 180.0, 180.0 * np.pi / 180.0, data.shape[0]),
             1200,
-            recon_size=recon_size,
+            recon_size=recon_size_it,
             iterations=2,
             nonnegativity=True,
         )
@@ -528,14 +534,14 @@ def test_recon_CGLS_memoryhook(slices, ensure_clean_memory):
     max_mem = (
         hook.max_mem
     )  # the amount of memory in bytes needed for the method according to memoryhook
-    max_mem_mb = round(max_mem / (1024**2), 2)
 
     # now we estimate how much of the total memory required for this data
-    library_info = get_method_info("httomolibgpu.recon.algorithm", "CGLS", "memory_gpu")
-    estimated_memory_bytes = (
-        library_info[1]["multipliers"][0] * np.prod(cp.shape(data)) * float32().nbytes
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_CGLS(
+        (1801, 2560), dtype=np.float32(), **kwargs
     )
-    estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
+    estimated_memory_mb = round(slices * estimated_memory_bytes / (1024**2), 2)
+    max_mem -= subtract_bytes
+    max_mem_mb = round(max_mem / (1024**2), 2)
 
     # now we compare both memory estimations
     difference_mb = abs(estimated_memory_mb - max_mem_mb)

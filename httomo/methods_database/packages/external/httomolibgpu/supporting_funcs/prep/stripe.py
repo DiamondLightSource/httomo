@@ -27,6 +27,7 @@ import numpy as np
 
 __all__ = [
     "_calc_memory_bytes_remove_stripe_ti",
+    "_calc_memory_bytes_remove_all_stripe",
 ]
 
 
@@ -47,3 +48,21 @@ def _calc_memory_bytes_remove_stripe_ti(
         in_slice_mem + slice_mean_mem + slice_fft_plan_mem + extra_temp_mem
     )
     return (tot_memory_bytes, gamma_mem)
+
+
+def _calc_memory_bytes_remove_all_stripe(
+    non_slice_dims_shape: Tuple[int, int],
+    dtype: np.dtype,
+    **kwargs,
+) -> Tuple[int, int]:
+    # Extremely memory hungry function but it works slice-by-slice so
+    # we need to compensate for that.
+
+    input_size = np.prod(non_slice_dims_shape) * dtype.itemsize
+    output_size = np.prod(non_slice_dims_shape) * dtype.itemsize
+
+    methods_memory_allocations = int(30 * input_size)
+
+    tot_memory_bytes = int(input_size + output_size)
+
+    return (tot_memory_bytes, methods_memory_allocations)

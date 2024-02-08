@@ -36,15 +36,16 @@ def _calc_memory_bytes_data_resampler(
 ) -> Tuple[int, int]:
     newshape = kwargs["newshape"]
     method = kwargs["method"]
-    
+
     input_size = np.prod(non_slice_dims_shape) * dtype.itemsize
-    xi = 2 * np.prod(newshape) * np.float64().nbytes
+    xi = 2 * np.prod(newshape) * dtype.itemsize
     output_size = np.prod(newshape) * dtype.itemsize
 
-    if method == 'nearest':
-        interpolator = 5 * xi
-    if method == 'linear':
-        interpolator = 6 * xi
+    # interpolation happens in 2d so we should allocate for it, the exact value is unknown
+    if method == "nearest":
+        interpolator = 3 * (input_size + output_size)
+    if method == "linear":
+        interpolator = 4 * (input_size + output_size)
 
-    tot_memory_bytes = input_size + output_size + xi + interpolator
-    return (tot_memory_bytes, 0)
+    tot_memory_bytes = input_size + output_size + interpolator
+    return (tot_memory_bytes, xi)
