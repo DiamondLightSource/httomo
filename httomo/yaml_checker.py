@@ -154,7 +154,7 @@ def check_parameter_names_are_known(conf: PipelineConfig) -> bool:
             yml_method_dict
             for yml_method_dict in template_yaml_conf
             if (yml_method_dict["method"] == method_dict["method"])
-            & (yml_method_dict["module_path"] == method_dict["module_path"])
+            and (yml_method_dict["module_path"] == method_dict["module_path"])
         ]
         unknown_param_dict = [
             p
