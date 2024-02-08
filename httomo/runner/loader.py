@@ -231,11 +231,7 @@ class StandardTomoLoader(DataSetSource):
 
         dataset: h5py.Dataset = self._get_data()
         self._data = FullFileDataSet(
-            data=dataset[
-                self._preview.config.angles.start : self._preview.config.angles.stop,
-                self._preview.config.detector_y.start : self._preview.config.detector_y.stop,
-                self._preview.config.detector_x.start : self._preview.config.detector_x.stop,
-            ],
+            data=dataset,
             angles=angles_arr,
             flats=flats_arr,
             darks=darks_arr,
@@ -278,7 +274,8 @@ class StandardTomoLoader(DataSetSource):
         Calculate the index of the chunk that is associated with the given MPI process in the
         slicing dimension
         """
-        return round((len(self._data_indices) / nprocs) * rank)
+        shift = round((len(self._data_indices) / nprocs) * rank)
+        return self._data_indices[0] + shift
 
     # TODO: Assume projection slice dim for now, and therefore assume chunk index element
     # ordering
@@ -289,7 +286,11 @@ class StandardTomoLoader(DataSetSource):
         """
         Calculates index of chunk relative to the previewed data
         """
-        return (chunk_index_slicing_dim, 0, 0)
+        return (
+            chunk_index_slicing_dim,
+            self._preview.config.detector_y.start,
+            self._preview.config.detector_x.start,
+        )
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
