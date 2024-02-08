@@ -1,3 +1,4 @@
+import weakref
 from pathlib import Path
 from typing import (
     Any,
@@ -94,12 +95,16 @@ class StandardTomoLoader(DataSetSource):
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
     ) -> None:
+        if slicing_dim != 0:
+            raise NotImplementedError("Only slicing dim 0 is currently supported")
+
         self._in_file = in_file
         self._data_path = data_path
         self._image_key_path = image_key_path
         self._angles = angles
         self._slicing_dim = slicing_dim
         self._comm = comm
+        self._h5file = h5py.File(in_file, "r", driver="mpio", comm = comm)
 
         self._data_indices = self._get_data_indices()
         self._global_shape = self._get_global_data_shape()
@@ -122,7 +127,7 @@ class StandardTomoLoader(DataSetSource):
         angles_arr = self._get_angles()
         darks_arr, flats_arr = get_darks_flats(darks, flats, comm)
 
-        dataset: h5py.Dataset = self._get_h5py_dataset()
+        dataset: h5py.Dataset = self._h5file[data_path]
         self._data = FullFileDataSet(
             data=dataset,
             angles=angles_arr,
@@ -131,6 +136,8 @@ class StandardTomoLoader(DataSetSource):
             global_index=self._chunk_index,
             chunk_shape=self._chunk_shape,
         )
+
+        weakref.finalize(self, self.finalize)
 
     @property
     def dtype(self) -> np.dtype:
@@ -153,9 +160,8 @@ class StandardTomoLoader(DataSetSource):
         return self._global_shape
 
     def _get_global_data_shape(self) -> Tuple[int, int, int]:
-        with h5py.File(self._in_file, "r", driver="mpio", comm=self._comm) as f:
-            dataset: h5py.Dataset = f[self._data_path]
-            global_shape = dataset.shape
+        dataset: h5py.Dataset = self._h5file[self._data_path]
+        global_shape = dataset.shape
         return (len(self._data_indices), global_shape[1], global_shape[2])
 
     @property
@@ -201,14 +207,6 @@ class StandardTomoLoader(DataSetSource):
             self._global_shape[2],
         )
 
-    def _get_h5py_dataset(self) -> h5py.Dataset:
-        """
-        Get an h5py `Dataset` object that represents the data being loaded
-        """
-        f = h5py.File(self._in_file, "r", driver="mpio", comm=self._comm)
-        dataset: h5py.Dataset = f[self._data_path]
-        return dataset
-
     def read_block(self, start: int, length: int) -> DataSetBlock:
         block = self._data.make_block(self._slicing_dim, start, length)
         return block
@@ -216,12 +214,11 @@ class StandardTomoLoader(DataSetSource):
     # NOTE: This method is largely copied from `load.get_data_indices()`; that function should
     # be removed in the future if/when `StandardTomoLoader` gets merged.
     def _get_data_indices(self) -> List[int]:
-        with h5py.File(self._in_file, "r", driver="mpio", comm=self._comm) as f:
-            if self._image_key_path is None:
-                data: h5py.Dataset = f[self._data_path]
-                return np.arange(data.shape[0]).tolist()
+        if self._image_key_path is None:
+            data: h5py.Dataset = self._h5file[self._data_path]
+            return np.arange(data.shape[0]).tolist()
 
-            return np.where(f[self._image_key_path][:] == 0)[0].tolist()
+        return np.where(self._h5file[self._image_key_path][:] == 0)[0].tolist()
 
     def _get_angles(
         self,
@@ -233,11 +230,10 @@ class StandardTomoLoader(DataSetSource):
                 self._angles.angles_total,
             )
 
-        with h5py.File(self._in_file, "r", driver="mpio", comm=self._comm) as f:
-            return f[self._angles.data_path][...]
+        return self._h5file[self._angles.data_path][...]
 
     def finalize(self):
-        pass
+        self._h5file.close()
 
 
 def get_darks_flats(

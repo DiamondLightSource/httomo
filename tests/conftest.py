@@ -300,7 +300,7 @@ def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
 @pytest.fixture
 def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
     return DarksFlatsFileConfig(
-        file=Path("tests/test_data/tomo_standard.nxs"),
+        file=Path(__file__).parent / "test_data/tomo_standard.nxs",
         data_path="/entry1/tomo_entry/data/data",
         image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
     )
