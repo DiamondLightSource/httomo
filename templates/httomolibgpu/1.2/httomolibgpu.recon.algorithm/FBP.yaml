@@ -1,7 +1,6 @@
-- httomolibgpu.recon.algorithm:
-    FBP:
-      data_in: tomo
-      data_out: tomo
-      center: null
-      recon_size: null
-      recon_mask_radius: null
+- method: FBP
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    recon_size: null
+    recon_mask_radius: null

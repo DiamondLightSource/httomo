@@ -1,5 +1,4 @@
-- tomopy.sim.project:
-    add_rings:
-      data_in: tomo
-      data_out: tomo
-      std: 0.05
+- method: add_rings
+  module_path: tomopy.sim.project
+  parameters:
+    std: 0.05

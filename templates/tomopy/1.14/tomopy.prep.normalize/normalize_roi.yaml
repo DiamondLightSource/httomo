@@ -1,9 +1,8 @@
-- tomopy.prep.normalize:
-    normalize_roi:
-      data_in: tomo
-      data_out: tomo
-      roi:
-      - 0
-      - 0
-      - 10
-      - 10
+- method: normalize_roi
+  module_path: tomopy.prep.normalize
+  parameters:
+    roi:
+    - 0
+    - 0
+    - 10
+    - 10

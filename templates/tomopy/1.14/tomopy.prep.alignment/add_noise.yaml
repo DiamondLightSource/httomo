@@ -1,5 +1,4 @@
-- tomopy.prep.alignment:
-    add_noise:
-      data_in: tomo
-      data_out: tomo
-      ratio: 0.05
+- method: add_noise
+  module_path: tomopy.prep.alignment
+  parameters:
+    ratio: 0.05

@@ -1,15 +1,18 @@
 import logging
 from pathlib import Path
+import os
+from typing import Optional
 
-import httomo.globals
-
-
-def setup_logger(out_dir: str):
+def setup_logger(out_dir: Optional[os.PathLike]):
+    if out_dir is None:
+        raise ValueError("out_dir has not been set")
+    out_path = Path(out_dir)
+    
     # Create timestamped output directory
-    Path.mkdir(httomo.globals.run_out_dir)
+    Path.mkdir(out_path)
 
     # Create empty `user.log` file
-    user_log_path = httomo.globals.run_out_dir / "user.log"
+    user_log_path = out_path / "user.log"
     Path.touch(user_log_path)
 
     #: set up logging to a user.log file
@@ -17,7 +20,7 @@ def setup_logger(out_dir: str):
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
         datefmt="%d/%m/%Y %I:%M:%S %p",
-        filename=f"{httomo.globals.run_out_dir}/user.log",
+        filename=f"{out_path}/user.log",
         filemode="w",
     )
 
@@ -31,4 +34,6 @@ def setup_logger(out_dir: str):
 
     user_logger = logging.getLogger(__file__)
     user_logger.setLevel(logging.DEBUG)
+    
+    logging.getLogger('httomo.runner').setLevel(logging.INFO)
     return user_logger

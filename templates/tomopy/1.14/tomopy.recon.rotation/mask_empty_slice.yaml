@@ -1,0 +1,4 @@
+- method: mask_empty_slice
+  module_path: tomopy.recon.rotation
+  parameters:
+    threshold: 0.25

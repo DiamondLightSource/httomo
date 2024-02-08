@@ -1,0 +1,5 @@
+- method: enhance_projs_aps_1id
+  module_path: tomopy.misc.corr
+  parameters:
+    imgstack: REQUIRED
+    median_ks: 5

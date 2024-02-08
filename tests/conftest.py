@@ -8,9 +8,11 @@ import numpy as np
 
 import pytest
 import yaml
+from httomo.runner.dataset import DataSet
+from httomo.ui_layer import _yaml_loader
+
 
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))
-
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
@@ -53,6 +55,7 @@ def output_folder():
                 path.unlink()
             elif path.is_dir():
                 rmtree(path)
+    return str(Path("output_dir").resolve())
 
 
 @pytest.fixture
@@ -63,9 +66,6 @@ def cmd():
         "httomo",
         "run",
         "--save-all",
-        "--ncore",
-        "2",
-        "output_dir/",
     ]
 
 
@@ -73,6 +73,9 @@ def cmd():
 def standard_data():
     return "tests/test_data/tomo_standard.nxs"
 
+@pytest.fixture
+def data360():
+    return "tests/test_data/360scan/360scan.hdf"
 
 @pytest.fixture(scope="session")
 def test_data_path():
@@ -111,6 +114,25 @@ def host_data(data_file):
 def data(host_data, ensure_clean_memory):
     import cupy as cp
     return cp.asarray(host_data)
+
+@pytest.fixture
+def host_angles(data_file):
+    return np.float32(np.copy(data_file["angles"]))
+
+@pytest.fixture
+@pytest.mark.cupy
+def angles(host_angles, ensure_clean_memory):
+    import cupy as cp
+    return cp.asarray(host_angles)
+
+@pytest.fixture
+def host_angles_radians(host_angles):
+    return host_angles
+
+@pytest.fixture
+@pytest.mark.cupy
+def angles_radians(angles):
+    return angles
 
 @pytest.fixture
 def host_flats(data_file):
@@ -164,6 +186,11 @@ def diad_loader():
 
 
 @pytest.fixture
+def diad_pipeline_gpu():
+    return "samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
+
+
+@pytest.fixture
 def i12_data():
     return "tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
 
@@ -197,20 +224,64 @@ def sample_pipelines():
 def gpu_pipeline():
     return "samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
 
+@pytest.fixture
+def python_cpu_pipeline1():
+    return "samples/python_templates/pipeline_cpu1.py"
+
+@pytest.fixture
+def python_cpu_pipeline2():
+    return "samples/python_templates/pipeline_cpu2.py"
+
+@pytest.fixture
+def python_cpu_pipeline3():
+    return "samples/python_templates/pipeline_cpu3.py"
+
+@pytest.fixture
+def python_gpu_pipeline1():
+    return "samples/python_templates/pipeline_gpu1.py"
+
+@pytest.fixture
+def yaml_cpu_pipeline1():
+    return "samples/pipeline_template_examples/pipeline_cpu1.yaml"
+
+@pytest.fixture
+def yaml_cpu_pipeline2():
+    return "samples/pipeline_template_examples/pipeline_cpu2.yaml"
+
+@pytest.fixture
+def yaml_cpu_pipeline3():
+    return "samples/pipeline_template_examples/pipeline_cpu3.yaml"
+
+@pytest.fixture
+def yaml_gpu_pipeline1():
+    return "samples/pipeline_template_examples/pipeline_gpu1.yaml"
+
+@pytest.fixture
+def yaml_gpu_pipeline360_2():
+    return "samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml"
+
 @pytest.fixture(scope="session")
 def distortion_correction_path(test_data_path):
     return os.path.join(test_data_path, "distortion-correction")
-
 
 @pytest.fixture
 def merge_yamls():
     def _merge_yamls(*yamls) -> None:
         """Merge multiple yaml files into one"""
-        data = []
+        data : list = []
         for y in yamls:
-            with open(y, "r") as file_descriptor:
-                data.extend(yaml.load(file_descriptor, Loader=yaml.SafeLoader))
+            curr_yaml_list = _yaml_loader(y)[0]
+            for x in curr_yaml_list:
+                data.append(x)
         with open("temp.yaml", "w") as file_descriptor:
             yaml.dump(data, file_descriptor)
-
     return _merge_yamls
+
+@pytest.fixture
+def dummy_dataset() -> DataSet:
+    return DataSet(
+        data=np.ones((10, 10, 10)),
+        angles=np.ones((20,)),
+        flats=3 * np.ones((5, 10, 10)),
+        darks=2 * np.ones((5, 10, 10)),
+    )

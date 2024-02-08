@@ -1,4 +1,5 @@
 from typing import Tuple
+from pathlib import Path
 
 import h5py as h5
 from mpi4py import MPI
@@ -7,14 +8,16 @@ from httomo.data.hdf.loaders import LoaderData
 
 
 def save_dataset(
-    out_folder: str,
+    out_folder: Path,
     file_name: str,
     data: ndarray,
-    loader_info: LoaderData,
+    angles: ndarray,
+    detector_x: int,
+    detector_y: int,
     slice_dim: int = 1,
     chunks: Tuple = (150, 150, 10),
     path: str = "/data",
-    reslice: bool = False,    
+    reslice: bool = False,
     comm: MPI.Comm = MPI.COMM_WORLD,
 ) -> None:
     """Save dataset in parallel.
@@ -27,8 +30,14 @@ def save_dataset(
         Name of file to save dataset in.
     data : ndarray
         Data to save to file.
+    angles : ndarray
+        Angles of the loaded dataset.
+    detector_x : int
+        det_x (horizontal) detector of the loaded dataset.
+    detector_y : int
+        det_y (vertical) detector of the loaded dataset.
     loader_info: Dict
-        Dictionary with information about the loaded data.        
+        Dictionary with information about the loaded data.
     slice_dim : int
         Where data has been parallelized (split into blocks, each of which is
         given to an MPI process), provide the dimension along which the data was
@@ -52,12 +61,13 @@ def save_dataset(
     with h5.File(
         f"{out_folder}/{file_name}", file_mode, driver="mpio", comm=comm
     ) as file:
-        dataset = file.create_dataset(path, shape, dtype, chunks=chunks)        
+        dataset = file.create_dataset(path, shape, dtype, chunks=chunks)
         save_data_parallel(dataset, data, slice_dim)
-        file.create_dataset("/angles", data = loader_info.angles)
-        file.create_dataset(file_name, data = [0,0])
-        g1 = file.create_group('data_dims')
-        g1.create_dataset('detector_x_y',data = [loader_info.detector_x, loader_info.detector_y])
+        file.create_dataset("/angles", data=angles)
+        file.create_dataset(file_name, data=[0, 0])
+        g1 = file.create_group("data_dims")
+        g1.create_dataset("detector_x_y", data=[detector_x, detector_y])
+
 
 def save_data_parallel(
     dataset: h5.Dataset,
@@ -93,6 +103,38 @@ def save_data_parallel(
         dataset[:, :, i0:i1] = data[...]
 
 
+def get_data_shape_and_offset(
+    data: ndarray, dim: int, comm: MPI.Comm = MPI.COMM_WORLD
+) -> Tuple[Tuple, Tuple]:
+    """Gets the shape of the distribtued dataset as well as the offset of the
+    local one within the full data shape.
+
+    Parameters
+    ----------
+    data : ndarray
+        The process data.
+    dim : int
+        The dimension in which to get the shape.
+    comm : MPI.Comm
+        The MPI communicator.
+
+    Returns
+    -------
+    Tuple, Tuple
+        The shape of the given distributed dataset and the global starting index of this dataset,
+        both as a 3-tuple of integers
+    """
+    shape = list(data.shape)
+    lengths = comm.gather(shape[dim], 0)
+    lengths = comm.bcast(lengths, 0)
+    shape[dim] = sum(lengths)
+    global_index = [0, 0, 0]
+    global_index[dim] = sum(lengths[: comm.rank - 1])
+    global_index = tuple(global_index)
+    shape = tuple(shape)
+    return shape, global_index
+
+
 def get_data_shape(data: ndarray, dim: int, comm: MPI.Comm = MPI.COMM_WORLD) -> Tuple:
     """Gets the shape of a distributed dataset.
 
@@ -110,9 +152,4 @@ def get_data_shape(data: ndarray, dim: int, comm: MPI.Comm = MPI.COMM_WORLD) -> 
     Tuple
         The shape of the given distributed dataset.
     """
-    shape = list(data.shape)
-    lengths = comm.gather(shape[dim], 0)
-    lengths = comm.bcast(lengths, 0)
-    shape[dim] = sum(lengths)
-    shape = tuple(shape)
-    return shape
+    return get_data_shape_and_offset(data, dim, comm)[0]

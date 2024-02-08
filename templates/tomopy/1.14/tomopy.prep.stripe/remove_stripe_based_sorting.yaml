@@ -1,6 +1,5 @@
-- tomopy.prep.stripe:
-    remove_stripe_based_sorting:
-      data_in: tomo
-      data_out: tomo
-      size: null
-      dim: 1
+- method: remove_stripe_based_sorting
+  module_path: tomopy.prep.stripe
+  parameters:
+    size: null
+    dim: 1

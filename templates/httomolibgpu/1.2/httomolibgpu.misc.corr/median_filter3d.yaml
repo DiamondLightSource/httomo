@@ -1,6 +1,5 @@
-- httomolibgpu.misc.corr:
-    median_filter3d:
-      data_in: tomo
-      data_out: tomo
-      kernel_size: 3
-      dif: 0.0
+- method: median_filter3d
+  module_path: httomolibgpu.misc.corr
+  parameters:
+    kernel_size: 3
+    dif: 0.0

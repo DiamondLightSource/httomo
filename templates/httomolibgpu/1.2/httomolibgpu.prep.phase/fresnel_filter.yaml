@@ -1,0 +1,7 @@
+- method: fresnel_filter
+  module_path: httomolibgpu.prep.phase
+  parameters:
+    mat: REQUIRED
+    pattern: REQUIRED
+    ratio: REQUIRED
+    apply_log: true

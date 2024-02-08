@@ -57,7 +57,6 @@ class MethodFunc:
     cpu: bool = True
     gpu: bool = False
     cupyrun: bool = False
-    is_loader: bool = False
     return_numpy: bool = False
     idx_global: int = 0
     global_statistics: bool = False
@@ -159,3 +158,26 @@ class RunMethodInfo:
     package_name: str = None
     method_name: str = None
     global_statistics: bool = False
+
+
+@dataclass
+class PreProcessInfo:
+    """
+    Class holding execution info for each method in the pre-processing stage
+    of the pipeline
+    """
+    params: Dict[str, Any]
+    method_name: str
+    module_path: str
+    wrapper_func: Callable
+
+
+@dataclass
+class LoaderInfo:
+    """
+    Class holding execution info for the loader
+    """
+    params: Dict[str, Any]
+    method_name: str
+    method_func: Callable
+    pattern: Pattern

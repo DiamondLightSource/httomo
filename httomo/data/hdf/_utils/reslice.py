@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import Tuple
+from typing import Optional, Tuple
+from mpi4py import MPI
 
 import numpy
 from mpi4py.MPI import Comm
@@ -14,7 +15,7 @@ def reslice(
     current_slice_dim: int,
     next_slice_dim: int,
     comm: Comm,
-) -> Tuple[numpy.ndarray]:
+) -> Tuple[numpy.ndarray, int]:
     """Reslice data by using in-memory MPI directives.
 
     Parameters
@@ -74,6 +75,9 @@ def reslice_filebased(
     data: numpy.ndarray,
     current_slice_dim: int,
     next_slice_dim: int,
+    angles: numpy.ndarray,
+    detector_x: int,
+    detector_y: int,
     comm: Comm,
     reslice_dir: Path,
 ) -> Tuple[numpy.ndarray, int]:
@@ -90,6 +94,12 @@ def reslice_filebased(
     next_slice_dim : int
         The dimension along which the data should be sliced after re-chunking
         and saving.
+    angles : ndarray
+        Angles of the loaded dataset.
+    detector_x : int
+        det_x (horizontal) detector of the loaded dataset.
+    detector_y : int
+        det_y (vertical) detector of the loaded dataset.        
     comm : Comm
         The MPI communicator to be used.
     Returns:
@@ -126,6 +136,9 @@ def reslice_filebased(
         reslice_dir,
         "intermediate.h5",
         data,
+        angles,
+        detector_x,
+        detector_y,
         current_slice_dim,
         chunks_data,
         reslice=True,
@@ -137,3 +150,46 @@ def reslice_filebased(
     )
 
     return data, next_slice_dim
+
+def single_sino_reslice(
+    data: numpy.ndarray,
+    idx: int,
+) -> Optional[numpy.ndarray]:
+    if mpiutil.size == 1:
+        log_once(
+            "Reslicing for single sinogram not necessary, as there is only one process",
+            comm=mpiutil.comm,
+            colour=Colour.BLUE,
+            level=1,
+        )
+        return data[:, idx, :]
+
+    NUMPY_DTYPE = numpy.float32
+    MPI_DTYPE = MPI.FLOAT
+
+    # Get shape of full/unsplit data, in order to define the shape of the numpy
+    # array that will hold the gathered data
+    data_shape = chunk.get_data_shape(data, 0)
+
+    if mpiutil.rank == 0:
+        # Define the numpy array that will hold the single sinogram that has
+        # been gathered from data from all MPI processes
+        recvbuf = numpy.empty(data_shape[0]*data_shape[2], dtype=NUMPY_DTYPE)
+    else:
+        recvbuf = None
+    # From the full projections that an MPI process has, send the data that
+    # contributes to the sinogram at height `idx` (ie, send a "partial
+    # sinogram")
+    sendbuf = numpy.ascontiguousarray(
+        data[:, idx, :].reshape(data[:, idx, :].size), dtype=NUMPY_DTYPE
+    )
+    sizes_rec = mpiutil.comm.gather(sendbuf.size)
+    # Gather the data into the rank 0 process
+    mpiutil.comm.Gatherv(
+        (sendbuf, data.shape[0]*data.shape[2], MPI_DTYPE),
+        (recvbuf, sizes_rec, MPI_DTYPE),
+        root=0
+    )
+
+    if mpiutil.rank == 0:
+        return recvbuf.reshape((data_shape[0], data_shape[2]))
