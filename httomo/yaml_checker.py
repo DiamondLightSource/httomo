@@ -213,7 +213,7 @@ def check_no_duplicated_keys(f: Path) -> bool:
         yaml file to check
     """
     try:
-        conf = _yaml_loader(f, loader=UniqueKeyLoader)[0]
+        conf = _yaml_loader(f, loader=UniqueKeyLoader)
     except ValueError as e:
         # duplicate key found
         _print_with_colour(str(e), colour=Colour.GREEN)
@@ -251,7 +251,7 @@ def _get_template_yaml_conf(conf: PipelineConfig) -> PipelineConfig:
     template_yaml_files = _get_template_yaml(conf, packages)
     template_yaml_conf: PipelineConfig = []
     for f in template_yaml_files:
-        tmp_conf = _yaml_loader(f)[0]
+        tmp_conf = _yaml_loader(f)
         # make an assumption there is one method inside each template
         template_yaml_conf.append(tmp_conf[0])
     return template_yaml_conf
@@ -323,7 +323,7 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
         is_yaml_ok = sanity_check(conf_generator)
 
     are_keys_duplicated = check_no_duplicated_keys(yaml_file)
-    conf = _yaml_loader(yaml_file)[0]
+    conf = _yaml_loader(yaml_file)
 
     # Let all checks run before returning with the result, even if some checks
     # fail, to show all errors present in YAML
@@ -369,7 +369,7 @@ class UniqueKeyLoader(yaml.SafeLoader):
             each_key = self.construct_object(key_node, deep=deep)
             if each_key in mapping:
                 raise ValueError(
-                    f"Duplicate Key: {each_key}" f" found{key_node.end_mark}"
+                    f"Duplicate Key: {each_key} found{key_node.end_mark}"
                 )
             mapping.add(each_key)
         return super().construct_mapping(node, deep)

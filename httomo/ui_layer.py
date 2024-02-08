@@ -1,5 +1,5 @@
 import yaml
-from typing import Any, Dict, List, Protocol
+from typing import Any, Dict, List, Protocol, TypeAlias
 from importlib import import_module, util
 from pathlib import Path
 import os
@@ -14,6 +14,9 @@ from httomo.runner.pipeline import Pipeline
 from httomo.runner.backend_wrapper import make_backend_wrapper
 from httomo.runner.loader import make_loader
 from httomo.runner.output_ref import OutputRef
+
+MethodConfig: TypeAlias = Dict[str, Any]
+PipelineConfig: TypeAlias = List[MethodConfig]
 
 
 class UiLayer:
@@ -36,7 +39,7 @@ class UiLayer:
         root, ext = os.path.splitext(self.tasks_file_path)
         if ext in [".yaml", ".yaml".upper()]:
             # loading yaml file with tasks provided
-            self.PipelineStageConfig = _yaml_loader(self.tasks_file_path)[0]
+            self.PipelineStageConfig = _yaml_loader(self.tasks_file_path)
         elif ext in [".py", ".py".upper()]:
             # loading python file with tasks provided
             self.PipelineStageConfig = _python_tasks_loader(self.tasks_file_path)
@@ -106,10 +109,25 @@ class UiLayer:
         )
 
 
-def _yaml_loader(file_path: Path, loader: yaml.Loader = yaml.FullLoader) -> list:
+def _yaml_loader(
+    file_path: Path, loader: yaml.Loader = yaml.FullLoader
+) -> PipelineConfig:
+    """Loads provided yaml file and returns dict
+
+    Parameters
+    ----------
+    file_path
+        yaml file to load
+    loader
+        yaml loader to use
+
+    Returns
+    -------
+    PipelineConfig
+    """
     with open(file_path, "r") as f:
         tasks_list = list(yaml.load_all(f, Loader=loader))
-    return tasks_list
+    return tasks_list[0]
 
 
 def _python_tasks_loader(file_path: Path) -> list:
