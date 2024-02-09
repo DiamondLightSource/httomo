@@ -1,7 +1,0 @@
-- method: find_slits_corners_aps_1id
-  module_path: tomopy.prep.alignment
-  parameters:
-    img: REQUIRED
-    method: quadrant+
-    medfilt2_kernel_size: 3
-    medfilt_kernel_size: 23

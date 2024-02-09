@@ -31,7 +31,7 @@
   parameters:
     dif: 0.1
     size: 3
-    axis: 0
+    axis: auto
 - method: normalize
   module_path: tomopy.prep.normalize
   parameters:
@@ -60,12 +60,12 @@
   module_path: tomopy.misc.corr
   parameters:
     size: 3
-    axis: 0
+    axis: auto
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:
     subfolder_name: images
-    axis: 1
+    axis: auto
     file_format: tif
     bits: 8
     perc_range_min: 0.0

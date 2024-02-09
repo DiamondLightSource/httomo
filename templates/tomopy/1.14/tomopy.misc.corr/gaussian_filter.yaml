@@ -3,4 +3,4 @@
   parameters:
     sigma: 3
     order: 0
-    axis: 0
+    axis: auto
