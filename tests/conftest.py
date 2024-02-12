@@ -214,11 +214,6 @@ def standard_loader():
 
 
 @pytest.fixture
-def more_than_one_method():
-    return "samples/pipeline_template_examples/testing/more_than_one_method.yaml"
-
-
-@pytest.fixture
 def sample_pipelines():
     return "samples/pipeline_template_examples/"
 
