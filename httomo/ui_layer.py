@@ -14,7 +14,8 @@ from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 
 from httomo.method_wrappers import make_method_wrapper
-from httomo.runner.loader import LoaderInterface, make_loader
+from httomo.loaders import make_loader
+from httomo.runner.loader import LoaderInterface
 from httomo.runner.output_ref import OutputRef
 
 
