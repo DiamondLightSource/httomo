@@ -239,22 +239,17 @@ class DataSet:
             length = self.chunk_shape[dim] - start
 
         slices = [
-            slice(0, self.shape[0]),
-            slice(0, self.shape[1]),
-            slice(0, self.shape[2]),
+            slice(0, self.chunk_shape[0]),
+            slice(0, self.chunk_shape[1]),
+            slice(0, self.chunk_shape[2]),
         ]
         slices[dim] = slice(start, start + length)
-        global_index = list(self._global_index)
-        global_index[dim] += start
-        chunk_index = [0, 0, 0]
-        chunk_index[dim] += start
+
         return DataSetBlock(
             base=self,
             data=self._data[slices[0], slices[1], slices[2]],
             dim=dim,
-            global_shape=self.global_shape,
-            global_index=tuple(global_index),
-            chunk_index=tuple(chunk_index),
+            start=start,
         )
 
     @property
@@ -340,14 +335,18 @@ class DataSetBlock(DataSet):
         base: DataSet,
         data: np.ndarray,
         dim: int,
-        global_shape: Tuple[int, int, int],
-        global_index: Tuple[int, int, int],
-        chunk_index: Tuple[int, int, int],
+        start: int,
     ):
         self._base = base
-        self._chunk_index = chunk_index
         self._chunk_shape = base.chunk_shape
         self._dim = dim
+
+        global_index = list(base.global_index)
+        global_index[dim] += start
+        chunk_index = [0, 0, 0]
+        chunk_index[dim] += start
+        self._chunk_index = tuple(chunk_index)
+
         # we pass an empty size-0 array to base class, as we're not going to use these
         # fields anyway here (we access the originals via self._base)
         super().__init__(
@@ -355,8 +354,8 @@ class DataSetBlock(DataSet):
             flats=np.empty((0,)),
             darks=np.empty((0,)),
             angles=np.empty((0,)),
-            global_shape=global_shape,
-            global_index=global_index,
+            global_shape=base.global_shape,
+            global_index=tuple(global_index),
         )
 
     @property
@@ -492,3 +491,24 @@ class FullFileDataSet(DataSet):
             + start_idx[2]
             + new_data.shape[2],
         ] = new_data
+
+    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
+        if length is None:
+            length = self.chunk_shape[dim] - start
+
+        slices = [
+            slice(self.global_index[0], self.global_index[0] + self.chunk_shape[0]),
+            slice(self.global_index[1], self.global_index[1] + self.chunk_shape[1]),
+            slice(self.global_index[2], self.global_index[2] + self.chunk_shape[2]),
+        ]
+        slices[dim] = slice(
+            self.global_index[dim] + start,
+            self.global_index[dim] + start + length,
+        )
+
+        return DataSetBlock(
+            base=self,
+            data=self._data[tuple(slices)],
+            dim=dim,
+            start=start,
+        )
