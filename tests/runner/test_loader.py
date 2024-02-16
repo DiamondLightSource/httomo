@@ -855,7 +855,7 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
             PreviewConfig(
                 angles=PreviewDimConfig(start=220, stop=220),
                 detector_y=PreviewDimConfig(start=0, stop=128),
-                detector_x=PreviewDimConfig(start=0, stop=161),
+                detector_x=PreviewDimConfig(start=0, stop=160),
             ),
             True,
             "Start index in preview indices for angles dim is >= stop index: start=220, stop=220",
