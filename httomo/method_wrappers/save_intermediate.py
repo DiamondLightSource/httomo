@@ -7,9 +7,9 @@ import httomo
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.loader import LoaderInterface
-from httomo.runner.method_wrapper import MethodParameterDictType, MethodWrapper
+from httomo.runner.method_wrapper import GpuTimeInfo, MethodParameterDictType, MethodWrapper
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import xp
+from httomo.utils import catchtime, xp
 
 import h5py
 import numpy as np
@@ -50,23 +50,31 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         # make sure file gets closed properly
         weakref.finalize(self, self._file.close)
         
-    def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
-        # pass the full block, not just the data array to the function
-        args[self.parameters[0]] = dataset
-        # TODO: capture the potential GPU->CPU transfer time in _save_dataset_data
-        return super()._run_method(dataset, args)
+    def execute(self, dataset: DataSetBlock) -> DataSetBlock:
+        # we overwrite the whole execute method here, as we do not need any of the helper methods
+        # from the Generic Wrapper
+        # What we know:
+        #  - we do not transfer the dataset as a whole to CPU - only the data and angles locally (and never back)
+        #  - the user does not insert this method - it's automatic - so no config params are relevant
+        #  - we return just the input as it is
         
-    def _transform_params(self, dict_params: MethodParameterDictType) -> MethodParameterDictType:
-        dict_params = super()._transform_params(dict_params).copy()
-        dict_params["detector_x"] = self._loader.detector_x
-        dict_params["detector_y"] = self._loader.detector_y
-        dict_params["path"] = "/data"
-        dict_params["file"] = self._file
-        return dict_params
-    
-    def _process_return_type(self, ret: Any, input_dataset: DataSetBlock) -> DataSetBlock:
-        if input_dataset.is_last_in_chunk:
+        self._gpu_time_info = GpuTimeInfo()
+        with catchtime() as t:
+            data = dataset.data if dataset.is_cpu else xp.asnumpy(dataset.data)
+            angles = dataset.get_value("angles", is_gpu=False)
+        self._gpu_time_info.device2host += t.elapsed
+        
+        self._method(data, 
+                     global_shape=dataset.global_shape,
+                     global_index=dataset.global_index,
+                     file=self._file,
+                     path="/data",
+                     detector_x=self._loader.detector_x,
+                     detector_y=self._loader.detector_y,
+                     angles=angles)
+        
+        if dataset.is_last_in_chunk:
             self._file.close()
-        return input_dataset
-
+            
+        return dataset
         

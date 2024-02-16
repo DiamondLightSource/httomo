@@ -1,4 +1,5 @@
 from pathlib import Path
+import time
 from httomo.methods import calculate_stats, save_intermediate_data
 
 import numpy as np
@@ -33,48 +34,71 @@ def test_calculate_stats_with_nan_and_inf():
     reason="skipped as cupy is not available",
 )
 @pytest.mark.cupy
-def test_calculate_status_gpu():
+def test_calculate_stats_gpu():
     data = xp.arange(30, dtype=np.float32).reshape((2, 3, 5)) - 10.0
     ret = calculate_stats(data)
 
     assert ret == (-10.0, 19.0, np.sum(data.get()), 30)
+    
 
-
-@pytest.mark.parametrize("gpu", [False, True])
-def test_save_intermediate_data(dummy_dataset: DataSet, tmp_path: Path, gpu: bool):
+@pytest.mark.perf
+@pytest.mark.parametrize("gpu", [False, True], ids=["CPU", "GPU"])
+def test_calculcate_stats_performance(gpu: bool):
     if gpu and not gpu_enabled:
         pytest.skip("No GPU available")
+        
+    data = np.random.randint(
+        low=7515, high=37624, size=(1801, 5, 2560), dtype=np.uint32
+    ).astype(np.float32)
+    
+    if gpu:
+        data = xp.asarray(data)
+        xp.cuda.Device().synchronize()
+    start = time.perf_counter_ns()
+    for _ in range(10):
+        calculate_stats(data)
+    if gpu:
+        xp.cuda.Device().synchronize()
+    stop = time.perf_counter_ns()
+    duration_ms = float(stop-start) * 1e-6 / 10
+    
+    # Note: on Quadro RTX 6000 vs Xeon(R) Gold 6148, GPU is about 10x faster 
+    assert "performance in ms" == duration_ms
+    
+    
 
+def test_save_intermediate_data(dummy_dataset: DataSet, tmp_path: Path):
     # use increasing numbers in the data, to make sure blocks have different content
     dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
         dummy_dataset.shape
     )
 
-    if gpu:
-        dummy_dataset.to_gpu()
-
     with h5py.File(
         tmp_path / "test_file.h5", "w", driver="mpio", comm=MPI.COMM_WORLD
     ) as file:
         # save in 2 blocks, starting with the second to confirm order-independence
+        block1 = dummy_dataset.make_block(0, 3)
         save_intermediate_data(
-            dummy_dataset.make_block(0, 3),
+            block1.data,
+            block1.global_shape,
+            block1.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
+            angles=block1.angles
         )
+        block2 = dummy_dataset.make_block(0, 0, 3)
         save_intermediate_data(
-            dummy_dataset.make_block(0, 0, 3),
+            block2.data,
+            block2.global_shape,
+            block2.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
+            angles=block2.angles
         )
-
-    if gpu:
-        assert dummy_dataset.is_gpu
-        dummy_dataset.to_cpu()
 
     with h5py.File(tmp_path / "test_file.h5", "r") as file:
         assert "/data" in file
@@ -115,19 +139,27 @@ def test_save_intermediate_data_mpi(dummy_dataset: DataSet, tmp_path: Path):
 
     with h5py.File(tmp_path / "test_file.h5", "w", driver="mpio", comm=comm) as file:
         # save in 2 blocks, starting with the second to confirm order-independence
+        block1 = dataset.make_block(0, 3)
         save_intermediate_data(
-            dataset.make_block(0, 3),
+            block1.data,
+            block1.global_shape,
+            block1.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
+            angles=block1.angles
         )
+        block2 = dataset.make_block(0, 0, 3)
         save_intermediate_data(
-            dataset.make_block(0, 0, 3),
+            block2.data,
+            block2.global_shape,
+            block2.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
+            angles=block2.angles
         )
 
     # open without MPI, looking at the full file
