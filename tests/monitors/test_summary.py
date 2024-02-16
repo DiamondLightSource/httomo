@@ -41,6 +41,9 @@ def test_summary_monitor_records_and_displays_data():
     assert "pipeline time" in data
     assert "500.0" in data
     assert "wall time" in data
+    assert "Method breakdowns" in data
+    assert "method1" in data
+    assert "method2" in data
 
 @pytest.mark.mpi
 @pytest.mark.skipif(
@@ -86,4 +89,8 @@ def test_summary_monitor_records_and_displays_data_mpi():
         assert "1000.0" in data
         assert "wall time" in data
         assert "500.0" in data
+        assert "Method breakdowns" in data
+        assert "method1" in data
+        assert "method2" in data
+
         

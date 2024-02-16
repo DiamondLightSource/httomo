@@ -1,4 +1,4 @@
-from typing import TextIO, Tuple
+from typing import Dict, TextIO, Tuple
 from mpi4py import MPI
 from httomo.runner.monitoring_interface import MonitoringInterface
 
@@ -7,6 +7,7 @@ class SummaryMonitor(MonitoringInterface):
     def __init__(self) -> None:
         self._methods_cpu = 0.0
         self._methods_gpu = 0.0
+        self._methods: Dict[str, float] = dict()
         self._h2d = 0.0
         self._d2h = 0.0
         self._sources = 0.0
@@ -29,6 +30,9 @@ class SummaryMonitor(MonitoringInterface):
         gpu_h2d_time: float = 0.0,
         gpu_d2h_time: float = 0.0        
     ):
+        if method_name not in self._methods:
+            self._methods[method_name] = 0.0
+        self._methods[method_name] += cpu_time
         self._methods_cpu += cpu_time
         self._methods_gpu += gpu_kernel_time
         self._h2d += gpu_h2d_time
@@ -64,7 +68,7 @@ class SummaryMonitor(MonitoringInterface):
     def write_results(self, dest: TextIO):
         self._aggregate_mpi()
         if self._comm.rank == 0:
-            dest.write('\n'.join([
+            lines = [
                 f"Summary Statistics (aggregated across {self._comm.size} processes):",
                 f"  Total methods CPU time: {self._methods_cpu:>10.3f}s",
                 f"  Total methods GPU time: {self._methods_gpu:>10.3f}s",
@@ -75,8 +79,13 @@ class SummaryMonitor(MonitoringInterface):
                 f"  Other overheads       : {self._total_agg - sum([self._methods_cpu, self._sources, self._sinks]):>10.3f}s",
                 f"  ------------------------" + "-" * 15,
                 f"  Total pipeline time   : {self._total_agg:>10.3f}s",
-                f"  Total wall time       : {self._total:>10.3f}s"
-            ]))
+                f"  Total wall time       : {self._total:>10.3f}s",
+                f"  ------------------------" + "-" * 15,
+                f"Method breakdowns:",
+            ]
+            for k,v in self._methods.items():
+                lines.append(f"  {k:>30s} : {v:>10.3f}s ({v / self._total * 100:>4.1f}%)")
+            dest.write('\n'.join(lines))
         
     def _aggregate_mpi(self):
         self._total_agg = self._total
@@ -89,3 +98,5 @@ class SummaryMonitor(MonitoringInterface):
         self._h2d = self._comm.reduce(self._h2d, MPI.SUM)
         self._d2h = self._comm.reduce(self._d2h, MPI.SUM)
         self._total_agg = self._comm.reduce(self._total_agg, MPI.SUM)
+        for k in self._methods.keys():
+            self.methods_[k] = self.comm.reduce(self._methods[k], MPI.SUM)
