@@ -152,11 +152,8 @@ class Preview:
         return intersection.tolist()
 
     def _calculate_global_shape(self) -> Tuple[int, int, int]:
-        if self._data_indices is None:
-            self._data_indices = self._calculate_data_indices()
-
         return (
-            len(self._data_indices),
+            len(self.data_indices),
             self.config.detector_y.stop - self.config.detector_y.start,
             self.config.detector_x.stop - self.config.detector_x.start,
         )
