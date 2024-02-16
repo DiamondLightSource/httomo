@@ -1,5 +1,6 @@
 import dataclasses
 import inspect
+from typing import Literal
 import pytest
 from mpi4py import MPI
 import numpy as np
@@ -19,10 +20,12 @@ from httomolibgpu.prep.phase import paganin_filter_tomopy, paganin_filter_savu
 from httomolibgpu.prep.alignment import distortion_correction_proj_discorpy
 from httomolibgpu.prep.stripe import remove_stripe_based_sorting, remove_stripe_ti
 from httomolibgpu.recon.algorithm import FBP, SIRT, CGLS
+from httomolibgpu.misc.rescale import rescale_to_int
 
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.phase import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.stripe import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.recon.algorithm import *
+from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.misc.rescale import *
 
 module_mem_path = "httomo.methods_database.packages.external."
 class MaxMemoryHook(cp.cuda.MemoryHook):
@@ -366,3 +369,36 @@ def test_recon_CGLS_memoryhook(slices, ensure_clean_memory):
     assert estimated_memory_mb >= max_mem_mb 
     assert percents_relative_maxmem <= 20
     
+    
+@pytest.mark.cupy
+@pytest.mark.parametrize("bits", [8, 16, 32])
+@pytest.mark.parametrize("slices", [3, 5, 8])
+@pytest.mark.parametrize("glob_stats", [False, True])
+def test_rescale_to_int_memoryhook(data, ensure_clean_memory, slices: int, bits: Literal[8, 16, 32], glob_stats: bool):
+    data = cp.random.random_sample((1801, slices, 600), dtype=np.float32)
+    kwargs: dict = {}
+    kwargs['bits'] = bits
+    if glob_stats:
+        kwargs['glob_stats'] = (0.0, 10.0, 120., data.size)
+    hook = MaxMemoryHook()
+    with hook:
+        rescale_to_int(cp.copy(data), **kwargs).get()
+
+    # make sure estimator function is within range (80% min, 100% max)
+    max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook   
+    max_mem_mb = round(max_mem / (1024**2), 2)
+    
+    # now we estimate how much of the total memory required for this data
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_rescale_to_int((data.shape[0], data.shape[2]), 
+                                                                                 dtype=np.float32(), **kwargs)
+    estimated_memory_mb = round(slices*estimated_memory_bytes / (1024**2), 2)
+    max_mem -= subtract_bytes
+    max_mem_mb = round(max_mem / (1024**2), 2)   
+    
+    # now we compare both memory estimations 
+    difference_mb = abs(estimated_memory_mb - max_mem_mb)
+    percents_relative_maxmem = round((difference_mb/max_mem_mb)*100)
+    # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
+    # the resulting percent value should not deviate from max_mem on more than 20%    
+    assert estimated_memory_mb >= max_mem_mb 
+    assert percents_relative_maxmem <= 35
