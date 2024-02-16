@@ -119,7 +119,7 @@ class Preview:
         if config.stop > length:
             raise ValueError(
                 f"Preview indices in {name} dim exceed bounds of data: "
-                f"start={config.start}, " f"stop={config.stop}"
+                f"start={config.start}, stop={config.stop}"
             )
 
         if config.start >= config.stop:
