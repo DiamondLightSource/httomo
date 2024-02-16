@@ -113,7 +113,7 @@ class RotationWrapper(GenericMethodWrapper):
         if not dataset.is_last_in_chunk:  # exit if we didn't process all blocks yet
             return dataset
 
-        sino_slice = self._gather_sino_slice(dataset.global_shape)
+        sino_slice = self._gather_sino_slice(dataset.base.shape)
 
         # now calculate the center of rotation on rank 0 and broadcast
         res: Optional[Union[tuple, float, np.float32]] = None

@@ -248,6 +248,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
                 darks=dataset.darks,
                 global_index=self.chunk_index,
                 chunk_shape=self.chunk_shape,
+                shape=self.global_shape,
             )
 
     @classmethod
@@ -330,6 +331,7 @@ class DataSetStoreReader(DataSetSource):
                 darks=source._data.darks,
                 global_index=source.chunk_index,
                 chunk_shape=source.chunk_shape,
+                shape=self.global_shape,
             )
 
         if slicing_dim is None or slicing_dim == source.slicing_dim:
@@ -429,6 +431,7 @@ class DataSetStoreReader(DataSetSource):
                     darks=data.darks,
                     global_index=self._chunk_idx,
                     chunk_shape=self._chunk_shape,
+                    shape=self.global_shape,
                 )
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
