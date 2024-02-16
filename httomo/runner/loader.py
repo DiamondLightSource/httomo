@@ -343,12 +343,12 @@ def get_darks_flats(
             flats_indices = np.where(f[flats_config.image_key_path][:] == 1)[0]
             dataset: h5py.Dataset = f[darks_config.data_path]
             darks = dataset[
-                darks_indices[0]: darks_indices[-1] + 1,
+                darks_indices,
                 preview_config.detector_y.start : preview_config.detector_y.stop,
                 preview_config.detector_x.start : preview_config.detector_x.stop,
             ]
             flats = dataset[
-                flats_indices[0]: flats_indices[-1] + 1,
+                flats_indices,
                 preview_config.detector_y.start : preview_config.detector_y.stop,
                 preview_config.detector_x.start : preview_config.detector_x.stop,
             ]
