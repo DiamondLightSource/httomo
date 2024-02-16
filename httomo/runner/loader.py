@@ -124,8 +124,8 @@ class Preview:
 
         if config.start >= config.stop:
             raise ValueError(
-                f"Start index in preview indices for {name} dim is >= stop index: "
-                f"start={config.start}, stop={config.stop}"
+                f"Preview index error for {name}: start must be strictly smaller "
+                f"than stop, but start={config.start}, stop={config.stop}"
             )
 
     def _calculate_data_indices(self) -> List[int]:

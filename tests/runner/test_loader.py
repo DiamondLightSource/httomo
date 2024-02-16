@@ -858,7 +858,10 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
                 detector_x=PreviewDimConfig(start=0, stop=160),
             ),
             True,
-            "Start index in preview indices for angles dim is >= stop index: start=220, stop=220",
+            (
+                "Preview index error for angles: start must be strictly smaller than "
+                "stop, but start=220, stop=220"
+            ),
         ),
         (
             PreviewConfig(
@@ -867,7 +870,10 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
                 detector_x=PreviewDimConfig(start=0, stop=160),
             ),
             True,
-            "Start index in preview indices for detector_y dim is >= stop index: start=60, stop=50",
+            (
+                "Preview index error for detector_y: start must be strictly smaller than "
+                "stop, but start=60, stop=50"
+            )
         ),
         (
             PreviewConfig(
@@ -876,7 +882,10 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
                 detector_x=PreviewDimConfig(start=50, stop=0),
             ),
             True,
-            "Start index in preview indices for detector_x dim is >= stop index: start=50, stop=0",
+            (
+                "Preview index error for detector_x: start must be strictly smaller than "
+                "stop, but start=50, stop=0"
+            )
         ),
         (
             PreviewConfig(
