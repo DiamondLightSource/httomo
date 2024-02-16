@@ -1,31 +1,25 @@
 import weakref
 from pathlib import Path
 from typing import (
-    Any,
-    Dict,
     List,
     Literal,
     NamedTuple,
     Optional,
     Protocol,
     Tuple,
-    TypeAlias,
     Union,
 )
+from typing_extensions import TypeAlias
 
 import h5py
 import numpy as np
 from mpi4py import MPI
 from mpi4py.MPI import Comm
 
-from httomo.data.hdf._utils.chunk import get_data_shape_and_offset
-from httomo.data.hdf.loaders import LoaderData
-from httomo.runner.dataset import DataSet, DataSetBlock, FullFileDataSet
+from httomo.runner.dataset import DataSetBlock, FullFileDataSet
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import Pattern, _get_slicing_dim
-
-from httomo.runner.method_wrapper import MethodWrapper
+from httomo.utils import Pattern
 
 
 class LoaderInterface(Protocol):
