@@ -382,6 +382,7 @@ def test_fullfiledataset_has_correct_shapes():
         darks=2 * np.ones((5, 10, 10)),
         global_index=(0, 0, 0),
         chunk_shape=CHUNK_SHAPE,
+        shape=GLOBAL_DATA_SHAPE,
     )
 
     assert dummy_dataset.chunk_shape == CHUNK_SHAPE
@@ -407,6 +408,7 @@ def test_datasetblock_from_fullfiledataset_has_correct_shapes():
         darks=2 * np.ones((5, 10, 10)),
         global_index=(0, 0, 0),
         chunk_shape=CHUNK_SHAPE,
+        shape=GLOBAL_DATA_SHAPE,
     )
 
     block = dummy_dataset.make_block(SLICING_DIM, BLOCK_START, BLOCK_LENGTH)
@@ -454,6 +456,7 @@ def test_fullfile_dataset_can_set_full_data():
         darks=2 * np.ones((5, 10, 10)),
         global_index=(0, 0, 0),
         chunk_shape=CHUNK_SHAPE,
+        shape=GLOBAL_DATA_SHAPE,
     )
 
     dataset.data = np.ones(CHUNK_SHAPE, dtype=np.float32)
@@ -477,6 +480,7 @@ def test_fullfile_dataset_cannot_change_shape():
         darks=2 * np.ones((5, 10, 10)),
         global_index=(0, 0, 0),
         chunk_shape=CHUNK_SHAPE,
+        shape=GLOBAL_DATA_SHAPE,
     )
 
     with pytest.raises(ValueError) as e:
@@ -500,6 +504,7 @@ def test_fullfile_dataset_cannot_change_dtype():
         darks=2 * np.ones((5, 10, 10)),
         global_index=(0, 0, 0),
         chunk_shape=CHUNK_SHAPE,
+        shape=GLOBAL_DATA_SHAPE,
     )
 
     with pytest.raises(ValueError) as e:
@@ -523,6 +528,7 @@ def test_fullfile_dataset_transfers_to_cpu():
         darks=2 * np.ones((5, 10, 10)),
         global_index=(0, 0, 0),
         chunk_shape=CHUNK_SHAPE,
+        shape=GLOBAL_DATA_SHAPE,
     )
     
     dataset.data = xp.ones(CHUNK_SHAPE, dtype=np.float32)

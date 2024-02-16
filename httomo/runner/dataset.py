@@ -417,6 +417,7 @@ class FullFileDataSet(DataSet):
         darks: np.ndarray,
         global_index: Tuple[int, int, int],
         chunk_shape: Tuple[int, int, int],
+        shape: Tuple[int, int, int],
     ):
         super().__init__(
             data,
@@ -427,10 +428,11 @@ class FullFileDataSet(DataSet):
             global_index,
         )
         self._chunk_shape = chunk_shape
+        self._shape = shape
 
     @property
     def shape(self) -> Tuple[int, int, int]:
-        return self._global_shape
+        return self._shape
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:

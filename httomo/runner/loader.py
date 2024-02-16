@@ -135,6 +135,7 @@ class StandardTomoLoader(DataSetSource):
             darks=darks_arr,
             global_index=self._chunk_index,
             chunk_shape=self._chunk_shape,
+            shape=self._global_shape,
         )
 
         weakref.finalize(self, self.finalize)
