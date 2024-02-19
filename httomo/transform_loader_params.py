@@ -1,4 +1,9 @@
 from typing import Literal, TypeAlias, TypedDict, Union
+from httomo.loaders.standard_tomo_loader import (
+    AnglesConfig,
+    RawAngles,
+    UserDefinedAngles,
+)
 
 from httomo.preview import PreviewConfig, PreviewDimConfig
 
@@ -72,3 +77,36 @@ def _get_middle_slice_indices(dim_len: int) -> tuple[int, int]:
         return mid_slice_idx - 2, mid_slice_idx + 1
     else:
         return mid_slice_idx - 1, mid_slice_idx + 1
+
+
+class RawAnglesParam(TypedDict):
+    data_path: str
+
+
+class UserDefinedAnglesParamInner(TypedDict):
+    start_angle: int
+    stop_angle: int
+    angles_total: int
+
+
+class UserDefinedAnglesParam(TypedDict):
+    user_defined: UserDefinedAnglesParamInner
+
+
+AnglesParam: TypeAlias = Union[RawAnglesParam, UserDefinedAnglesParam]
+
+
+def parse_angles(angles_data: AnglesParam) -> AnglesConfig:
+    keys = angles_data.keys()
+
+    if "data_path" in keys:
+        return RawAngles(data_path=angles_data["data_path"])
+
+    if "user_defined" in keys:
+        return UserDefinedAngles(
+            start_angle=angles_data["user_defined"]["start_angle"],
+            stop_angle=angles_data["user_defined"]["stop_angle"],
+            angles_total=angles_data["user_defined"]["angles_total"],
+        )
+
+    raise ValueError(f"Unknown rotation_angles param value for loader: {angles_data}")

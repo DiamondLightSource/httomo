@@ -1,7 +1,17 @@
 import pytest
+from httomo.loaders.standard_tomo_loader import (
+    AnglesConfig,
+    RawAngles,
+    UserDefinedAngles,
+)
 
 from httomo.preview import PreviewConfig, PreviewDimConfig
-from httomo.transform_loader_params import PreviewParam, parse_preview
+from httomo.transform_loader_params import (
+    AnglesParam,
+    PreviewParam,
+    parse_angles,
+    parse_preview,
+)
 
 
 @pytest.mark.parametrize(
@@ -101,3 +111,32 @@ def test_parse_preview_raises_error_mid_in_angle_dim():
     PREVIEW_PARAM_VALUE: PreviewParam = ["mid"]
     with pytest.raises(ValueError):
         _ = parse_preview(PREVIEW_PARAM_VALUE, DATA_SHAPE)
+
+
+@pytest.mark.parametrize(
+    "angles_param, expected_angles_config",
+    [
+        (
+            {"data_path": "/entry1/tomo_entry/data/rotation_angle"},
+            RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle"),
+        ),
+        (
+            {
+                "user_defined": {
+                    "start_angle": 0,
+                    "stop_angle": 180,
+                    "angles_total": 724,
+                },
+            },
+            UserDefinedAngles(
+                start_angle=0,
+                stop_angle=180,
+                angles_total=724,
+            ),
+        ),
+    ],
+    ids=["raw_angles", "user_defined_angles"],
+)
+def test_parse_angles(angles_param: AnglesParam, expected_angles_config: AnglesConfig):
+    angles_config = parse_angles(angles_param)
+    assert angles_config == expected_angles_config
