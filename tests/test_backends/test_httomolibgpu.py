@@ -51,12 +51,15 @@ class MaxMemoryHook(cp.cuda.MemoryHook):
     def malloc_preprocess(self, **kwargs):
         pass
 
+
 @pytest.mark.parametrize("dtype", ["uint16", "float32"])
+@pytest.mark.parametrize("slices", [50, 121])
 @pytest.mark.cupy
-def test_normalize_memoryhook(data, flats, darks, ensure_clean_memory, dtype):
+def test_normalize_memoryhook(flats, darks, ensure_clean_memory, dtype, slices):
     hook = MaxMemoryHook()
+    data = cp.random.random_sample((slices, flats.shape[1], flats.shape[2]), dtype=np.float32)
     if dtype == "uint16":
-        darks = darks.astype(np.uint16)
+        darks = (darks * 1233).astype(np.uint16)
         flats = flats.astype(np.uint16)
         data = data.astype(np.uint16)
     with hook:
@@ -70,16 +73,10 @@ def test_normalize_memoryhook(data, flats, darks, ensure_clean_memory, dtype):
     )  # the amount of memory in bytes needed for the method according to memoryhook
 
     # now we estimate how much of the total memory required for this data
-    library_info = get_method_info(
-        "httomolibgpu.prep.normalize", "normalize", "memory_gpu"
-    )
-
-    # now we estimate how much of the total memory required for this data
     (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_normalize(
         data.shape[1:], dtype=data.dtype
     )
 
-    slices = data.shape[0]
     estimated_memory_mb = round(slices*estimated_memory_bytes / (1024**2), 2)
     max_mem -= subtract_bytes
     max_mem_mb = round(max_mem / (1024**2), 2)
@@ -93,39 +90,6 @@ def test_normalize_memoryhook(data, flats, darks, ensure_clean_memory, dtype):
     assert percents_relative_maxmem <= 20
 
 
-@pytest.mark.cupy
-@pytest.mark.parametrize("slices", [128, 256, 512])
-def test_normalize_memoryhook_parametrise(slices, ensure_clean_memory):
-    data_size_dim = 512
-    data = cp.random.random_sample((slices, data_size_dim, data_size_dim), dtype=np.float32)
-    darks = cp.random.random_sample((20, data_size_dim, data_size_dim), dtype=np.float32)
-    flats = cp.random.random_sample((20, data_size_dim, data_size_dim), dtype=np.float32)
-    hook = MaxMemoryHook()
-    with hook:
-        data_normalize = normalize(cp.copy(data), flats, darks, minus_log=True).get()
-
-    # make sure estimator function is within range (80% min, 100% max)
-    max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook
-    max_mem_mb = round(max_mem / (1024**2), 2) # now in mbs
-   
-    # now we estimate how much of the total memory required for this data
-    library_info = get_method_info("httomolibgpu.prep.normalize", "normalize", "memory_gpu")
-    for i, dst in enumerate(library_info[0]['datasets']):
-        if dst == "flats":
-            flats_bytes = library_info[1]['multipliers'][i] * np.prod(cp.shape(flats)) * float32().nbytes
-        elif dst == "darks":
-            darks_bytes = library_info[1]['multipliers'][i] * np.prod(cp.shape(darks)) * float32().nbytes
-        else:            
-            data_bytes = library_info[1]['multipliers'][i] * np.prod(cp.shape(data)) * float32().nbytes
-    estimated_memory_bytes = flats_bytes + darks_bytes + data_bytes
-    estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
-    # now compare both memory estimations 
-    difference_mb = abs(estimated_memory_mb - max_mem_mb)
-    percents_relative_maxmem = round((difference_mb/max_mem_mb)*100)
-    # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
-    # the resulting percent value should not deviate from max_mem on more than 20%    
-    assert estimated_memory_mb >= max_mem_mb 
-    assert percents_relative_maxmem <= 20
 
 @pytest.mark.cupy
 @pytest.mark.parametrize("slices", [64, 128])
