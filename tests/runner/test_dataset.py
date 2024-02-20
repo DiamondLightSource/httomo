@@ -367,6 +367,8 @@ def test_block_caches_in_base_on_gpu_access(dataset: DataSet):
     
     assert dataset.has_gpu_flats is False
     assert dataset.has_gpu_darks is True
+    assert block.has_gpu_flats is False
+    assert block.has_gpu_darks is True
 
 
 def test_setting_data_in_block_updates_global_shape(dataset):
