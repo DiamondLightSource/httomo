@@ -81,8 +81,18 @@ class DataSetSource(Protocol):
         ...  # pragma: no cover
         
     @property
+    def has_gpu_darks(self) -> bool:
+        """Check if darks array has already been cached on the GPU"""
+        ...  # pragma: no cover
+        
+    @property
     def flats(self) -> np.ndarray:
         """Flats array"""
+        ...  # pragma: no cover
+        
+    @property
+    def has_gpu_flats(self) -> bool:
+        """Check if flats array has already been cached on the GPU"""
         ...  # pragma: no cover
 
     def read_block(self, start: int, length: int) -> DataSetBlock:

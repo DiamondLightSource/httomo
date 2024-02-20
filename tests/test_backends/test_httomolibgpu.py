@@ -18,12 +18,14 @@ from httomolibgpu.prep.normalize import normalize
 from httomolibgpu.prep.phase import paganin_filter_tomopy, paganin_filter_savu
 from httomolibgpu.prep.alignment import distortion_correction_proj_discorpy
 from httomolibgpu.prep.stripe import remove_stripe_based_sorting, remove_stripe_ti
+from httomolibgpu.misc.corr import remove_outlier3d
 from httomolibgpu.recon.algorithm import FBP, SIRT, CGLS
 
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.phase import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.stripe import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.recon.algorithm import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.normalize import *
+from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.misc.corr import *
 
 module_mem_path = "httomo.methods_database.packages.external."
 class MaxMemoryHook(cp.cuda.MemoryHook):
@@ -89,6 +91,44 @@ def test_normalize_memoryhook(flats, darks, ensure_clean_memory, dtype, slices):
     assert estimated_memory_mb >= max_mem_mb
     assert percents_relative_maxmem <= 20
 
+
+@pytest.mark.parametrize("dtype", ["uint16", "float32"])
+@pytest.mark.parametrize("slices", [151, 321])
+@pytest.mark.cupy
+def test_remove_outlier3d_memoryhook(flats, darks, ensure_clean_memory, dtype, slices):
+    hook = MaxMemoryHook()
+    data = cp.random.random_sample((slices, flats.shape[1], flats.shape[2]), dtype=np.float32)
+    if dtype == "uint16":
+        darks = (darks * 1233).astype(np.uint16)
+        flats = flats.astype(np.uint16)
+        data = data.astype(np.uint16)
+    with hook:
+        remove_outlier3d(cp.copy(data))
+        remove_outlier3d(darks)
+        remove_outlier3d(flats)
+
+    # make sure estimator function is within range (80% min, 100% max)
+    max_mem = (
+        hook.max_mem
+    )  # the amount of memory in bytes needed for the method according to memoryhook
+
+    # now we estimate how much of the total memory required for this data
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_remove_outlier3d(
+        data.shape[1:], dtype=data.dtype, darks_shape=darks.shape, darks_dtype=darks.dtype,
+        flats_shape=flats.shape, flats_dtype=flats.dtype
+    )
+
+    estimated_memory_mb = round(slices*estimated_memory_bytes / (1024**2), 2)
+    max_mem -= subtract_bytes
+    max_mem_mb = round(max_mem / (1024**2), 2)
+    
+    # now compare both memory estimations
+    difference_mb = abs(estimated_memory_mb - max_mem_mb)
+    percents_relative_maxmem = round((difference_mb / max_mem_mb) * 100)
+    # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
+    # the resulting percent value should not deviate from max_mem on more than 20%
+    assert estimated_memory_mb >= max_mem_mb
+    assert percents_relative_maxmem <= 20
 
 
 @pytest.mark.cupy

@@ -582,7 +582,11 @@ def test_generic_calculate_max_slices_module(
     if gpu_enabled:
         assert max_slices == (1_000_000_000 - 5678) // 1234
         assert available_memory == 1_000_000_000
-        memcalc_mock.assert_called_once_with(tuple(shape), dummy_dataset.data.dtype)
+        memcalc_mock.assert_called_once_with(tuple(shape), dummy_dataset.data.dtype,
+                                             darks_shape=dummy_dataset.darks.shape, 
+                                             flats_shape=dummy_dataset.flats.shape, 
+                                             darks_dtype=dummy_dataset.darks.dtype, 
+                                             flats_dtype=dummy_dataset.flats.dtype)
     else:
         assert max_slices > dummy_dataset.data.shape[0]
         assert available_memory == 1_000_000_000

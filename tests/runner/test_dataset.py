@@ -150,6 +150,22 @@ def test_angles_stay_on_cpu(dataset):
         assert getattr(dataset.angles_radians, "device", None) is None
 
 
+@pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")
+@pytest.mark.cupy
+def test_darks_on_gpu_property(dataset):
+    assert dataset.has_gpu_darks is False
+    assert dataset.has_gpu_flats is False
+    
+    with xp.cuda.Device(0):
+        dataset.to_gpu()    
+        dataset.darks
+        dataset.flats
+        
+    assert dataset.has_gpu_darks is True
+    assert dataset.has_gpu_flats is True
+    
+
+
 @pytest.mark.skipif(
     not gpu_enabled or xp.cuda.runtime.getDeviceCount() < 2,
     reason="skipped as cupy and 2 GPUs are not available",
@@ -332,6 +348,9 @@ def test_a_block_reuses_base_cached_gpu_fields(dataset: DataSet):
         # check that cupy arrays are pointing to the same GPU memory
         assert darks_orig.data == darks_new.data
         assert flats_orig.data == flats_new.data
+    
+    assert dataset.has_gpu_flats is True
+    assert dataset.has_gpu_darks is True
 
 
 @pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")
@@ -345,6 +364,9 @@ def test_block_caches_in_base_on_gpu_access(dataset: DataSet):
         darks_orig = dataset.darks
 
         assert darks_orig.data == darks_new.data
+    
+    assert dataset.has_gpu_flats is False
+    assert dataset.has_gpu_darks is True
 
 
 def test_setting_data_in_block_updates_global_shape(dataset):

@@ -62,6 +62,14 @@ class DataSet:
             self._darks_dirty: bool = False
 
     @property
+    def has_gpu_darks(self) -> bool:
+        return gpu_enabled and self._darks_gpu is not None
+    
+    @property
+    def has_gpu_flats(self) -> bool:
+        return gpu_enabled and self._flats_gpu is not None
+
+    @property
     def global_shape(self) -> Tuple[int, int, int]:
         """Overall shape of the data, regardless of chunking and blocking"""
         return self._global_shape
@@ -401,6 +409,14 @@ class DataSetBlock(DataSet):
         self, field: str, is_gpu: Optional[bool] = None
     ) -> DataSet.generic_array:
         return self._base.get_value(field, self.is_gpu if is_gpu is None else is_gpu)
+    
+    @property
+    def has_gpu_darks(self) -> bool:
+        return self._base.has_gpu_darks
+    
+    @property
+    def has_gpu_flats(self) -> bool:
+        return self._base.has_gpu_flats
 
     def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
         raise ValueError("Cannot slice a dataset that is already a slice")

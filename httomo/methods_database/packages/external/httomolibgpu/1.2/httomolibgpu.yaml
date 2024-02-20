@@ -16,8 +16,8 @@ misc:
       save_result_default: False
       memory_gpu:
         - datasets: [tomo]
-        - multipliers: [2.1]
-        - methods: [direct]
+        - multipliers: [None]
+        - methods: [module]
   morph:
     sino_360_to_180:
       pattern: sinogram
