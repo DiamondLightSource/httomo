@@ -140,12 +140,6 @@ class TaskRunner:
             self.pipeline.loader.method_name,
         )
         self.source = self.pipeline.loader.make_data_source()
-        log_once(
-            f"The full dataset shape is {self.source.global_shape}",
-            comm=self.comm,
-            colour=Colour.LYELLOW,
-            level=1,
-        )
         self._log_task_end(
             "loader",
             start_time,

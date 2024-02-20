@@ -11,7 +11,7 @@ from httomo.preview import Preview, PreviewConfig
 from httomo.runner.dataset import DataSetBlock, FullFileDataSet
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
-from httomo.utils import Pattern
+from httomo.utils import Pattern, log_once
 
 
 class RawAngles(NamedTuple):
@@ -94,6 +94,7 @@ class StandardTomoLoader(DataSetSource):
             shape=self._global_shape,
         )
 
+        self._log_info()
         weakref.finalize(self, self.finalize)
 
     @property
@@ -184,6 +185,34 @@ class StandardTomoLoader(DataSetSource):
 
     def _get_data(self) -> h5py.Dataset:
         return self._h5file[self._data_path]
+
+    def _log_info(self) -> None:
+        log_once(
+            f"The full dataset shape is {self._data._data.shape}",
+            comm=self._comm,
+        )
+        log_once(
+            f"Loading data: {self._in_file}",
+            comm=self._comm,
+        )
+        log_once(
+            f"Path to data: {self._data_path}",
+            comm=self._comm,
+        )
+        log_once(
+            (
+                "Preview: ("
+                f"{self._preview.config.angles.start}:{self._preview.config.angles.stop}, "
+                f"{self._preview.config.detector_y.start}:{self._preview.config.detector_y.stop}, "
+                f"{self._preview.config.detector_x.start}:{self._preview.config.detector_x.stop}"
+                ")"
+            ),
+            comm=self._comm,
+        )
+        log_once(
+            f"Data shape is {self._global_shape} of type {self._data.data.dtype}",
+            comm=self._comm,
+        )
 
 
 class StandardLoaderWrapper(LoaderInterface):
