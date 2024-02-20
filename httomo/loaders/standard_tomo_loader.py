@@ -197,6 +197,7 @@ class StandardLoaderWrapper(LoaderInterface):
         darks: DarksFlatsFileConfig,
         flats: DarksFlatsFileConfig,
         angles: AnglesConfig,
+        preview: PreviewConfig,
     ):
         self.pattern = Pattern.projection
         self.method_name = "standard_tomo"
@@ -211,18 +212,20 @@ class StandardLoaderWrapper(LoaderInterface):
         self.darks = darks
         self.flats = flats
         self.angles = angles
+        self.preview = preview
 
     def make_data_source(self) -> DataSetSource:
         assert self.pattern in [Pattern.sinogram, Pattern.projection]
         loader = StandardTomoLoader(
-            self.in_file,
-            self.data_path,
-            self.image_key_path,
-            self.darks,
-            self.flats,
-            self.angles,
-            1 if self.pattern == Pattern.sinogram else 0,
-            self.comm,
+            in_file=self.in_file,
+            data_path=self.data_path,
+            image_key_path=self.image_key_path,
+            darks=self.darks,
+            flats=self.flats,
+            angles=self.angles,
+            preview_config=self.preview,
+            slicing_dim=1 if self.pattern == Pattern.sinogram else 0,
+            comm=self.comm,
         )
         (self._angles_total, self._detector_y, self._detector_x) = loader.global_shape
         return loader
