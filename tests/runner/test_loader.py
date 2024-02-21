@@ -133,6 +133,7 @@ def test_standard_tomo_loader_read_block_single_proc(
         loader = make_standard_tomo_loader()
 
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+    EXPECTED_BLOCK_GLOBAL_INDEX = (BLOCK_START, 0, 0)
 
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[standard_data_path]
@@ -141,6 +142,7 @@ def test_standard_tomo_loader_read_block_single_proc(
         ]
 
     assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    assert block.global_index == EXPECTED_BLOCK_GLOBAL_INDEX
     np.testing.assert_array_equal(block.data, projs)
 
 
@@ -172,6 +174,9 @@ def test_standard_tomo_loader_read_block_two_procs(
         loader = make_standard_tomo_loader()
 
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+    expected_block_global_index = (
+        (BLOCK_START, 0, 0) if COMM.rank == 0 else (GLOBAL_DATA_SHAPE[0] // 2 + BLOCK_START, 0, 0)
+    )
 
     projs_start = 0 if COMM.rank == 0 else CHUNK_SHAPE[0]
     with h5py.File(IN_FILE_PATH, "r") as f:
@@ -181,6 +186,7 @@ def test_standard_tomo_loader_read_block_two_procs(
         ]
 
     assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    assert block.global_index == expected_block_global_index
     np.testing.assert_array_equal(block.data, projs)
 
 
@@ -216,6 +222,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
 
     BLOCK_START = 0
     BLOCK_LENGTH = 4
+    EXPECTED_BLOCK_GLOBAL_INDEX = (BLOCK_START, 0, 0)
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
     # Darks/flats are at indices 0 to 99 (and 3101 to 3200), projection data starts at index
@@ -228,6 +235,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
         ]
 
     assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    assert block.global_index == EXPECTED_BLOCK_GLOBAL_INDEX
     np.testing.assert_array_equal(block.data, projs)
 
 
@@ -280,6 +288,9 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
     # 100
     PROJS_SHIFT = 100
     projs_start = PROJS_SHIFT if COMM.rank == 0 else PROJS_SHIFT + CHUNK_SHAPE[0]
+    expected_block_global_index = (
+        (BLOCK_START, 0, 0) if COMM.rank == 0 else (GLOBAL_DATA_SHAPE[0] // 2 + BLOCK_START, 0, 0)
+    )
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[DATA_PATH]
         projs: np.ndarray = dataset[
@@ -287,6 +298,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
         ]
 
     assert projs.shape[SLICING_DIM] == BLOCK_LENGTH
+    assert block.global_index == expected_block_global_index
     np.testing.assert_array_equal(block.data, projs)
 
 

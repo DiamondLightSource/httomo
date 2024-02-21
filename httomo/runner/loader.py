@@ -136,6 +136,7 @@ class StandardTomoLoader(DataSetSource):
             global_index=self._chunk_index,
             chunk_shape=self._chunk_shape,
             shape=self._global_shape,
+            data_offset=(self._data_indices[0], 0, 0),
         )
 
         weakref.finalize(self, self.finalize)
@@ -178,8 +179,7 @@ class StandardTomoLoader(DataSetSource):
         Calculate the index of the chunk that is associated with the MPI process in the slicing
         dimension, taking potential darks/flats into account
         """
-        shift = round((len(self._data_indices) / nprocs) * rank)
-        return self._data_indices[0] + shift
+        return round((len(self._data_indices) / nprocs) * rank)
 
     # TODO: Assume projection slice dim for now, and therefore assume chunk index element
     # ordering

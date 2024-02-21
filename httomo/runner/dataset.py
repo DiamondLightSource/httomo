@@ -418,6 +418,7 @@ class FullFileDataSet(DataSet):
         global_index: Tuple[int, int, int],
         chunk_shape: Tuple[int, int, int],
         shape: Tuple[int, int, int],
+        data_offset: Tuple[int, int, int] = (0, 0, 0),
     ):
         super().__init__(
             data,
@@ -429,6 +430,7 @@ class FullFileDataSet(DataSet):
         )
         self._chunk_shape = chunk_shape
         self._shape = shape
+        self._data_offset = data_offset
 
     @property
     def shape(self) -> Tuple[int, int, int]:
@@ -490,10 +492,13 @@ class FullFileDataSet(DataSet):
     def get_data_block(
         self, start0: int, stop0: int, start1: int, stop1: int, start2: int, stop2: int
     ) -> DataSet.generic_array:
-        start0 += self._global_index[0]
-        stop0 += self._global_index[0]
-        start1 += self._global_index[1]
-        stop1 += self._global_index[1]
-        start2 += self._global_index[2]
-        stop2 += self._global_index[2]
+        # `self._data_offset` and `self._global_index` are used for block reading offsets
+        # required by `StandardTomoLoader`. For all other objects using `FullFileDataSet`,
+        # `self.global_index` exclusively is used for offsetting block reads.
+        start0 += self._global_index[0] + self._data_offset[0]
+        stop0 += self._global_index[0] + self._data_offset[0]
+        start1 += self._global_index[1] + self._data_offset[1]
+        stop1 += self._global_index[1] + self._data_offset[1]
+        start2 += self._global_index[2] + self._data_offset[2]
+        stop2 += self._global_index[2] + self._data_offset[2]
         return self._data[start0:stop0, start1:stop1, start2:stop2]
