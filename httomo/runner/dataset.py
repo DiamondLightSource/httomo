@@ -446,12 +446,7 @@ class FullFileDataSet(DataSet):
 
     @property
     def data(self) -> DataSet.generic_array:
-        # Note: this view doesn't allow write-back, it's a copy of the data in the file
-        return self._data[
-            self._global_index[0] : self._global_index[0] + self._chunk_shape[0],
-            self._global_index[1] : self._global_index[1] + self._chunk_shape[1],
-            self._global_index[2] : self._global_index[2] + self._chunk_shape[2],
-        ]
+        raise NotImplementedError("This method should not be called in FullFileDataSet")
 
     @data.setter
     def data(self, new_data: DataSet.generic_array):

@@ -247,7 +247,7 @@ class TaskRunner:
         log_once(memory_str, comm=self.comm, colour=Colour.BVIOLET, level=1)
         if self._memory_limit_bytes != 0:
             available_memory = min(available_memory, self._memory_limit_bytes)
-            log_once(f"The memory has been limited to {available_memory / (1024**4):4.2f} GB",
+            log_once(f"The memory has been limited to {available_memory / (1024**3):4.2f} GB",
                      comm=self.comm, colour=Colour.BVIOLET, level=1)
         
         max_slices_methods = [max_slices] * len(section)

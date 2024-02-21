@@ -128,6 +128,8 @@ class StandardTomoLoader(DataSetSource):
         darks_arr, flats_arr = get_darks_flats(darks, flats, comm)
 
         dataset: h5py.Dataset = self._h5file[data_path]
+        # store the type here, since FullFileDataSet.data cannot be called (it would read the whole chunk)
+        self._dtype = dataset.dtype
         self._data = FullFileDataSet(
             data=dataset,
             angles=angles_arr,
@@ -143,7 +145,7 @@ class StandardTomoLoader(DataSetSource):
 
     @property
     def dtype(self) -> np.dtype:
-        return self._data.data.dtype
+        return self._dtype
 
     @property
     def flats(self) -> np.ndarray:
