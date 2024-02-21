@@ -14,6 +14,9 @@ from httomo.yaml_checker import (
     check_parameter_names_are_str,
     check_no_required_parameter_values,
     check_no_duplicated_keys,
+    check_ref_id_valid,
+    check_id_has_side_out,
+    check_side_out_matches_ref_arg,
     check_keys,
     sanity_check,
     validate_yaml_config,
@@ -119,6 +122,54 @@ def test_check_keys(
     )
     conf = load_yaml(required_param_pipeline)
     assert not check_keys(conf)
+
+
+@pytest.mark.parametrize(
+    "yaml_file, expected",
+    [
+        ("testing/invalid_reference.yaml", True),
+        ("testing/invalid_reference_1.yaml", False),
+        ("testing/valid_reference.yaml", True),
+    ],
+)
+def test_check_id_has_side_out(
+    sample_pipelines: str, yaml_file: str, expected: bool, load_yaml: Callable
+):
+    required_param_pipeline = sample_pipelines + yaml_file
+    conf = load_yaml(required_param_pipeline)
+    assert check_id_has_side_out(conf) == expected
+
+
+@pytest.mark.parametrize(
+    "yaml_file, expected",
+    [
+        ("testing/invalid_reference.yaml", True),
+        ("testing/invalid_reference_1.yaml", True),
+        ("testing/valid_reference.yaml", True),
+    ],
+)
+def test_check_ref_id_valid(
+    sample_pipelines: str, yaml_file: str, expected: bool, load_yaml: Callable
+):
+    required_param_pipeline = sample_pipelines + yaml_file
+    conf = load_yaml(required_param_pipeline)
+    assert check_ref_id_valid(conf) == expected
+
+
+@pytest.mark.parametrize(
+    "yaml_file, expected",
+    [
+        ("testing/invalid_reference.yaml", False),
+        ("testing/invalid_reference_1.yaml", False),
+        ("testing/valid_reference.yaml", True),
+    ],
+)
+def test_check_side_out_matches_ref_arg(
+    sample_pipelines: str, yaml_file: str, expected: bool, load_yaml: Callable
+):
+    required_param_pipeline = sample_pipelines + yaml_file
+    conf = load_yaml(required_param_pipeline)
+    assert check_side_out_matches_ref_arg(conf) == expected
 
 
 @pytest.mark.parametrize(
