@@ -14,6 +14,7 @@
   module_path: tomopy.prep.normalize
   parameters:
     cutoff: null
+    unknown_param: null
     averaging: mean
 - method: stripes_mask3d
   module_path: tomopy.prep.stripe
