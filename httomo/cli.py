@@ -63,6 +63,12 @@ def main():
     default=64,
     help="Maximum number of slices to use for a block for CPU-only sections (default: 64)"
 )
+@click.option(
+    "--max-memory",
+    type=click.STRING,
+    default="0",
+    help="Limit the amount of memory used by the pipline to the given memory (supports strings like 3.2G or bytes)"
+)
 def run(
     in_data_file: Path,
     yaml_config: Path,
@@ -70,9 +76,13 @@ def run(
     gpu_id: int,
     save_all: bool,
     reslice_dir: Union[Path, None],
-    max_cpu_slices: int
+    max_cpu_slices: int,
+    max_memory: str
 ):
     """Run a pipeline defined in YAML on input data."""
+
+    # we use half the memory for blocks since we typically have inputs/output
+    memory_limit = transform_limit_str_to_bytes(max_memory) // 2
 
     # First we need to validate yaml configuration file if there are any errors
     # TODO: with new yaml syntax check yaml is not fully working.
@@ -127,10 +137,25 @@ def run(
     if reslice_dir is None:
         ctx = tempfile.TemporaryDirectory()
     with ctx as tmp_dir:
-        runner = TaskRunner(pipeline, Path(tmp_dir))
+        runner = TaskRunner(pipeline, Path(tmp_dir), memory_limit_bytes=memory_limit)
         return runner.execute()
 
 
 def _check_yaml(yaml_config: Path, in_data: Path):
     """Check a YAML pipeline file for errors."""
     return validate_yaml_config(yaml_config, in_data)
+
+
+def transform_limit_str_to_bytes(limit_str: str):
+    try:
+        limit_upper = limit_str.upper()
+        if limit_upper.endswith("K"):
+            return int(float(limit_str[:-1]) * 1024)
+        elif limit_upper.endswith("M"):
+            return int(float(limit_str[:-1]) * 1024**2)
+        elif limit_upper.endswith("G"):
+            return int(float(limit_str[:-1]) * 1024**3)
+        else: 
+            return int(limit_str) 
+    except ValueError:
+        raise ValueError(f"invalid memory limit string {limit_str}")

@@ -179,6 +179,7 @@ def test_making_reader_closes_file_and_deletes(
     assert writer._h5file is None
     assert writer.filename is not None
     assert writer.filename.exists()
+    assert isinstance(reader, DataSetStoreReader)
     assert reader.filename == writer.filename
     assert reader._h5file is not None
     assert reader._h5file.get("data", None) is not None
@@ -275,6 +276,36 @@ def test_create_new_data_goes_to_file_on_memory_error(
     block1 = dummy_dataset.make_block(0, 0, 2)
 
     mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
+    createh5_mock = mocker.patch.object(
+        writer, "_create_h5_data", return_value=dummy_dataset.data
+    )
+
+    writer.write_block(block1)
+
+    createh5_mock.assert_called_with(
+        writer.global_shape,
+        dummy_dataset.data.dtype,
+        ANY,
+        writer.comm,
+    )
+    
+    
+def test_create_new_data_goes_to_file_on_memory_limit(
+    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: PathLike
+):
+    block1 = dummy_dataset.make_block(0, 0, 2)
+    
+    writer = DataSetStoreWriter(
+        full_size=dummy_dataset.shape[0],
+        slicing_dim=0,
+        other_dims=(dummy_dataset.shape[1], dummy_dataset.shape[2]),
+        chunk_size=4,
+        chunk_start=3,
+        comm=MPI.COMM_WORLD,
+        temppath=tmp_path,
+        memory_limit_bytes=block1.data.nbytes + 5  # only one block will fit in memory
+    )
+
     createh5_mock = mocker.patch.object(
         writer, "_create_h5_data", return_value=dummy_dataset.data
     )

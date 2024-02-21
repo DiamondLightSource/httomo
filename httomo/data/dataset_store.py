@@ -6,7 +6,11 @@ from tempfile import NamedTemporaryFile, TemporaryFile, mkstemp
 from typing import IO, BinaryIO, Literal, Optional, Tuple
 from httomo.data.hdf._utils.reslice import reslice
 from httomo.runner.dataset import DataSet, DataSetBlock, FullFileDataSet
-from httomo.runner.dataset_store_interfaces import DataSetSink, DataSetSource, ReadableDataSetSink
+from httomo.runner.dataset_store_interfaces import (
+    DataSetSink,
+    DataSetSource,
+    ReadableDataSetSink,
+)
 from mpi4py import MPI
 import numpy as np
 from numpy.typing import DTypeLike
@@ -105,6 +109,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         chunk_start: int,
         comm: MPI.Comm,
         temppath: PathLike,
+        memory_limit_bytes: int = 0,
     ):
         self._slicing_dim = slicing_dim
         self._comm = comm
@@ -122,6 +127,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         self._readonly = False
         self._h5file: Optional[h5py.File] = None
         self._h5filename: Optional[Path] = None
+        self._memory_limit_bytes: int = memory_limit_bytes
 
         self._data: Optional[DataSet] = None
 
@@ -251,11 +257,17 @@ class DataSetStoreWriter(ReadableDataSetSink):
                 shape=self.global_shape,
             )
 
-    @classmethod
     def _create_numpy_data(
-        cls, chunk_shape: Tuple[int, int, int], dtype: DTypeLike
+        self, chunk_shape: Tuple[int, int, int], dtype: DTypeLike
     ) -> np.ndarray:
         """Convenience method to enable mocking easily"""
+        if (
+            self._memory_limit_bytes > 0
+            and np.prod(chunk_shape) * np.dtype(dtype).itemsize
+            >= self._memory_limit_bytes
+        ):
+            raise MemoryError("Memory limit reached")
+
         return np.empty(chunk_shape, dtype)
 
     def _create_h5_data(
@@ -346,15 +358,15 @@ class DataSetStoreReader(DataSetSource):
     @property
     def dtype(self) -> np.dtype:
         return self._data.data.dtype
-    
+
     @property
     def darks(self) -> np.ndarray:
         return self._data.darks
-    
+
     @property
     def flats(self) -> np.ndarray:
         return self._data.flats
-    
+
     @property
     def is_file_based(self) -> bool:
         return self._h5filename is not None
