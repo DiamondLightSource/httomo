@@ -11,7 +11,7 @@ from pathlib import Path
 
 from httomo.utils import Colour
 from httomo.yaml_utils import get_packages_current_version
-from httomo.ui_layer import _yaml_loader
+from httomo.ui_layer import get_ref_split, get_valid_ref_ids, yaml_loader
 
 
 from . import __version__
@@ -213,7 +213,7 @@ def check_no_duplicated_keys(f: Path) -> bool:
         yaml file to check
     """
     try:
-        conf = _yaml_loader(f, loader=UniqueKeyLoader)
+        conf = yaml_loader(f, loader=UniqueKeyLoader)
     except ValueError as e:
         # duplicate key found
         _print_with_colour(str(e), colour=Colour.GREEN)
@@ -230,6 +230,49 @@ def check_keys(conf: PipelineConfig) -> bool:
             missing_keys = set(required_keys) - set(all_keys)
             _print_with_colour(f"Missing keys:")
             print(*missing_keys, sep=", ")
+            return False
+    return True
+
+
+def check_id_has_side_out(conf: PipelineConfig) -> bool:
+    """ Check method with an id has side outputs"""
+    method_ids = [m.get("side_outputs") for m in conf if m.get("id")]
+    if None in method_ids:
+        _print_with_colour(f"A method with an id has no side outputs defined.")
+        return False
+    return True
+
+
+def check_ref_id_valid(conf: PipelineConfig) -> bool:
+    """ Check reference id is matching a valid method id"""
+    method_ids = [m.get("id") for m in conf if m.get("id")]
+    ref_ids = {k: v for m in conf for k, v in get_valid_ref_ids(m).items()}
+    for k, v in ref_ids.items():
+        (ref_id, side_str, ref_arg) = get_ref_split(v)
+        if ref_id not in method_ids:
+            _print_with_colour(
+                f"The reference id: {ref_id} was not found to have a matching method id."
+            )
+            return False
+    return True
+
+
+def check_side_out_matches_ref_arg(conf: PipelineConfig) -> bool:
+    """ Check reference name exists """
+    ref_ids = {k: v for m in conf for k, v in get_valid_ref_ids(m).items()}
+    for k, v in ref_ids.items():
+        (ref_id, side_str, ref_arg) = get_ref_split(v)
+        side_dicts = [
+            m.get(side_str)
+            for m in conf
+            if m.get("id") == ref_id and m.get(side_str) is not None
+        ]
+        all_side_out = {k: v for d in side_dicts for k, v in d.items()}
+        if ref_arg not in all_side_out.values():
+            _print_with_colour(
+                f"The reference value: {ref_arg} was not found to have a matching side"
+                f"output value."
+            )
             return False
     return True
 
@@ -251,7 +294,7 @@ def _get_template_yaml_conf(conf: PipelineConfig) -> PipelineConfig:
     template_yaml_files = _get_template_yaml(conf, packages)
     template_yaml_conf: PipelineConfig = []
     for f in template_yaml_files:
-        tmp_conf = _yaml_loader(f)
+        tmp_conf = yaml_loader(f)
         # make an assumption there is one method inside each template
         template_yaml_conf.append(tmp_conf[0])
     return template_yaml_conf
@@ -323,7 +366,7 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
         is_yaml_ok = sanity_check(conf_generator)
 
     are_keys_duplicated = check_no_duplicated_keys(yaml_file)
-    conf = _yaml_loader(yaml_file)
+    conf = yaml_loader(yaml_file)
 
     # Let all checks run before returning with the result, even if some checks
     # fail, to show all errors present in YAML
@@ -334,6 +377,9 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
     do_methods_exist = check_methods_exist_in_templates(conf)
     are_param_names_known = check_parameter_names_are_known(conf)
     are_param_names_type_str = check_parameter_names_are_str(conf)
+    id_and_side_out_present = check_id_has_side_out(conf)
+    are_ref_ids_valid = check_ref_id_valid(conf)
+    side_out_matches_ref_arg = check_side_out_matches_ref_arg(conf)
     required_keys_present = check_keys(conf)
     are_required_parameters_missing = check_no_required_parameter_values(conf)
 
@@ -345,6 +391,9 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
         and do_methods_exist
         and are_param_names_known
         and are_param_names_type_str
+        and id_and_side_out_present
+        and are_ref_ids_valid
+        and side_out_matches_ref_arg
         and required_keys_present
         and are_required_parameters_missing
     )
@@ -368,8 +417,6 @@ class UniqueKeyLoader(yaml.SafeLoader):
         for key_node, value_node in node.value:
             each_key = self.construct_object(key_node, deep=deep)
             if each_key in mapping:
-                raise ValueError(
-                    f"Duplicate Key: {each_key} found{key_node.end_mark}"
-                )
+                raise ValueError(f"Duplicate Key: {each_key} found{key_node.end_mark}")
             mapping.add(each_key)
         return super().construct_mapping(node, deep)
