@@ -92,6 +92,11 @@ class StandardTomoLoader(DataSetSource):
             global_index=self._chunk_index,
             chunk_shape=self._chunk_shape,
             shape=self._global_shape,
+            data_offset=(
+                self._data_indices[0],
+                self._preview.config.detector_y.start,
+                self._preview.config.detector_x.start,
+            ),
         )
 
         self._log_info()
@@ -130,8 +135,7 @@ class StandardTomoLoader(DataSetSource):
         Calculate the index of the chunk that is associated with the given MPI process in the
         slicing dimension
         """
-        shift = round((len(self._data_indices) / nprocs) * rank)
-        return self._data_indices[0] + shift
+        return round((len(self._data_indices) / nprocs) * rank)
 
     # TODO: Assume projection slice dim for now, and therefore assume chunk index element
     # ordering
@@ -142,11 +146,7 @@ class StandardTomoLoader(DataSetSource):
         """
         Calculates index of chunk relative to the previewed data
         """
-        return (
-            chunk_index_slicing_dim,
-            self._preview.config.detector_y.start,
-            self._preview.config.detector_x.start,
-        )
+        return (chunk_index_slicing_dim, 0, 0)
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:

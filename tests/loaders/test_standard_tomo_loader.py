@@ -69,69 +69,14 @@ def test_standard_tomo_loader_get_slicing_dim():
     assert loader.slicing_dim == 0
 
 
-@pytest.mark.parametrize(
-    "preview_config, expected_chunk_index",
-    [
-        (
-            PreviewConfig(
-                angles=PreviewDimConfig(start=0, stop=180),
-                detector_y=PreviewDimConfig(start=0, stop=128),
-                detector_x=PreviewDimConfig(start=0, stop=160),
-            ),
-            (0, 0, 0),
-        ),
-        (
-            PreviewConfig(
-                angles=PreviewDimConfig(start=0, stop=180),
-                detector_y=PreviewDimConfig(start=5, stop=128),
-                detector_x=PreviewDimConfig(start=0, stop=160),
-            ),
-            (0, 5, 0),
-        ),
-        (
-            PreviewConfig(
-                angles=PreviewDimConfig(start=0, stop=180),
-                detector_y=PreviewDimConfig(start=0, stop=128),
-                detector_x=PreviewDimConfig(start=5, stop=160),
-            ),
-            (0, 0, 5),
-        ),
-    ],
-    ids=["no_cropping", "crop_det_y", "crop_det_x"],
-)
-def test_standard_tomo_loader_previewed_get_chunk_index_single_proc(
-    standard_data_path: str,
-    standard_image_key_path: str,
-    preview_config: PreviewConfig,
-    expected_chunk_index: Tuple[int, int, int],
-):
-    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
-    DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
-        file=IN_FILE_PATH,
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
-    )
-    ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
-    SLICING_DIM = 0
-    COMM = MPI.COMM_WORLD
-
+def test_standard_tomo_loader_get_chunk_index_single_proc():
     with mock.patch(
         "httomo.darks_flats.get_darks_flats",
         return_value=(np.zeros(1), np.zeros(1)),
     ):
-        loader = StandardTomoLoader(
-            in_file=IN_FILE_PATH,
-            data_path=DARKS_FLATS_CONFIG.data_path,
-            image_key_path=DARKS_FLATS_CONFIG.image_key_path,
-            darks=DARKS_FLATS_CONFIG,
-            flats=DARKS_FLATS_CONFIG,
-            angles=ANGLES_CONFIG,
-            preview_config=preview_config,
-            slicing_dim=SLICING_DIM,
-            comm=COMM,
-        )
-
-    assert loader.chunk_index == expected_chunk_index
+        loader = make_standard_tomo_loader()
+    CHUNK_INDEX = (0, 0, 0)
+    assert loader.chunk_index == CHUNK_INDEX
 
 
 @pytest.mark.mpi
@@ -139,34 +84,22 @@ def test_standard_tomo_loader_previewed_get_chunk_index_single_proc(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
 @pytest.mark.parametrize(
-    "preview_config, crop_dim_index, crop_dim_start",
+    "preview_config",
     [
-        (
-            PreviewConfig(
-                angles=PreviewDimConfig(start=0, stop=180),
-                detector_y=PreviewDimConfig(start=0, stop=128),
-                detector_x=PreviewDimConfig(start=0, stop=160),
-            ),
-            0,
-            0,
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=128),
+            detector_x=PreviewDimConfig(start=0, stop=160),
         ),
-        (
-            PreviewConfig(
-                angles=PreviewDimConfig(start=0, stop=180),
-                detector_y=PreviewDimConfig(start=5, stop=128),
-                detector_x=PreviewDimConfig(start=0, stop=160),
-            ),
-            1,
-            5,
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=5, stop=128),
+            detector_x=PreviewDimConfig(start=0, stop=160),
         ),
-        (
-            PreviewConfig(
-                angles=PreviewDimConfig(start=0, stop=180),
-                detector_y=PreviewDimConfig(start=0, stop=128),
-                detector_x=PreviewDimConfig(start=5, stop=160),
-            ),
-            2,
-            5,
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=128),
+            detector_x=PreviewDimConfig(start=5, stop=160),
         ),
     ],
     ids=["no_cropping", "crop_det_y", "crop_det_x"],
@@ -175,10 +108,8 @@ def test_standard_tomo_loader_previewed_get_chunk_index_two_procs(
     standard_data_path: str,
     standard_image_key_path: str,
     preview_config: PreviewConfig,
-    crop_dim_index: int,
-    crop_dim_start: int,
 ):
-    GLOBAL_DATA_SHAPE = (180, 128, 160)
+    DATA_SHAPE = (180, 128, 160)
     IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
     DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
         file=IN_FILE_PATH,
@@ -189,18 +120,7 @@ def test_standard_tomo_loader_previewed_get_chunk_index_two_procs(
     SLICING_DIM = 0
     COMM = MPI.COMM_WORLD
 
-    if crop_dim_index == 1:
-        chunk_index = (
-            (0, crop_dim_start, 0)
-            if COMM.rank == 0
-            else (GLOBAL_DATA_SHAPE[0] // 2, crop_dim_start, 0)
-        )
-    else:
-        chunk_index = (
-            (0, 0, crop_dim_start)
-            if COMM.rank == 0
-            else (GLOBAL_DATA_SHAPE[0] // 2, 0, crop_dim_start)
-        )
+    chunk_index = (0, 0, 0) if COMM.rank == 0 else (DATA_SHAPE[0] // 2, 0, 0)
 
     with mock.patch(
         "httomo.darks_flats.get_darks_flats",
@@ -415,14 +335,11 @@ def test_standard_tomo_loader_read_block_single_proc(
         preview_config.detector_y.stop - preview_config.detector_y.start,
         preview_config.detector_x.stop - preview_config.detector_x.start,
     )
-    # Index of block relative to the global data
-    expected_global_index = (
-        preview_config.angles.start + BLOCK_START,
-        preview_config.detector_y.start,
-        preview_config.detector_x.start,
-    )
     # Index of block relative to the chunk it belongs to
-    expected_chunk_index = (BLOCK_START, 0, 0)
+    EXPECTED_CHUNK_INDEX = (BLOCK_START, 0, 0)
+    # Index of block relative to the global data it belongs to (ie, includes chunk shift - for
+    # single proc, this is the same as the expected chunk index)
+    EXPECTED_BLOCK_GLOBAL_INDEX = (BLOCK_START, 0, 0)
 
     with mock.patch(
         "httomo.darks_flats.get_darks_flats",
@@ -450,8 +367,8 @@ def test_standard_tomo_loader_read_block_single_proc(
             preview_config.detector_x.start : preview_config.detector_x.stop,
         ]
 
-    assert block.global_index == expected_global_index
-    assert block.chunk_index == expected_chunk_index
+    assert block.global_index == EXPECTED_BLOCK_GLOBAL_INDEX
+    assert block.chunk_index == EXPECTED_CHUNK_INDEX
     assert block.data.shape == expected_block_shape
     np.testing.assert_array_equal(block.data, projs)
 
@@ -519,6 +436,7 @@ def test_standard_tomo_loader_read_block_two_procs(
         preview_config.detector_y.stop - preview_config.detector_y.start,
         preview_config.detector_x.stop - preview_config.detector_x.start,
     )
+    DATA_SHAPE = (180, 128, 160)
 
     with mock.patch(
         "httomo.darks_flats.get_darks_flats",
@@ -543,14 +461,15 @@ def test_standard_tomo_loader_read_block_two_procs(
         if COMM.rank == 0
         else (preview_config.angles.stop - preview_config.angles.start) // 2
     )
-    # Index of block relative to the global data
-    expected_global_index = (
-        projs_start + BLOCK_START,
-        preview_config.detector_y.start,
-        preview_config.detector_x.start,
-    )
     # Index of block relative to the chunk it belongs to
     expected_chunk_index = (BLOCK_START, 0, 0)
+    # Index of block relative to the global data it belongs to (ie, includes chunk shift - this
+    # will differ across two procs)
+    expected_block_global_index = (
+        (BLOCK_START, 0, 0)
+        if COMM.rank == 0
+        else (DATA_SHAPE[0] // 2 + BLOCK_START, 0, 0)
+    )
 
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[standard_data_path]
@@ -560,7 +479,7 @@ def test_standard_tomo_loader_read_block_two_procs(
             preview_config.detector_x.start : preview_config.detector_x.stop,
         ]
 
-    assert block.global_index == expected_global_index
+    assert block.global_index == expected_block_global_index
     assert block.chunk_index == expected_chunk_index
     assert block.data.shape == expected_block_shape
     np.testing.assert_array_equal(block.data, projs)
@@ -602,17 +521,12 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
 
     BLOCK_START = 0
     BLOCK_LENGTH = 4
+    EXPECTED_BLOCK_GLOBAL_INDEX = (BLOCK_START, 0, 0)
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
     # Darks/flats are at indices 0 to 99 (and 3101 to 3200), projection data starts at index
     # 100
     PROJS_START = 100
-    # Index of block relative to the global data
-    expected_global_index = (
-        PROJS_START + BLOCK_START,
-        PREVIEW_CONFIG.detector_y.start,
-        PREVIEW_CONFIG.detector_x.start,
-    )
     # Index of block relative to the chunk it belongs to
     expected_chunk_index = (BLOCK_START, 0, 0)
 
@@ -622,7 +536,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
             PROJS_START + BLOCK_START : PROJS_START + BLOCK_START + BLOCK_LENGTH
         ]
 
-    assert block.global_index == expected_global_index
+    assert block.global_index == EXPECTED_BLOCK_GLOBAL_INDEX
     assert block.chunk_index == expected_chunk_index
     assert block.data.shape[SLICING_DIM] == BLOCK_LENGTH
     np.testing.assert_array_equal(block.data, projs)
@@ -670,25 +584,26 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
     BLOCK_LENGTH = 4
     block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
-    GLOBAL_DATA_SHAPE = (3000, 22, 26)
+    DATA_SHAPE = (3000, 22, 26)
     CHUNK_SHAPE = (
-        GLOBAL_DATA_SHAPE[0] // 2,
-        GLOBAL_DATA_SHAPE[1],
-        GLOBAL_DATA_SHAPE[2],
+        DATA_SHAPE[0] // 2,
+        DATA_SHAPE[1],
+        DATA_SHAPE[2],
     )
 
     # Darks/flats are at indices 0 to 99 (and 3101 to 3200), projection data starts at index
     # 100
     PROJS_SHIFT = 100
     projs_start = PROJS_SHIFT if COMM.rank == 0 else PROJS_SHIFT + CHUNK_SHAPE[0]
-    # Index of block relative to the global data
-    expected_global_index = (
-        projs_start + BLOCK_START,
-        PREVIEW_CONFIG.detector_y.start,
-        PREVIEW_CONFIG.detector_x.start,
-    )
     # Index of block relative to the chunk it belongs to
     expected_chunk_index = (BLOCK_START, 0, 0)
+    # Index of block relative to the global data it belongs to (ie, includes chunk shift - this
+    # will differ across two procs)
+    expected_block_global_index = (
+        (BLOCK_START, 0, 0)
+        if COMM.rank == 0
+        else (DATA_SHAPE[0] // 2 + BLOCK_START, 0, 0)
+    )
 
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[DATA_PATH]
@@ -696,7 +611,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
             projs_start + BLOCK_START : projs_start + BLOCK_START + BLOCK_LENGTH
         ]
 
-    assert block.global_index == expected_global_index
+    assert block.global_index == expected_block_global_index
     assert block.chunk_index == expected_chunk_index
     assert block.data.shape[SLICING_DIM] == BLOCK_LENGTH
     np.testing.assert_array_equal(block.data, projs)

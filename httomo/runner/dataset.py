@@ -425,6 +425,7 @@ class FullFileDataSet(DataSet):
         global_index: Tuple[int, int, int],
         chunk_shape: Tuple[int, int, int],
         shape: Tuple[int, int, int],
+        data_offset: Tuple[int, int, int] = (0, 0, 0),
     ):
         super().__init__(
             data,
@@ -436,6 +437,7 @@ class FullFileDataSet(DataSet):
         )
         self._chunk_shape = chunk_shape
         self._shape = shape
+        self._data_offset = data_offset
 
     @property
     def shape(self) -> Tuple[int, int, int]:
@@ -499,13 +501,22 @@ class FullFileDataSet(DataSet):
             length = self.chunk_shape[dim] - start
 
         slices = [
-            slice(self.global_index[0], self.global_index[0] + self.chunk_shape[0]),
-            slice(self.global_index[1], self.global_index[1] + self.chunk_shape[1]),
-            slice(self.global_index[2], self.global_index[2] + self.chunk_shape[2]),
+            slice(
+                self.global_index[0] + self._data_offset[0],
+                self.global_index[0] + self._data_offset[0] + self.chunk_shape[0],
+            ),
+            slice(
+                self.global_index[1] + self._data_offset[1],
+                self.global_index[1] + self._data_offset[1] + self.chunk_shape[1],
+            ),
+            slice(
+                self.global_index[2] + self._data_offset[2],
+                self.global_index[2] + self._data_offset[2] + self.chunk_shape[2],
+            ),
         ]
         slices[dim] = slice(
-            self.global_index[dim] + start,
-            self.global_index[dim] + start + length,
+            self.global_index[dim] + self._data_offset[dim] + start,
+            self.global_index[dim] + self._data_offset[dim] + start + length,
         )
 
         return DataSetBlock(
