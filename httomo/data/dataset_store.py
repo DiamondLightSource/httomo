@@ -352,8 +352,16 @@ class DataSetStoreReader(DataSetSource):
         return self._data.darks
     
     @property
+    def has_gpu_darks(self) -> bool:
+        return self._data.has_gpu_darks
+    
+    @property
     def flats(self) -> np.ndarray:
         return self._data.flats
+    
+    @property
+    def has_gpu_flats(self) -> bool:
+        return self._data.has_gpu_flats
     
     @property
     def is_file_based(self) -> bool:
