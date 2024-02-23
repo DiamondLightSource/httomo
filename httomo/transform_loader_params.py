@@ -1,4 +1,4 @@
-from typing import Literal, TypeAlias, TypedDict, Union
+from typing import Literal, Optional, TypeAlias, TypedDict, Union
 from httomo.loaders.standard_tomo_loader import (
     AnglesConfig,
     RawAngles,
@@ -9,47 +9,53 @@ from httomo.preview import PreviewConfig, PreviewDimConfig
 
 
 class StartStopEntry(TypedDict):
-    start: int
-    stop: int
+    start: Optional[int]
+    stop: Optional[int]
 
 
-PreviewParamEntry: TypeAlias = Union[None, Literal["mid"], StartStopEntry]
+PreviewParamEntry: TypeAlias = Union[Literal["mid"], StartStopEntry]
 
 
-# TODO: Need to disallow "mid" from being the 0th entry in the list
-PreviewParam: TypeAlias = list[PreviewParamEntry]
+class PreviewParam(TypedDict):
+    angles: Optional[StartStopEntry]
+    detector_y: Optional[PreviewParamEntry]
+    detector_x: Optional[PreviewParamEntry]
 
 
 def parse_preview(
-    param_value: PreviewParam,
+    param_value: Optional[PreviewParam],
     data_shape: tuple[int, int, int],
 ) -> PreviewConfig:
-    preview_data = param_value[:]
-    if len(param_value) < len(data_shape):
-        preview_data += [None] * (len(data_shape) - len(preview_data))
+    DIMENSION_MAPPINGS: dict[str, int] = {"angles": 0, "detector_y": 1, "detector_x": 2}
 
-    assert len(preview_data) == 3
-    dim_configs: list[PreviewDimConfig] = []
+    if param_value is None:
+        param_value = {"angles": None, "detector_y": None, "detector_x": None}
 
-    if preview_data[0] == "mid":
+    dims = param_value.keys()
+    for dim in DIMENSION_MAPPINGS.keys():
+        if dim not in dims:
+            param_value[dim] = None
+
+    if param_value["angles"] == "mid":
         raise ValueError("'mid' keyword not supported for angles dimension")
 
-    for idx, slice_info in enumerate(preview_data):
+    dim_configs = {}
+    for dim, slice_info in param_value.items():
         if slice_info is None:
             start = 0
-            stop = data_shape[idx]
+            stop = data_shape[DIMENSION_MAPPINGS[dim]]
         elif slice_info == "mid":
-            start, stop = _get_middle_slice_indices(data_shape[idx])
+            start, stop = _get_middle_slice_indices(data_shape[DIMENSION_MAPPINGS[dim]])
         else:
-            start = slice_info["start"]
-            stop = slice_info["stop"]
+            start = slice_info.get("start", 0)
+            stop = slice_info.get("stop", data_shape[DIMENSION_MAPPINGS[dim]])
 
-        dim_configs.append(PreviewDimConfig(start=start, stop=stop))
+        dim_configs[dim] = PreviewDimConfig(start=start, stop=stop)
 
     return PreviewConfig(
-        angles=dim_configs[0],
-        detector_y=dim_configs[1],
-        detector_x=dim_configs[2],
+        angles=dim_configs["angles"],
+        detector_y=dim_configs["detector_y"],
+        detector_x=dim_configs["detector_x"],
     )
 
 

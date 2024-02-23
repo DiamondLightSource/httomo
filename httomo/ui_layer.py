@@ -102,7 +102,7 @@ class UiLayer:
 
         with h5py.File(in_file, "r") as f:
             data_shape = f[data_path].shape
-        preview = parse_preview(parameters["preview"], data_shape)
+        preview = parse_preview(parameters.get("preview", None), data_shape)
 
         loader = make_loader(
             repo=self.repo,

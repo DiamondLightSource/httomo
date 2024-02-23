@@ -19,7 +19,7 @@ from httomo.transform_loader_params import (
     [
         (
             (220, 128, 160),
-            [None, None, None],
+            None,
             PreviewConfig(
                 angles=PreviewDimConfig(start=0, stop=220),
                 detector_y=PreviewDimConfig(start=0, stop=128),
@@ -28,7 +28,11 @@ from httomo.transform_loader_params import (
         ),
         (
             (220, 128, 160),
-            [None],
+            {
+                "angles": {"start": 0, "stop": 220},
+                "detector_y": {"start": 0, "stop": 128},
+                "detector_x": {"start": 0, "stop": 160},
+            },
             PreviewConfig(
                 angles=PreviewDimConfig(start=0, stop=220),
                 detector_y=PreviewDimConfig(start=0, stop=128),
@@ -37,11 +41,7 @@ from httomo.transform_loader_params import (
         ),
         (
             (220, 128, 160),
-            [
-                {"start": 0, "stop": 220},
-                {"start": 0, "stop": 128},
-                None,
-            ],
+            {"angles": None, "detector_y": None, "detector_x": None},
             PreviewConfig(
                 angles=PreviewDimConfig(start=0, stop=220),
                 detector_y=PreviewDimConfig(start=0, stop=128),
@@ -50,11 +50,86 @@ from httomo.transform_loader_params import (
         ),
         (
             (220, 128, 160),
-            [
-                {"start": 0, "stop": 220},
-                "mid",
-                None,
-            ],
+            {
+                "angles": None,
+                "detector_y": {"start": 0, "stop": 128},
+                "detector_x": {"start": 0, "stop": 160},
+            },
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=220),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+        ),
+        (
+            (220, 128, 160),
+            {
+                "angles": {"start": 0, "stop": 220},
+                "detector_y": None,
+                "detector_x": {"start": 0, "stop": 160},
+            },
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=220),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+        ),
+        (
+            (220, 128, 160),
+            {
+                "angles": {"start": 0, "stop": 220},
+                "detector_y": {"start": 0, "stop": 128},
+                "detector_x": None,
+            },
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=220),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+        ),
+        (
+            (220, 128, 160),
+            {
+                "detector_y": {"start": 0, "stop": 128},
+                "detector_x": {"start": 0, "stop": 160},
+            },
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=220),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+        ),
+        (
+            (220, 128, 160),
+            {
+                "angles": {"start": 0, "stop": 220},
+                "detector_x": {"start": 0, "stop": 160},
+            },
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=220),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+        ),
+        (
+            (220, 128, 160),
+            {
+                "angles": {"start": 0, "stop": 220},
+                "detector_y": {"start": 0, "stop": 128},
+            },
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=220),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+        ),
+        (
+            (220, 128, 160),
+            {
+                "angles": {"start": 0, "stop": 220},
+                "detector_y": "mid",
+                "detector_x": {"start": 0, "stop": 160},
+            },
             PreviewConfig(
                 angles=PreviewDimConfig(start=0, stop=220),
                 detector_y=PreviewDimConfig(start=62, stop=65),
@@ -63,11 +138,11 @@ from httomo.transform_loader_params import (
         ),
         (
             (220, 127, 160),
-            [
-                {"start": 0, "stop": 220},
-                "mid",
-                None,
-            ],
+            {
+                "angles": {"start": 0, "stop": 220},
+                "detector_y": "mid",
+                "detector_x": {"start": 0, "stop": 160},
+            },
             PreviewConfig(
                 angles=PreviewDimConfig(start=0, stop=220),
                 detector_y=PreviewDimConfig(start=62, stop=64),
@@ -76,25 +151,59 @@ from httomo.transform_loader_params import (
         ),
         (
             (220, 3, 160),
-            [
-                {"start": 0, "stop": 220},
-                "mid",
-                None,
-            ],
+            {
+                "angles": {"start": 0, "stop": 220},
+                "detector_y": "mid",
+                "detector_x": None,
+            },
             PreviewConfig(
                 angles=PreviewDimConfig(start=0, stop=220),
                 detector_y=PreviewDimConfig(start=0, stop=3),
                 detector_x=PreviewDimConfig(start=0, stop=160),
             ),
         ),
+        (
+            (220, 128, 160),
+            {
+                "angles": {"start": 0, "stop": 220},
+                "detector_y": {"stop": 128},
+                "detector_x": {"start": 0, "stop": 160},
+            },
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=220),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+        ),
+        (
+            (220, 128, 160),
+            {
+                "angles": {"start": 0, "stop": 220},
+                "detector_y": {"start": 0},
+                "detector_x": {"start": 0, "stop": 160},
+            },
+            PreviewConfig(
+                angles=PreviewDimConfig(start=0, stop=220),
+                detector_y=PreviewDimConfig(start=0, stop=128),
+                detector_x=PreviewDimConfig(start=0, stop=160),
+            ),
+        ),
     ],
     ids=[
+        "preview_param_none",
+        "all_dims_provided",
         "all_dims_none",
-        "single_none",
-        "angles_det_y_not_none",
+        "angles_none",
+        "det_y_none",
+        "det_x_none",
+        "missing_angles",
+        "missing_det_y",
+        "missing_det_x",
         "det_y_even_len_get_mid",
         "det_y_odd_len_get_mid",
         "det_y_small_len_get_mid",
+        "det_y_missing_start",
+        "det_y_missing_stop",
     ],
 )
 def test_parse_preview(
@@ -108,7 +217,11 @@ def test_parse_preview(
 
 def test_parse_preview_raises_error_mid_in_angle_dim():
     DATA_SHAPE = (220, 128, 160)
-    PREVIEW_PARAM_VALUE: PreviewParam = ["mid"]
+    PREVIEW_PARAM_VALUE = {
+        "angles": "mid",
+        "detector_y": {"start": 0, "stop": 128},
+        "detector_x": {"start": 0, "stop": 160},
+    }
     with pytest.raises(ValueError):
         _ = parse_preview(PREVIEW_PARAM_VALUE, DATA_SHAPE)
 
