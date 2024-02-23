@@ -67,7 +67,7 @@ def main():
     "--max-memory",
     type=click.STRING,
     default="0",
-    help="Limit the amount of memory used by the pipline to the given memory (supports strings like 3.2G or bytes)"
+    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)"
 )
 def run(
     in_data_file: Path,
