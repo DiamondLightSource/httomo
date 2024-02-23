@@ -17,7 +17,7 @@ def make_monitors(monitor_descriptors: List[str]) -> Optional[MonitoringInterfac
     monitors: List[MonitoringInterface] = []
     for descriptor in monitor_descriptors:
         if descriptor not in MONITORS_MAP:
-            raise ValueError(f"Unknown monitor '{descriptor}'. Please choose one of {MONITORS_MAP.keys}")
+            raise ValueError(f"Unknown monitor '{descriptor}'. Please choose one of {MONITORS_MAP.keys()}")
         monitors.append(MONITORS_MAP[descriptor]())
         
     return AggregateMonitoring(monitors)
