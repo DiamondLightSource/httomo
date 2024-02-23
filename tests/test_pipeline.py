@@ -645,7 +645,7 @@ def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder)
     assert "The full dataset shape is (3201, 22, 26)" in log_contents
     assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in log_contents
     assert "Path to data: /entry/imaging/data" in log_contents
-    assert "Preview: (100:3101, 8:15:, 0:26)" in log_contents
+    assert "Preview: (100:3101, 8:15, 0:26)" in log_contents
     assert "Data shape is (3001, 7, 26) of type uint16" in log_contents
     assert "Saving intermediate file: 5-httomolibgpu-FBP-tomo.h5" in log_contents
     assert "Global min -0.00561" in log_contents
