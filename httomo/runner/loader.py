@@ -104,7 +104,7 @@ class StandardTomoLoader(DataSetSource):
         self._angles = angles
         self._slicing_dim = slicing_dim
         self._comm = comm
-        self._h5file = h5py.File(in_file, "r", driver="mpio", comm = comm)
+        self._h5file = h5py.File(in_file, "r", driver="mpio", comm=comm)
 
         self._data_indices = self._get_data_indices()
         self._global_shape = self._get_global_data_shape()
@@ -124,7 +124,7 @@ class StandardTomoLoader(DataSetSource):
             next_process_chunk_index_slicing_dim,
         )
 
-        angles_arr = self._get_angles()
+        angles_arr = np.deg2rad(self._get_angles())
         darks_arr, flats_arr = get_darks_flats(darks, flats, comm)
 
         dataset: h5py.Dataset = self._h5file[data_path]
@@ -152,11 +152,11 @@ class StandardTomoLoader(DataSetSource):
     @property
     def darks(self) -> np.ndarray:
         return self._data.darks
-    
+
     @property
     def has_gpu_darks(self) -> bool:
         return self._data.has_gpu_darks
-    
+
     @property
     def has_gpu_flats(self) -> bool:
         return self._data.has_gpu_flats
