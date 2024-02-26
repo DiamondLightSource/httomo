@@ -68,7 +68,7 @@ class RotationWrapper(GenericMethodWrapper):
         if not "ind" in dict_params or (
             dict_params["ind"] == "mid" or dict_params["ind"] is None
         ):
-            updated_params = {**dict_params, "ind": (dataset.base.shape[1] - 1) // 2}
+            updated_params = {**dict_params, "ind": (dataset.shape[1] - 1) // 2}
         return super()._build_kwargs(updated_params, dataset)
 
     def _gather_sino_slice(self, global_shape: Tuple[int, int, int]):
