@@ -59,11 +59,8 @@ def run(
     reslice_dir: Union[Path, None],
 ):
     """Run a pipeline defined in YAML on input data."""
-    
-    # First we need to validate yaml configuration file if there are any errors
-    # TODO: with new yaml syntax check yaml is not fully working.
-    # Need to re-enable that: 
-    # _check_yaml(yaml_config, in_data_file)
+    if yaml_config.suffix == ".yaml":
+        _check_yaml(yaml_config, in_data_file)
 
     # Define httomo.globals.run_out_dir in all MPI processes
     httomo.globals.run_out_dir = out_dir.joinpath(

@@ -1,4 +1,3 @@
---- # pre-processing
 - method: normalize
   module_path: tomopy.prep.normalize
   parameters:
@@ -7,14 +6,6 @@
 - method: minus_log
   module_path: tomopy.prep.normalize
   parameters: {}
---- # main processing
-- method: remove_stripe_fw
-  module_path: tomopy.prep.stripe
-  parameters:
-    level: null
-    wname: db5
-    sigma: 2
-    pad: true
 - method: find_center_vo
   module_path: tomopy.recon.rotation
   parameters:
@@ -28,6 +19,13 @@
   id: centering
   side_outputs:
     cor: centre_of_rotation
+- method: remove_stripe_fw
+  module_path: tomopy.prep.stripe
+  parameters:
+    level: null
+    wname: db5
+    sigma: 2
+    pad: true
 - method: recon
   module_path: tomopy.recon.algorithm
   parameters:
@@ -35,8 +33,7 @@
     sinogram_order: false
     algorithm: gridrec
     init_recon: null
-    save_result: true
-    #additional parameters': AVAILABLE
+  save_result: true
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:
@@ -47,5 +44,3 @@
     perc_range_min: 0.0
     perc_range_max: 100.0
     jpeg_quality: 95
-    glob_stats: true
-

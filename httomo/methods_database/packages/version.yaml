@@ -1,0 +1,4 @@
+# This file defines the current httomo version
+httomo:
+  current:
+  - 1.2

@@ -14,12 +14,13 @@
   module_path: tomopy.prep.normalize
   parameters:
     cutoff: null
+    unknown_param: null
     averaging: mean
 - method: stripes_mask3d
   module_path: tomopy.prep.stripe
   parameters:
-    weights: REQUIRED
-    threshold: 0.6
+    weights: 0.0
+    unknown_threshold: 0.6
     min_stripe_length: 20
     min_stripe_depth: 10
     min_stripe_width: 5
