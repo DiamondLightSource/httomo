@@ -7,13 +7,14 @@ from httomo.runner.pipeline import Pipeline
 from mpi4py import MPI
 import httomo
 
+
 class TransformLayer:
     def __init__(
         self,
         repo=MethodDatabaseRepository(),
         comm: MPI.Comm = MPI.COMM_WORLD,
         save_all=False,
-        out_dir: Optional[os.PathLike] = None
+        out_dir: Optional[os.PathLike] = None,
     ):
         self._repo = repo
         self._save_all = save_all
@@ -22,6 +23,7 @@ class TransformLayer:
 
     def transform(self, pipeline: Pipeline) -> Pipeline:
         pipeline = self.insert_save_methods(pipeline)
+        pipeline = self.insert_data_reducer(pipeline)
         return pipeline
 
     def insert_save_methods(self, pipeline: Pipeline) -> Pipeline:
@@ -44,7 +46,28 @@ class TransformLayer:
                         loader=loader,
                         prev_method=m,
                         task_id=f"save_{m.task_id}",
-                        out_dir=self._out_dir
+                        out_dir=self._out_dir,
                     )
                 )
+        return Pipeline(loader, methods)
+
+    def insert_data_reducer(self, pipeline: Pipeline) -> Pipeline:
+        loader = pipeline.loader
+        methods = []
+        counter = 0
+        for m in pipeline:
+            methods.append(m)
+            if m.method_name == "normalize":
+                methods.insert(
+                    counter,
+                    make_method_wrapper(
+                        self._repo,
+                        "httomolib.misc.morph",
+                        "data_reducer",
+                        comm=self._comm,
+                        save_result=False,
+                        task_id=f"task_{counter}",
+                    ),
+                )
+            counter += 1
         return Pipeline(loader, methods)
