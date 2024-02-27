@@ -8,10 +8,9 @@
         data_path: /entry1/tomo_entry/data/rotation_angle
     dimension: 1
     preview:
-      -
-      - start: 30
+      detector_y:
+        start: 30
         stop: 60
-      -
     pad: 0
 - method: find_center_vo
   module_path: tomopy.recon.rotation

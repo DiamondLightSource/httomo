@@ -91,7 +91,7 @@ def test_tomo_standard_testing_pipeline_output(
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, 57:60:, :)" in log_contents
+    assert "Preview: (0:180, 57:60, 0:160)" in log_contents
     assert "Data shape is (180, 3, 160) of type uint16" in log_contents
     assert "<-------Reslicing/rechunking the data-------->" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -124,7 +124,7 @@ def test_run_pipeline_cpu1_yaml(cmd, standard_data, yaml_cpu_pipeline1, output_f
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
     assert "<-------Reslicing/rechunking the data-------->" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -157,7 +157,7 @@ def test_run_pipeline_cpu1_py(cmd, standard_data, python_cpu_pipeline1, output_f
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
     assert "<-------Reslicing/rechunking the data-------->" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -201,7 +201,7 @@ def test_run_pipeline_cpu2_yaml(cmd, standard_data, yaml_cpu_pipeline2, output_f
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, 30:60:, :)" in log_contents
+    assert "Preview: (0:180, 30:60, 0:160)" in log_contents
     assert "Data shape is (180, 30, 160) of type uint16" in log_contents
     assert "<-------Reslicing/rechunking the data-------->" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -247,7 +247,7 @@ def test_run_pipeline_cpu2_py(cmd, standard_data, python_cpu_pipeline2, output_f
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, 30:60:, :)" in log_contents
+    assert "Preview: (0:180, 30:60, 0:160)" in log_contents
     assert "Data shape is (180, 30, 160) of type uint16" in log_contents
     assert "<-------Reslicing/rechunking the data-------->" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -285,7 +285,7 @@ def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_f
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
     assert "<-------Reslicing/rechunking the data-------->" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -324,7 +324,7 @@ def test_run_pipeline_cpu3_py(cmd, standard_data, python_cpu_pipeline3, output_f
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
     assert "<-------Reslicing/rechunking the data-------->" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -371,7 +371,7 @@ def test_run_pipeline_gpu1_yaml(cmd, standard_data, yaml_gpu_pipeline1, output_f
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
     assert "<-------Reslicing/rechunking the data-------->" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -417,7 +417,7 @@ def test_run_pipeline_gpu1_py(cmd, standard_data, python_gpu_pipeline1, output_f
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
     assert "<-------Reslicing/rechunking the data-------->" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -512,7 +512,7 @@ def test_i12_testing_pipeline_output(
         in log_contents
     )
     assert "Path to data: /1-TempPlugin-tomo/data" in log_contents
-    assert "Preview: (0:724, :, :)" in log_contents
+    assert "Preview: (0:724, 0:10, 0:192)" in log_contents
     assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
     assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -557,7 +557,7 @@ def test_i12_testing_ignore_darks_flats_pipeline_output(
         in log_contents
     )
     assert "Path to data: /1-TempPlugin-tomo/data" in log_contents
-    assert "Preview: (0:724, :, :)" in log_contents
+    assert "Preview: (0:724, 0:10, 0:192)" in log_contents
     assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
     assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -616,7 +616,7 @@ def test_diad_testing_pipeline_output(
     assert "The full dataset shape is (3201, 22, 26)" in log_contents
     assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in log_contents
     assert "Path to data: /entry/imaging/data" in log_contents
-    assert "Preview: (100:3101, 5:7:, :)" in log_contents
+    assert "Preview: (100:3101, 5:7, 0:26)" in log_contents
     assert "Data shape is (3001, 2, 26) of type uint16" in log_contents
     assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
     assert "Reslicing not necessary, as there is only one process" in log_contents
@@ -645,7 +645,7 @@ def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder)
     assert "The full dataset shape is (3201, 22, 26)" in log_contents
     assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in log_contents
     assert "Path to data: /entry/imaging/data" in log_contents
-    assert "Preview: (100:3101, 8:15:, :)" in log_contents
+    assert "Preview: (100:3101, 8:15, 0:26)" in log_contents
     assert "Data shape is (3001, 7, 26) of type uint16" in log_contents
     assert "Saving intermediate file: 5-httomolibgpu-FBP-tomo.h5" in log_contents
     assert "Global min -0.00561" in log_contents
