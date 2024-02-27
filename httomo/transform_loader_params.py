@@ -1,10 +1,10 @@
 from typing import Literal, Optional, TypeAlias, TypedDict, Union
-from httomo.loaders.standard_tomo_loader import (
+
+from httomo.loaders.types import (
     AnglesConfig,
     RawAngles,
     UserDefinedAngles,
 )
-
 from httomo.preview import PreviewConfig, PreviewDimConfig
 
 

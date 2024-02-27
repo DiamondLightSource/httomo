@@ -3,7 +3,8 @@ from typing import Optional
 from mpi4py import MPI
 
 from httomo.darks_flats import DarksFlatsFileConfig
-from httomo.loaders.standard_tomo_loader import AnglesConfig, StandardLoaderWrapper
+from httomo.loaders.standard_tomo_loader import StandardLoaderWrapper
+from httomo.loaders.types import AnglesConfig
 from httomo.preview import PreviewConfig
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.methods_repository_interface import MethodRepository

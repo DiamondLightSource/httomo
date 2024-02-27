@@ -9,11 +9,8 @@ from mpi4py import MPI
 from pytest_mock import MockerFixture
 
 from httomo.darks_flats import DarksFlatsFileConfig
-from httomo.loaders.standard_tomo_loader import (
-    RawAngles,
-    StandardTomoLoader,
-    UserDefinedAngles,
-)
+from httomo.loaders.standard_tomo_loader import StandardTomoLoader
+from httomo.loaders.types import RawAngles, UserDefinedAngles
 from httomo.preview import PreviewConfig, PreviewDimConfig
 
 

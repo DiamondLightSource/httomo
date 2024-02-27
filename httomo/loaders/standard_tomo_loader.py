@@ -1,30 +1,18 @@
 import weakref
 from pathlib import Path
-from typing import Literal, NamedTuple, Optional, Tuple, TypeAlias, Union
+from typing import Literal, Optional, Tuple
 
 import h5py
 import numpy as np
 from mpi4py import MPI
 
 from httomo.darks_flats import DarksFlatsFileConfig, get_darks_flats
+from httomo.loaders.types import AnglesConfig, UserDefinedAngles
 from httomo.preview import Preview, PreviewConfig
 from httomo.runner.dataset import DataSetBlock, FullFileDataSet
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
 from httomo.utils import Pattern, log_once
-
-
-class RawAngles(NamedTuple):
-    data_path: str
-
-
-class UserDefinedAngles(NamedTuple):
-    start_angle: int
-    stop_angle: int
-    angles_total: int
-
-
-AnglesConfig: TypeAlias = Union[RawAngles, UserDefinedAngles]
 
 
 class StandardTomoLoader(DataSetSource):

@@ -1,10 +1,10 @@
 import pytest
-from httomo.loaders.standard_tomo_loader import (
+
+from httomo.loaders.types import (
     AnglesConfig,
     RawAngles,
     UserDefinedAngles,
 )
-
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.transform_loader_params import (
     AnglesParam,
