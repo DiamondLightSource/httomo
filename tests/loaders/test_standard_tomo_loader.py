@@ -630,7 +630,7 @@ def test_standard_tomo_loader_generates_block_with_angles():
 
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[ANGLES_PATH]
-        angles = dataset[...]
+        angles = np.deg2rad(dataset[...])
 
     np.testing.assert_array_equal(block.angles, angles)
 
@@ -653,11 +653,11 @@ def test_standard_tomo_loader_user_defined_angles(
         stop_angle=180,
         angles_total=720,
     )
-    EXPECTED_ANGLES = np.linspace(
+    EXPECTED_ANGLES = np.deg2rad(np.linspace(
         USER_DEFINED_ANGLES.start_angle,
         USER_DEFINED_ANGLES.stop_angle,
         USER_DEFINED_ANGLES.angles_total,
-    )
+    ))
 
     with mock.patch(
         "httomo.darks_flats.get_darks_flats",

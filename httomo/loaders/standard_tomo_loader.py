@@ -68,7 +68,7 @@ class StandardTomoLoader(DataSetSource):
             next_process_chunk_index_slicing_dim,
         )
 
-        angles_arr = self._get_angles()
+        angles_arr = np.deg2rad(self._get_angles())
         darks_arr, flats_arr = get_darks_flats(darks, flats, preview_config)
 
         dataset: h5py.Dataset = self._get_data()
