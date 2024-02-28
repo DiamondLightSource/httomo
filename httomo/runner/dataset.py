@@ -1,7 +1,12 @@
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 from typing_extensions import TypeAlias
+from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.utils import gpu_enabled, xp
 import numpy as np
+
+from httomo.utils import make_3d_shape_from_shape
+from httomo.utils import make_3d_shape_from_array
+
 
 
 class DataSet:
@@ -227,30 +232,29 @@ class DataSet:
             return
         self._data = xp.asnumpy(self._data)
 
-    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
-        """Create a block from this dataset, which slices in dimension `dim`
-        starting at index `start`, and taking `length` elements (if it's not given,
-        it uses the remaining length of the block after `start`).
+    # def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
+    #     """Create a block from this dataset, which slices in dimension `dim`
+    #     starting at index `start`, and taking `length` elements (if it's not given,
+    #     it uses the remaining length of the block after `start`).
 
-        The returned block is a `DataSet` object itself, but it references the
-        original one for the darks/flats/angles arrays and re-use the GPU-cached
-        version of those if needed."""
-        if length is None:
-            length = self.chunk_shape[dim] - start
+    #     The returned block is a `DataSet` object itself, but it references the
+    #     original one for the darks/flats/angles arrays and re-use the GPU-cached
+    #     version of those if needed."""
+    #     if length is None:
+    #         length = self.chunk_shape[dim] - start
 
-        slices = [
-            slice(0, self.chunk_shape[0]),
-            slice(0, self.chunk_shape[1]),
-            slice(0, self.chunk_shape[2]),
-        ]
-        slices[dim] = slice(start, start + length)
+    #     slices = [
+    #         slice(0, self.chunk_shape[0]),
+    #         slice(0, self.chunk_shape[1]),
+    #         slice(0, self.chunk_shape[2]),
+    #     ]
+    #     slices[dim] = slice(start, start + length)
 
-        return DataSetBlock(
-            base=self,
-            data=self._data[slices[0], slices[1], slices[2]],
-            dim=dim,
-            start=start,
-        )
+    #     return DataSetBlock(
+    #         data=self._data[slices[0], slices[1], slices[2]],
+    #         dim=dim,
+    #         start=start,
+    #     )
 
     @property
     def is_block(self) -> bool:
@@ -321,7 +325,7 @@ class DataSet:
         return gpuarray
 
 
-class DataSetBlock(DataSet):
+class DataSetBlock:
     """Represents a slice/block of a dataset, as returned returned by `make_block`
     in a DataSet object. It is a DataSet (inherits from it) and users can mostly
     ignore the fact that it's just a view.
@@ -332,86 +336,169 @@ class DataSetBlock(DataSet):
 
     def __init__(
         self,
-        base: DataSet,
         data: np.ndarray,
-        dim: int,
-        start: int,
+        aux_data: AuxiliaryData,
+        slicing_dim: int = 0,
+        block_start: int = 0,
+        chunk_start: int = 0,
+        global_shape: Optional[Tuple[int, int, int]] = None,
+        chunk_shape: Optional[Tuple[int, int, int]] = None,
     ):
-        self._base = base
-        self._chunk_shape = base.chunk_shape
-        self._dim = dim
+        self._data = data
+        self._aux_data = aux_data
+        self._slicing_dim = slicing_dim
+        self._block_start = block_start
+        self._chunk_start = chunk_start
 
-        global_index = list(base.global_index)
-        global_index[dim] += start
+        if global_shape is None:
+            self._global_shape = make_3d_shape_from_array(data)
+        else:
+            self._global_shape = global_shape
+            
+        if chunk_shape is None:
+            self._chunk_shape = make_3d_shape_from_array(data)
+        else:
+            self._chunk_shape = chunk_shape
+
         chunk_index = [0, 0, 0]
-        chunk_index[dim] += start
-        self._chunk_index = tuple(chunk_index)
+        chunk_index[slicing_dim] += block_start
+        self._chunk_index = make_3d_shape_from_shape(chunk_index)
+        global_index = [0, 0, 0]
+        global_index[slicing_dim] += chunk_start + block_start
+        self._global_index = make_3d_shape_from_shape(global_index)
 
-        # we pass an empty size-0 array to base class, as we're not going to use these
-        # fields anyway here (we access the originals via self._base)
-        super().__init__(
-            data=data,
-            flats=np.empty((0,)),
-            darks=np.empty((0,)),
-            angles=np.empty((0,)),
-            global_shape=base.global_shape,
-            global_index=tuple(global_index),
-        )
-
+        self._check_inconsistencies()
+        
+    def _check_inconsistencies(self):
+        if self.chunk_index[self.slicing_dim] < 0:
+            raise ValueError("block start index must be >= 0")
+        if self.chunk_index[self.slicing_dim] + self.shape[self.slicing_dim] > self.chunk_shape[self.slicing_dim]:
+            raise ValueError("block spans beyond the chunk's boundaries")
+        if self.global_index[self.slicing_dim] < 0:
+            raise ValueError("chunk start index must be >= 0")
+        if self.global_index[self.slicing_dim] + self.shape[self.slicing_dim] > self.global_shape[self.slicing_dim]:
+            raise ValueError("chunk spans beyond the global data boundaries")
+        if any(self.chunk_shape[i] > self.global_shape[i] for i in range(3)):    
+            raise ValueError("chunk shape is larger than the global shape")
+        if any(self.shape[i] > self.chunk_shape[i] for i in range(3)):
+            raise ValueError("block shape is larger than the chunk shape")
+        if any(self.shape[i] != self.global_shape[i] for i in range(3) if i != self.slicing_dim):
+            raise ValueError("block shape inconsistent with non-slicing dims of global shape")
+        
+        assert not any(self.chunk_shape[i] != self.global_shape[i] for i in range(3) if i != self.slicing_dim)
+        
+        if len(self.angles) < self.global_shape[0]:
+            raise ValueError("angles array must be at least as long as projection dimension of the data")
+        
     @property
-    def is_block(self) -> bool:
-        return True
-
-    @property
-    def is_full(self) -> bool:
-        """Check if the dataset is the full global data"""
-        return False
+    def shape(self) -> Tuple[int, int, int]:
+        """Shape of the data in this block"""
+        return make_3d_shape_from_array(self._data)
 
     @property
     def chunk_index(self) -> Tuple[int, int, int]:
-        """The index of this dataset within the chunk handled by the current process"""
+        """The index of this block within the chunk handled by the current process"""
         return self._chunk_index
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Shape of the full chunk handled by the current process"""
         return self._chunk_shape
+    
+    @property
+    def global_index(self) -> Tuple[int, int, int]:
+        """The index of this block within the global data across all processes"""
+        return self._global_index
 
     @property
-    def data(self) -> DataSet.generic_array:
-        return super().data
-
-    @data.setter
-    def data(self, new_data: DataSet.generic_array):
-        super()._set_data(new_data)
-        chunk_shape = np.array(new_data.shape)
-        chunk_shape[self._dim] = self._base.chunk_shape[self._dim]
-        self._chunk_shape = (chunk_shape[0], chunk_shape[1], chunk_shape[2])
+    def global_shape(self) -> Tuple[int, int, int]:
+        """Shape of the global data across all processes"""
+        return self._global_shape
+    
+    @property
+    def is_cpu(self) -> bool:
+        return getattr(self._data, "device", None) is None
+    
+    @property
+    def is_gpu(self) -> bool:
+        return not self.is_cpu
+    
+    @property
+    def angles(self) -> np.ndarray:
+        return self._aux_data.get_angles()
+    
+    @property
+    def angles_radians(self) -> np.ndarray:
+        return self.angles
 
     @property
     def is_last_in_chunk(self) -> bool:
         """Check if the current dataset is the final one for the chunk handled by the current process"""
         return (
-            self.chunk_index[self._dim] + self.shape[self._dim]
-            == self.chunk_shape[self._dim]
+            self.chunk_index[self._slicing_dim] + self.shape[self._slicing_dim]
+            == self.chunk_shape[self._slicing_dim]
         )
 
     @property
-    def base(self) -> DataSet:
-        """Get the original (unblocked) dataset"""
-        return self._base
+    def slicing_dim(self) -> int:
+        return self._slicing_dim
+    
+    def _empty_aux_array(self):
+        empty_shape = list(self._data.shape)
+        empty_shape[self.slicing_dim] = 0
+        return np.empty_like(self._data, shape=empty_shape)
 
-    def set_value(self, field: str, new_data: DataSet.generic_array):
-        raise ValueError(f"Cannot update field {field} in a block/slice dataset")
+    @property
+    def data(self) -> DataSet.generic_array:
+        return self._data
 
-    def get_value(
-        self, field: str, is_gpu: Optional[bool] = None
-    ) -> DataSet.generic_array:
-        return self._base.get_value(field, self.is_gpu if is_gpu is None else is_gpu)
+    @data.setter
+    def data(self, new_data: DataSet.generic_array):
+        global_shape = list(self._global_shape)
+        chunk_shape = list(self._chunk_shape)
+        for i in range(3):
+            if i != self.slicing_dim:
+                global_shape[i] = new_data.shape[i]
+                chunk_shape[i] = new_data.shape[i]
+            elif self._data.shape[i] != new_data.shape[i]:
+                raise ValueError("shape mismatch in slicing dimension")
+                
+        self._data = new_data
+        self._global_shape = make_3d_shape_from_shape(global_shape)
+        self._chunk_shape = make_3d_shape_from_shape(chunk_shape)
 
-    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
-        raise ValueError("Cannot slice a dataset that is already a slice")
+    @property
+    def darks(self) -> DataSet.generic_array:
+        darks = self._aux_data.get_darks(self.is_gpu)
+        if darks is None:
+            darks = self._empty_aux_array()
+        return darks
 
+    @darks.setter
+    def darks(self, darks: DataSet.generic_array):
+        self._aux_data.set_darks(darks)
+    
+    @property
+    def flats(self) -> DataSet.generic_array:
+        flats = self._aux_data.get_flats(self.is_gpu)
+        if flats is None:
+            flats = self._empty_aux_array()
+        return flats
+
+    @flats.setter
+    def flats(self, flats: DataSet.generic_array):
+        self._aux_data.set_flats(flats)
+
+    def to_gpu(self):
+        if not gpu_enabled:
+            raise ValueError("no GPU available")
+        # from doc: if already on GPU, no copy is taken
+        self._data = xp.asarray(self.data, order="C")        
+
+    def to_cpu(self):
+        if not gpu_enabled:
+            return
+        self._data = xp.asnumpy(self.data, order="C")
 
 class FullFileDataSet(DataSet):
     generic_array = DataSet.generic_array
@@ -496,32 +583,32 @@ class FullFileDataSet(DataSet):
             + new_data.shape[2],
         ] = new_data
 
-    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
-        if length is None:
-            length = self.chunk_shape[dim] - start
+    # def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
+    #     if length is None:
+    #         length = self.chunk_shape[dim] - start
 
-        slices = [
-            slice(
-                self.global_index[0] + self._data_offset[0],
-                self.global_index[0] + self._data_offset[0] + self.chunk_shape[0],
-            ),
-            slice(
-                self.global_index[1] + self._data_offset[1],
-                self.global_index[1] + self._data_offset[1] + self.chunk_shape[1],
-            ),
-            slice(
-                self.global_index[2] + self._data_offset[2],
-                self.global_index[2] + self._data_offset[2] + self.chunk_shape[2],
-            ),
-        ]
-        slices[dim] = slice(
-            self.global_index[dim] + self._data_offset[dim] + start,
-            self.global_index[dim] + self._data_offset[dim] + start + length,
-        )
+    #     slices = [
+    #         slice(
+    #             self.global_index[0] + self._data_offset[0],
+    #             self.global_index[0] + self._data_offset[0] + self.chunk_shape[0],
+    #         ),
+    #         slice(
+    #             self.global_index[1] + self._data_offset[1],
+    #             self.global_index[1] + self._data_offset[1] + self.chunk_shape[1],
+    #         ),
+    #         slice(
+    #             self.global_index[2] + self._data_offset[2],
+    #             self.global_index[2] + self._data_offset[2] + self.chunk_shape[2],
+    #         ),
+    #     ]
+    #     slices[dim] = slice(
+    #         self.global_index[dim] + self._data_offset[dim] + start,
+    #         self.global_index[dim] + self._data_offset[dim] + start + length,
+    #     )
 
-        return DataSetBlock(
-            base=self,
-            data=self._data[tuple(slices)],
-            dim=dim,
-            start=start,
-        )
+    #     return DataSetBlock(
+    #         base=self,
+    #         data=self._data[tuple(slices)],
+    #         dim=dim,
+    #         start=start,
+    #     )
