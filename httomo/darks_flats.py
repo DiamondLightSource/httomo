@@ -18,7 +18,7 @@ def get_darks_flats(
     flats_config: DarksFlatsFileConfig,
     preview_config: PreviewConfig,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    def get_together():
+    def get_together() -> Tuple[np.ndarray, np.ndarray]:
         with h5py.File(darks_config.file, "r") as f:
             darks_indices = np.where(f[darks_config.image_key_path][:] == 2)[0]
             flats_indices = np.where(f[flats_config.image_key_path][:] == 1)[0]

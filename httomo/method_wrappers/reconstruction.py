@@ -16,17 +16,17 @@ class ReconstructionWrapper(GenericMethodWrapper):
     def should_select_this_class(cls, module_path: str, method_name: str) -> bool:
         return module_path.endswith(".algorithm")
 
-    def _preprocess_data(self, dataset: DataSetBlock) -> DataSetBlock:
+    def _preprocess_data(self, block: DataSetBlock) -> DataSetBlock:
         # this is essential for the angles cutting below to be valid
         assert self.pattern == Pattern.sinogram, "reconstruction methods must be sinogram"
         
         # for 360 degrees data the angular dimension will be truncated while angles are not.
         # Truncating angles if the angular dimension has got a different size
-        datashape0 = dataset.data.shape[0]
-        if datashape0 != len(dataset.angles_radians):
-            dataset.angles_radians = dataset.angles_radians[0:datashape0]
-        self._input_shape = dataset.data.shape
-        return super()._preprocess_data(dataset)
+        datashape0 = block.data.shape[0]
+        if datashape0 != len(block.angles_radians):
+            block.angles_radians = block.angles_radians[0:datashape0]
+        self._input_shape = block.data.shape
+        return super()._preprocess_data(block)
 
     def _build_kwargs(
         self,

@@ -109,7 +109,7 @@ class TaskRunner:
                 slicing_dim_section,
                 (0, 0),
                 self.source.chunk_shape[slicing_dim_section],
-                self.source.chunk_index[slicing_dim_section],
+                self.source.global_index[slicing_dim_section],
                 self.comm,
                 self.reslice_dir,
             )

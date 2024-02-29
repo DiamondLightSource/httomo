@@ -623,3 +623,11 @@ def test_returns_flats_on_gpu_when_the_data_is_there():
 
     assert block.darks.device == xp.cuda.Device()
     assert block.flats.device == xp.cuda.Device()
+
+
+def test_attributes_array(dummy_block: DataSetBlock):
+    expected = set(
+        ["data", "flats", "darks", "angles", "angles_radians", "dark", "flat"]
+    )
+    actual = set(dir(dummy_block))
+    assert actual == expected

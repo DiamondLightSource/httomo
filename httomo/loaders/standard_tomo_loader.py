@@ -100,7 +100,7 @@ class StandardTomoLoader(DataSetSource):
         return self._global_shape
 
     @property
-    def chunk_index(self) -> Tuple[int, int, int]:
+    def global_index(self) -> Tuple[int, int, int]:
         return self._chunk_index
 
     def _calculate_chunk_index_slicing_dim(
