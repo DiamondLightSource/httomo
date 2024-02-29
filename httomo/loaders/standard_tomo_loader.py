@@ -43,9 +43,10 @@ class StandardTomoLoader(DataSetSource):
         self._slicing_dim = slicing_dim
         self._comm = comm
         self._h5file = h5py.File(in_file, "r")
+        self._data: h5py.Dataset = self._get_data()
         self._preview = Preview(
             preview_config=preview_config,
-            dataset=self._h5file[data_path],
+            dataset=self._data,
             image_key=(
                 self._h5file[image_key_path] if image_key_path is not None else None
             ),
@@ -75,7 +76,6 @@ class StandardTomoLoader(DataSetSource):
         )
 
         self._aux_data = self._setup_aux_data(darks, flats)
-        self._data: h5py.Dataset = self._get_data()
         self._log_info()
         weakref.finalize(self, self.finalize)
 
