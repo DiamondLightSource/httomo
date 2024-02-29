@@ -232,29 +232,36 @@ class DataSet:
             return
         self._data = xp.asnumpy(self._data)
 
-    # def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
-    #     """Create a block from this dataset, which slices in dimension `dim`
-    #     starting at index `start`, and taking `length` elements (if it's not given,
-    #     it uses the remaining length of the block after `start`).
+    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
+        """Create a block from this dataset, which slices in dimension `dim`
+        starting at index `start`, and taking `length` elements (if it's not given,
+        it uses the remaining length of the block after `start`).
 
-    #     The returned block is a `DataSet` object itself, but it references the
-    #     original one for the darks/flats/angles arrays and re-use the GPU-cached
-    #     version of those if needed."""
-    #     if length is None:
-    #         length = self.chunk_shape[dim] - start
+        The returned block is a `DataSet` object itself, but it references the
+        original one for the darks/flats/angles arrays and re-use the GPU-cached
+        version of those if needed.
+        
+        This is a placeholder method for the time being.
+        """
+        if length is None:
+            length = self.chunk_shape[dim] - start
 
-    #     slices = [
-    #         slice(0, self.chunk_shape[0]),
-    #         slice(0, self.chunk_shape[1]),
-    #         slice(0, self.chunk_shape[2]),
-    #     ]
-    #     slices[dim] = slice(start, start + length)
+        slices = [
+            slice(0, self.chunk_shape[0]),
+            slice(0, self.chunk_shape[1]),
+            slice(0, self.chunk_shape[2]),
+        ]
+        slices[dim] = slice(start, start + length)
 
-    #     return DataSetBlock(
-    #         data=self._data[slices[0], slices[1], slices[2]],
-    #         dim=dim,
-    #         start=start,
-    #     )
+        return DataSetBlock(
+            data=self._data[slices[0], slices[1], slices[2]],
+            slicing_dim=dim,
+            block_start=start,
+            chunk_start=self.global_index[dim],
+            global_shape=self.global_shape,
+            chunk_shape=self.chunk_shape,
+            aux_data=AuxiliaryData(angles=self.angles, darks=self.get_value("darks", self.is_gpu), flats=self.get_value("flats", self.is_gpu))
+        )
 
     @property
     def is_block(self) -> bool:
@@ -427,9 +434,17 @@ class DataSetBlock:
     def angles(self) -> np.ndarray:
         return self._aux_data.get_angles()
     
+    @angles.setter
+    def angles(self, new_angles: np.ndarray):
+        self._aux_data.set_angles(new_angles)
+    
     @property
     def angles_radians(self) -> np.ndarray:
         return self.angles
+    
+    @angles_radians.setter
+    def angles_radians(self, new_angles: np.ndarray):
+        self.angles = new_angles
 
     @property
     def is_last_in_chunk(self) -> bool:
@@ -477,6 +492,15 @@ class DataSetBlock:
     @darks.setter
     def darks(self, darks: DataSet.generic_array):
         self._aux_data.set_darks(darks)
+        
+    # alias
+    @property
+    def dark(self) -> DataSet.generic_array:
+        return self.darks
+    
+    @dark.setter
+    def dark(self, darks: DataSet.generic_array):
+        self.darks = darks
     
     @property
     def flats(self) -> DataSet.generic_array:
@@ -488,6 +512,15 @@ class DataSetBlock:
     @flats.setter
     def flats(self, flats: DataSet.generic_array):
         self._aux_data.set_flats(flats)
+        
+    # alias
+    @property
+    def flat(self) -> DataSet.generic_array:
+        return self.flats
+    
+    @flat.setter
+    def flat(self, flats: DataSet.generic_array):
+        self.flats = flats
 
     def to_gpu(self):
         if not gpu_enabled:
@@ -583,32 +616,35 @@ class FullFileDataSet(DataSet):
             + new_data.shape[2],
         ] = new_data
 
-    # def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
-    #     if length is None:
-    #         length = self.chunk_shape[dim] - start
+    def make_block(self, dim: int, start: int = 0, length: Optional[int] = None):
+        if length is None:
+            length = self.chunk_shape[dim] - start
 
-    #     slices = [
-    #         slice(
-    #             self.global_index[0] + self._data_offset[0],
-    #             self.global_index[0] + self._data_offset[0] + self.chunk_shape[0],
-    #         ),
-    #         slice(
-    #             self.global_index[1] + self._data_offset[1],
-    #             self.global_index[1] + self._data_offset[1] + self.chunk_shape[1],
-    #         ),
-    #         slice(
-    #             self.global_index[2] + self._data_offset[2],
-    #             self.global_index[2] + self._data_offset[2] + self.chunk_shape[2],
-    #         ),
-    #     ]
-    #     slices[dim] = slice(
-    #         self.global_index[dim] + self._data_offset[dim] + start,
-    #         self.global_index[dim] + self._data_offset[dim] + start + length,
-    #     )
+        slices = [
+            slice(
+                self.global_index[0] + self._data_offset[0],
+                self.global_index[0] + self._data_offset[0] + self.chunk_shape[0],
+            ),
+            slice(
+                self.global_index[1] + self._data_offset[1],
+                self.global_index[1] + self._data_offset[1] + self.chunk_shape[1],
+            ),
+            slice(
+                self.global_index[2] + self._data_offset[2],
+                self.global_index[2] + self._data_offset[2] + self.chunk_shape[2],
+            ),
+        ]
+        slices[dim] = slice(
+            self.global_index[dim] + self._data_offset[dim] + start,
+            self.global_index[dim] + self._data_offset[dim] + start + length,
+        )
 
-    #     return DataSetBlock(
-    #         base=self,
-    #         data=self._data[tuple(slices)],
-    #         dim=dim,
-    #         start=start,
-    #     )
+        return DataSetBlock(
+            data=self._data[tuple(slices)],
+            slicing_dim=dim,
+            block_start=start,
+            chunk_start=self.global_index[dim],
+            aux_data=AuxiliaryData(angles=self.angles, darks=self.darks, flats=self.flats),
+            global_shape=self.global_shape,
+            chunk_shape=self.chunk_shape,
+        )

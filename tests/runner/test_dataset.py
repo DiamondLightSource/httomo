@@ -251,9 +251,7 @@ def test_can_slice_dataset_to_blocks(
     )
     block = dataset.make_block(dim, start, length)
 
-    assert block.is_block is True
     assert dataset.is_block is False
-    assert block.base.shape == dataset.shape
     assert block.global_shape == dataset.shape
     assert block.chunk_shape == dataset.shape
     assert dataset.chunk_shape == dataset.shape
@@ -261,8 +259,6 @@ def test_can_slice_dataset_to_blocks(
     assert dataset.chunk_index == (0, 0, 0)
     assert dataset.is_last_in_chunk is True
     assert block.is_last_in_chunk is False
-    assert block.is_full is False
-    assert dataset.is_full is False
     if dim == 0:
         np.testing.assert_array_equal(
             dataset.data[start : start + length, :, :], block.data
@@ -292,59 +288,6 @@ def test_is_last_block_in_chunk_property(dataset: DataSet):
     assert dataset.is_last_in_chunk is True
     assert dataset.make_block(0, dataset.shape[0] - 2, 2).is_last_in_chunk is True
     assert dataset.make_block(0, dataset.shape[0] - 4, 2).is_last_in_chunk is False
-
-
-def test_cannot_slice_a_block(dataset: DataSet):
-    block = dataset.make_block(0, 0, 2)
-    with pytest.raises(ValueError):
-        block.make_block(0, 0, 1)
-
-
-@pytest.mark.parametrize(
-    "field", ["darks", "flats", "angles", "angles_radians", "dark", "flat"]
-)
-def test_cannot_reset_darks_flats_angles_on_a_block(dataset: DataSet, field: str):
-    block = dataset.make_block(0, 0, 2)
-    block.unlock()
-    dataset.unlock()
-    with pytest.raises(ValueError):
-        setattr(block, field, np.ones((10, 10), dtype=np.float32))
-
-
-@pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")
-def test_a_block_reuses_base_cached_gpu_fields(dataset: DataSet):
-    with xp.cuda.Device(0):
-        dataset.to_gpu()
-        darks_orig = dataset.darks
-        flats_orig = dataset.flats
-        dataset.to_cpu()
-
-        block = dataset.make_block(0, 1, 2)
-        block.to_gpu()
-        darks_new = block.darks
-        flats_new = block.flats
-
-        assert block.is_gpu is True
-        # check that they are on the right device
-        assert block.data.device.id == 0
-        assert block.flats.device.id == 0
-        assert block.darks.device.id == 0
-        # check that cupy arrays are pointing to the same GPU memory
-        assert darks_orig.data == darks_new.data
-        assert flats_orig.data == flats_new.data
-
-
-@pytest.mark.skipif(not gpu_enabled, reason="skipped as cupy is not available")
-def test_block_caches_in_base_on_gpu_access(dataset: DataSet):
-    with xp.cuda.Device(0):
-        block = dataset.make_block(0, 1, 2)
-        block.to_gpu()
-        darks_new = block.darks
-
-        dataset.to_gpu()
-        darks_orig = dataset.darks
-
-        assert darks_orig.data == darks_new.data
 
 
 def test_setting_data_in_block_updates_global_shape(dataset):
