@@ -398,6 +398,10 @@ class DataSetBlock:
             raise ValueError("angles array must be at least as long as projection dimension of the data")
         
     @property
+    def aux_data(self) -> AuxiliaryData:
+        return self._aux_data
+    
+    @property
     def shape(self) -> Tuple[int, int, int]:
         """Shape of the data in this block"""
         return make_3d_shape_from_array(self._data)

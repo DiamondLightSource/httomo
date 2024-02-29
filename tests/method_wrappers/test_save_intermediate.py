@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 
-from httomo.runner.dataset import DataSet, DataSetBlock
+from httomo.runner.dataset import DataSetBlock
 import h5py
 from mpi4py import MPI
 from httomo.runner.loader import LoaderInterface
@@ -13,7 +13,7 @@ import httomo
 
 
 def test_save_intermediate(
-    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: Path
+    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: Path
 ):
     loader: LoaderInterface = mocker.create_autospec(
         LoaderInterface, instance=True, detector_x=10, detector_y=20
@@ -48,10 +48,9 @@ def test_save_intermediate(
         prev_method=prev_method,
     )
     assert isinstance(wrp, SaveIntermediateFilesWrapper)
-    block = dummy_dataset.make_block(0)
-    res = wrp.execute(block)
+    res = wrp.execute(dummy_block)
 
-    assert res == block
+    assert res == dummy_block
 
 def test_save_intermediate_defaults_out_dir(
     mocker: MockerFixture, tmp_path: Path
