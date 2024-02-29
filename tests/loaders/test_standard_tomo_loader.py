@@ -54,7 +54,7 @@ def test_standard_tomo_loader_gives_h5py_dataset():
     ):
         loader = make_standard_tomo_loader()
 
-    assert isinstance(loader._data._data, h5py.Dataset)
+    assert isinstance(loader._data, h5py.Dataset)
 
 
 def test_standard_tomo_loader_get_slicing_dim():

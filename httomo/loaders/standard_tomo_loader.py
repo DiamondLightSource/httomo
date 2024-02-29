@@ -9,7 +9,8 @@ from mpi4py import MPI
 from httomo.darks_flats import DarksFlatsFileConfig, get_darks_flats
 from httomo.loaders.types import AnglesConfig, UserDefinedAngles
 from httomo.preview import Preview, PreviewConfig
-from httomo.runner.dataset import DataSetBlock, FullFileDataSet
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
 from httomo.utils import Pattern, log_once
@@ -42,9 +43,10 @@ class StandardTomoLoader(DataSetSource):
         self._slicing_dim = slicing_dim
         self._comm = comm
         self._h5file = h5py.File(in_file, "r")
+        self._data: h5py.Dataset = self._get_data()
         self._preview = Preview(
             preview_config=preview_config,
-            dataset=self._h5file[data_path],
+            dataset=self._data,
             image_key=(
                 self._h5file[image_key_path] if image_key_path is not None else None
             ),
@@ -52,6 +54,11 @@ class StandardTomoLoader(DataSetSource):
 
         self._data_indices = self._preview.data_indices
         self._global_shape = self._preview.global_shape
+        self._data_offset = (
+            self._data_indices[0],
+            self._preview.config.detector_y.start,
+            self._preview.config.detector_x.start,
+        )
 
         chunk_index_slicing_dim = self._calculate_chunk_index_slicing_dim(
             comm.rank,
@@ -68,39 +75,21 @@ class StandardTomoLoader(DataSetSource):
             next_process_chunk_index_slicing_dim,
         )
 
-        angles_arr = np.deg2rad(self._get_angles())
-        darks_arr, flats_arr = get_darks_flats(darks, flats, preview_config)
-
-        dataset: h5py.Dataset = self._get_data()
-        self._data = FullFileDataSet(
-            data=dataset,
-            angles=angles_arr,
-            flats=flats_arr,
-            darks=darks_arr,
-            global_index=self._chunk_index,
-            chunk_shape=self._chunk_shape,
-            shape=self._global_shape,
-            data_offset=(
-                self._data_indices[0],
-                self._preview.config.detector_y.start,
-                self._preview.config.detector_x.start,
-            ),
-        )
-
+        self._aux_data = self._setup_aux_data(darks, flats)
         self._log_info()
         weakref.finalize(self, self.finalize)
 
     @property
     def dtype(self) -> np.dtype:
-        return self._data.data.dtype
+        return self._data.dtype
 
     @property
     def flats(self) -> np.ndarray:
-        return self._data.flats
+        return self._aux_data.get_flats()
 
     @property
     def darks(self) -> np.ndarray:
-        return self._data.darks
+        return self._aux_data.get_darks()
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
@@ -155,8 +144,39 @@ class StandardTomoLoader(DataSetSource):
         )
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
-        block = self._data.make_block(self._slicing_dim, start, length)
-        return block
+        slices = [
+            slice(
+                self._data_offset[0] + self._chunk_index[0],
+                self._data_offset[0] + self._chunk_index[0] + self.chunk_shape[0],
+            ),
+            slice(
+                self._data_offset[1] + self._chunk_index[1],
+                self._data_offset[1] + self._chunk_index[1] + self.chunk_shape[1],
+            ),
+            slice(
+                self._data_offset[2] + self._chunk_index[2],
+                self._data_offset[2] + self._chunk_index[2] + self.chunk_shape[2],
+            ),
+        ]
+        slices[self._slicing_dim] = slice(
+            self._data_offset[self._slicing_dim]
+            + self._chunk_index[self._slicing_dim]
+            + start,
+            self._data_offset[self._slicing_dim]
+            + self._chunk_index[self._slicing_dim]
+            + start
+            + length,
+        )
+
+        return DataSetBlock(
+            data=self._data[slices[0], slices[1], slices[2]],
+            aux_data=self._aux_data,
+            slicing_dim=self._slicing_dim,
+            block_start=start,
+            chunk_start=self._chunk_index[self._slicing_dim],
+            global_shape=self._global_shape,
+            chunk_shape=self._chunk_shape,
+        )
 
     def _get_angles(self) -> np.ndarray:
         if isinstance(self._angles, UserDefinedAngles):
@@ -174,9 +194,26 @@ class StandardTomoLoader(DataSetSource):
     def _get_data(self) -> h5py.Dataset:
         return self._h5file[self._data_path]
 
+    @property
+    def aux_data(self) -> AuxiliaryData:
+        return self._aux_data
+
+    def _setup_aux_data(
+        self,
+        darks_config: DarksFlatsFileConfig,
+        flats_config: DarksFlatsFileConfig,
+    ) -> AuxiliaryData:
+        angles_arr = np.deg2rad(self._get_angles())
+        darks_arr, flats_arr = get_darks_flats(
+            darks_config,
+            flats_config,
+            self._preview.config,
+        )
+        return AuxiliaryData(angles=angles_arr, darks=darks_arr, flats=flats_arr)
+
     def _log_info(self) -> None:
         log_once(
-            f"The full dataset shape is {self._data._data.shape}",
+            f"The full dataset shape is {self._data.shape}",
             comm=self._comm,
         )
         log_once(
@@ -198,7 +235,7 @@ class StandardTomoLoader(DataSetSource):
             comm=self._comm,
         )
         log_once(
-            f"Data shape is {self._global_shape} of type {self._data.data.dtype}",
+            f"Data shape is {self._global_shape} of type {self._data.dtype}",
             comm=self._comm,
         )
 
