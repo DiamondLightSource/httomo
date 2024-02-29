@@ -10,7 +10,7 @@ from httomo.darks_flats import DarksFlatsFileConfig, get_darks_flats
 from httomo.loaders.types import AnglesConfig, UserDefinedAngles
 from httomo.preview import Preview, PreviewConfig
 from httomo.runner.auxiliary_data import AuxiliaryData
-from httomo.runner.dataset import DataSetBlock, FullFileDataSet
+from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
 from httomo.utils import Pattern, log_once
@@ -76,29 +76,13 @@ class StandardTomoLoader(DataSetSource):
             darks=darks_arr,
             flats=flats_arr,
         )
-
-        dataset: h5py.Dataset = self._get_data()
-        self._data = FullFileDataSet(
-            data=dataset,
-            angles=angles_arr,
-            flats=flats_arr,
-            darks=darks_arr,
-            global_index=self._chunk_index,
-            chunk_shape=self._chunk_shape,
-            shape=self._global_shape,
-            data_offset=(
-                self._data_indices[0],
-                self._preview.config.detector_y.start,
-                self._preview.config.detector_x.start,
-            ),
-        )
-
+        self._data: h5py.Dataset = self._get_data()
         self._log_info()
         weakref.finalize(self, self.finalize)
 
     @property
     def dtype(self) -> np.dtype:
-        return self._data.data.dtype
+        return self._data.dtype
 
     @property
     def flats(self) -> np.ndarray:
@@ -161,8 +145,25 @@ class StandardTomoLoader(DataSetSource):
         )
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
-        block = self._data.make_block(self._slicing_dim, start, length)
-        return block
+        slices = [
+            slice(self._chunk_index[0], self._chunk_index[0] + self.chunk_shape[0]),
+            slice(self._chunk_index[1], self._chunk_index[1] + self.chunk_shape[1]),
+            slice(self._chunk_index[2], self._chunk_index[2] + self.chunk_shape[2]),
+        ]
+        slices[self._slicing_dim] = slice(
+            self._chunk_index[self._slicing_dim] + start,
+            self._chunk_index[self._slicing_dim] + start + length,
+        )
+
+        return DataSetBlock(
+            data=self._data[slices[0], slices[1], slices[2]],
+            aux_data=self._aux_data,
+            slicing_dim=self._slicing_dim,
+            block_start=start,
+            chunk_start=self._chunk_index[self._slicing_dim],
+            global_shape=self._global_shape,
+            chunk_shape=self._chunk_shape,
+        )
 
     def _get_angles(self) -> np.ndarray:
         if isinstance(self._angles, UserDefinedAngles):
@@ -182,7 +183,7 @@ class StandardTomoLoader(DataSetSource):
 
     def _log_info(self) -> None:
         log_once(
-            f"The full dataset shape is {self._data._data.shape}",
+            f"The full dataset shape is {self._data.shape}",
             comm=self._comm,
         )
         log_once(
@@ -204,7 +205,7 @@ class StandardTomoLoader(DataSetSource):
             comm=self._comm,
         )
         log_once(
-            f"Data shape is {self._global_shape} of type {self._data.data.dtype}",
+            f"Data shape is {self._global_shape} of type {self._data.dtype}",
             comm=self._comm,
         )
 
