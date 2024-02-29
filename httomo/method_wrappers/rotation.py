@@ -95,33 +95,33 @@ class RotationWrapper(GenericMethodWrapper):
             )
             return None
 
-    def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
+    def _run_method(self, block: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
         assert "ind" in args
         slice_for_cor = args["ind"]
         # append to internal sinogram, until we have the last block
         if self.sino is None:
             self.sino = np.empty(
-                (dataset.chunk_shape[0], dataset.chunk_shape[2]), dtype=np.float32
+                (block.chunk_shape[0], block.chunk_shape[2]), dtype=np.float32
             )
-        data = dataset.data[:, slice_for_cor, :]
-        if dataset.is_gpu:
-            data = data.get()
+        data = block.data[:, slice_for_cor, :]
+        if block.is_gpu:
+            data = xp.asnumpy(data)
         self.sino[
-            dataset.chunk_index[0] : dataset.chunk_index[0] + dataset.shape[0], :
+            block.chunk_index[0] : block.chunk_index[0] + block.shape[0], :
         ] = data
 
-        if not dataset.is_last_in_chunk:  # exit if we didn't process all blocks yet
-            return dataset
+        if not block.is_last_in_chunk:  # exit if we didn't process all blocks yet
+            return block
 
-        sino_slice = self._gather_sino_slice(dataset.base.shape)
+        sino_slice = self._gather_sino_slice(block.chunk_shape)
 
         # now calculate the center of rotation on rank 0 and broadcast
         res: Optional[Union[tuple, float, np.float32]] = None
         if self.comm.rank == 0:
             sino_slice = self.normalize_sino(
                 sino_slice,
-                dataset.flats[:, slice_for_cor, :],
-                dataset.darks[:, slice_for_cor, :],
+                block.flats[:, slice_for_cor, :],
+                block.darks[:, slice_for_cor, :],
             )
             if self.cupyrun:
                 sino_slice = xp.asarray(sino_slice)
@@ -133,7 +133,7 @@ class RotationWrapper(GenericMethodWrapper):
 
         cor_str = f"The center of rotation for sinogram is {res}"
         log_rank(cor_str, comm=self.comm)
-        return self._process_return_type(res, dataset)
+        return self._process_return_type(res, block)
 
     @classmethod
     def normalize_sino(
@@ -157,7 +157,7 @@ class RotationWrapper(GenericMethodWrapper):
         return sino[:, np.newaxis, :]
 
     def _process_return_type(
-        self, ret: Any, input_dataset: DataSetBlock
+        self, ret: Any, input_block: DataSetBlock
     ) -> DataSetBlock:
         if type(ret) == tuple:
             # cor, overlap, side, overlap_position - from find_center_360
@@ -167,4 +167,4 @@ class RotationWrapper(GenericMethodWrapper):
             self._side_output["overlap_position"] = float(ret[3])  # float
         else:
             self._side_output["cor"] = float(ret)
-        return input_dataset
+        return input_block

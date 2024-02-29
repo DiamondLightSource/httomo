@@ -113,13 +113,13 @@ class MethodWrapper(Protocol):
         ... # pragma: nocover
         
 
-    def execute(self, dataset: DataSetBlock) -> DataSetBlock:
+    def execute(self, block: DataSetBlock) -> DataSetBlock:
         """Execute the method.
 
         Parameters
         ----------
 
-        dataset: DataSetBlock
+        block: DataSetBlock
             A numpy or cupy dataset, mutable (method might work in-place).
 
         Returns

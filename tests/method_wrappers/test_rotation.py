@@ -2,7 +2,8 @@ from typing import Union
 import numpy as np
 from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.rotation import RotationWrapper
-from httomo.runner.dataset import DataSet
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.runner.dataset import DataSetBlock
 from httomo.utils import Pattern, gpu_enabled, xp
 from ..testing_utils import make_mock_repo
 
@@ -27,13 +28,37 @@ def test_rotation_fails_with_projection_method(mocker: MockerFixture):
         )
 
 
-def test_rotation_accumulates_blocks(
-    mocker: MockerFixture, dummy_dataset: DataSet
-):
+def test_rotation_accumulates_blocks(mocker: MockerFixture):
+    GLOBAL_SHAPE = (10, 10, 30)
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    aux_data = AuxiliaryData(
+        angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32),
+        darks=2.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), np.float32),
+        flats=3.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), np.float32),
+    )
+    b1 = DataSetBlock(
+        data=global_data[0 : GLOBAL_SHAPE[0] // 2, :, :],
+        aux_data=aux_data,
+        block_start=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_shape=GLOBAL_SHAPE,
+    )
+    b2 = DataSetBlock(
+        data=global_data[GLOBAL_SHAPE[0] // 2 :, :, :],
+        aux_data=aux_data,
+        block_start=GLOBAL_SHAPE[0] // 2,
+        global_shape=GLOBAL_SHAPE,
+        chunk_shape=GLOBAL_SHAPE,
+    )
+
     class FakeModule:
         def rotation_tester(data, ind=None):
             assert data.ndim == 2  # for 1 slice only
-            np.testing.assert_array_equal(data, dummy_dataset.data[:, 4, :])
+            np.testing.assert_array_equal(
+                data, global_data[:, (GLOBAL_SHAPE[1] - 1) // 2, :]
+            )
             return 42.0
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
@@ -48,14 +73,7 @@ def test_rotation_accumulates_blocks(
     normalize = mocker.patch.object(
         wrp, "normalize_sino", side_effect=lambda sino, flats, darks: sino
     )
-    # generate varying numbers so the comparison above works
-    dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
-        dummy_dataset.shape
-    )
-    b1 = dummy_dataset.make_block(0, 0, dummy_dataset.shape[0] // 2)
-    b2 = dummy_dataset.make_block(
-        0, dummy_dataset.shape[0] // 2, dummy_dataset.shape[0] // 2
-    )
+
     wrp.execute(b1)
     normalize.assert_not_called()
     wrp.execute(b2)
@@ -68,11 +86,31 @@ def test_rotation_accumulates_blocks(
 @pytest.mark.parametrize("ind_par", ["mid", 2, None])
 def test_rotation_gathers_single_sino_slice(
     mocker: MockerFixture,
-    dummy_dataset: DataSet,
     rank: int,
     ind_par: Union[str, int, None],
     gpu: bool,
 ):
+    GLOBAL_SHAPE = (10, 10, 30)
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    rank0_data = global_data[:GLOBAL_SHAPE[0]//2, :, :]
+    rank1_data = global_data[GLOBAL_SHAPE[0]//2:, :, :]
+    aux_data = AuxiliaryData(
+        angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32),
+        darks=2.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), np.float32),
+        flats=3.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), np.float32),
+    )
+    block = DataSetBlock(
+        data=rank0_data if rank == 0 else rank1_data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        block_start=0,
+        chunk_start=0 if rank ==0 else GLOBAL_SHAPE[1]//2,
+        global_shape=GLOBAL_SHAPE,
+        chunk_shape=(GLOBAL_SHAPE[0]//2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]),
+    )
+    
     class FakeModule:
         def rotation_tester(data, ind=None):
             assert rank == 0  # for rank 1, it shouldn't be called
@@ -80,11 +118,11 @@ def test_rotation_gathers_single_sino_slice(
             assert ind == 0
             if ind_par == "mid" or ind_par is None:
                 xp.testing.assert_array_equal(
-                    dummy_dataset.data[:, (dummy_dataset.data.shape[1] - 1) // 2, :],
+                    global_data[:, (GLOBAL_SHAPE[1] - 1) // 2, :],
                     data,
                 )
             else:
-                xp.testing.assert_array_equal(dummy_dataset.data[:, ind_par, :], data)
+                xp.testing.assert_array_equal(global_data[:, ind_par, :], data)
             return 42.0
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
@@ -98,24 +136,29 @@ def test_rotation_gathers_single_sino_slice(
         comm,
     )
     assert isinstance(wrp, RotationWrapper)
+    
     if ind_par is not None:
         wrp["ind"] = ind_par
-    dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
-        dummy_dataset.shape
-    )
+    
     if gpu:
-        dummy_dataset.to_gpu()
-    mocker.patch.object(wrp, "_gather_sino_slice", side_effect=lambda s: wrp.sino)
+        block.to_gpu()
+    
+    if ind_par == "mid" or ind_par is None:
+        sino_slice = global_data[:, (GLOBAL_SHAPE[1]-1)//2, :]
+    else:
+        assert isinstance(ind_par, int)
+        sino_slice = global_data[:, ind_par, :]
+    mocker.patch.object(wrp, "_gather_sino_slice", side_effect=lambda s: sino_slice)
     normalize = mocker.patch.object(
         wrp, "normalize_sino", side_effect=lambda sino, f, d: sino
     )
-    
+
     comm.bcast.return_value = 42.0
 
-    res = wrp.execute(dummy_dataset.make_block(0))
+    res = wrp.execute(block)
 
     assert wrp.pattern == Pattern.projection
-    xp.testing.assert_array_equal(res.data, dummy_dataset.data)
+    xp.testing.assert_array_equal(res.data, rank0_data if rank == 0 else rank1_data)
     comm.bcast.assert_called_once()
     if rank == 0:
         normalize.assert_called_once()
@@ -144,7 +187,7 @@ def test_rotation_gather_sino_slice(mocker: MockerFixture, rank: int):
         wrp.sino = np.arange(2 * 6, dtype=np.float32).reshape((2, 6))
     else:
         wrp.sino = np.arange(2 * 6, 5 * 6, dtype=np.float32).reshape((3, 6))
-    
+
     if rank == 0:
         comm.gather.return_value = [2 * 6, 3 * 6]
     else:
@@ -248,7 +291,7 @@ def test_rotation_normalize_sino_different_darks_flats_gpu():
     xp.testing.assert_allclose(xp.squeeze(ret), 1.0)
 
 
-def test_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
+def test_rotation_180(mocker: MockerFixture):
     class FakeModule:
         def rotation_tester(data, ind):
             return 42.0  # center of rotation
@@ -263,14 +306,17 @@ def test_rotation_180(mocker: MockerFixture, dummy_dataset: DataSet):
         ind=5,
     )
 
-    block = dummy_dataset.make_block(0)
+    block = DataSetBlock(
+        data=np.ones((10, 10, 10), dtype=np.float32),
+        aux_data=AuxiliaryData(angles=np.ones(10, dtype=np.float32))
+    )
     new_block = wrp.execute(block)
 
     assert wrp.get_side_output() == {"center": 42.0}
     assert new_block == block  # note: not a deep comparison
 
 
-def test_rotation_360(mocker: MockerFixture, dummy_dataset: DataSet):
+def test_rotation_360(mocker: MockerFixture):
     class FakeModule:
         def rotation_tester(data, ind):
             # cor, overlap, side, overlap_position - from find_center_360
@@ -289,7 +335,10 @@ def test_rotation_360(mocker: MockerFixture, dummy_dataset: DataSet):
         },
         ind=5,
     )
-    block = dummy_dataset.make_block(0)
+    block = DataSetBlock(
+        data=np.ones((10, 10, 10), dtype=np.float32),
+        aux_data=AuxiliaryData(angles=np.ones(10, dtype=np.float32))
+    )
     new_block = wrp.execute(block)
 
     assert wrp.get_side_output() == {

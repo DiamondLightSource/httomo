@@ -73,7 +73,7 @@ def test_standard_tomo_loader_get_chunk_index_single_proc():
     ):
         loader = make_standard_tomo_loader()
     CHUNK_INDEX = (0, 0, 0)
-    assert loader.chunk_index == CHUNK_INDEX
+    assert loader.global_index == CHUNK_INDEX
 
 
 @pytest.mark.mpi
@@ -135,7 +135,7 @@ def test_standard_tomo_loader_previewed_get_chunk_index_two_procs(
             comm=COMM,
         )
 
-    assert loader.chunk_index == chunk_index
+    assert loader.global_index == chunk_index
 
 
 @pytest.mark.parametrize(

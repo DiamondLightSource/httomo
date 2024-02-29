@@ -29,9 +29,13 @@ def test_full_block_for_global_data():
     np.testing.assert_array_equal(angles, block.angles)
     np.testing.assert_array_equal(angles, block.angles_radians)
     assert block.darks.shape == (0, 10, 10)
+    assert block.dark.shape == (0, 10, 10)
     assert block.flats.shape == (0, 10, 10)
+    assert block.flat.shape == (0, 10, 10)
     assert block.darks.dtype == data.dtype
     assert block.flats.dtype == data.dtype
+    assert block.dark.dtype == data.dtype
+    assert block.flat.dtype == data.dtype
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
@@ -370,7 +374,9 @@ def test_darks_and_flats_get():
     )
 
     np.testing.assert_array_equal(darks, block.darks)
+    np.testing.assert_array_equal(darks, block.dark)
     np.testing.assert_array_equal(flats, block.flats)
+    np.testing.assert_array_equal(flats, block.flat)
 
 
 def test_darks_and_flats_set_same_shape():
@@ -422,7 +428,13 @@ def test_darks_and_flats_set_different_shape():
         block.darks, 2.0 * np.ones((1, 10, 10), dtype=np.float32)
     )
     np.testing.assert_array_equal(
+        block.dark, 2.0 * np.ones((1, 10, 10), dtype=np.float32)
+    )
+    np.testing.assert_array_equal(
         block.flats, 3.0 * np.ones((1, 10, 10), dtype=np.float32)
+    )
+    np.testing.assert_array_equal(
+        block.flat, 3.0 * np.ones((1, 10, 10), dtype=np.float32)
     )
     np.testing.assert_array_equal(
         aux_data.get_darks(), 2.0 * np.ones((1, 10, 10), dtype=np.float32)
@@ -430,6 +442,47 @@ def test_darks_and_flats_set_different_shape():
     np.testing.assert_array_equal(
         aux_data.get_flats(), 3.0 * np.ones((1, 10, 10), dtype=np.float32)
     )
+
+
+def test_darks_and_flats_set_via_alias():
+    data = np.ones((10, 10, 10), dtype=np.float32)
+    darks = 2.0 * np.ones((3, 10, 10), dtype=np.float32)
+    flats = 3.0 * np.ones((5, 10, 10), dtype=np.float32)
+    angles = np.linspace(0, math.pi, 10, dtype=np.float32)
+    aux_data = AuxiliaryData(angles=angles, darks=darks, flats=flats)
+    block = DataSetBlock(data=data, aux_data=aux_data)
+
+    block.dark = np.mean(block.darks, axis=0, keepdims=True)
+    block.flat = np.mean(block.flats, axis=0, keepdims=True)
+
+    np.testing.assert_array_equal(
+        aux_data.get_darks(), 2.0 * np.ones((1, 10, 10), dtype=np.float32)
+    )
+    np.testing.assert_array_equal(
+        aux_data.get_flats(), 3.0 * np.ones((1, 10, 10), dtype=np.float32)
+    )
+
+
+def test_angles_set():
+    data = np.ones((10, 10, 10), dtype=np.float32)
+    angles = np.linspace(0, math.pi, 10, dtype=np.float32)
+    aux_data = AuxiliaryData(angles=angles)
+    block = DataSetBlock(data=data, aux_data=aux_data)
+
+    block.angles = np.ones(10, dtype=np.float32)
+
+    np.testing.assert_array_equal(aux_data.get_angles(), 1.0)
+
+
+def test_angles_set_via_alias():
+    data = np.ones((10, 10, 10), dtype=np.float32)
+    angles = np.linspace(0, math.pi, 10, dtype=np.float32)
+    aux_data = AuxiliaryData(angles=angles)
+    block = DataSetBlock(data=data, aux_data=aux_data)
+
+    block.angles_radians = np.ones(10, dtype=np.float32)
+
+    np.testing.assert_array_equal(aux_data.get_angles(), 1.0)
 
 
 def test_aux_can_drop_darks_flats():
@@ -570,3 +623,11 @@ def test_returns_flats_on_gpu_when_the_data_is_there():
 
     assert block.darks.device == xp.cuda.Device()
     assert block.flats.device == xp.cuda.Device()
+
+
+def test_attributes_array(dummy_block: DataSetBlock):
+    expected = set(
+        ["data", "flats", "darks", "angles", "angles_radians", "dark", "flat"]
+    )
+    actual = set(dir(dummy_block))
+    assert actual == expected

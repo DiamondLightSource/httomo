@@ -244,7 +244,7 @@ class GenericMethodWrapper(MethodWrapper):
             ret[k] = v
         return ret
 
-    def execute(self, dataset: DataSetBlock) -> DataSetBlock:
+    def execute(self, block: DataSetBlock) -> DataSetBlock:
         """Execute functions for external packages.
 
         Developer note: Derived classes may override this function or any of the methods
@@ -253,7 +253,7 @@ class GenericMethodWrapper(MethodWrapper):
         Parameters
         ----------
 
-        dataset: DataSetBlock
+        block: DataSetBlock
             A numpy or cupy dataset, mutable (method might work in-place).
 
         Returns
@@ -263,22 +263,22 @@ class GenericMethodWrapper(MethodWrapper):
             A CPU or GPU-based dataset object with the output
         """
 
-        dataset = self._transfer_data(dataset)
-        dataset = self._preprocess_data(dataset)
-        args = self._build_kwargs(self._transform_params(self._config_params), dataset)
-        dataset = self._run_method(dataset, args)
-        dataset = self._postprocess_data(dataset)
+        block = self._transfer_data(block)
+        block = self._preprocess_data(block)
+        args = self._build_kwargs(self._transform_params(self._config_params), block)
+        block = self._run_method(block, args)
+        block = self._postprocess_data(block)
 
-        return dataset
+        return block
 
-    def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
+    def _run_method(self, block: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
         """Runs the actual method - override if special handling is required
         Or side outputs are produced."""
         ret = self._method(**args)
-        dataset = self._process_return_type(ret, dataset)
-        return dataset
+        block = self._process_return_type(ret, block)
+        return block
 
-    def _process_return_type(self, ret: Any, input_dataset: DataSetBlock) -> DataSetBlock:
+    def _process_return_type(self, ret: Any, input_block: DataSetBlock) -> DataSetBlock:
         """Checks return type of method call and assigns/creates return DataSetBlock object.
         Override this method if a return type different from ndarray is produced and
         needs to be processed in some way.
@@ -289,8 +289,8 @@ class GenericMethodWrapper(MethodWrapper):
             )
         if self._query.swap_dims_on_output():
             ret = ret.swapaxes(0, 1)
-        input_dataset.data = ret
-        return input_dataset
+        input_block.data = ret
+        return input_block
 
     def get_side_output(self) -> Dict[str, Any]:
         """Override this method for functions that have a side output. The returned dictionary
@@ -298,34 +298,34 @@ class GenericMethodWrapper(MethodWrapper):
         follow in the pipeline"""
         return {v: self._side_output[k] for k, v in self._output_mapping.items()}
 
-    def _transfer_data(self, dataset: DataSetBlock):
+    def _transfer_data(self, block: DataSetBlock):
         if not self.cupyrun:
-            dataset.to_cpu()
-            return dataset
+            block.to_cpu()
+            return block
 
         assert gpu_enabled, "GPU method used on a system without GPU support"
 
         xp.cuda.Device(self._gpu_id).use()
-        gpulog_str = f"Using GPU {self._gpu_id} to transfer data of shape {xp.shape(dataset.data[0])}"
+        gpulog_str = f"Using GPU {self._gpu_id} to transfer data of shape {xp.shape(block.data[0])}"
         log_rank(gpulog_str, comm=self.comm)
         gpumem_cleanup()
-        dataset.to_gpu()
-        return dataset
+        block.to_gpu()
+        return block
 
     def _transform_params(self, dict_params: MethodParameterDictType) -> MethodParameterDictType:
         """Hook for derived classes, for transforming the names of the possible method parameters
         dictionary, for example to rename some of them or inspect them in some way"""
         return dict_params
 
-    def _preprocess_data(self, dataset: DataSetBlock) -> DataSetBlock:
+    def _preprocess_data(self, block: DataSetBlock) -> DataSetBlock:
         """Hook for derived classes to implement proprocessing steps, after the data has been
         transferred and before the method is called"""
-        return dataset
+        return block
 
-    def _postprocess_data(self, dataset: DataSetBlock) -> DataSetBlock:
+    def _postprocess_data(self, block: DataSetBlock) -> DataSetBlock:
         """Hook for derived classes to implement postprocessing steps, after the method has been
         called"""
-        return dataset
+        return block
 
     def calculate_output_dims(
         self, non_slice_dims_shape: Tuple[int, int]

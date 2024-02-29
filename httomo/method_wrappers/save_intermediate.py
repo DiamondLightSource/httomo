@@ -50,10 +50,10 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         # make sure file gets closed properly
         weakref.finalize(self, self._file.close)
         
-    def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
+    def _run_method(self, block: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
         # pass the full block, not just the data array to the function
-        args[self.parameters[0]] = dataset
-        return super()._run_method(dataset, args)
+        args[self.parameters[0]] = block
+        return super()._run_method(block, args)
         
     def _transform_params(self, dict_params: MethodParameterDictType) -> MethodParameterDictType:
         dict_params = super()._transform_params(dict_params).copy()
@@ -63,9 +63,9 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         dict_params["file"] = self._file
         return dict_params
     
-    def _process_return_type(self, ret: Any, input_dataset: DataSetBlock) -> DataSetBlock:
-        if input_dataset.is_last_in_chunk:
+    def _process_return_type(self, ret: Any, input_block: DataSetBlock) -> DataSetBlock:
+        if input_block.is_last_in_chunk:
             self._file.close()
-        return input_dataset
+        return input_block
 
         
