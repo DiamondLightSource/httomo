@@ -194,6 +194,10 @@ class StandardTomoLoader(DataSetSource):
     def _get_data(self) -> h5py.Dataset:
         return self._h5file[self._data_path]
 
+    @property
+    def aux_data(self) -> AuxiliaryData:
+        return self._aux_data
+
     def _setup_aux_data(
         self,
         darks_config: DarksFlatsFileConfig,
