@@ -74,13 +74,7 @@ class StandardTomoLoader(DataSetSource):
             next_process_chunk_index_slicing_dim,
         )
 
-        angles_arr = np.deg2rad(self._get_angles())
-        darks_arr, flats_arr = get_darks_flats(darks, flats, preview_config)
-        self._aux_data = AuxiliaryData(
-            angles=angles_arr,
-            darks=darks_arr,
-            flats=flats_arr,
-        )
+        self._aux_data = self._setup_aux_data(darks, flats)
         self._data: h5py.Dataset = self._get_data()
         self._log_info()
         weakref.finalize(self, self.finalize)
@@ -199,6 +193,19 @@ class StandardTomoLoader(DataSetSource):
 
     def _get_data(self) -> h5py.Dataset:
         return self._h5file[self._data_path]
+
+    def _setup_aux_data(
+        self,
+        darks_config: DarksFlatsFileConfig,
+        flats_config: DarksFlatsFileConfig,
+    ) -> AuxiliaryData:
+        angles_arr = np.deg2rad(self._get_angles())
+        darks_arr, flats_arr = get_darks_flats(
+            darks_config,
+            flats_config,
+            self._preview.config,
+        )
+        return AuxiliaryData(angles=angles_arr, darks=darks_arr, flats=flats_arr)
 
     def _log_info(self) -> None:
         log_once(
