@@ -9,6 +9,7 @@ from mpi4py import MPI
 from httomo.darks_flats import DarksFlatsFileConfig, get_darks_flats
 from httomo.loaders.types import AnglesConfig, UserDefinedAngles
 from httomo.preview import Preview, PreviewConfig
+from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock, FullFileDataSet
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
@@ -70,6 +71,11 @@ class StandardTomoLoader(DataSetSource):
 
         angles_arr = np.deg2rad(self._get_angles())
         darks_arr, flats_arr = get_darks_flats(darks, flats, preview_config)
+        self._aux_data = AuxiliaryData(
+            angles=angles_arr,
+            darks=darks_arr,
+            flats=flats_arr,
+        )
 
         dataset: h5py.Dataset = self._get_data()
         self._data = FullFileDataSet(
@@ -96,11 +102,11 @@ class StandardTomoLoader(DataSetSource):
 
     @property
     def flats(self) -> np.ndarray:
-        return self._data.flats
+        return self._aux_data.get_flats()
 
     @property
     def darks(self) -> np.ndarray:
-        return self._data.darks
+        return self._aux_data.get_darks()
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
