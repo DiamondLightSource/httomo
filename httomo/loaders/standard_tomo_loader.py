@@ -53,6 +53,11 @@ class StandardTomoLoader(DataSetSource):
 
         self._data_indices = self._preview.data_indices
         self._global_shape = self._preview.global_shape
+        self._data_offset = (
+            self._data_indices[0],
+            self._preview.config.detector_y.start,
+            self._preview.config.detector_x.start,
+        )
 
         chunk_index_slicing_dim = self._calculate_chunk_index_slicing_dim(
             comm.rank,
@@ -146,13 +151,27 @@ class StandardTomoLoader(DataSetSource):
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
         slices = [
-            slice(self._chunk_index[0], self._chunk_index[0] + self.chunk_shape[0]),
-            slice(self._chunk_index[1], self._chunk_index[1] + self.chunk_shape[1]),
-            slice(self._chunk_index[2], self._chunk_index[2] + self.chunk_shape[2]),
+            slice(
+                self._data_offset[0] + self._chunk_index[0],
+                self._data_offset[0] + self._chunk_index[0] + self.chunk_shape[0],
+            ),
+            slice(
+                self._data_offset[1] + self._chunk_index[1],
+                self._data_offset[1] + self._chunk_index[1] + self.chunk_shape[1],
+            ),
+            slice(
+                self._data_offset[2] + self._chunk_index[2],
+                self._data_offset[2] + self._chunk_index[2] + self.chunk_shape[2],
+            ),
         ]
         slices[self._slicing_dim] = slice(
-            self._chunk_index[self._slicing_dim] + start,
-            self._chunk_index[self._slicing_dim] + start + length,
+            self._data_offset[self._slicing_dim]
+            + self._chunk_index[self._slicing_dim]
+            + start,
+            self._data_offset[self._slicing_dim]
+            + self._chunk_index[self._slicing_dim]
+            + start
+            + length,
         )
 
         return DataSetBlock(
