@@ -182,30 +182,46 @@ def test_can_determine_max_slices_with_cpu_large(
     assert s[0].max_slices == 16
 
 
-# def test_calls_append_side_outputs_after_last_block(
-#     mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
-# ):
-#     loader = make_test_loader(mocker, dummy_block)
+def test_calls_append_side_outputs_after_last_block(
+    mocker: MockerFixture, tmp_path: PathLike,
+):
+    GLOBAL_SHAPE = (500, 10, 10)
+    CHUNK_SHAPE = GLOBAL_SHAPE
+    data = np.ones(GLOBAL_SHAPE, dtype=np.float32)
+    aux = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
+    block1 = DataSetBlock(
+        data=data[:GLOBAL_SHAPE[0] // 2, :, :],
+        aux_data=aux,
+        block_start=0,
+        chunk_start=0,
+        chunk_shape=CHUNK_SHAPE,
+        global_shape=GLOBAL_SHAPE
+    )
+    block2 = DataSetBlock(
+        data=data[GLOBAL_SHAPE[0] // 2:, :, :],
+        aux_data=aux,
+        block_start=CHUNK_SHAPE[0] // 2,
+        chunk_start=0,
+        chunk_shape=CHUNK_SHAPE,
+        global_shape=GLOBAL_SHAPE
+    )
 
-#     side_outputs = {"answer": 42, "other": "xxx"}
+    method = make_test_method(mocker)
+    mocker.patch.object(method, "execute", side_effect=[block1, block2])
+    side_outputs = {"answer": 42, "other": "xxx"}
+    getmock = mocker.patch.object(method, "get_side_output", return_value=side_outputs)
 
-#     block1 = dummy_dataset.make_block(0, 0, dummy_dataset.shape[0] // 2)
-#     block2 = dummy_dataset.make_block(0, dummy_dataset.shape[0] // 2)
-#     method1 = make_test_method(mocker)
-#     mocker.patch.object(method1, "execute", side_effect=[block1, block2])
-#     getmock = mocker.patch.object(method1, "get_side_output", return_value=side_outputs)
-#     method2 = make_test_method(mocker)
+    loader = make_test_loader(mocker)
+    p = Pipeline(loader=loader, methods=[method])
+    t = TaskRunner(p, reslice_dir=tmp_path)
+    spy = mocker.patch.object(t, "append_side_outputs")
+    t._prepare()
+    t._execute_method(method, block1) # the first block shouldn't trigger a side output append call
+    assert spy.call_count == 0
 
-#     p = Pipeline(loader=loader, methods=[method1, method2])
-#     t = TaskRunner(p, reslice_dir=tmp_path)
-#     spy = mocker.patch.object(t, "append_side_outputs")
-#     t._prepare()
-#     t._execute_method(method1, block1)
-#     t._execute_method(method1, block2)  # this should trigger it
-
-#     getmock.assert_called_once()
-#     spy.assert_called_once_with(side_outputs)
-#     t.side_outputs == side_outputs
+    t._execute_method(method, block2)  # the last block should trigger side output append call
+    getmock.assert_called_once()
+    spy.assert_called_once_with(side_outputs)
 
 
 def test_update_side_inputs_updates_downstream_methods(
