@@ -71,10 +71,7 @@ class DataSetBlock:
             raise ValueError("block shape inconsistent with non-slicing dims of global shape")
         
         assert not any(self.chunk_shape[i] != self.global_shape[i] for i in range(3) if i != self.slicing_dim)
-        
-        if len(self.angles) < self.global_shape[0]:
-            raise ValueError("angles array must be at least as long as projection dimension of the data")
-        
+
     @property
     def aux_data(self) -> AuxiliaryData:
         return self._aux_data

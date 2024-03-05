@@ -182,25 +182,14 @@ def test_inconsistent_global_chunk_shape_non_slice_dim(slicing_dim: int):
         )
 
 
-# angles length >= block.global_shape[0]
-def test_inconsistent_angles_length():
+def test_longer_angles_length_half_projections():
     data = np.ones((10, 10, 10), dtype=np.float32)
-    angles = np.linspace(0, math.pi, data.shape[0] - 2, dtype=np.float32)
-    with pytest.raises(ValueError):
-        DataSetBlock(
-            data,
-            aux_data=AuxiliaryData(angles=angles),
-        )
-
-
-def test_longer_angles_length_than_projections():
-    data = np.ones((10, 10, 10), dtype=np.float32)
-    angles = np.linspace(0, math.pi, data.shape[0] + 2, dtype=np.float32)
+    angles = np.linspace(0, math.pi, data.shape[0] // 2, dtype=np.float32)
     block = DataSetBlock(
         data,
         aux_data=AuxiliaryData(angles=angles),
     )
-    assert len(block.angles) == data.shape[0] + 2
+    assert len(block.angles) == data.shape[0] // 2
 
 
 # chunk_index outside of chunk_shape
