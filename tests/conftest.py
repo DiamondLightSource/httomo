@@ -8,8 +8,9 @@ import numpy as np
 
 import pytest
 import yaml
-from httomo.runner.dataset import DataSet
 from httomo.darks_flats import DarksFlatsFileConfig
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.runner.dataset import DataSetBlock
 from httomo.ui_layer import _yaml_loader
 
 
@@ -278,15 +279,6 @@ def merge_yamls():
             yaml.dump(data, file_descriptor)
     return _merge_yamls
 
-@pytest.fixture
-def dummy_dataset() -> DataSet:
-    return DataSet(
-        data=np.ones((10, 10, 10), dtype=np.float32),
-        angles=np.ones((20,), dtype=np.float32),
-        flats=3 * np.ones((5, 10, 10), dtype=np.float32),
-        darks=2 * np.ones((5, 10, 10), dtype=np.float32),
-    )
-
 
 @pytest.fixture
 def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
@@ -304,3 +296,12 @@ def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
         data_path="/entry1/tomo_entry/data/data",
         image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
     )
+
+
+@pytest.fixture
+def dummy_block() -> DataSetBlock:
+    data = np.ones((10, 10, 10), dtype=np.float32)
+    aux_data = AuxiliaryData(angles=np.ones(data.shape[0], dtype=np.float32),
+                             darks=2.*np.ones((2, data.shape[1], data.shape[2]), dtype=np.float32),
+                             flats=1.*np.ones((2, data.shape[1], data.shape[2]), dtype=np.float32))
+    return DataSetBlock(data=data, aux_data=aux_data)

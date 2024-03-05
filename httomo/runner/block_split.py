@@ -1,6 +1,6 @@
 import math
 from typing import Iterator
-from httomo.runner.dataset import DataSet, DataSetBlock
+from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
 import logging
 

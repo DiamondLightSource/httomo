@@ -105,11 +105,7 @@ class TaskRunner:
             self.sink = DummySink(slicing_dim_section)
         else:
             self.sink = DataSetStoreWriter(
-                self.source.global_shape[slicing_dim_section],
                 slicing_dim_section,
-                (0, 0),
-                self.source.chunk_shape[slicing_dim_section],
-                self.source.chunk_index[slicing_dim_section],
                 self.comm,
                 self.reslice_dir,
             )
@@ -250,8 +246,6 @@ class TaskRunner:
                 self.source.dtype,
                 non_slice_dims_shape,
                 available_memory,
-                self.source.darks,
-                self.source.flats,
             )
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims

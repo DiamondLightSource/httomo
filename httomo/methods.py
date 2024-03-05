@@ -56,7 +56,7 @@ def _save_auxiliary_data(
     if "/angles" in file:
         return
 
-    file.create_dataset("/angles", data=block.get_value("angles", is_gpu=False))
+    file.create_dataset("/angles", data=block.angles)
     file_name = pathlib.Path(file.filename).name
     file.create_dataset(file_name, data=[0, 0])
     g1 = file.create_group("data_dims")
