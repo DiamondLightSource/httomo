@@ -107,11 +107,7 @@ class TaskRunner:
             self.sink = DummySink(slicing_dim_section)
         else:
             self.sink = DataSetStoreWriter(
-                self.source.global_shape[slicing_dim_section],
                 slicing_dim_section,
-                (0, 0),
-                self.source.chunk_shape[slicing_dim_section],
-                self.source.chunk_index[slicing_dim_section],
                 self.comm,
                 self.reslice_dir,
             )
@@ -142,12 +138,6 @@ class TaskRunner:
             self.pipeline.loader.method_name,
         )
         self.source = self.pipeline.loader.make_data_source()
-        log_once(
-            f"The full dataset shape is {self.source.global_shape}",
-            comm=self.comm,
-            colour=Colour.LYELLOW,
-            level=1,
-        )
         self._log_task_end(
             "loader",
             start_time,
@@ -266,8 +256,6 @@ class TaskRunner:
                 self.source.dtype,
                 non_slice_dims_shape,
                 available_memory,
-                self.source.darks,
-                self.source.flats,
             )
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims

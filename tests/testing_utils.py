@@ -1,6 +1,6 @@
 from typing import List, Optional
 from httomo.runner.method_wrapper import MethodWrapper
-from httomo.runner.dataset import DataSet
+from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.methods_repository_interface import (
@@ -43,7 +43,7 @@ def make_test_method(
 
 def make_test_loader(
     mocker: MockerFixture,
-    dataset: Optional[DataSet] = None,
+    block: Optional[DataSetBlock] = None,
     pattern: Pattern = Pattern.all,
     method_name="testloader",
 ) -> LoaderInterface:
@@ -54,26 +54,33 @@ def make_test_loader(
         method_name=method_name,
         reslice=False,
     )
-    if dataset is not None:
+    if block is not None:
 
         def mock_make_data_source() -> DataSetSource:
             ret = mocker.create_autospec(
                 DataSetSource,
-                global_shape=dataset.global_shape,
-                dtype=dataset.data.dtype,
-                chunk_shape=dataset.chunk_shape,
-                chunk_index=dataset.chunk_index,
+                global_shape=block.global_shape,
+                dtype=block.data.dtype,
+                chunk_shape=block.chunk_shape,
+                chunk_index=block.chunk_index,
                 slicing_dim=1 if interface.pattern == Pattern.sinogram else 0,
-                darks=dataset.darks,
-                flats=dataset.flats,
+                aux_data=block.aux_data
             )
+            slicing_dim=1 if interface.pattern == Pattern.sinogram else 0
             mocker.patch.object(
                 ret,
                 "read_block",
-                side_effect=lambda start, length: dataset.make_block(
-                    1 if interface.pattern == Pattern.sinogram else 0, start, length
-                ),
+                side_effect=lambda start, length: DataSetBlock(
+                    data=block.data[start: start+length, :, :],
+                    aux_data=block.aux_data,
+                    global_shape=block.global_shape,
+                    chunk_shape=block.chunk_shape,
+                    slicing_dim=slicing_dim,
+                    block_start=start,
+                    chunk_start=block.chunk_index[slicing_dim]
+                )
             )
+            
             return ret
 
         mocker.patch.object(

@@ -3,6 +3,7 @@ from typing import Literal, Optional, Protocol, Tuple
 import numpy as np
 
 from httomo.runner.dataset import DataSetBlock
+from httomo.runner.auxiliary_data import AuxiliaryData
 
 # Interfaces for an MPI-aware store for full datasets, where each process handles a *chunk*, and
 # the data can be read or written in *blocks*, sliced in the slicing dimension.
@@ -66,7 +67,7 @@ class DataSetSource(Protocol):
         ...  # pragma: no cover
 
     @property
-    def chunk_index(self) -> Tuple[int, int, int]:
+    def global_index(self) -> Tuple[int, int, int]:
         """Returns the start index of the chunk within the global data array"""
         ...  # pragma: no cover
 
@@ -76,18 +77,8 @@ class DataSetSource(Protocol):
         ...  # pragma: no cover
         
     @property
-    def darks(self) -> np.ndarray:
-        """Darks array"""
-        ...  # pragma: no cover
-        
-    @property
-    def has_gpu_darks(self) -> bool:
-        """Check if darks array has already been cached on the GPU"""
-        ...  # pragma: no cover
-        
-    @property
-    def flats(self) -> np.ndarray:
-        """Flats array"""
+    def aux_data(self) -> AuxiliaryData:
+        """Auxiliary data"""
         ...  # pragma: no cover
         
     @property
@@ -120,7 +111,7 @@ class DataSetSink(Protocol):
         ...  # pragma: no cover
 
     @property
-    def chunk_index(self) -> Tuple[int, int, int]:
+    def global_index(self) -> Tuple[int, int, int]:
         """Returns the start index of the chunk within the global data array"""
         ...  # pragma: no cover
 
@@ -129,7 +120,7 @@ class DataSetSink(Protocol):
         """Slicing dimension - 0, 1, or 2"""
         ...  # pragma: no cover
 
-    def write_block(self, dataset: DataSetBlock):
+    def write_block(self, block: DataSetBlock):
         """Writes a block to the store, starting at the index in dataset.chunk_index,
         in the current slicing dimension.
 
@@ -174,17 +165,17 @@ class DummySink(DataSetSink):
         return self._chunk_shape
 
     @property
-    def chunk_index(self) -> Tuple[int, int, int]:
+    def global_index(self) -> Tuple[int, int, int]:
         return self._chunk_index
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
         return self._slicing_dim
 
-    def write_block(self, dataset: DataSetBlock):
-        self._global_shape = dataset.global_shape
-        self._chunk_shape = dataset.chunk_shape
-        self._chunk_index = dataset.chunk_index
+    def write_block(self, block: DataSetBlock):
+        self._global_shape = block.global_shape
+        self._chunk_shape = block.chunk_shape
+        self._chunk_index = block.chunk_index
 
     def finalize(self):
         pass  # pragma: no cover

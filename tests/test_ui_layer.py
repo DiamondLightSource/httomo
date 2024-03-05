@@ -44,11 +44,9 @@ def test_can_read_cpu2_python(python_cpu_pipeline2, yaml_cpu_pipeline2, version)
     assert len(pipline_stage_config) == 9
     assert pipline_stage_config[0]["method"] == "standard_tomo"
     assert pipline_stage_config[0]["module_path"] == "httomo.data.hdf.loaders"
-    assert pipline_stage_config[0]["parameters"]["preview"] == [
-        None,
-        {"start": 30, "stop": 60},
-        None,
-    ]
+    assert pipline_stage_config[0]["parameters"]["preview"] == {
+        "detector_y": {"start": 30, "stop": 60}
+    }
     assert pipline_stage_config[1]["method"] == "find_center_vo"
     assert pipline_stage_config[1]["module_path"] == "tomopy.recon.rotation"
     assert pipline_stage_config[1]["side_outputs"] == {"cor": "centre_of_rotation"}
@@ -79,7 +77,6 @@ def test_can_read_cpu3_python(python_cpu_pipeline3, yaml_cpu_pipeline3, version)
     assert len(pipline_stage_config) == 8
     assert pipline_stage_config[0]["method"] == "standard_tomo"
     assert pipline_stage_config[0]["module_path"] == "httomo.data.hdf.loaders"
-    assert pipline_stage_config[0]["parameters"]["preview"] == [None, None, None]
     assert pipline_stage_config[1]["method"] == "find_center_vo"
     assert pipline_stage_config[1]["module_path"] == "tomopy.recon.rotation"
     assert pipline_stage_config[1]["side_outputs"] == {"cor": "centre_of_rotation"}
@@ -108,7 +105,6 @@ def test_can_read_gpu1_python(python_gpu_pipeline1, yaml_gpu_pipeline1, version)
     assert len(pipline_stage_config) == 7
     assert pipline_stage_config[0]["method"] == "standard_tomo"
     assert pipline_stage_config[0]["module_path"] == "httomo.data.hdf.loaders"
-    assert pipline_stage_config[0]["parameters"]["preview"] == [None, None, None]
     assert pipline_stage_config[1]["method"] == "find_center_vo"
     assert pipline_stage_config[1]["module_path"] == "httomolibgpu.recon.rotation"
     assert pipline_stage_config[1]["side_outputs"] == {"cor": "centre_of_rotation"}

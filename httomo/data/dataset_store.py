@@ -2,17 +2,20 @@ from os import PathLike
 from pathlib import Path
 import time
 import h5py
-from tempfile import NamedTemporaryFile, TemporaryFile, mkstemp
-from typing import IO, BinaryIO, Literal, Optional, Tuple
+from typing import Literal, Optional, Tuple, Union
 from httomo.data.hdf._utils.reslice import reslice
-from httomo.runner.dataset import DataSet, DataSetBlock, FullFileDataSet
-from httomo.runner.dataset_store_interfaces import DataSetSink, DataSetSource, ReadableDataSetSink
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.runner.dataset import DataSetBlock
+from httomo.runner.dataset_store_interfaces import (
+    DataSetSource,
+    ReadableDataSetSink,
+)
 from mpi4py import MPI
 import numpy as np
 from numpy.typing import DTypeLike
 import weakref
 
-from httomo.utils import Colour, log_once
+from httomo.utils import Colour, log_once, make_3d_shape_from_shape
 
 """
 This is from the final handover call:
@@ -98,32 +101,23 @@ class DataSetStoreWriter(ReadableDataSetSink):
 
     def __init__(
         self,
-        full_size: int,
         slicing_dim: Literal[0, 1, 2],
-        other_dims: Tuple[int, int],
-        chunk_size: int,
-        chunk_start: int,
         comm: MPI.Comm,
         temppath: PathLike,
     ):
         self._slicing_dim = slicing_dim
         self._comm = comm
 
-        full = list(other_dims)
-        full.insert(self._slicing_dim, full_size)
-        chunk = list(other_dims)
-        chunk.insert(self._slicing_dim, chunk_size)
-        idx = [0, 0]
-        idx.insert(self._slicing_dim, chunk_start)
-        self._full_shape: Tuple[int, int, int] = tuple(full)  # type: ignore
-        self._chunk_shape: Tuple[int, int, int] = tuple(chunk)  # type: ignore
-        self._chunk_idx: Tuple[int, int, int] = tuple(idx)  # type: ignore
         self._temppath = temppath
         self._readonly = False
         self._h5file: Optional[h5py.File] = None
         self._h5filename: Optional[Path] = None
 
-        self._data: Optional[DataSet] = None
+        self._data: Optional[Union[np.ndarray, h5py.Dataset]] = None
+
+        self._global_shape: Optional[Tuple[int, int, int]] = None
+        self._chunk_shape: Optional[Tuple[int, int, int]] = None
+        self._global_index: Optional[Tuple[int, int, int]] = None
 
         # make sure finalize is called when this object is garbage-collected
         weakref.finalize(self, self.finalize)
@@ -140,60 +134,79 @@ class DataSetStoreWriter(ReadableDataSetSink):
     def comm(self) -> MPI.Comm:
         return self._comm
 
+    # ??? do we need these properties?
     @property
     def global_shape(self) -> Tuple[int, int, int]:
-        return self._full_shape
+        assert self._global_shape is not None
+        return self._global_shape
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
+        assert self._chunk_shape is not None
         return self._chunk_shape
 
     @property
-    def chunk_index(self) -> Tuple[int, int, int]:
-        return self._chunk_idx
+    def global_index(self) -> Tuple[int, int, int]:
+        assert self._global_index is not None
+        return self._global_index
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
         return self._slicing_dim
 
-    def write_block(self, dataset: DataSetBlock):
+    @property
+    def aux_data(self) -> AuxiliaryData:
+        return self._aux_data
+
+    def write_block(self, block: DataSetBlock):
         if self._readonly:
             raise ValueError("Cannot write after creating a reader")
-        dataset.to_cpu()
-        start = max(dataset.chunk_index)
+        block.to_cpu()
+        start = max(block.chunk_index)
         if self._data is None:
-            block_shape = list(dataset.data.shape)
-            block_shape.pop(self._slicing_dim)
-            fullshape = block_shape.copy()
-            fullshape.insert(self._slicing_dim, self._full_shape[self.slicing_dim])
-            self._full_shape = tuple(fullshape)  # type: ignore
-            chunkshape = block_shape.copy()
-            chunkshape.insert(self._slicing_dim, self._chunk_shape[self._slicing_dim])
-            self._chunk_shape = tuple(chunkshape)  # type: ignore
-            self._create_new_data(dataset)
+            # if non-slice dims in block are different, update the shapes here
+            self._global_shape = block.global_shape
+            self._chunk_shape = block.chunk_shape
+            self._global_index = (
+                block.global_index[0] - block.chunk_index[0],
+                block.global_index[1] - block.chunk_index[1],
+                block.global_index[2] - block.chunk_index[2],
+            )
+            self._aux_data = block.aux_data
+            self._create_new_data(block)
         else:
+            assert self._global_shape is not None
+            assert self._chunk_shape is not None
+            assert self._global_index is not None
+            if any(self._global_shape[i] != block.global_shape[i] for i in range(3)):
+                raise ValueError(
+                    "Attempt to write a block with inconsistent shape to existing data"
+                )
+
+            if any(self._chunk_shape[i] != block.chunk_shape[i] for i in range(3)):
+                raise ValueError(
+                    "Attempt to write a block with inconsistent shape to existing data"
+                )
+
             if any(
-                a != b
-                for i, (a, b) in enumerate(zip(self._data.shape, dataset.shape))
-                if i != self._slicing_dim
+                self._global_index[i] != block.global_index[i] - block.chunk_index[i]
+                for i in range(3)
             ):
                 raise ValueError(
                     "Attempt to write a block with inconsistent shape to existing data"
                 )
 
-        if (
-            start + dataset.shape[self._slicing_dim]
-            > self.chunk_shape[self._slicing_dim]
-        ):
-            raise ValueError("writing a block that is outside the chunk dimension")
-
         # insert the slice here
         assert self._data is not None  # after the above methods, this must be set
         start_idx = [0, 0, 0]
         start_idx[self._slicing_dim] = start
-        self._data.set_data_block(
-            (start_idx[0], start_idx[1], start_idx[2]), dataset.data
-        )
+        if self.is_file_based:
+            start_idx[self._slicing_dim] += self._global_index[self._slicing_dim]
+        self._data[
+            start_idx[0] : start_idx[0] + block.shape[0],
+            start_idx[1] : start_idx[1] + block.shape[1],
+            start_idx[2] : start_idx[2] + block.shape[2],
+        ] = block.data
 
     def _get_global_h5_filename(self) -> PathLike:
         """Creates a temporary h5 file to back the storage (using nanoseconds timestamp
@@ -205,21 +218,13 @@ class DataSetStoreWriter(ReadableDataSetSink):
         self._h5filename = Path(filename)
         return self._h5filename
 
-    def _create_new_data(self, dataset: DataSet):
+    def _create_new_data(self, block: DataSetBlock):
         # reduce memory errors across all processes - if any has a memory problem,
         # all should use a file
         sendBuffer = np.zeros(1, dtype=bool)
         recvBuffer = np.zeros(1, dtype=bool)
         try:
-            data = self._create_numpy_data(self.chunk_shape, dataset.data.dtype)
-            self._data = DataSet(
-                data=data,
-                angles=dataset.angles,
-                flats=dataset.flats,
-                darks=dataset.darks,
-                global_shape=self._full_shape,
-                global_index=self.chunk_index,
-            )
+            self._data = self._create_numpy_data(self.chunk_shape, block.data.dtype)
         except MemoryError:
             sendBuffer[0] = True
 
@@ -235,20 +240,11 @@ class DataSetStoreWriter(ReadableDataSetSink):
             )
             # we create a full file dataset, i.e. file-based,
             # with the full global shape in it
-            data = self._create_h5_data(
+            self._data = self._create_h5_data(
                 self.global_shape,
-                dataset.data.dtype,
+                block.data.dtype,
                 self._get_global_h5_filename(),
                 self.comm,
-            )
-            self._data = FullFileDataSet(
-                data=data,
-                angles=dataset.angles,
-                flats=dataset.flats,
-                darks=dataset.darks,
-                global_index=self.chunk_index,
-                chunk_shape=self.chunk_shape,
-                shape=self.global_shape,
             )
 
     @classmethod
@@ -264,7 +260,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         dtype: DTypeLike,
         file: PathLike,
         comm: MPI.Comm,
-    ) -> np.ndarray:
+    ) -> h5py.Dataset:
         """Creates a h5 data file based on the file-like object given.
         The returned data object behaves like a numpy array, so can be used freely within
         a DataSet."""
@@ -283,6 +279,8 @@ class DataSetStoreWriter(ReadableDataSetSink):
         self, new_slicing_dim: Optional[Literal[0, 1, 2]] = None
     ) -> DataSetSource:
         """Create a reader from this writer, reading from the same store"""
+        if self._data is None:
+            raise ValueError("Cannot make reader when no data has been written yet")
         self._readonly = True
         if self._h5file is not None:
             self._h5file.close()
@@ -308,9 +306,10 @@ class DataSetStoreReader(DataSetSource):
         self, source: DataSetStoreWriter, slicing_dim: Optional[Literal[0, 1, 2]] = None
     ):
         self._comm = source.comm
-        self._full_shape = source.global_shape
-        self._chunk_idx = source.chunk_index
+        self._global_shape = source.global_shape
+        self._global_index = source.global_index
         self._chunk_shape = source.chunk_shape
+        self._aux_data = source.aux_data
         if source._data is None:
             raise ValueError(
                 "Cannot create DataSetStoreReader when no data has been written"
@@ -321,18 +320,8 @@ class DataSetStoreReader(DataSetSource):
         source_data = source._data
         if source.is_file_based:
             self._h5filename = source.filename
-            self._h5file = h5py.File(
-                source.filename, "r", driver="mpio", comm=self._comm
-            )
-            source_data = FullFileDataSet(
-                data=self._h5file["data"],
-                angles=source._data.angles,
-                flats=source._data.flats,
-                darks=source._data.darks,
-                global_index=source.chunk_index,
-                chunk_shape=source.chunk_shape,
-                shape=self.global_shape,
-            )
+            self._h5file = h5py.File(source.filename, "r")
+            source_data = self._h5file["data"]
 
         if slicing_dim is None or slicing_dim == source.slicing_dim:
             self._slicing_dim = source.slicing_dim
@@ -344,21 +333,13 @@ class DataSetStoreReader(DataSetSource):
         source.finalize()
 
     @property
+    def aux_data(self) -> AuxiliaryData:
+        return self._aux_data
+
+    @property
     def dtype(self) -> np.dtype:
-        return self._data.data.dtype
-    
-    @property
-    def darks(self) -> np.ndarray:
-        return self._data.darks
-    
-    @property
-    def has_gpu_darks(self) -> bool:
-        return self._data.has_gpu_darks
-    
-    @property
-    def flats(self) -> np.ndarray:
-        return self._data.flats
-    
+        return self._data.dtype
+
     @property
     def has_gpu_flats(self) -> bool:
         return self._data.has_gpu_flats
@@ -373,15 +354,15 @@ class DataSetStoreReader(DataSetSource):
 
     @property
     def global_shape(self) -> Tuple[int, int, int]:
-        return self._full_shape
+        return self._global_shape
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         return self._chunk_shape
 
     @property
-    def chunk_index(self) -> Tuple[int, int, int]:
-        return self._chunk_idx
+    def global_index(self) -> Tuple[int, int, int]:
+        return self._global_index
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
@@ -391,59 +372,65 @@ class DataSetStoreReader(DataSetSource):
         self,
         old_slicing_dim: Literal[0, 1, 2],
         new_slicing_dim: Literal[0, 1, 2],
-        data: DataSet,
-    ) -> DataSet:
-        assert data.is_block is False
+        data: Union[np.ndarray, h5py.Dataset],
+    ) -> Union[np.ndarray, h5py.Dataset]:
         assert old_slicing_dim != new_slicing_dim
-        if data.chunk_shape == self._full_shape:
+        if self._comm.size == 1:
+            assert data.shape == self._global_shape
             assert self._comm.size == 1
             return data
         else:
             assert self._comm.size > 1
-            if not data.is_full:
+            if isinstance(data, np.ndarray):  # in-memory chunks
                 # we only see a chunk, so we need to do MPI-based reslicing
                 array, newdim, startidx = reslice(
-                    data.data, old_slicing_dim + 1, new_slicing_dim + 1, self._comm
+                    data, old_slicing_dim + 1, new_slicing_dim + 1, self._comm
                 )
                 self._chunk_shape = array.shape  #  type: ignore
                 assert newdim == new_slicing_dim + 1
                 idx = [0, 0, 0]
                 idx[new_slicing_dim] = startidx
-                self._chunk_idx = (idx[0], idx[1], idx[2])
-                return DataSet(
-                    data=array,
-                    angles=data.angles,
-                    darks=data.darks,
-                    flats=data.flats,
-                    global_shape=data.global_shape,
-                    global_index=self._chunk_idx,
-                )
+                self._global_index = (idx[0], idx[1], idx[2])
+                return array
             else:
                 # we have a full, file-based dataset - all we have to do
                 # is calculate the new chunk shape and start index
                 rank = self._comm.rank
                 nproc = self._comm.size
-                length = self._full_shape[new_slicing_dim]
+                length = self._global_shape[new_slicing_dim]
                 startidx = round((length / nproc) * rank)
                 stopidx = round((length / nproc) * (rank + 1))
-                chunk_shape = list(self._full_shape)
+                chunk_shape = list(self._global_shape)
                 chunk_shape[new_slicing_dim] = stopidx - startidx
-                self._chunk_shape = (chunk_shape[0], chunk_shape[1], chunk_shape[2])
+                self._chunk_shape = make_3d_shape_from_shape(chunk_shape)
                 idx = [0, 0, 0]
                 idx[new_slicing_dim] = startidx
-                self._chunk_idx = (idx[0], idx[1], idx[2])
-                return FullFileDataSet(
-                    data=data._data,
-                    angles=data.angles,
-                    flats=data.flats,
-                    darks=data.darks,
-                    global_index=self._chunk_idx,
-                    chunk_shape=self._chunk_shape,
-                    shape=self.global_shape,
-                )
+                self._global_index = (idx[0], idx[1], idx[2])
+                return data
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
-        block = self._data.make_block(self._slicing_dim, start, length)
+        start_idx = [0, 0, 0]
+        start_idx[self._slicing_dim] = start
+        if self.is_file_based:
+            start_idx[self._slicing_dim] += self._global_index[self._slicing_dim]
+        shape = list(self._global_shape)
+        shape[self._slicing_dim] = length
+
+        block_data = self._data[
+            start_idx[0] : start_idx[0] + shape[0],
+            start_idx[1] : start_idx[1] + shape[1],
+            start_idx[2] : start_idx[2] + shape[2],
+        ]
+
+        block = DataSetBlock(
+            data=block_data,
+            aux_data=self._aux_data,
+            slicing_dim=self._slicing_dim,
+            block_start=start,
+            chunk_start=self._global_index[self._slicing_dim],
+            global_shape=self._global_shape,
+            chunk_shape=self._chunk_shape,
+        )
 
         return block
 

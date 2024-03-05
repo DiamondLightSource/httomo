@@ -6,7 +6,8 @@ import numpy as np
 from pytest_mock import MockerFixture
 import httomo
 from httomo.data.dataset_store import DataSetStoreWriter
-from httomo.runner.dataset import DataSet, DataSetBlock
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import Section, sectionize
@@ -48,9 +49,9 @@ def test_can_load_datasets(mocker: MockerFixture, tmp_path: PathLike):
 
 
 def test_can_determine_max_slices_no_gpu_estimator(
-    mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
+    mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):
-    loader = make_test_loader(mocker, dummy_dataset)
+    loader = make_test_loader(mocker, dummy_block)
     method = make_test_method(mocker, gpu=True, memory_gpu=[])
     p = Pipeline(loader=loader, methods=[method])
     t = TaskRunner(p, reslice_dir=tmp_path)
@@ -59,16 +60,18 @@ def test_can_determine_max_slices_no_gpu_estimator(
 
     t.determine_max_slices(s[0], 0)
 
-    assert s[0].max_slices == dummy_dataset.shape[0]
+    assert s[0].max_slices == dummy_block.chunk_shape[0]
 
 
 @pytest.mark.parametrize("slices", [10, 500])
 def test_can_determine_max_slices_empty_section(
-    mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet, slices: int
+    mocker: MockerFixture, tmp_path: PathLike, slices: int
 ):
-    dummy_dataset.data = np.ones((slices, 10, 10), dtype=np.float32)
+    data = np.ones((slices, 10, 10), dtype=np.float32)
+    aux = AuxiliaryData(angles=np.ones(slices, dtype=np.float32))
+    block = DataSetBlock(data, aux)
 
-    loader = make_test_loader(mocker, dummy_dataset)
+    loader = make_test_loader(mocker, block)
     method = make_test_method(mocker, gpu=True, memory_gpu=[])
     p = Pipeline(loader=loader, methods=[method])
     t = TaskRunner(p, reslice_dir=tmp_path)
@@ -78,7 +81,7 @@ def test_can_determine_max_slices_empty_section(
 
     t.determine_max_slices(s[0], 0)
 
-    assert s[0].max_slices == min(dummy_dataset.shape[0], httomo.globals.MAX_CPU_SLICES)
+    assert s[0].max_slices == min(slices, httomo.globals.MAX_CPU_SLICES)
 
 
 @pytest.mark.skipif(
@@ -96,9 +99,9 @@ def test_can_determine_max_slices_with_gpu_estimator(
     mocker: MockerFixture,
     max_slices_methods: List[int],
     tmp_path: PathLike,
-    dummy_dataset: DataSet,
+    dummy_block: DataSetBlock,
 ):
-    loader = make_test_loader(mocker, dummy_dataset)
+    loader = make_test_loader(mocker, dummy_block)
     methods: List[MethodWrapper] = []
     calc_dims_mocks = []
     calc_max_slices_mocks = []
@@ -125,7 +128,7 @@ def test_can_determine_max_slices_with_gpu_estimator(
         p,
     )
     assert len(s[0]) == len(max_slices_methods)
-    shape = (dummy_dataset.shape[1], dummy_dataset.shape[2])
+    shape = (dummy_block.shape[1], dummy_block.shape[2])
 
     t.determine_max_slices(s[0], 0)
 
@@ -133,18 +136,16 @@ def test_can_determine_max_slices_with_gpu_estimator(
     for i in range(len(max_slices_methods)):
         calc_dims_mocks[i].assert_called_with(shape)
         calc_max_slices_mocks[i].assert_called_with(
-            dummy_dataset.data.dtype,
+            dummy_block.data.dtype,
             shape,
             ANY,
-            dummy_dataset.darks,
-            dummy_dataset.flats,
         )
 
 
 def test_can_determine_max_slices_with_cpu(
-    mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
+    mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):
-    loader = make_test_loader(mocker, dummy_dataset)
+    loader = make_test_loader(mocker, dummy_block)
     methods = []
     for _ in range(3):
         method = make_test_method(mocker, gpu=False)
@@ -155,15 +156,17 @@ def test_can_determine_max_slices_with_cpu(
     s = sectionize(p)
 
     t.determine_max_slices(s[0], 0)
-    assert s[0].max_slices == dummy_dataset.shape[0]
+    assert s[0].max_slices == dummy_block.chunk_shape[0]
 
 
 def test_can_determine_max_slices_with_cpu_large(
-    mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
+    mocker: MockerFixture, tmp_path: PathLike
 ):
     mocker.patch.object(httomo.globals, "MAX_CPU_SLICES", 16)
-    dummy_dataset.data = np.ones((500, 10, 10), dtype=np.float32)
-    loader = make_test_loader(mocker, dummy_dataset)
+    data = np.ones((500, 10, 10), dtype=np.float32)
+    aux = AuxiliaryData(angles=np.ones(500, dtype=np.float32))
+    block = DataSetBlock(data, aux)
+    loader = make_test_loader(mocker, block)
     methods = []
     for _ in range(3):
         method = make_test_method(mocker, gpu=False)
@@ -178,29 +181,45 @@ def test_can_determine_max_slices_with_cpu_large(
 
 
 def test_calls_append_side_outputs_after_last_block(
-    mocker: MockerFixture, tmp_path: PathLike, dummy_dataset: DataSet
+    mocker: MockerFixture, tmp_path: PathLike,
 ):
-    loader = make_test_loader(mocker, dummy_dataset)
+    GLOBAL_SHAPE = (500, 10, 10)
+    CHUNK_SHAPE = GLOBAL_SHAPE
+    data = np.ones(GLOBAL_SHAPE, dtype=np.float32)
+    aux = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
+    block1 = DataSetBlock(
+        data=data[:GLOBAL_SHAPE[0] // 2, :, :],
+        aux_data=aux,
+        block_start=0,
+        chunk_start=0,
+        chunk_shape=CHUNK_SHAPE,
+        global_shape=GLOBAL_SHAPE
+    )
+    block2 = DataSetBlock(
+        data=data[GLOBAL_SHAPE[0] // 2:, :, :],
+        aux_data=aux,
+        block_start=CHUNK_SHAPE[0] // 2,
+        chunk_start=0,
+        chunk_shape=CHUNK_SHAPE,
+        global_shape=GLOBAL_SHAPE
+    )
 
+    method = make_test_method(mocker)
+    mocker.patch.object(method, "execute", side_effect=[block1, block2])
     side_outputs = {"answer": 42, "other": "xxx"}
+    getmock = mocker.patch.object(method, "get_side_output", return_value=side_outputs)
 
-    block1 = dummy_dataset.make_block(0, 0, dummy_dataset.shape[0] // 2)
-    block2 = dummy_dataset.make_block(0, dummy_dataset.shape[0] // 2)
-    method1 = make_test_method(mocker)
-    mocker.patch.object(method1, "execute", side_effect=[block1, block2])
-    getmock = mocker.patch.object(method1, "get_side_output", return_value=side_outputs)
-    method2 = make_test_method(mocker)
-
-    p = Pipeline(loader=loader, methods=[method1, method2])
+    loader = make_test_loader(mocker)
+    p = Pipeline(loader=loader, methods=[method])
     t = TaskRunner(p, reslice_dir=tmp_path)
     spy = mocker.patch.object(t, "append_side_outputs")
     t._prepare()
-    t._execute_method(method1, block1)
-    t._execute_method(method1, block2)  # this should trigger it
+    t._execute_method(method, block1) # the first block shouldn't trigger a side output append call
+    assert spy.call_count == 0
 
+    t._execute_method(method, block2)  # the last block should trigger side output append call
     getmock.assert_called_once()
     spy.assert_called_once_with(side_outputs)
-    t.side_outputs == side_outputs
 
 
 def test_update_side_inputs_updates_downstream_methods(
@@ -228,10 +247,10 @@ def test_update_side_inputs_updates_downstream_methods(
 
 
 def test_execute_section_calls_blockwise_execute(
-    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: PathLike
+    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: PathLike
 ):
-    original_value = dummy_dataset.data[0, 0, 0]  # it has all the same number
-    loader = make_test_loader(mocker, dummy_dataset)
+    original_value = dummy_block.data[0, 0, 0]  # it has all the same number
+    loader = make_test_loader(mocker, dummy_block)
     method = make_test_method(mocker, method_name="m1")
     p = Pipeline(loader=loader, methods=[method])
     s = sectionize(p)
@@ -239,7 +258,7 @@ def test_execute_section_calls_blockwise_execute(
     t._prepare()
     # make that do nothing
     mocker.patch.object(t, "determine_max_slices")
-    s[0].max_slices = dummy_dataset.data.shape[0] // 2  # we'll have 2 blocks
+    s[0].max_slices = dummy_block.chunk_shape[0] // 2  # we'll have 2 blocks
 
     # make this function return the block, with data multiplied by 2
     def mul_block_by_two(section, block: DataSetBlock):
@@ -254,7 +273,7 @@ def test_execute_section_calls_blockwise_execute(
     t._execute_section(s[0], 1)
     assert isinstance(t.sink, DataSetStoreWriter)
     reader = t.sink.make_reader()
-    data = reader.read_block(0, dummy_dataset.shape[0])
+    data = reader.read_block(0, dummy_block.shape[0])
 
     np.testing.assert_allclose(data.data, original_value * 2)
     calls = [call(ANY, ANY), call(ANY, ANY)]
@@ -262,32 +281,33 @@ def test_execute_section_calls_blockwise_execute(
 
 
 def test_execute_section_for_block(
-    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: PathLike
+    mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):
-    loader = make_test_loader(mocker, dummy_dataset)
+    loader = make_test_loader(mocker, dummy_block)
     method1 = make_test_method(mocker, method_name="m1")
     method2 = make_test_method(mocker, method_name="m2")
     p = Pipeline(loader=loader, methods=[method1, method2])
     s = sectionize(p)
     t = TaskRunner(p, reslice_dir=tmp_path)
     t._prepare()
-    block = dummy_dataset.make_block(0)
-    exec_method = mocker.patch.object(t, "_execute_method", return_value=block)
-    t._execute_section_block(s[0], block)
+    exec_method = mocker.patch.object(t, "_execute_method", return_value=dummy_block)
+    t._execute_section_block(s[0], dummy_block)
 
     calls = [call(method1, ANY), call(method2, ANY)]
     exec_method.assert_has_calls(calls)
 
 
 def test_does_reslice_when_needed(
-    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: PathLike
+    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: PathLike
 ):
-    loader = make_test_loader(mocker, dummy_dataset)
-    block = dummy_dataset.make_block(0)
+    loader = make_test_loader(mocker, dummy_block)
     method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
-    mocker.patch.object(method1, "execute", return_value=block)
+    mocker.patch.object(method1, "execute", return_value=dummy_block)
     method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
-    block2 = dummy_dataset.make_block(1)
+    # create a block in the other slicing dim
+    block2 = DataSetBlock(data=dummy_block.data, 
+                          aux_data=dummy_block.aux_data, 
+                          slicing_dim=1)
     mocker.patch.object(method2, "execute", return_value=block2)
     p = Pipeline(loader=loader, methods=[method1, method2])
     t = TaskRunner(p, reslice_dir=tmp_path)
@@ -307,12 +327,12 @@ def test_does_reslice_when_needed(
 )
 def test_warns_with_multiple_reslices(
     mocker: MockerFixture,
-    dummy_dataset: DataSet,
+    dummy_block: DataSetBlock,
     tmp_path: PathLike,
     loader_pattern: Pattern,
     reslices: int,
 ):
-    loader = make_test_loader(mocker, dummy_dataset, pattern=loader_pattern)
+    loader = make_test_loader(mocker, dummy_block, pattern=loader_pattern)
     method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
     method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
     method3 = make_test_method(mocker, method_name="m3", pattern=Pattern.projection)
