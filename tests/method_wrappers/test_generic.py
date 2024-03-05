@@ -472,73 +472,12 @@ def test_generic_calculate_max_slices_direct(
         dummy_block.data.dtype,
         shape,
         available_memory_in,
-        dummy_block.darks,
-        dummy_block.flats,
     )
 
     if gpu_enabled and implementation != "cpu":
         assert max_slices == max_slices_expected
     else:
         assert max_slices > dummy_block.data.shape[0]
-    assert available_memory == available_memory_in
-
-
-def test_generic_calculate_max_slices_direct_flats_darks(
-    mocker: MockerFixture, dummy_block: DataSetBlock
-):
-    class FakeModule:
-        def test_method(data):
-            return data
-
-    mocker.patch("importlib.import_module", return_value=FakeModule)
-    memory_gpu = [
-        GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct"),
-        GpuMemoryRequirement(dataset="flats", multiplier=1.1, method="direct"),
-        GpuMemoryRequirement(dataset="darks", multiplier=1.2, method="direct"),
-    ]
-    wrp = make_method_wrapper(
-        make_mock_repo(
-            mocker,
-            pattern=Pattern.projection,
-            output_dims_change=True,
-            implementation="gpu_cupy",
-            memory_gpu=memory_gpu,
-        ),
-        "mocked_module_path",
-        "test_method",
-        MPI.COMM_WORLD,
-    )
-    shape_t = list(dummy_block.chunk_shape)
-    shape_t.pop(0)
-    shape = (shape_t[0], shape_t[1])
-    databytes = shape[0] * shape[1] * dummy_block.data.itemsize
-    max_slices_expected = 5
-    multiplier = memory_gpu[0].multiplier
-    assert multiplier is not None
-    available_memory_in = int(databytes * max_slices_expected * multiplier)
-    flats = dummy_block.flats
-    darks = dummy_block.darks
-    assert flats is not None
-    assert darks is not None
-    assert memory_gpu[1].multiplier is not None
-    assert memory_gpu[2].multiplier is not None
-    available_memory_adjusted = (
-        available_memory_in
-        + int(flats.nbytes * memory_gpu[1].multiplier)
-        + int(darks.nbytes * memory_gpu[2].multiplier)
-    )
-    max_slices, available_memory = wrp.calculate_max_slices(
-        dummy_block.data.dtype,
-        shape,
-        available_memory_adjusted,
-        dummy_block.darks,
-        dummy_block.flats,
-    )
-
-    if gpu_enabled:
-        assert max_slices == max_slices_expected
-    else:
-        assert max_slices > dummy_block.chunk_shape[0]
     assert available_memory == available_memory_in
 
 
@@ -577,8 +516,6 @@ def test_generic_calculate_max_slices_module(
         dummy_block.data.dtype,
         shape,
         1_000_000_000,
-        dummy_block.darks,
-        dummy_block.flats,
     )
 
     if gpu_enabled:

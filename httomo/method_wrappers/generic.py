@@ -343,8 +343,6 @@ class GenericMethodWrapper(MethodWrapper):
         data_dtype: np.dtype,
         non_slice_dims_shape: Tuple[int, int],
         available_memory: int,
-        darks: np.ndarray,
-        flats: np.ndarray,
     ) -> Tuple[int, int]:
         """If it runs on GPU, determine the maximum number of slices that can fit in the
         available memory in bytes, and return a tuple of
@@ -372,28 +370,21 @@ class GenericMethodWrapper(MethodWrapper):
             subtract_bytes = 0
             # loop over the dataset names given in the library file and extracting
             # the corresponding dimensions from the available datasets
-            if field.dataset in ["flats", "darks"]:
+            if field.method == "direct":
                 assert field.multiplier is not None
-                # for normalisation module dealing with flats and darks separately
-                array: np.ndarray = flats if field.dataset == "flats" else darks
-                available_memory -= int(field.multiplier * array.nbytes)
+                # this calculation assumes a direct (simple) correspondence through multiplier
+                memory_bytes_method += int(
+                    field.multiplier
+                    * np.prod(non_slice_dims_shape)
+                    * data_dtype.itemsize
+                )
             else:
-                # deal with the rest of the data
-                if field.method == "direct":
-                    assert field.multiplier is not None
-                    # this calculation assumes a direct (simple) correspondence through multiplier
-                    memory_bytes_method += int(
-                        field.multiplier
-                        * np.prod(non_slice_dims_shape)
-                        * data_dtype.itemsize
-                    )
-                else:
-                    (
-                        memory_bytes_method,
-                        subtract_bytes,
-                    ) = self._query.calculate_memory_bytes(
-                        non_slice_dims_shape, data_dtype, **self.config_params
-                    )
+                (
+                    memory_bytes_method,
+                    subtract_bytes,
+                ) = self._query.calculate_memory_bytes(
+                    non_slice_dims_shape, data_dtype, **self.config_params
+                )
 
         if memory_bytes_method == 0:
             return available_memory - subtract_bytes, available_memory

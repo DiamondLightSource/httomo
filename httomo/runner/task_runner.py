@@ -246,8 +246,6 @@ class TaskRunner:
                 self.source.dtype,
                 non_slice_dims_shape,
                 available_memory,
-                self.source.darks,
-                self.source.flats,
             )
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims

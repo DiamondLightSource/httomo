@@ -139,8 +139,6 @@ def test_can_determine_max_slices_with_gpu_estimator(
             dummy_block.data.dtype,
             shape,
             ANY,
-            dummy_block.darks,
-            dummy_block.flats,
         )
 
 
