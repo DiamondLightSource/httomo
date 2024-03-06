@@ -99,4 +99,4 @@ class SummaryMonitor(MonitoringInterface):
         self._d2h = self._comm.reduce(self._d2h, MPI.SUM)
         self._total_agg = self._comm.reduce(self._total_agg, MPI.SUM)
         for k in self._methods.keys():
-            self.methods_[k] = self.comm.reduce(self._methods[k], MPI.SUM)
+            self._methods[k] = self._comm.reduce(self._methods[k], MPI.SUM)
