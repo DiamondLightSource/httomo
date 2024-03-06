@@ -6,9 +6,10 @@ import numpy as np
 import pytest
 from mpi4py import MPI
 import h5py
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.runner.dataset import DataSetBlock
 
 from httomo.utils import gpu_enabled, xp
-from httomo.runner.dataset import DataSet
 
 
 def test_calculate_stats_simple():
@@ -66,47 +67,59 @@ def test_calculcate_stats_performance(gpu: bool):
     assert "performance in ms" == duration_ms
     
     
-
-def test_save_intermediate_data(dummy_dataset: DataSet, tmp_path: Path):
+def test_save_intermediate_data(tmp_path: Path):
     # use increasing numbers in the data, to make sure blocks have different content
-    dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
-        dummy_dataset.shape
+    GLOBAL_SHAPE=(10,10,10)
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
     )
+    aux_data = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
+    bsize = 3
+    b1 = DataSetBlock(data=global_data[:bsize], aux_data=aux_data,
+                      slicing_dim=0,
+                      block_start=0,
+                      chunk_start=0,
+                      chunk_shape=GLOBAL_SHAPE,
+                      global_shape=GLOBAL_SHAPE)
+    b2 = DataSetBlock(data=global_data[bsize:], aux_data=aux_data,
+                      slicing_dim=0,
+                      block_start=bsize,
+                      chunk_start=0,
+                      chunk_shape=GLOBAL_SHAPE,
+                      global_shape=GLOBAL_SHAPE)
 
     with h5py.File(
         tmp_path / "test_file.h5", "w", driver="mpio", comm=MPI.COMM_WORLD
     ) as file:
         # save in 2 blocks, starting with the second to confirm order-independence
-        block1 = dummy_dataset.make_block(0, 3)
         save_intermediate_data(
-            block1.data,
-            block1.global_shape,
-            block1.global_index,
+            b2.data,
+            b2.global_shape,
+            b2.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
-            angles=block1.angles
+            angles=b2.angles,
         )
-        block2 = dummy_dataset.make_block(0, 0, 3)
         save_intermediate_data(
-            block2.data,
-            block2.global_shape,
-            block2.global_index,
+            b1.data,
+            b1.global_shape,
+            b1.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
-            angles=block2.angles
+            angles=b1.angles,
         )
 
     with h5py.File(tmp_path / "test_file.h5", "r") as file:
         assert "/data" in file
         data = file["/data"]
-        np.testing.assert_array_equal(data, dummy_dataset.data)
+        np.testing.assert_array_equal(data, global_data)
         assert "/angles" in file
         angles = file["/angles"]
-        np.testing.assert_array_equal(angles, dummy_dataset.angles)
+        np.testing.assert_array_equal(angles, aux_data.get_angles())
         assert "test_file.h5" in file
         np.testing.assert_array_equal(file["test_file.h5"], [0, 0])
         assert "data_dims" in file
@@ -117,59 +130,70 @@ def test_save_intermediate_data(dummy_dataset: DataSet, tmp_path: Path):
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
-def test_save_intermediate_data_mpi(dummy_dataset: DataSet, tmp_path: Path):
+def test_save_intermediate_data_mpi(tmp_path: Path):
     comm = MPI.COMM_WORLD
     # make sure we use the same tmp_path on both processes
     tmp_path = comm.bcast(tmp_path)
+    GLOBAL_SHAPE = (10, 10, 10)
+    csize=5
     # use increasing numbers in the data, to make sure blocks have different content
-    dummy_dataset.data = np.arange(dummy_dataset.data.size, dtype=np.float32).reshape(
-        dummy_dataset.shape
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
     )
+    aux_data = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
     # give each process only a portion of the data
-    dataset = DataSet(
-        data=dummy_dataset.data[0:5, :, :]
-        if comm.rank == 0
-        else dummy_dataset.data[5:, :, :],
-        angles=dummy_dataset.angles,
-        flats=dummy_dataset.flats,
-        darks=dummy_dataset.darks,
-        global_shape=dummy_dataset.shape,
-        global_index=(0, 0, 0) if comm.rank == 0 else (5, 0, 0),
+    rank_data = global_data[:csize, :, :] if comm.rank == 0 else global_data[csize:, :, :]
+    # create 2 blocks per rank
+    b1 = DataSetBlock(
+        data=rank_data[:3, :, :],
+        aux_data=aux_data,
+        slicing_dim=0,
+        block_start=0,
+        chunk_start=0 if comm.rank == 0 else csize,
+        global_shape=GLOBAL_SHAPE,
+        chunk_shape=(csize, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
+    )
+    b2 = DataSetBlock(
+        data=rank_data[3:, :, :],
+        aux_data=aux_data,
+        slicing_dim=0,
+        block_start=3,
+        chunk_start=0 if comm.rank == 0 else csize,
+        global_shape=GLOBAL_SHAPE,
+        chunk_shape=(csize, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
     )
 
     with h5py.File(tmp_path / "test_file.h5", "w", driver="mpio", comm=comm) as file:
         # save in 2 blocks, starting with the second to confirm order-independence
-        block1 = dataset.make_block(0, 3)
         save_intermediate_data(
-            block1.data,
-            block1.global_shape,
-            block1.global_index,
+            b2.data,
+            b2.global_shape,
+            b2.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
-            angles=block1.angles
+            angles=b2.angles,
         )
-        block2 = dataset.make_block(0, 0, 3)
         save_intermediate_data(
-            block2.data,
-            block2.global_shape,
-            block2.global_index,
+            b1.data,
+            b1.global_shape,
+            b1.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
-            angles=block2.angles
+            angles=b1.angles,
         )
 
     # open without MPI, looking at the full file
     with h5py.File(tmp_path / "test_file.h5", "r") as file:
         assert "/data" in file
         data = file["/data"]
-        np.testing.assert_array_equal(data, dummy_dataset.data)
+        np.testing.assert_array_equal(data, global_data)
         assert "/angles" in file
         angles = file["/angles"]
-        np.testing.assert_array_equal(angles, dummy_dataset.angles)
+        np.testing.assert_array_equal(angles, aux_data.get_angles())
         assert "test_file.h5" in file
         np.testing.assert_array_equal(file["test_file.h5"], [0, 0])
         assert "data_dims" in file

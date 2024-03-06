@@ -6,7 +6,7 @@ from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 
 from httomo.utils import gpu_enabled
-from httomo.runner.dataset import DataSet, DataSetBlock
+from httomo.runner.dataset import DataSetBlock
 import h5py
 from mpi4py import MPI
 from httomo.runner.loader import LoaderInterface
@@ -17,7 +17,7 @@ import numpy as np
 
 
 def test_save_intermediate(
-    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: Path
+    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: Path
 ):
     loader: LoaderInterface = mocker.create_autospec(
         LoaderInterface, instance=True, detector_x=10, detector_y=20
@@ -35,14 +35,13 @@ def test_save_intermediate(
             angles: np.ndarray,
         ):
             assert isinstance(data, np.ndarray)
-            assert data.shape == dummy_dataset.shape
+            assert data.shape == dummy_block.shape
             assert global_index == (0, 0, 0)
-            assert global_shape == dummy_dataset.shape
+            assert global_shape == dummy_block.shape
             assert Path(file.filename).name == "task1-testpackage-testmethod-XXX.h5"
             assert detector_x == 10
             assert detector_y == 20
             assert path == "/data"
-            np.testing.assert_array_equal(angles, dummy_dataset.angles)
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     prev_method = mocker.create_autospec(
@@ -63,10 +62,9 @@ def test_save_intermediate(
         prev_method=prev_method,
     )
     assert isinstance(wrp, SaveIntermediateFilesWrapper)
-    block = dummy_dataset.make_block(0)
-    res = wrp.execute(block)
+    res = wrp.execute(dummy_block)
 
-    assert res == block
+    assert res == dummy_block
 
 
 def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Path):
@@ -111,7 +109,7 @@ def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Pat
 
 @pytest.mark.parametrize("gpu", [False, True], ids=["CPU", "GPU"])
 def test_save_intermediate_leaves_gpu_data(
-    mocker: MockerFixture, dummy_dataset: DataSet, tmp_path: Path, gpu: bool
+    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: Path, gpu: bool
 ):
     if gpu and not gpu_enabled:
         pytest.skip("No GPU available")
@@ -154,10 +152,9 @@ def test_save_intermediate_leaves_gpu_data(
     )
 
     if gpu is True:
-        dummy_dataset.to_gpu()
+        dummy_block.to_gpu()
 
-    block = dummy_dataset.make_block(0)
-    assert block.is_gpu == gpu
-    res = wrp.execute(block)
+    assert dummy_block.is_gpu == gpu
+    res = wrp.execute(dummy_block)
 
     assert res.is_gpu == gpu

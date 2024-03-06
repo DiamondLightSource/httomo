@@ -6,6 +6,7 @@ from time import perf_counter_ns
 from typing import Any, Callable, Dict, List, Literal, Tuple
 
 from mpi4py.MPI import Comm
+import numpy as np
 
 import httomo.globals
 from httomo.data import mpiutil
@@ -319,3 +320,18 @@ class catch_gputime:
             return xp.cuda.get_elapsed_time(self.start, self.end) * 1e-3
         else:
             return 0.0
+
+
+def make_3d_shape_from_shape(shape: List[int]) -> Tuple[int, int, int]:
+    """Given a shape as a list of length 3, return a corresponding tuple 
+       with the right typing type (required to make mypy type checks work)
+    """
+    assert len(shape) == 3, "3D shape expected"
+    return (shape[0], shape[1], shape[2])
+
+
+def make_3d_shape_from_array(array: np.ndarray) -> Tuple[int, int, int]:
+    """Given a 3D array, return a corresponding shape tuple
+       with the right typing type (required to make mypy type checks work)
+    """
+    return make_3d_shape_from_shape(list(array.shape))

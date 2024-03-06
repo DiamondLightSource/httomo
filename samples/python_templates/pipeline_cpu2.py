@@ -27,7 +27,7 @@ def methods_to_list() -> PipelineConfig:
             "image_key_path": "entry1/tomo_entry/instrument/detector/image_key",
             "rotation_angles": {"data_path": "/entry1/tomo_entry/data/rotation_angle"},
             "dimension": 1,
-            "preview": [None, {"start": 30, "stop": 60}, None],
+            "preview": {"detector_y": {"start": 30, "stop": 60}},
             "pad": 0,
         },
     }
