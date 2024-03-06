@@ -58,10 +58,17 @@ def test_summary_monitor_records_and_displays_data_mpi():
     mon.report_method_block(
         "method1", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0, 0.1, 0.2
     )
+    mon.report_method_block(
+        "method2", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0, 0.1, 0.2
+    )
     mon.report_source_block(
         "loader", "method1", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 4.0
     )
+    mon.report_source_block(
+        "other", "method2", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 4.0
+    )
     mon.report_sink_block("wrt1", "method1", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 3.0)
+    mon.report_sink_block("dummy", "method2", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 3.0)
     mon.report_total_time(500.0)
 
     dest = StringIO()
@@ -76,15 +83,15 @@ def test_summary_monitor_records_and_displays_data_mpi():
         assert "methods CPU time" in data
         assert " 84.0" in data
         assert "methods GPU time" in data
-        assert " 4.0" in data
-        assert "host2device" in data
-        assert " 0.2" in data
-        assert "device2host" in data
-        assert " 0.4" in data
-        assert "sources time" in data
         assert " 8.0" in data
+        assert "host2device" in data
+        assert " 0.4" in data
+        assert "device2host" in data
+        assert " 0.8" in data
+        assert "sources time" in data
+        assert " 16.0" in data
         assert "sinks time" in data
-        assert " 6.0" in data
+        assert " 12.0" in data
         assert "pipeline time" in data
         assert "1000.0" in data
         assert "wall time" in data
@@ -92,5 +99,3 @@ def test_summary_monitor_records_and_displays_data_mpi():
         assert "Method breakdowns" in data
         assert "method1" in data
         assert "method2" in data
-
-        
