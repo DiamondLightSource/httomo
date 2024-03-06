@@ -81,11 +81,6 @@ class DataSetSource(Protocol):
         """Auxiliary data"""
         ...  # pragma: no cover
         
-    @property
-    def has_gpu_flats(self) -> bool:
-        """Check if flats array has already been cached on the GPU"""
-        ...  # pragma: no cover
-
     def read_block(self, start: int, length: int) -> DataSetBlock:
         """Reads a block from the dataset, starting at `start` of length `length`,
         in the current slicing dimension. Note that `start` is chunk-based,

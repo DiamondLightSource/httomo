@@ -51,7 +51,7 @@ def test_datareducer(mocker: MockerFixture):
 
     # it should only update the darks/flats once
     block2 = DataSetBlock(
-        data[2:2, :, :],
+        data[2:4, :, :],
         aux_data=aux_data,
         slicing_dim=0,
         block_start=2,

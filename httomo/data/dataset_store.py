@@ -341,10 +341,6 @@ class DataSetStoreReader(DataSetSource):
         return self._data.dtype
 
     @property
-    def has_gpu_flats(self) -> bool:
-        return self._data.has_gpu_flats
-    
-    @property
     def is_file_based(self) -> bool:
         return self._h5filename is not None
 
