@@ -239,9 +239,7 @@ class TaskRunner:
             f"The amount of the available GPU memory is {available_memory_in_GB} GB"
         )
         log_once(memory_str, comm=self.comm, colour=Colour.BVIOLET, level=1)
-        max_slices_methods = [max_slices] * len(section)
-
-        available_memory -= self._darks_flats_gpu_memory(section)
+        max_slices_methods = [max_slices] * len(section)        
 
         # loop over all methods in section
         has_gpu = False
@@ -266,16 +264,3 @@ class TaskRunner:
             )
         else:
             section.max_slices = min(max_slices_methods)
-
-    def _darks_flats_gpu_memory(self, section: Section):
-        mem = 0
-        assert self.source is not None, "Source not set"
-        if not self.source.has_gpu_darks and any(
-            m.cupyrun and "darks" in m.parameters for m in section
-        ):
-            mem += self.source.darks.nbytes
-        if not self.source.has_gpu_flats and any(
-            m.cupyrun and "flats" in m.parameters for m in section
-        ):
-            mem += self.source.flats.nbytes
-        return mem

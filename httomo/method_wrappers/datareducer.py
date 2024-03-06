@@ -39,18 +39,12 @@ class DatareducerWrapper(GenericMethodWrapper):
         ), "Only data_reducer is supported at the moment"
         self._flats_darks_processed = False
 
-    def execute(self, dataset: DataSetBlock) -> DataSetBlock:
+    def execute(self, block: DataSetBlock) -> DataSetBlock:
         # check if data needs to be transfered host <-> device
-        dataset = self._transfer_data(dataset)
+        block = self._transfer_data(block)
 
         if not self._flats_darks_processed:
-            darks = self.method(dataset.darks, **self._config_params)
-            flats = self.method(dataset.flats, **self._config_params)
-            ds = dataset.base
-            ds.unlock()
-            ds.darks = darks
-            ds.flats = flats
-            ds.lock()
+            block.darks = self.method(block.darks, **self._config_params)
+            block.flats = self.method(block.flats, **self._config_params)
             self._flats_darks_processed = True
-
-        return dataset
+        return block
