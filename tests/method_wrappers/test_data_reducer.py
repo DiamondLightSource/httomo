@@ -42,6 +42,8 @@ def test_datareducer(mocker: MockerFixture):
         chunk_shape=GLOBAL_SHAPE,
         global_shape=GLOBAL_SHAPE,
     )
+    spy = mocker.spy(wrp, "execute")
+    assert wrp._flats_darks_processed == False
     newblock1 = wrp.execute(block1)
 
     # we double flats and darks only, so we expect them to be twice the input
@@ -49,7 +51,18 @@ def test_datareducer(mocker: MockerFixture):
     np.testing.assert_array_equal(newblock1.flats, 6)
     np.testing.assert_array_equal(newblock1.darks, 8)
 
-    # it should only update the darks/flats once
+    assert spy.call_count == 1
+    assert wrp._flats_darks_processed == True
+
+    # It should only update the darks/flats once, so "_flats_darks_processed" should be True at this point.
+    # In order to ensure that we're not processing darks/flats again in the next block
+    # we change flats and darks array. If we DO, then the result must also change.
+    aux_data = AuxiliaryData(
+        angles=np.linspace(0, math.pi, GLOBAL_SHAPE[0], dtype=np.float32),
+        darks=8 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), dtype=np.float32),
+        flats=6 * np.ones((3, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), dtype=np.float32),
+    )
+
     block2 = DataSetBlock(
         data[2:4, :, :],
         aux_data=aux_data,
