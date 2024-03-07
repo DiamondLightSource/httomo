@@ -1,5 +1,0 @@
-- method: fan_to_para
-  module_path: tomopy.sim.project
-  parameters:
-    dist: REQUIRED
-    geom: REQUIRED

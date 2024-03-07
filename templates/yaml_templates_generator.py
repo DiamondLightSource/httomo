@@ -108,6 +108,8 @@ def _set_param_value(k: int, v: int, params_dict: Dict):
         params_dict[str(k)] = "REQUIRED"
     elif str(k) == "kwargs":
         params_dict["#additional parameters"] = "AVAILABLE"
+    elif str(k) == "axis":
+        params_dict[str(k)] = 'auto'
     elif str(k) == "center":
         # Temporary value
         params_dict[str(k)] = "${{centering.side_outputs.centre_of_rotation}}"
