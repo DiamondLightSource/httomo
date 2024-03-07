@@ -76,15 +76,15 @@ class MaxMemoryHook(cp.cuda.MemoryHook):
 @pytest.mark.cupy
 def test_normalize_memoryhook(flats, darks, ensure_clean_memory, dtype, slices):
     hook = MaxMemoryHook()
-    data = cp.random.random_sample((slices, flats.shape[1], flats.shape[2]), dtype=np.float32)
+    data = cp.random.random_sample(
+        (slices, flats.shape[1], flats.shape[2]), dtype=np.float32
+    )
     if dtype == "uint16":
         darks = (darks * 1233).astype(np.uint16)
         flats = flats.astype(np.uint16)
         data = data.astype(np.uint16)
     with hook:
-        normalize(
-            cp.copy(data), flats, darks, minus_log=True
-        ).get()
+        normalize(cp.copy(data), flats, darks, minus_log=True).get()
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = (
@@ -96,7 +96,7 @@ def test_normalize_memoryhook(flats, darks, ensure_clean_memory, dtype, slices):
         data.shape[1:], dtype=data.dtype
     )
 
-    estimated_memory_mb = round(slices*estimated_memory_bytes / (1024**2), 2)
+    estimated_memory_mb = round(slices * estimated_memory_bytes / (1024**2), 2)
     max_mem -= subtract_bytes
     max_mem_mb = round(max_mem / (1024**2), 2)
 
@@ -114,7 +114,9 @@ def test_normalize_memoryhook(flats, darks, ensure_clean_memory, dtype, slices):
 @pytest.mark.cupy
 def test_remove_outlier3d_memoryhook(flats, darks, ensure_clean_memory, dtype, slices):
     hook = MaxMemoryHook()
-    data = cp.random.random_sample((slices, flats.shape[1], flats.shape[2]), dtype=np.float32)
+    data = cp.random.random_sample(
+        (slices, flats.shape[1], flats.shape[2]), dtype=np.float32
+    )
     if dtype == "uint16":
         darks = (darks * 1233).astype(np.uint16)
         flats = flats.astype(np.uint16)
@@ -131,14 +133,18 @@ def test_remove_outlier3d_memoryhook(flats, darks, ensure_clean_memory, dtype, s
 
     # now we estimate how much of the total memory required for this data
     (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_remove_outlier3d(
-        data.shape[1:], dtype=data.dtype, darks_shape=darks.shape, darks_dtype=darks.dtype,
-        flats_shape=flats.shape, flats_dtype=flats.dtype
+        data.shape[1:],
+        dtype=data.dtype,
+        darks_shape=darks.shape,
+        darks_dtype=darks.dtype,
+        flats_shape=flats.shape,
+        flats_dtype=flats.dtype,
     )
 
-    estimated_memory_mb = round(slices*estimated_memory_bytes / (1024**2), 2)
+    estimated_memory_mb = round(slices * estimated_memory_bytes / (1024**2), 2)
     max_mem -= subtract_bytes
     max_mem_mb = round(max_mem / (1024**2), 2)
-    
+
     # now compare both memory estimations
     difference_mb = abs(estimated_memory_mb - max_mem_mb)
     percents_relative_maxmem = round((difference_mb / max_mem_mb) * 100)
@@ -146,6 +152,7 @@ def test_remove_outlier3d_memoryhook(flats, darks, ensure_clean_memory, dtype, s
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
     assert percents_relative_maxmem <= 20
+
 
 @pytest.mark.cupy
 @pytest.mark.parametrize("slices", [64, 128])
@@ -367,7 +374,8 @@ def test_remove_all_stripe_memoryhook(angles, dim_x_slices, dim_y, ensure_clean_
     difference_mb = abs(estimated_memory_mb - max_mem_mb)
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     assert estimated_memory_mb >= max_mem_mb
-    # the function is too complex to estimate the memory needed exactly.
+    # this function is too complex to estimate the memory needed exactly,
+    # but it works in slice-by-slice fashion.
     # We overestimate and ensure that we're always above the memoryhook limit.
 
 
@@ -406,9 +414,9 @@ def test_data_sampler_memoryhook(slices, newshape, interpolation, ensure_clean_m
     percents_relative_maxmem = round((difference_mb / max_mem_mb) * 100)
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     assert estimated_memory_mb >= max_mem_mb
-    # this function is very tricky to estimate the memory requires as it works
-    # slice by slice so memory usage inside interpn/RegularGridInterpolator is
-    # unknown. We should overestitmate the memory here.
+    # for this function it is difficult to estimate the memory requirements as it works
+    # slice by slice. Also the memory usage inside interpn/RegularGridInterpolator is
+    # unknown. We should generally overestitmate the memory here.
 
 
 @pytest.mark.cupy
@@ -530,36 +538,42 @@ def test_recon_CGLS_memoryhook(slices, recon_size_it, ensure_clean_memory):
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
     assert percents_relative_maxmem <= 20
-    
+
+
 @pytest.mark.cupy
 @pytest.mark.parametrize("bits", [8, 16, 32])
 @pytest.mark.parametrize("slices", [3, 5, 8])
 @pytest.mark.parametrize("glob_stats", [False, True])
-def test_rescale_to_int_memoryhook(data, ensure_clean_memory, slices: int, bits: Literal[8, 16, 32], glob_stats: bool):
+def test_rescale_to_int_memoryhook(
+    data, ensure_clean_memory, slices: int, bits: Literal[8, 16, 32], glob_stats: bool
+):
     data = cp.random.random_sample((1801, slices, 600), dtype=np.float32)
     kwargs: dict = {}
-    kwargs['bits'] = bits
+    kwargs["bits"] = bits
     if glob_stats:
-        kwargs['glob_stats'] = (0.0, 10.0, 120., data.size)
+        kwargs["glob_stats"] = (0.0, 10.0, 120.0, data.size)
     hook = MaxMemoryHook()
     with hook:
         rescale_to_int(cp.copy(data), **kwargs).get()
 
     # make sure estimator function is within range (80% min, 100% max)
-    max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook   
+    max_mem = (
+        hook.max_mem
+    )  # the amount of memory in bytes needed for the method according to memoryhook
     max_mem_mb = round(max_mem / (1024**2), 2)
-    
+
     # now we estimate how much of the total memory required for this data
-    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_rescale_to_int((data.shape[0], data.shape[2]), 
-                                                                                 dtype=np.float32(), **kwargs)
-    estimated_memory_mb = round(slices*estimated_memory_bytes / (1024**2), 2)
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_rescale_to_int(
+        (data.shape[0], data.shape[2]), dtype=np.float32(), **kwargs
+    )
+    estimated_memory_mb = round(slices * estimated_memory_bytes / (1024**2), 2)
     max_mem -= subtract_bytes
-    max_mem_mb = round(max_mem / (1024**2), 2)   
-    
-    # now we compare both memory estimations 
+    max_mem_mb = round(max_mem / (1024**2), 2)
+
+    # now we compare both memory estimations
     difference_mb = abs(estimated_memory_mb - max_mem_mb)
-    percents_relative_maxmem = round((difference_mb/max_mem_mb)*100)
+    percents_relative_maxmem = round((difference_mb / max_mem_mb) * 100)
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
-    # the resulting percent value should not deviate from max_mem on more than 20%    
-    assert estimated_memory_mb >= max_mem_mb 
+    # the resulting percent value should not deviate from max_mem on more than 20%
+    assert estimated_memory_mb >= max_mem_mb
     assert percents_relative_maxmem <= 35
