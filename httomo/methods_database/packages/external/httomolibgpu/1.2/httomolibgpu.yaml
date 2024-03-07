@@ -28,6 +28,16 @@ misc:
         - datasets: [tomo]
         - multipliers: [2.2]
         - methods: [direct]
+  rescale:
+    rescale_to_int:
+      pattern: all
+      output_dims_change: False
+      implementation: gpu_cupy
+      save_result_default: False
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
 prep:
   normalize:
     normalize:
