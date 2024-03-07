@@ -1,7 +1,0 @@
-- method: inpainting_filter3d
-  module_path: httomolib.misc.corr
-  parameters:
-    mask: REQUIRED
-    iter: 3
-    windowsize_half: 5
-    method_type: random

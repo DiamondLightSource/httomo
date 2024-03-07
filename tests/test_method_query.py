@@ -78,10 +78,9 @@ def test_database_query_object():
     assert query.swap_dims_on_output() is False
     assert query.save_result_default() is False
     mempars = query.get_memory_gpu_params()
-    assert len(mempars) == 3
-    assert set(p.dataset for p in mempars) == set(["tomo", "flats", "darks"])
-    assert all(p.method == "direct" for p in mempars)
-    assert all(p.multiplier >= 1.0 for p in mempars)
+    assert set(p.dataset for p in mempars) == set(["tomo"])
+    assert all(p.method == "module" for p in mempars)
+    assert all(p.multiplier == 'None' for p in mempars)
 
 
 def test_database_query_object_recon_swap_output():
