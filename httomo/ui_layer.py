@@ -6,16 +6,20 @@ from pathlib import Path
 import os
 import re
 
+import h5py
 from mpi4py import MPI
 from mpi4py.MPI import Comm
+from httomo.darks_flats import DarksFlatsFileConfig
 
 from httomo.methods_database.query import MethodDatabaseRepository
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 
 from httomo.method_wrappers import make_method_wrapper
-from httomo.runner.loader import LoaderInterface, make_loader
+from httomo.loaders import make_loader
+from httomo.runner.loader import LoaderInterface
 from httomo.runner.output_ref import OutputRef
+from httomo.transform_loader_params import parse_angles, parse_preview
 
 
 class UiLayer:
@@ -81,12 +85,41 @@ class UiLayer:
             raise ValueError("Got pipeline with no loader (must be first method)")
         parameters = task_conf.get("parameters", dict())
         parameters["in_file"] = self.in_data_file
+        # the following will raise KeyError if not present
+        in_file = parameters["in_file"]
+        data_path = parameters["data_path"]
+        # these will have defaults if not given
+        image_key_path = parameters.get("image_key_path", None)
+        darks: dict = parameters.get("darks", dict())
+        darks_file = darks.get("file", in_file)
+        darks_path = darks.get("data_path", data_path)
+        darks_image_key = darks.get("image_key_path", image_key_path)
+        flats: dict = parameters.get("flats", dict())
+        flats_file = flats.get("file", in_file)
+        flats_path = flats.get("data_path", data_path)
+        flats_image_key = flats.get("image_key_path", image_key_path)
+        angles = parse_angles(parameters["rotation_angles"])
+
+        with h5py.File(in_file, "r") as f:
+            data_shape = f[data_path].shape
+        preview = parse_preview(parameters.get("preview", None), data_shape)
+
         loader = make_loader(
-            self.repo,
-            task_conf["module_path"],
-            task_conf["method"],
-            self.comm,
-            **task_conf.get("parameters", dict()),
+            repo=self.repo,
+            module_path=task_conf["module_path"],
+            method_name=task_conf["method"],
+            in_file=Path(in_file),
+            data_path=data_path,
+            image_key_path=image_key_path,
+            angles=angles,
+            darks=DarksFlatsFileConfig(
+                file=darks_file, data_path=darks_path, image_key_path=darks_image_key
+            ),
+            flats=DarksFlatsFileConfig(
+                file=flats_file, data_path=flats_path, image_key_path=flats_image_key
+            ),
+            preview=preview,
+            comm=self.comm,
         )
 
         return loader

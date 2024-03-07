@@ -16,8 +16,8 @@ misc:
       save_result_default: False
       memory_gpu:
         - datasets: [tomo]
-        - multipliers: [2.1]
-        - methods: [direct]
+        - multipliers: [None]
+        - methods: [module]
   morph:
     sino_360_to_180:
       pattern: sinogram
@@ -46,9 +46,9 @@ prep:
       implementation: gpu_cupy
       save_result_default: False
       memory_gpu:
-        - datasets: [tomo, flats, darks]
-        - multipliers: [2, 1.075, 1.075]
-        - methods: [direct, direct, direct]
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
   phase:
     paganin_filter_tomopy:
       pattern: projection

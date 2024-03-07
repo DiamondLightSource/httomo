@@ -42,7 +42,7 @@ class StatsCalcWrapper(GenericMethodWrapper):
         self._elements: int = 0
 
     def _process_return_type(
-        self, ret: Any, input_dataset: DataSetBlock
+        self, ret: Any, input_block: DataSetBlock
     ) -> DataSetBlock:
         assert isinstance(ret, tuple), "expected return type is a tuple"
         assert len(ret) == 4, "A 4-tuple of stats values is expected"
@@ -52,13 +52,13 @@ class StatsCalcWrapper(GenericMethodWrapper):
         self._sum += float(ret[2])
         self._elements += int(ret[3])
 
-        if input_dataset.is_last_in_chunk:
+        if input_block.is_last_in_chunk:
             glob_stats = self._accumulate_chunks()
             stats_str = f"Global min {glob_stats[0]}, Global max {glob_stats[1]}, Global mean {glob_stats[2]}"
             log_rank(stats_str, comm=self.comm)
             self._side_output["glob_stats"] = glob_stats
 
-        return input_dataset
+        return input_block
 
     def _accumulate_chunks(self) -> Tuple[float, float, float, int]:
         # reduce to rank 0 process

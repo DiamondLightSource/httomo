@@ -90,6 +90,7 @@ dev-cpu = [
   "httomolib[dev]",
   "tomopy",
   "plumbum",
+  "typing_extensions",
   "mypy",
   "types-PyYAML",
 ]
@@ -106,6 +107,7 @@ dev-gpu = [
   "httomolibgpu[dev]",
   "tomopy",
   "plumbum",
+  "typing_extensions",
   "mypy",
   "types-PyYAML",
 ]
