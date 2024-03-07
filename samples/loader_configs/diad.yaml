@@ -9,8 +9,7 @@
       data_path: /entry/imaging_sum/gts_theta_value
     dimension: 1
     preview:
-      -
-      - start: 5
+      detector_y:
+        start: 5
         stop: 7
-      -
     pad: 0
