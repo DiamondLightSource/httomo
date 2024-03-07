@@ -80,7 +80,7 @@ class DataSetSource(Protocol):
     def aux_data(self) -> AuxiliaryData:
         """Auxiliary data"""
         ...  # pragma: no cover
-
+        
     def read_block(self, start: int, length: int) -> DataSetBlock:
         """Reads a block from the dataset, starting at `start` of length `length`,
         in the current slicing dimension. Note that `start` is chunk-based,

@@ -4,20 +4,22 @@ channels:
   - conda-forge
   - httomo
   - anaconda
+  - rapidsai
 dependencies:
   - astra-toolbox::astra-toolbox
   - conda-forge::click>=8.1.3
-  - conda-forge::cupy=12.3.0
-  - conda-forge::h5py[build=*openmpi*]
+  - conda-forge::cupy<=12.3.0
+  - conda-forge::cudatoolkit
+  - conda-forge::h5py=*=*mpi_openmpi*
   - conda-forge::hdf5plugin
   - conda-forge::mpi4py
   - conda-forge::pyyaml
-  - conda-forge::numpy<=1.24
+  - conda-forge::numpy<=1.25
   - conda-forge::nvtx
   - conda-forge::python
+  - conda-forge::plumbum
+  - conda-forge::typing_extensions
   - anaconda::ipython
   - conda-forge::tomopy
-  - httomo::larix
   - httomo::tomobar
-  - httomo::httomolib
-  - httomo::httomolibgpu
+  - rapidsai::cucim

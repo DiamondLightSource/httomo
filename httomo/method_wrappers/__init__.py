@@ -5,12 +5,13 @@ from .generic import GenericMethodWrapper
 
 # import all other wrappers to make sure they are available to the factory function
 # (add imports here when createing new wrappers)
-import httomo.method_wrappers.dezinging  # noqa: F401; pylint: disable=unused-variable
-import httomo.method_wrappers.images  # noqa: F401; pylint: disable=unused-variable
-import httomo.method_wrappers.reconstruction  # noqa: F401; pylint: disable=unused-variable
-import httomo.method_wrappers.rotation  # noqa: F401; pylint: disable=unused-variable
-import httomo.method_wrappers.stats_calc  # noqa: F401; pylint: disable=unused-variable
-import httomo.method_wrappers.save_intermediate  # noqa: F401; pylint: disable=unused-variable
+import httomo.method_wrappers.datareducer
+import httomo.method_wrappers.dezinging
+import httomo.method_wrappers.images
+import httomo.method_wrappers.reconstruction
+import httomo.method_wrappers.rotation
+import httomo.method_wrappers.stats_calc
+import httomo.method_wrappers.save_intermediate
 
 from mpi4py.MPI import Comm
 from typing import Dict, Optional

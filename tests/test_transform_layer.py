@@ -116,3 +116,27 @@ def test_transform_calls_insert_save_methods(mocker: MockerFixture, tmp_path: Pa
     trans.transform(pipeline)
 
     save_mock.assert_called_once()
+
+
+def test_insert_data_reducer(mocker: MockerFixture, tmp_path: Path):
+    comm = MPI.COMM_SELF
+    repo = make_mock_repo(mocker)
+    loader = mocker.create_autospec(
+        LoaderInterface,
+        instance=True,
+    )
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[
+            make_test_method(
+                mocker, method_name="remove_outlier", save_result=False, task_id="t1"
+            ),
+            make_test_method(mocker, method_name="normalize", save_result=False),
+        ],
+    )
+    trans = TransformLayer(repo, comm=comm, save_all=False, out_dir=tmp_path)
+    pipeline = trans.insert_data_reducer(pipeline)
+
+    assert len(pipeline) == 3
+    assert pipeline[1].method_name == "data_reducer"
+    assert pipeline[1].task_id == "task_1"

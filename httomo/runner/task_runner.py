@@ -49,19 +49,21 @@ class TaskRunner:
         self.start_time = MPI.Wtime()
 
         sections = self._sectionize()
-        
+
         self._prepare()
         for i, section in enumerate(sections):
             self._execute_section(section, i)
             gpumem_cleanup()
-            
+
         self.end_time = MPI.Wtime()
-        self._log_pipeline(f"Pipeline finished. Took {self.end_time-self.start_time:.3f}s")
-            
+        self._log_pipeline(
+            f"Pipeline finished. Took {self.end_time-self.start_time:.3f}s"
+        )
+
     def _sectionize(self) -> List[Section]:
         sections = sectionize(self.pipeline)
         self._log_pipeline(f"Pipeline has been separated into {len(sections)} sections")
-        num_stores = len(sections) - 1 
+        num_stores = len(sections) - 1
         if num_stores > 1:
             log_once(
                 f"WARNING: Reslicing will be performed {num_stores} times. The number of reslices increases the total run time.",
@@ -147,12 +149,18 @@ class TaskRunner:
     def _execute_method(
         self, method: MethodWrapper, block: DataSetBlock
     ) -> DataSetBlock:
-        start_time = self._log_task_start(method.task_id, method.pattern, method.method_name)
+        start_time = self._log_task_start(
+            method.task_id, method.pattern, method.method_name
+        )
         block = method.execute(block)
         if block.is_last_in_chunk:
             self.append_side_outputs(method.get_side_output())
         self._log_task_end(
-            method.task_id, start_time, method.pattern, method.method_name, method.package_name
+            method.task_id,
+            start_time,
+            method.pattern,
+            method.method_name,
+            method.package_name,
         )
         return block
 
@@ -231,7 +239,7 @@ class TaskRunner:
             f"The amount of the available GPU memory is {available_memory_in_GB} GB"
         )
         log_once(memory_str, comm=self.comm, colour=Colour.BVIOLET, level=1)
-        max_slices_methods = [max_slices] * len(section)
+        max_slices_methods = [max_slices] * len(section)        
 
         # loop over all methods in section
         has_gpu = False
@@ -251,6 +259,8 @@ class TaskRunner:
             non_slice_dims_shape = output_dims
 
         if not has_gpu:
-            section.max_slices = min(min(max_slices_methods), httomo.globals.MAX_CPU_SLICES)
+            section.max_slices = min(
+                min(max_slices_methods), httomo.globals.MAX_CPU_SLICES
+            )
         else:
             section.max_slices = min(max_slices_methods)
