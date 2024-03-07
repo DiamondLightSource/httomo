@@ -51,20 +51,20 @@ class ImagesWrapper(GenericMethodWrapper):
     # but gives the method a CPU copy of the data.
     def execute(
         self,
-        dataset: DataSetBlock,
+        block: DataSetBlock,
     ) -> DataSetBlock:
         config_params = self._config_params
         if "offset" in self.parameters:
             config_params = {
                 **self._config_params,
-                "offset": dataset.global_index[_get_slicing_dim(self.pattern) - 1],
+                "offset": block.global_index[_get_slicing_dim(self.pattern) - 1],
             }
             
-        args = self._build_kwargs(self._transform_params(config_params), dataset)
-        if dataset.is_gpu:
+        args = self._build_kwargs(self._transform_params(config_params), block)
+        if block.is_gpu:
             # give method a CPU copy of the data
-            args[self.parameters[0]] = xp.asnumpy(dataset.data)
+            args[self.parameters[0]] = xp.asnumpy(block.data)
 
         self.method(**args)
 
-        return dataset
+        return block
