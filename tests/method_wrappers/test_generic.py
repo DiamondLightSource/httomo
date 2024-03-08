@@ -167,18 +167,20 @@ def test_generic_passes_communicator_if_needed(
     wrp.execute(dummy_block)
 
 
-def test_generic_passes_axis(
+def test_generic_transforms_auto_axis(
     mocker: MockerFixture, dummy_block: DataSetBlock
 ):    
 
+    PATTERN = Pattern.projection
     class FakeModule:
-        def fake_method(data, axis: Union[str, int] = 'auto'):
-            assert axis == 'auto'
+        def fake_method(data, axis: int):
+            assert axis == PATTERN.value
             return data
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_method_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker, pattern=PATTERN), "mocked_module_path", "fake_method",
+        MPI.COMM_WORLD, axis="auto",
     )
 
     wrp.execute(dummy_block)
