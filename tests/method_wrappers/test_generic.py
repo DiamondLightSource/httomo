@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 from httomo.method_wrappers import make_method_wrapper
@@ -157,6 +157,23 @@ def test_generic_passes_communicator_if_needed(
     class FakeModule:
         def fake_method(data, comm: Optional[MPI.Comm] = None):
             assert comm is not None
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+    )
+
+    wrp.execute(dummy_block)
+
+
+def test_generic_passes_axis(
+    mocker: MockerFixture, dummy_block: DataSetBlock
+):    
+
+    class FakeModule:
+        def fake_method(data, axis: Union[str, int] = 'auto'):
+            assert axis == 'auto'
             return data
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
