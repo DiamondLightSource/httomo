@@ -104,6 +104,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
         temppath: PathLike,
+        memory_limit_bytes: int = 0,
     ):
         self._slicing_dim = slicing_dim
         self._comm = comm
@@ -112,6 +113,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         self._readonly = False
         self._h5file: Optional[h5py.File] = None
         self._h5filename: Optional[Path] = None
+        self._memory_limit_bytes: int = memory_limit_bytes
 
         self._data: Optional[Union[np.ndarray, h5py.Dataset]] = None
 
@@ -247,11 +249,17 @@ class DataSetStoreWriter(ReadableDataSetSink):
                 self.comm,
             )
 
-    @classmethod
     def _create_numpy_data(
-        cls, chunk_shape: Tuple[int, int, int], dtype: DTypeLike
+        self, chunk_shape: Tuple[int, int, int], dtype: DTypeLike
     ) -> np.ndarray:
         """Convenience method to enable mocking easily"""
+        if (
+            self._memory_limit_bytes > 0
+            and np.prod(chunk_shape) * np.dtype(dtype).itemsize
+            >= self._memory_limit_bytes
+        ):
+            raise MemoryError("Memory limit reached")
+
         return np.empty(chunk_shape, dtype)
 
     def _create_h5_data(

@@ -2,8 +2,16 @@ import httomo.globals
 from httomo.data import mpiutil
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.gpu_utils import gpumem_cleanup
-from httomo.runner.method_wrapper import GpuTimeInfo, MethodParameterDictType, MethodParameterValues, MethodWrapper
-from httomo.runner.methods_repository_interface import GpuMemoryRequirement, MethodRepository
+from httomo.runner.method_wrapper import (
+    GpuTimeInfo,
+    MethodParameterDictType,
+    MethodParameterValues,
+    MethodWrapper,
+)
+from httomo.runner.methods_repository_interface import (
+    GpuMemoryRequirement,
+    MethodRepository,
+)
 from httomo.runner.output_ref import OutputRef
 from httomo.utils import catch_gputime, catchtime, gpu_enabled, log_rank, xp
 
@@ -91,9 +99,9 @@ class GenericMethodWrapper(MethodWrapper):
         self._has_kwargs = any(
             p.kind == Parameter.VAR_KEYWORD for p in sig.parameters.values()
         )
-        
+
         self.task_id = kwargs.pop("task_id", "")
-        
+
         # check if the given kwargs are actually supported by the method
         self._config_params = kwargs
         self._output_mapping = output_mapping
@@ -105,7 +113,9 @@ class GenericMethodWrapper(MethodWrapper):
         self._output_dims_change = self._query.get_output_dims_change()
         self._implementation = self._query.get_implementation()
         self._memory_gpu = self._query.get_memory_gpu_params()
-        self._save_result = self._query.save_result_default() if save_result is None else save_result
+        self._save_result = (
+            self._query.save_result_default() if save_result is None else save_result
+        )
 
         if self.is_gpu and not gpu_enabled:
             raise ValueError("GPU is not available, please use only CPU methods")
@@ -134,15 +144,15 @@ class GenericMethodWrapper(MethodWrapper):
     @property
     def memory_gpu(self) -> List[GpuMemoryRequirement]:
         return self._memory_gpu
-        
+
     @property
     def implementation(self) -> Literal["gpu", "cpu", "gpu_cupy"]:
         return self._implementation
-        
+
     @property
     def output_dims_change(self) -> bool:
         return self._output_dims_change
-        
+
     @property
     def save_result(self) -> bool:
         return self._save_result
@@ -166,7 +176,7 @@ class GenericMethodWrapper(MethodWrapper):
     @property
     def method_name(self) -> str:
         return self._method_name
-    
+
     @property
     def module_path(self) -> str:
         return self._module_path
@@ -210,7 +220,9 @@ class GenericMethodWrapper(MethodWrapper):
         return None
 
     def _build_kwargs(
-        self, dict_params: MethodParameterDictType, dataset: Optional[DataSetBlock] = None
+        self,
+        dict_params: MethodParameterDictType,
+        dataset: Optional[DataSetBlock] = None,
     ) -> Dict[str, Any]:
         # first parameter is always the data (if given)
         ret: Dict[str, Any] = dict()
@@ -228,8 +240,11 @@ class GenericMethodWrapper(MethodWrapper):
             elif p == "gpu_id":
                 assert gpu_enabled, "methods with gpu_id parameter require GPU support"
                 ret[p] = self._gpu_id
+            elif p == 'axis' and p in remaining_dict_params and remaining_dict_params[p] == 'auto':
+                ret[p] = self.pattern.value
+                pass
             elif p in remaining_dict_params:
-                ret[p] = remaining_dict_params[p]
+                ret[p] = remaining_dict_params[p]            
             elif p in self._params_with_defaults:
                 pass
             else:
@@ -326,7 +341,9 @@ class GenericMethodWrapper(MethodWrapper):
         self._gpu_time_info.host2device = t.elapsed
         return block
 
-    def _transform_params(self, dict_params: MethodParameterDictType) -> MethodParameterDictType:
+    def _transform_params(
+        self, dict_params: MethodParameterDictType
+    ) -> MethodParameterDictType:
         """Hook for derived classes, for transforming the names of the possible method parameters
         dictionary, for example to rename some of them or inspect them in some way"""
         return dict_params
@@ -372,8 +389,10 @@ class GenericMethodWrapper(MethodWrapper):
         # if we have no information, we assume in-place operation with no extra memory
         if len(self.memory_gpu) == 0:
             return (
-                int(available_memory
-                // (np.prod(non_slice_dims_shape) * data_dtype.itemsize)),
+                int(
+                    available_memory
+                    // (np.prod(non_slice_dims_shape) * data_dtype.itemsize)
+                ),
                 available_memory,
             )
 
