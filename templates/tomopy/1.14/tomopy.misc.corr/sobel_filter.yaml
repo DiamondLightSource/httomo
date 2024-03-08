@@ -1,4 +1,4 @@
 - method: sobel_filter
   module_path: tomopy.misc.corr
   parameters:
-    axis: 0
+    axis: auto
