@@ -1,8 +1,7 @@
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.methods import calculate_stats
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import log_rank
+from httomo.utils import catchtime, log_rank, xp, gpu_enabled
 
 
 from mpi4py.MPI import Comm
@@ -14,8 +13,8 @@ from typing import Any, Dict, Optional, Tuple
 class StatsCalcWrapper(GenericMethodWrapper):
     """This class calculates global statistics and deliver a side_output.
     It also forces to return the original dataset to be passed to the next method.
-    
-    Note that the side output is only set once the last block in the chunk has been 
+
+    Note that the side output is only set once the last block in the chunk has been
     processed.
     """
 
@@ -34,12 +33,34 @@ class StatsCalcWrapper(GenericMethodWrapper):
         **kwargs,
     ):
         super().__init__(
-            method_repository, module_path, method_name, comm, save_result, output_mapping, **kwargs
+            method_repository,
+            module_path,
+            method_name,
+            comm,
+            save_result,
+            output_mapping,
+            **kwargs,
         )
         self._min = float("inf")
         self._max = float("-inf")
         self._sum: float = 0.0
         self._elements: int = 0
+
+    def _transfer_data(self, dataset: DataSetBlock):
+        # don't transfer anything (either way) at this point
+        return dataset
+    
+    def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
+        # transfer data to GPU if we can / have it available (always faster), 
+        # but don't want to fail if we don't have a GPU (underlying method works for both)
+        # and don't touch original dataset
+        if gpu_enabled and dataset.is_cpu:
+            with catchtime() as t:
+                args[self._parameters[0]] = xp.asarray(dataset.data)
+            self._gpu_time_info.host2device += t.elapsed
+        ret = self._method(**args)
+        return self._process_return_type(ret, dataset)
+        
 
     def _process_return_type(
         self, ret: Any, input_block: DataSetBlock

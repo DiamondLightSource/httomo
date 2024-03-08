@@ -6,7 +6,7 @@ from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.output_ref import OutputRef
-from httomo.utils import Pattern, gpu_enabled
+from httomo.utils import Pattern, gpu_enabled, xp
 from ..testing_utils import make_mock_repo, make_test_method
 
 import pytest
@@ -65,6 +65,32 @@ def test_generic_execute_transfers_to_gpu(mocker: MockerFixture, dummy_block: Da
     res = wrp.execute(dummy_block)
 
     assert res.is_gpu == gpu_enabled
+
+
+@pytest.mark.skipif(
+    not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
+    reason="skipped as cupy is not available",
+)
+@pytest.mark.cupy
+def test_generic_excute_measures_gpu_times(dummy_block: DataSetBlock, mocker: MockerFixture
+):
+    class FakeModule:
+        def fake_method(data):
+            return xp.exp(data) + data  # make sure some kernel code is run
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, implementation="gpu_cupy"),
+        "module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+    )
+    wrp.execute(dummy_block)
+
+    if gpu_enabled:
+        assert wrp.gpu_time.host2device > 0.0
+        assert wrp.gpu_time.device2host == 0.0
+        assert wrp.gpu_time.kernel > 0.0
 
 
 def test_generic_execute_calls_pre_post_process(

@@ -6,7 +6,8 @@ from ..testing_utils import make_mock_repo
 
 from mpi4py import MPI
 from pytest_mock import MockerFixture
-import numpy as np
+from httomo.utils import gpu_enabled, xp
+
 
 
 def test_calculate_stats(mocker: MockerFixture, dummy_block: DataSetBlock):
@@ -106,3 +107,37 @@ def test_calculate_stats_2_processes(mocker: MockerFixture, dummy_block: DataSet
     assert wrp.get_side_output() == {
         "glob_stats": (1.1, 3.5, (42.0 + 40.0) / 19, 19),  # computes mean (sum/total)
     }
+
+
+@pytest.mark.parametrize("gpu", [False, True], ids=["CPU-input", "GPU-input"])
+def test_calculate_stats_uses_gpu_if_available(
+    mocker: MockerFixture, dummy_block: DataSetBlock, gpu: bool
+):
+
+    if gpu and not gpu_enabled:
+        pytest.skip("No GPU available")
+
+    class FakeModule:
+        def calculate_stats(data, comm):
+            # regardless of dataset input, we want device data if gpu enabled
+            if gpu_enabled:
+                assert getattr(data, "device", None) is not None
+            else:
+                assert getattr(data, "device", None) is None
+            return (1.2, 3.1, 42.0, 10)
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker),
+        "mocked_module_path.calculate_stats",
+        "calculate_stats",
+        MPI.COMM_SELF,
+        output_mapping={"glob_stats": "glob_stats"},
+    )
+
+    if gpu is True:
+        dummy_block.to_gpu()
+
+    res = wrp.execute(dummy_block)
+
+    assert res.is_gpu == gpu

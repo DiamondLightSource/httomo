@@ -2,7 +2,7 @@ from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.method_wrapper import MethodParameterDictType
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import Pattern, log_rank, xp
+from httomo.utils import Pattern, catchtime, log_rank, xp
 
 
 import numpy as np
@@ -105,7 +105,9 @@ class RotationWrapper(GenericMethodWrapper):
             )
         data = block.data[:, slice_for_cor, :]
         if block.is_gpu:
-            data = xp.asnumpy(data)
+            with catchtime() as t:
+                data = xp.asnumpy(data)
+            self._gpu_time_info.device2host += t.elapsed
         self.sino[
             block.chunk_index[0] : block.chunk_index[0] + block.shape[0], :
         ] = data
@@ -124,7 +126,9 @@ class RotationWrapper(GenericMethodWrapper):
                 block.darks[:, slice_for_cor, :],
             )
             if self.cupyrun:
-                sino_slice = xp.asarray(sino_slice)
+                with catchtime() as t:
+                    sino_slice = xp.asarray(sino_slice)
+                self._gpu_time_info.host2device += t.elapsed
             args["ind"] = 0
             args[self.parameters[0]] = sino_slice
             res = self.method(**args)
@@ -135,9 +139,8 @@ class RotationWrapper(GenericMethodWrapper):
         log_rank(cor_str, comm=self.comm)
         return self._process_return_type(res, block)
 
-    @classmethod
     def normalize_sino(
-        cls, sino: np.ndarray, flats: Optional[np.ndarray], darks: Optional[np.ndarray]
+        self, sino: np.ndarray, flats: Optional[np.ndarray], darks: Optional[np.ndarray]
     ) -> np.ndarray:
         flats1d = 1.0 if flats is None else flats.mean(0, dtype=np.float32)
         darks1d = 0.0 if darks is None else darks.mean(0, dtype=np.float32)
@@ -148,7 +151,9 @@ class RotationWrapper(GenericMethodWrapper):
         elif getattr(denom, "device", None) is not None:
             # GPU
             denom[xp.where(denom == 0.0)] = 1.0
-            sino = xp.asarray(sino)
+            with catchtime() as t:
+                sino = xp.asarray(sino)
+            self._gpu_time_info.host2device += t.elapsed
             sino -= darks1d / denom
         else:
             # CPU

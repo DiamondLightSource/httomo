@@ -1,8 +1,9 @@
 import httomo.globals
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
+from httomo.runner.method_wrapper import GpuTimeInfo
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import _get_slicing_dim, xp
+from httomo.utils import _get_slicing_dim, catchtime, xp
 
 
 from mpi4py.MPI import Comm
@@ -53,6 +54,7 @@ class ImagesWrapper(GenericMethodWrapper):
         self,
         block: DataSetBlock,
     ) -> DataSetBlock:
+        self._gpu_time_info = GpuTimeInfo()
         config_params = self._config_params
         if "offset" in self.parameters:
             config_params = {
@@ -62,8 +64,10 @@ class ImagesWrapper(GenericMethodWrapper):
             
         args = self._build_kwargs(self._transform_params(config_params), block)
         if block.is_gpu:
-            # give method a CPU copy of the data
-            args[self.parameters[0]] = xp.asnumpy(block.data)
+            with catchtime() as t:
+                # give method a CPU copy of the data
+                args[self.parameters[0]] = xp.asnumpy(block.data)
+            self._gpu_time_info.device2host = t.elapsed
 
         self.method(**args)
 

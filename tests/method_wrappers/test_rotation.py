@@ -1,4 +1,5 @@
 from typing import Union
+from unittest.mock import MagicMock
 import numpy as np
 from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.rotation import RotationWrapper
@@ -205,7 +206,9 @@ def test_rotation_gather_sino_slice(mocker: MockerFixture, rank: int):
 
 
 def test_rotation_normalize_sino_no_darks_flats():
+    self_mock = MagicMock()    # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
+        self_mock,
         np.ones((10, 10), dtype=np.float32), None, None
     )
 
@@ -214,7 +217,10 @@ def test_rotation_normalize_sino_no_darks_flats():
 
 
 def test_rotation_normalize_sino_same_darks_flats():
+    
+    self_mock = MagicMock()    # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
+        self_mock,
         np.ones((10, 10), dtype=np.float32),
         0.5
         * np.ones(
@@ -239,7 +245,9 @@ def test_rotation_normalize_sino_same_darks_flats():
 
 
 def test_rotation_normalize_sino_scalar():
+    self_mock = MagicMock()    # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
+        self_mock,
         np.ones((10, 10), dtype=np.float32),
         0.5
         * np.ones(
@@ -264,7 +272,9 @@ def test_rotation_normalize_sino_scalar():
 
 
 def test_rotation_normalize_sino_different_darks_flats():
+    self_mock = MagicMock()    # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
+        self_mock,
         2.0 * np.ones((10, 10), dtype=np.float32),
         1.0 * np.ones((10, 10), dtype=np.float32),
         0.5 * np.ones((10, 10), dtype=np.float32),
@@ -280,7 +290,9 @@ def test_rotation_normalize_sino_different_darks_flats():
 )
 @pytest.mark.cupy
 def test_rotation_normalize_sino_different_darks_flats_gpu():
+    self_mock = MagicMock()    # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
+        self_mock,
         2.0 * xp.ones((10, 10), dtype=np.float32),
         1.0 * xp.ones((10, 10), dtype=np.float32),
         0.5 * xp.ones((10, 10), dtype=np.float32),

@@ -1,4 +1,5 @@
 from pathlib import Path
+import time
 from httomo.methods import calculate_stats, save_intermediate_data
 
 import numpy as np
@@ -8,7 +9,7 @@ import h5py
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 
-from httomo.utils import gpu_enabled
+from httomo.utils import gpu_enabled, xp
 
 
 def test_calculate_stats_simple():
@@ -29,11 +30,44 @@ def test_calculate_stats_with_nan_and_inf():
     assert ret == (-10.0, 19.0, expected, 30)
 
 
-@pytest.mark.parametrize("gpu", [False, True])
-def test_save_intermediate_data( tmp_path: Path, gpu: bool):
+@pytest.mark.skipif(
+    not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
+    reason="skipped as cupy is not available",
+)
+@pytest.mark.cupy
+def test_calculate_stats_gpu():
+    data = xp.arange(30, dtype=np.float32).reshape((2, 3, 5)) - 10.0
+    ret = calculate_stats(data)
+
+    assert ret == (-10.0, 19.0, np.sum(data.get()), 30)
+    
+
+@pytest.mark.perf
+@pytest.mark.parametrize("gpu", [False, True], ids=["CPU", "GPU"])
+def test_calculcate_stats_performance(gpu: bool):
     if gpu and not gpu_enabled:
         pytest.skip("No GPU available")
-
+        
+    data = np.random.randint(
+        low=7515, high=37624, size=(1801, 5, 2560), dtype=np.uint32
+    ).astype(np.float32)
+    
+    if gpu:
+        data = xp.asarray(data)
+        xp.cuda.Device().synchronize()
+    start = time.perf_counter_ns()
+    for _ in range(10):
+        calculate_stats(data)
+    if gpu:
+        xp.cuda.Device().synchronize()
+    stop = time.perf_counter_ns()
+    duration_ms = float(stop-start) * 1e-6 / 10
+    
+    # Note: on Quadro RTX 6000 vs Xeon(R) Gold 6148, GPU is about 10x faster 
+    assert "performance in ms" == duration_ms
+    
+    
+def test_save_intermediate_data(tmp_path: Path):
     # use increasing numbers in the data, to make sure blocks have different content
     GLOBAL_SHAPE=(10,10,10)
     global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
@@ -54,27 +88,29 @@ def test_save_intermediate_data( tmp_path: Path, gpu: bool):
                       chunk_shape=GLOBAL_SHAPE,
                       global_shape=GLOBAL_SHAPE)
 
-    if gpu:
-        b1.to_gpu()
-        b2.to_gpu()
-
     with h5py.File(
         tmp_path / "test_file.h5", "w", driver="mpio", comm=MPI.COMM_WORLD
     ) as file:
         # save in 2 blocks, starting with the second to confirm order-independence
         save_intermediate_data(
-            b2,
+            b2.data,
+            b2.global_shape,
+            b2.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
+            angles=b2.angles,
         )
         save_intermediate_data(
-            b1,
+            b1.data,
+            b1.global_shape,
+            b1.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
+            angles=b1.angles,
         )
 
     with h5py.File(tmp_path / "test_file.h5", "r") as file:
@@ -130,18 +166,24 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
     with h5py.File(tmp_path / "test_file.h5", "w", driver="mpio", comm=comm) as file:
         # save in 2 blocks, starting with the second to confirm order-independence
         save_intermediate_data(
-            b2,
+            b2.data,
+            b2.global_shape,
+            b2.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
+            angles=b2.angles,
         )
         save_intermediate_data(
-            b1,
+            b1.data,
+            b1.global_shape,
+            b1.global_index,
             file,
             path="/data",
             detector_x=10,
             detector_y=20,
+            angles=b1.angles,
         )
 
     # open without MPI, looking at the full file

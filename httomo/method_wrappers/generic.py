@@ -3,6 +3,7 @@ from httomo.data import mpiutil
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.gpu_utils import gpumem_cleanup
 from httomo.runner.method_wrapper import (
+    GpuTimeInfo,
     MethodParameterDictType,
     MethodParameterValues,
     MethodWrapper,
@@ -12,7 +13,7 @@ from httomo.runner.methods_repository_interface import (
     MethodRepository,
 )
 from httomo.runner.output_ref import OutputRef
-from httomo.utils import gpu_enabled, log_rank, xp
+from httomo.utils import catch_gputime, catchtime, gpu_enabled, log_rank, xp
 
 
 import numpy as np
@@ -120,6 +121,8 @@ class GenericMethodWrapper(MethodWrapper):
             raise ValueError("GPU is not available, please use only CPU methods")
 
         self._side_output: Dict[str, Any] = dict()
+        
+        self._gpu_time_info = GpuTimeInfo()
 
         if gpu_enabled:
             self._num_gpus = xp.cuda.runtime.getDeviceCount()
@@ -165,6 +168,10 @@ class GenericMethodWrapper(MethodWrapper):
     @property
     def is_gpu(self) -> bool:
         return not self.is_cpu
+    
+    @property
+    def gpu_time(self) -> GpuTimeInfo:
+        return self._gpu_time_info
 
     @property
     def method_name(self) -> str:
@@ -277,11 +284,15 @@ class GenericMethodWrapper(MethodWrapper):
             A CPU or GPU-based dataset object with the output
         """
 
+        self._gpu_time_info = GpuTimeInfo()
         block = self._transfer_data(block)
-        block = self._preprocess_data(block)
-        args = self._build_kwargs(self._transform_params(self._config_params), block)
-        block = self._run_method(block, args)
-        block = self._postprocess_data(block)
+        with catch_gputime() as t:
+            block = self._preprocess_data(block)
+            args = self._build_kwargs(self._transform_params(self._config_params), block)
+            block = self._run_method(block, args)
+            block = self._postprocess_data(block)
+
+        self._gpu_time_info.kernel = t.elapsed
 
         return block
 
@@ -312,9 +323,11 @@ class GenericMethodWrapper(MethodWrapper):
         follow in the pipeline"""
         return {v: self._side_output[k] for k, v in self._output_mapping.items()}
 
-    def _transfer_data(self, block: DataSetBlock):
+    def _transfer_data(self, block: DataSetBlock) -> DataSetBlock:
         if not self.cupyrun:
-            block.to_cpu()
+            with catchtime() as t:
+                block.to_cpu()
+            self._gpu_time_info.device2host = t.elapsed
             return block
 
         assert gpu_enabled, "GPU method used on a system without GPU support"
@@ -323,7 +336,9 @@ class GenericMethodWrapper(MethodWrapper):
         gpulog_str = f"Using GPU {self._gpu_id} to transfer data of shape {xp.shape(block.data[0])}"
         log_rank(gpulog_str, comm=self.comm)
         gpumem_cleanup()
-        block.to_gpu()
+        with catchtime() as t:
+            block.to_gpu()
+        self._gpu_time_info.host2device = t.elapsed
         return block
 
     def _transform_params(

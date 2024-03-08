@@ -7,14 +7,12 @@ import httomo
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.loader import LoaderInterface
-from httomo.runner.method_wrapper import MethodParameterDictType, MethodWrapper
+from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import xp
+from httomo.utils import catchtime, xp
 
 import h5py
 import numpy as np
-
-    
 
 
 class SaveIntermediateFilesWrapper(GenericMethodWrapper):
@@ -50,22 +48,32 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         # make sure file gets closed properly
         weakref.finalize(self, self._file.close)
         
-    def _run_method(self, block: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
-        # pass the full block, not just the data array to the function
-        args[self.parameters[0]] = block
-        return super()._run_method(block, args)
-        
-    def _transform_params(self, dict_params: MethodParameterDictType) -> MethodParameterDictType:
-        dict_params = super()._transform_params(dict_params).copy()
-        dict_params["detector_x"] = self._loader.detector_x
-        dict_params["detector_y"] = self._loader.detector_y
-        dict_params["path"] = "/data"
-        dict_params["file"] = self._file
-        return dict_params
-    
-    def _process_return_type(self, ret: Any, input_block: DataSetBlock) -> DataSetBlock:
-        if input_block.is_last_in_chunk:
-            self._file.close()
-        return input_block
+    def execute(self, block: DataSetBlock) -> DataSetBlock:
+        # we overwrite the whole execute method here, as we do not need any of the helper
+        # methods from the Generic Wrapper
+        # What we know:
+        # - we do not transfer the dataset as a whole to CPU - only the data and angles locally
+        # (and never back)
+        # - the user does not insert this method - it's automatic - so no config params are
+        # relevant
+        # - we return just the input as it is
+        self._gpu_time_info = GpuTimeInfo()
+        with catchtime() as t:
+            data = block.data if block.is_cpu else xp.asnumpy(block.data)
+        self._gpu_time_info.device2host += t.elapsed
 
+        self._method(
+            data,
+            global_shape=block.global_shape,
+            global_index=block.global_index,
+            file=self._file,
+            path="/data",
+            detector_x=self._loader.detector_x,
+            detector_y=self._loader.detector_y,
+            angles=block.angles,
+        )
         
+        if block.is_last_in_chunk:
+            self._file.close()
+
+        return block

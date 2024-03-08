@@ -3,14 +3,16 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PurePath
 from shutil import copy
+import sys
 import tempfile
-from typing import Optional, Union
+from typing import List, Optional, TextIO, Union
 
 import click
 from mpi4py import MPI
 
 import httomo.globals
 from httomo.logger import setup_logger
+from httomo.monitors import MONITORS_MAP, make_monitors
 from httomo.transform_layer import TransformLayer
 from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
@@ -69,6 +71,20 @@ def main():
     default="0",
     help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)"
 )
+@click.option(
+    "--monitor",
+    type=click.STRING,
+    multiple=True,
+    default=[],
+    help=("Add monitor to the runner (can be given multiple times). " + 
+          f"Available monitors: {', '.join(MONITORS_MAP.keys())}")
+)
+@click.option(
+    "--monitor-output",
+    type=click.File('w'),
+    default=sys.stdout,
+    help="File to store the monitoring output. Defaults to '-', which denotes stdout"
+)
 def run(
     in_data_file: Path,
     yaml_config: Path,
@@ -77,7 +93,9 @@ def run(
     save_all: bool,
     reslice_dir: Union[Path, None],
     max_cpu_slices: int,
-    max_memory: str
+    max_memory: str,
+    monitor: List[str],
+    monitor_output: TextIO,
 ):
     """Run a pipeline defined in YAML on input data."""
 
@@ -133,12 +151,20 @@ def run(
     pipeline = tr.transform(pipeline)
 
     # Run the pipeline using Taskrunner, with temp dir or reslice dir
+    mon = make_monitors(monitor)
     ctx: AbstractContextManager = nullcontext(reslice_dir)
     if reslice_dir is None:
         ctx = tempfile.TemporaryDirectory()
     with ctx as tmp_dir:
-        runner = TaskRunner(pipeline, Path(tmp_dir), memory_limit_bytes=memory_limit)
-        return runner.execute()
+        runner = TaskRunner(
+            pipeline,
+            Path(tmp_dir),
+            monitor=mon,
+            memory_limit_bytes=memory_limit,
+        )
+        runner.execute()
+        if mon is not None:
+            mon.write_results(monitor_output)
 
 
 def _check_yaml(yaml_config: Path, in_data: Path):

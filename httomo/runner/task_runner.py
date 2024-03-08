@@ -16,9 +16,10 @@ from httomo.runner.dataset_store_interfaces import (
     ReadableDataSetSink,
 )
 from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
+from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import Section, sectionize
-from httomo.utils import Colour, Pattern, _get_slicing_dim, log_exception, log_once
+from httomo.utils import Colour, Pattern, _get_slicing_dim, catchtime, log_exception, log_once
 import numpy as np
 
 log = logging.getLogger(__name__)
@@ -31,14 +32,14 @@ class TaskRunner:
         self,
         pipeline: Pipeline,
         reslice_dir: os.PathLike,
-        memory_limit_bytes: int = 0
+        memory_limit_bytes: int = 0,
+        monitor: Optional[MonitoringInterface] = None,
     ):
         self.pipeline = pipeline
         self.reslice_dir = reslice_dir
         self.comm = MPI.COMM_WORLD
+        self.monitor = monitor
 
-        self.start_time: float = 0
-        self.global_stats: List = []
         self.side_outputs: Dict[str, Any] = dict()
         self.source: Optional[DataSetSource] = None
         self.sink: Optional[Union[DataSetSink, ReadableDataSetSink]] = None
@@ -49,19 +50,19 @@ class TaskRunner:
         self.output_colour_list_short = [Colour.GREEN, Colour.CYAN]
 
     def execute(self) -> None:
-        self.start_time = MPI.Wtime()
+        with catchtime() as t:
+            sections = self._sectionize()
 
-        sections = self._sectionize()
-
-        self._prepare()
-        for i, section in enumerate(sections):
-            self._execute_section(section, i)
-            gpumem_cleanup()
-
-        self.end_time = MPI.Wtime()
+            self._prepare()
+            for i, section in enumerate(sections):
+                self._execute_section(section, i)
+                gpumem_cleanup()
+       
         self._log_pipeline(
-            f"Pipeline finished. Took {self.end_time-self.start_time:.3f}s"
+            f"Pipeline finished. Took {t.elapsed:.3f}s"
         )
+        if self.monitor is not None:
+            self.monitor.report_total_time(t.elapsed)
 
     def _sectionize(self) -> List[Section]:
         sections = sectionize(self.pipeline)
@@ -90,9 +91,37 @@ class TaskRunner:
         )
 
         splitter = BlockSplitter(self.source, section.max_slices)
+        start_source = time.perf_counter_ns()
         for block in splitter:
-            self.sink.write_block(self._execute_section_block(section, block))
+            end_source = time.perf_counter_ns()
+            if self.monitor is not None:
+                self.monitor.report_source_block(
+                    f"sec_{section_index}",
+                    section.methods[0].task_id if len(section) > 0 else "",
+                    _get_slicing_dim(section.pattern) - 1,
+                    block.shape,
+                    block.chunk_index,
+                    block.global_index,
+                    (end_source - start_source) * 1e-9,
+                )
+
+            res = self._execute_section_block(section, block)
+
+            start_sink = time.perf_counter_ns()
+            self.sink.write_block(res)
+            end_sink = time.perf_counter_ns()
+            if self.monitor is not None:
+                self.monitor.report_sink_block(
+                    f"sec_{section_index}",
+                    section.methods[-1].task_id if len(section) > 0 else "",
+                    _get_slicing_dim(section.pattern) - 1,
+                    block.shape,
+                    block.chunk_index,
+                    block.global_index,
+                    (end_sink - start_sink) * 1e-9,
+                )
             gpumem_cleanup()
+            start_source = time.perf_counter_ns()
 
     def _setup_source_sink(self, section: Section):
         assert self.source is not None, "Dataset has not been loaded yet"
@@ -156,9 +185,25 @@ class TaskRunner:
         start_time = self._log_task_start(
             method.task_id, method.pattern, method.method_name
         )
+        start = time.perf_counter_ns()
         block = method.execute(block)
         if block.is_last_in_chunk:
             self.append_side_outputs(method.get_side_output())
+        end = time.perf_counter_ns()
+        if self.monitor is not None:
+            self.monitor.report_method_block(
+                    method.method_name,
+                    method.module_path,
+                    method.task_id,
+                    _get_slicing_dim(method.pattern) - 1,
+                    block.shape,
+                    block.chunk_index,
+                    block.global_index,
+                    (end - start) * 1e-9,
+                    method.gpu_time.kernel,
+                    method.gpu_time.host2device,
+                    method.gpu_time.device2host
+                )
         self._log_task_end(
             method.task_id,
             start_time,

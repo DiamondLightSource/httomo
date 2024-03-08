@@ -1,9 +1,12 @@
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
+from httomo.runner.method_wrapper import GpuTimeInfo
 from httomo.runner.methods_repository_interface import MethodRepository
 
 from mpi4py.MPI import Comm
 from typing import Dict, Optional
+
+from httomo.utils import catch_gputime
 
 
 class DezingingWrapper(GenericMethodWrapper):
@@ -35,13 +38,17 @@ class DezingingWrapper(GenericMethodWrapper):
         self._flats_darks_processed = False
 
     def execute(self, block: DataSetBlock) -> DataSetBlock:
+        self._gpu_time_info = GpuTimeInfo()
         # check if data needs to be transfered host <-> device
         block = self._transfer_data(block)
 
-        block.data = self.method(block.data, **self._config_params)
-        if not self._flats_darks_processed:
-            block.darks = self.method(block.darks, **self._config_params)
-            block.flats = self.method(block.flats, **self._config_params)
-            self._flats_darks_processed = True
+        with catch_gputime() as t:
+            block.data = self.method(block.data, **self._config_params)
+            if not self._flats_darks_processed:
+                block.darks = self.method(block.darks, **self._config_params)
+                block.flats = self.method(block.flats, **self._config_params)
+                self._flats_darks_processed = True
+
+        self._gpu_time_info.kernel = t.elapsed
 
         return block
