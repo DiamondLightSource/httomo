@@ -233,8 +233,11 @@ class GenericMethodWrapper(MethodWrapper):
             elif p == "gpu_id":
                 assert gpu_enabled, "methods with gpu_id parameter require GPU support"
                 ret[p] = self._gpu_id
+            elif p == 'axis' and p in remaining_dict_params and remaining_dict_params[p] == 'auto':
+                ret[p] = self.pattern.value
+                pass
             elif p in remaining_dict_params:
-                ret[p] = remaining_dict_params[p]
+                ret[p] = remaining_dict_params[p]            
             elif p in self._params_with_defaults:
                 pass
             else:
