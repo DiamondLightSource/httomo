@@ -142,6 +142,52 @@ def test_can_determine_max_slices_with_gpu_estimator(
         )
 
 
+@pytest.mark.parametrize("limit", [0, 10000])
+def test_can_determine_max_slices_with_gpu_estimator_and_cpu_limit(
+    mocker: MockerFixture,
+    limit: int,
+    tmp_path: PathLike,
+    dummy_block: DataSetBlock,
+):
+    mocker.patch("httomo.runner.task_runner.get_available_gpu_memory", return_value=1e7)
+    loader = make_test_loader(mocker, dummy_block)
+    methods: List[MethodWrapper] = []
+    calc_dims_mocks = []
+    calc_max_slices_mocks = []
+    for i in range(3):
+        method = make_test_method(mocker, gpu=True)
+        mocker.patch.object(
+            method,
+            "memory_gpu",
+            [GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")],
+        )
+        calc_dims_mocks.append(
+            mocker.patch.object(method, "calculate_output_dims", return_value=(10, 10))
+        )
+        calc_max_slices_mocks.append(
+            mocker.patch.object(
+                method, "calculate_max_slices", return_value=(10, limit if limit != 0 else 1e7)
+            )
+        )
+        methods.append(method)
+    p = Pipeline(loader=loader, methods=methods)
+    
+    t = TaskRunner(p, reslice_dir=tmp_path, memory_limit_bytes=limit)
+    t._prepare()
+    s = sectionize(p)
+    shape = (dummy_block.shape[1], dummy_block.shape[2])
+
+    t.determine_max_slices(s[0], 0)
+
+    for i in range(3):
+        calc_dims_mocks[i].assert_called_with(shape)
+        calc_max_slices_mocks[i].assert_called_with(
+            dummy_block.data.dtype,
+            shape,
+            limit if limit != 0 else 1e7,
+        )
+
+
 def test_can_determine_max_slices_with_cpu(
     mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):

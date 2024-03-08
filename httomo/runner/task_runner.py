@@ -31,6 +31,7 @@ class TaskRunner:
         self,
         pipeline: Pipeline,
         reslice_dir: os.PathLike,
+        memory_limit_bytes: int = 0
     ):
         self.pipeline = pipeline
         self.reslice_dir = reslice_dir
@@ -41,6 +42,8 @@ class TaskRunner:
         self.side_outputs: Dict[str, Any] = dict()
         self.source: Optional[DataSetSource] = None
         self.sink: Optional[Union[DataSetSink, ReadableDataSetSink]] = None
+        
+        self._memory_limit_bytes = memory_limit_bytes
 
         self.output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
         self.output_colour_list_short = [Colour.GREEN, Colour.CYAN]
@@ -110,6 +113,7 @@ class TaskRunner:
                 slicing_dim_section,
                 self.comm,
                 self.reslice_dir,
+                memory_limit_bytes=self._memory_limit_bytes
             )
 
     def _execute_section_block(
@@ -239,7 +243,12 @@ class TaskRunner:
             f"The amount of the available GPU memory is {available_memory_in_GB} GB"
         )
         log_once(memory_str, comm=self.comm, colour=Colour.BVIOLET, level=1)
-        max_slices_methods = [max_slices] * len(section)        
+        if self._memory_limit_bytes != 0:
+            available_memory = min(available_memory, self._memory_limit_bytes)
+            log_once(f"The memory has been limited to {available_memory / (1024**3):4.2f} GB",
+                     comm=self.comm, colour=Colour.BVIOLET, level=1)
+        
+        max_slices_methods = [max_slices] * len(section)
 
         # loop over all methods in section
         has_gpu = False
