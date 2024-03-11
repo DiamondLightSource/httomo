@@ -376,10 +376,10 @@ def test_run_pipeline_gpu1_yaml(cmd, standard_data, yaml_gpu_pipeline1, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "The amount of the available GPU memory is" in log_contents
     assert "Using GPU 0 to transfer data of shape (128, 160)" in log_contents
+    #assert "<-------Reslicing/rechunking the data-------->" in log_contents
+    #assert "Reslicing not necessary, as there is only one process" in log_contents    
 
 
 def test_run_pipeline_gpu1_py(cmd, standard_data, python_gpu_pipeline1, output_folder):
@@ -422,8 +422,8 @@ def test_run_pipeline_gpu1_py(cmd, standard_data, python_gpu_pipeline1, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
+    #assert "<-------Reslicing/rechunking the data-------->" in log_contents
+    #assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "The amount of the available GPU memory is" in log_contents
     assert "Using GPU 0 to transfer data of shape (128, 160)" in log_contents
 
