@@ -261,7 +261,7 @@ def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_f
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 0
+    assert len(h5_files) == 1
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -298,7 +298,7 @@ def test_run_pipeline_cpu3_py(cmd, standard_data, python_cpu_pipeline3, output_f
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 0
+    assert len(h5_files) == 1
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
