@@ -1,5 +1,6 @@
-- method: median_filter3d
+- method: remove_outlier
   module_path: httomolibgpu.misc.corr
   parameters:
     kernel_size: 3
-    dif: 0.0
+    axis: auto
+    dif: 0.1

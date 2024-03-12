@@ -108,7 +108,7 @@ def test_can_read_gpu1_python(python_gpu_pipeline1, yaml_gpu_pipeline1, version)
     assert pipline_stage_config[1]["method"] == "find_center_vo"
     assert pipline_stage_config[1]["module_path"] == "httomolibgpu.recon.rotation"
     assert pipline_stage_config[1]["side_outputs"] == {"cor": "centre_of_rotation"}
-    assert pipline_stage_config[2]["method"] == "remove_outlier3d"
+    assert pipline_stage_config[2]["method"] == "remove_outlier"
     assert pipline_stage_config[2]["module_path"] == "httomolibgpu.misc.corr"
     assert pipline_stage_config[3]["method"] == "normalize"
     assert pipline_stage_config[3]["module_path"] == "httomolibgpu.prep.normalize"
@@ -168,7 +168,8 @@ def test_pipeline_build_no_loader(python_cpu_pipeline1, standard_data):
         LayerUI.build_pipeline()
 
     assert "no loader" in str(e)
-    
+
+
 def test_pipeline_build_duplicate_id(python_cpu_pipeline1, standard_data):
     comm = MPI.COMM_NULL
     LayerUI = UiLayer(

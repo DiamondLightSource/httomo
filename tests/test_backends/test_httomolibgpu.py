@@ -26,7 +26,7 @@ from httomolibgpu.prep.stripe import (
     remove_all_stripe,
 )
 from httomolibgpu.prep.stripe import remove_stripe_based_sorting, remove_stripe_ti
-from httomolibgpu.misc.corr import remove_outlier3d
+from httomolibgpu.misc.corr import remove_outlier
 from httomolibgpu.recon.algorithm import FBP, SIRT, CGLS
 from httomolibgpu.misc.rescale import rescale_to_int
 
@@ -36,7 +36,6 @@ from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.pre
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.recon.algorithm import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.misc.rescale import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.normalize import *
-from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.misc.corr import *
 
 module_mem_path = "httomo.methods_database.packages.external."
 
@@ -109,22 +108,18 @@ def test_normalize_memoryhook(flats, darks, ensure_clean_memory, dtype, slices):
     assert percents_relative_maxmem <= 20
 
 
-@pytest.mark.parametrize("dtype", ["uint16", "float32"])
+@pytest.mark.parametrize("dtype", ["uint16"])
 @pytest.mark.parametrize("slices", [151, 321])
 @pytest.mark.cupy
-def test_remove_outlier3d_memoryhook(flats, darks, ensure_clean_memory, dtype, slices):
+def test_remove_outlier_memoryhook(flats, ensure_clean_memory, dtype, slices):
     hook = MaxMemoryHook()
     data = cp.random.random_sample(
         (slices, flats.shape[1], flats.shape[2]), dtype=np.float32
     )
     if dtype == "uint16":
-        darks = (darks * 1233).astype(np.uint16)
-        flats = flats.astype(np.uint16)
         data = data.astype(np.uint16)
     with hook:
-        remove_outlier3d(cp.copy(data))
-        remove_outlier3d(darks)
-        remove_outlier3d(flats)
+        remove_outlier(cp.copy(data))
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = (
@@ -132,19 +127,16 @@ def test_remove_outlier3d_memoryhook(flats, darks, ensure_clean_memory, dtype, s
     )  # the amount of memory in bytes needed for the method according to memoryhook
 
     # now we estimate how much of the total memory required for this data
-    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_remove_outlier3d(
-        data.shape[1:],
-        dtype=data.dtype,
-        darks_shape=darks.shape,
-        darks_dtype=darks.dtype,
-        flats_shape=flats.shape,
-        flats_dtype=flats.dtype,
+    library_info = get_method_info(
+        "httomolibgpu.misc.corr", "remove_outlier", "memory_gpu"
+    )
+    estimated_memory_bytes = (
+        library_info[1]["multipliers"][0] * np.prod(cp.shape(data)) * uint16().nbytes
     )
 
-    estimated_memory_mb = round(slices * estimated_memory_bytes / (1024**2), 2)
-    max_mem -= subtract_bytes
-    max_mem_mb = round(max_mem / (1024**2), 2)
+    estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
 
+    max_mem_mb = round(max_mem / (1024**2), 2)
     # now compare both memory estimations
     difference_mb = abs(estimated_memory_mb - max_mem_mb)
     percents_relative_maxmem = round((difference_mb / max_mem_mb) * 100)

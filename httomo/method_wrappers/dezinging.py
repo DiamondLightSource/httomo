@@ -10,14 +10,14 @@ from httomo.utils import catch_gputime
 
 
 class DezingingWrapper(GenericMethodWrapper):
-    """Wraps the remove_outlier3d method, to clean/dezing the data.
+    """Wraps the remove_outlier method, to clean/dezing the data.
     Note that this method is applied to all elements of the dataset, i.e.
     data, darks, and flats.
     """
 
     @classmethod
     def should_select_this_class(cls, module_path: str, method_name: str) -> bool:
-        return method_name == "remove_outlier3d"
+        return method_name == "remove_outlier"
 
     def __init__(
         self,
@@ -30,17 +30,29 @@ class DezingingWrapper(GenericMethodWrapper):
         **kwargs,
     ):
         super().__init__(
-            method_repository, module_path, method_name, comm, save_result, output_mapping, **kwargs
+            method_repository,
+            module_path,
+            method_name,
+            comm,
+            save_result,
+            output_mapping,
+            **kwargs,
         )
         assert (
-            method_name == "remove_outlier3d"
-        ), "Only remove_outlier3d is supported at the moment"
+            method_name == "remove_outlier"
+        ), "Only remove_outlier is supported at the moment"
         self._flats_darks_processed = False
 
     def execute(self, block: DataSetBlock) -> DataSetBlock:
         self._gpu_time_info = GpuTimeInfo()
         # check if data needs to be transfered host <-> device
         block = self._transfer_data(block)
+
+        args = self._build_kwargs(self._transform_params(self._config_params), block)
+        try:
+            self._config_params["axis"] = args["axis"]
+        except:
+            pass
 
         with catch_gputime() as t:
             block.data = self.method(block.data, **self._config_params)

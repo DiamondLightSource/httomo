@@ -48,7 +48,7 @@ def methods_to_list() -> PipelineConfig:
     }
     full_pipeline_list.append(method1)
     method2 = {
-        "method": "remove_outlier3d",
+        "method": "remove_outlier",
         "module_path": "httomolibgpu.misc.corr",
         "parameters": {
             "dif": 0.1,

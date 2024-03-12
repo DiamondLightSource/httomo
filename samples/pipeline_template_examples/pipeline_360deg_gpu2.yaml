@@ -23,7 +23,7 @@
     overlap: overlap
     side: side
     overlap_position: overlap_position
-- method: remove_outlier3d
+- method: remove_outlier
   module_path: httomolibgpu.misc.corr
   parameters:
     dif: 0.1
@@ -49,6 +49,7 @@
   module_path: httomolibgpu.recon.algorithm
   parameters:
     center: ${{centering.side_outputs.centre_of_rotation}}
+    filter_freq_cutoff: 0.6
     recon_size: null
     recon_mask_radius: null
   save_result: true
