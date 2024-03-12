@@ -498,48 +498,50 @@ def test_i12_testing_pipeline_output(
     assert "Running save_task_5 (pattern=sinogram): save_intermediate_data..." in log_contents
 
 
-def test_i12_testing_ignore_darks_flats_pipeline_output(
-    cmd,
-    i12_data,
-    i12_loader_ignore_darks_flats,
-    testing_pipeline,
-    output_folder,
-    merge_yamls,
-):
-    cmd.insert(7, i12_data)
-    merge_yamls(i12_loader_ignore_darks_flats, testing_pipeline)
-    cmd.insert(8, "temp.yaml")
-    cmd.insert(9, output_folder)
-    subprocess.check_output(cmd)
-
-    files = read_folder("output_dir/")
-    assert len(files) == 16
-
-    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
-    assert compare_two_yamls("temp.yaml", copied_yaml_path)
-
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 1
-
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 10
-
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 4
-
-    log_contents = _get_log_contents(log_files[0])
-    assert "The full dataset shape is (724, 10, 192)" in log_contents
-    assert (
-        "Loading data: tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
-        in log_contents
-    )
-    assert "Path to data: /1-TempPlugin-tomo/data" in log_contents
-    assert "Preview: (0:724, 0:10, 0:192)" in log_contents
-    assert "Running save_task_1 (pattern=projection): save_intermediate_data..." in log_contents
-    assert "Running save_task_2 (pattern=projection): save_intermediate_data..." in log_contents
-    assert "Running save_task_4 (pattern=sinogram): save_intermediate_data..." in log_contents
-    assert "The center of rotation for sinogram is 95.5" in log_contents
-    assert "Running save_task_5 (pattern=sinogram): save_intermediate_data..." in log_contents
+# TODO: Add back in when ignoring darks/flats is added to the new loader
+#
+# def test_i12_testing_ignore_darks_flats_pipeline_output(
+#     cmd,
+#     i12_data,
+#     i12_loader_ignore_darks_flats,
+#     testing_pipeline,
+#     output_folder,
+#     merge_yamls,
+# ):
+#     cmd.insert(7, i12_data)
+#     merge_yamls(i12_loader_ignore_darks_flats, testing_pipeline)
+#     cmd.insert(8, "temp.yaml")
+#     cmd.insert(9, output_folder)
+#     subprocess.check_output(cmd)
+#
+#     files = read_folder("output_dir/")
+#     assert len(files) == 16
+#
+#     copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
+#     assert compare_two_yamls("temp.yaml", copied_yaml_path)
+#
+#     log_files = list(filter(lambda x: ".log" in x, files))
+#     assert len(log_files) == 1
+#
+#     tif_files = list(filter(lambda x: ".tif" in x, files))
+#     assert len(tif_files) == 10
+#
+#     h5_files = list(filter(lambda x: ".h5" in x, files))
+#     assert len(h5_files) == 4
+#
+#     log_contents = _get_log_contents(log_files[0])
+#     assert "The full dataset shape is (724, 10, 192)" in log_contents
+#     assert (
+#         "Loading data: tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
+#         in log_contents
+#     )
+#     assert "Path to data: /1-TempPlugin-tomo/data" in log_contents
+#     assert "Preview: (0:724, 0:10, 0:192)" in log_contents
+#     assert "Running save_task_1 (pattern=projection): save_intermediate_data..." in log_contents
+#     assert "Running save_task_2 (pattern=projection): save_intermediate_data..." in log_contents
+#     assert "Running save_task_4 (pattern=sinogram): save_intermediate_data..." in log_contents
+#     assert "The center of rotation for sinogram is 95.5" in log_contents
+#     assert "Running save_task_5 (pattern=sinogram): save_intermediate_data..." in log_contents
 
 
 def test_diad_testing_pipeline_output(
