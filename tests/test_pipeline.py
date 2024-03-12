@@ -623,8 +623,9 @@ def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder)
     assert "Preview: (100:3101, 8:15, 0:26)" in log_contents
     assert "Data shape is (3001, 7, 26) of type uint16" in log_contents
     assert "Running save_task_5 (pattern=sinogram): save_intermediate_data..." in log_contents
-    assert "Global min -0.00561" in log_contents
-    assert "Global max 0.006643" in log_contents
+    assert "Global min -0.009095" in log_contents
+    assert "Global max 0.011238" in log_contents
+    assert "Global mean 0.000145" in log_contents
 
 
 def test_run_pipeline_360deg_gpu2(cmd, data360, yaml_gpu_pipeline360_2, output_folder):
@@ -652,5 +653,6 @@ def test_run_pipeline_360deg_gpu2(cmd, data360, yaml_gpu_pipeline360_2, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Data shape is (3601, 3, 2560) of type uint16" in log_contents
     assert "Running save_task_6 (pattern=sinogram): save_intermediate_data..." in log_contents
-    assert "Global min -0.000412" in log_contents
-    assert "Global max 0.003134" in log_contents
+    assert "Global min -0.003117" in log_contents
+    assert "Global max 0.005553" in log_contents
+    assert "Global mean 0.000887" in log_contents
