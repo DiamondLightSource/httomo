@@ -461,12 +461,12 @@ def test_i12_testing_pipeline_output(
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 4
 
-    gridrec_recon = list(filter(lambda x: "recon-tomo-gridrec.h5" in x, h5_files))[0]
-    minus_log_tomo = list(filter(lambda x: "minus_log-tomo.h5" in x, h5_files))[0]
+    gridrec_recon = list(filter(lambda x: "recon-gridrec.h5" in x, h5_files))[0]
+    minus_log_tomo = list(filter(lambda x: "minus_log.h5" in x, h5_files))[0]
     remove_stripe_fw_tomo = list(
-        filter(lambda x: "remove_stripe_fw-tomo.h5" in x, h5_files)
+        filter(lambda x: "remove_stripe_fw.h5" in x, h5_files)
     )[0]
-    normalize_tomo = list(filter(lambda x: "normalize-tomo.h5" in x, h5_files))[0]
+    normalize_tomo = list(filter(lambda x: "normalize.h5" in x, h5_files))[0]
 
     with h5py.File(gridrec_recon, "r") as f:
         assert f["data"].shape == (192, 10, 192)
