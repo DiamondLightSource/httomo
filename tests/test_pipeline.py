@@ -93,8 +93,6 @@ def test_tomo_standard_testing_pipeline_output(
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 57:60, 0:160)" in log_contents
     assert "Data shape is (180, 3, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
 
 
 def test_run_pipeline_cpu1_yaml(cmd, standard_data, yaml_cpu_pipeline1, output_folder):
@@ -126,11 +124,6 @@ def test_run_pipeline_cpu1_yaml(cmd, standard_data, yaml_cpu_pipeline1, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    
-    # May be the stuff about reslicing should go into other more verbose log. 
-
-    # assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    # assert "Reslicing not necessary, as there is only one process" in log_contents
 
 
 def test_run_pipeline_cpu1_py(cmd, standard_data, python_cpu_pipeline1, output_folder):
@@ -162,8 +155,6 @@ def test_run_pipeline_cpu1_py(cmd, standard_data, python_cpu_pipeline1, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    # assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    # assert "Reslicing not necessary, as there is only one process" in log_contents
 
 
 def test_run_pipeline_cpu2_yaml(cmd, standard_data, yaml_cpu_pipeline2, output_folder):
@@ -206,8 +197,6 @@ def test_run_pipeline_cpu2_yaml(cmd, standard_data, yaml_cpu_pipeline2, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 30:60, 0:160)" in log_contents
     assert "Data shape is (180, 30, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "Maximum amount of slices is 30 for section 1" in log_contents
     assert "Maximum amount of slices is 30 for section 2" in log_contents
 
@@ -252,8 +241,6 @@ def test_run_pipeline_cpu2_py(cmd, standard_data, python_cpu_pipeline2, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 30:60, 0:160)" in log_contents
     assert "Data shape is (180, 30, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "Maximum amount of slices is 30 for section 1" in log_contents
     assert "Maximum amount of slices is 30 for section 2" in log_contents
 
@@ -290,8 +277,6 @@ def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
     assert " Global min -0.01500" in log_contents
     assert " Global max 0.041933" in log_contents
     assert " Global mean 0.001633" in log_contents
@@ -329,8 +314,6 @@ def test_run_pipeline_cpu3_py(cmd, standard_data, python_cpu_pipeline3, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
     assert " Global min -0.01500" in log_contents
     assert " Global max 0.041933" in log_contents
     assert " Global mean 0.001633" in log_contents
@@ -378,8 +361,6 @@ def test_run_pipeline_gpu1_yaml(cmd, standard_data, yaml_gpu_pipeline1, output_f
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
     assert "The amount of the available GPU memory is" in log_contents
     assert "Using GPU 0 to transfer data of shape (128, 160)" in log_contents
-    #assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    #assert "Reslicing not necessary, as there is only one process" in log_contents    
 
 
 def test_run_pipeline_gpu1_py(cmd, standard_data, python_gpu_pipeline1, output_folder):
@@ -422,8 +403,6 @@ def test_run_pipeline_gpu1_py(cmd, standard_data, python_gpu_pipeline1, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    #assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    #assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "The amount of the available GPU memory is" in log_contents
     assert "Using GPU 0 to transfer data of shape (128, 160)" in log_contents
 
@@ -518,7 +497,6 @@ def test_i12_testing_pipeline_output(
     assert "Preview: (0:724, 0:10, 0:192)" in log_contents
     assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
     assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "Saving intermediate file: 5-tomopy-remove_stripe_fw-tomo.h5" in log_contents
     assert "The center of rotation for sinogram is 95.5" in log_contents
     assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
@@ -563,7 +541,6 @@ def test_i12_testing_ignore_darks_flats_pipeline_output(
     assert "Preview: (0:724, 0:10, 0:192)" in log_contents
     assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
     assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "Saving intermediate file: 5-tomopy-remove_stripe_fw-tomo.h5" in log_contents
     assert "The center of rotation for sinogram is 95.5" in log_contents
     assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
@@ -622,7 +599,6 @@ def test_diad_testing_pipeline_output(
     assert "Preview: (100:3101, 5:7, 0:26)" in log_contents
     assert "Data shape is (3001, 2, 26) of type uint16" in log_contents
     assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
 
 
 def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder):
