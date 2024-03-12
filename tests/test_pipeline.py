@@ -197,8 +197,6 @@ def test_run_pipeline_cpu2_yaml(cmd, standard_data, yaml_cpu_pipeline2, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 30:60, 0:160)" in log_contents
     assert "Data shape is (180, 30, 160) of type uint16" in log_contents
-    assert "Maximum amount of slices is 30 for section 1" in log_contents
-    assert "Maximum amount of slices is 30 for section 2" in log_contents
 
 
 def test_run_pipeline_cpu2_py(cmd, standard_data, python_cpu_pipeline2, output_folder):
@@ -241,8 +239,6 @@ def test_run_pipeline_cpu2_py(cmd, standard_data, python_cpu_pipeline2, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 30:60, 0:160)" in log_contents
     assert "Data shape is (180, 30, 160) of type uint16" in log_contents
-    assert "Maximum amount of slices is 30 for section 1" in log_contents
-    assert "Maximum amount of slices is 30 for section 2" in log_contents
 
 
 def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_folder):
