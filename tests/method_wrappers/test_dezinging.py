@@ -13,7 +13,7 @@ from pytest_mock import MockerFixture
 
 def test_dezinging(mocker: MockerFixture):
     class FakeModule:
-        def remove_outlier(x):
+        def remove_outlier(x, axis="auto"):
             return 2 * x
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
