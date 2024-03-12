@@ -491,11 +491,11 @@ def test_i12_testing_pipeline_output(
     )
     assert "Path to data: /1-TempPlugin-tomo/data" in log_contents
     assert "Preview: (0:724, 0:10, 0:192)" in log_contents
-    assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
-    assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in log_contents
-    assert "Saving intermediate file: 5-tomopy-remove_stripe_fw-tomo.h5" in log_contents
+    assert "Running save_task_1 (pattern=projection): save_intermediate_data..." in log_contents
+    assert "Running save_task_2 (pattern=projection): save_intermediate_data..." in log_contents
+    assert "Running save_task_4 (pattern=sinogram): save_intermediate_data..." in log_contents
     assert "The center of rotation for sinogram is 95.5" in log_contents
-    assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
+    assert "Running save_task_5 (pattern=sinogram): save_intermediate_data..." in log_contents
 
 
 def test_i12_testing_ignore_darks_flats_pipeline_output(
@@ -535,11 +535,11 @@ def test_i12_testing_ignore_darks_flats_pipeline_output(
     )
     assert "Path to data: /1-TempPlugin-tomo/data" in log_contents
     assert "Preview: (0:724, 0:10, 0:192)" in log_contents
-    assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
-    assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in log_contents
-    assert "Saving intermediate file: 5-tomopy-remove_stripe_fw-tomo.h5" in log_contents
+    assert "Running save_task_1 (pattern=projection): save_intermediate_data..." in log_contents
+    assert "Running save_task_2 (pattern=projection): save_intermediate_data..." in log_contents
+    assert "Running save_task_4 (pattern=sinogram): save_intermediate_data..." in log_contents
     assert "The center of rotation for sinogram is 95.5" in log_contents
-    assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
+    assert "Running save_task_5 (pattern=sinogram): save_intermediate_data..." in log_contents
 
 
 def test_diad_testing_pipeline_output(
@@ -594,7 +594,7 @@ def test_diad_testing_pipeline_output(
     assert "Path to data: /entry/imaging/data" in log_contents
     assert "Preview: (100:3101, 5:7, 0:26)" in log_contents
     assert "Data shape is (3001, 2, 26) of type uint16" in log_contents
-    assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
+    assert "Running save_task_1 (pattern=projection): save_intermediate_data..." in log_contents
 
 
 def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder):
@@ -622,7 +622,7 @@ def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder)
     assert "Path to data: /entry/imaging/data" in log_contents
     assert "Preview: (100:3101, 8:15, 0:26)" in log_contents
     assert "Data shape is (3001, 7, 26) of type uint16" in log_contents
-    assert "Saving intermediate file: 5-httomolibgpu-FBP-tomo.h5" in log_contents
+    assert "Running save_task_5 (pattern=sinogram): save_intermediate_data..." in log_contents
     assert "Global min -0.00561" in log_contents
     assert "Global max 0.006643" in log_contents
 
@@ -651,6 +651,6 @@ def test_run_pipeline_360deg_gpu2(cmd, data360, yaml_gpu_pipeline360_2, output_f
     assert "Loading data: tests/test_data/360scan/360scan.hdf" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Data shape is (3601, 3, 2560) of type uint16" in log_contents
-    assert "Saving intermediate file: 5-httomolibgpu-FBP-tomo.h5" in log_contents
+    assert "Running save_task_6 (pattern=sinogram): save_intermediate_data..." in log_contents
     assert "Global min -0.000412" in log_contents
     assert "Global max 0.003134" in log_contents
