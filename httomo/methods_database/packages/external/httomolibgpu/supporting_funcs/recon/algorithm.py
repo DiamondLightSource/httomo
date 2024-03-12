@@ -24,6 +24,8 @@ import math
 from typing import Tuple
 import numpy as np
 
+from httomo.cufft import CufftType, cufft_estimate_1d
+
 
 __all__ = [
     "_calc_memory_bytes_FBP",
@@ -51,18 +53,31 @@ def _calc_memory_bytes_FBP(
         dtype: np.dtype,
         **kwargs,
 ) -> Tuple[int, int]:    
-    DetectorsLengthH = non_slice_dims_shape[1]
-    # calculate the output shape
+    det_width = non_slice_dims_shape[1]
     output_dims = _calc_output_dim_FBP(non_slice_dims_shape,  **kwargs)
     
     in_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
-    filter_size = (DetectorsLengthH//2+1) * np.float32().itemsize
-    freq_slice = non_slice_dims_shape[0] * (DetectorsLengthH//2+1) * np.complex64().itemsize
-    fftplan_size = freq_slice * 2
-    filtered_in_data = np.prod(non_slice_dims_shape) * np.float32().itemsize
+    filter_size = (det_width//2+1) * np.float32().itemsize
+
+    batch = non_slice_dims_shape[0]
+    SLICES = 200 # dummy multiplier+divisor to pass large batch size threshold
+    fftplan_size = cufft_estimate_1d(
+        nx=det_width,
+        fft_type=CufftType.CUFFT_R2C,
+        batch=batch*SLICES,
+    ) / SLICES
+    ifftplan_size = cufft_estimate_1d(
+        nx=det_width,
+        fft_type=CufftType.CUFFT_C2R,
+        batch=batch*SLICES,
+    ) / SLICES
 
     # astra backprojection will generate an output array 
     astra_out_size = (np.prod(output_dims) * np.float32().itemsize)
-
-    tot_memory_bytes = int(2*in_slice_size + filtered_in_data + freq_slice + fftplan_size + 2.5*astra_out_size)
+    tot_memory_bytes = int(
+        2*in_slice_size +
+        fftplan_size +
+        ifftplan_size +
+        2.5*astra_out_size
+    )
     return (tot_memory_bytes, filter_size)

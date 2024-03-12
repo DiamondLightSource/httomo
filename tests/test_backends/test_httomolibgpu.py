@@ -114,20 +114,21 @@ def test_normalize_memoryhook_parametrise(slices, ensure_clean_memory):
     assert percents_relative_maxmem <= 20
 
 @pytest.mark.cupy
+@pytest.mark.parametrize("dim_x", [340, 135, 96])
+@pytest.mark.parametrize("dim_y", [81, 260, 320])
 @pytest.mark.parametrize("slices", [64, 128])
-@pytest.mark.parametrize("dim_x", [81, 260, 320])
-@pytest.mark.parametrize("dim_y", [340, 135, 96])
 def test_paganin_filter_tomopy_memoryhook(slices, dim_x, dim_y, ensure_clean_memory):    
-    data = cp.random.random_sample((slices, dim_x, dim_y), dtype=np.float32)
     hook = MaxMemoryHook()
     with hook:
-        data_filtered = paganin_filter_tomopy(cp.copy(data)).get()
+        _ = paganin_filter_tomopy(
+                cp.random.random_sample((slices, dim_y, dim_x), dtype=np.float32)
+            ).get()
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook   
     
     # now we estimate how much of the total memory required for this data
-    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_paganin_filter_tomopy((dim_x, dim_y), dtype=np.float32())
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_paganin_filter_tomopy((dim_y, dim_x), dtype=np.float32())
     estimated_memory_mb = round(slices*estimated_memory_bytes / (1024**2), 2)
     max_mem -= subtract_bytes
     max_mem_mb = round(max_mem / (1024**2), 2)
@@ -270,15 +271,15 @@ def test_remove_stripe_ti_memoryhook(slices, ensure_clean_memory):
 @pytest.mark.parametrize("recon_size_it", [600, 1200, 2560])
 def test_recon_FBP_memoryhook(slices, recon_size_it, ensure_clean_memory):
     data = cp.random.random_sample((1801, slices, recon_size_it), dtype=np.float32)
-    kwargs={}
-    kwargs['angles'] = np.linspace(0.0 * np.pi / 180.0, 180.0 * np.pi / 180.0, data.shape[0])
-    kwargs['center'] = 500    
-    kwargs['recon_size'] = recon_size_it
-    kwargs['recon_mask_radius'] = 0.8
-    recon_size = data.shape[2]
+    kwargs = {
+        "angles": np.linspace(0.0 * np.pi / 180.0, 180.0 * np.pi / 180.0, data.shape[0]),
+        "center": 500,
+        "recon_size": recon_size_it,
+        "recon_mask_radius": 0.8,
+    }
     hook = MaxMemoryHook()
     with hook:
-        recon_data = FBP(data, **kwargs)
+        _ = FBP(data, **kwargs)
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = hook.max_mem # the amount of memory in bytes needed for the method according to memoryhook   
