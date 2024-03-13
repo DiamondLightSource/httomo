@@ -115,7 +115,7 @@ class RotationWrapper(GenericMethodWrapper):
         if not block.is_last_in_chunk:  # exit if we didn't process all blocks yet
             return block
 
-        sino_slice = self._gather_sino_slice(block.chunk_shape)
+        sino_slice = self._gather_sino_slice(block.global_shape)
 
         # now calculate the center of rotation on rank 0 and broadcast
         res: Optional[Union[tuple, float, np.float32]] = None
