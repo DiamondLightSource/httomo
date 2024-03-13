@@ -13,14 +13,14 @@ from pytest_mock import MockerFixture
 
 def test_dezinging(mocker: MockerFixture):
     class FakeModule:
-        def remove_outlier3d(x):
+        def remove_outlier(x, axis="auto"):
             return 2 * x
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path.prep",
-        "remove_outlier3d",
+        "remove_outlier",
         MPI.COMM_WORLD,
     )
     assert isinstance(wrp, DezingingWrapper)

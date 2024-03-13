@@ -1,23 +1,23 @@
 misc:
   corr:
-    median_filter3d:
+    median_filter:
       pattern: all
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [2.1]
         - methods: [direct]
-    remove_outlier3d:
+    remove_outlier:
       pattern: all
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
       memory_gpu:
         - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        - multipliers: [2.1]
+        - methods: [direct]
   morph:
     sino_360_to_180:
       pattern: sinogram
