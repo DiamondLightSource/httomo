@@ -105,10 +105,10 @@ class TaskRunner:
                     (end_source - start_source) * 1e-9,
                 )
 
-            res = self._execute_section_block(section, block)
+            block = self._execute_section_block(section, block)
 
             start_sink = time.perf_counter_ns()
-            self.sink.write_block(res)
+            self.sink.write_block(block)
             end_sink = time.perf_counter_ns()
             if self.monitor is not None:
                 self.monitor.report_sink_block(
