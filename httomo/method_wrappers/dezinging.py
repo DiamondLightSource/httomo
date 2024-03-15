@@ -55,39 +55,39 @@ class DezingingWrapper(GenericMethodWrapper):
         # tested in the yaml checker potentially
         self._config_params["axis"] = args.get("axis", 0)
 
-        with catch_gputime() as t:
-            block.data = self.method(block.data, **self._config_params)
-            if self.is_gpu:
+        if self.is_gpu:
+            with catch_gputime() as t:
+                block.data = self.method(block.data, **self._config_params)
                 block.to_cpu()
                 gpumem_cleanup()
 
-            if not self._flats_darks_processed:
-                if self.is_gpu:
+                if not self._flats_darks_processed:
                     block.aux_data.set_darks(
                         xp.asnumpy(
                             self.method(
-                                block.aux_data.get_darks(gpu=True), **self._config_params
+                                block.aux_data.get_darks(gpu=True),
+                                **self._config_params,
                             )
                         )
                     )
                     gpumem_cleanup()
-                else:
-                    block.darks = self.method(block.darks, **self._config_params)
-
-                if self.is_gpu:
                     block.aux_data.set_flats(
                         xp.asnumpy(
                             self.method(
-                                block.aux_data.get_flats(gpu=True), **self._config_params
+                                block.aux_data.get_flats(gpu=True),
+                                **self._config_params,
                             )
                         )
                     )
                     gpumem_cleanup()
-                else:
-                    block.flats = self.method(block.flats, **self._config_params)
+                    self._flats_darks_processed = True
 
+            self._gpu_time_info.kernel = t.elapsed
+        else:
+            block.data = self.method(block.data, **self._config_params)
+            if not self._flats_darks_processed:
+                block.darks = self.method(block.darks, **self._config_params)
+                block.flats = self.method(block.flats, **self._config_params)
                 self._flats_darks_processed = True
-
-        self._gpu_time_info.kernel = t.elapsed
 
         return block
