@@ -110,6 +110,8 @@ def _set_param_value(name: str, value: inspect.Parameter, params_dict: Dict[str,
         params_dict["#additional parameters"] = "AVAILABLE"
     elif name == "axis":
         params_dict[name] = 'auto'
+    elif name == "asynchronous":
+        params_dict[name] = True
     elif name == "center":
         # Temporary value
         params_dict[name] = "${{centering.side_outputs.centre_of_rotation}}"
