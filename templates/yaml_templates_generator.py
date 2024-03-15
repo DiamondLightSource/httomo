@@ -104,7 +104,7 @@ def _set_param_value(name: str, value: inspect.Parameter, params_dict: Dict[str,
         value: Parameter value
         params_dict: Dict containing method's parameter names and values
     """
-    if str(value).find("=") == -1 and name != "kwargs":
+    if value.default is inspect.Parameter.empty and name != "kwargs":
         params_dict[name] = "REQUIRED"
     elif name == "kwargs":
         params_dict["#additional parameters"] = "AVAILABLE"
