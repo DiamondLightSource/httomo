@@ -29,7 +29,7 @@ import importlib
 import inspect
 import os
 import re
-from typing import List, Dict
+from typing import Any, List, Dict
 
 import yaml
 
@@ -97,28 +97,28 @@ def yaml_generator(path_to_modules: str, output_folder: str) -> int:
     return 0
 
 
-def _set_param_value(k: int, v: int, params_dict: Dict):
+def _set_param_value(k: str, v: inspect.Parameter, params_dict: Dict[str, Any]):
     """Set param value for method inside dictionary
     Args:
         k: Method name, dict key
         v: Method value, dict value
         params_dict: Parameter dictionary
     """
-    if str(v).find("=") == -1 and str(k) != "kwargs":
-        params_dict[str(k)] = "REQUIRED"
-    elif str(k) == "kwargs":
+    if str(v).find("=") == -1 and k != "kwargs":
+        params_dict[k] = "REQUIRED"
+    elif k == "kwargs":
         params_dict["#additional parameters"] = "AVAILABLE"
-    elif str(k) == "axis":
-        params_dict[str(k)] = 'auto'
-    elif str(k) == "center":
+    elif k == "axis":
+        params_dict[k] = 'auto'
+    elif k == "center":
         # Temporary value
-        params_dict[str(k)] = "${{centering.side_outputs.centre_of_rotation}}"
-    elif str(k) == "glob_stats":
-        params_dict[str(k)] = "${{statistics.side_outputs.glob_stats}}"
-    elif str(k) == "overlap":
-        params_dict[str(k)] = "${{centering.side_outputs.overlap}}"
+        params_dict[k] = "${{centering.side_outputs.centre_of_rotation}}"
+    elif k == "glob_stats":
+        params_dict[k] = "${{statistics.side_outputs.glob_stats}}"
+    elif k == "overlap":
+        params_dict[k] = "${{centering.side_outputs.overlap}}"
     else:
-        params_dict[str(k)] = v.default
+        params_dict[k] = v.default
 
 
 def _save_yaml(module_name: str, method_name: str, params_list: List[str]):
