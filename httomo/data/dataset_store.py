@@ -122,7 +122,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         self._global_index: Optional[Tuple[int, int, int]] = None
 
         # make sure finalize is called when this object is garbage-collected
-        weakref.finalize(self, self.finalize)
+        weakref.finalize(self, weakref.WeakMethod(self.finalize))
 
     @property
     def is_file_based(self) -> bool:
@@ -295,7 +295,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
             self._h5file = None
         reader = DataSetStoreReader(self, new_slicing_dim)
         # make sure finalize is called when reader object is garbage-collected
-        weakref.finalize(reader, reader.finalize)
+        weakref.finalize(reader, weakref.WeakMethod(reader.finalize))
         return reader
 
     def finalize(self):
