@@ -1,5 +1,0 @@
-- method: median_filter3d
-  module_path: httomolibgpu.misc.corr
-  parameters:
-    kernel_size: 3
-    dif: 0.0

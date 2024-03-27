@@ -1,31 +1,40 @@
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PurePath
 from shutil import copy
-from typing import Optional, Union
+import sys
+import tempfile
+from typing import List, Optional, TextIO, Union
 
 import click
 from mpi4py import MPI
 
 import httomo.globals
 from httomo.logger import setup_logger
+from httomo.monitors import MONITORS_MAP, make_monitors
+from httomo.transform_layer import TransformLayer
 from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
 from httomo.ui_layer import UiLayer
 
 from . import __version__
 
+
 @click.group
 @click.version_option(version=__version__, message="%(version)s")
 def main():
     """httomo: Software for High Throughput Tomography in parallel beam.
-     
-      Use `python -m httomo run --help` for more help on the runner. 
+
+    Use `python -m httomo run --help` for more help on the runner.
     """
     pass
 
+
 @main.command()
-@click.argument("in_data_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument(
+    "in_data_file", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
 @click.argument(
     "yaml_config", type=click.Path(exists=True, dir_okay=False, path_type=Path)
 )
@@ -48,7 +57,33 @@ def main():
     "--reslice-dir",
     type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
     default=None,
-    help="Enable reslicing through the disk by providing a folder path to store intermediate file)",
+    help="Directory for temporary files potentially needed for reslicing (defaults to output dir)",
+)
+@click.option(
+    "--max-cpu-slices",
+    type=click.INT,
+    default=64,
+    help="Maximum number of slices to use for a block for CPU-only sections (default: 64)"
+)
+@click.option(
+    "--max-memory",
+    type=click.STRING,
+    default="0",
+    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)"
+)
+@click.option(
+    "--monitor",
+    type=click.STRING,
+    multiple=True,
+    default=[],
+    help=("Add monitor to the runner (can be given multiple times). " + 
+          f"Available monitors: {', '.join(MONITORS_MAP.keys())}")
+)
+@click.option(
+    "--monitor-output",
+    type=click.File('w'),
+    default=sys.stdout,
+    help="File to store the monitoring output. Defaults to '-', which denotes stdout"
 )
 def run(
     in_data_file: Path,
@@ -57,17 +92,28 @@ def run(
     gpu_id: int,
     save_all: bool,
     reslice_dir: Union[Path, None],
+    max_cpu_slices: int,
+    max_memory: str,
+    monitor: List[str],
+    monitor_output: TextIO,
 ):
     """Run a pipeline defined in YAML on input data."""
-    
+
+    # we use half the memory for blocks since we typically have inputs/output
+    memory_limit = transform_limit_str_to_bytes(max_memory) // 2
+
     # First we need to validate yaml configuration file if there are any errors
     # TODO: with new yaml syntax check yaml is not fully working.
-    # Need to re-enable that: 
+    # Need to re-enable that:
     # _check_yaml(yaml_config, in_data_file)
+
+    if max_cpu_slices < 1:
+        raise ValueError("max-cpu-slices must be greater or equal to 1")
+    httomo.globals.MAX_CPU_SLICES = max_cpu_slices
 
     # Define httomo.globals.run_out_dir in all MPI processes
     httomo.globals.run_out_dir = out_dir.joinpath(
-            f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
+        f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
     )
     comm = MPI.COMM_WORLD
     if comm.rank == 0:
@@ -99,11 +145,43 @@ def run(
     # instantiate UiLayer class for pipeline build
     init_UiLayer = UiLayer(yaml_config, in_data_file, comm=comm)
     pipeline = init_UiLayer.build_pipeline()
-    
-    # Run the pipeline using Taskrunner
-    runner = TaskRunner(pipeline, save_all, reslice_dir)
-    return runner.execute()
+
+    # perform transformations on pipeline
+    tr = TransformLayer(comm=comm, save_all=save_all)
+    pipeline = tr.transform(pipeline)
+
+    # Run the pipeline using Taskrunner, with temp dir or reslice dir
+    mon = make_monitors(monitor)
+    ctx: AbstractContextManager = nullcontext(reslice_dir)
+    if reslice_dir is None:
+        ctx = tempfile.TemporaryDirectory()
+    with ctx as tmp_dir:
+        runner = TaskRunner(
+            pipeline,
+            Path(tmp_dir),
+            monitor=mon,
+            memory_limit_bytes=memory_limit,
+        )
+        runner.execute()
+        if mon is not None:
+            mon.write_results(monitor_output)
+
 
 def _check_yaml(yaml_config: Path, in_data: Path):
-    """Check a YAML pipeline file for errors."""    
+    """Check a YAML pipeline file for errors."""
     return validate_yaml_config(yaml_config, in_data)
+
+
+def transform_limit_str_to_bytes(limit_str: str):
+    try:
+        limit_upper = limit_str.upper()
+        if limit_upper.endswith("K"):
+            return int(float(limit_str[:-1]) * 1024)
+        elif limit_upper.endswith("M"):
+            return int(float(limit_str[:-1]) * 1024**2)
+        elif limit_upper.endswith("G"):
+            return int(float(limit_str[:-1]) * 1024**3)
+        else: 
+            return int(limit_str) 
+    except ValueError:
+        raise ValueError(f"invalid memory limit string {limit_str}")

@@ -5,8 +5,8 @@ import numpy as np
 try:
     from mpi4py import MPI
 
-    comm = MPI.COMM_WORLD.__sizeof__()
-    enabled = comm > 1
+    comsize = MPI.COMM_WORLD.__sizeof__()
+    enabled = comsize > 1
 except ImportError:
     enabled = False
 

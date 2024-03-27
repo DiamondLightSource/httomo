@@ -16,7 +16,7 @@ def load_data(
     preview: str = ":,:,:",
     pad: Tuple = (0, 0),
     comm: MPI.Comm = MPI.COMM_WORLD,
-) -> ndarray:
+) -> Tuple[ndarray, int]:
     """Load data in parallel, slicing it through a certain dimension.
 
     Parameters
@@ -37,21 +37,20 @@ def load_data(
 
     Returns
     -------
-    ndarray
-        The numpy array that has been loaded.
+    Tuple[ndarray, int]
+        The numpy array that has been loaded and the start index in the global shape.
     """
     log_once(f"Loading data: {file}", colour=Colour.LYELLOW, comm=comm, level=1)
     log_once(f"Path to data: {path}", colour=Colour.LYELLOW, comm=comm, level=1)
     log_once(f"Preview: ({preview})", colour=Colour.LYELLOW, comm=comm, level=1)
     if dim == 1:
-        data = read_through_dim1(file, path, preview=preview, pad=pad, comm=comm)
+        return read_through_dim1(file, path, preview=preview, pad=pad, comm=comm)
     elif dim == 2:
-        data = read_through_dim2(file, path, preview=preview, pad=pad, comm=comm)
+        return read_through_dim2(file, path, preview=preview, pad=pad, comm=comm)
     elif dim == 3:
-        data = read_through_dim3(file, path, preview=preview, pad=pad, comm=comm)
+        return read_through_dim3(file, path, preview=preview, pad=pad, comm=comm)
     else:
         raise Exception("Invalid dimension. Choose 1, 2 or 3.")
-    return data
 
 
 def read_through_dim3(
@@ -60,7 +59,7 @@ def read_through_dim3(
     preview: str = ":,:,:",
     pad: Tuple = (0, 0),
     comm: MPI.Comm = MPI.COMM_WORLD,
-) -> ndarray:
+) -> Tuple[ndarray, int]:
     """Read a dataset in parallel, with each MPI process loading a block.
 
     Parameters
@@ -78,7 +77,7 @@ def read_through_dim3(
 
     Returns
     -------
-    ndarray
+    Tuple[ndarray, int]
         ADD DESC
     """
     rank = comm.rank
@@ -104,8 +103,10 @@ def read_through_dim3(
             offset = start  # Offset where the dataset will start being read.
         # Bounds of the data this process will load. Length is split between number of
         # processes.
-        i0 = round((length / nproc) * rank) + offset - pad[0]
-        i1 = round((length / nproc) * (rank + 1)) + offset + pad[1]
+        chunk_idx = round((length / nproc) * rank)
+        next_chunk_idx = round((length / nproc) * (rank + 1))
+        i0 = chunk_idx + offset - pad[0]
+        i1 = next_chunk_idx + offset + pad[1]
         # Checking that i0 and i1 are still within the bounds of the dataset after
         # padding.
         if i0 < 0:
@@ -113,7 +114,7 @@ def read_through_dim3(
         if i1 > dataset.shape[2]:
             i1 = dataset.shape[2]
         data = dataset[:, :, i0:i1:step]
-        return data
+        return data, chunk_idx
 
 
 def read_through_dim2(
@@ -122,7 +123,7 @@ def read_through_dim2(
     preview: str = ":,:,:",
     pad: Tuple = (0, 0),
     comm: MPI.Comm = MPI.COMM_WORLD,
-) -> ndarray:
+) -> Tuple[ndarray, int]:
     """Read a dataset in parallel, with each MPI process loading a block.
 
     Parameters
@@ -140,8 +141,8 @@ def read_through_dim2(
 
     Returns
     -------
-    ndarray
-        ADD DESC
+    Tuple[ndarray, int]
+        The data loaded and its starting index in the global shape
     """
     rank = comm.rank
     nproc = comm.size
@@ -166,8 +167,10 @@ def read_through_dim2(
             offset = start  # Offset where the dataset will start being read.
         # Bounds of the data this process will load. Length is split between number of
         # processes.
-        i0 = round((length / nproc) * rank) + offset - pad[0]
-        i1 = round((length / nproc) * (rank + 1)) + offset + pad[1]
+        chunk_idx = round((length / nproc) * rank)
+        next_chunk_idx = round((length / nproc) * (rank + 1))
+        i0 = chunk_idx + offset - pad[0]
+        i1 = next_chunk_idx + offset + pad[1]
         # Checking that i0 and i1 are still within the bounds of the dataset after
         # padding.
         if i0 < 0:
@@ -175,7 +178,7 @@ def read_through_dim2(
         if i1 > dataset.shape[1]:
             i1 = dataset.shape[1]
         data = dataset[slice_list[0], i0:i1:step, :]
-        return data
+        return data, chunk_idx
 
 
 def read_through_dim1(
@@ -184,7 +187,7 @@ def read_through_dim1(
     preview: str = ":,:,:",
     pad: Tuple = (0, 0),
     comm: MPI.Comm = MPI.COMM_WORLD,
-) -> ndarray:
+) -> Tuple[ndarray, int]:
     """Read a dataset in parallel, with each MPI process loading a block.
 
     Parameters
@@ -202,8 +205,8 @@ def read_through_dim1(
 
     Returns
     -------
-    ndarray
-        ADD DESC
+    Tuple[ndarray, int]
+        The data loaded and its starting index in the global shape
     """
     rank = comm.rank
     nproc = comm.size
@@ -228,8 +231,10 @@ def read_through_dim1(
             offset = start  # Offset where the dataset will start being read.
         # Bounds of the data this process will load. Length is split between number of
         # processes.
-        i0 = round((length / nproc) * rank) + offset - pad[0]
-        i1 = round((length / nproc) * (rank + 1)) + offset + pad[1]
+        chunk_idx = round((length / nproc) * rank)
+        next_chunk_idx = round((length / nproc) * (rank + 1))
+        i0 = chunk_idx + offset - pad[0]
+        i1 = next_chunk_idx + offset + pad[1]
         # Checking that i0 and i1 are still within the bounds of the dataset after
         # padding.
         if i0 < 0:
@@ -237,7 +242,7 @@ def read_through_dim1(
         if i1 > dataset.shape[0]:
             i1 = dataset.shape[0]
         data = dataset[i0:i1:step, slice_list[1], slice_list[2]]
-        return data
+        return data, chunk_idx
 
 
 def get_pad_values(

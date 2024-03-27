@@ -1,5 +1,5 @@
-from typing import Tuple
-from pathlib import Path
+from os import PathLike
+from typing import Optional, Tuple
 
 import h5py as h5
 from mpi4py import MPI
@@ -8,12 +8,12 @@ from httomo.data.hdf.loaders import LoaderData
 
 
 def save_dataset(
-    out_folder: Path,
+    out_folder: PathLike,
     file_name: str,
     data: ndarray,
-    angles: ndarray,
-    detector_x: int,
-    detector_y: int,
+    angles: Optional[ndarray] = None,
+    detector_x: int = -1,
+    detector_y: int = -1,
     slice_dim: int = 1,
     chunks: Tuple = (150, 150, 10),
     path: str = "/data",
@@ -24,7 +24,7 @@ def save_dataset(
 
     Parameters
     ----------
-    out_folder : str
+    out_folder : PathLike
         Path to output folder.
     file_name : str
         Name of file to save dataset in.
@@ -63,7 +63,8 @@ def save_dataset(
     ) as file:
         dataset = file.create_dataset(path, shape, dtype, chunks=chunks)
         save_data_parallel(dataset, data, slice_dim)
-        file.create_dataset("/angles", data=angles)
+        if angles is not None:
+            file.create_dataset("/angles", data=angles)
         file.create_dataset(file_name, data=[0, 0])
         g1 = file.create_group("data_dims")
         g1.create_dataset("detector_x_y", data=[detector_x, detector_y])

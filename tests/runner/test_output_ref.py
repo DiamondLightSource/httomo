@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 
 from httomo.runner.output_ref import OutputRef
 
-from .testing_utils import make_test_method
+from ..testing_utils import make_test_method
 
 
 def test_gets_mapped_value(mocker: MockerFixture):

@@ -4,4 +4,4 @@
     val_intensity: 0.1
     otsu: false
     foreground: true
-    axis: 1
+    axis: auto

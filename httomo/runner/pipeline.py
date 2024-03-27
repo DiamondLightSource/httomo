@@ -1,6 +1,6 @@
 from httomo.runner.loader import LoaderInterface
 from httomo.utils import Pattern
-from httomo.runner.backend_wrapper import BackendWrapper
+from httomo.runner.method_wrapper import MethodWrapper
 
 from typing import Iterator, List, Optional
 
@@ -12,29 +12,24 @@ class Pipeline:
     def __init__(
         self,
         loader: LoaderInterface,
-        methods: List[BackendWrapper],
-        save_results_set: List = [],
-        main_pipeline_start: int = 0,
+        methods: List[MethodWrapper]
     ):
         self._methods = methods
         self._loader = loader
-        self._save_results_set = save_results_set
-        self._main_pipeline_start = main_pipeline_start
 
     @property
     def loader(self) -> LoaderInterface:
         return self._loader
 
-    @property
-    def main_pipeline_start(self) -> int:
-        return self._main_pipeline_start
-
     # iterator interface to access the methods
-    def __iter__(self) -> Iterator[BackendWrapper]:
+    def __iter__(self) -> Iterator[MethodWrapper]:
         return iter(self._methods)
 
     def __len__(self) -> int:
         return len(self._methods)
+
+    def __getitem__(self, idx: int) -> MethodWrapper:
+        return self._methods[idx]
 
     @property
     def loader_pattern(self) -> Pattern:
@@ -45,13 +40,3 @@ class Pipeline:
         """Although the pipeline is largely immutable, this setter is needed as the
         actual pattern is set after processing the full pipeline"""
         self.loader.pattern = pattern
-
-    @property
-    def loader_reslice(self) -> bool:
-        return self.loader.reslice if self.loader is not None else False
-
-    @loader_reslice.setter
-    def loader_reslice(self, reslice: bool):
-        """Although the pipeline is largely immutable, this setter is needed as the
-        information whether reslicing is required after the loader is set later"""
-        self.loader.reslice = reslice

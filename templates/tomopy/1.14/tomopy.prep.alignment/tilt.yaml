@@ -1,6 +1,0 @@
-- method: tilt
-  module_path: tomopy.prep.alignment
-  parameters:
-    obj: REQUIRED
-    rad: 0
-    phi: 0

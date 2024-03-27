@@ -62,7 +62,7 @@ def test_reslice(full_shape, current_slice_dim, next_slice_dim, dtype):
     # reslice, artificially mocking MPI max size to check that it can handle sizes
     # larger than max
     with mock.patch("httomo.data.mpiutil._mpi_max_elements", 128):
-        newdata, _ = reslice(data, current_slice_dim, next_slice_dim, comm)
+        newdata, _, start_idx = reslice(data, current_slice_dim, next_slice_dim, comm)
 
     # check expected dimensions
     start = round((full_shape[next_slice_dim - 1] / comm.size) * comm.rank)
@@ -70,6 +70,7 @@ def test_reslice(full_shape, current_slice_dim, next_slice_dim, dtype):
     expected_dims = np.copy(full_shape)
     expected_dims[next_slice_dim - 1] = stop - start
     np.testing.assert_array_equal(newdata.shape, expected_dims)
+    assert start == start_idx
 
     # check expected data
     expected = np.ones(expected_dims, dtype=dtype)

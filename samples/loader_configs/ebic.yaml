@@ -13,5 +13,4 @@
         file: # /path/to/file/containing/flats
         data_path: /exchange/data_white_post
     dimension: 1
-    preview: [None, None, None]
     pad: 0

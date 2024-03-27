@@ -1,9 +1,12 @@
+from contextlib import contextmanager
 import re
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple
+from time import perf_counter_ns
+from typing import Any, Callable, Dict, List, Literal, Tuple
 
 from mpi4py.MPI import Comm
+import numpy as np
 
 import httomo.globals
 from httomo.data import mpiutil
@@ -213,7 +216,7 @@ class Pattern(Enum):
     all = 2
 
 
-def _get_slicing_dim(pattern: Pattern) -> int:
+def _get_slicing_dim(pattern: Pattern) -> Literal[1, 2]:
     """Assuming 3D projection data with the axes ordered as
     - axis 0 = rotation angle
     - axis 1 = detector y
@@ -279,3 +282,56 @@ def remove_ansi_escape_sequences(filename):
         with open(filename, "w") as f:
             for line in lines:
                 f.write(ansi_escape.sub("", line))
+
+
+class catchtime:
+    """A context manager to measure ns-accurate time for the context block.
+    
+    Usage:
+        with catchtime() as t:
+            ...
+            
+        print(t.elapsed)
+    """
+    def __enter__(self):
+        self.start = perf_counter_ns()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.elapsed = (perf_counter_ns() - self.start) * 1e-9
+    
+
+class catch_gputime:
+    def __enter__(self):
+        if gpu_enabled:
+            self.start = xp.cuda.Event()
+            self.start.record()
+        return self
+            
+    def __exit__(self, type, value, traceback):
+        if gpu_enabled:
+            self.end = xp.cuda.Event()
+            self.end.record()
+    
+    @property
+    def elapsed(self) -> float:
+        if gpu_enabled:
+            self.end.synchronize()
+            return xp.cuda.get_elapsed_time(self.start, self.end) * 1e-3
+        else:
+            return 0.0
+
+
+def make_3d_shape_from_shape(shape: List[int]) -> Tuple[int, int, int]:
+    """Given a shape as a list of length 3, return a corresponding tuple 
+       with the right typing type (required to make mypy type checks work)
+    """
+    assert len(shape) == 3, "3D shape expected"
+    return (shape[0], shape[1], shape[2])
+
+
+def make_3d_shape_from_array(array: np.ndarray) -> Tuple[int, int, int]:
+    """Given a 3D array, return a corresponding shape tuple
+       with the right typing type (required to make mypy type checks work)
+    """
+    return make_3d_shape_from_shape(list(array.shape))

@@ -1,0 +1,80 @@
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    rotation_angles:
+      data_path: /entry1/tomo_entry/data/rotation_angle
+    dimension: 1
+    preview:
+      -
+      - start: 1000
+        stop: 1005
+      -
+    pad: 0
+- method: find_center_360
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    ind: mid
+    win_width: 10
+    side: null
+    denoise: true
+    norm: false
+    use_overlap: false
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+    overlap: overlap
+    side: side
+    overlap_position: overlap_position
+- method: normalize
+  module_path: httomolibgpu.prep.normalize
+  parameters:
+    cutoff: 10.0
+    minus_log: true
+    nonnegativity: false
+    remove_nans: false
+- method: sino_360_to_180
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    overlap: ${{centering.side_outputs.overlap}}
+    rotation: right
+- method: remove_all_stripe
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    snr: 3.0
+    la_size: 61
+    sm_size: 21
+    dim: 1
+- method: CGLS
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    recon_size: null
+    iterations: 3
+    nonnegativity: true
+  save_result: true
+- method: data_resampler
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    newshape: [256, 256]
+    axis: auto
+    interpolation: nearest  
+- method: calculate_stats
+  module_path: httomo.methods
+  parameters: {}
+  id: statistics
+  side_outputs:
+    glob_stats: glob_stats  
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif
+    bits: 8
+    perc_range_min: 0.0
+    perc_range_max: 90.0
+    jpeg_quality: 95
+    glob_stats: ${{statistics.side_outputs.glob_stats}}

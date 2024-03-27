@@ -27,7 +27,6 @@ def methods_to_list() -> PipelineConfig:
             "image_key_path": "entry1/tomo_entry/instrument/detector/image_key",
             "rotation_angles": {"data_path": "/entry1/tomo_entry/data/rotation_angle"},
             "dimension": 1,
-            "preview": [None, None, None],
             "pad": 0,
         },
     }
@@ -49,7 +48,7 @@ def methods_to_list() -> PipelineConfig:
     }
     full_pipeline_list.append(method1)
     method2 = {
-        "method": "remove_outlier3d",
+        "method": "remove_outlier",
         "module_path": "httomolibgpu.misc.corr",
         "parameters": {
             "dif": 0.1,

@@ -8,4 +8,4 @@
     emission: true
     pad: true
     sinogram_order: false
-    axis: 0
+    axis: auto

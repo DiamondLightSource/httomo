@@ -87,16 +87,15 @@ class MethodsDatabaseQuery(MethodQuery):
 
     def get_pattern(self) -> Pattern:
         p = get_method_info(self.module_path, self.method_name, "pattern")
+        assert p in ["projection", "sinogram", "all"], (
+            f"The pattern {p} that is listed for the method "
+            f"{self.module_path}.{self.method_name} is invalid."
+        )
         if p == "projection":
             return Pattern.projection
         if p == "sinogram":
             return Pattern.sinogram
-        if p == "all":
-            return Pattern.all
-        raise ValueError(
-            f"The pattern {p} that is listed for the method "
-            f"{self.module_path}.{self.method_name} is invalid."
-        )
+        return Pattern.all
 
     def get_output_dims_change(self) -> bool:
         p = get_method_info(self.module_path, self.method_name, "output_dims_change")
@@ -104,11 +103,17 @@ class MethodsDatabaseQuery(MethodQuery):
 
     def get_implementation(self) -> Literal["cpu", "gpu", "gpu_cupy"]:
         p = get_method_info(self.module_path, self.method_name, "implementation")
-        if p not in ["gpu", "gpu_cupy", "cpu"]:
-            raise ValueError(
-                f"The ipmlementation arch {p} listed for method {self.module_path}.{self.method_name} is invalid"
-            )
+        assert p in [
+            "gpu",
+            "gpu_cupy",
+            "cpu",
+        ], f"The implementation arch {p} listed for method {self.module_path}.{self.method_name} is invalid"
         return p
+
+    def save_result_default(self) -> bool:
+        return get_method_info(
+            self.module_path, self.method_name, "save_result_default"
+        )
 
     def get_memory_gpu_params(
         self,
@@ -118,7 +123,7 @@ class MethodsDatabaseQuery(MethodQuery):
             return []
         if type(p) == list:
             # convert to dict first
-            dd = dict()
+            dd: dict = dict()
             for item in p:
                 dd |= item
         else:

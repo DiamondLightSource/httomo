@@ -29,7 +29,7 @@ import importlib
 import inspect
 import os
 import re
-from typing import List, Dict
+from typing import Any, List, Dict
 
 import yaml
 
@@ -77,15 +77,15 @@ def yaml_generator(path_to_modules: str, output_folder: str) -> int:
             # put the parameters in the dictionary
             params_list: List = []
             params_dict: Dict = {}
-            for k, v in get_method_params.parameters.items():
-                if v is not None:
+            for name, value in get_method_params.parameters.items():
+                if value is not None:
                     append = True
                     for x in discard_keys:
-                        if str(k) == x:
+                        if name == x:
                             append = False
                             break
                     if append:
-                        _set_param_value(k, v, params_dict)
+                        _set_param_value(name, value, params_dict)
             method_dict = {
                 "method": method_name,
                 "module_path": module_name,
@@ -97,26 +97,30 @@ def yaml_generator(path_to_modules: str, output_folder: str) -> int:
     return 0
 
 
-def _set_param_value(k: int, v: int, params_dict: Dict):
+def _set_param_value(name: str, value: inspect.Parameter, params_dict: Dict[str, Any]):
     """Set param value for method inside dictionary
     Args:
-        k: Method name, dict key
-        v: Method value, dict value
-        params_dict: Parameter dictionary
+        name: Parameter name
+        value: Parameter value
+        params_dict: Dict containing method's parameter names and values
     """
-    if str(v).find("=") == -1 and str(k) != "kwargs":
-        params_dict[str(k)] = "REQUIRED"
-    elif str(k) == "kwargs":
+    if value.default is inspect.Parameter.empty and name != "kwargs":
+        params_dict[name] = "REQUIRED"
+    elif name == "kwargs":
         params_dict["#additional parameters"] = "AVAILABLE"
-    elif str(k) == "center":
+    elif name == "axis":
+        params_dict[name] = 'auto'
+    elif name == "asynchronous":
+        params_dict[name] = True
+    elif name == "center":
         # Temporary value
-        params_dict[str(k)] = "${{centering.side_outputs.centre_of_rotation}}"
-    elif str(k) == "glob_stats":
-        params_dict[str(k)] = "${{statistics.side_outputs.glob_stats}}"
-    elif str(k) == "overlap":
-        params_dict[str(k)] = "${{centering.side_outputs.overlap}}"
+        params_dict[name] = "${{centering.side_outputs.centre_of_rotation}}"
+    elif name == "glob_stats":
+        params_dict[name] = "${{statistics.side_outputs.glob_stats}}"
+    elif name == "overlap":
+        params_dict[name] = "${{centering.side_outputs.overlap}}"
     else:
-        params_dict[str(k)] = v.default
+        params_dict[name] = value.default
 
 
 def _save_yaml(module_name: str, method_name: str, params_list: List[str]):

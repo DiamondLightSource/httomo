@@ -3,4 +3,4 @@
   parameters:
     dif: REQUIRED
     size: 3
-    axis: 0
+    axis: auto
