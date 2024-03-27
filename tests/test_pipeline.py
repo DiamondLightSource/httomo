@@ -273,9 +273,9 @@ def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert " Global min -0.014968" in log_contents
-    assert " Global max 0.041707" in log_contents
-    assert " Global mean 0.001559" in log_contents
+    assert " Global min -0.014979" in log_contents
+    assert " Global max 0.04177" in log_contents
+    assert " Global mean 0.0016174" in log_contents
 
 
 def test_run_pipeline_cpu3_py(cmd, standard_data, python_cpu_pipeline3, output_folder):
@@ -310,9 +310,9 @@ def test_run_pipeline_cpu3_py(cmd, standard_data, python_cpu_pipeline3, output_f
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert " Global min -0.014968" in log_contents
-    assert " Global max 0.041707" in log_contents
-    assert " Global mean 0.001559" in log_contents
+    assert " Global min -0.014979" in log_contents
+    assert " Global max 0.04177" in log_contents
+    assert " Global mean 0.0016174" in log_contents
 
 
 def test_run_pipeline_gpu1_yaml(cmd, standard_data, yaml_gpu_pipeline1, output_folder):
@@ -643,9 +643,9 @@ def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder)
         "Running save_task_5 (pattern=sinogram): save_intermediate_data..."
         in log_contents
     )
-    assert "Global min -0.012102" in log_contents
-    assert "Global max 0.01959" in log_contents
-    assert "Global mean 0.000311" in log_contents
+    assert "Global min -0.011995" in log_contents
+    assert "Global max 0.019879" in log_contents
+    assert "Global mean 0.000291" in log_contents
 
 
 def test_run_pipeline_360deg_gpu2(cmd, data360, yaml_gpu_pipeline360_2, output_folder):
@@ -676,6 +676,6 @@ def test_run_pipeline_360deg_gpu2(cmd, data360, yaml_gpu_pipeline360_2, output_f
         "Running save_task_6 (pattern=sinogram): save_intermediate_data..."
         in log_contents
     )
-    assert "Global min -0.00311" in log_contents
-    assert "Global max 0.00581" in log_contents
-    assert "Global mean 0.000887" in log_contents
+    assert "Global min -0.00315" in log_contents
+    assert "Global max 0.00575" in log_contents
+    assert "Global mean 0.00088" in log_contents

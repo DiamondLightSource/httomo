@@ -138,5 +138,5 @@ def test_insert_data_reducer(mocker: MockerFixture, tmp_path: Path):
     pipeline = trans.insert_data_reducer(pipeline)
 
     assert len(pipeline) == 3
-    assert pipeline[1].method_name == "data_reducer"
-    assert pipeline[1].task_id == "task_1"
+    assert pipeline[0].method_name == "data_reducer"
+    assert pipeline[0].task_id == "task_0"

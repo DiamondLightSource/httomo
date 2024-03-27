@@ -52,22 +52,19 @@ class TransformLayer:
         return Pipeline(loader, methods)
 
     def insert_data_reducer(self, pipeline: Pipeline) -> Pipeline:
+        """This will always insert data reducer as method 0 right after the loader"""
         loader = pipeline.loader
         methods = []
-        counter = 0
+        methods.append(
+            make_method_wrapper(
+                self._repo,
+                "httomolib.misc.morph",
+                "data_reducer",
+                comm=self._comm,
+                save_result=False,
+                task_id=f"task_{0}",
+            ),
+        )
         for m in pipeline:
             methods.append(m)
-            if m.method_name == "normalize":
-                methods.insert(
-                    counter,
-                    make_method_wrapper(
-                        self._repo,
-                        "httomolib.misc.morph",
-                        "data_reducer",
-                        comm=self._comm,
-                        save_result=False,
-                        task_id=f"task_{counter}",
-                    ),
-                )
-            counter += 1
         return Pipeline(loader, methods)
