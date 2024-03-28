@@ -19,7 +19,14 @@ from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import Section, sectionize
-from httomo.utils import Colour, Pattern, _get_slicing_dim, catchtime, log_exception, log_once
+from httomo.utils import (
+    Colour,
+    Pattern,
+    _get_slicing_dim,
+    catchtime,
+    log_exception,
+    log_once,
+)
 import numpy as np
 
 log = logging.getLogger(__name__)
@@ -43,7 +50,7 @@ class TaskRunner:
         self.side_outputs: Dict[str, Any] = dict()
         self.source: Optional[DataSetSource] = None
         self.sink: Optional[Union[DataSetSink, ReadableDataSetSink]] = None
-        
+
         self._memory_limit_bytes = memory_limit_bytes
 
         self.output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
@@ -57,10 +64,8 @@ class TaskRunner:
             for i, section in enumerate(sections):
                 self._execute_section(section, i)
                 gpumem_cleanup()
-       
-        self._log_pipeline(
-            f"Pipeline finished. Took {t.elapsed:.3f}s"
-        )
+
+        self._log_pipeline(f"Pipeline finished. Took {t.elapsed:.3f}s")
         if self.monitor is not None:
             self.monitor.report_total_time(t.elapsed)
 
@@ -68,9 +73,9 @@ class TaskRunner:
         sections = sectionize(self.pipeline)
         self._log_pipeline(f"Pipeline has been separated into {len(sections)} sections")
         num_stores = len(sections) - 1
-        if num_stores > 1:
+        if num_stores > 3:
             log_once(
-                f"WARNING: Reslicing will be performed {num_stores} times. The number of reslices increases the total run time.",
+                f"WARNING: Data saving or/and reslicing operation will be performed {num_stores} times. This increases the total run time, especially if the saving is performed through the disk.",
                 comm=self.comm,
                 colour=Colour.RED,
             )
@@ -142,7 +147,7 @@ class TaskRunner:
                 slicing_dim_section,
                 self.comm,
                 self.reslice_dir,
-                memory_limit_bytes=self._memory_limit_bytes
+                memory_limit_bytes=self._memory_limit_bytes,
             )
 
     def _execute_section_block(
@@ -192,18 +197,18 @@ class TaskRunner:
         end = time.perf_counter_ns()
         if self.monitor is not None:
             self.monitor.report_method_block(
-                    method.method_name,
-                    method.module_path,
-                    method.task_id,
-                    _get_slicing_dim(method.pattern) - 1,
-                    block.shape,
-                    block.chunk_index,
-                    block.global_index,
-                    (end - start) * 1e-9,
-                    method.gpu_time.kernel,
-                    method.gpu_time.host2device,
-                    method.gpu_time.device2host
-                )
+                method.method_name,
+                method.module_path,
+                method.task_id,
+                _get_slicing_dim(method.pattern) - 1,
+                block.shape,
+                block.chunk_index,
+                block.global_index,
+                (end - start) * 1e-9,
+                method.gpu_time.kernel,
+                method.gpu_time.host2device,
+                method.gpu_time.device2host,
+            )
         self._log_task_end(
             method.task_id,
             start_time,
@@ -290,9 +295,13 @@ class TaskRunner:
         log_once(memory_str, comm=self.comm, colour=Colour.BVIOLET, level=1)
         if self._memory_limit_bytes != 0:
             available_memory = min(available_memory, self._memory_limit_bytes)
-            log_once(f"The memory has been limited to {available_memory / (1024**3):4.2f} GB",
-                     comm=self.comm, colour=Colour.BVIOLET, level=1)
-        
+            log_once(
+                f"The memory has been limited to {available_memory / (1024**3):4.2f} GB",
+                comm=self.comm,
+                colour=Colour.BVIOLET,
+                level=1,
+            )
+
         max_slices_methods = [max_slices] * len(section)
 
         # loop over all methods in section
