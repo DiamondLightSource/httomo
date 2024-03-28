@@ -109,7 +109,7 @@ def _set_param_value(name: str, value: inspect.Parameter, params_dict: Dict[str,
     elif name == "kwargs":
         params_dict["#additional parameters"] = "AVAILABLE"
     elif name == "axis":
-        params_dict[name] = 'auto'
+        params_dict[name] = "auto"
     elif name == "asynchronous":
         params_dict[name] = True
     elif name == "center":
@@ -147,7 +147,7 @@ def _set_dict_special_cases(method_dict: Dict, method_name: str):
         method_dict: Dictionary of modules and parameters
         method_name: Name of method
     """
-    if method_name in "find_center_vo":
+    if method_name in ["find_center_vo", "find_center_pc"]:
         method_dict["id"] = "centering"
         method_dict["side_outputs"] = {"cor": "centre_of_rotation"}
     if method_name in "find_center_360":
@@ -161,6 +161,7 @@ def _set_dict_special_cases(method_dict: Dict, method_name: str):
     if method_name in "calculate_stats":
         method_dict["id"] = "statistics"
         method_dict["side_outputs"] = {"glob_stats": "glob_stats"}
+
 
 def _get_discard_data_out() -> List[str]:
     """Discard data_out from certain modules
@@ -185,6 +186,8 @@ def _get_discard_keys() -> List[str]:
         "tomo",
         "arr",
         "prj",
+        "proj1",
+        "proj2",
         "data",
         "ncore",
         "nchunk",
@@ -199,7 +202,7 @@ def _get_discard_keys() -> List[str]:
         "out_dir",
         "angles",
         "gpu_id",
-        "comm"
+        "comm",
     ]
     return discard_keys
 

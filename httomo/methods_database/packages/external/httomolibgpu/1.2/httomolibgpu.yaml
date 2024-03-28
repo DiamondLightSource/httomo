@@ -140,7 +140,7 @@ recon:
         - methods: [module]
   rotation:
     find_center_vo:
-      pattern: sinogram
+      pattern: projection
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
@@ -149,7 +149,16 @@ recon:
         - multipliers: [0]
         - methods: [direct]
     find_center_360:
-      pattern: sinogram
+      pattern: projection
+      output_dims_change: False
+      implementation: gpu_cupy
+      save_result_default: False
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [0]
+        - methods: [direct]
+    find_center_pc:
+      pattern: projection
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False

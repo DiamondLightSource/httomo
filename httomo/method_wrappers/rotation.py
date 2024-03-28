@@ -15,7 +15,8 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 class RotationWrapper(GenericMethodWrapper):
     """Wraps rotation (centering) methods, which output the original dataset untouched,
-    but have a side output for the center of rotation data (handling both 180 and 360).
+    but have a side output for the center of rotation data (handling both 180 and 360
+    degrees scans).
 
     It wraps the actual algorithm to find the center and does more. In particular:
     - takes a single sinogram from the full dataset (across all MPI processes)
@@ -43,7 +44,13 @@ class RotationWrapper(GenericMethodWrapper):
         **kwargs,
     ):
         super().__init__(
-            method_repository, module_path, method_name, comm, save_result, output_mapping, **kwargs
+            method_repository,
+            module_path,
+            method_name,
+            comm,
+            save_result,
+            output_mapping,
+            **kwargs,
         )
         if self.pattern not in [Pattern.sinogram, Pattern.all]:
             raise NotImplementedError(
@@ -108,9 +115,9 @@ class RotationWrapper(GenericMethodWrapper):
             with catchtime() as t:
                 data = xp.asnumpy(data)
             self._gpu_time_info.device2host += t.elapsed
-        self.sino[
-            block.chunk_index[0] : block.chunk_index[0] + block.shape[0], :
-        ] = data
+        self.sino[block.chunk_index[0] : block.chunk_index[0] + block.shape[0], :] = (
+            data
+        )
 
         if not block.is_last_in_chunk:  # exit if we didn't process all blocks yet
             return block
@@ -161,9 +168,7 @@ class RotationWrapper(GenericMethodWrapper):
             sino -= darks1d / denom
         return sino[:, np.newaxis, :]
 
-    def _process_return_type(
-        self, ret: Any, input_block: DataSetBlock
-    ) -> DataSetBlock:
+    def _process_return_type(self, ret: Any, input_block: DataSetBlock) -> DataSetBlock:
         if type(ret) == tuple:
             # cor, overlap, side, overlap_position - from find_center_360
             self._side_output["cor"] = float(ret[0])
