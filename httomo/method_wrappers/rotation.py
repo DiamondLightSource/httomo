@@ -19,12 +19,12 @@ class RotationWrapper(GenericMethodWrapper):
     degrees scans).
 
     It wraps the actual algorithm to find the center and does more. In particular:
-    - takes a single sinogram from the full dataset (across all MPI processes)
+    - extracts a single sinogram from the projections set (across all MPI processes)
     - normalises it
     - calls the center-finding algorithm on this normalised data slice
-    - outputs the center of rotation as a side output
+    - outputs the center of rotation as a side output and broadcast the value
 
-    For block-wise processing support, it accumulates the sinogram in-memory in the method
+    For block-wise processing support, it aggregates the sinogram in-memory in the method
     until the sinogram is complete for the current process. Then it uses MPI to add the data
     from the other processes to it.
     """
@@ -52,12 +52,10 @@ class RotationWrapper(GenericMethodWrapper):
             output_mapping,
             **kwargs,
         )
-        if self.pattern not in [Pattern.sinogram, Pattern.all]:
+        if self.pattern not in [Pattern.projection]:
             raise NotImplementedError(
-                "Base method for rotation wrapper only supports sinogram or all"
+                "Base method for rotation wrapper work with the projection pattern only"
             )
-        # we must use projection in this wrapper now, to determine the full sino slice with MPI
-        # TODO: extend this to support Pattern.all
         self.pattern = Pattern.projection
         self.sino: Optional[np.ndarray] = None
 
