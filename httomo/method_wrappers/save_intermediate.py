@@ -66,6 +66,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             data,
             global_shape=block.global_shape,
             global_index=block.global_index,
+            slicing_dim=block.slicing_dim,
             file=self._file,
             path="/data",
             detector_x=self._loader.detector_x,

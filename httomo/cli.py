@@ -85,6 +85,11 @@ def main():
     default=sys.stdout,
     help="File to store the monitoring output. Defaults to '-', which denotes stdout"
 )
+@click.option(
+    "--chunk-intermediate",
+    is_flag=True,
+    help="Write intermediate data in chunked format",
+)
 def run(
     in_data_file: Path,
     yaml_config: Path,
@@ -96,8 +101,10 @@ def run(
     max_memory: str,
     monitor: List[str],
     monitor_output: TextIO,
+    chunk_intermediate: bool,
 ):
     """Run a pipeline defined in YAML on input data."""
+    httomo.globals.CHUNK_INTERMEDIATE = chunk_intermediate
 
     # we use half the memory for blocks since we typically have inputs/output
     memory_limit = transform_limit_str_to_bytes(max_memory) // 2
