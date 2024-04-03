@@ -1,7 +1,8 @@
 import pathlib
-from typing import Tuple
+from typing import Tuple, Union
 import numpy as np
 import h5py
+import hdf5plugin
 
 import httomo
 from httomo.runner.dataset import DataSetBlock
@@ -56,6 +57,10 @@ def save_intermediate_data(
     else:
         chunk_shape = None
 
+    compression: Union[dict, hdf5plugin.Blosc] = (
+        hdf5plugin.Blosc() if httomo.globals.COMPRESS_INTERMEDIATE else {}
+    )
+
     # only create if not already present - otherwise return existing dataset
     dataset = file.require_dataset(
         path,
@@ -63,6 +68,7 @@ def save_intermediate_data(
         data.dtype,
         exact=True,
         chunks=chunk_shape,
+        **compression,
     )
     _save_dataset_data(dataset, data, global_shape, global_index)
     _save_auxiliary_data(file, angles, detector_x, detector_y)
@@ -81,7 +87,13 @@ def _save_dataset_data(
     assert stop[1] <= dataset.shape[1]
     assert stop[2] <= dataset.shape[2]
     assert dataset.shape == global_shape
-    dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
+    if httomo.globals.COMPRESS_INTERMEDIATE:
+        # Write operations must be collective when applying compression, see
+        # https://github.com/h5py/h5py/issues/1564
+        with dataset.collective:
+            dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
+    else:
+        dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
 
 
 def _save_auxiliary_data(

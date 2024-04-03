@@ -88,7 +88,12 @@ def main():
 @click.option(
     "--chunk-intermediate",
     is_flag=True,
-    help="Write intermediate data in chunked format",
+    help="Write intermediate data in chunked uncompressed format",
+)
+@click.option(
+    "--compress-intermediate",
+    is_flag=True,
+    help="Write intermediate data in chunked format with BLOSC compression applied",
 )
 def run(
     in_data_file: Path,
@@ -102,9 +107,13 @@ def run(
     monitor: List[str],
     monitor_output: TextIO,
     chunk_intermediate: bool,
+    compress_intermediate: bool,
 ):
     """Run a pipeline defined in YAML on input data."""
+    if compress_intermediate:
+        chunk_intermediate = True
     httomo.globals.CHUNK_INTERMEDIATE = chunk_intermediate
+    httomo.globals.COMPRESS_INTERMEDIATE = compress_intermediate
 
     # we use half the memory for blocks since we typically have inputs/output
     memory_limit = transform_limit_str_to_bytes(max_memory) // 2

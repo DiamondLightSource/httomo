@@ -9,3 +9,4 @@ gpu_id: int = -1
 # maximum slices to use in CPU-only section
 MAX_CPU_SLICES: int = 64
 CHUNK_INTERMEDIATE: bool = False
+COMPRESS_INTERMEDIATE: bool = False
