@@ -410,22 +410,18 @@ def test_does_reslice_when_needed_and_reports_time(
     mon.report_total_time.assert_called_once()
 
 
-@pytest.mark.parametrize(
-    "loader_pattern,reslices",
-    [(Pattern.all, 2), (Pattern.projection, 2), (Pattern.sinogram, 3)],
-)
 def test_warns_with_multiple_reslices(
     mocker: MockerFixture,
     dummy_block: DataSetBlock,
     tmp_path: PathLike,
-    loader_pattern: Pattern,
-    reslices: int,
 ):
-    loader = make_test_loader(mocker, dummy_block, pattern=loader_pattern)
+    loader = make_test_loader(mocker, dummy_block, pattern=Pattern.projection)
     method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
     method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
     method3 = make_test_method(mocker, method_name="m3", pattern=Pattern.projection)
-    p = Pipeline(loader=loader, methods=[method1, method2, method3])
+    method4 = make_test_method(mocker, method_name="m4", pattern=Pattern.sinogram)
+    method5 = make_test_method(mocker, method_name="m5", pattern=Pattern.projection)
+    p = Pipeline(loader=loader, methods=[method1, method2, method3, method4, method5])
     t = TaskRunner(p, reslice_dir=tmp_path)
 
     spy = mocker.patch("httomo.runner.task_runner.log_once")
@@ -433,5 +429,5 @@ def test_warns_with_multiple_reslices(
     t._sectionize()
 
     spy.assert_called()
-    args, kwargs = spy.call_args
-    assert f"Reslicing will be performed {reslices} times" in args[0]
+    args, _ = spy.call_args
+    assert "Data saving or/and reslicing operation will be performed 4 times" in args[0]
