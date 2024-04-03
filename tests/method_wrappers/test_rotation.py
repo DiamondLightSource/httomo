@@ -327,6 +327,30 @@ def test_rotation_180(mocker: MockerFixture):
     assert new_block == block  # note: not a deep comparison
 
 
+def test_rotation_pc_180(mocker: MockerFixture):
+    class FakeModule:
+        def find_center_pc(proj1, proj2=None):
+            return 42.0  # center of rotation
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, pattern=Pattern.projection),
+        "mocked_module_path.rotation",
+        "find_center_pc",
+        MPI.COMM_WORLD,
+        output_mapping={"cor": "center"},
+    )
+
+    block = DataSetBlock(
+        data=np.ones((10, 10, 10), dtype=np.float32),
+        aux_data=AuxiliaryData(angles=np.ones(10, dtype=np.float32)),
+    )
+    new_block = wrp.execute(block)
+
+    assert wrp.get_side_output() == {"center": 42.5}
+    assert new_block == block  # note: not a deep comparison
+
+
 def test_rotation_360(mocker: MockerFixture):
     class FakeModule:
         def rotation_tester(data, ind):

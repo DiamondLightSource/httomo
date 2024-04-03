@@ -105,7 +105,10 @@ def _set_param_value(name: str, value: inspect.Parameter, params_dict: Dict[str,
         params_dict: Dict containing method's parameter names and values
     """
     if value.default is inspect.Parameter.empty and name != "kwargs":
-        params_dict[name] = "REQUIRED"
+        if name in ["proj1", "proj2"]:
+            params_dict[name] = "auto"
+        else:
+            params_dict[name] = "REQUIRED"
     elif name == "kwargs":
         params_dict["#additional parameters"] = "AVAILABLE"
     elif name == "axis":
@@ -186,8 +189,6 @@ def _get_discard_keys() -> List[str]:
         "tomo",
         "arr",
         "prj",
-        "proj1",
-        "proj2",
         "data",
         "ncore",
         "nchunk",
