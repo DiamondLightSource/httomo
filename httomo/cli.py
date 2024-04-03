@@ -118,6 +118,11 @@ def check(yaml_config: Path, in_data_file: Path = None):
     default=514,
     help="Port on the host the syslog server is running on",
 )
+@click.option(
+    "--chunk-intermediate",
+    is_flag=True,
+    help="Write intermediate data in chunked format",
+)
 def run(
     in_data_file: Path,
     yaml_config: Path,
@@ -132,8 +137,10 @@ def run(
     monitor_output: TextIO,
     syslog_host: str,
     syslog_port: int,
+    chunk_intermediate: bool,
 ):
     """Run a pipeline defined in YAML on input data."""
+    httomo.globals.CHUNK_INTERMEDIATE = chunk_intermediate
 
     # we use half the memory for blocks since we typically have inputs/output
     memory_limit = transform_limit_str_to_bytes(max_memory) // 2

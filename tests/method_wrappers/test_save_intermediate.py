@@ -28,6 +28,7 @@ def test_save_intermediate(
             data,
             global_shape: Tuple[int, int, int],
             global_index: Tuple[int, int, int],
+            slicing_dim: int,
             file: h5py.File,
             path: str,
             detector_x: int,
@@ -38,6 +39,7 @@ def test_save_intermediate(
             assert data.shape == dummy_block.shape
             assert global_index == (0, 0, 0)
             assert global_shape == dummy_block.shape
+            assert slicing_dim == 0
             assert Path(file.filename).name == "task1-testpackage-testmethod-XXX.h5"
             assert detector_x == 10
             assert detector_y == 20
@@ -77,6 +79,7 @@ def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Pat
             data,
             global_shape: Tuple[int, int, int],
             global_index: Tuple[int, int, int],
+            slicing_dim: int,
             file: h5py.File,
             path: str,
             detector_x: int,
@@ -123,6 +126,7 @@ def test_save_intermediate_leaves_gpu_data(
             data,
             global_shape: Tuple[int, int, int],
             global_index: Tuple[int, int, int],
+            slicing_dim: int,
             file: h5py.File,
             path: str,
             detector_x: int,
