@@ -10,6 +10,7 @@ from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.monitoring_interface import MonitoringInterface
+from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import Section, sectionize
 from httomo.runner.task_runner import TaskRunner
@@ -421,6 +422,53 @@ def test_warns_with_multiple_reslices(
     method3 = make_test_method(mocker, method_name="m3", pattern=Pattern.projection)
     method4 = make_test_method(mocker, method_name="m4", pattern=Pattern.sinogram)
     method5 = make_test_method(mocker, method_name="m5", pattern=Pattern.projection)
+    p = Pipeline(loader=loader, methods=[method1, method2, method3, method4, method5])
+    t = TaskRunner(p, reslice_dir=tmp_path)
+
+    spy = mocker.patch("httomo.runner.task_runner.log_once")
+
+    t._sectionize()
+
+    spy.assert_called()
+    args, _ = spy.call_args
+    assert "Data saving or/and reslicing operation will be performed 4 times" in args[0]
+
+
+def test_warns_with_multiple_stores_from_side_outputs(
+    mocker: MockerFixture,
+    dummy_block: DataSetBlock,
+    tmp_path: PathLike,
+):
+    # Mock pipeline contains all projection methods, so no reslices occur. However, each method
+    # requires side output from previous method, which causes data to be written to store after
+    # each method
+    loader = make_test_loader(mocker, dummy_block, pattern=Pattern.projection)
+    method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
+    method2 = make_test_method(
+        mocker,
+        method_name="m2",
+        pattern=Pattern.projection,
+        param1=OutputRef(method1, "method1_out"),
+    )
+    method3 = make_test_method(
+        mocker,
+        method_name="m3",
+        pattern=Pattern.projection,
+        param2=OutputRef(method2, "method2_out"),
+    )
+    method4 = make_test_method(
+        mocker,
+        method_name="m4",
+        pattern=Pattern.projection,
+        param3=OutputRef(method3, "method3_out"),
+    )
+    method5 = make_test_method(
+        mocker,
+        method_name="m5",
+        pattern=Pattern.projection,
+        param4=OutputRef(method4, "method4_out"),
+    )
+
     p = Pipeline(loader=loader, methods=[method1, method2, method3, method4, method5])
     t = TaskRunner(p, reslice_dir=tmp_path)
 
