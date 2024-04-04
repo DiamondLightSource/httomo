@@ -104,18 +104,14 @@ def _save_dataset_data(
     assert stop[1] <= dataset.shape[1]
     assert stop[2] <= dataset.shape[2]
     assert dataset.shape == global_shape
-    if isinstance(dataset, h5py.Dataset):
-        if httomo.globals.COMPRESS_INTERMEDIATE:
-            # Write operations must be collective when applying compression, see
-            # https://github.com/h5py/h5py/issues/1564
-            with dataset.collective:
-                dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = (
-                    data
-                )
-        else:
+    if isinstance(dataset, h5py.Dataset) and httomo.globals.COMPRESS_INTERMEDIATE:
+        # Write operations must be collective when applying compression, see
+        # https://github.com/h5py/h5py/issues/1564
+        with dataset.collective:
             dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
-    else:
-        dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
+        return
+
+    dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
 
 
 def _save_auxiliary_data(
