@@ -86,6 +86,12 @@ def main():
     help="File to store the monitoring output. Defaults to '-', which denotes stdout"
 )
 @click.option(
+    "--intermediate-format",
+    type=click.Choice(["hdf5", "zarr"], case_sensitive=False),
+    default="hdf5",
+    help="Write intermediate data in hdf5 or zarr format",
+)
+@click.option(
     "--chunk-intermediate",
     is_flag=True,
     help="Write intermediate data in chunked uncompressed format",
@@ -106,12 +112,14 @@ def run(
     max_memory: str,
     monitor: List[str],
     monitor_output: TextIO,
+    intermediate_format: str,
     chunk_intermediate: bool,
     compress_intermediate: bool,
 ):
     """Run a pipeline defined in YAML on input data."""
     if compress_intermediate:
         chunk_intermediate = True
+    httomo.globals.INTERMEDIATE_FORMAT = intermediate_format
     httomo.globals.CHUNK_INTERMEDIATE = chunk_intermediate
     httomo.globals.COMPRESS_INTERMEDIATE = compress_intermediate
 

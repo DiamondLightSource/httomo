@@ -3,6 +3,8 @@ from typing import Tuple, Union
 import numpy as np
 import h5py
 import hdf5plugin
+import zarr
+from zarr import storage
 
 import httomo
 from httomo.runner.dataset import DataSetBlock
@@ -39,7 +41,7 @@ def save_intermediate_data(
     global_shape: Tuple[int, int, int],
     global_index: Tuple[int, int, int],
     slicing_dim: int,
-    file: h5py.File,
+    file: Union[h5py.File, zarr.Group],
     path: str,
     detector_x: int,
     detector_y: int,
@@ -55,27 +57,42 @@ def save_intermediate_data(
             chunk_shape[dim] = global_shape[dim]
         chunk_shape = tuple(chunk_shape)
     else:
-        chunk_shape = None
+        chunk_shape = None if isinstance(file, h5py.File) else False
 
-    compression: Union[dict, hdf5plugin.Blosc] = (
-        hdf5plugin.Blosc() if httomo.globals.COMPRESS_INTERMEDIATE else {}
-    )
+    dataset: Union[h5py.Dataset, zarr.Array]
+    if isinstance(file, h5py.File):
+        compression: Union[dict, hdf5plugin.Blosc] = (
+            hdf5plugin.Blosc() if httomo.globals.COMPRESS_INTERMEDIATE else {}
+        )
+        # only create if not already present - otherwise return existing dataset
+        dataset = file.require_dataset(
+            path,
+            global_shape,
+            data.dtype,
+            exact=True,
+            chunks=chunk_shape,
+            **compression,
+        )
+    else:
+        dataset = file.require_dataset(
+            name=path,
+            shape=global_shape,
+            chunks=chunk_shape,
+            dtype=data.dtype,
+            exact=True,
+            compressor=(
+                storage.default_compressor
+                if httomo.globals.COMPRESS_INTERMEDIATE
+                else None
+            ),
+        )
 
-    # only create if not already present - otherwise return existing dataset
-    dataset = file.require_dataset(
-        path,
-        global_shape,
-        data.dtype,
-        exact=True,
-        chunks=chunk_shape,
-        **compression,
-    )
     _save_dataset_data(dataset, data, global_shape, global_index)
     _save_auxiliary_data(file, angles, detector_x, detector_y)
 
 
 def _save_dataset_data(
-    dataset: h5py.Dataset,
+    dataset: Union[h5py.Dataset, zarr.Array],
     data: np.ndarray,
     global_shape: Tuple[int, int, int],
     global_index: Tuple[int, int, int],
@@ -87,24 +104,40 @@ def _save_dataset_data(
     assert stop[1] <= dataset.shape[1]
     assert stop[2] <= dataset.shape[2]
     assert dataset.shape == global_shape
-    if httomo.globals.COMPRESS_INTERMEDIATE:
-        # Write operations must be collective when applying compression, see
-        # https://github.com/h5py/h5py/issues/1564
-        with dataset.collective:
+    if isinstance(dataset, h5py.Dataset):
+        if httomo.globals.COMPRESS_INTERMEDIATE:
+            # Write operations must be collective when applying compression, see
+            # https://github.com/h5py/h5py/issues/1564
+            with dataset.collective:
+                dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = (
+                    data
+                )
+        else:
             dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
     else:
         dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
 
 
 def _save_auxiliary_data(
-    file: h5py.File, angles: np.ndarray, detector_x: int, detector_y: int
+    file: Union[h5py.File, zarr.Group],
+    angles: np.ndarray,
+    detector_x: int,
+    detector_y: int,
 ):
     # only save if not there yet
     if "/angles" in file:
         return
 
-    file.create_dataset("/angles", data=angles)
-    file_name = pathlib.Path(file.filename).name
+    file.create_dataset("angles", data=angles)
+
+    if isinstance(file, h5py.File):
+        file_name = pathlib.Path(file.filename).name
+    else:
+        assert isinstance(
+            file.store, storage.DirectoryStore
+        ), "Expected zarr storage on filesystem"
+        file_name = pathlib.Path(file.store.dir_path()).name
+
     file.create_dataset(file_name, data=[0, 0])
     g1 = file.create_group("data_dims")
     g1.create_dataset("detector_x_y", data=[detector_x, detector_y])

@@ -43,7 +43,7 @@ def test_save_intermediate(
             assert Path(file.filename).name == "task1-testpackage-testmethod-XXX.h5"
             assert detector_x == 10
             assert detector_y == 20
-            assert path == "/data"
+            assert path == "data"
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     prev_method = mocker.create_autospec(

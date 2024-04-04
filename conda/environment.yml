@@ -19,6 +19,7 @@ dependencies:
   - conda-forge::python
   - conda-forge::plumbum
   - conda-forge::typing_extensions
+  - conda-forge::zarr
   - anaconda::ipython
   - conda-forge::tomopy
   - httomo::tomobar

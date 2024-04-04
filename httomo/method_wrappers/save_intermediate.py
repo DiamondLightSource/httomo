@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 import weakref
 from mpi4py.MPI import Comm
 import httomo
@@ -12,6 +12,7 @@ from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import catchtime, xp
 
 import h5py
+import zarr
 import numpy as np
 
 
@@ -44,10 +45,24 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         if out_dir is None:
             out_dir = httomo.globals.run_out_dir
         assert out_dir is not None
-        self._file = h5py.File(f"{out_dir}/{filename}.h5", "w", driver="mpio", comm=comm)
-        # make sure file gets closed properly
-        weakref.finalize(self, self._file.close)
-        
+
+        self._file: Union[h5py.File, zarr.Group]
+        if httomo.globals.INTERMEDIATE_FORMAT == "hdf5":
+            self._file = h5py.File(
+                f"{out_dir}/{filename}.h5", "w", driver="mpio", comm=comm
+            )
+            # make sure hdf5 file gets closed properly
+            weakref.finalize(self, self._file.close)
+        else:
+            synchronizer = zarr.ProcessSynchronizer(
+                pathlib.Path(out_dir, f"{filename}.sync")
+            )
+            self._file = zarr.open_group(
+                store=f"{out_dir}/{filename}.zarr",
+                mode="a",
+                synchronizer=synchronizer,
+            )
+
     def execute(self, block: DataSetBlock) -> DataSetBlock:
         # we overwrite the whole execute method here, as we do not need any of the helper
         # methods from the Generic Wrapper
@@ -68,13 +83,13 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             global_index=block.global_index,
             slicing_dim=block.slicing_dim,
             file=self._file,
-            path="/data",
+            path="data",
             detector_x=self._loader.detector_x,
             detector_y=self._loader.detector_y,
             angles=block.angles,
         )
         
-        if block.is_last_in_chunk:
+        if block.is_last_in_chunk and isinstance(self._file, h5py.File):
             self._file.close()
 
         return block
