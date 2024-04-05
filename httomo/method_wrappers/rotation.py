@@ -127,10 +127,11 @@ class RotationWrapper(GenericMethodWrapper):
                 return block
 
             if self.comm.size > 1:
-                if self.comm.rank == self.comm.size - 1:
-                    self.comm.send(self.proj2, dest=0)
-                if self.comm.rank == 0:
-                    self.proj2 = self.comm.recv(source=self.comm.size - 1)
+                # if self.comm.rank == self.comm.size - 1:
+                #     self.comm.send(self.proj2, dest=0)
+                # if self.comm.rank == 0:
+                #     self.proj2 = self.comm.recv(source=self.comm.size - 1)
+                self.proj2 = self.comm.bcast(self.proj2, root=self.comm.size - 1)
             if self.comm.rank == 0:
                 assert self.proj1 is not None
                 assert self.proj2 is not None
