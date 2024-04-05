@@ -121,7 +121,9 @@ def _save_auxiliary_data(
     detector_y: int,
 ):
     # only save if not there yet
-    if "/angles" in file:
+    if isinstance(file, h5py.File) and "/angles" in file:
+        return
+    if isinstance(file, zarr.Group) and "angles" in file.array_keys():
         return
 
     file.create_dataset("angles", data=angles)
