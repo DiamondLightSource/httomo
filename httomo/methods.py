@@ -8,6 +8,7 @@ from zarr import storage
 
 import httomo
 from httomo.runner.dataset import DataSetBlock
+from httomo.data import mpiutil
 from httomo.utils import xp
 
 __all__ = ["calculate_stats", "save_intermediate_data"]
@@ -41,7 +42,7 @@ def save_intermediate_data(
     global_shape: Tuple[int, int, int],
     global_index: Tuple[int, int, int],
     slicing_dim: int,
-    file: Union[h5py.File, zarr.Group],
+    file: Union[h5py.File, zarr.DirectoryStore],
     path: str,
     detector_x: int,
     detector_y: int,
@@ -61,6 +62,7 @@ def save_intermediate_data(
 
     dataset: Union[h5py.Dataset, zarr.Array]
     if isinstance(file, h5py.File):
+        _save_auxiliary_data_hdf5(file, angles, detector_x, detector_y)
         compression: Union[dict, hdf5plugin.Blosc] = (
             hdf5plugin.Blosc() if httomo.globals.COMPRESS_INTERMEDIATE else {}
         )
@@ -74,21 +76,21 @@ def save_intermediate_data(
             **compression,
         )
     else:
-        dataset = file.require_dataset(
-            name=path,
+        _save_auxiliary_data_zarr(file, angles, detector_x, detector_y)
+        dataset = zarr.open_array(
+            store=file,
+            path=path,
             shape=global_shape,
-            chunks=chunk_shape,
+            chunks=chunk_shape,  # type: ignore
             dtype=data.dtype,
-            exact=True,
             compressor=(
                 storage.default_compressor
                 if httomo.globals.COMPRESS_INTERMEDIATE
                 else None
-            ),
+            ),  # type: ignore
         )
 
     _save_dataset_data(dataset, data, global_shape, global_index)
-    _save_auxiliary_data(file, angles, detector_x, detector_y)
 
 
 def _save_dataset_data(
@@ -114,28 +116,34 @@ def _save_dataset_data(
     dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
 
 
-def _save_auxiliary_data(
-    file: Union[h5py.File, zarr.Group],
+def _save_auxiliary_data_hdf5(
+    file: h5py.File,
     angles: np.ndarray,
     detector_x: int,
     detector_y: int,
 ):
     # only save if not there yet
-    if isinstance(file, h5py.File) and "/angles" in file:
-        return
-    if isinstance(file, zarr.Group) and "angles" in file.array_keys():
+    if "/angles" in file:
         return
 
     file.create_dataset("angles", data=angles)
 
-    if isinstance(file, h5py.File):
-        file_name = pathlib.Path(file.filename).name
-    else:
-        assert isinstance(
-            file.store, storage.DirectoryStore
-        ), "Expected zarr storage on filesystem"
-        file_name = pathlib.Path(file.store.dir_path()).name
-
+    file_name = pathlib.Path(file.filename).name
     file.create_dataset(file_name, data=[0, 0])
     g1 = file.create_group("data_dims")
     g1.create_dataset("detector_x_y", data=[detector_x, detector_y])
+
+
+def _save_auxiliary_data_zarr(
+    store: zarr.DirectoryStore,
+    angles: np.ndarray,
+    detector_x: int,
+    detector_y: int,
+):
+    if mpiutil.comm.rank != 0:
+        return
+
+    zarr.save(store=store, path="angles", data=angles)
+    zarr.save(
+        store=store, path="detector_x_y", detector_x=detector_x, detector_y=detector_y
+    )

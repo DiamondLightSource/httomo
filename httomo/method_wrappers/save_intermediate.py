@@ -46,7 +46,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             out_dir = httomo.globals.run_out_dir
         assert out_dir is not None
 
-        self._file: Union[h5py.File, zarr.Group]
+        self._file: Union[h5py.File, zarr.DirectoryStore]
         if httomo.globals.INTERMEDIATE_FORMAT == "hdf5":
             self._file = h5py.File(
                 f"{out_dir}/{filename}.h5", "w", driver="mpio", comm=comm
@@ -54,14 +54,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             # make sure hdf5 file gets closed properly
             weakref.finalize(self, self._file.close)
         else:
-            synchronizer = zarr.ProcessSynchronizer(
-                pathlib.Path(out_dir, f"{filename}.sync")
-            )
-            self._file = zarr.open_group(
-                store=f"{out_dir}/{filename}.zarr",
-                mode="a",
-                synchronizer=synchronizer,
-            )
+            self._file = zarr.DirectoryStore(path=f"{out_dir}/{filename}.zarr")
 
     def execute(self, block: DataSetBlock) -> DataSetBlock:
         # we overwrite the whole execute method here, as we do not need any of the helper
