@@ -121,23 +121,23 @@ class RotationWrapper(GenericMethodWrapper):
                 if self.cupyrun:
                     self.proj2 = xp.asnumpy(self.proj2)
 
+            # for all middle processes we need to broadcast and return the block
             if block.global_index[block.slicing_dim] != 0 and not (
                 self.comm.rank == self.comm.size - 1 and block.is_last_in_chunk
             ):
-                return block
+                if self.comm.size > 1:
+                    res = self.comm.bcast(res, root=0)
+                return self._process_return_type(res, block)
 
             if self.comm.size > 1:
-                # if self.comm.rank == self.comm.size - 1:
-                #     self.comm.send(self.proj2, dest=0)
-                # if self.comm.rank == 0:
-                #     self.proj2 = self.comm.recv(source=self.comm.size - 1)
-                self.proj2 = self.comm.bcast(self.proj2, root=self.comm.size - 1)
-            if self.comm.rank == 0:
-                assert self.proj1 is not None
-                assert self.proj2 is not None
-
+                if self.comm.rank == self.comm.size - 1:
+                    self.comm.send(self.proj2, dest=0, tag=self.comm.rank)
             # now calculate the center of rotation on rank 0
             if self.comm.rank == 0:
+                if self.comm.size > 1:
+                    self.proj2 = self.comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
+                assert self.proj1 is not None
+                assert self.proj2 is not None
                 if self.cupyrun:
                     with catchtime() as t:
                         self.proj1 = xp.asarray(self.proj1)
@@ -145,7 +145,7 @@ class RotationWrapper(GenericMethodWrapper):
                     self._gpu_time_info.host2device += t.elapsed
                 args["proj1"] = self.proj1
                 args["proj2"] = self.proj2
-                res = self.method(**args) + 0.5
+                res = self.method(**args)
         else:
             assert "ind" in args
             slice_for_cor = args["ind"]
