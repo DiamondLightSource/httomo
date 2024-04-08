@@ -112,7 +112,7 @@ class RotationWrapper(GenericMethodWrapper):
                 if self.cupyrun:
                     self.proj1 = xp.asnumpy(self.proj1)
 
-            if not block.is_last_in_chunk:  # exit if we didn't process all blocks yet
+            if not block.is_last_in_chunk:
                 return block
             else:
                 # Get the last frame of the last block for every process.
@@ -123,14 +123,7 @@ class RotationWrapper(GenericMethodWrapper):
                     self.proj2 = xp.asnumpy(self.proj2)
 
             if self.comm.size > 1:
-                # for all middle processes we need to broadcast and return the block
-                if block.global_index[block.slicing_dim] != 0 and not (
-                    self.comm.rank == self.comm.size - 1 and block.is_last_in_chunk
-                ):
-                    res = self.comm.bcast(res, root=0)
-                    return self._process_return_type(res, block)
-
-                # Here we recieve the proj2 data from the last process
+                # Here we send/recieve the proj2 data from the last process only
                 if self.comm.rank == self.comm.size - 1:
                     self.comm.send(self.proj2, dest=0)
                 if self.comm.rank == 0:
