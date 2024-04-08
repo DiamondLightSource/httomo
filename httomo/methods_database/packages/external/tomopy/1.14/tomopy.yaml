@@ -349,25 +349,19 @@ recon:
       save_result_default: True
   rotation:
     find_center:
-      pattern: sinogram
+      pattern: projection
       output_dims_change: False
       implementation: cpu
       memory_gpu: None
       save_result_default: False
     find_center_pc:
-      pattern: sinogram
+      pattern: projection
       output_dims_change: False
       implementation: cpu
       memory_gpu: None
       save_result_default: True
     find_center_vo:
-      pattern: sinogram
-      output_dims_change: False
-      implementation: cpu
-      memory_gpu: None
-      save_result_default: False
-    write_center:
-      pattern: sinogram
+      pattern: projection
       output_dims_change: False
       implementation: cpu
       memory_gpu: None

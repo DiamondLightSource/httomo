@@ -15,15 +15,16 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 class RotationWrapper(GenericMethodWrapper):
     """Wraps rotation (centering) methods, which output the original dataset untouched,
-    but have a side output for the center of rotation data (handling both 180 and 360).
+    but have a side output for the center of rotation data (handling both 180 and 360
+    degrees scans).
 
     It wraps the actual algorithm to find the center and does more. In particular:
-    - takes a single sinogram from the full dataset (across all MPI processes)
+    - extracts a single sinogram from the projections set (across all MPI processes)
     - normalises it
     - calls the center-finding algorithm on this normalised data slice
-    - outputs the center of rotation as a side output
+    - outputs the center of rotation as a side output and broadcast the value
 
-    For block-wise processing support, it accumulates the sinogram in-memory in the method
+    For block-wise processing support, it aggregates the sinogram in-memory in the method
     until the sinogram is complete for the current process. Then it uses MPI to add the data
     from the other processes to it.
     """
@@ -43,14 +44,18 @@ class RotationWrapper(GenericMethodWrapper):
         **kwargs,
     ):
         super().__init__(
-            method_repository, module_path, method_name, comm, save_result, output_mapping, **kwargs
+            method_repository,
+            module_path,
+            method_name,
+            comm,
+            save_result,
+            output_mapping,
+            **kwargs,
         )
-        if self.pattern not in [Pattern.sinogram, Pattern.all]:
+        if self.pattern not in [Pattern.projection]:
             raise NotImplementedError(
-                "Base method for rotation wrapper only supports sinogram or all"
+                "Base method for rotation wrapper work with the projection pattern only"
             )
-        # we must use projection in this wrapper now, to determine the full sino slice with MPI
-        # TODO: extend this to support Pattern.all
         self.pattern = Pattern.projection
         self.sino: Optional[np.ndarray] = None
 
@@ -96,46 +101,87 @@ class RotationWrapper(GenericMethodWrapper):
             return None
 
     def _run_method(self, block: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
-        assert "ind" in args
-        slice_for_cor = args["ind"]
-        # append to internal sinogram, until we have the last block
-        if self.sino is None:
-            self.sino = np.empty(
-                (block.chunk_shape[0], block.chunk_shape[2]), dtype=np.float32
-            )
-        data = block.data[:, slice_for_cor, :]
-        if block.is_gpu:
-            with catchtime() as t:
-                data = xp.asnumpy(data)
-            self._gpu_time_info.device2host += t.elapsed
-        self.sino[
-            block.chunk_index[0] : block.chunk_index[0] + block.shape[0], :
-        ] = data
-
-        if not block.is_last_in_chunk:  # exit if we didn't process all blocks yet
-            return block
-
-        sino_slice = self._gather_sino_slice(block.global_shape)
-
-        # now calculate the center of rotation on rank 0 and broadcast
+        """Different CoR estimation methods require different inputs, e.g., the VoCentering
+        method needs the full sinogram, while the PhaseCorrelation method needs specific projections.
+        """
         res: Optional[Union[tuple, float, np.float32]] = None
-        if self.comm.rank == 0:
-            sino_slice = self.normalize_sino(
-                sino_slice,
-                block.flats[:, slice_for_cor, :],
-                block.darks[:, slice_for_cor, :],
-            )
-            if self.cupyrun:
+        if self.method.__name__ == "find_center_pc":
+            # initialising proj1 & proj2
+            if block.global_index[block.slicing_dim] == 0:
+                self.proj1 = block.data[0, :, :]  # first frame in the whole dataset
+                if self.cupyrun:
+                    self.proj1 = xp.asnumpy(self.proj1)
+
+            if not block.is_last_in_chunk:
+                return block
+            else:
+                # Get the last frame of the last block for every process.
+                # For the last process we also get the last frame of the last
+                # block which we send/recieve later
+                self.proj2 = block.data[-1, :, :]
+                if self.cupyrun:
+                    self.proj2 = xp.asnumpy(self.proj2)
+
+            if self.comm.size > 1:
+                # Here we send/recieve the proj2 data from the last process only
+                if self.comm.rank == self.comm.size - 1:
+                    self.comm.send(self.proj2, dest=0)
+                if self.comm.rank == 0:
+                    self.proj2 = self.comm.recv(source=self.comm.size - 1)
+
+            # now calculate the center of rotation on rank 0
+            if self.comm.rank == 0:
+                assert self.proj1 is not None
+                assert self.proj2 is not None
+                if self.cupyrun:
+                    with catchtime() as t:
+                        self.proj1 = xp.asarray(self.proj1)
+                        self.proj2 = xp.asarray(self.proj2)
+                    self._gpu_time_info.host2device += t.elapsed
+                args["proj1"] = self.proj1
+                args["proj2"] = self.proj2
+                res = self.method(**args)
+        else:
+            assert "ind" in args
+            slice_for_cor = args["ind"]
+            # append to internal sinogram, until we have the last block
+            if self.sino is None:
+                self.sino = np.empty(
+                    (block.chunk_shape[0], block.chunk_shape[2]), dtype=np.float32
+                )
+            data = block.data[:, slice_for_cor, :]
+            if block.is_gpu:
                 with catchtime() as t:
-                    sino_slice = xp.asarray(sino_slice)
-                self._gpu_time_info.host2device += t.elapsed
-            args["ind"] = 0
-            args[self.parameters[0]] = sino_slice
-            res = self.method(**args)
+                    data = xp.asnumpy(data)
+                self._gpu_time_info.device2host += t.elapsed
+            self.sino[
+                block.chunk_index[0] : block.chunk_index[0] + block.shape[0], :
+            ] = data
+
+            if not block.is_last_in_chunk:  # exit if we didn't process all blocks yet
+                return block
+
+            sino_slice = self._gather_sino_slice(block.global_shape)
+
+            # now calculate the center of rotation on rank 0
+            if self.comm.rank == 0:
+                sino_slice = self.normalize_sino(
+                    sino_slice,
+                    block.flats[:, slice_for_cor, :],
+                    block.darks[:, slice_for_cor, :],
+                )
+                if self.cupyrun:
+                    with catchtime() as t:
+                        sino_slice = xp.asarray(sino_slice)
+                    self._gpu_time_info.host2device += t.elapsed
+                args["ind"] = 0
+                args[self.parameters[0]] = sino_slice
+                res = self.method(**args)
+        # and broadcast
         if self.comm.size > 1:
             res = self.comm.bcast(res, root=0)
 
-        cor_str = f"The center of rotation for sinogram is {res}"
+        cor_str = f"The center of rotation is {res}"
         log_rank(cor_str, comm=self.comm)
         return self._process_return_type(res, block)
 
@@ -161,9 +207,7 @@ class RotationWrapper(GenericMethodWrapper):
             sino -= darks1d / denom
         return sino[:, np.newaxis, :]
 
-    def _process_return_type(
-        self, ret: Any, input_block: DataSetBlock
-    ) -> DataSetBlock:
+    def _process_return_type(self, ret: Any, input_block: DataSetBlock) -> DataSetBlock:
         if type(ret) == tuple:
             # cor, overlap, side, overlap_position - from find_center_360
             self._side_output["cor"] = float(ret[0])

@@ -14,7 +14,7 @@ from mpi4py import MPI
 from pytest_mock import MockerFixture
 
 
-def test_rotation_fails_with_projection_method(mocker: MockerFixture):
+def test_rotation_fails_with_sinogram_method(mocker: MockerFixture):
     class FakeModule:
         def rotation_tester(data, ind=None):
             return 42.0
@@ -22,7 +22,7 @@ def test_rotation_fails_with_projection_method(mocker: MockerFixture):
     mocker.patch("importlib.import_module", return_value=FakeModule)
     with pytest.raises(NotImplementedError):
         make_method_wrapper(
-            make_mock_repo(mocker, pattern=Pattern.projection),
+            make_mock_repo(mocker, pattern=Pattern.sinogram),
             "mocked_module_path.rotation",
             "rotation_tester",
             MPI.COMM_WORLD,
@@ -64,7 +64,7 @@ def test_rotation_accumulates_blocks(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_method_wrapper(
-        make_mock_repo(mocker),
+        make_mock_repo(mocker, pattern=Pattern.projection),
         "mocked_module_path.rotation",
         "rotation_tester",
         MPI.COMM_WORLD,
@@ -95,8 +95,8 @@ def test_rotation_gathers_single_sino_slice(
     global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
         GLOBAL_SHAPE
     )
-    rank0_data = global_data[:GLOBAL_SHAPE[0]//2, :, :]
-    rank1_data = global_data[GLOBAL_SHAPE[0]//2:, :, :]
+    rank0_data = global_data[: GLOBAL_SHAPE[0] // 2, :, :]
+    rank1_data = global_data[GLOBAL_SHAPE[0] // 2 :, :, :]
     aux_data = AuxiliaryData(
         angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32),
         darks=2.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), np.float32),
@@ -107,11 +107,11 @@ def test_rotation_gathers_single_sino_slice(
         aux_data=aux_data,
         slicing_dim=0,
         block_start=0,
-        chunk_start=0 if rank ==0 else GLOBAL_SHAPE[1]//2,
+        chunk_start=0 if rank == 0 else GLOBAL_SHAPE[1] // 2,
         global_shape=GLOBAL_SHAPE,
-        chunk_shape=(GLOBAL_SHAPE[0]//2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]),
+        chunk_shape=(GLOBAL_SHAPE[0] // 2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]),
     )
-    
+
     class FakeModule:
         def rotation_tester(data, ind=None):
             assert rank == 0  # for rank 1, it shouldn't be called
@@ -131,21 +131,21 @@ def test_rotation_gathers_single_sino_slice(
     comm.rank = rank
     comm.size = 2
     wrp = make_method_wrapper(
-        make_mock_repo(mocker, implementation="gpu_cupy"),
+        make_mock_repo(mocker, pattern=Pattern.projection, implementation="gpu_cupy"),
         "mocked_module_path.rotation",
         "rotation_tester",
         comm,
     )
     assert isinstance(wrp, RotationWrapper)
-    
+
     if ind_par is not None:
         wrp["ind"] = ind_par
-    
+
     if gpu:
         block.to_gpu()
-    
+
     if ind_par == "mid" or ind_par is None:
-        sino_slice = global_data[:, (GLOBAL_SHAPE[1]-1)//2, :]
+        sino_slice = global_data[:, (GLOBAL_SHAPE[1] - 1) // 2, :]
     else:
         assert isinstance(ind_par, int)
         sino_slice = global_data[:, ind_par, :]
@@ -178,7 +178,7 @@ def test_rotation_gather_sino_slice(mocker: MockerFixture, rank: int):
     comm.rank = rank
     comm.size = 2
     wrp = make_method_wrapper(
-        make_mock_repo(mocker),
+        make_mock_repo(mocker, pattern=Pattern.projection),
         "mocked_module_path.rotation",
         "rotation_tester",
         comm,
@@ -206,10 +206,9 @@ def test_rotation_gather_sino_slice(mocker: MockerFixture, rank: int):
 
 
 def test_rotation_normalize_sino_no_darks_flats():
-    self_mock = MagicMock()    # this mocks self - as function only sets gpu time
+    self_mock = MagicMock()  # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
-        self_mock,
-        np.ones((10, 10), dtype=np.float32), None, None
+        self_mock, np.ones((10, 10), dtype=np.float32), None, None
     )
 
     assert ret.shape == (10, 1, 10)
@@ -217,8 +216,8 @@ def test_rotation_normalize_sino_no_darks_flats():
 
 
 def test_rotation_normalize_sino_same_darks_flats():
-    
-    self_mock = MagicMock()    # this mocks self - as function only sets gpu time
+
+    self_mock = MagicMock()  # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
         self_mock,
         np.ones((10, 10), dtype=np.float32),
@@ -245,7 +244,7 @@ def test_rotation_normalize_sino_same_darks_flats():
 
 
 def test_rotation_normalize_sino_scalar():
-    self_mock = MagicMock()    # this mocks self - as function only sets gpu time
+    self_mock = MagicMock()  # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
         self_mock,
         np.ones((10, 10), dtype=np.float32),
@@ -272,7 +271,7 @@ def test_rotation_normalize_sino_scalar():
 
 
 def test_rotation_normalize_sino_different_darks_flats():
-    self_mock = MagicMock()    # this mocks self - as function only sets gpu time
+    self_mock = MagicMock()  # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
         self_mock,
         2.0 * np.ones((10, 10), dtype=np.float32),
@@ -290,7 +289,7 @@ def test_rotation_normalize_sino_different_darks_flats():
 )
 @pytest.mark.cupy
 def test_rotation_normalize_sino_different_darks_flats_gpu():
-    self_mock = MagicMock()    # this mocks self - as function only sets gpu time
+    self_mock = MagicMock()  # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
         self_mock,
         2.0 * xp.ones((10, 10), dtype=np.float32),
@@ -310,7 +309,7 @@ def test_rotation_180(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_method_wrapper(
-        make_mock_repo(mocker),
+        make_mock_repo(mocker, pattern=Pattern.projection),
         "mocked_module_path.rotation",
         "rotation_tester",
         MPI.COMM_WORLD,
@@ -320,7 +319,31 @@ def test_rotation_180(mocker: MockerFixture):
 
     block = DataSetBlock(
         data=np.ones((10, 10, 10), dtype=np.float32),
-        aux_data=AuxiliaryData(angles=np.ones(10, dtype=np.float32))
+        aux_data=AuxiliaryData(angles=np.ones(10, dtype=np.float32)),
+    )
+    new_block = wrp.execute(block)
+
+    assert wrp.get_side_output() == {"center": 42.0}
+    assert new_block == block  # note: not a deep comparison
+
+
+def test_rotation_pc_180(mocker: MockerFixture):
+    class FakeModule:
+        def find_center_pc(proj1, proj2=None):
+            return 42.0  # center of rotation
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, pattern=Pattern.projection),
+        "mocked_module_path.rotation",
+        "find_center_pc",
+        MPI.COMM_WORLD,
+        output_mapping={"cor": "center"},
+    )
+
+    block = DataSetBlock(
+        data=np.ones((10, 10, 10), dtype=np.float32),
+        aux_data=AuxiliaryData(angles=np.ones(10, dtype=np.float32)),
     )
     new_block = wrp.execute(block)
 
@@ -336,7 +359,7 @@ def test_rotation_360(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_method_wrapper(
-        make_mock_repo(mocker),
+        make_mock_repo(mocker, pattern=Pattern.projection),
         "mocked_module_path.rotation",
         "rotation_tester",
         MPI.COMM_WORLD,
@@ -349,7 +372,7 @@ def test_rotation_360(mocker: MockerFixture):
     )
     block = DataSetBlock(
         data=np.ones((10, 10, 10), dtype=np.float32),
-        aux_data=AuxiliaryData(angles=np.ones(10, dtype=np.float32))
+        aux_data=AuxiliaryData(angles=np.ones(10, dtype=np.float32)),
     )
     new_block = wrp.execute(block)
 
