@@ -122,6 +122,7 @@ def test_run_pipeline_cpu1_yaml(cmd, standard_data, yaml_cpu_pipeline1, output_f
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
+    assert "The center of rotation is 79.5" in log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
 
@@ -313,6 +314,41 @@ def test_run_pipeline_cpu3_py(cmd, standard_data, python_cpu_pipeline3, output_f
     assert " Global min -0.014979" in log_contents
     assert " Global max 0.04177" in log_contents
     assert " Global mean 0.0016174" in log_contents
+
+
+def test_run_pipeline_cpu4_yaml(cmd, standard_data, yaml_cpu_pipeline4, output_folder):
+    cmd.pop(4)  #: don't save all
+    cmd.insert(6, standard_data)
+    cmd.insert(7, yaml_cpu_pipeline4)
+    cmd.insert(8, output_folder)
+    subprocess.check_output(cmd)
+
+    # recurse through output_dir and check that all files are there
+    files = read_folder("output_dir/")
+    assert len(files) == 131  # 128 images + yaml, log, intermdiate
+
+    # check the .tif files
+    tif_files = list(filter(lambda x: ".tif" in x, files))
+    assert len(tif_files) == 128
+    #: check that the image size is correct
+    imarray = np.array(Image.open(tif_files[0]))
+    assert imarray.shape == (160, 160)
+
+    #: check the generated h5 files
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    log_files = list(filter(lambda x: ".log" in x, files))
+    assert len(log_files) == 1
+    log_contents = _get_log_contents(log_files[0])
+
+    assert f"{log_files[0]}" in log_contents
+    assert "The full dataset shape is (220, 128, 160)" in log_contents
+    assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
+    assert "Path to data: entry1/tomo_entry/data/data" in log_contents
+    assert "The center of rotation is 79.5" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
+    assert "Data shape is (180, 128, 160) of type uint16" in log_contents
 
 
 def test_run_pipeline_gpu1_yaml(cmd, standard_data, yaml_gpu_pipeline1, output_folder):

@@ -106,36 +106,38 @@ class RotationWrapper(GenericMethodWrapper):
         """
         res: Optional[Union[tuple, float, np.float32]] = None
         if self.method.__name__ == "find_center_pc":
-            self.proj1 = None
-            self.proj2 = None
-
+            # initialising proj1 & proj2
             if block.global_index[block.slicing_dim] == 0:
                 self.proj1 = block.data[0, :, :]  # first frame in the whole dataset
                 if self.cupyrun:
                     self.proj1 = xp.asnumpy(self.proj1)
-                if not block.is_last_in_chunk:
-                    return block
 
-            if self.comm.rank == self.comm.size - 1 and block.is_last_in_chunk:
-                self.proj2 = block.data[-1, :, :]  # last frame in the whole dataset
+            if not block.is_last_in_chunk:  # exit if we didn't process all blocks yet
+                return block
+            else:
+                # Get the last frame of the last block for every process.
+                # For the last process we also get the last frame of the last
+                # block which we send/recieve later
+                self.proj2 = block.data[-1, :, :]
                 if self.cupyrun:
                     self.proj2 = xp.asnumpy(self.proj2)
 
-            # for all middle processes we need to broadcast and return the block
-            if block.global_index[block.slicing_dim] != 0 and not (
-                self.comm.rank == self.comm.size - 1 and block.is_last_in_chunk
-            ):
-                if self.comm.size > 1:
-                    res = self.comm.bcast(res, root=0)
-                return self._process_return_type(res, block)
-
             if self.comm.size > 1:
+                # for all middle processes we need to broadcast and return the block
+                if block.global_index[block.slicing_dim] != 0 and not (
+                    self.comm.rank == self.comm.size - 1 and block.is_last_in_chunk
+                ):
+                    res = self.comm.bcast(res, root=0)
+                    return self._process_return_type(res, block)
+
+                # Here we recieve the proj2 data from the last process
                 if self.comm.rank == self.comm.size - 1:
-                    self.comm.send(self.proj2, dest=0, tag=self.comm.rank)
+                    self.comm.send(self.proj2, dest=0)
+                if self.comm.rank == 0:
+                    self.proj2 = self.comm.recv(source=self.comm.size - 1)
+
             # now calculate the center of rotation on rank 0
             if self.comm.rank == 0:
-                if self.comm.size > 1:
-                    self.proj2 = self.comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
                 assert self.proj1 is not None
                 assert self.proj2 is not None
                 if self.cupyrun:

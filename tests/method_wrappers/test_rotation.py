@@ -347,7 +347,7 @@ def test_rotation_pc_180(mocker: MockerFixture):
     )
     new_block = wrp.execute(block)
 
-    assert wrp.get_side_output() == {"center": 42.5}
+    assert wrp.get_side_output() == {"center": 42.0}
     assert new_block == block  # note: not a deep comparison
 
 
