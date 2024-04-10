@@ -539,7 +539,7 @@ def test_i12_testing_pipeline_output(
         "Running save_task_4 (pattern=sinogram): save_intermediate_data..."
         in log_contents
     )
-    assert "The center of rotation for sinogram is 95.5" in log_contents
+    assert "The center of rotation is 95.5" in log_contents
     assert (
         "Running save_task_5 (pattern=sinogram): save_intermediate_data..."
         in log_contents
