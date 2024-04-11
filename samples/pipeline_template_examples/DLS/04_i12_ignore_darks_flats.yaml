@@ -10,10 +10,6 @@
         stop_angle: 180
         angles_total: 724
     dimension: 1
-    preview:
-      -
-      - 
-      -
     pad: 0
     darks:
       file: tests/test_data/i12/separate_flats_darks/dark_field.h5

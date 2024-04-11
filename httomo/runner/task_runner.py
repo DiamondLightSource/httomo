@@ -1,23 +1,33 @@
 from itertools import islice
-import math
 import time
-from typing import Any, Dict, Optional, List, Tuple, Union
+from typing import Any, Dict, Literal, Optional, List, Union
 import os
 from mpi4py import MPI
-import numpy as np
 import httomo
 import logging
-from httomo.data.hdf._utils.reslice import reslice, reslice_filebased
-from httomo.data.hdf._utils.save import intermediate_dataset
-from httomo.runner.backend_wrapper import BackendWrapper
-from httomo.runner.block_split import BlockAggregator, BlockSplitter
-from httomo.runner.dataset import DataSet
+from httomo.data.dataset_store import DataSetStoreWriter
+from httomo.runner.method_wrapper import MethodWrapper
+from httomo.runner.block_split import BlockSplitter
+from httomo.runner.dataset import DataSetBlock
+from httomo.runner.dataset_store_interfaces import (
+    DataSetSink,
+    DataSetSource,
+    DummySink,
+    ReadableDataSetSink,
+)
 from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
-from httomo.runner.loader import LoaderInterface
+from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.platform_section import PlatformSection, sectionize
-from httomo.utils import Colour, Pattern, _get_slicing_dim, log_exception, log_once
-
+from httomo.runner.section import Section, sectionize
+from httomo.utils import (
+    Colour,
+    Pattern,
+    _get_slicing_dim,
+    catchtime,
+    log_exception,
+    log_once,
+)
+import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -28,112 +38,56 @@ class TaskRunner:
     def __init__(
         self,
         pipeline: Pipeline,
-        save_all: bool = False,
-        reslice_dir: Optional[os.PathLike] = None,
+        reslice_dir: os.PathLike,
+        memory_limit_bytes: int = 0,
+        monitor: Optional[MonitoringInterface] = None,
     ):
         self.pipeline = pipeline
-        self.save_all = save_all
         self.reslice_dir = reslice_dir
         self.comm = MPI.COMM_WORLD
+        self.monitor = monitor
 
-        self.start_time: float = 0
-        self.global_stats: List = []
         self.side_outputs: Dict[str, Any] = dict()
-        self.dataset: Optional[DataSet] = None
-        self.method_index: int = 1
-        self.reslice_count: int = 0
-        self.has_reslice_warn_printed: bool = False
+        self.source: Optional[DataSetSource] = None
+        self.sink: Optional[Union[DataSetSink, ReadableDataSetSink]] = None
+
+        self._memory_limit_bytes = memory_limit_bytes
 
         self.output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
         self.output_colour_list_short = [Colour.GREEN, Colour.CYAN]
 
-    def execute(self):
-        self.start_time = MPI.Wtime()
+    def execute(self) -> None:
+        with catchtime() as t:
+            sections = self._sectionize()
 
-        sections = sectionize(self.pipeline, self.save_all)
+            self._prepare()
+            for i, section in enumerate(sections):
+                self._execute_section(section, i)
+                gpumem_cleanup()
 
-        last_section: Optional[PlatformSection] = None
-        self._prepare()
-        for i, section in enumerate(sections):
-            if last_section is not None:
-                self.perform_reslice_if_needed(
-                    last_section=last_section, current_section=section
-                )
-            self._execute_section(section, i)
-            gpumem_cleanup()
-            self.check_save_intermediate_results(last_section=section)
-            self.method_index += len(section)
-            last_section = section
+        self._log_pipeline(f"Pipeline finished. Took {t.elapsed:.3f}s")
+        if self.monitor is not None:
+            self.monitor.report_total_time(t.elapsed)
 
-    def check_save_intermediate_results(self, last_section: PlatformSection):
-        if not last_section.save_result:
-            return
-        last_method = last_section.methods[-1]
-        if (
-            last_method.method_name == "save_to_images"
-            or "center" in last_method.method_name
-        ):
-            return
-        if self.dataset.data.ndim != 3:
-            return
-
-        slice_dim = _get_slicing_dim(last_section.pattern)
-
-        intermediate_dataset(
-            self.dataset.data,
-            httomo.globals.run_out_dir,
-            self.dataset.angles,
-            self.pipeline.loader.detector_x,
-            self.pipeline.loader.detector_y,
-            self.comm,
-            self.method_index,
-            last_method.package_name,
-            last_method.method_name,
-            "tomo",
-            slice_dim,
-            last_method.recon_algorithm,
-        )
-
-    def perform_reslice_if_needed(
-        self,
-        last_section: Optional[PlatformSection],
-        current_section: Optional[PlatformSection],
-    ):
-        if last_section is None or not last_section.reslice:
-            return
-        current_slice_dim = _get_slicing_dim(last_section.pattern)
-        next_slice_dim = _get_slicing_dim(current_section.pattern)
-        self.reslice_count += 1
-        if self.reslice_count > 1 and not self.has_reslice_warn_printed:
+    def _sectionize(self) -> List[Section]:
+        sections = sectionize(self.pipeline)
+        self._log_pipeline(f"Pipeline has been separated into {len(sections)} sections")
+        num_stores = len(sections) - 1
+        if num_stores > 3:
             log_once(
-                f"WARNING: Reslicing is performed {self.reslice_count} times. The number of reslices increases the total run time.",
+                f"WARNING: Data saving or/and reslicing operation will be performed {num_stores} times. This increases the total run time, especially if the saving is performed through the disk.",
                 comm=self.comm,
                 colour=Colour.RED,
             )
-            self.has_reslice_warn_printed = True
 
-        self.dataset.to_cpu()
+        return sections
 
-        if self.reslice_dir is None:
-            self.dataset.data = reslice(
-                self.dataset.data, current_slice_dim, next_slice_dim, self.comm
-            )[0]
-        else:
-            self.dataset.data = reslice_filebased(
-                self.dataset.data,
-                current_slice_dim,
-                next_slice_dim,
-                self.dataset.angles,
-                self.dataset.__dict__['_global_shape'][2],
-                self.dataset.__dict__['_global_shape'][1],
-                self.comm,
-                self.reslice_dir,
-            )[0]
+    def _execute_section(self, section: Section, section_index: int = 0):
+        self._setup_source_sink(section)
+        assert self.source is not None, "Dataset has not been loaded yet"
+        assert self.sink is not None, "Sink setup failed"
 
-    def _execute_section(self, section: PlatformSection, section_index: int = 0):
-        assert self.dataset is not None, "Dataset has not been loaded yet"
-
-        slicing_dim_section = _get_slicing_dim(section.pattern) - 1
+        slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
         self.determine_max_slices(section, slicing_dim_section)
 
         self._log_pipeline(
@@ -141,25 +95,67 @@ class TaskRunner:
             level=1,
         )
 
-        splitter = BlockSplitter(self.dataset, section.pattern, section.max_slices)
-        aggregator = BlockAggregator(self.dataset, section.pattern)
+        splitter = BlockSplitter(self.source, section.max_slices)
+        start_source = time.perf_counter_ns()
         for block in splitter:
-            aggregator.append(self._execute_section_block(section, block))
-            gpumem_cleanup()
+            end_source = time.perf_counter_ns()
+            if self.monitor is not None:
+                self.monitor.report_source_block(
+                    f"sec_{section_index}",
+                    section.methods[0].task_id if len(section) > 0 else "",
+                    _get_slicing_dim(section.pattern) - 1,
+                    block.shape,
+                    block.chunk_index,
+                    block.global_index,
+                    (end_source - start_source) * 1e-9,
+                )
 
-        self.dataset = aggregator.full_dataset
+            block = self._execute_section_block(section, block)
+
+            start_sink = time.perf_counter_ns()
+            self.sink.write_block(block)
+            end_sink = time.perf_counter_ns()
+            if self.monitor is not None:
+                self.monitor.report_sink_block(
+                    f"sec_{section_index}",
+                    section.methods[-1].task_id if len(section) > 0 else "",
+                    _get_slicing_dim(section.pattern) - 1,
+                    block.shape,
+                    block.chunk_index,
+                    block.global_index,
+                    (end_sink - start_sink) * 1e-9,
+                )
+            gpumem_cleanup()
+            start_source = time.perf_counter_ns()
+
+    def _setup_source_sink(self, section: Section):
+        assert self.source is not None, "Dataset has not been loaded yet"
+
+        slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
+
+        if self.sink is not None:
+            # we have a store-based sink from the last section - use that to determine
+            # the source for this one
+            assert isinstance(self.sink, ReadableDataSetSink)
+            self.source = self.sink.make_reader(slicing_dim_section)
+
+        if section.is_last:
+            # we don't need to store the results - this sink just discards it
+            self.sink = DummySink(slicing_dim_section)
+        else:
+            self.sink = DataSetStoreWriter(
+                slicing_dim_section,
+                self.comm,
+                self.reslice_dir,
+                memory_limit_bytes=self._memory_limit_bytes,
+            )
 
     def _execute_section_block(
-        self, section: PlatformSection, block: DataSet
-    ) -> DataSet:
-        for i, m in enumerate(section):
-            log.debug(
-                f"{m.method_name}: input shape, dtype: {block.data.shape}, {block.data.dtype}"
-            )
-            block = self._execute_method(m, self.method_index + i, block)
-            log.debug(
-                f"{m.method_name}: output shape, dtype: {block.data.shape}, {block.data.dtype}"
-            )
+        self, section: Section, block: DataSetBlock
+    ) -> DataSetBlock:
+        for method in section:
+            self.set_side_inputs(method)
+            block = self._execute_method(method, block)
         return block
 
     def _log_pipeline(self, str: str, level: int = 0, colour=Colour.BVIOLET):
@@ -175,57 +171,85 @@ class TaskRunner:
 
     def _load_datasets(self):
         start_time = self._log_task_start(
-            self.method_index,
+            "loader",
             self.pipeline.loader.pattern,
             self.pipeline.loader.method_name,
         )
-        self.dataset = self.pipeline.loader.load()
-        self.update_side_inputs(self.pipeline.loader.get_side_output())
+        self.source = self.pipeline.loader.make_data_source()
         self._log_task_end(
-            self.method_index,
+            "loader",
             start_time,
             self.pipeline.loader.pattern,
             self.pipeline.loader.method_name,
-            self.pipeline.loader.package_name
+            self.pipeline.loader.package_name,
         )
-        self.method_index += 1
 
     def _execute_method(
-        self, method: BackendWrapper, num: int, dataset: DataSet
-    ) -> DataSet:
-        start_time = self._log_task_start(num, method.pattern, method.method_name)
-        dataset = method.execute(dataset)
-        if dataset.is_last_in_chunk:
-            self.update_side_inputs(method.get_side_output())
-        self._log_task_end(num, start_time, method.pattern, method.method_name, method.package_name)
-        return dataset
+        self, method: MethodWrapper, block: DataSetBlock
+    ) -> DataSetBlock:
+        start_time = self._log_task_start(
+            method.task_id, method.pattern, method.method_name
+        )
+        start = time.perf_counter_ns()
+        block = method.execute(block)
+        if block.is_last_in_chunk:
+            self.append_side_outputs(method.get_side_output())
+        end = time.perf_counter_ns()
+        if self.monitor is not None:
+            self.monitor.report_method_block(
+                method.method_name,
+                method.module_path,
+                method.task_id,
+                _get_slicing_dim(method.pattern) - 1,
+                block.shape,
+                block.chunk_index,
+                block.global_index,
+                (end - start) * 1e-9,
+                method.gpu_time.kernel,
+                method.gpu_time.host2device,
+                method.gpu_time.device2host,
+            )
+        self._log_task_end(
+            method.task_id,
+            start_time,
+            method.pattern,
+            method.method_name,
+            method.package_name,
+        )
+        return block
 
-    def update_side_inputs(self, side_outputs: Dict[str, Any]):
-        """Updates the methods not yet executed in the pipeline with the side outputs
-        gathered so far if needed"""
+    def append_side_outputs(self, side_outputs: Dict[str, Any]):
+        """Appends to the side outputs that are available for the next section(s)"""
         if len(side_outputs) == 0:
             return
 
         self.side_outputs |= side_outputs
 
-        # iterate starting after current method index
-        for m in islice(self.pipeline, self.method_index - 1, None):
-            for k, v in self.side_outputs.items():
-                if k in m.parameters:
-                    m[k] = v
+    def set_side_inputs(self, method: MethodWrapper):
+        """Sets the parameters that reference side outputs for this method."""
+        for k, v in self.side_outputs.items():
+            if k in method.parameters:
+                method[k] = v
 
-    def _log_task_start(self, num: int, pattern: Pattern, name: str) -> int:
+    def _log_task_start(self, id: str, pattern: Pattern, name: str) -> int:
         log_once(
-            f"Running task {num} (pattern={pattern.name}): {name}...",
+            f"Running {id} (pattern={pattern.name}): {name}...",
             self.comm,
             colour=Colour.LIGHT_BLUE,
             level=0,
         )
         return time.perf_counter_ns()
 
-    def _log_task_end(self, num: int, start_time: int, pattern: Pattern, name: str, package: str = 'httomo'):
+    def _log_task_end(
+        self,
+        id: str,
+        start_time: int,
+        pattern: Pattern,
+        name: str,
+        package: str = "httomo",
+    ):
         output_str_list = [
-            f"    Finished task {num} (pattern={pattern.name}): {name} (",
+            f"    Finished {id} (pattern={pattern.name}): {name} (",
             package,
             f") Took {float(time.perf_counter_ns() - start_time)*1e-6:.2f}ms",
         ]
@@ -250,19 +274,18 @@ class TaskRunner:
     def _count_tuple_values(self, d: Dict[str, Any]) -> int:
         return sum(1 for v in d.values() if isinstance(v, tuple))
 
-    def determine_max_slices(self, section: PlatformSection, slicing_dim: int):
-        data_shape = self.dataset.data.shape
+    def determine_max_slices(self, section: Section, slicing_dim: int):
+        assert self.source is not None
+        data_shape = self.source.chunk_shape
 
         max_slices = data_shape[slicing_dim]
-        if not section.gpu:
-            section.max_slices = max_slices
+        if len(section) == 0:
+            section.max_slices = min(httomo.globals.MAX_CPU_SLICES, max_slices)
             return
-
-        ###### GPU ##################
 
         nsl_dim_l = list(data_shape)
         nsl_dim_l.pop(slicing_dim)
-        non_slice_dims_shape = tuple(nsl_dim_l)
+        non_slice_dims_shape = (nsl_dim_l[0], nsl_dim_l[1])
 
         available_memory = get_available_gpu_memory(10.0)
         available_memory_in_GB = round(available_memory / (1024**3), 2)
@@ -270,19 +293,37 @@ class TaskRunner:
             f"The amount of the available GPU memory is {available_memory_in_GB} GB"
         )
         log_once(memory_str, comm=self.comm, colour=Colour.BVIOLET, level=1)
+        if self._memory_limit_bytes != 0:
+            available_memory = min(available_memory, self._memory_limit_bytes)
+            log_once(
+                f"The memory has been limited to {available_memory / (1024**3):4.2f} GB",
+                comm=self.comm,
+                colour=Colour.BVIOLET,
+                level=1,
+            )
+
         max_slices_methods = [max_slices] * len(section)
 
         # loop over all methods in section
+        has_gpu = False
         for idx, m in enumerate(section):
             if len(m.memory_gpu) == 0:
                 max_slices_methods[idx] = max_slices
                 continue
 
+            has_gpu = has_gpu or m.is_gpu
             output_dims = m.calculate_output_dims(non_slice_dims_shape)
             (slices_estimated, available_memory) = m.calculate_max_slices(
-                self.dataset, non_slice_dims_shape, available_memory
+                self.source.dtype,
+                non_slice_dims_shape,
+                available_memory,
             )
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims
 
-        section.max_slices = min(max_slices_methods)
+        if not has_gpu:
+            section.max_slices = min(
+                min(max_slices_methods), httomo.globals.MAX_CPU_SLICES
+            )
+        else:
+            section.max_slices = min(max_slices_methods)

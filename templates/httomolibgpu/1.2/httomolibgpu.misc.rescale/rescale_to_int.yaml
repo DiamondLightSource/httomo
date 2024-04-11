@@ -1,0 +1,7 @@
+- method: rescale_to_int
+  module_path: httomolibgpu.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+    glob_stats: ${{statistics.side_outputs.glob_stats}}

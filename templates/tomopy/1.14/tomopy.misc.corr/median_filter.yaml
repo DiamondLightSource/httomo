@@ -2,4 +2,4 @@
   module_path: tomopy.misc.corr
   parameters:
     size: 3
-    axis: 0
+    axis: auto

@@ -7,10 +7,6 @@
     rotation_angles:
       data_path: /entry1/tomo_entry/data/rotation_angle
     dimension: 1
-    preview:
-      - 
-      - 
-      - 
     pad: 0
 - method: normalize
   module_path: tomopy.prep.normalize
@@ -44,7 +40,7 @@
   module_path: httomolib.misc.images
   parameters:
     subfolder_name: images
-    axis: 1
+    axis: auto
     file_format: tif
     bits: 8
     perc_range_min: 0.0

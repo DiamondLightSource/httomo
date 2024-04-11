@@ -13,7 +13,7 @@ DLS-specific:
 
 python_templates:
   - pipeline_cpu1.py (same pipeline as pipeline_cpu1.yaml)
-  - pipeline_cpu2.py (same pipeline as pipeline_cpu1.yaml)
-  - pipeline_cpu3.py (same pipeline as pipeline_cpu1.yaml)
-  - pipeline_gpu1.py (same pipeline as pipeline_cpu1.yaml)
+  - pipeline_cpu2.py (same pipeline as pipeline_cpu2.yaml)
+  - pipeline_cpu3.py (same pipeline as pipeline_cpu3.yaml)
+  - pipeline_gpu1.py (same pipeline as pipeline_gpu1.yaml)
 

@@ -1,6 +1,0 @@
-- method: angles
-  module_path: tomopy.sim.project
-  parameters:
-    nang: REQUIRED
-    ang1: 0.0
-    ang2: 180.0
