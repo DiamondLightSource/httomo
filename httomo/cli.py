@@ -16,6 +16,8 @@ from httomo.ui_layer import UiLayer
 
 from . import __version__
 
+log = logging.getLogger(__name__)
+
 @click.group
 @click.version_option(version=__version__, message="%(version)s")
 def main():
