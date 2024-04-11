@@ -39,7 +39,6 @@ v.2.0
 .. toctree::
    :glob:
 
-   ../api/httomolib.misc.corr
    ../api/httomolib.misc.images
    ../api/httomolib.misc.segm
 

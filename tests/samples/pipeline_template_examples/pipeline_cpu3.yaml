@@ -6,8 +6,6 @@
     image_key_path: entry1/tomo_entry/instrument/detector/image_key
     rotation_angles:
         data_path: /entry1/tomo_entry/data/rotation_angle
-    dimension: 1
-    pad: 0
 - method: find_center_vo
   module_path: tomopy.recon.rotation
   parameters:

@@ -156,8 +156,8 @@ repo, where the :code:`find_center_vo` method is generating an output dataset
 called :code:`cor`, which is then being used as the value of the :code:`center`
 parameter for the :code:`recon` method:
 
-.. literalinclude:: ../../../../samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml
+.. literalinclude:: ../../../../tests/samples/pipeline_template_examples/pipeline_cpu1.yaml
   :language: yaml
   :lines: 31-50
   :emphasize-lines: 4,16
-  :caption: samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml
+  :caption: tests/samples/pipeline_template_examples/pipeline_cpu1.yaml
