@@ -5,6 +5,7 @@ from shutil import copy
 from typing import Optional, Union
 
 import click
+import logging
 from mpi4py import MPI
 
 import httomo.globals
@@ -60,7 +61,10 @@ def run(
 ):
     """Run a pipeline defined in YAML on input data."""
     if yaml_config.suffix == ".yaml":
-        _check_yaml(yaml_config, in_data_file)
+        try:
+            assert _check_yaml(yaml_config, in_data_file) == True
+        except:
+            log.exception('')
 
     # Define httomo.globals.run_out_dir in all MPI processes
     httomo.globals.run_out_dir = out_dir.joinpath(
