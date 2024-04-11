@@ -9,6 +9,7 @@ Setup a new conda environment using the requirements file docs/source/doc-conda-
 If you are using a diamond computer you can load python into your path to do this.
 
     >>> module load python
+    >>> conda env create -f /path/to/HTTomo/docs/source/doc-conda-requirements.yml
     >>> conda env create --prefix /path/to/env/doc-env --file /path/to/HTTomo/docs/source/doc-conda-requirements.yml
 
 

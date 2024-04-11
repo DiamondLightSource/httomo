@@ -4,11 +4,12 @@
 YAML Templates
 ==========================
 
-This section contains YAML templates from :ref:`backends_list`.
+This section contains YAML templates from :ref:`backends_list`. 
+You can also download templates for all supported backends in HTTomo ver.2.0 in one archive `HERE <https://github.com/DiamondLightSource/httomo/blob/main/yaml_templates/all_templates_httomo_v2_0.zip>`_.
 
 TomoPy Modules
 ---------------
-v.1.14
+v.1.15
 ''''''
 
 .. toctree::
@@ -20,7 +21,7 @@ v.1.14
 
 HTTomolibgpu Modules
 -------------------- 
-v.1.0
+v.2.0
 '''''
 
 .. toctree::
@@ -32,7 +33,7 @@ v.1.0
 
 HTTomolib Modules
 ------------------
-v.1.0
+v.2.0
 '''''
 
 .. toctree::
@@ -46,6 +47,8 @@ v.1.0
 
 HTTomo
 ------------------
+v.2.0
+'''''
 
 .. toctree::
    :glob:

@@ -1,0 +1,67 @@
+- method: add_noise
+  module_path: tomopy.prep.alignment
+  parameters:
+    ratio: 0.05
+- method: align_seq
+  module_path: tomopy.prep.alignment
+  parameters:
+    fdir: .
+    iters: 10
+    pad: !!python/tuple
+    - 0
+    - 0
+    blur: true
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    algorithm: sirt
+    upsample_factor: 10
+    rin: 0.5
+    rout: 0.8
+    save: false
+    debug: true
+- method: scale
+  module_path: tomopy.prep.alignment
+  parameters: {}
+- method: distortion_correction_sino
+  module_path: tomopy.prep.alignment
+  parameters:
+    ind: REQUIRED
+    xcenter: REQUIRED
+    ycenter: REQUIRED
+    list_fact: REQUIRED
+- method: shift_images
+  module_path: tomopy.prep.alignment
+  parameters:
+    sx: REQUIRED
+    sy: REQUIRED
+- method: align_joint
+  module_path: tomopy.prep.alignment
+  parameters:
+    fdir: ./
+    iters: 10
+    pad: !!python/tuple
+    - 0
+    - 0
+    blur: true
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    algorithm: sirt
+    upsample_factor: 10
+    rin: 0.5
+    rout: 0.8
+    save: false
+    debug: true
+- method: add_jitter
+  module_path: tomopy.prep.alignment
+  parameters:
+    low: 0
+    high: 1
+- method: blur_edges
+  module_path: tomopy.prep.alignment
+  parameters:
+    low: 0
+    high: 0.8
+- method: distortion_correction_proj
+  module_path: tomopy.prep.alignment
+  parameters:
+    xcenter: REQUIRED
+    ycenter: REQUIRED
+    list_fact: REQUIRED
