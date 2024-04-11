@@ -64,7 +64,7 @@ def run(
     """Run a pipeline defined in YAML on input data."""
     if yaml_config.suffix == ".yaml":
         try:
-            assert _check_yaml(yaml_config, in_data_file) == True
+            assert _check_yaml(yaml_config, in_data_file)
         except:
             log.exception('')
 
