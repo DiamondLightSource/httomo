@@ -29,31 +29,20 @@ HTTomo at Diamond vs. outside of Diamond, and the guidance on running HTTomo has
 been split into two sections accordingly.
 
 Additionally, HTTomo is able to run in serial or in parallel depending on what
-computer hardware is available to the user, so each section has been further
-split into these two subsections.
+computer hardware is available to the user, so some sections have been further
+split into these two subsections where relevant.
 
 Inside Diamond
 ++++++++++++++
 
-Serial
-######
-
-HTTomo can be loaded on a Diamond machine by doing :code:`module load httomo`.
-This will allow HTTomo to be run on the local machine like so:
-
-.. code-block:: console
-
-  httomo run IN_FILE YAML_CONFIG OUT_DIR
-
-Parallel
-########
-
-A parallel run of HTTomo at Diamond would usually be done on a compute cluster.
-However, there are cases where a parallel run on a local machine on cropped data
-is also useful, so that has also been described below.
-
 Cluster
-~~~~~~~
+#######
+
+This will be the most common way to use HTTomo at Diamond, it submits a job to the
+production compute cluster at Diamond that will run HTTomo.
+
+In a terminal, the commands to log onto the compute cluster and submit an HTTomo
+job are the following:
 
 .. code-block:: console
 
@@ -61,8 +50,25 @@ Cluster
   module load httomo
   httomo_mpi IN_FILE YAML_CONFIG OUT_DIR
 
-Non-cluster
-~~~~~~~~~~~
+Workstation
+###########
+
+Serial
+~~~~~~
+
+HTTomo can be loaded on a Diamond workstation by doing :code:`module load httomo`.
+This will allow HTTomo to be run on the local machine like so:
+
+.. code-block:: console
+
+  httomo run IN_FILE YAML_CONFIG OUT_DIR
+
+Parallel
+~~~~~~~~
+
+A parallel run of HTTomo at Diamond would usually be done on a compute cluster.
+However, there are cases where a parallel run on a local machine on cropped data
+is also useful, so that has also been described below.
 
 TODO (:code:`httomo_mpi_local`?)
 
