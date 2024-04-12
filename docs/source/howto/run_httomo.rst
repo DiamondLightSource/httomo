@@ -3,12 +3,14 @@
 How to run HTTomo
 -----------------
 
-For those interested in getting straight to the run commands, please feel free
-to :ref:`jump ahead<run-commands>`. Otherwise, carry on reading for more
-in-depth information on running HTTomo.
+The next section gives an overview of the commands to quickly get started running
+HTTomo.
 
-The Basics of Running HTTomo
-============================
+For those interested in learning about the different ways HTTomo can be configured
+to run, there is the :ref:`run-httomo-indepth` section.
+
+Quick Overview of Running HTTomo
+================================
 
 Required inputs
 +++++++++++++++
@@ -17,14 +19,94 @@ In order to run HTTomo you require a data file (an HDF5 file) and a YAML process
 list file that describes the desired processing pipeline. For information on
 getting started creating this YAML file, please see :ref:`howto_process_list`.
 
+Running HTTomo Inside or Outside of Diamond
++++++++++++++++++++++++++++++++++++++++++++
+
+As HTTomo was developed at the Diamond Light Source, there have been some extra
+efforts to accommodate the users at Diamond (for example, aliases for commands
+and launcher scripts). As such, there are some differences as to how one would run
+HTTomo at Diamond vs. outside of Diamond, and the guidance on running HTTomo has
+been split into two sections accordingly.
+
+Additionally, HTTomo is able to run in serial or in parallel depending on what
+computer hardware is available to the user, so each section has been further
+split into these two subsections.
+
+Outside Diamond
++++++++++++++++
+
+Make sure to activate the conda environment that has HTTomo installed in it.
+
+Serial
+######
+
+This is the simplest case:
+
+.. code-block:: console
+
+  python -m httomo run IN_FILE YAML_CONFIG OUT_DIR
+
+Parallel
+########
+
+HTTomo's parallel processing capability has been implemented with :code:`mpi4py`
+and :code:`h5py`. Therefore, HTTomo is intended to be run in parallel by using
+the :code:`mpirun` command (or equivalent, such as :code:`srun` for SLURM
+clusters):
+
+.. code-block:: console
+
+  mpirun -np N python -m httomo run IN_FILE YAML_CONFIG OUT_DIR
+
+where :code:`N` is the number of parallel processes to launch.
+
+Inside Diamond
+++++++++++++++
+
+Serial
+######
+
+HTTomo can be loaded on a Diamond machine by doing :code:`module load httomo`.
+This will allow HTTomo to be run on the local machine like so:
+
+.. code-block:: console
+
+  httomo run IN_FILE YAML_CONFIG OUT_DIR
+
+Parallel
+########
+
+A parallel run of HTTomo at Diamond would usually be done on a compute cluster.
+However, there are cases where a parallel run on a local machine on cropped data
+is also useful, so that has also been described below.
+
+Cluster
+~~~~~~~
+
+.. code-block:: console
+
+  ssh wilson
+  module load httomo
+  httomo_mpi IN_FILE YAML_CONFIG OUT_DIR
+
+Non-cluster
+~~~~~~~~~~~
+
+TODO (:code:`httomo_mpi_local`?)
+
+.. _run-httomo-indepth:
+
+In-depth Look at Running HTTomo
+===============================
+
 Interacting with HTTomo through the command line interface (CLI)
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The way to interact with the HTTomo software is through its "command line
 interface" (CLI).
 
-The preliminary step to accessing installed HTTomo software depends on if you
-are using a Diamond machine or not:
+As mentioned earlier, the preliminary step to accessing installed HTTomo software
+depends on if you are using a Diamond machine or not:
 
 - not on a Diamond machine: activate the conda environment that HTTomo was
   installed into (please refer to :doc:`installation` for instructions on how to
@@ -292,82 +374,3 @@ In-memory                    Very fast
 File w/ local disk           Fast
 File w/ network-mounted disk Very slow
 ============================ =========
-
-.. _run-commands:
-
-Run Commands
-============
-
-As HTTomo was developed at the Diamond Light Source, there have been some extra
-efforts to accommodate the users at Diamond (for example, aliases for commands
-and launcher scripts). As such, there are some differences as to how one would run
-HTTomo at Diamond vs. outside of Diamond, and the guidance on running HTTomo has
-been split into two sections accordingly.
-
-Additionally, HTTomo is able to run in serial or in parallel depending on what
-computer hardware is available to the user, so each section has been further
-split into these two subsections.
-
-Outside Diamond
-+++++++++++++++
-
-As mentioned earlier, make sure to activate the conda environment that has
-HTTomo installed in it.
-
-Serial
-######
-
-This is the simplest case:
-
-.. code-block:: console
-
-  python -m httomo run IN_FILE YAML_CONFIG OUT_DIR
-
-Parallel
-########
-
-HTTomo's parallel processing capability has been implemented with :code:`mpi4py`
-and :code:`h5py`. Therefore, HTTomo is intended to be run in parallel by using
-the :code:`mpirun` command (or equivalent, such as :code:`srun` for SLURM
-clusters):
-
-.. code-block:: console
-
-  mpirun -np N python -m httomo run IN_FILE YAML_CONFIG OUT_DIR
-
-where :code:`N` is the number of parallel processes to launch.
-
-Inside Diamond
-++++++++++++++
-
-Serial
-######
-
-As mentioned earlier, HTTomo can be loaded on a Diamond machine by doing
-:code:`module load httomo`. This will allow HTTomo to be run on the local
-machine like so:
-
-.. code-block:: console
-
-  httomo run IN_FILE YAML_CONFIG OUT_DIR
-
-Parallel
-########
-
-A parallel run of HTTomo at Diamond would usually be done on a compute cluster.
-However, there are cases where a parallel run on a local machine on cropped data
-is also useful, so that has also been described below.
-
-Cluster
-~~~~~~~
-
-.. code-block:: console
-
-  ssh wilson
-  module load httomo
-  httomo_mpi IN_FILE YAML_CONFIG OUT_DIR
-
-Non-cluster
-~~~~~~~~~~~
-
-TODO (:code:`httomo_mpi_local`?)
