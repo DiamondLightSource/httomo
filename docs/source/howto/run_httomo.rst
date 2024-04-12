@@ -211,23 +211,26 @@ The :code:`run` command
 .. code-block:: console
 
     $ python -m httomo run --help
-    Usage: python -m httomo run [OPTIONS] IN_FILE YAML_CONFIG OUT_DIR
+    Usage: python -m httomo run [OPTIONS] IN_DATA_FILE YAML_CONFIG OUT_DIR
 
-      Run a processing pipeline defined in YAML on input data.
+      Run a pipeline defined in YAML on input data.
 
     Options:
-      -d, --dimension INTEGER RANGE  The dimension to slice through.  [1<=x<=3]
-      --pad INTEGER                  The number of slices to pad each block of
-                                     data.
-      --ncore INTEGER                The number of the CPU cores per process.
-      --save-all                     Save intermediate datasets for all tasks in
-                                     the pipeline.
-      --file-based-reslice           Reslice using intermediate files (default is
-                                     in-memory).
-      --reslice-dir DIRECTORY        Directory for reslice intermediate files
-                                     (defaults to out_dir, only relevant if
-                                     --reslice is also given)
-      --help                         Show this message and exit.
+      --save-all                 Save intermediate datasets for all tasks in the
+                                 pipeline.
+      --gpu-id INTEGER           The GPU ID of the device to use.
+      --reslice-dir DIRECTORY    Directory for temporary files potentially needed
+                                 for reslicing (defaults to output dir)
+      --max-cpu-slices INTEGER   Maximum number of slices to use for a block for
+                                 CPU-only sections (default: 64)
+      --max-memory TEXT          Limit the amount of memory used by the pipeline
+                                 to the given memory (supports strings like 3.2G
+                                 or bytes)
+      --monitor TEXT             Add monitor to the runner (can be given multiple
+                                 times). Available monitors: bench, summary
+      --monitor-output FILENAME  File to store the monitoring output. Defaults to
+                                 '-', which denotes stdout
+      --help                     Show this message and exit.
 
 Arguments
 #########
@@ -270,44 +273,12 @@ Options/flags
 
 The :code:`run` command has 6 options/flags:
 
-- :code:`-d/--dimension`
-- :code:`--pad`
-- :code:`--ncore`
 - :code:`--save-all`
-- :code:`--file-based-reslice`
 - :code:`--reslice-dir`
-
-:code:`-d/--dimension`
-~~~~~~~~~~~~~~~~~~~~~~
-
-This allows the user to specify what dimension of the data (counting from 1 to
-3) that the input data should be sliced in when it is first loaded by the loader
-method. In other words, it allows the user to specify if the input data should
-be loaded as projections (pass a value of 1, which is the default value) or
-sinograms (pass a value of 2).
-
-For example, if the method immediately after the loader processes *projections*,
-then the :code:`-d/--dimension` flag can be omitted entirely, or a value of 1
-can be explicitly provided like :code:`-d 1`.
-
-Another example: if the method immediately after the loader processes
-*sinograms*, then this flag needs to be passed and given a value of 2, like
-:code:`-d 2`.
-
-:code:`--pad`
-~~~~~~~~~~~~~
-
-TODO
-
-:code:`--ncore`
-~~~~~~~~~~~~~~~
-
-In the backends that HTTomo supports, there are CPU methods which support
-running multiple processes to enable the method's processing to be performed
-faster.
-
-Based on the hardware that HTTomo will be run on, the number of available CPU
-cores can be provided to take advantage of this multi-process capability.
+- :code:`--max-cpu-slices`
+- :code:`--max-memory`
+- :code:`--monitor`
+- :code:`--monitor-output`
 
 .. _httomo-saving:
 
@@ -326,23 +297,6 @@ following conditions is satisfied:
 However, there are certain cases such as debugging, where saving the output of
 all methods to files in the output directory is beneficial. This flag is a quick
 way of doing so.
-
-:code:`--file-based-reslice`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Please see the :ref:`pl_reslice` section for more information about the
-re-slicing operation that can occur during the execution of the processing
-pipeline.
-
-By default, HTTomo will perform the re-slice operation *without* writing a file
-to the output directory, and instead perform the operation "in-memory". This is
-because the latter has much better performance than the former, and is thus
-given preference.
-
-While performing the re-slice operation via writing a file has worse performance
-than in-memory, it is useful to have it as an option for backup. Therefore, this
-flag is for specifying to HTTomo that any re-slice operations should be done
-with a file, rather than with RAM.
 
 :code:`--reslice-dir`
 ~~~~~~~~~~~~~~~~~~~~~
@@ -380,3 +334,107 @@ In-memory                    Very fast
 File w/ local disk           Fast
 File w/ network-mounted disk Very slow
 ============================ =========
+
+:code:`--max-cpu-slices`
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This flag is only relevant only for runs which are using a pipeline that contains
+1 or more sections that are composed of purely CPU methods.
+
+Understanding this flag's usage is dependent on knowledge of the concept of
+"chunks", "blocks", and "sections" within HTTomo's framework, so please refer to
+(TODO) for information on these concepts.
+
+The notion of a block is fully utilised to increase performance when a sequence of
+two or more GPU methods are being executed. When two or more CPU methods are
+executed in sequence, the notion of a block plays a less significant role in
+performance. The number of slices in a block is driven by the memory capacity of
+the GPU, but if no GPU is being used for executing a sequence of methods in the
+pipeline, there is no obvious way to choose the number of slices in a block (the
+"block size").
+
+In such cases the user may wish to tweak the block size to explore if a specific
+block size happens to improve performance for the CPU-only section(s).
+
+:code:`--max-memory`
+~~~~~~~~~~~~~~~~~~~~
+
+HTTomo supports running on both:
+
+- a compute cluster, where RAM on the host machine is often quite large
+- a personal machine, where RAM is not nearly as large
+
+This is done by a mechanism within HTTomo to hold data in RAM wherever there is
+enough RAM to do the required processing, and write data to a file if there is not
+enough RAM.
+
+The :code:`--max-memory` flag is for telling HTTomo how much RAM the machine has,
+so then it can switch to using a file during execution of the pipeline if
+necessary.
+
+:code:`--monitor`
+~~~~~~~~~~~~~~~~~
+
+HTTomo has the capability of reporting information about the performance of the
+various methods involved in the specific pipeline that will be executed.
+Specifically:
+
+- time taken for methods to execute on the CPU/GPU
+- transfer time to and from the GPU
+- time taken to write to files (if HTTomo uses a file instead of RAM to hold data
+  during pipeline execution)
+
+There are two options for this flag, :code:`summary` and :code:`bench`.
+
+:code:`--monitor=summary`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :code:`summary` option will produce a brief summary of the time taken for each
+method to execute in the pipeline, which will look something like the following:
+
+.. code-block:: console
+
+    Summary Statistics (aggregated across 1 processes):
+      Total methods CPU time:     19.376s
+      Total methods GPU time:     19.042s
+      Total host2device time:      0.013s
+      Total device2host time:      0.548s
+      Total sources time    :      0.063s
+      Total sinks time      :      0.028s
+      Other overheads       :      0.362s
+      ---------------------------------------
+      Total pipeline time   :     19.829s
+      Total wall time       :     19.829s
+      ---------------------------------------
+    Method breakdowns:
+                        data_reducer :      0.001s ( 0.0%)
+                      find_center_vo :     11.586s (58.4%)
+                      remove_outlier :      3.312s (16.7%)
+                           normalize :      0.334s ( 1.7%)
+         remove_stripe_based_sorting :      2.987s (15.1%)
+                                 FBP :      0.966s ( 4.9%)
+              save_intermediate_data :      0.019s ( 0.1%)
+                      save_to_images :      0.171s ( 0.9%)
+
+:code:`--monitor=bench`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The :code:`bench` option (short for "benchmark") provides a much more in-depth
+breakdown of the time taken for each method to execute (dividing it into time
+taken on CPU vs. GPU, data transfer times to and from the GPU), and providing this
+information for all processes involved in the run.
+
+This output is very verbose, but can provide some insight if, for example, wanting
+to see what parts of the pipeline may be slower than expected.
+
+:code:`--monitor-output`
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default the output of any usage of the :code:`--monitor` flag will be written
+to :code:`stdout` (ie, printed to the terminal). However, there are times when
+it's useful to write the monitoring output to a file, such as for performance
+analysis.
+
+HTTomo supports writing the monitoring results in CSV format, and so any given
+filepath to the :code:`--monitor-output` flag will produce a file with the
+benchmarking results written in CSV format.
