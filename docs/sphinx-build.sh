@@ -27,6 +27,7 @@ rm -rf $DIR/build/
 # sphinx-apidoc generates source files that use sphinx.ext.autodoc to document all found modules
 sphinx-apidoc -feT -t=$DIR/source/_templates -o $DIR/source/api $DIR/../httomo
 
+
 # Append yaml link to rst files
 python -m source.yaml_doc_generator
 

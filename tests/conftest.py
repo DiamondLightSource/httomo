@@ -191,7 +191,7 @@ def standard_image_key_path():
 
 @pytest.fixture
 def testing_pipeline():
-    return "samples/pipeline_template_examples/testing/testing_pipeline.yaml"
+    return "tests/samples/pipeline_template_examples/testing/testing_pipeline.yaml"
 
 
 @pytest.fixture
@@ -201,12 +201,12 @@ def diad_data():
 
 @pytest.fixture
 def diad_loader():
-    return "samples/loader_configs/diad.yaml"
+    return "tests/samples/loader_configs/diad.yaml"
 
 
 @pytest.fixture
 def diad_pipeline_gpu():
-    return "samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
+    return "tests/samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
 
 
 @pytest.fixture
@@ -216,82 +216,84 @@ def i12_data():
 
 @pytest.fixture
 def i12_loader():
-    return "samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
+    return (
+        "tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
+    )
 
 
 @pytest.fixture
 def i12_loader_ignore_darks_flats():
-    return "samples/pipeline_template_examples/DLS/04_i12_ignore_darks_flats.yaml"
+    return "tests/samples/pipeline_template_examples/DLS/04_i12_ignore_darks_flats.yaml"
 
 
 @pytest.fixture
 def standard_loader():
-    return "samples/loader_configs/standard_tomo.yaml"
+    return "tests/samples/loader_configs/standard_tomo.yaml"
 
 
 @pytest.fixture
 def more_than_one_method():
-    return "samples/pipeline_template_examples/testing/more_than_one_method.yaml"
+    return "tests/samples/pipeline_template_examples/testing/more_than_one_method.yaml"
 
 
 @pytest.fixture
 def sample_pipelines():
-    return "samples/pipeline_template_examples/"
+    return "tests/samples/pipeline_template_examples/"
 
 
 @pytest.fixture
 def gpu_pipeline():
-    return "samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
+    return "tests/samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
 
 
 @pytest.fixture
 def python_cpu_pipeline1():
-    return "samples/python_templates/pipeline_cpu1.py"
+    return "tests/samples/python_templates/pipeline_cpu1.py"
 
 
 @pytest.fixture
 def python_cpu_pipeline2():
-    return "samples/python_templates/pipeline_cpu2.py"
+    return "tests/samples/python_templates/pipeline_cpu2.py"
 
 
 @pytest.fixture
 def python_cpu_pipeline3():
-    return "samples/python_templates/pipeline_cpu3.py"
+    return "tests/samples/python_templates/pipeline_cpu3.py"
 
 
 @pytest.fixture
 def python_gpu_pipeline1():
-    return "samples/python_templates/pipeline_gpu1.py"
+    return "tests/samples/python_templates/pipeline_gpu1.py"
 
 
 @pytest.fixture
 def yaml_cpu_pipeline1():
-    return "samples/pipeline_template_examples/pipeline_cpu1.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu1.yaml"
 
 
 @pytest.fixture
 def yaml_cpu_pipeline2():
-    return "samples/pipeline_template_examples/pipeline_cpu2.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu2.yaml"
 
 
 @pytest.fixture
 def yaml_cpu_pipeline3():
-    return "samples/pipeline_template_examples/pipeline_cpu3.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu3.yaml"
 
 
 @pytest.fixture
 def yaml_cpu_pipeline4():
-    return "samples/pipeline_template_examples/pipeline_cpu4.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu4.yaml"
 
 
 @pytest.fixture
 def yaml_gpu_pipeline1():
-    return "samples/pipeline_template_examples/pipeline_gpu1.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_gpu1.yaml"
 
 
 @pytest.fixture
 def yaml_gpu_pipeline360_2():
-    return "samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml"
 
 
 @pytest.fixture(scope="session")
@@ -312,15 +314,6 @@ def merge_yamls():
             yaml.dump(data, file_descriptor)
 
     return _merge_yamls
-
-
-@pytest.fixture
-def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
-    return DarksFlatsFileConfig(
-        file=Path("tests/test_data/tomo_standard.nxs"),
-        data_path="/entry1/tomo_entry/data/data",
-        image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
-    )
 
 
 @pytest.fixture

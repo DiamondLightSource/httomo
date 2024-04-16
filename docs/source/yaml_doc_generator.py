@@ -151,11 +151,11 @@ def save_all_yaml_functions(tmp_dir, yaml_files):
 
 
 if __name__ == "__main__":
-    """Create documentation for modules from httomo, tomopy and httomolib.
+    """Create documentation for modules from httomo, tomopy, httomolib and httomolibgpu.
     Append the yaml information to the documentation pages.
     """
     doc_source_dir = os.path.dirname(os.path.abspath(__file__))
-    path_to_templates = doc_source_dir + "/../../templates/"
+    path_to_templates = doc_source_dir + "/../../yaml_templates/"
     for root, dirs, files in os.walk(path_to_templates, topdown=True):
         dirs[:] = [d for d in dirs]
         files[:] = [fi for fi in files if ".yaml" in fi]
