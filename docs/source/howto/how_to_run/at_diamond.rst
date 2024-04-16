@@ -3,6 +3,8 @@
 Inside Diamond
 ++++++++++++++
 
+If you're not familiar what the module system is, please check :ref:`faq_workstation` guide.
+
 Cluster
 #######
 

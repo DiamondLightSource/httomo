@@ -57,6 +57,7 @@
     :maxdepth: 2
 
     utilities/yaml_checker
+    utilities/yaml_generator
 
 .. _developers_content:
 
@@ -64,5 +65,5 @@
     :caption: Developers
     :maxdepth: 2
 
-    developers/yaml_generator
+    developers/new_module_integr
     

@@ -26,11 +26,13 @@ Frequently Asked Questions
 
 .. dropdown:: I have a Python method, can it be used with HTTomo?
     
-    There is a high chance that it can be used. The method needs to be accessible in your Python environment and you will need a YAML template for it. See more on what kind of :ref:`backends_list` can be used with HTTomo. It is also recommended if you integrate your method there first.
+    There is a high chance that it can be used. The method needs to be accessible in your Python environment and you will need a YAML template for it. See more on what kind of :ref:`backends_list` can be used with HTTomo. It is also recommended if you integrate your method in a library first. See :ref:`developers_content`.
 	
 .. dropdown:: How can I contribute to HTTomo?
 
-	You can contribute by adding new methods to :ref:`backends_list` or by contributing to source base of the `HTTomo project <https://github.com/DiamondLightSource/httomo>`_.
+	You can contribute by adding new methods to :ref:`backends_list` or by contributing to the source base of the `HTTomo project <https://github.com/DiamondLightSource/httomo>`_.
+
+.. _faq_workstation:
 
 Working from a workstation at Diamond Light Source
 **************************************************
@@ -52,17 +54,17 @@ Working from a workstation at Diamond Light Source
 
 .. dropdown:: How can I use HTTomo inside the terminal?
 
-    1. Using the module system, ``module load`` the version of HTTomo you are using
+    1. Using the module system, ``module load`` allows you to obtain an access to the installed HTTomo at Diamond computing systems.
+    You can check which versions of HTTomo are installed with the command: :code:`module avail httomo`. You can either load a specific version 
+    with ``module load httomo/*httomo_version*`` or the default (recommended) version by executing: 
 
     .. code-block:: console
         
-        $ module load httomo/*httomo_version*
+        $ module load httomo
 
     This will add all of the related packages and files into your path, meaning
-    that your program will be able to access these packages when it is run.
-
-    These packages are required for the various plugins to run correctly.
-
+    that you will have an access to these packages from your loaded Python environment.
+    
     2. Configure your pipeline using the templates as shown previously 
     and run HTTomo.
 
@@ -70,7 +72,7 @@ Working from a workstation at Diamond Light Source
 .. dropdown:: What is ``module load`` doing?
 
     It is modifying the users environment, by including the path to certain
-    environment modules.
+    environment modules. In case of HTTomo it enables a specific conda environment with Python.
     
     You can read more about how module works at `modules.readthedocs.io <https://modules.readthedocs.io>`_
 
