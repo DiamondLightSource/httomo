@@ -1,13 +1,11 @@
+.. _howto_edit_list:
+
+=====================
 Editing process lists
----------------------
+=====================
 
-The concepts in the previous page will have hopefully helped you to understand
-how to define your desired pipeline with HTTomo in the most computationally
-efficient manner. This page will provide guidance on editing a process list
-file.
-
-Workflow for Writing Process Lists
-==================================
+This section explains how to build a process list (see more on :ref:`explanation_process_list`) from YAML templates 
+(see more on :ref:`explanation_templates`).
 
 Given time working with HTTomo, a user will likely settle on a workflow for
 defining process list YAML files that suits their individual needs.
@@ -16,14 +14,14 @@ As a starting point, something like the following is suggested:
 
 - copy+paste templates for the desired methods from the
   :ref:`reference_templates` section
-- manually edit the parameter values within the copied template as needed,
-  checking the documentation for the relevant backend if/when necessary for
-  further guidance on the method's parameters
+- manually edit the parameter values within the copied template as needed. The user might want 
+  to check the documentation for the relevant method in the library itself.
 - intermittently run the :ref:`YAML checker <utilities_yamlchecker>` during
-  editing of the YAML file to detect any errors early on
+  editing of the YAML file to detect any errors early on. It is strongly recommended to run 
+  the checker at least once when the YAML pipeline is configured.
 
 Method Parameters vs. HTTomo Method Parameters
-==============================================
+----------------------------------------------
 
 In addition to parameters for a method that influence the processing that the
 method performs, there are some parameters that can be used in a method's YAML
@@ -35,129 +33,15 @@ instead specific to HTTomo, the next section will go through these extra
 parameters, explaining what they are for and giving examples of how they can be
 used.
 
-HTTomo Method Parameter Guide
-=============================
+HTTomo-specific Method Parameters
+---------------------------------
 
-.. _save-result-examples:
+In the following subsections, we introduce parameters that are **HTTomo-specific** and do NOT belong to the list of the exposed method's parameters from the backend library. 
 
-Saving intermediate files with :code:`save_result`
-++++++++++++++++++++++++++++++++++++++++++++++++++
-
-As explained in :ref:`httomo-saving`, by default, HTTomo will *not* write the
-output of a method to a file unless under certain conditions (please see the
-link for a description of these file-saving conditions).
-
-HTTomo can be informed to write or not write the output of a method to a file
-with the :code:`save_result` parameter. Its value is a boolean, so either
-:code:`True` or :code:`False` are valid values for it.
+.. toctree::
+   :maxdepth: 1
+   
+   side_outputs/side_out
+   save_results/save_results
 
 
-Example: save output of a specific method
-#########################################
-
-Suppose we wanted to save the output of the TomoPy :code:`median_filter`, we
-could add :code:`save_result: True` to its parameters:
-
-.. code-block:: yaml
-  :emphasize-lines: 7
-
-  - tomopy.misc.corr:
-      median_filter:
-        data_in: tomo
-        data_out: tomo
-        size: 3
-        axis: 0
-        save_result: True
-
-Example: using :code:`--save_all` and :code:`save_result` together
-##################################################################
-
-When the :code:`--save_all` option/flag is provided, the :code:`save_result`
-parameter can be used to override individual method's to *not* save their
-output.
-
-In contrast to the previous example, suppose we had a process list where we
-would like to save the output of all methods *apart* from the
-:code:`median_filter`.  This could be achieved by using :code:`--save_all` when
-running HTTomo, along with providing :code:`save_result: False` for
-:code:`median_filter` in the YAML:
-
-.. code-block:: yaml
-  :emphasize-lines: 7
-
-  - tomopy.misc.corr:
-      median_filter:
-        data_in: tomo
-        data_out: tomo
-        size: 3
-        axis: 0
-        save_result: False
-
-Omitting :code:`data_out`
-+++++++++++++++++++++++++
-
-It could be the case that one would like to have the same name for the output
-dataset as the input dataset (keeping in mind that this will *overwrite* the
-input of a method with the output of the method once the method has finished its
-processing).
-
-In such cases, it can be tedious or an eyesore in the YAML to always be
-specifying both :code:`data_in` and :code:`data_out` to have the same value in
-each method's configuration.
-
-To help with this, the :code:`data_out` parameter can be omitted and HTTomo will
-assume that the output dataset name is the same as the input dataset name.
-
-.. warning::
-  As previously stated, please be aware that using this will be *overwriting*
-  the input dataset of a method with the output of the method.
-
-  In particular, please be careful and check if any methods further down the
-  pipeline would need to process the original dataset, as this will influence if
-  using this functionality will unintentionally interfere with the desired
-  pipeline.
-
-Using a different name for the output dataset
-+++++++++++++++++++++++++++++++++++++++++++++
-
-In principle, the output dataset name need not be the same as the input dataset
-name. Specifying a different dataset name is valid, so the following is fine:
-
-.. code-block:: yaml
-  :emphasize-lines: 3-4
-
-  - tomopy.misc.corr:
-      median_filter:
-        data_in: tomo
-        data_out: tomo_diff
-        size: 3
-        axis: 0
-
-In particular, this ensures that the input dataset :code:`tomo` is *not*
-being overwritten with the result of the :code:`median_filter` method. Instead,
-the result is stored in a different dataset, called :code:`tomo_diff`.
-
-Using a dataset as a parameter value
-++++++++++++++++++++++++++++++++++++
-
-There are cases where the output dataset of a method is needed as the value of
-a parameter for a method further down the pipeline. For example, the output of a
-method that calculates the center of rotation needing would be used as the value
-of a CoR parameter for a reconstruction method.
-
-HTTomo supports providing a dataset name as the value of a parameter to handle
-situations like this.
-
-Example
-#######
-
-The following example comes from taking snippets from an example in the HTTomo
-repo, where the :code:`find_center_vo` method is generating an output dataset
-called :code:`cor`, which is then being used as the value of the :code:`center`
-parameter for the :code:`recon` method:
-
-.. literalinclude:: ../../../../tests/samples/pipeline_template_examples/pipeline_cpu1.yaml
-  :language: yaml
-  :lines: 31-50
-  :emphasize-lines: 4,16
-  :caption: tests/samples/pipeline_template_examples/pipeline_cpu1.yaml

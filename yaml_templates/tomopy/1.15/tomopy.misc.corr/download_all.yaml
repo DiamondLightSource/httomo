@@ -1,23 +1,23 @@
-- method: sobel_filter
+- method: adjust_range
   module_path: tomopy.misc.corr
   parameters:
-    axis: auto
-- method: remove_outlier1d
-  module_path: tomopy.misc.corr
-  parameters:
-    dif: REQUIRED
-    size: 3
-    axis: auto
+    dmin: null
+    dmax: null
 - method: circ_mask
   module_path: tomopy.misc.corr
   parameters:
     axis: REQUIRED
     ratio: 1
     val: 0.0
-- method: remove_outlier
+- method: gaussian_filter
   module_path: tomopy.misc.corr
   parameters:
-    dif: REQUIRED
+    sigma: 3
+    order: 0
+    axis: auto
+- method: median_filter
+  module_path: tomopy.misc.corr
+  parameters:
     size: 3
     axis: auto
 - method: median_filter3d
@@ -29,6 +29,31 @@
   parameters:
     size: 3
     callback: null
+- method: remove_nan
+  module_path: tomopy.misc.corr
+  parameters:
+    val: 0.0
+- method: remove_neg
+  module_path: tomopy.misc.corr
+  parameters:
+    val: 0.0
+- method: remove_outlier
+  module_path: tomopy.misc.corr
+  parameters:
+    dif: REQUIRED
+    size: 3
+    axis: auto
+- method: remove_outlier1d
+  module_path: tomopy.misc.corr
+  parameters:
+    dif: REQUIRED
+    size: 3
+    axis: auto
+- method: remove_outlier3d
+  module_path: tomopy.misc.corr
+  parameters:
+    dif: REQUIRED
+    size: 3
 - method: remove_ring
   module_path: tomopy.misc.corr
   parameters:
@@ -41,32 +66,7 @@
     theta_min: 30
     rwidth: 30
     int_mode: WRAP
-- method: remove_nan
+- method: sobel_filter
   module_path: tomopy.misc.corr
   parameters:
-    val: 0.0
-- method: adjust_range
-  module_path: tomopy.misc.corr
-  parameters:
-    dmin: null
-    dmax: null
-- method: median_filter
-  module_path: tomopy.misc.corr
-  parameters:
-    size: 3
     axis: auto
-- method: remove_neg
-  module_path: tomopy.misc.corr
-  parameters:
-    val: 0.0
-- method: gaussian_filter
-  module_path: tomopy.misc.corr
-  parameters:
-    sigma: 3
-    order: 0
-    axis: auto
-- method: remove_outlier3d
-  module_path: tomopy.misc.corr
-  parameters:
-    dif: REQUIRED
-    size: 3

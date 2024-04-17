@@ -1,10 +1,3 @@
-- method: distortion_correction_proj_discorpy
-  module_path: httomolibgpu.prep.alignment
-  parameters:
-    metadata_path: REQUIRED
-    preview: REQUIRED
-    order: 1
-    mode: reflect
 - method: distortion_correction_proj
   module_path: httomolibgpu.prep.alignment
   parameters:
@@ -14,3 +7,10 @@
     center_from_top: null
     polynomial_coeffs: null
     crop: 0
+- method: distortion_correction_proj_discorpy
+  module_path: httomolibgpu.prep.alignment
+  parameters:
+    metadata_path: REQUIRED
+    preview: REQUIRED
+    order: 1
+    mode: reflect
