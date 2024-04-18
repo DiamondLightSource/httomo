@@ -1,3 +1,10 @@
+- method: SIRT
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    recon_size: null
+    iterations: 300
+    nonnegativity: true
 - method: CGLS
   module_path: httomolibgpu.recon.algorithm
   parameters:
@@ -12,10 +19,3 @@
     filter_freq_cutoff: 0.6
     recon_size: null
     recon_mask_radius: null
-- method: SIRT
-  module_path: httomolibgpu.recon.algorithm
-  parameters:
-    center: ${{centering.side_outputs.centre_of_rotation}}
-    recon_size: null
-    iterations: 300
-    nonnegativity: true

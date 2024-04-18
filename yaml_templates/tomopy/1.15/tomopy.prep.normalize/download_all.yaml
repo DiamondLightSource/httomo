@@ -1,11 +1,11 @@
-- method: minus_log
-  module_path: tomopy.prep.normalize
-  parameters: {}
-- method: normalize
+- method: normalize_roi
   module_path: tomopy.prep.normalize
   parameters:
-    cutoff: null
-    averaging: mean
+    roi:
+    - 0
+    - 0
+    - 10
+    - 10
 - method: normalize_bg
   module_path: tomopy.prep.normalize
   parameters:
@@ -16,11 +16,11 @@
     flat_loc: REQUIRED
     cutoff: null
     averaging: mean
-- method: normalize_roi
+- method: minus_log
+  module_path: tomopy.prep.normalize
+  parameters: {}
+- method: normalize
   module_path: tomopy.prep.normalize
   parameters:
-    roi:
-    - 0
-    - 0
-    - 10
-    - 10
+    cutoff: null
+    averaging: mean

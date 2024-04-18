@@ -7,14 +7,14 @@ There are cases where the output dataset of a method is needed as the value of
 a parameter for a method further down the pipeline. For example, the output of a
 method that calculates the :ref:`centering`, that is required for a reconstruction method.
 
-HTTomo provides a special syntax how the output of the method needs to be defined and 
-how to refer to that special output. 
+HTTomo provides a special syntax (loosely based on metadata syntax for `GitHub Actions  <https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions>`_) 
+how the output of the method needs to be defined and how to refer to that special output later. 
 
 Specifying the side output
 ##########################
 
-The output of some methods provides a supplementary information to be used later down the line,
-hence the given term for that is :code:`side_outputs`. As an example, let us consider the following centering 
+The output of some methods delivers not the processed data, but rather a supplementary information to be used later down the line. 
+The given term for that supplementary data is :code:`side_outputs`. As an example, let us consider the following centering 
 algorithm:
 
 .. code-block:: yaml
@@ -34,14 +34,15 @@ algorithm:
     side_outputs:
       cor: centre_of_rotation
 
-One can see that :code:`side_outputs` here are presented by the singular scalar value :code:`cor` with the :code:`centre_of_rotation` reference. 
-Please also note the :code:`id` parameter, which is a reference to the method itself. 
+One can see that :code:`side_outputs` here include a singular scalar value :code:`cor` with the :code:`centre_of_rotation` reference. 
+The :code:`id` parameter here needed to refer to the method later. 
 
-Refering to the side output
-###########################
+Referring to the side output
+############################
 
-The sole purpose of :code:`side_outputs` is to refer to them later when some method(s) require them. There could be various combinations when this is needed
-and we will present more verbose :ref:`side_output_example` bellow. Consider this reference example to the centering side outputs. 
+The purpose of :code:`side_outputs` is to refer to it later, when some method(s) require the contained information in the reference.
+Consider this example then the reconstruction method refers to the centering method side outputs. The required information of :ref:`centering`
+is stored in the reference :code:`${{centering.side_outputs.centre_of_rotation}}`.
 
 .. code-block:: yaml
   :emphasize-lines: 4
@@ -55,15 +56,23 @@ and we will present more verbose :ref:`side_output_example` bellow. Consider thi
       recon_mask_radius: null
 
 
-.. note:: Side outputs and references to them are generated automatically with the :ref:`utilities_yamlgenerator`. Usually there is no need to modify them.
+There could be various configurations when this reference is required from other methods as well. We present more verbose :ref:`side_output_example` bellow.
+
+.. note:: Side outputs and references to them are generated automatically with the :ref:`utilities_yamlgenerator`. Usually there is no need to modify them when you edit your process list.
 
 .. _side_output_example:
 
 Example of side outputs
 #######################
 
+This example demonstrates 3 cases when the side output is required and references to it. 
+This pipeline is for reconstructing DFoV data which needs to be stitched into the traditional 180 degrees data. 
+See that parameters for stitching are stored in side outputs and then used later in the :code:`sino_360_to_180` method.
+The reconstruction module also refers to the found :ref:`centering` for the stitched dataset. Then we also need to 
+extract the global statistics for normalisation of the data when saving into images. 
+
 .. literalinclude:: ../../../../../tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml
   :language: yaml
   :lines: 1-71
   :emphasize-lines: 18,19,20,21,22,23,45,50,58,59,60,71
-  :caption: tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml
+  :caption: Pipeline for 360 degrees scan, a double field of view (DFoV) data.

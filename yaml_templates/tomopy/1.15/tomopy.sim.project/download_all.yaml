@@ -4,32 +4,6 @@
     amp: 0.2
     period: 50
     mean: 1
-- method: add_focal_spot_blur
-  module_path: tomopy.sim.project
-  parameters:
-    spotsize: REQUIRED
-- method: add_gaussian
-  module_path: tomopy.sim.project
-  parameters:
-    mean: 0
-    std: null
-- method: add_poisson
-  module_path: tomopy.sim.project
-  parameters: {}
-- method: add_rings
-  module_path: tomopy.sim.project
-  parameters:
-    std: 0.05
-- method: add_salt_pepper
-  module_path: tomopy.sim.project
-  parameters:
-    prob: 0.01
-    val: null
-- method: add_zingers
-  module_path: tomopy.sim.project
-  parameters:
-    f: 0.01
-    sat: 65536
 - method: project
   module_path: tomopy.sim.project
   parameters:
@@ -38,16 +12,24 @@
     emission: true
     pad: true
     sinogram_order: false
-- method: project2
+- method: add_poisson
+  module_path: tomopy.sim.project
+  parameters: {}
+- method: add_gaussian
   module_path: tomopy.sim.project
   parameters:
-    objx: REQUIRED
-    objy: REQUIRED
-    center: ${{centering.side_outputs.centre_of_rotation}}
-    emission: true
-    pad: true
-    sinogram_order: false
-    axis: auto
+    mean: 0
+    std: null
+- method: add_zingers
+  module_path: tomopy.sim.project
+  parameters:
+    f: 0.01
+    sat: 65536
+- method: add_salt_pepper
+  module_path: tomopy.sim.project
+  parameters:
+    prob: 0.01
+    val: null
 - method: project3
   module_path: tomopy.sim.project
   parameters:
@@ -59,3 +41,21 @@
     pad: true
     sinogram_order: false
     axis: auto
+- method: add_rings
+  module_path: tomopy.sim.project
+  parameters:
+    std: 0.05
+- method: project2
+  module_path: tomopy.sim.project
+  parameters:
+    objx: REQUIRED
+    objy: REQUIRED
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    emission: true
+    pad: true
+    sinogram_order: false
+    axis: auto
+- method: add_focal_spot_blur
+  module_path: tomopy.sim.project
+  parameters:
+    spotsize: REQUIRED
