@@ -3,30 +3,44 @@
 Configure efficient pipelines
 =============================
 
-Here we focus on several important aspects which can be helpful while configuring the process list. 
-In order to construct more efficient pipelines one need to know :ref:`pl_conf_order`, :ref:`info_reslice`, and :ref:`info_sections`. 
+Here we focus on several important aspects which can be helpful while configuring a
+process list. In order to construct more efficient pipelines one needs to be
+familiar with :ref:`pl_conf_order`, :ref:`info_reslice`, and :ref:`info_sections`.
 
 .. _pl_conf_order:
 
-More on methods order 
----------------------
+Method pattern and method order
+-------------------------------
 
-The pipelines in HTTomo consist of multiple methods stacked together and executed in a serial order. Behind the scenes, 
-HTTomo will take care of providing the data for the method's input/output. 
+An HTTomo pipeline consists of multiple methods ordered sequentially and is
+executed in the given serial order (meaning that there is no branching in HTTomo
+pipelines). Behind the scenes HTTomo will take care of providing the input data
+for each method, and passing the output data of each method to the next method.
 
-Different methods require data to be provided in different orientations (array slices). In order
-to satisfy those requirements, we introduced the notion of *pattern* in HTTomo, i.e., every method has a pattern associated with it.
-So far HTTomo supports three types of patterns: :code:`projection`, :code:`sinogram`, and  :code:`all`. 
+Different methods require data to be provided in different orientations (ie, the
+direction of slicing an array). In order to satisfy those requirements, the notion
+of a method having a *pattern* was introduced in HTTomo, i.e., every method has a
+pattern associated with it. So far HTTomo supports three types of patterns:
+:code:`projection`, :code:`sinogram`, and  :code:`all`.
 
-.. note:: The methods that change the pattern from *projection* to *sinogram* or vice versa will trigger a costly :ref:`info_reslice` operation. Methods with pattern *all* inherit the pattern of the previous method.
+.. note:: Transitioning between methods that change the pattern from
+   :code:`projection` to :code:`sinogram` or vice versa will trigger a costly
+   :ref:`info_reslice` operation. Methods with pattern :code:`all` inherit the
+   pattern of the previous method.
 
-In order to minimise the amount of reslice operations it is better to group methods together based on the pattern. 
-For example, methods that work with projections in one group and methods that work with sinograms in another group. 
-Worth noting that it might not be always possible to group the methods such way, especially the longer pipelines. It, however,
-useful to keep that in mind if one seeks the most computationally efficient pipeline. The user can check the pattern of the 
-method in :ref:`pl_library`.
+In order to minimise the amount of reslice operations it is best to group methods
+together based on the pattern. For example, putting methods that work with
+projections in one group, and methods that work with sinograms in another group. It
+may not always be possible to group the methods in such way, especially with longer
+pipelines. However, it's useful to keep this in mind if one seeks the most
+computationally efficient pipeline.
 
-.. note:: Currently HTTomo loaders use *projection* pattern by default, therefore the first method after the loader will be working with the *projection* pattern. It is also recommended to place :ref:`centering` methods right after the loader.
+The pattern of any supported method can be found in :ref:`pl_library`.
+
+.. note:: Currently, HTTomo loaders use the :code:`projection` pattern by default,
+   therefore it's best for efficiency purposes that the first method after the
+   loader has the :code:`projection` pattern. It is also recommended to place
+   :ref:`centering` methods right after the loader.
 
 .. _pl_library:
 
@@ -52,18 +66,34 @@ The :ref:`pl_library` demonstrate the library files for backends where patterns 
 Grouping CPU/GPU methods
 ------------------------
 
-There are different implementations of methods in :ref:`backends_list`, we can classify them into 3 categories: 
+There are different implementations of methods in :ref:`backends_list`, and can be
+classified into three categories:
 
-- :code:`cpu` methods. These are traditional CPU implementations in Python or other compiled languages. The exposed TomoPy functions are mostly pure CPU. 
-- :code:`gpu` methods. These are the methods that use GPU devices and require an array (e.g. Numpy ndarray) in the CPU memory as an input.
-- :code:`gpu_cupy` methods. A special group of methods mostly from the `HTTomolibgpu <https://github.com/DiamondLightSource/httomolibgpu>`_ library that use CuPy API and also executed on the GPU devices. The main difference of :code:`gpu_cupy` methods from the :code:`gpu` methods is that they operate on CuPy arrays instead of Numpy arrays. CuPy arrays are kept in the GPU memory until they are requested back on the CPU. This approach allows us to be more flexible with the sequences of GPU methods as we can chain them together for more efficient processing. 
+- :code:`cpu` methods. These are traditional CPU implementations in Python or other
+  compiled languages. The exposed TomoPy functions are mostly pure CPU.
+- :code:`gpu` methods. These are methods that use GPU devices and require an input
+  array in CPU memory (e.g. Numpy ndarray).
+- :code:`gpu_cupy` methods. These are a special group of methods, mostly from the
+  `HTTomolibgpu <https://github.com/DiamondLightSource/httomolibgpu>`_ library,
+  that are executed on GPU devices using the CuPy API. The main difference between
+  :code:`gpu_cupy` methods and :code:`gpu` methods is that :code:`gpu_cupy` methods
+  require CuPy arrays as input instead of Numpy arrays. The CuPy arrays are then
+  kept in GPU memory across any consecutive :code:`gpu_cupy` methods until they are
+  requested back on the CPU. This approach allows more flexibility with the
+  sequences of GPU methods, as they can be chained together for more efficient
+  processing.
 
-.. note:: If the GPU processing is possible, it is recommended to employ :code:`gpu_cupy` or :code:`gpu` methods in the process lists. The methods themselves are usually optimised for the performance and HTTomo will take care of chaining the methods together to avoid unnecessary CPU-GPU data transfers.
+.. note:: If GPUs are available to the user, it is recommended to use
+   :code:`gpu_cupy` or :code:`gpu` methods in process lists. The methods themselves
+   are usually optimised for performance and HTTomo will take care of chaining the
+   methods together to avoid unnecessary CPU-GPU data transfers.
 
-The user can check the implementation of the method in :ref:`pl_library`.
+The implementation of any supported method can be found in :ref:`pl_library`.
 
-Minimise saving on disk
------------------------
+Minimise writing to disk
+------------------------
 
-HTTomo does not require :ref:`save-result-examples` by default. If the result of the method is not needed as a separate file,
-then there is no reason for it to be saved on the hard disk. Saving the intermediate files can significantly slow down the execution time.
+HTTomo does not require :ref:`save-result-examples` by default. If the result of a
+method is not needed as a separate file, then there is no reason for it to be
+written to disk. This is because saving intermediate files can significantly slow
+down the execution time.
