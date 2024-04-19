@@ -3,13 +3,19 @@
 Detailed concepts
 +++++++++++++++++
 
-Here we present more detailed concepts of HTTomo, such as, *sections*, *blocks*, *method wrappers*, gpu-memory aware processing and others.
+Here we present more detailed concepts of HTTomo's framework, such as, :ref:`info_sections`, :ref:`info_reslice`, *blocks*, *method wrappers*, gpu-memory aware processing and others.
 
 .. _info_sections:
 
 Sections
 --------
-to be added...
+
+Sections is the essential element of HTTomo's framework which is related to how the I/O operations and processing of data is organised. 
+
+.. note:: The main purpose of sections is to organise the data input/output workflow, as well as, chaining together the processing elements so the constructed pipeline is computationally efficient. 
+
+
+In order to understand how sections are formed we give here the list of rules when sections are created. 
 
 .. _info_reslice:
 
