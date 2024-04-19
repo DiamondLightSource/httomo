@@ -1,10 +1,7 @@
-# This file covers the supported and the current versions of external packages
+# This file covers the currently supported versions of external packages
 tomopy:
-  current:
-  - 1.14
+  - 1.15
 httomolib:
-  current:
-  - 1.2
+  - 2.0
 httomolibgpu:
-  current:
-  - 1.2
+  - 2.0
