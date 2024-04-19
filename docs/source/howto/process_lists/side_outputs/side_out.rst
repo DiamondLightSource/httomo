@@ -3,19 +3,23 @@
 Side outputs
 ++++++++++++
 
-There are cases where the output dataset of a method is needed as the value of
-a parameter for a method further down the pipeline. For example, the output of a
-method that calculates the :ref:`centering`, that is required for a reconstruction method.
+There are cases where the output of a method is needed as the value of a parameter
+for a method further down the pipeline. For example, the output of a method that
+calculates the :ref:`centering`, that is required for a reconstruction method.
 
-HTTomo provides a special syntax (loosely based on metadata syntax for `GitHub Actions  <https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions>`_) 
-how the output of the method needs to be defined and how to refer to that special output later. 
+HTTomo provides a special syntax (loosely based on the syntax for references in
+`GitHub Actions
+<https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions>`_)
+for how such an output of a method needs to be defined and how to refer to that
+special output later.
 
 Specifying the side output
 ##########################
 
-The output of some methods delivers not the processed data, but rather a supplementary information to be used later down the line. 
-The given term for that supplementary data is :code:`side_outputs`. As an example, let us consider the following centering 
-algorithm:
+The output of some methods isn't processed data, but rather supplementary
+information to be used later in the pipeline. The given term for that supplementary
+data is "side outputs", and is what the :code:`side_outputs` parameter is for. As
+an example, let us consider the following centering algorithm:
 
 .. code-block:: yaml
   :emphasize-lines: 11,12,13
@@ -34,15 +38,18 @@ algorithm:
     side_outputs:
       cor: centre_of_rotation
 
-One can see that :code:`side_outputs` here include a singular scalar value :code:`cor` with the :code:`centre_of_rotation` reference. 
-The :code:`id` parameter here needed to refer to the method later. 
+One can see that :code:`side_outputs` here includes a single value :code:`cor` with
+the :code:`centre_of_rotation` reference. The :code:`id` parameter here is needed to
+refer to the method later.
 
 Referring to the side output
 ############################
 
-The purpose of :code:`side_outputs` is to refer to it later, when some method(s) require the contained information in the reference.
-Consider this example then the reconstruction method refers to the centering method side outputs. The required information of :ref:`centering`
-is stored in the reference :code:`${{centering.side_outputs.centre_of_rotation}}`.
+The purpose of :code:`side_outputs` is to refer to it later, when some method(s)
+require the contained information in the reference. Consider this example where the
+reconstruction method refers to the centering method's side outputs. The required
+information of :ref:`centering` is stored in the reference
+:code:`${{centering.side_outputs.centre_of_rotation}}`.
 
 .. code-block:: yaml
   :emphasize-lines: 4
@@ -56,23 +63,56 @@ is stored in the reference :code:`${{centering.side_outputs.centre_of_rotation}}
       recon_mask_radius: null
 
 
-There could be various configurations when this reference is required from other methods as well. We present more verbose :ref:`side_output_example` bellow.
+There could be various configurations when this reference is required from other methods as well. We present more verbose :ref:`side_output_example` below.
 
-.. note:: Side outputs and references to them are generated automatically with the :ref:`utilities_yamlgenerator`. Usually there is no need to modify them when you edit your process list.
+.. note:: Side outputs and references to them are generated automatically with the
+   :ref:`utilities_yamlgenerator`. Usually there is no need to modify them when
+   editing a process list.
 
 .. _side_output_example:
 
 Example of side outputs
 #######################
 
-This example demonstrates 3 cases when the side output is required and references to it. 
-This pipeline is for reconstructing DFoV data which needs to be stitched into the traditional 180 degrees data. 
-See that parameters for stitching are stored in side outputs and then used later in the :code:`sino_360_to_180` method.
-The reconstruction module also refers to the found :ref:`centering` for the stitched dataset. Then we also need to 
-extract the global statistics for normalisation of the data when saving into images. 
+Pipeline overview
+=================
+
+This pipeline is for reconstructing DFoV data which needs to be stitched into the
+traditional 180 degrees data. It demonstrates three cases where a method produces
+one or more side outputs, and a method later in the pipeline references them.
+
+A rough outline of the three side outputs being used is:
+
+1. the 360 centering method produces an "overlap" value as a side output, for the
+   stitching method to use
+2. the 360 centering method also produces a CoR value as a side output, for the
+   recon method to use
+3. the stats calculator method produces a global stats value as a side output, for
+   the image saver method to use
+
+Detailed look at side outputs usage
+===================================
+
+Parameters for stitching are generated by :code:`find_center_360`, stored in side
+outputs, and then used later in the :code:`sino_360_to_180` method. The
+reconstruction method :code:`FBP` then refers to the found :ref:`centering` for the
+stitched dataset produced by :code:`find_center_360`. Finally, we also need to
+extract the global statistics for normalisation of the data using the
+:code:`calculate_stats` method when saving into images with the
+:code:`save_to_images` method.
 
 .. literalinclude:: ../../../../../tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml
   :language: yaml
   :lines: 1-71
   :emphasize-lines: 18,19,20,21,22,23,45,50,58,59,60,71
   :caption: Pipeline for 360 degrees scan, a double field of view (DFoV) data.
+
+Please see below for a concise description of how each of the individual side
+outputs of methods are connected to the method using them:
+
+1. :code:`find_center_360` produces a side output called :code:`overlap` that the
+   :code:`sino_360_to_180` method uses
+2. :code:`find_center_360` produces another side output called
+   :code:`centre_of_rotation` that the :code:`FBP` method uses
+3. :code:`calculate_stats` produces a side output called :code:`glob_stats` that
+   the :code:`save_to_images` method uses
