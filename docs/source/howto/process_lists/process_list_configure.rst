@@ -26,6 +26,8 @@ Worth noting that it might not be always possible to group the methods such way,
 useful to keep that in mind if one seeks the most computationally efficient pipeline. The user can check the pattern of the 
 method in :ref:`pl_library`.
 
+.. note:: Currently HTTomo loaders use *projection* pattern by default, therefore the first method after the loader will be working with the *projection* pattern. It is also recommended to place :ref:`centering` methods right after the loader.
+
 .. _pl_library:
 
 Library files
