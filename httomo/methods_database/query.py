@@ -39,31 +39,6 @@ def get_method_info(module_path: str, method_name: str, attr: str):
 
     yaml_info_path = Path(YAML_DIR, f"{package_name}.yaml")
 
-    """
-    # The part bellow extracts versions from the versions file in order
-    # to amend the path to the library file. Not needed if the versions 
-    # were removed from the path. We probably should avoid hardcoding the
-    # version in the path, one option is to expose versions in the library file.
-
-    # get information about the currently supported version of the package
-    yaml_versions_path = Path(YAML_DIR, "external/", "versions.yaml")
-
-    if not yaml_versions_path.exists():
-        err_str = f"The YAML file {yaml_versions_path} doesn't exist."
-        log_exception(err_str)
-        raise ValueError(err_str)
-
-    with open(yaml_versions_path, "r") as f:
-        yaml_versions_library = yaml.safe_load(f)
-
-    ext_package_path = ""
-    for module, versions_dict in yaml_versions_library.items():
-        if module == package_name:
-            for version_type, package_version in versions_dict.items():
-                if version_type == "current":
-                    package_version = package_version[0]
-                    ext_package_path = f"external/{package_name}/{package_version}/"
-    """
     # open the library file for the package
     ext_package_path = ""
     if package_name != "httomo":
