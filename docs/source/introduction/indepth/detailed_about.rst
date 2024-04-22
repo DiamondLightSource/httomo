@@ -4,7 +4,7 @@ Detailed concepts
 +++++++++++++++++
 
 Here we present more detailed concepts of HTTomo's framework, such as,
-:ref:`info_sections`, :ref:`info_reslice`, :ref:`info_data`, *method wrappers*,
+:ref:`info_sections`, :ref:`info_reslice`, :ref:`info_data` (:ref:`chunks_data`,:ref:`blocks_data`), :ref:`info_wrappers`,
 gpu-memory aware processing and others.
 
 .. toctree::
@@ -12,6 +12,7 @@ gpu-memory aware processing and others.
    
    sections
    reslice
+   wrappers
 
 
 .. _info_data:
