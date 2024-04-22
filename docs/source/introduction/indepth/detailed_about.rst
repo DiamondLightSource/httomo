@@ -12,10 +12,50 @@ Sections
 
 Sections is the essential element of HTTomo's framework which is related to how the I/O operations and processing of data is organised. 
 
-.. note:: The main purpose of sections is to organise the data input/output workflow, as well as, chaining together the processing elements so the constructed pipeline is computationally efficient. 
+.. note:: The main purpose of sections is to organise the data input/output workflow, as well as, chaining together the processing elements so that the constructed pipeline is computationally efficient. 
 
 
-In order to understand how sections are formed we give here the list of rules when sections are created. 
+In order to understand how sections are formed, we give here the list of rules with examples when sections are created.
+
+.. _fig_sec1:
+.. figure::  ../../_static/sections1.png
+    :scale: 40 %
+    :alt: Sections in pipelines
+
+    Here is a typical pipeline with with a loader (`L`), 5 methods (`M`), and 4 data transfer operations (`T`) between methods. 
+
+Sections are created when:
+
+1. :ref:`info_reslice` is needed, which is related to the change of pattern.
+2. The output of the method needs to be saved to the disk.
+3. The :ref:`side_output` is required by one of the methods.
+
+Example 1: Sections with re-slice
+=================================
+
+.. _fig_sec2:
+.. figure::  ../../_static/sections2.png
+    :scale: 40 %
+    :alt: Sections in pipelines
+
+    Let us say that the pattern in methods `M`\ :sub:`1-3` is *projection* and methods in `M`\ :sub:`4-5` belong to *sinogram* pattern.
+    This will result in two sections created and also :ref:`info_reslice` operation in the data transfer `T`\ :sub:`3` layer. 
+
+Example 2 : Sections with re-slice and data saving
+==================================================
+
+.. _fig_sec3:
+.. figure::  ../../_static/sections3.png
+    :scale: 40 %
+    :alt: Sections in pipelines
+
+    In addition Example 1 situation, let us assume that we want to save the result of `M`\ :sub:`2` method to the disk. 
+    This means that even though `M`\ :sub:`1-3` methods can be performed on the GPU, the data will be transferred to CPU.
+    The pipeline will be further fragmented to introduce another section, so that the data transfer `T`\ :sub:`2` layer also saves the data on the 
+    disk, as well as, taking care to return the data back on the GPU for the method `M`\ :sub:`3`. One can see that this is not efficient. 
+
+
+.. note:: It can be seen that creating more sections in the pipeline is best to be avoided when building an efficient pipeline. 
 
 .. _info_reslice:
 
@@ -24,44 +64,20 @@ Re-slicing
 The re-slicing of data happens when we need to access a slice which is orthogonal to the current one. 
 In tomography, we normally work in the space of projections or in the space of sinograms. Different methods require different slicing 
 orientations, or, as we call it, a *pattern*. The change of the pattern is a **re-slice** operation or a transformation of an array by 
-re-slicing in a particular direction. For instance, from the projection space/pattern to the sinogram space/patterns, as in :numref:`fig_reslice`.
+re-slicing in a particular direction. For instance, from the projection space/pattern to the sinogram space/patterns, as in the figure bellow.
 
 .. _fig_reslice:
 .. figure::  ../../_static/reslice.png
     :scale: 40 %
     :alt: Reslicing procedure
 
-    The re-slicing operation for tomographic data. The transformation from the stack of projections to the stack of sinograms by slicing the 3D array in the direction parallel to the projection angles.
+    The re-slicing operation for tomographic data. Here the data is resliced from the stack of projections to the stack of sinograms.
 
 In HTTomo, the re-slicing operation is performed on the CPU as we need to access all the data. Even if the pipeline consists of only GPU methods stacked together, 
-the re-slicing step will transfer the data from the GPU device to the CPU memory. This operation can be costly for big datasets and we recommend to minimise the number of 
-re-slicing operations in your pipeline. Normally for tomographic pre-processing and reconstruction there is just one re-slice needed. HTTomo checks if there is more than 
-one reslice in the pipeline and warn the user about it. The user will be prompted to change the order of the methods to minimise the number of the reslicing operations. 
+the re-slicing step will transfer the data from the GPU device to the CPU memory first. This operation can be costly for big datasets and we recommend to minimise the number of 
+re-slicing operations in your pipeline. Normally for tomographic pre-processing and reconstruction there is just one re-slice needed, please see how :ref:`howto_process_list`.
 
-For example to execute the methods bellow, **two** re-slicing operations needed:
-
-.. code-block:: yaml
-    
-    1. normalisation
-    2. median_filter
-    3. centering
-    4. paganin_filter
-    5. reconstruction
-
-The main issue here is that the :code:`centering` method requires pattern to be `sinogram`, :code:`paganin_filter` needs `projections` and 
-:code:`reconstruction` needs sinogram pattern again. Therefore we need to re-slice two times to accommodate for that. To remove one 
-reslice operation and obtain exactly the same result (but quicker), one needs to change the order of methods like this: 
-
-.. code-block:: yaml
-    
-    1. normalisation
-    2. median_filter
-    3. paganin_filter
-    4. centering    
-    5. reconstruction
-
-To conclude, it is useful to look for the order of methods in your pipelines and 
-rearrange them to reduce the amount of potentially unnecessary reslicing steps.
+.. note:: Note that when the CPU memory is not enough to perform re-slicing operation, the operation will be performed through the disk. This is substantially slower.
 
 .. _info_blocks:
 
