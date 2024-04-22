@@ -15,7 +15,7 @@ In order to understand how sections are formed, we give here the list of rules w
     :scale: 40 %
     :alt: Sections in pipelines
 
-    Here is a typical pipeline with with a loader (`L`), 5 methods (`M`), and 4 data transfer operations (`T`) between methods. 
+    Here is a typical pipeline with a loader (`L`), 5 methods (`M`), and 4 data transfer operations (`T`) between methods.
 
 Sections are created when:
 

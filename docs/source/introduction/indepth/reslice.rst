@@ -5,7 +5,7 @@ Re-slicing
 The re-slicing of data happens when we need to access a slice which is orthogonal to the current one. 
 In tomography, we normally work in the space of projections or in the space of sinograms. Different methods require different slicing 
 orientations, or, as we call it, a *pattern*. The change of the pattern is a **re-slice** operation or a transformation of an array by 
-re-slicing in a particular direction. For instance, from the projection space/pattern to the sinogram space/patterns, as in the figure bellow.
+re-slicing in a particular direction. For instance, from the projection space/pattern to the sinogram space/patterns, as in the figure below.
 
 .. _fig_reslice:
 .. figure::  ../../_static/reslice.png
