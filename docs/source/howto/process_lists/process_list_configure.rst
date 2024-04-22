@@ -51,15 +51,15 @@ The :ref:`pl_library` demonstrate the library files for backends where patterns 
 
 .. dropdown:: TomoPy's library file
 
-    .. literalinclude:: ../../../../httomo/methods_database/packages/external/tomopy/1.14/tomopy.yaml    
+    .. literalinclude:: ../../../../httomo/methods_database/packages/external/tomopy/tomopy.yaml    
 
 .. dropdown:: Httomolibgpu's library file
     
-    .. literalinclude:: ../../../../httomo/methods_database/packages/external/httomolibgpu/1.2/httomolibgpu.yaml
+    .. literalinclude:: ../../../../httomo/methods_database/packages/external/httomolibgpu/httomolibgpu.yaml
 
 .. dropdown:: Httomolib's library file
     
-    .. literalinclude:: ../../../../httomo/methods_database/packages/external/httomolib/1.2/httomolib.yaml
+    .. literalinclude:: ../../../../httomo/methods_database/packages/external/httomolib/httomolib.yaml
 
 .. _pl_grouping:
 
