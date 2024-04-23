@@ -1,4 +1,4 @@
-- method: normalize
+- method: normalize # no loader
   module_path: tomopy.prep.normalize
   parameters:
     cutoff: null

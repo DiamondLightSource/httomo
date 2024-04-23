@@ -13,7 +13,7 @@
 - method: recon
   module_path: tomopy.recon.algorithm
   parameters:
-    center: !SweepRange
+    center: !SweepRange # step absent
       start: 10
       stop: 50
     sinogram_order: false

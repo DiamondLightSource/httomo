@@ -29,7 +29,7 @@
 - method: recon
   module_path: tomopy.recon.algorithm
   parameters:
-    center: ${{centering.side_outputs.centre_of_rotation}}
+    center: ${{centering.side_outputs.centre_of_rotation}} # valid reference
     sinogram_order: false
     algorithm: gridrec
     init_recon: null
