@@ -50,6 +50,7 @@ class UiLayer:
             # loading python file with tasks provided
             self.PipelineStageConfig = _python_tasks_loader(self.tasks_file_path)
         else:
+            # TODO option to relocate to yaml_checker
             raise ValueError(
                 f"The extension {ext} of the file {root} with tasks is unknown."
             )
@@ -102,6 +103,7 @@ class UiLayer:
             task_id=task_conf.get("id", f"task_{i + 1}"),
             **parameters,
         )
+        # TODO option to relocate to yaml_checker
         if method.task_id in method_id_map:
             raise ValueError(f"duplicate id {method.task_id} in pipeline")
         method_id_map[method.task_id] = method
@@ -110,6 +112,7 @@ class UiLayer:
     def _setup_loader(self) -> LoaderInterface:
         task_conf = self.PipelineStageConfig[0]
         if "loaders" not in task_conf["module_path"]:
+            # TODO option to relocate to yaml_checker
             raise ValueError("Got pipeline with no loader (must be first method)")
         parameters = task_conf.get("parameters", dict())
         parameters["in_file"] = self.in_data_file
@@ -237,6 +240,7 @@ def check_valid_ref_id(
     side_str: str, ref_id: str, v: str, method: MethodWrapper
 ) -> None:
     """Check the reference values are valid
+    TODO option to relocate to yaml_checker
 
     Parameters
     ----------
