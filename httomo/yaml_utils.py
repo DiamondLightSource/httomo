@@ -22,4 +22,4 @@ def get_packages_current_version(package: str, type_p: str = "external") -> str:
     with open(versions_file, "r") as f:
         versions = yaml.safe_load(f)
 
-    return str(versions[package]["current"][0])
+    return str(versions[package][0])

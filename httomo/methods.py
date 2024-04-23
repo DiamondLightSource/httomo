@@ -1,34 +1,79 @@
+import pathlib
 from typing import Tuple
 import numpy as np
-from mpi4py import MPI
-from mpi4py.MPI import Comm
+import h5py
 
-__all__ = [
-    "calculate_stats",
-]
+from httomo.runner.dataset import DataSetBlock
+from httomo.utils import xp
 
-def calculate_stats(data: np.ndarray, comm: Comm) -> Tuple[float, float, float, int]:
-    """Calculating the global statistics of the given array
-    
+__all__ = ["calculate_stats", "save_intermediate_data"]
+
+
+def calculate_stats(
+    data: np.ndarray,
+) -> Tuple[float, float, float, int]:
+    """Calculating the statistics of the given array
+
     Args:
         data: (np.ndarray): a numpy array
-        comm: The MPI communicator to use.
-        
-    Returns:
-        tuple[(float, float, float, int)]: (min, max, mean, total_elements)
-    """
-    
-    data = np.nan_to_num(data, copy=False, nan=0.0, posinf=0, neginf=0)
-       
-    # max/min global values
-    minval_glob = comm.allreduce(np.min(data.ravel()), op=MPI.MIN)
-    maxval_glob = comm.allreduce(np.max(data.ravel()), op=MPI.MAX)
-    sum_glob = comm.allreduce(np.sum(data.ravel()), op=MPI.SUM)
 
-    # mean calculation
-    elem_per_process = int(np.prod(np.shape(data)))
-    # the total number of elements in the global data 
-    total_elements = MPI.COMM_WORLD.Get_size()*elem_per_process   
-    cmean_glob =  sum_glob/total_elements
-  
-    return (minval_glob, maxval_glob, cmean_glob, total_elements)
+    Returns:
+        tuple[(float, float, float, int)]: (min, max, sum, total_elements)
+    """
+
+    # do this whereever the data is at the moment (GPU/CPU)
+    if getattr(data, "device", None) is not None:
+        # GPU
+        data = xp.nan_to_num(data, copy=False, nan=0.0, posinf=0, neginf=0)
+    else:
+        # CPU
+        data = np.nan_to_num(data, copy=False, nan=0.0, posinf=0, neginf=0)
+
+    return (float(data.min()), float(data.max()), float(data.sum()), data.size)
+
+
+def save_intermediate_data(
+    data: np.ndarray,
+    global_shape: Tuple[int, int, int],
+    global_index: Tuple[int, int, int],
+    file: h5py.File,
+    path: str,
+    detector_x: int,
+    detector_y: int,
+    angles: np.ndarray,
+) -> None:
+    """Saves intermediate data to a file, including auxiliary"""
+    # only create if not already present - otherwise return existing dataset
+    dataset = file.require_dataset(path, global_shape, data.dtype, exact=True)
+    _save_dataset_data(dataset, data, global_shape, global_index)
+    _save_auxiliary_data(file, angles, detector_x, detector_y)
+
+
+def _save_dataset_data(
+    dataset: h5py.Dataset,
+    data: np.ndarray,
+    global_shape: Tuple[int, int, int],
+    global_index: Tuple[int, int, int],
+):
+    start = np.array(global_index)
+    stop = start + np.array(data.shape)
+    assert getattr(data, "device", None) is None, "data must be on CPU for saving"
+    assert stop[0] <= dataset.shape[0]
+    assert stop[1] <= dataset.shape[1]
+    assert stop[2] <= dataset.shape[2]
+    assert dataset.shape == global_shape
+    dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
+
+
+def _save_auxiliary_data(
+    file: h5py.File, angles: np.ndarray, detector_x: int, detector_y: int
+):
+    # only save if not there yet
+    if "/angles" in file:
+        return
+
+    file.create_dataset("/angles", data=angles)
+    file_name = pathlib.Path(file.filename).name
+    file.create_dataset(file_name, data=[0, 0])
+    g1 = file.create_group("data_dims")
+    g1.create_dataset("detector_x_y", data=[detector_x, detector_y])

@@ -1,0 +1,75 @@
+- method: remove_stripe_sf
+  module_path: tomopy.prep.stripe
+  parameters:
+    size: 5
+- method: stripes_mask3d
+  module_path: tomopy.prep.stripe
+  parameters:
+    weights: REQUIRED
+    threshold: 0.6
+    min_stripe_length: 20
+    min_stripe_depth: 10
+    min_stripe_width: 5
+    sensitivity_perc: 85.0
+- method: remove_stripe_based_sorting
+  module_path: tomopy.prep.stripe
+  parameters:
+    size: null
+    dim: 1
+- method: stripes_detect3d
+  module_path: tomopy.prep.stripe
+  parameters:
+    size: 10
+    radius: 3
+- method: remove_stripe_fw
+  module_path: tomopy.prep.stripe
+  parameters:
+    level: null
+    wname: db5
+    sigma: 2
+    pad: true
+- method: remove_stripe_ti
+  module_path: tomopy.prep.stripe
+  parameters:
+    nblock: 0
+    alpha: 1.5
+- method: remove_dead_stripe
+  module_path: tomopy.prep.stripe
+  parameters:
+    snr: 3
+    size: 51
+    norm: true
+- method: remove_stripe_based_filtering
+  module_path: tomopy.prep.stripe
+  parameters:
+    sigma: 3
+    size: null
+    dim: 1
+- method: remove_large_stripe
+  module_path: tomopy.prep.stripe
+  parameters:
+    snr: 3
+    size: 51
+    drop_ratio: 0.1
+    norm: true
+- method: remove_stripe_based_fitting
+  module_path: tomopy.prep.stripe
+  parameters:
+    order: 3
+    sigma: !!python/tuple
+    - 5
+    - 20
+- method: remove_stripe_based_interpolation
+  module_path: tomopy.prep.stripe
+  parameters:
+    snr: 3
+    size: 31
+    drop_ratio: 0.1
+    norm: true
+- method: remove_all_stripe
+  module_path: tomopy.prep.stripe
+  parameters:
+    snr: 3
+    la_size: 61
+    sm_size: 21
+    dim: 1

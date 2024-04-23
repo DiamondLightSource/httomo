@@ -3,13 +3,13 @@ from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
     # this is purely for type annotations. We import conditionally to
     # avoid circular imports (need to quote the type when used below)
-    from httomo.runner.backend_wrapper import BackendWrapper  # pragma: no cover
+    from httomo.runner.method_wrapper import MethodWrapper  # pragma: no cover
 
 
 class OutputRef:
     """Class to reference an output from other methods lazily."""
 
-    def __init__(self, method: "BackendWrapper", mapped_output_name: str):
+    def __init__(self, method: "MethodWrapper", mapped_output_name: str):
         self.method = method
         self.mapped_output_name = mapped_output_name
 

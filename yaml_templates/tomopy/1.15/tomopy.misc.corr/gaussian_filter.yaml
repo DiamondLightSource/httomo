@@ -1,0 +1,6 @@
+- method: gaussian_filter
+  module_path: tomopy.misc.corr
+  parameters:
+    sigma: 3
+    order: 0
+    axis: auto

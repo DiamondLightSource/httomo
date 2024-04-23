@@ -15,27 +15,27 @@ httomo = ["methods_database/packages/*.yaml",
           "methods_database/packages/external/httomolibgpu/*/*.yaml",
           "methods_database/packages/external/httomolib/*/*.yaml",
           "methods_database/packages/external/tomopy/*/*.yaml",
-          "../templates/httomolib/*/httomolib.misc.corr/*.yaml",
-          "../templates/httomolib/*/httomolib.misc.images/*.yaml",
-          "../templates/httomolib/*/httomolib.misc.segm/*.yaml",
-          "../templates/httomolib/*/httomolib.prep.phase/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.misc.corr/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.misc.morph/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.prep.alignment/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.prep.normalize/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.prep.phase/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.prep.stripe/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.recon.algorithm/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.recon.rotation/*.yaml",
-          "../templates/tomopy/*/tomopy.misc.corr/*.yaml",
-          "../templates/tomopy/*/tomopy.misc.morph/*.yaml",
-          "../templates/tomopy/*/tomopy.prep.alignment/*.yaml",
-          "../templates/tomopy/*/tomopy.prep.normalize/*.yaml",
-          "../templates/tomopy/*/tomopy.prep.phase/*.yaml",
-          "../templates/tomopy/*/tomopy.prep.stripe/*.yaml",
-          "../templates/tomopy/*/tomopy.recon.algorithm/*.yaml",
-          "../templates/tomopy/*/tomopy.recon.rotation/*.yaml",
-          "../templates/tomopy/*/tomopy.sim.project/*.yaml"]
+          "../yaml_templates/httomolib/*/httomolib.misc.corr/*.yaml",
+          "../yaml_templates/httomolib/*/httomolib.misc.images/*.yaml",
+          "../yaml_templates/httomolib/*/httomolib.misc.segm/*.yaml",
+          "../yaml_templates/httomolib/*/httomolib.prep.phase/*.yaml",
+          "../yaml_templates/httomolibgpu/*/httomolibgpu.misc.corr/*.yaml",
+          "../yaml_templates/httomolibgpu/*/httomolibgpu.misc.morph/*.yaml",
+          "../yaml_templates/httomolibgpu/*/httomolibgpu.prep.alignment/*.yaml",
+          "../yaml_templates/httomolibgpu/*/httomolibgpu.prep.normalize/*.yaml",
+          "../yaml_templates/httomolibgpu/*/httomolibgpu.prep.phase/*.yaml",
+          "../yaml_templates/httomolibgpu/*/httomolibgpu.prep.stripe/*.yaml",
+          "../yaml_templates/httomolibgpu/*/httomolibgpu.recon.algorithm/*.yaml",
+          "../yaml_templates/httomolibgpu/*/httomolibgpu.recon.rotation/*.yaml",
+          "../yaml_templates/tomopy/*/tomopy.misc.corr/*.yaml",
+          "../yaml_templates/tomopy/*/tomopy.misc.morph/*.yaml",
+          "../yaml_templates/tomopy/*/tomopy.prep.alignment/*.yaml",
+          "../yaml_templates/tomopy/*/tomopy.prep.normalize/*.yaml",
+          "../yaml_templates/tomopy/*/tomopy.prep.phase/*.yaml",
+          "../yaml_templates/tomopy/*/tomopy.prep.stripe/*.yaml",
+          "../yaml_templates/tomopy/*/tomopy.recon.algorithm/*.yaml",
+          "../yaml_templates/tomopy/*/tomopy.recon.rotation/*.yaml",
+          "../yaml_templates/tomopy/*/tomopy.sim.project/*.yaml"]
 
 [tool.setuptools-git-versioning]
 enabled = true
@@ -49,9 +49,11 @@ readme = "README.rst"
 license = {text = "BSD-3-Clause"}
 authors = [
     {name = "Daniil Kazantsev", email = "daniil.kazantsev@diamond.ac.uk"},
-    {name = "Jacob Williamson"},
     {name = "Yousef Moazzam", email = "yousef.moazzam@diamond.ac.uk"},
+    {name = "Jessica Verschoyle", email = "jessica.verschoyle@diamond.ac.uk"},
+    {name = "Naman Gera", email = "naman.gera@diamond.ac.uk"},
     {name = "Garry ODonnell"},
+    {name = "Jacob Williamson"},
     {email = "scientificsoftware@diamond.ac.uk"},
 ]
 classifiers = [
@@ -90,6 +92,7 @@ dev-cpu = [
   "httomolib[dev]",
   "tomopy",
   "plumbum",
+  "typing_extensions",
   "mypy",
   "types-PyYAML",
 ]
@@ -106,6 +109,7 @@ dev-gpu = [
   "httomolibgpu[dev]",
   "tomopy",
   "plumbum",
+  "typing_extensions",
   "mypy",
   "types-PyYAML",
 ]
@@ -113,7 +117,8 @@ dev-gpu = [
 [tool.mypy]
 # Ignore missing stubs for modules we use
 ignore_missing_imports = true
-python_version = 3.9  # make sure we're compatible with 3.9
+python_version = "3.9"  # make sure we're compatible with 3.9
+plugins = 'numpy.typing.mypy_plugin'
 
 [tool.isort]
 profile = "black"

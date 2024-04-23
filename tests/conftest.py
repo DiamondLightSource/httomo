@@ -9,7 +9,9 @@ import numpy as np
 
 import pytest
 import yaml
-from httomo.runner.dataset import DataSet
+from httomo.darks_flats import DarksFlatsFileConfig
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.runner.dataset import DataSetBlock
 
 MethodConfig: TypeAlias = Dict[str, Any]
 PipelineConfig: TypeAlias = List[MethodConfig]
@@ -17,11 +19,14 @@ PipelineConfig: TypeAlias = List[MethodConfig]
 
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))
 
+
 def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
     config.addinivalue_line("markers", "perf: mark test as performance test")
     config.addinivalue_line("markers", "cupy: needs cupy to run")
-    config.addinivalue_line("markers", "preview: mark test to run with `httomo preview`")
+    config.addinivalue_line(
+        "markers", "preview: mark test to run with `httomo preview`"
+    )
 
 
 def pytest_addoption(parser):
@@ -76,14 +81,17 @@ def cmd():
 def standard_data():
     return "tests/test_data/tomo_standard.nxs"
 
+
 @pytest.fixture
 def data360():
     return "tests/test_data/360scan/360scan.hdf"
 
+
 @pytest.fixture(scope="session")
 def test_data_path():
     return os.path.join(CUR_DIR, "test_data")
-    
+
+
 # only load from disk once per session, and we use np.copy for the elements,
 # to ensure data in this loaded file stays as originally loaded
 @pytest.fixture(scope="session")
@@ -92,10 +100,12 @@ def data_file(test_data_path):
     # keys: data, flats, darks, angles, angles_total, detector_y, detector_x
     return np.load(in_file)
 
+
 @pytest.fixture
 @pytest.mark.cupy
 def ensure_clean_memory():
     import cupy as cp
+
     cp.get_default_memory_pool().free_all_blocks()
     cp.get_default_pinned_memory_pool().free_all_blocks()
     cache = cp.fft.config.get_plan_cache()
@@ -104,38 +114,45 @@ def ensure_clean_memory():
     cp.get_default_memory_pool().free_all_blocks()
     cp.get_default_pinned_memory_pool().free_all_blocks()
     cache = cp.fft.config.get_plan_cache()
-    cache.clear()    
+    cache.clear()
 
 
 @pytest.fixture
 def host_data(data_file):
     return np.float32(np.copy(data_file["data"]))
-    
-    
+
+
 @pytest.fixture
 @pytest.mark.cupy
 def data(host_data, ensure_clean_memory):
     import cupy as cp
+
     return cp.asarray(host_data)
+
 
 @pytest.fixture
 def host_angles(data_file):
     return np.float32(np.copy(data_file["angles"]))
 
+
 @pytest.fixture
 @pytest.mark.cupy
 def angles(host_angles, ensure_clean_memory):
     import cupy as cp
+
     return cp.asarray(host_angles)
+
 
 @pytest.fixture
 def host_angles_radians(host_angles):
     return host_angles
 
+
 @pytest.fixture
 @pytest.mark.cupy
 def angles_radians(angles):
     return angles
+
 
 @pytest.fixture
 def host_flats(data_file):
@@ -146,6 +163,7 @@ def host_flats(data_file):
 @pytest.mark.cupy
 def flats(host_flats, ensure_clean_memory):
     import cupy as cp
+
     return cp.asarray(host_flats)
 
 
@@ -160,6 +178,7 @@ def host_darks(
 @pytest.mark.cupy
 def darks(host_darks, ensure_clean_memory):
     import cupy as cp
+
     return cp.asarray(host_darks)
 
 
@@ -175,7 +194,7 @@ def standard_image_key_path():
 
 @pytest.fixture
 def testing_pipeline():
-    return "samples/pipeline_template_examples/testing/testing_pipeline.yaml"
+    return "tests/samples/pipeline_template_examples/testing/testing_pipeline.yaml"
 
 
 @pytest.fixture
@@ -185,12 +204,12 @@ def diad_data():
 
 @pytest.fixture
 def diad_loader():
-    return "samples/loader_configs/diad.yaml"
+    return "tests/samples/loader_configs/diad.yaml"
 
 
 @pytest.fixture
 def diad_pipeline_gpu():
-    return "samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
+    return "tests/samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
 
 
 @pytest.fixture
@@ -200,67 +219,85 @@ def i12_data():
 
 @pytest.fixture
 def i12_loader():
-    return "samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
+    return (
+        "tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
+    )
 
 
 @pytest.fixture
 def i12_loader_ignore_darks_flats():
-    return "samples/pipeline_template_examples/DLS/04_i12_ignore_darks_flats.yaml"
+    return "tests/samples/pipeline_template_examples/DLS/04_i12_ignore_darks_flats.yaml"
 
 
 @pytest.fixture
 def standard_loader():
-    return "samples/loader_configs/standard_tomo.yaml"
+    return "tests/samples/loader_configs/standard_tomo.yaml"
 
 
 @pytest.fixture
 def sample_pipelines():
-    return "samples/pipeline_template_examples/"
+    return "tests/samples/pipeline_template_examples/"
 
 
 @pytest.fixture
 def gpu_pipeline():
-    return "samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
+    return "tests/samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
+
 
 @pytest.fixture
 def python_cpu_pipeline1():
-    return "samples/python_templates/pipeline_cpu1.py"
+    return "tests/samples/python_templates/pipeline_cpu1.py"
+
 
 @pytest.fixture
 def python_cpu_pipeline2():
-    return "samples/python_templates/pipeline_cpu2.py"
+    return "tests/samples/python_templates/pipeline_cpu2.py"
+
 
 @pytest.fixture
 def python_cpu_pipeline3():
-    return "samples/python_templates/pipeline_cpu3.py"
+    return "tests/samples/python_templates/pipeline_cpu3.py"
+
 
 @pytest.fixture
 def python_gpu_pipeline1():
-    return "samples/python_templates/pipeline_gpu1.py"
+    return "tests/samples/python_templates/pipeline_gpu1.py"
+
 
 @pytest.fixture
 def yaml_cpu_pipeline1():
-    return "samples/pipeline_template_examples/pipeline_cpu1.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu1.yaml"
+
 
 @pytest.fixture
 def yaml_cpu_pipeline2():
-    return "samples/pipeline_template_examples/pipeline_cpu2.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu2.yaml"
+
 
 @pytest.fixture
 def yaml_cpu_pipeline3():
-    return "samples/pipeline_template_examples/pipeline_cpu3.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu3.yaml"
+
+
+@pytest.fixture
+def yaml_cpu_pipeline4():
+    return "tests/samples/pipeline_template_examples/pipeline_cpu4.yaml"
+
 
 @pytest.fixture
 def yaml_gpu_pipeline1():
-    return "samples/pipeline_template_examples/pipeline_gpu1.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_gpu1.yaml"
+
 
 @pytest.fixture
 def yaml_gpu_pipeline360_2():
-    return "samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml"
+
 
 @pytest.fixture(scope="session")
 def distortion_correction_path(test_data_path):
     return os.path.join(test_data_path, "distortion-correction")
+
 
 @pytest.fixture
 def merge_yamls(load_yaml: Callable):
@@ -273,16 +310,28 @@ def merge_yamls(load_yaml: Callable):
                 data.append(x)
         with open("temp.yaml", "w") as file_descriptor:
             yaml.dump(data, file_descriptor)
+
     return _merge_yamls
 
+
 @pytest.fixture
-def dummy_dataset() -> DataSet:
-    return DataSet(
-        data=np.ones((10, 10, 10)),
-        angles=np.ones((20,)),
-        flats=3 * np.ones((5, 10, 10)),
-        darks=2 * np.ones((5, 10, 10)),
+def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
+    return DarksFlatsFileConfig(
+        file=Path(__file__).parent / "test_data/tomo_standard.nxs",
+        data_path="/entry1/tomo_entry/data/data",
+        image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
     )
+
+
+@pytest.fixture
+def dummy_block() -> DataSetBlock:
+    data = np.ones((10, 10, 10), dtype=np.float32)
+    aux_data = AuxiliaryData(
+        angles=np.ones(data.shape[0], dtype=np.float32),
+        darks=2.0 * np.ones((2, data.shape[1], data.shape[2]), dtype=np.float32),
+        flats=1.0 * np.ones((2, data.shape[1], data.shape[2]), dtype=np.float32),
+    )
+    return DataSetBlock(data=data, aux_data=aux_data)
 
 
 @pytest.fixture()

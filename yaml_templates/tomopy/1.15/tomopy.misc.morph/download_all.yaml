@@ -1,0 +1,29 @@
+- method: downsample
+  module_path: tomopy.misc.morph
+  parameters:
+    level: 1
+    axis: auto
+- method: trim_sinogram
+  module_path: tomopy.misc.morph
+  parameters:
+    center: REQUIRED
+    x: REQUIRED
+    y: REQUIRED
+    diameter: REQUIRED
+- method: upsample
+  module_path: tomopy.misc.morph
+  parameters:
+    level: 1
+    axis: auto
+- method: sino_360_to_180
+  module_path: tomopy.misc.morph
+  parameters:
+    overlap: ${{centering.side_outputs.overlap}}
+    rotation: left
+- method: pad
+  module_path: tomopy.misc.morph
+  parameters:
+    axis: REQUIRED
+    npad: null
+    mode: constant
+    '#additional parameters': AVAILABLE

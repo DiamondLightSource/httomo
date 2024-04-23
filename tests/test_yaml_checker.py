@@ -129,6 +129,8 @@ def test_check_keys(
     [
         ("testing/invalid_reference.yaml", True),
         ("testing/invalid_reference_1.yaml", False),
+        ("testing/invalid_reference_2.yaml", True),
+        ("testing/invalid_reference_3.yaml", True),
         ("testing/valid_reference.yaml", True),
     ],
 )
@@ -145,6 +147,8 @@ def test_check_id_has_side_out(
     [
         ("testing/invalid_reference.yaml", True),
         ("testing/invalid_reference_1.yaml", True),
+        ("testing/invalid_reference_2.yaml", True),
+        ("testing/invalid_reference_3.yaml", False),
         ("testing/valid_reference.yaml", True),
     ],
 )
@@ -161,6 +165,8 @@ def test_check_ref_id_valid(
     [
         ("testing/invalid_reference.yaml", False),
         ("testing/invalid_reference_1.yaml", False),
+        ("testing/invalid_reference_2.yaml", False),
+        ("testing/invalid_reference_3.yaml", False),
         ("testing/valid_reference.yaml", True),
     ],
 )

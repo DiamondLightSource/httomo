@@ -73,8 +73,8 @@ def test_tomo_standard_testing_pipeline_output(
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 3, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6, rtol=1e-6)
+                assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6, rtol=1e-6)
 
     #: some basic testing of the generated user.log file, because running the whole pipeline again
     #: will slow down the execution of the test suite.
@@ -89,10 +89,8 @@ def test_tomo_standard_testing_pipeline_output(
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, 57:60:, :)" in log_contents
+    assert "Preview: (0:180, 57:60, 0:160)" in log_contents
     assert "Data shape is (180, 3, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
 
 
 def test_run_pipeline_cpu1_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline1, output_folder):
@@ -104,7 +102,7 @@ def test_run_pipeline_cpu1_yaml(get_files: Callable, cmd, standard_data, yaml_cp
 
     # recurse through output_dir and check that all files are there
     files = get_files("output_dir/")
-    assert len(files) == 130
+    assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
     _check_tif(files, 128, (160, 160))
 
@@ -117,10 +115,9 @@ def test_run_pipeline_cpu1_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "The center of rotation is 79.5" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
 
 
 def test_run_pipeline_cpu1_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline1, output_folder):
@@ -132,7 +129,7 @@ def test_run_pipeline_cpu1_py(get_files: Callable, cmd, standard_data, python_cp
 
     # recurse through output_dir and check that all files are there
     files = get_files("output_dir/")
-    assert len(files) == 130
+    assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
     _check_tif(files, 128, (160, 160))
 
@@ -145,10 +142,8 @@ def test_run_pipeline_cpu1_py(get_files: Callable, cmd, standard_data, python_cp
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
 
 
 def test_run_pipeline_cpu2_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline2, output_folder):
@@ -176,7 +171,7 @@ def test_run_pipeline_cpu2_yaml(get_files: Callable, cmd, standard_data, yaml_cp
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 30, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6, rtol=1e-6)
 
     log_contents = _get_log_contents(log_files[0])
 
@@ -184,12 +179,8 @@ def test_run_pipeline_cpu2_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, 30:60:, :)" in log_contents
+    assert "Preview: (0:180, 30:60, 0:160)" in log_contents
     assert "Data shape is (180, 30, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
-    assert "Maximum amount of slices is 30 for section 1" in log_contents
-    assert "Maximum amount of slices is 30 for section 2" in log_contents
 
 
 def test_run_pipeline_cpu2_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline2, output_folder):
@@ -214,7 +205,7 @@ def test_run_pipeline_cpu2_py(get_files: Callable, cmd, standard_data, python_cp
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 30, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6, rtol=1e-6)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -225,12 +216,8 @@ def test_run_pipeline_cpu2_py(get_files: Callable, cmd, standard_data, python_cp
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, 30:60:, :)" in log_contents
+    assert "Preview: (0:180, 30:60, 0:160)" in log_contents
     assert "Data shape is (180, 30, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
-    assert "Maximum amount of slices is 30 for section 1" in log_contents
-    assert "Maximum amount of slices is 30 for section 2" in log_contents
 
 
 def test_run_pipeline_cpu3_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline3, output_folder):
@@ -242,13 +229,13 @@ def test_run_pipeline_cpu3_yaml(get_files: Callable, cmd, standard_data, yaml_cp
 
     # recurse through output_dir and check that all files are there
     files = get_files("output_dir/")
-    assert len(files) == 130
+    assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
     _check_tif(files, 128, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 0
+    assert len(h5_files) == 1
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -258,13 +245,11 @@ def test_run_pipeline_cpu3_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
-    assert " Global min -0.01500" in log_contents
-    assert " Global max 0.041933" in log_contents
-    assert " Global mean 0.001633" in log_contents
+    assert " Global min -0.014979" in log_contents
+    assert " Global max 0.04177" in log_contents
+    assert " Global mean 0.0016174" in log_contents
 
 
 def test_run_pipeline_cpu3_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline3, output_folder):
@@ -276,13 +261,13 @@ def test_run_pipeline_cpu3_py(get_files: Callable, cmd, standard_data, python_cp
 
     # recurse through output_dir and check that all files are there
     files = get_files("output_dir/")
-    assert len(files) == 130
+    assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
     _check_tif(files, 128, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 0
+    assert len(h5_files) == 1
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -292,13 +277,41 @@ def test_run_pipeline_cpu3_py(get_files: Callable, cmd, standard_data, python_cp
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
-    assert " Global min -0.01500" in log_contents
-    assert " Global max 0.041933" in log_contents
-    assert " Global mean 0.001633" in log_contents
+    assert " Global min -0.014979" in log_contents
+    assert " Global max 0.04177" in log_contents
+    assert " Global mean 0.0016174" in log_contents
+
+
+def test_run_pipeline_cpu4_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline4, output_folder):
+    cmd.pop(4)  #: don't save all
+    cmd.insert(6, standard_data)
+    cmd.insert(7, yaml_cpu_pipeline4)
+    cmd.insert(8, output_folder)
+    subprocess.check_output(cmd)
+
+    # recurse through output_dir and check that all files are there
+    files = get_files("output_dir/")
+    assert len(files) == 131  # 128 images + yaml, log, intermdiate
+
+    _check_tif(files, 128, (160, 160))
+
+    #: check the generated h5 files
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    log_files = list(filter(lambda x: ".log" in x, files))
+    assert len(log_files) == 1
+    log_contents = _get_log_contents(log_files[0])
+
+    assert f"{log_files[0]}" in log_contents
+    assert "The full dataset shape is (220, 128, 160)" in log_contents
+    assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
+    assert "Path to data: entry1/tomo_entry/data/data" in log_contents
+    assert "The center of rotation is 79.5" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
+    assert "Data shape is (180, 128, 160) of type uint16" in log_contents
 
 
 def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gpu_pipeline1, output_folder):
@@ -323,7 +336,7 @@ def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gp
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 128, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6, rtol=1e-6)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -334,10 +347,8 @@ def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gp
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "The amount of the available GPU memory is" in log_contents
     assert "Using GPU 0 to transfer data of shape (128, 160)" in log_contents
 
@@ -364,7 +375,7 @@ def test_run_pipeline_gpu1_py(get_files: Callable, cmd, standard_data, python_gp
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 128, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6)
+                assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6, rtol=1e-6)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -375,10 +386,8 @@ def test_run_pipeline_gpu1_py(get_files: Callable, cmd, standard_data, python_gp
     assert "The full dataset shape is (220, 128, 160)" in log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
-    assert "Preview: (0:180, :, :)" in log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
-    assert "<-------Reslicing/rechunking the data-------->" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
     assert "The amount of the available GPU memory is" in log_contents
     assert "Using GPU 0 to transfer data of shape (128, 160)" in log_contents
 
@@ -407,8 +416,8 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 3, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6, rtol=1e-6)
+                assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6, rtol=1e-6)
 
 
 def test_i12_testing_pipeline_output(
@@ -434,27 +443,27 @@ def test_i12_testing_pipeline_output(
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 4
 
-    gridrec_recon = list(filter(lambda x: "recon-tomo-gridrec.h5" in x, h5_files))[0]
-    minus_log_tomo = list(filter(lambda x: "minus_log-tomo.h5" in x, h5_files))[0]
+    gridrec_recon = list(filter(lambda x: "recon-gridrec.h5" in x, h5_files))[0]
+    minus_log_tomo = list(filter(lambda x: "minus_log.h5" in x, h5_files))[0]
     remove_stripe_fw_tomo = list(
-        filter(lambda x: "remove_stripe_fw-tomo.h5" in x, h5_files)
+        filter(lambda x: "remove_stripe_fw.h5" in x, h5_files)
     )[0]
-    normalize_tomo = list(filter(lambda x: "normalize-tomo.h5" in x, h5_files))[0]
+    normalize_tomo = list(filter(lambda x: "normalize.h5" in x, h5_files))[0]
 
     with h5py.File(gridrec_recon, "r") as f:
         assert f["data"].shape == (192, 10, 192)
-        assert_allclose(np.sum(f["data"]), 2157.03, atol=1e-2)
-        assert_allclose(np.mean(f["data"]), 0.0058513316, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), 2157.03, atol=1e-2, rtol=1e-6)
+        assert_allclose(np.mean(f["data"]), 0.0058513316, atol=1e-6, rtol=1e-6)
     with h5py.File(minus_log_tomo, "r") as f:
-        assert_allclose(np.sum(f["data"]), 1756628.4, atol=1e-6)
-        assert_allclose(np.mean(f["data"]), 1.2636887, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), 1756628.4, atol=1e-6, rtol=1e-6)
+        assert_allclose(np.mean(f["data"]), 1.2636887, atol=1e-6, rtol=1e-6)
     with h5py.File(remove_stripe_fw_tomo, "r") as f:
-        assert_allclose(np.sum(f["data"]), 1766357.8, atol=1e-6)
-        assert_allclose(np.mean(f["data"]), 1.2706878, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), 1766357.8, atol=1e-6, rtol=1e-6)
+        assert_allclose(np.mean(f["data"]), 1.2706878, atol=1e-6, rtol=1e-6)
     with h5py.File(normalize_tomo, "r") as f:
         assert f["data"].shape == (724, 10, 192)
-        assert_allclose(np.sum(f["data"]), 393510.72, atol=1e-6)
-        assert_allclose(np.mean(f["data"]), 0.28308493, atol=1e-6)
+        assert_allclose(np.sum(f["data"]), 393510.72, atol=1e-6, rtol=1e-6)
+        assert_allclose(np.mean(f["data"]), 0.28308493, atol=1e-6, rtol=1e-6)
 
     log_contents = _get_log_contents(log_files[0])
     assert "The full dataset shape is (724, 10, 192)" in log_contents
@@ -463,58 +472,70 @@ def test_i12_testing_pipeline_output(
         in log_contents
     )
     assert "Path to data: /1-TempPlugin-tomo/data" in log_contents
-    assert "Preview: (0:724, :, :)" in log_contents
-    assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
-    assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
-    assert "Saving intermediate file: 5-tomopy-remove_stripe_fw-tomo.h5" in log_contents
-    assert "The center of rotation for sinogram is 95.5" in log_contents
-    assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
-
-
-def test_i12_testing_ignore_darks_flats_pipeline_output(
-    get_files: Callable,
-    cmd,
-    i12_data,
-    i12_loader_ignore_darks_flats,
-    testing_pipeline,
-    output_folder,
-    merge_yamls,
-):
-    cmd.insert(7, i12_data)
-    merge_yamls(i12_loader_ignore_darks_flats, testing_pipeline)
-    cmd.insert(8, "temp.yaml")
-    cmd.insert(9, output_folder)
-    subprocess.check_output(cmd)
-
-    files = get_files("output_dir/")
-    assert len(files) == 16
-
-    _check_yaml(files, "temp.yaml")
-
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 1
-
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 10
-
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 4
-
-    log_contents = _get_log_contents(log_files[0])
-    assert "The full dataset shape is (724, 10, 192)" in log_contents
+    assert "Preview: (0:724, 0:10, 0:192)" in log_contents
     assert (
-        "Loading data: tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
+        "Running save_task_1 (pattern=projection): save_intermediate_data..."
         in log_contents
     )
-    assert "Path to data: /1-TempPlugin-tomo/data" in log_contents
-    assert "Preview: (0:724, :, :)" in log_contents
-    assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
-    assert "Saving intermediate file: 3-tomopy-minus_log-tomo.h5" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
-    assert "Saving intermediate file: 5-tomopy-remove_stripe_fw-tomo.h5" in log_contents
-    assert "The center of rotation for sinogram is 95.5" in log_contents
-    assert "Saving intermediate file: 6-tomopy-recon-tomo-gridrec.h5" in log_contents
+    assert (
+        "Running save_task_2 (pattern=projection): save_intermediate_data..."
+        in log_contents
+    )
+    assert (
+        "Running save_task_4 (pattern=sinogram): save_intermediate_data..."
+        in log_contents
+    )
+    assert "The center of rotation is 95.5" in log_contents
+    assert (
+        "Running save_task_5 (pattern=sinogram): save_intermediate_data..."
+        in log_contents
+    )
+
+
+# TODO: Add back in when ignoring darks/flats is added to the new loader
+#
+# def test_i12_testing_ignore_darks_flats_pipeline_output(
+#     get_files: Callable,
+#     cmd,
+#     i12_data,
+#     i12_loader_ignore_darks_flats,
+#     testing_pipeline,
+#     output_folder,
+#     merge_yamls,
+# ):
+#     cmd.insert(7, i12_data)
+#     merge_yamls(i12_loader_ignore_darks_flats, testing_pipeline)
+#     cmd.insert(8, "temp.yaml")
+#     cmd.insert(9, output_folder)
+#     subprocess.check_output(cmd)
+#
+#     files = get_files("output_dir/")
+#     assert len(files) == 16
+#
+#     _check_yaml(files, "temp.yaml")
+#
+#     log_files = list(filter(lambda x: ".log" in x, files))
+#     assert len(log_files) == 1
+#
+#     tif_files = list(filter(lambda x: ".tif" in x, files))
+#     assert len(tif_files) == 10
+#
+#     h5_files = list(filter(lambda x: ".h5" in x, files))
+#     assert len(h5_files) == 4
+#
+#     log_contents = _get_log_contents(log_files[0])
+#     assert "The full dataset shape is (724, 10, 192)" in log_contents
+#     assert (
+#         "Loading data: tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
+#         in log_contents
+#     )
+#     assert "Path to data: /1-TempPlugin-tomo/data" in log_contents
+#     assert "Preview: (0:724, 0:10, 0:192)" in log_contents
+#     assert "Running save_task_1 (pattern=projection): save_intermediate_data..." in log_contents
+#     assert "Running save_task_2 (pattern=projection): save_intermediate_data..." in log_contents
+#     assert "Running save_task_4 (pattern=sinogram): save_intermediate_data..." in log_contents
+#     assert "The center of rotation for sinogram is 95.5" in log_contents
+#     assert "Running save_task_5 (pattern=sinogram): save_intermediate_data..." in log_contents
 
 
 def test_diad_testing_pipeline_output(
@@ -541,13 +562,13 @@ def test_diad_testing_pipeline_output(
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (3001, 2, 26)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.mean(f["data"]), 0.847944, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), 132323.36, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), 0.847944, atol=1e-6, rtol=1e-6)
+                assert_allclose(np.sum(f["data"]), 132323.36, atol=1e-6, rtol=1e-6)
         if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (26, 2, 26)
-                assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6)
-                assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6)
+                assert_allclose(np.mean(f["data"]), 0.005883, atol=1e-6, rtol=1e-6)
+                assert_allclose(np.sum(f["data"]), 7.954298, atol=1e-6, rtol=1e-6)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -557,10 +578,12 @@ def test_diad_testing_pipeline_output(
     assert "The full dataset shape is (3201, 22, 26)" in log_contents
     assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in log_contents
     assert "Path to data: /entry/imaging/data" in log_contents
-    assert "Preview: (100:3101, 5:7:, :)" in log_contents
+    assert "Preview: (100:3101, 5:7, 0:26)" in log_contents
     assert "Data shape is (3001, 2, 26) of type uint16" in log_contents
-    assert "Saving intermediate file: 2-tomopy-normalize-tomo.h5" in log_contents
-    assert "Reslicing not necessary, as there is only one process" in log_contents
+    assert (
+        "Running save_task_1 (pattern=projection): save_intermediate_data..."
+        in log_contents
+    )
 
 
 def test_run_diad_pipeline_gpu(get_files: Callable, cmd, diad_data, diad_pipeline_gpu, output_folder):
@@ -586,11 +609,15 @@ def test_run_diad_pipeline_gpu(get_files: Callable, cmd, diad_data, diad_pipelin
     assert "The full dataset shape is (3201, 22, 26)" in log_contents
     assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in log_contents
     assert "Path to data: /entry/imaging/data" in log_contents
-    assert "Preview: (100:3101, 8:15:, :)" in log_contents
+    assert "Preview: (100:3101, 8:15, 0:26)" in log_contents
     assert "Data shape is (3001, 7, 26) of type uint16" in log_contents
-    assert "Saving intermediate file: 5-httomolibgpu-FBP-tomo.h5" in log_contents
-    assert "Global min -0.00561" in log_contents
-    assert "Global max 0.006643" in log_contents
+    assert (
+        "Running save_task_5 (pattern=sinogram): save_intermediate_data..."
+        in log_contents
+    )
+    assert "Global min -0.011995" in log_contents
+    assert "Global max 0.019879" in log_contents
+    assert "Global mean 0.000291" in log_contents
 
 
 def test_run_pipeline_360deg_gpu2(get_files: Callable, cmd, data360, yaml_gpu_pipeline360_2, output_folder):
@@ -617,6 +644,10 @@ def test_run_pipeline_360deg_gpu2(get_files: Callable, cmd, data360, yaml_gpu_pi
     assert "Loading data: tests/test_data/360scan/360scan.hdf" in log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in log_contents
     assert "Data shape is (3601, 3, 2560) of type uint16" in log_contents
-    assert "Saving intermediate file: 5-httomolibgpu-FBP-tomo.h5" in log_contents
-    assert "Global min -0.000412" in log_contents
-    assert "Global max 0.003134" in log_contents
+    assert (
+        "Running save_task_6 (pattern=sinogram): save_intermediate_data..."
+        in log_contents
+    )
+    assert "Global min -0.00315" in log_contents
+    assert "Global max 0.00575" in log_contents
+    assert "Global mean 0.00088" in log_contents

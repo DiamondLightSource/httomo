@@ -2,7 +2,7 @@
 Module for checking the validity of yaml files.
 """
 import os
-from typing import Any, Dict, Generator, Iterator, List, Optional, Tuple, TypeAlias
+from typing import Any, Dict, Iterator, List, Optional, TypeAlias
 
 import h5py
 import yaml
@@ -11,10 +11,12 @@ from pathlib import Path
 
 from httomo.utils import Colour
 from httomo.yaml_utils import get_packages_current_version
-from httomo.ui_layer import get_ref_split, get_valid_ref_ids, yaml_loader
-
-
-from . import __version__
+from httomo.ui_layer import (
+    get_regex_pattern,
+    get_ref_split,
+    get_valid_ref_str,
+    yaml_loader,
+)
 
 __all__ = [
     "sanity_check",
@@ -244,11 +246,16 @@ def check_id_has_side_out(conf: PipelineConfig) -> bool:
 
 
 def check_ref_id_valid(conf: PipelineConfig) -> bool:
-    """ Check reference id is matching a valid method id"""
+    """ Check reference str is matching a valid method id"""
+    pattern = get_regex_pattern()
     method_ids = [m.get("id") for m in conf if m.get("id")]
-    ref_ids = {k: v for m in conf for k, v in get_valid_ref_ids(m).items()}
-    for k, v in ref_ids.items():
-        (ref_id, side_str, ref_arg) = get_ref_split(v)
+    ref_strs = {
+        k: v
+        for m in conf
+        for k, v in get_valid_ref_str(m.get("parameters", dict())).items()
+    }
+    for k, v in ref_strs.items():
+        (ref_id, side_str, ref_arg) = get_ref_split(v, pattern)
         if ref_id not in method_ids:
             _print_with_colour(
                 f"The reference id: {ref_id} was not found to have a matching method id."
@@ -259,9 +266,14 @@ def check_ref_id_valid(conf: PipelineConfig) -> bool:
 
 def check_side_out_matches_ref_arg(conf: PipelineConfig) -> bool:
     """ Check reference name exists """
-    ref_ids = {k: v for m in conf for k, v in get_valid_ref_ids(m).items()}
-    for k, v in ref_ids.items():
-        (ref_id, side_str, ref_arg) = get_ref_split(v)
+    pattern = get_regex_pattern()
+    ref_strs = {
+        k: v
+        for m in conf
+        for k, v in get_valid_ref_str(m.get("parameters", dict())).items()
+    }
+    for k, v in ref_strs.items():
+        (ref_id, side_str, ref_arg) = get_ref_split(v, pattern)
         side_dicts = [
             m.get(side_str)
             for m in conf
@@ -322,7 +334,7 @@ def _get_template_yaml(conf: PipelineConfig, packages: List) -> List:
     passed.
     """
     parent_dir = os.path.dirname(os.path.abspath("__file__"))
-    templates_dir = os.path.join(parent_dir, "templates")
+    templates_dir = os.path.join(parent_dir, "yaml_templates")
     assert os.path.exists(templates_dir)
     return [
         os.path.join(
@@ -359,7 +371,7 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
     """
     Check that the modules, methods, and parameters in the `YAML_CONFIG` file
     are valid, and adhere to the same structure as in each corresponding
-    module in `httomo.templates`.
+    module in `httomo.yaml_templates`.
     """
     with open(yaml_file, "r") as f:
         conf_generator: Iterator[Any] = yaml.load_all(f, Loader=yaml.FullLoader)

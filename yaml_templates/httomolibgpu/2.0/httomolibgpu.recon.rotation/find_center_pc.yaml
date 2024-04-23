@@ -1,0 +1,10 @@
+- method: find_center_pc
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    proj1: auto
+    proj2: auto
+    tol: 0.5
+    rotc_guess: null
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation

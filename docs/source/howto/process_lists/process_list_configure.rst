@@ -27,7 +27,7 @@ For example, for tomographic processing, we can build the following process list
 
 .. dropdown:: A basic TomoPy full data processing pipeline
 
-    .. literalinclude:: ../../../../samples/pipeline_template_examples/01_basic_cpu_pipeline_tomo_standard.yaml
+    .. literalinclude:: ../../../../tests/samples/pipeline_template_examples/pipeline_cpu1.yaml
 
 In this process list the data will be loaded using the standard HTTomo loader to read `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`_ dataset. 
 Then the loaded data is normalised, the centre of rotation estimated and provided to the reconstruction. 

@@ -1,19 +1,24 @@
 import yaml
-from typing import Any, Dict, List, Protocol, TypeAlias
+from typing import Any, Dict, List, TypeAlias
 from importlib import import_module, util
 from pathlib import Path
 import os
 import re
 
-from mpi4py import MPI
+import h5py
 from mpi4py.MPI import Comm
+from httomo.darks_flats import DarksFlatsFileConfig
 
 from httomo.methods_database.query import MethodDatabaseRepository
+from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 
-from httomo.runner.backend_wrapper import make_backend_wrapper
-from httomo.runner.loader import Loader, make_loader
+from httomo.method_wrappers import make_method_wrapper
+from httomo.loaders import make_loader
+from httomo.runner.loader import LoaderInterface
 from httomo.runner.output_ref import OutputRef
+from httomo.transform_loader_params import parse_angles, parse_preview
+
 
 MethodConfig: TypeAlias = Dict[str, Any]
 PipelineConfig: TypeAlias = List[MethodConfig]
@@ -30,17 +35,18 @@ class UiLayer:
         tasks_file_path: Path,
         in_data_file_path: Path,
         comm: Comm,
+        repo=MethodDatabaseRepository(),
     ):
-        self.repo = MethodDatabaseRepository()
+        self.repo = repo
         self.tasks_file_path = tasks_file_path
         self.in_data_file = in_data_file_path
         self.comm = comm
 
         root, ext = os.path.splitext(self.tasks_file_path)
-        if ext in [".yaml", ".yaml".upper()]:
+        if ext.upper() in [".YAML", ".YML"]:
             # loading yaml file with tasks provided
             self.PipelineStageConfig = yaml_loader(self.tasks_file_path)
-        elif ext in [".py", ".py".upper()]:
+        elif ext.upper() == ".PY":
             # loading python file with tasks provided
             self.PipelineStageConfig = _python_tasks_loader(self.tasks_file_path)
         else:
@@ -49,176 +55,206 @@ class UiLayer:
             )
 
     def build_pipeline(self) -> Pipeline:
-        side_outputs_collect: list = []
-        save_result_collect: list = []
-        methods_list: list = []
-        for task_no, task_conf in enumerate(self.PipelineStageConfig):
-            if "loaders" in task_conf["module_path"]:
-                loader = self._initiate_loader(task_conf)
-            else:
-                if "parameters" not in task_conf:
-                    task_conf["parameters"] = {}
-                _append_save_res(task_conf, save_result_collect)
-                _append_side_outputs(task_no, task_conf, side_outputs_collect)
-                valid_refs = get_valid_ref_ids(task_conf)
-                for k, v in valid_refs.items():
-                    (ref_id, side_str, ref_arg) = get_ref_split(v)
-                    _save_side_reference(
-                        task_conf, side_outputs_collect, methods_list, k, ref_id, ref_arg
-                    )
-                self._append_methods_list(task_conf, methods_list)
-        return Pipeline(
-            loader=loader,
-            methods=methods_list,
-            save_results_set=save_result_collect,
-        )
+        loader = self._setup_loader()
 
-    def _initiate_loader(self, task_conf: MethodConfig) -> Loader:
-        """Unpack params and initiate a loader
+        # saves map {task_id -> method} map
+        methods_list: List[MethodWrapper] = []
+        method_id_map: Dict[str, MethodWrapper] = dict()
 
-        Parameters
-        ----------
-        task_conf
-            Dictionary containing method information
+        for i, task_conf in enumerate(self.PipelineStageConfig[1:]):
+            parameters = task_conf.get("parameters", dict())
+            valid_refs = get_valid_ref_str(parameters)
+            update_side_output_references(valid_refs, parameters, method_id_map)
+            self._append_methods_list(
+                i, task_conf, methods_list, parameters, method_id_map
+            )
+        return Pipeline(loader=loader, methods=methods_list)
 
-        Returns
-        -------
-        Instance of loader class with method details
-        """
-        task_conf["parameters"]["in_file"] = self.in_data_file
-        loader = make_loader(
-            self.repo,
-            task_conf["module_path"],
-            task_conf["method"],
-            self.comm,
-            **task_conf["parameters"],
-        )
-        return loader
-
-    def _append_methods_list(self, task_conf: MethodConfig, methods_list: List) -> None:
+    def _append_methods_list(
+        self,
+        i: int,
+        task_conf: MethodConfig,
+        methods_list: List,
+        parameters: dict,
+        method_id_map: Dict[str, MethodWrapper],
+    ) -> None:
         """Unpack params of a method and append to a list of methods
 
         Parameters
         ----------
+        i
+            item in pipeline config
         task_conf
-            Dictionary containing method parameters
+            dictionary containing method parameters
         methods_list
+        parameters
+            dictionary of parameters
+        method_id_map
+            map of methods and ids
         """
-        method = make_backend_wrapper(
-            self.repo,
-            task_conf["module_path"],
-            task_conf["method"],
-            self.comm,
-            task_conf["side_outputs"],
-            **task_conf["parameters"],
+        method = make_method_wrapper(
+            method_repository=self.repo,
+            module_path=task_conf["module_path"],
+            method_name=task_conf["method"],
+            comm=self.comm,
+            save_result=task_conf.get("save_result", None),
+            output_mapping=task_conf.get("side_outputs", dict()),
+            task_id=task_conf.get("id", f"task_{i + 1}"),
+            **parameters,
         )
+        if method.task_id in method_id_map:
+            raise ValueError(f"duplicate id {method.task_id} in pipeline")
+        method_id_map[method.task_id] = method
         methods_list.append(method)
 
+    def _setup_loader(self) -> LoaderInterface:
+        task_conf = self.PipelineStageConfig[0]
+        if "loaders" not in task_conf["module_path"]:
+            raise ValueError("Got pipeline with no loader (must be first method)")
+        parameters = task_conf.get("parameters", dict())
+        parameters["in_file"] = self.in_data_file
 
-def _append_save_res(task_conf: MethodConfig, save_result_collect: List) -> None:
-    """Appends the save result value inside method dictionary to a list
+        # the following will raise KeyError if not present
+        in_file = parameters["in_file"]
+        data_path = parameters["data_path"]
+        # these will have defaults if not given
+        image_key_path = parameters.get("image_key_path", None)
 
-    Parameters
-    ----------
-    task_conf
-        Dictionary containing method information
-    save_result_collect
-        List to collect method save result values
-    """
-    if "save_result" not in task_conf:
-        save_result_collect.append(False)
-    else:
-        save_result_collect.append(task_conf["save_result"])
+        darks: dict = parameters.get("darks", dict())
+        darks_file = darks.get("file", in_file)
+        darks_path = darks.get("data_path", data_path)
+        darks_image_key = darks.get("image_key_path", image_key_path)
 
+        flats: dict = parameters.get("flats", dict())
+        flats_file = flats.get("file", in_file)
+        flats_path = flats.get("data_path", data_path)
+        flats_image_key = flats.get("image_key_path", image_key_path)
 
-def _append_side_outputs(
-    task_no: int, task_conf: MethodConfig, side_outputs_collect: List
-) -> None:
-    """Saves [task_no, id, side_outputs] for tasks with side_outputs
+        angles = parse_angles(parameters["rotation_angles"])
 
-    Parameters
-    ----------
-    task_no
-        number of task in pipeline
-    task_conf
-        Dictionary containing method information
-    side_outputs_collect
-        side output list
-    """
-    if "side_outputs" not in task_conf:
-        task_conf["side_outputs"] = {}
-    else:
-        side_outputs_collect.append(
-            [task_no, task_conf["id"], task_conf["side_outputs"]]
+        with h5py.File(in_file, "r") as f:
+            data_shape = f[data_path].shape
+        preview = parse_preview(parameters.get("preview", None), data_shape)
+
+        loader = make_loader(
+            repo=self.repo,
+            module_path=task_conf["module_path"],
+            method_name=task_conf["method"],
+            in_file=Path(in_file),
+            data_path=data_path,
+            image_key_path=image_key_path,
+            angles=angles,
+            darks=DarksFlatsFileConfig(
+                file=darks_file, data_path=darks_path, image_key_path=darks_image_key
+            ),
+            flats=DarksFlatsFileConfig(
+                file=flats_file, data_path=flats_path, image_key_path=flats_image_key
+            ),
+            preview=preview,
+            comm=self.comm,
         )
 
+        return loader
 
-def get_valid_ref_ids(task_conf: MethodConfig) -> Dict[str, str]:
-    """
+
+def get_valid_ref_str(parameters: Dict[str, Any]) -> Dict[str, str]:
+    """Find valid reference strings inside dictionary
+
     Parameters
     ----------
-    task_conf
-        Dictionary containing method information
+    parameters
+        Dictionary containing parameter information
     Returns
     -------
     Dictionary of {parameter names: valid reference strings}
     """
     valid_refs = {
         param_name: param_val
-        for param_name, param_val in task_conf["parameters"].items()
+        for param_name, param_val in parameters.items()
         if (isinstance(param_val, str)) and (param_val is not None)
         if param_val.find("${{") != -1
     }
     return valid_refs
 
 
-def get_ref_split(ref_str) -> List:
+def update_side_output_references(
+    valid_refs: Dict[str, Any],
+    parameters: Dict[str, Any],
+    method_id_map: Dict[str, MethodWrapper],
+) -> None:
+    """Iterate over valid reference strings, split, check, set
+
+    Parameters
+    ----------
+    valid_refs
+        dict of valid reference id strings {param_name: ref id str}
+    parameters
+        dict of all parameters
+    method_id_map
+        map of methods and ids
+    """
+    pattern = get_regex_pattern()
+    # check if there is a reference to side_outputs to cross-link
+    for param_name, param_value in valid_refs.items():
+        (ref_id, side_str, ref_arg) = get_ref_split(param_value, pattern)
+        if ref_id is None:
+            continue
+        method = method_id_map.get(ref_id, None)
+        check_valid_ref_id(side_str, ref_id, param_value, method)
+        parameters[param_name] = OutputRef(method, ref_arg)
+
+def get_regex_pattern() -> re.Pattern:
+    """Return the reference string regex pattern to search for
+    Returns
+    -------
+    Regex pattern specification
+    """
+    return re.compile(r"^\$\{\{([A-Za-z0-9_.]+)\}\}$")
+
+
+def get_ref_split(ref_str: str, pattern: re.Pattern) -> List:
     """Split the given reference string
 
     Parameters
     ----------
     ref_str
         reference string
+    pattern
+        regex pattern specification
 
     Returns
     -------
     The internal reference expression split by '.'
     """
-    result_extr = re.search(r"\{([A-Za-z0-9_.]+)\}", ref_str)
+    result_extr = pattern.search(ref_str)
+    if result_extr is None:
+        return [None] * 3
     internal_expression = result_extr.group(1)
-    return internal_expression.split(".")
+    return internal_expression.split(".", 3)
 
 
-def _save_side_reference(
-    task_conf: MethodConfig,
-    side_outputs_collect: List,
-    methods_list: List,
-    key: str,
-    ref_id: str,
-    ref_arg: str,
+def check_valid_ref_id(
+    side_str: str, ref_id: str, v: str, method: MethodWrapper
 ) -> None:
-    """Find the reference id in "side_outputs_collect", if it matches, then save
+    """Check the reference values are valid
 
     Parameters
     ----------
-    task_conf
-        Dictionary containing method parameters
-    side_outputs_collect
-        List of side (additional) outputs
-    methods_list
-    key:
-        Parameter name
-    ref_id:
-        Side output reference id
-    ref_arg:
-        Side output reference str
+    side_str
+        side output string
+    ref_id
+        reference id
+    v
+        ref value
+    method
+        method found from ref
     """
-    for items in side_outputs_collect:
-        if items[1] == ref_id:
-            # If the side output reference is a match
-            task_conf["parameters"][key] = OutputRef(
-                methods_list[items[0] - 1], ref_arg
-            )
+    if side_str != "side_outputs":
+        raise ValueError(
+            "Config error: output references must be of the form <id>.side_outputs.<name>"
+        )
+    if method is None:
+        raise ValueError(f"could not find method referenced by {ref_id} in {v}")
 
 
 def yaml_loader(
@@ -244,7 +280,9 @@ def yaml_loader(
 
 def _python_tasks_loader(file_path: Path) -> list:
     module_spec = util.spec_from_file_location("methods_to_list", file_path)
+    assert module_spec is not None, "error reading module spec"
     foo = util.module_from_spec(module_spec)
+    assert module_spec.loader is not None, "module spec has no loader"
     module_spec.loader.exec_module(foo)
     tasks_list = list(foo.methods_to_list())
     return tasks_list
