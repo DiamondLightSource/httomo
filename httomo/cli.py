@@ -61,13 +61,6 @@ def run(
     save_all: bool,
     reslice_dir: Union[Path, None],
 ):
-    """Run a pipeline defined in YAML on input data."""
-    if yaml_config.suffix == ".yaml":
-        try:
-            assert _check_yaml(yaml_config, in_data_file)
-        except:
-            log.exception('')
-
     # Define httomo.globals.run_out_dir in all MPI processes
     httomo.globals.run_out_dir = out_dir.joinpath(
             f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
