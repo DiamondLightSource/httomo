@@ -6,7 +6,7 @@ import numpy as np
 from mpi4py import MPI
 from numpy import ndarray
 
-from httomo.utils import Colour, log_once
+from httomo.utils import log_once
 
 
 def load_data(
@@ -40,9 +40,9 @@ def load_data(
     Tuple[ndarray, int]
         The numpy array that has been loaded and the start index in the global shape.
     """
-    log_once(f"Loading data: {file}", colour=Colour.LYELLOW, comm=comm, level=1)
-    log_once(f"Path to data: {path}", colour=Colour.LYELLOW, comm=comm, level=1)
-    log_once(f"Preview: ({preview})", colour=Colour.LYELLOW, comm=comm, level=1)
+    log_once(f"Loading data: {file}", level=1)
+    log_once(f"Path to data: {path}", level=1)
+    log_once(f"Preview: ({preview})", level=1)
     if dim == 1:
         return read_through_dim1(file, path, preview=preview, pad=pad, comm=comm)
     elif dim == 2:

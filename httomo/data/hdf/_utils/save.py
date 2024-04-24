@@ -4,7 +4,7 @@ import numpy
 from mpi4py.MPI import Comm
 
 from httomo.data.hdf._utils.chunk import save_dataset
-from httomo.utils import Colour, log_once
+from httomo.utils import log_once
 
 
 def intermediate_dataset(
@@ -63,9 +63,7 @@ def intermediate_dataset(
     else:
         filename = f"{filename}.h5"
 
-    log_once(
-        f"Saving intermediate file: {filename}", comm, colour=Colour.LYELLOW, level=1
-    )
+    log_once(f"Saving intermediate file: {filename}", level=1)
     save_dataset(
         run_out_dir,
         filename,

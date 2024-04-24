@@ -1,9 +1,8 @@
 from typing import Iterator, List, Optional
 
-import mpi4py
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
-from httomo.utils import Colour, Pattern, log_once
+from httomo.utils import Pattern, log_once
 from httomo.runner.method_wrapper import MethodWrapper
 
 
@@ -115,8 +114,6 @@ def _finalize_patterns(
     if len(sections) > 0 and sections[0].pattern == Pattern.all:
         log_once(
             "All pipeline sections support all patterns: choosing projection",
-            mpi4py.MPI.COMM_WORLD,
-            Colour.YELLOW,
             level=2,
         )
         for s in sections:

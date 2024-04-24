@@ -13,7 +13,7 @@ from httomo.runner.methods_repository_interface import (
     MethodRepository,
 )
 from httomo.runner.output_ref import OutputRef
-from httomo.utils import catch_gputime, catchtime, gpu_enabled, log_rank, xp
+from httomo.utils import catch_gputime, catchtime, gpu_enabled, log_once, xp
 
 
 import numpy as np
@@ -334,7 +334,7 @@ class GenericMethodWrapper(MethodWrapper):
 
         xp.cuda.Device(self._gpu_id).use()
         gpulog_str = f"Using GPU {self._gpu_id} to transfer data of shape {xp.shape(block.data[0])}"
-        log_rank(gpulog_str, comm=self.comm)
+        log_once(gpulog_str)
         gpumem_cleanup()
         with catchtime() as t:
             block.to_gpu()

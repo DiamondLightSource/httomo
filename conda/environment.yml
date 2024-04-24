@@ -12,6 +12,7 @@ dependencies:
   - conda-forge::cudatoolkit
   - conda-forge::h5py=*=*mpi_openmpi*
   - conda-forge::hdf5plugin
+  - conda-forge::loguru
   - conda-forge::mpi4py
   - conda-forge::pyyaml
   - conda-forge::numpy<=1.25
