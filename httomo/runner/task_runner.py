@@ -1,4 +1,5 @@
 from itertools import islice
+import logging
 import time
 from typing import Any, Dict, Literal, Optional, List, Union
 import os
@@ -83,7 +84,7 @@ class TaskRunner:
 
         self._log_pipeline(
             f"Maximum amount of slices is {section.max_slices} for section {section_index}",
-            level=1,
+            level=logging.DEBUG,
         )
 
         splitter = BlockSplitter(self.source, section.max_slices)
@@ -149,7 +150,7 @@ class TaskRunner:
             block = self._execute_method(method, block)
         return block
 
-    def _log_pipeline(self, str: str, level: int = 0):
+    def _log_pipeline(self, str: str, level: int = logging.INFO):
         log_once(str, level=level)
 
     def _prepare(self):
@@ -224,7 +225,7 @@ class TaskRunner:
     def _log_task_start(self, id: str, pattern: Pattern, name: str) -> int:
         log_once(
             f"Running {id} (pattern={pattern.name}): {name}...",
-            level=0,
+            level=logging.INFO,
         )
         return time.perf_counter_ns()
 
@@ -285,7 +286,7 @@ class TaskRunner:
             available_memory = min(available_memory, self._memory_limit_bytes)
             log_once(
                 f"The memory has been limited to {available_memory / (1024**3):4.2f} GB",
-                level=1,
+                level=logging.DEBUG,
             )
 
         max_slices_methods = [max_slices] * len(section)

@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -95,7 +96,7 @@ def standard_tomo(
     if comm.rank == 0:
         log_once(
             f"The full dataset shape is {shape}",
-            level=1,
+            level=logging.DEBUG,
         )
 
     # Get indices in data which contain projections
