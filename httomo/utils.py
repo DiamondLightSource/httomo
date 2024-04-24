@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from enum import Enum
 from time import perf_counter_ns
@@ -46,7 +47,7 @@ class Colour:
     BACKG_RED = "\x1b[6;37;41m"
 
 
-def log_once(output: Any, level=0) -> None:
+def log_once(output: Any, level: int = logging.INFO) -> None:
     """
     Log output to console and log file if the process is rank zero.
 
@@ -55,7 +56,8 @@ def log_once(output: Any, level=0) -> None:
     output : Any
         The item to be printed.
     level : int, optional
-        The level of the log message. 0 is info, 1 is debug, 2 is warning.
+        The level of the log message. See
+        https://docs.python.org/3/library/logging.html#logging-levels.
     """
     if mpiutil.rank == 0:
         if isinstance(output, list):
@@ -63,9 +65,9 @@ def log_once(output: Any, level=0) -> None:
                 [f"{out}" for out in output]
             )
 
-        if level == 1:
+        if level == logging.DEBUG:
             logger.debug(output)
-        elif level == 2:
+        elif level == logging.WARNING:
             logger.warning(output)
         else:
             logger.info(output)

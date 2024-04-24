@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import numpy
@@ -63,7 +64,7 @@ def intermediate_dataset(
     else:
         filename = f"{filename}.h5"
 
-    log_once(f"Saving intermediate file: {filename}", level=1)
+    log_once(f"Saving intermediate file: {filename}", level=logging.DEBUG)
     save_dataset(
         run_out_dir,
         filename,

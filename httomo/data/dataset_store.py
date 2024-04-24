@@ -1,3 +1,4 @@
+import logging
 from os import PathLike
 from pathlib import Path
 import time
@@ -236,7 +237,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         if bool(recvBuffer[0]) is True:
             log_once(
                 "Chunk does not fit in memory - using a file-based store",
-                level=2,
+                level=logging.WARNING,
             )
             # we create a full file dataset, i.e. file-based,
             # with the full global shape in it

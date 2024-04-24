@@ -1,3 +1,4 @@
+import logging
 from typing import Iterator, List, Optional
 
 from httomo.runner.output_ref import OutputRef
@@ -114,7 +115,7 @@ def _finalize_patterns(
     if len(sections) > 0 and sections[0].pattern == Pattern.all:
         log_once(
             "All pipeline sections support all patterns: choosing projection",
-            level=2,
+            level=logging.WARNING,
         )
         for s in sections:
             s.pattern = default_pattern

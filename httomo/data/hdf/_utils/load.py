@@ -1,3 +1,4 @@
+import logging
 import math
 from typing import Dict, List, Tuple, Optional, Union
 
@@ -40,9 +41,9 @@ def load_data(
     Tuple[ndarray, int]
         The numpy array that has been loaded and the start index in the global shape.
     """
-    log_once(f"Loading data: {file}", level=1)
-    log_once(f"Path to data: {path}", level=1)
-    log_once(f"Preview: ({preview})", level=1)
+    log_once(f"Loading data: {file}", level=logging.DEBUG)
+    log_once(f"Path to data: {path}", level=logging.DEBUG)
+    log_once(f"Preview: ({preview})", level=logging.DEBUG)
     if dim == 1:
         return read_through_dim1(file, path, preview=preview, pad=pad, comm=comm)
     elif dim == 2:

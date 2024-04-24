@@ -1,3 +1,4 @@
+import logging
 from os import PathLike
 from pathlib import Path
 from typing import Optional, Tuple
@@ -38,14 +39,14 @@ def reslice(
     """
     log_once(
         "<-------Reslicing/rechunking the data-------->",
-        level=1,
+        level=logging.DEBUG,
     )
 
     # No need to reclice anything if there is only one process
     if mpiutil.size == 1:
         log_once(
             "Reslicing not necessary, as there is only one process",
-            level=1,
+            level=logging.DEBUG,
         )
         return data, next_slice_dim, 0
 
@@ -116,7 +117,7 @@ def reslice_filebased(
     
     log_once(
         "<-------Reslicing/rechunking the data-------->",
-        level=1,
+        level=logging.DEBUG,
     )
     # Pass the current slicing dim so then data can be gathered and assembled
     # correctly, and the new chunk shape to save the data in an hdf5 file with
@@ -144,7 +145,7 @@ def single_sino_reslice(
     if mpiutil.size == 1:
         log_once(
             "Reslicing for single sinogram not necessary, as there is only one process",
-            level=1,
+            level=logging.DEBUG,
         )
         return data[:, idx, :]
 
