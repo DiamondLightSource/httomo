@@ -1,16 +1,8 @@
 import logging
 from pathlib import Path
-import os
-from typing import Optional
 
-def setup_logger(out_dir: Optional[os.PathLike]):
-    if out_dir is None:
-        raise ValueError("out_dir has not been set")
-    out_path = Path(out_dir)
-    
-    # Create timestamped output directory
-    Path.mkdir(out_path, exist_ok=True)
 
+def setup_logger(out_path: Path):
     # Create empty `user.log` file
     user_log_path = out_path / "user.log"
     Path.touch(user_log_path)
