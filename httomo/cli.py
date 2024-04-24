@@ -126,8 +126,11 @@ def run(
     )
     comm = MPI.COMM_WORLD
     if comm.rank == 0:
+        # Create timestamped output directory
+        Path.mkdir(httomo.globals.run_out_dir, exist_ok=True)
+
         # Setup global logger object
-        httomo.globals.logger = setup_logger(httomo.globals.run_out_dir)
+        httomo.globals.logger = setup_logger(Path(httomo.globals.run_out_dir))
 
         # Copy YAML pipeline file to output directory
         copy(yaml_config, httomo.globals.run_out_dir)
