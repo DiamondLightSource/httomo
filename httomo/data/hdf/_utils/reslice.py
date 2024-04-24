@@ -8,7 +8,7 @@ from mpi4py.MPI import Comm
 
 from httomo.data import mpiutil
 from httomo.data.hdf._utils import chunk, load
-from httomo.utils import Colour, log_once
+from httomo.utils import log_once
 
 
 def reslice(
@@ -37,9 +37,7 @@ def reslice(
         now sliced, and the starting index in slicing dimension for the current process.
     """
     log_once(
-        f"<-------Reslicing/rechunking the data-------->",
-        comm,
-        colour=Colour.BLUE,
+        "<-------Reslicing/rechunking the data-------->",
         level=1,
     )
 
@@ -47,8 +45,6 @@ def reslice(
     if mpiutil.size == 1:
         log_once(
             "Reslicing not necessary, as there is only one process",
-            comm=comm,
-            colour=Colour.BLUE,
             level=1,
         )
         return data, next_slice_dim, 0
@@ -119,9 +115,7 @@ def reslice_filebased(
     chunks_data[next_slice_dim - 1] = slices_no_in_chunks
     
     log_once(
-        f"<-------Reslicing/rechunking the data-------->",
-        comm,
-        colour=Colour.BLUE,
+        "<-------Reslicing/rechunking the data-------->",
         level=1,
     )
     # Pass the current slicing dim so then data can be gathered and assembled
@@ -150,8 +144,6 @@ def single_sino_reslice(
     if mpiutil.size == 1:
         log_once(
             "Reslicing for single sinogram not necessary, as there is only one process",
-            comm=mpiutil.comm,
-            colour=Colour.BLUE,
             level=1,
         )
         return data[:, idx, :]

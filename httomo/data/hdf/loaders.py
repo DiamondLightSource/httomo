@@ -8,7 +8,7 @@ from mpi4py.MPI import Comm
 from numpy import arange, asarray, deg2rad, linspace, ndarray
 
 from httomo.data.hdf._utils import load
-from httomo.utils import Colour, _parse_preview, log_once, log_rank
+from httomo.utils import _parse_preview, log_once, log_rank
 
 
 __all__ = [
@@ -95,8 +95,6 @@ def standard_tomo(
     if comm.rank == 0:
         log_once(
             f"The full dataset shape is {shape}",
-            comm=comm,
-            colour=Colour.LYELLOW,
             level=1,
         )
 
