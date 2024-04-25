@@ -84,6 +84,12 @@ class TaskRunner:
             f"Section {section_index} (pattern={section.methods[0].pattern.name})",
             level=logging.INFO,
         )
+        methods_info = [
+            f"    {method.method_name} ({method.package_name})\n"
+            for method in section.methods
+        ]
+        methods_info[-1] = methods_info[-1].rstrip("\n")
+        self._log_pipeline(methods_info, level=logging.INFO)
 
         slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
         self.determine_max_slices(section, slicing_dim_section)
