@@ -25,6 +25,7 @@ from httomo.utils import (
     catchtime,
     log_exception,
     log_once,
+    log_rank,
 )
 import numpy as np
 
@@ -281,7 +282,7 @@ class TaskRunner:
         memory_str = (
             f"The amount of the available GPU memory is {available_memory_in_GB} GB"
         )
-        log_once(memory_str)
+        log_rank(memory_str, comm=self.comm)
         if self._memory_limit_bytes != 0:
             available_memory = min(available_memory, self._memory_limit_bytes)
             log_once(
