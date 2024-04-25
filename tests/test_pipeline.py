@@ -362,7 +362,7 @@ def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gp
     assert "Preview: (0:180, 0:128, 0:160)" in verbose_log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
     assert "The amount of the available GPU memory is" in verbose_log_contents
-    assert "Using GPU 0 to transfer data of shape (128, 160)" in verbose_log_contents
+    assert "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
 
 
 def test_run_pipeline_gpu1_py(get_files: Callable, cmd, standard_data, python_gpu_pipeline1, output_folder):
@@ -401,7 +401,7 @@ def test_run_pipeline_gpu1_py(get_files: Callable, cmd, standard_data, python_gp
     assert "Preview: (0:180, 0:128, 0:160)" in verbose_log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
     assert "The amount of the available GPU memory is" in verbose_log_contents
-    assert "Using GPU 0 to transfer data of shape (128, 160)" in verbose_log_contents
+    assert "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
 
 
 def test_tomo_standard_testing_pipeline_output_with_save_all(
