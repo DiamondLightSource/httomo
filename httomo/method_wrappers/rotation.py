@@ -181,7 +181,7 @@ class RotationWrapper(GenericMethodWrapper):
         if self.comm.size > 1:
             res = self.comm.bcast(res, root=0)
 
-        cor_str = f"The center of rotation is {res}"
+        cor_str = f"    The center of rotation is {res}"
         log_once(cor_str)
         return self._process_return_type(res, block)
 
