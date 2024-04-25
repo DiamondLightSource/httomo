@@ -190,9 +190,6 @@ class TaskRunner:
     def _execute_method(
         self, method: MethodWrapper, block: DataSetBlock
     ) -> DataSetBlock:
-        start_time = self._log_task_start(
-            method.task_id, method.pattern, method.method_name
-        )
         start = time.perf_counter_ns()
         block = method.execute(block)
         if block.is_last_in_chunk:
@@ -212,13 +209,6 @@ class TaskRunner:
                 method.gpu_time.host2device,
                 method.gpu_time.device2host,
             )
-        self._log_task_end(
-            method.task_id,
-            start_time,
-            method.pattern,
-            method.method_name,
-            method.package_name,
-        )
         return block
 
     def append_side_outputs(self, side_outputs: Dict[str, Any]):
