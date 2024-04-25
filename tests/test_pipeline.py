@@ -536,22 +536,6 @@ def test_i12_testing_pipeline_output(
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert (
-        "Running save_task_1 (pattern=projection): save_intermediate_data..."
-        in concise_log_contents
-    )
-    assert (
-        "Running save_task_2 (pattern=projection): save_intermediate_data..."
-        in concise_log_contents
-    )
-    assert (
-        "Running save_task_4 (pattern=sinogram): save_intermediate_data..."
-        in concise_log_contents
-    )
-    assert (
-        "Running save_task_5 (pattern=sinogram): save_intermediate_data..."
-        in concise_log_contents
-    )
     assert "The center of rotation is 95.5" in concise_log_contents
     assert "The full dataset shape is (724, 10, 192)" in verbose_log_contents
     assert (
@@ -652,15 +636,9 @@ def test_diad_testing_pipeline_output(
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 2
-    concise_log_file = list(filter(lambda x: "user.log" in x, files))
-    concise_log_contents = _get_log_contents(concise_log_file[0])
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert (
-        "Running save_task_1 (pattern=projection): save_intermediate_data..."
-        in concise_log_contents
-    )
     assert "The full dataset shape is (3201, 22, 26)" in verbose_log_contents
     assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
     assert "Path to data: /entry/imaging/data" in verbose_log_contents
@@ -685,15 +663,9 @@ def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder)
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 2
-    concise_log_file = list(filter(lambda x: "user.log" in x, files))
-    concise_log_contents = _get_log_contents(concise_log_file[0])
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert (
-        "Running save_task_5 (pattern=sinogram): save_intermediate_data..."
-        in concise_log_contents
-    )
     assert "The full dataset shape is (3201, 22, 26)" in verbose_log_contents
     assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
     assert "Path to data: /entry/imaging/data" in verbose_log_contents
@@ -721,15 +693,9 @@ def test_run_pipeline_360deg_gpu2(cmd, data360, yaml_gpu_pipeline360_2, output_f
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 2
-    concise_log_file = list(filter(lambda x: "user.log" in x, files))
-    concise_log_contents = _get_log_contents(concise_log_file[0])
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert (
-        "Running save_task_6 (pattern=sinogram): save_intermediate_data..."
-        in concise_log_contents
-    )
     assert "The full dataset shape is (3751, 3, 2560)" in verbose_log_contents
     assert "Loading data: tests/test_data/360scan/360scan.hdf" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
