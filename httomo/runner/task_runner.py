@@ -80,6 +80,11 @@ class TaskRunner:
         assert self.source is not None, "Dataset has not been loaded yet"
         assert self.sink is not None, "Sink setup failed"
 
+        self._log_pipeline(
+            f"Section {section_index} (pattern={section.methods[0].pattern.name})",
+            level=logging.INFO,
+        )
+
         slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
         self.determine_max_slices(section, slicing_dim_section)
 
