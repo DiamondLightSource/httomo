@@ -1,3 +1,4 @@
+import logging
 import weakref
 from pathlib import Path
 from typing import Literal, Optional, Tuple
@@ -214,12 +215,15 @@ class StandardTomoLoader(DataSetSource):
     def _log_info(self) -> None:
         log_once(
             f"The full dataset shape is {self._data.shape}",
+            level=logging.DEBUG,
         )
         log_once(
             f"Loading data: {self._in_file}",
+            level=logging.DEBUG,
         )
         log_once(
             f"Path to data: {self._data_path}",
+            level=logging.DEBUG,
         )
         log_once(
             (
@@ -229,9 +233,11 @@ class StandardTomoLoader(DataSetSource):
                 f"{self._preview.config.detector_x.start}:{self._preview.config.detector_x.stop}"
                 ")"
             ),
+            level=logging.DEBUG,
         )
         log_once(
             f"Data shape is {self._global_shape} of type {self._data.dtype}",
+            level=logging.DEBUG,
         )
 
 

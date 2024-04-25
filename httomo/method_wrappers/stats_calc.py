@@ -1,7 +1,7 @@
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import catchtime, log_once, xp, gpu_enabled
+from httomo.utils import catchtime, log_rank, xp, gpu_enabled
 
 
 from mpi4py.MPI import Comm
@@ -76,7 +76,7 @@ class StatsCalcWrapper(GenericMethodWrapper):
         if input_block.is_last_in_chunk:
             glob_stats = self._accumulate_chunks()
             stats_str = f"Global min {glob_stats[0]}, Global max {glob_stats[1]}, Global mean {glob_stats[2]}"
-            log_once(stats_str)
+            log_rank(stats_str, comm=self.comm)
             self._side_output["glob_stats"] = glob_stats
 
         return input_block
