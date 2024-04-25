@@ -151,8 +151,8 @@ class TaskRunner:
             block = self._execute_method(method, block)
         return block
 
-    def _log_pipeline(self, str: Any, level: int = logging.INFO):
-        log_once(str, level=level)
+    def _log_pipeline(self, msg: Any, level: int = logging.INFO):
+        log_once(msg, level=level)
 
     def _prepare(self):
         self._log_pipeline(
