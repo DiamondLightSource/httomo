@@ -101,7 +101,8 @@ class TaskRunner:
 
         splitter = BlockSplitter(self.source, section.max_slices)
         start_source = time.perf_counter_ns()
-        for block in splitter:
+        no_of_blocks = len(splitter)
+        for idx, block in enumerate(splitter):
             end_source = time.perf_counter_ns()
             if self.monitor is not None:
                 self.monitor.report_source_block(
@@ -115,6 +116,10 @@ class TaskRunner:
                 )
 
             block = self._execute_section_block(section, block)
+            log_rank(
+                f"    Completed processing block {idx + 1} of {no_of_blocks}",
+                comm=self.comm,
+            )
 
             start_sink = time.perf_counter_ns()
             self.sink.write_block(block)
@@ -131,6 +136,11 @@ class TaskRunner:
                 )
             gpumem_cleanup()
             start_source = time.perf_counter_ns()
+
+        self._log_pipeline(
+            "    Completed processing last block",
+            level=logging.INFO,
+        )
 
     def _setup_source_sink(self, section: Section):
         assert self.source is not None, "Dataset has not been loaded yet"
