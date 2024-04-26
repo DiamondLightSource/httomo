@@ -13,4 +13,4 @@ def setup_logger(out_path: Path):
     # Concise logs written to file
     logger.add(sink=concise_logfile_path, level="INFO", colorize=False, format="{message}")
     # Verbose logs written to file
-    logger.add(sink=verbose_logfile_path, level="DEBUG", colorize=False)
+    logger.add(sink=verbose_logfile_path, level="DEBUG", colorize=False, enqueue=True)
