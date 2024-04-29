@@ -7,7 +7,8 @@ channels:
 dependencies:
   - python<=3.10
   - numpy
-  - httomolibgpu==2.0 
+  - tomopy==1.15
+  - httomolibgpu==2.0
   - sphinx
   - sphinx-book-theme
   - nbsphinx

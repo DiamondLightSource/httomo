@@ -13,17 +13,13 @@
     overlap: overlap
     side: side
     overlap_position: overlap_position
-- method: write_center
+- method: find_center_pc
   module_path: tomopy.recon.rotation
   parameters:
-    dpath: tmp/center
-    cen_range: null
-    ind: null
-    mask: false
-    ratio: 1.0
-    sinogram_order: false
-    algorithm: gridrec
-    filter_name: parzen
+    proj1: REQUIRED
+    proj2: REQUIRED
+    tol: 0.5
+    rotc_guess: null
 - method: find_center_vo
   module_path: tomopy.recon.rotation
   parameters:
@@ -37,10 +33,14 @@
   id: centering
   side_outputs:
     cor: centre_of_rotation
-- method: find_center_pc
+- method: write_center
   module_path: tomopy.recon.rotation
   parameters:
-    proj1: REQUIRED
-    proj2: REQUIRED
-    tol: 0.5
-    rotc_guess: null
+    dpath: tmp/center
+    cen_range: null
+    ind: null
+    mask: false
+    ratio: 1.0
+    sinogram_order: false
+    algorithm: gridrec
+    filter_name: parzen

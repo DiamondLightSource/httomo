@@ -1,12 +1,12 @@
-- method: remove_outlier
-  module_path: httomolibgpu.misc.corr
-  parameters:
-    kernel_size: 3
-    axis: auto
-    dif: 0.1
 - method: median_filter
   module_path: httomolibgpu.misc.corr
   parameters:
     kernel_size: 3
     axis: auto
     dif: 0.0
+- method: remove_outlier
+  module_path: httomolibgpu.misc.corr
+  parameters:
+    kernel_size: 3
+    axis: auto
+    dif: 0.1
