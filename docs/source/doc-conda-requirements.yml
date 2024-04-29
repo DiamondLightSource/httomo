@@ -2,7 +2,8 @@ name: httomo-docs
 channels:
   - conda-forge
   - defaults
-  - httomo  
+  - httomo
+  - rapidsai
 dependencies:
   - python<=3.10
   - numpy
