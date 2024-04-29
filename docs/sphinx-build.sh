@@ -32,7 +32,8 @@ mkdir $DIR/build/
 mkdir $DIR/build/yaml_templates
 
 cd $DIR/../yaml_templates/
-python -m yaml_templates_generator -m $DIR/../httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o $DIR/build/yaml_templates/
+python -m yaml_templates_generator -m $DIR/../httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o $DIR/build/yaml_templates/httomolibgpu
+python -m yaml_templates_generator -m $DIR/../httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o $DIR/build/yaml_templates/httomolib
 cd $DIR/
 
 # Append yaml link to rst files

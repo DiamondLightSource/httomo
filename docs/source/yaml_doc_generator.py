@@ -155,12 +155,10 @@ if __name__ == "__main__":
     Append the yaml information to the documentation pages.
     """
     doc_source_dir = os.path.dirname(os.path.abspath(__file__))
-    path_to_templates = doc_source_dir + "/../../yaml_templates/"
+    path_to_templates = doc_source_dir + "/../build/yaml_templates/"
     for root, dirs, files in os.walk(path_to_templates, topdown=True):
         dirs[:] = [d for d in dirs]
         files[:] = [fi for fi in files if ".yaml" in fi]
-        # Don't include the module list on the documentation pages
-        files[:] = [fi for fi in files if "modules" not in fi]
         if files:
             add_function_summary(doc_source_dir, root, files)
             save_all_yaml_functions(root, files)
