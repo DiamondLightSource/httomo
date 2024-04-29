@@ -32,6 +32,21 @@ def main():
 
 @main.command()
 @click.argument(
+    "yaml_config", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
+@click.argument(
+    "in_data_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=False, default=None,
+)
+def check(yaml_config: Path, in_data_file: Path = None):
+    """Check a YAML pipeline file for errors."""
+    in_data = str(in_data_file) if isinstance(in_data_file, PurePath) else None
+    return validate_yaml_config(yaml_config, in_data)
+
+
+@main.command()
+@click.argument(
     "in_data_file", type=click.Path(exists=True, dir_okay=False, path_type=Path)
 )
 @click.argument(
