@@ -333,7 +333,10 @@ class GenericMethodWrapper(MethodWrapper):
         assert gpu_enabled, "GPU method used on a system without GPU support"
 
         xp.cuda.Device(self._gpu_id).use()
-        gpulog_str = f"Using GPU {self._gpu_id} to transfer data of shape {xp.shape(block.data)}"
+        gpulog_str = (
+            f"Using GPU {self._gpu_id} to transfer data of shape {xp.shape(block.data)}, "
+            f"{self.method_name} ({self.package_name})"
+        )
         log_rank(gpulog_str, comm=self.comm)
         gpumem_cleanup()
         with catchtime() as t:
