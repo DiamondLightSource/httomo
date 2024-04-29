@@ -2,9 +2,11 @@ name: httomo-docs
 channels:
   - conda-forge
   - defaults
+  - httomo  
 dependencies:
-  - python==3.9
+  - python<=3.10
   - numpy
+  - httomolibgpu==2.0 
   - sphinx
   - sphinx-book-theme
   - nbsphinx
