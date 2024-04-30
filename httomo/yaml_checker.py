@@ -335,7 +335,7 @@ def _get_template_yaml(conf: PipelineConfig, packages: List) -> List:
     """
     parent_dir = os.path.dirname(os.path.abspath("__file__"))
     templates_dir = os.path.join(parent_dir, "yaml_templates")
-    assert os.path.exists(templates_dir)
+    assert os.path.exists(templates_dir), "Dev error: expected YAML templates dir to exist"
     return [
         os.path.join(
             templates_dir,
