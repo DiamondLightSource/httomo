@@ -8,7 +8,7 @@ dependencies:
   - python<=3.10
   - numpy
   - tomopy==1.15
-  - httomolibgpu==2.0
+  - httomolibgpu==2.1
   - httomolib==2.0
   - sphinx
   - sphinx-book-theme
