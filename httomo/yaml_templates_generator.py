@@ -58,6 +58,7 @@ def yaml_generator(path_to_modules: str, output_folder: str) -> int:
     modules_no = len(modules_list)
     for i in range(modules_no):
         module_name = modules_list[i]
+        print(module_name)
         try:
             imported_module = importlib.import_module(str(module_name))
         except NameError:
