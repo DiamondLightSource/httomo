@@ -24,15 +24,19 @@ jobs:
           with:
             python-version: 3.9
 
-        - name: httomo
+        - name: httomo-docs
           uses: conda-incubator/setup-miniconda@v2
           with:
             auto-update-conda: false
-            activate-environment: httomo
+            activate-environment: httomo-docs
             environment-file: ./docs/source/doc-conda-requirements.yml
 
         - name: Build api docs
           run: sphinx-apidoc -feT -t=./docs/source/_templates -o ./docs/source/api ./httomo
+
+        - name: Generate yaml templates
+          run: |
+            python ./httomo/httomo/yaml_templates_generator.py -i ./httomo/httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./docs/build/yaml_templates/httomolib
 
         - name: Generate yml docs
           run: python ./docs/source/yaml_doc_generator.py

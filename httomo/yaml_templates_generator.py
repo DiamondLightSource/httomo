@@ -22,7 +22,7 @@
 """Script that exposes all functions of a given software package as YAML templates.
 
 Please run the generator as:
-    python -m yaml_templates_generator -m /path/to/modules.yml -o /path/to/output/
+    python -m yaml_templates_generator -i /path/to/modules.yml -o /path/to/output/
 """
 import argparse
 import importlib
@@ -214,8 +214,8 @@ def get_args():
         "of a given software package as YAML templates."
     )
     parser.add_argument(
-        "-m",
-        "--modules",
+        "-i",
+        "--input",
         type=str,
         default=None,
         help="A path to the list of modules yaml file"
@@ -234,8 +234,8 @@ def get_args():
 if __name__ == "__main__":
     current_dir = os.path.basename(os.path.abspath(os.curdir))
     args = get_args()
-    path_to_modules = args.modules
+    path_to_modules = args.input
     output_folder = args.output
     return_val = yaml_generator(path_to_modules, output_folder)
     if return_val == 0:
-        print("The methods as YAML templates have been succesfully generated!")
+        print("The methods as YAML templates have been successfully generated!")

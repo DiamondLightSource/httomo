@@ -39,8 +39,7 @@ v.2.0
 .. toctree::
    :glob:
 
-   ../api/httomolib.misc.images
-   ../api/httomolib.misc.segm
+   ../api/httomolib.*
 
 .. _reference_templates_httomo:
 

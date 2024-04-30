@@ -31,10 +31,8 @@ sphinx-apidoc -feT -t=$DIR/source/_templates -o $DIR/source/api $DIR/../httomo
 mkdir $DIR/build/
 mkdir $DIR/build/yaml_templates
 
-cd $DIR/../yaml_templates/
-python -m yaml_templates_generator -m $DIR/../httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o $DIR/build/yaml_templates/httomolibgpu
-python -m yaml_templates_generator -m $DIR/../httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o $DIR/build/yaml_templates/httomolib
-cd $DIR/
+python $DIR/../httomo/yaml_templates_generator.py -i $DIR/../httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o $DIR/build/yaml_templates/httomolibgpu
+python $DIR/../httomo/yaml_templates_generator.py -i $DIR/../httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o $DIR/build/yaml_templates/httomolib
 
 # Append yaml link to rst files
 python -m source.yaml_doc_generator
