@@ -6,4 +6,4 @@
 - httomolibgpu.prep.phase
 - httomolibgpu.prep.stripe
 - httomolibgpu.recon.rotation
-- httomolibgpu.recon.algorithm
+#- httomolibgpu.recon.algorithm
