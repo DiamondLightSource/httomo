@@ -28,9 +28,6 @@ rm -rf $DIR/build/
 sphinx-apidoc -feT -t=$DIR/source/_templates -o $DIR/source/api $DIR/../httomo
 
 # build yaml templates here:
-mkdir $DIR/build/
-mkdir $DIR/build/yaml_templates
-
 python $DIR/../httomo/yaml_templates_generator.py -i $DIR/../httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o $DIR/build/yaml_templates/httomolibgpu
 python $DIR/../httomo/yaml_templates_generator.py -i $DIR/../httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o $DIR/build/yaml_templates/httomolib
 

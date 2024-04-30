@@ -36,7 +36,7 @@ jobs:
 
         - name: Generate yaml templates
           run: |
-            python ./httomo/httomo/yaml_templates_generator.py -i ./httomo/httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./docs/build/yaml_templates/httomolib
+            python ./httomo/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./docs/build/yaml_templates/httomolib
 
         - name: Generate yml docs
           run: python ./docs/source/yaml_doc_generator.py
