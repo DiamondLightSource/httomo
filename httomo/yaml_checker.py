@@ -333,7 +333,7 @@ def _get_template_yaml(conf: PipelineConfig, packages: List) -> List:
     Helper function that fetches template YAML file names associated with methods
     passed.
     """
-    parent_dir = os.path.dirname(os.path.abspath("__file__"))
+    parent_dir = Path(__file__).parent.parent
     templates_dir = os.path.join(parent_dir, "yaml_templates")
     assert os.path.exists(templates_dir), "Dev error: expected YAML templates dir to exist"
     return [
