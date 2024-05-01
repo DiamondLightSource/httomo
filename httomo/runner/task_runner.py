@@ -3,7 +3,10 @@ import logging
 import time
 from typing import Any, Dict, Literal, Optional, List, Union
 import os
+
+import tqdm
 from mpi4py import MPI
+
 import httomo
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.method_wrapper import MethodWrapper
@@ -102,7 +105,16 @@ class TaskRunner:
         splitter = BlockSplitter(self.source, section.max_slices)
         start_source = time.perf_counter_ns()
         no_of_blocks = len(splitter)
-        for idx, block in enumerate(splitter):
+
+        # Redirect tqdm progress bar output to /dev/null, and instead manually write block
+        # processing progress to logfile within loop
+        progress = tqdm.tqdm(
+            iterable=splitter,
+            file=open(os.devnull, "w"),
+            unit="block",
+            ascii=True,
+        )
+        for idx, (block, _) in enumerate(zip(splitter, progress)):
             end_source = time.perf_counter_ns()
             if self.monitor is not None:
                 self.monitor.report_source_block(
@@ -115,6 +127,7 @@ class TaskRunner:
                     (end_source - start_source) * 1e-9,
                 )
 
+            log_once(f"   {str(progress)}", level=logging.INFO)
             block = self._execute_section_block(section, block)
             log_rank(
                 f"    Completed processing block {idx + 1} of {no_of_blocks}",

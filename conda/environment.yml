@@ -19,6 +19,7 @@ dependencies:
   - conda-forge::nvtx
   - conda-forge::python
   - conda-forge::plumbum
+  - conda-forge::tqdm
   - conda-forge::typing_extensions
   - anaconda::ipython
   - conda-forge::tomopy
