@@ -13,12 +13,8 @@
   parameters:
     cutoff: null
     averaging: mean
-- method: stripes_mask3d
-  module_path: tomopy.prep.stripe
-  parameters:
-    weights: REQUIRED # required param
-    threshold: 0.6
-    min_stripe_length: 20
-    min_stripe_depth: 10
-    min_stripe_width: 5
-    sensitivity_perc: 85.0
+- method: minus_log
+  module_path: tomopy.prep.normalize
+  parameters: {}
+  module_path: tomopy.prep.normalize # duplicated key
+  # TODO if duplicate module_path value is different, then this first checks both module_path values reference existing methods
