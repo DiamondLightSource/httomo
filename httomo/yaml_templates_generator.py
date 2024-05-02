@@ -61,13 +61,18 @@ def yaml_generator(path_to_modules: str, output_folder: str) -> int:
         try:
             imported_module = importlib.import_module(str(module_name))
         except NameError:
-            print("Import of the module has failed, check if software installed")
+            print(
+                "Import of the module {} has failed, check if software installed".format(
+                    module_name
+                )
+            )
         methods_list = imported_module.__all__  # get all the methods in the module
         methods_no = len(methods_list)
 
         # a loop over all methods in the module
         for m in range(methods_no):
             method_name = methods_list[m]
+            print("Inspecting the signature of the {} method".format(method_name))
             get_method_params = inspect.signature(
                 getattr(imported_module, methods_list[m])
             )
