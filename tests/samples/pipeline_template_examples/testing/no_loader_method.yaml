@@ -1,6 +1,4 @@
---- # loading
---- # pre-processing
-- method: normalize
+- method: normalize # no loader
   module_path: tomopy.prep.normalize
   parameters:
     cutoff: null
@@ -8,7 +6,6 @@
 - method: minus_log
   module_path: tomopy.prep.normalize
   parameters: {}
---- # main processing
 - method: remove_stripe_fw
   module_path: tomopy.prep.stripe
   parameters:

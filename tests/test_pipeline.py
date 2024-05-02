@@ -2,6 +2,7 @@ import glob
 import os
 import re
 import subprocess
+from typing import Callable, List, Tuple
 
 import h5py
 import numpy as np
@@ -24,24 +25,30 @@ def _get_log_contents(file):
     return log_contents
 
 
-def read_folder(folder):
-    files = []
-    for f in os.listdir(folder):
-        f = os.path.join(folder, f)
-        if os.path.isdir(f):
-            files = [*files, *read_folder(f)]
-        else:
-            files.append(f)
-    return files
-
-
-def compare_two_yamls(original_yaml, copied_yaml):
+def _compare_two_yamls(original_yaml, copied_yaml):
     with open(original_yaml, "r") as oy, open(copied_yaml, "r") as cy:
         return oy.read() == cy.read()
 
 
+def _check_yaml(files: List, input_yaml: str):
+    # check that the contents of the copied YAML in the output directory matches
+    # the contents of the input YAML
+    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
+    assert _compare_two_yamls(input_yaml, copied_yaml_path)
+
+
+def _check_tif(files: List, number: int, shape: Tuple):
+    # check the .tif files
+    tif_files = list(filter(lambda x: ".tif" in x, files))
+    assert len(tif_files) == number
+
+    # check that the image size is correct
+    imarray = np.array(Image.open(tif_files[0]))
+    assert imarray.shape == shape
+
+
 def test_tomo_standard_testing_pipeline_output(
-    cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable, cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
 ):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
@@ -51,20 +58,11 @@ def test_tomo_standard_testing_pipeline_output(
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 6
 
-    # check that the contents of the copied YAML in the output directory matches
-    # the contents of the input YAML
-    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
-    assert compare_two_yamls("temp.yaml", copied_yaml_path)
-
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 3
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (160, 160)
+    _check_yaml(files, "temp.yaml")
+    _check_tif(files, 3, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -95,7 +93,7 @@ def test_tomo_standard_testing_pipeline_output(
     assert "Data shape is (180, 3, 160) of type uint16" in log_contents
 
 
-def test_run_pipeline_cpu1_yaml(cmd, standard_data, yaml_cpu_pipeline1, output_folder):
+def test_run_pipeline_cpu1_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline1, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline1)
@@ -103,15 +101,10 @@ def test_run_pipeline_cpu1_yaml(cmd, standard_data, yaml_cpu_pipeline1, output_f
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 128
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (160, 160)
+    _check_tif(files, 128, (160, 160))
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -127,7 +120,7 @@ def test_run_pipeline_cpu1_yaml(cmd, standard_data, yaml_cpu_pipeline1, output_f
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
 
 
-def test_run_pipeline_cpu1_py(cmd, standard_data, python_cpu_pipeline1, output_folder):
+def test_run_pipeline_cpu1_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline1, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_cpu_pipeline1)
@@ -135,15 +128,10 @@ def test_run_pipeline_cpu1_py(cmd, standard_data, python_cpu_pipeline1, output_f
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 128
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (160, 160)
+    _check_tif(files, 128, (160, 160))
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -158,7 +146,7 @@ def test_run_pipeline_cpu1_py(cmd, standard_data, python_cpu_pipeline1, output_f
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
 
 
-def test_run_pipeline_cpu2_yaml(cmd, standard_data, yaml_cpu_pipeline2, output_folder):
+def test_run_pipeline_cpu2_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline2, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline2)
@@ -166,15 +154,10 @@ def test_run_pipeline_cpu2_yaml(cmd, standard_data, yaml_cpu_pipeline2, output_f
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 33
 
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 30
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (160, 160)
+    _check_tif(files, 30, (160, 160))
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -200,7 +183,7 @@ def test_run_pipeline_cpu2_yaml(cmd, standard_data, yaml_cpu_pipeline2, output_f
     assert "Data shape is (180, 30, 160) of type uint16" in log_contents
 
 
-def test_run_pipeline_cpu2_py(cmd, standard_data, python_cpu_pipeline2, output_folder):
+def test_run_pipeline_cpu2_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline2, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_cpu_pipeline2)
@@ -208,15 +191,10 @@ def test_run_pipeline_cpu2_py(cmd, standard_data, python_cpu_pipeline2, output_f
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 33
 
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 30
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (160, 160)
+    _check_tif(files, 30, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -242,7 +220,7 @@ def test_run_pipeline_cpu2_py(cmd, standard_data, python_cpu_pipeline2, output_f
     assert "Data shape is (180, 30, 160) of type uint16" in log_contents
 
 
-def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_folder):
+def test_run_pipeline_cpu3_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline3, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline3)
@@ -250,15 +228,10 @@ def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_f
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 128
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (160, 160)
+    _check_tif(files, 128, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -279,7 +252,7 @@ def test_run_pipeline_cpu3_yaml(cmd, standard_data, yaml_cpu_pipeline3, output_f
     assert " Global mean 0.0016174" in log_contents
 
 
-def test_run_pipeline_cpu3_py(cmd, standard_data, python_cpu_pipeline3, output_folder):
+def test_run_pipeline_cpu3_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline3, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_cpu_pipeline3)
@@ -287,15 +260,10 @@ def test_run_pipeline_cpu3_py(cmd, standard_data, python_cpu_pipeline3, output_f
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 128
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (160, 160)
+    _check_tif(files, 128, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -316,7 +284,7 @@ def test_run_pipeline_cpu3_py(cmd, standard_data, python_cpu_pipeline3, output_f
     assert " Global mean 0.0016174" in log_contents
 
 
-def test_run_pipeline_cpu4_yaml(cmd, standard_data, yaml_cpu_pipeline4, output_folder):
+def test_run_pipeline_cpu4_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline4, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline4)
@@ -324,15 +292,10 @@ def test_run_pipeline_cpu4_yaml(cmd, standard_data, yaml_cpu_pipeline4, output_f
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 131  # 128 images + yaml, log, intermdiate
 
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 128
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (160, 160)
+    _check_tif(files, 128, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -351,7 +314,7 @@ def test_run_pipeline_cpu4_yaml(cmd, standard_data, yaml_cpu_pipeline4, output_f
     assert "Data shape is (180, 128, 160) of type uint16" in log_contents
 
 
-def test_run_pipeline_gpu1_yaml(cmd, standard_data, yaml_gpu_pipeline1, output_folder):
+def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gpu_pipeline1, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_gpu_pipeline1)
@@ -359,15 +322,10 @@ def test_run_pipeline_gpu1_yaml(cmd, standard_data, yaml_gpu_pipeline1, output_f
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 131
 
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 128
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (160, 160)
+    _check_tif(files, 128, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -395,7 +353,7 @@ def test_run_pipeline_gpu1_yaml(cmd, standard_data, yaml_gpu_pipeline1, output_f
     assert "Using GPU 0 to transfer data of shape (128, 160)" in log_contents
 
 
-def test_run_pipeline_gpu1_py(cmd, standard_data, python_gpu_pipeline1, output_folder):
+def test_run_pipeline_gpu1_py(get_files: Callable, cmd, standard_data, python_gpu_pipeline1, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_gpu_pipeline1)
@@ -403,15 +361,10 @@ def test_run_pipeline_gpu1_py(cmd, standard_data, python_gpu_pipeline1, output_f
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 131
 
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 128
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (160, 160)
+    _check_tif(files, 128, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -440,7 +393,7 @@ def test_run_pipeline_gpu1_py(cmd, standard_data, python_gpu_pipeline1, output_f
 
 
 def test_tomo_standard_testing_pipeline_output_with_save_all(
-    cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable, cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
 ):
     cmd.insert(7, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
@@ -448,17 +401,11 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     cmd.insert(9, output_folder)
     subprocess.check_output(cmd)
 
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 9
 
-    # check that the contents of the copied YAML in the output directory matches
-    # the contents of the input YAML
-    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
-    assert compare_two_yamls("temp.yaml", copied_yaml_path)
-
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 3
+    _check_yaml(files, "temp.yaml")
+    _check_tif(files, 3, (160,160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -474,7 +421,7 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
 
 
 def test_i12_testing_pipeline_output(
-    cmd, i12_data, i12_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable, cmd, i12_data, i12_loader, testing_pipeline, output_folder, merge_yamls
 ):
     cmd.insert(7, i12_data)
     merge_yamls(i12_loader, testing_pipeline)
@@ -482,11 +429,10 @@ def test_i12_testing_pipeline_output(
     cmd.insert(9, output_folder)
     subprocess.check_output(cmd)
 
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 16
 
-    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
-    assert compare_two_yamls("temp.yaml", copied_yaml_path)
+    _check_yaml(files, "temp.yaml")
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 1
@@ -549,6 +495,7 @@ def test_i12_testing_pipeline_output(
 # TODO: Add back in when ignoring darks/flats is added to the new loader
 #
 # def test_i12_testing_ignore_darks_flats_pipeline_output(
+#     get_files: Callable,
 #     cmd,
 #     i12_data,
 #     i12_loader_ignore_darks_flats,
@@ -562,11 +509,10 @@ def test_i12_testing_pipeline_output(
 #     cmd.insert(9, output_folder)
 #     subprocess.check_output(cmd)
 #
-#     files = read_folder("output_dir/")
+#     files = get_files("output_dir/")
 #     assert len(files) == 16
 #
-#     copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
-#     assert compare_two_yamls("temp.yaml", copied_yaml_path)
+#     _check_yaml(files, "temp.yaml")
 #
 #     log_files = list(filter(lambda x: ".log" in x, files))
 #     assert len(log_files) == 1
@@ -593,7 +539,7 @@ def test_i12_testing_pipeline_output(
 
 
 def test_diad_testing_pipeline_output(
-    cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable, cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
 ):
     cmd.insert(7, diad_data)
     merge_yamls(diad_loader, testing_pipeline)
@@ -601,21 +547,11 @@ def test_diad_testing_pipeline_output(
     cmd.insert(9, output_folder)
     subprocess.check_output(cmd)
 
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 8
 
-    # check that the contents of the copied YAML in the output directory matches
-    # the contents of the input YAML
-    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
-    assert compare_two_yamls("temp.yaml", copied_yaml_path)
-
-    #: check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == 2
-
-    #: check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == (26, 26)
+    _check_yaml(files, "temp.yaml")
+    _check_tif(files, 2, (26, 26))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -650,7 +586,7 @@ def test_diad_testing_pipeline_output(
     )
 
 
-def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder):
+def test_run_diad_pipeline_gpu(get_files: Callable, cmd, diad_data, diad_pipeline_gpu, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, diad_data)
     cmd.insert(7, diad_pipeline_gpu)
@@ -658,7 +594,7 @@ def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder)
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 10
 
     #: check the generated h5 files
@@ -684,7 +620,7 @@ def test_run_diad_pipeline_gpu(cmd, diad_data, diad_pipeline_gpu, output_folder)
     assert "Global mean 0.000291" in log_contents
 
 
-def test_run_pipeline_360deg_gpu2(cmd, data360, yaml_gpu_pipeline360_2, output_folder):
+def test_run_pipeline_360deg_gpu2(get_files: Callable, cmd, data360, yaml_gpu_pipeline360_2, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, data360)
     cmd.insert(7, yaml_gpu_pipeline360_2)
@@ -692,7 +628,7 @@ def test_run_pipeline_360deg_gpu2(cmd, data360, yaml_gpu_pipeline360_2, output_f
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = read_folder("output_dir/")
+    files = get_files("output_dir/")
     assert len(files) == 6
 
     #: check the generated h5 files
