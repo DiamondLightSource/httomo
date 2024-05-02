@@ -1,0 +1,4 @@
+- method: remove_stripe_ti
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    beta: 0.1
