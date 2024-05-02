@@ -1,7 +1,0 @@
-# This file covers the currently supported versions of external packages
-tomopy:
-  - 1.15
-httomolib:
-  - 2.0
-httomolibgpu:
-  - 2.0
