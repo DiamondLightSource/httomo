@@ -4,7 +4,7 @@ from pathlib import Path, PurePath
 from shutil import copy
 import sys
 import tempfile
-from typing import List, TextIO, Union
+from typing import List, Optional, TextIO, Union
 
 import click
 from mpi4py import MPI
@@ -58,6 +58,12 @@ def check(yaml_config: Path, in_data_file: Path = None):
     type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
 )
 @click.option(
+    "--create-folder",
+    type=click.Path(exists=False, file_okay=False, writable=True, path_type=Path),
+    default=None,
+    help="Define the name of the output folder created by HTTomo",
+)
+@click.option(
     "--save-all",
     is_flag=True,
     help="Save intermediate datasets for all tasks in the pipeline.",
@@ -104,6 +110,7 @@ def run(
     in_data_file: Path,
     yaml_config: Path,
     out_dir: Path,
+    create_folder: Optional[Path],
     gpu_id: int,
     save_all: bool,
     reslice_dir: Union[Path, None],
@@ -122,9 +129,13 @@ def run(
     httomo.globals.MAX_CPU_SLICES = max_cpu_slices
 
     # Define httomo.globals.run_out_dir in all MPI processes
-    httomo.globals.run_out_dir = out_dir.joinpath(
-        f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
-    )
+    if create_folder is None:
+        httomo.globals.run_out_dir = out_dir.joinpath(
+            f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
+        )
+    else:
+        httomo.globals.run_out_dir = out_dir.joinpath(create_folder)
+
     comm = MPI.COMM_WORLD
     if comm.rank == 0:
         # Create timestamped output directory
