@@ -101,3 +101,26 @@ def test_cli_fails_transforming_memory_limits(cli_parameter: str):
         transform_limit_str_to_bytes(cli_parameter)
         
     assert f"invalid memory limit string {cli_parameter}" in str(e)
+
+
+@pytest.mark.cupy
+def test_cli_pass_create_folder(
+    standard_data, standard_loader, testing_pipeline, merge_yamls, output_folder
+):
+    merge_yamls(standard_loader, testing_pipeline)
+    output_dir = "output_dir"  # dir created by the `output_folder` fixture
+    httomo_output_dir = "test-output"  # subdir that should be created by httomo
+    custom_output_dir = Path(output_dir, httomo_output_dir)
+    cmd = [
+        sys.executable,
+        "-m",
+        "httomo",
+        "run",
+        "--create-folder",
+        httomo_output_dir,
+        standard_data,
+        "temp.yaml",
+        output_dir,
+    ]
+    subprocess.check_output(cmd)
+    assert Path(custom_output_dir, "user.log").exists()
