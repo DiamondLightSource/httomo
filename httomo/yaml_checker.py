@@ -1,6 +1,7 @@
 """
 Module for checking the validity of yaml files.
 """
+
 import os
 from typing import Any, Dict, Iterator, List, Optional, TypeAlias
 
@@ -10,7 +11,6 @@ import yaml
 from pathlib import Path
 
 from httomo.utils import Colour
-from httomo.yaml_utils import get_packages_current_version
 from httomo.ui_layer import (
     get_regex_pattern,
     get_ref_split,
@@ -237,7 +237,7 @@ def check_keys(conf: PipelineConfig) -> bool:
 
 
 def check_id_has_side_out(conf: PipelineConfig) -> bool:
-    """ Check method with an id has side outputs"""
+    """Check method with an id has side outputs"""
     method_ids = [m.get("side_outputs") for m in conf if m.get("id")]
     if None in method_ids:
         _print_with_colour(f"A method with an id has no side outputs defined.")
@@ -246,7 +246,7 @@ def check_id_has_side_out(conf: PipelineConfig) -> bool:
 
 
 def check_ref_id_valid(conf: PipelineConfig) -> bool:
-    """ Check reference str is matching a valid method id"""
+    """Check reference str is matching a valid method id"""
     pattern = get_regex_pattern()
     method_ids = [m.get("id") for m in conf if m.get("id")]
     ref_strs = {
@@ -265,7 +265,7 @@ def check_ref_id_valid(conf: PipelineConfig) -> bool:
 
 
 def check_side_out_matches_ref_arg(conf: PipelineConfig) -> bool:
-    """ Check reference name exists """
+    """Check reference name exists"""
     pattern = get_regex_pattern()
     ref_strs = {
         k: v
@@ -317,14 +317,7 @@ def _get_package_info(conf: PipelineConfig) -> List:
     Helper function to get packages from module path.
     """
     modules = [m["module_path"] for m in conf]
-    packages = [
-        m.split(".")[0] + "/" + get_packages_current_version(m.split(".")[0])
-        if m.split(".")[0] != "httomo"
-        else m.split(".")[0]
-        + "/"
-        + get_packages_current_version(m.split(".")[0], type_p="httomo")
-        for m in modules
-    ]
+    packages = [m.split(".")[0] for m in modules]
     return packages
 
 
@@ -335,7 +328,9 @@ def _get_template_yaml(conf: PipelineConfig, packages: List) -> List:
     """
     parent_dir = Path(__file__).parent.parent
     templates_dir = os.path.join(parent_dir, "yaml_templates")
-    assert os.path.exists(templates_dir), "Dev error: expected YAML templates dir to exist"
+    assert os.path.exists(
+        templates_dir
+    ), "Dev error: expected YAML templates dir to exist"
     return [
         os.path.join(
             templates_dir,
