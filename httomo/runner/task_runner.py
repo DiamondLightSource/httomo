@@ -84,7 +84,7 @@ class TaskRunner:
         assert self.sink is not None, "Sink setup failed"
 
         self._log_pipeline(
-            f"Section {section_index} (pattern={section.methods[0].pattern.name})",
+            f"Section {section_index} (pattern={section.methods[0].pattern.name}) with the following methods:",
             level=logging.INFO,
         )
         methods_info = [
@@ -130,7 +130,7 @@ class TaskRunner:
             log_once(f"   {str(progress)}", level=logging.INFO)
             block = self._execute_section_block(section, block)
             log_rank(
-                f"    Completed processing block {idx + 1} of {no_of_blocks}",
+                f"    Finished processing block {idx + 1} of {no_of_blocks}",
                 comm=self.comm,
             )
 
@@ -151,7 +151,7 @@ class TaskRunner:
             start_source = time.perf_counter_ns()
 
         self._log_pipeline(
-            "    Completed processing last block",
+            "    Finished processing last block",
             level=logging.INFO,
         )
 
@@ -263,7 +263,7 @@ class TaskRunner:
         package: str = "httomo",
     ):
         output_str_list = [
-            f"    Finished {id} (pattern={pattern.name}): {name} (",
+            f"    Finished {id}: {name} (",
             package,
             f") Took {float(time.perf_counter_ns() - start_time)*1e-6:.2f}ms",
         ]
