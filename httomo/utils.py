@@ -42,17 +42,26 @@ def log_once(output: Any, level: int = logging.INFO) -> None:
     """
     if mpiutil.rank == 0:
         if isinstance(output, list):
-            output = "".join(
-                [f"{out}" for out in output]
-            )
+            output = "".join([f"{out}" for out in output])
 
         if level == logging.DEBUG:
             logger.debug(output)
         elif level == logging.WARNING:
             logger.warning(output)
         else:
-            logger.info(output)
-
+            # logger.info(output)
+            if "section" in output:
+                logger.opt(ansi=True).info("<cyan>{}</cyan>".format(output))
+            elif "pattern" in output:
+                logger.opt(ansi=True).info("<green>{}</green>".format(output))
+            elif "rotation" in output:
+                logger.opt(ansi=True).info("<yellow>{}</yellow>".format(output))
+            elif "Finished" in output:
+                logger.opt(ansi=True).info("<magenta>{}</magenta>".format(output))
+            elif "Pipeline" in output:
+                logger.opt(ansi=True).info("<red>{}</red>".format(output))
+            else:
+                logger.info(output)
 
 def log_rank(output: Any, comm: Comm) -> None:
     """
@@ -241,20 +250,21 @@ def get_data_in_data_out(method_name: str, dict_params_method: Dict[str, Any]) -
 
 class catchtime:
     """A context manager to measure ns-accurate time for the context block.
-    
+
     Usage:
         with catchtime() as t:
             ...
-            
+
         print(t.elapsed)
     """
+
     def __enter__(self):
         self.start = perf_counter_ns()
         return self
 
     def __exit__(self, type, value, traceback):
         self.elapsed = (perf_counter_ns() - self.start) * 1e-9
-    
+
 
 class catch_gputime:
     def __enter__(self):
@@ -262,12 +272,12 @@ class catch_gputime:
             self.start = xp.cuda.Event()
             self.start.record()
         return self
-            
+
     def __exit__(self, type, value, traceback):
         if gpu_enabled:
             self.end = xp.cuda.Event()
             self.end.record()
-    
+
     @property
     def elapsed(self) -> float:
         if gpu_enabled:
@@ -278,8 +288,8 @@ class catch_gputime:
 
 
 def make_3d_shape_from_shape(shape: List[int]) -> Tuple[int, int, int]:
-    """Given a shape as a list of length 3, return a corresponding tuple 
-       with the right typing type (required to make mypy type checks work)
+    """Given a shape as a list of length 3, return a corresponding tuple
+    with the right typing type (required to make mypy type checks work)
     """
     assert len(shape) == 3, "3D shape expected"
     return (shape[0], shape[1], shape[2])
@@ -287,6 +297,6 @@ def make_3d_shape_from_shape(shape: List[int]) -> Tuple[int, int, int]:
 
 def make_3d_shape_from_array(array: np.ndarray) -> Tuple[int, int, int]:
     """Given a 3D array, return a corresponding shape tuple
-       with the right typing type (required to make mypy type checks work)
+    with the right typing type (required to make mypy type checks work)
     """
     return make_3d_shape_from_shape(list(array.shape))
