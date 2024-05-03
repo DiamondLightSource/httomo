@@ -1,11 +1,10 @@
 from contextlib import AbstractContextManager, nullcontext
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PurePath
 from shutil import copy
 import sys
 import tempfile
-from typing import List, Optional, TextIO, Union
+from typing import List, TextIO, Union
 
 import click
 from mpi4py import MPI
@@ -30,6 +29,21 @@ def main():
     Use `python -m httomo run --help` for more help on the runner.
     """
     pass
+
+
+@main.command()
+@click.argument(
+    "yaml_config", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
+@click.argument(
+    "in_data_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=False, default=None,
+)
+def check(yaml_config: Path, in_data_file: Path = None):
+    """Check a YAML pipeline file for errors."""
+    in_data = str(in_data_file) if isinstance(in_data_file, PurePath) else None
+    return validate_yaml_config(yaml_config, in_data)
 
 
 @main.command()
@@ -77,7 +91,7 @@ def main():
     type=click.STRING,
     multiple=True,
     default=[],
-    help=("Add monitor to the runner (can be given multiple times). " + 
+    help=("Add monitor to the runner (can be given multiple times). " +
           f"Available monitors: {', '.join(MONITORS_MAP.keys())}")
 )
 @click.option(
@@ -102,11 +116,6 @@ def run(
 
     # we use half the memory for blocks since we typically have inputs/output
     memory_limit = transform_limit_str_to_bytes(max_memory) // 2
-
-    # First we need to validate yaml configuration file if there are any errors
-    # TODO: with new yaml syntax check yaml is not fully working.
-    # Need to re-enable that:
-    # _check_yaml(yaml_config, in_data_file)
 
     if max_cpu_slices < 1:
         raise ValueError("max-cpu-slices must be greater or equal to 1")
@@ -184,7 +193,7 @@ def transform_limit_str_to_bytes(limit_str: str):
             return int(float(limit_str[:-1]) * 1024**2)
         elif limit_upper.endswith("G"):
             return int(float(limit_str[:-1]) * 1024**3)
-        else: 
-            return int(limit_str) 
+        else:
+            return int(limit_str)
     except ValueError:
         raise ValueError(f"invalid memory limit string {limit_str}")

@@ -16,7 +16,7 @@ def test_can_read_cpu1_python(python_cpu_pipeline1, yaml_cpu_pipeline1, version)
     if version == "python":
         pipline_stage_config = ui_layer._python_tasks_loader(python_cpu_pipeline1)
     else:
-        pipline_stage_config = ui_layer._yaml_loader(yaml_cpu_pipeline1)
+        pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline1)
 
     assert len(pipline_stage_config) == 6
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -39,7 +39,7 @@ def test_can_read_cpu2_python(python_cpu_pipeline2, yaml_cpu_pipeline2, version)
     if version == "python":
         pipline_stage_config = ui_layer._python_tasks_loader(python_cpu_pipeline2)
     else:
-        pipline_stage_config = ui_layer._yaml_loader(yaml_cpu_pipeline2)
+        pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline2)
 
     assert len(pipline_stage_config) == 9
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -72,7 +72,7 @@ def test_can_read_cpu3_python(python_cpu_pipeline3, yaml_cpu_pipeline3, version)
     if version == "python":
         pipline_stage_config = ui_layer._python_tasks_loader(python_cpu_pipeline3)
     else:
-        pipline_stage_config = ui_layer._yaml_loader(yaml_cpu_pipeline3)
+        pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline3)
 
     assert len(pipline_stage_config) == 8
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -100,7 +100,7 @@ def test_can_read_gpu1_python(python_gpu_pipeline1, yaml_gpu_pipeline1, version)
     if version == "python":
         pipline_stage_config = ui_layer._python_tasks_loader(python_gpu_pipeline1)
     else:
-        pipline_stage_config = ui_layer._yaml_loader(yaml_gpu_pipeline1)
+        pipline_stage_config = ui_layer.yaml_loader(yaml_gpu_pipeline1)
 
     assert len(pipline_stage_config) == 7
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -123,7 +123,7 @@ def test_can_read_gpu1_python(python_gpu_pipeline1, yaml_gpu_pipeline1, version)
 @pytest.mark.parametrize("extension", ["yaml", "yml", "YaML", "YAML"])
 def test_uilayer_calls_correct_loader_yaml(mocker: MockerFixture, extension: str):
     comm = MPI.COMM_NULL
-    loader = mocker.patch("httomo.ui_layer._yaml_loader")
+    loader = mocker.patch("httomo.ui_layer.yaml_loader")
     file = Path(f"test_pipeline.{extension}")
     UiLayer(file, Path("doesnt_matter"), comm=comm)
 
@@ -294,15 +294,16 @@ def test_pipeline_build_cpu3(
 )
 def test_update_side_output_references_invalid(refvalue: str):
     parameters = {"refkey": refvalue}
-    ui_layer._update_side_output_references(parameters, {})
-
+    valid_refs = ui_layer.get_valid_ref_str(parameters)
+    ui_layer.update_side_output_references(valid_refs, parameters, {})
     assert parameters == {"refkey": refvalue}  # not updated
 
 
 def test_update_side_output_references_normal(mocker: MockerFixture):
     parameters = {"refkey": "${{testid.side_outputs.value}}"}
-    ui_layer._update_side_output_references(
-        parameters, dict(testid=make_test_method(mocker))
+    valid_refs = ui_layer.get_valid_ref_str(parameters)
+    ui_layer.update_side_output_references(
+        valid_refs, parameters, dict(testid=make_test_method(mocker))
     )
 
     obj = parameters["refkey"]
@@ -313,15 +314,17 @@ def test_update_side_output_references_normal(mocker: MockerFixture):
 def test_update_side_output_references_nosidestr():
     parameters = {"refkey": "${{testid.side_typo_outputs.value}}"}
     with pytest.raises(ValueError) as e:
-        ui_layer._update_side_output_references(parameters, {})
-    assert "side_outputs" in str(e)
+        valid_refs = ui_layer.get_valid_ref_str(parameters)
+        ui_layer.update_side_output_references(valid_refs, parameters, {})
+        assert "side_outputs" in str(e)
 
 
 def test_update_side_output_references_notfound(mocker: MockerFixture):
     parameters = {"refkey": "${{testid123.side_outputs.value}}"}
     with pytest.raises(ValueError) as e:
-        ui_layer._update_side_output_references(
-            parameters, dict(testid=make_test_method(mocker))
+        valid_refs = ui_layer.get_valid_ref_str(parameters)
+        ui_layer.update_side_output_references(
+            valid_refs, parameters, dict(testid=make_test_method(mocker))
         )
 
     assert "could not find method referenced" in str(e)

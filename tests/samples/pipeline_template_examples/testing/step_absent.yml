@@ -2,18 +2,16 @@
   module_path: httomo.data.hdf.loaders
   parameters:
     name: tomo
-    in_file: tests/test_data/tomo_standard.nxs
     data_path: /entry1/tomo_entry/data/data
     image_key_path: /entry1/tomo_entry/instrument/detector/image_key
     rotation_angles:
       data_path: /entry1/tomo_entry/data/rotation_angle
     dimension: 1
-    # preview: [None, None, None]
     pad: 0
 - method: recon
   module_path: tomopy.recon.algorithm
   parameters:
-    center: !SweepRange
+    center: !SweepRange # step absent
       start: 10
       stop: 50
     sinogram_order: false
