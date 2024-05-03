@@ -28,25 +28,6 @@ except ImportError:
     print("CuPy is not installed")
 
 
-class Colour:
-    """
-    Class for storing the ANSI escape codes for different colours.
-    """
-
-    LIGHT_BLUE = "\033[1;34m"
-    LIGHT_BLUE_BCKGR = "\033[1;44m"
-    BLUE = "\33[94m"
-    CYAN = "\33[96m"
-    GREEN = "\33[92m"
-    YELLOW = "\33[93m"
-    MAGENTA = "\33[95m"
-    RED = "\33[91m"
-    END = "\033[0m"
-    BVIOLET = "\033[1;35m"
-    LYELLOW = "\033[33m"
-    BACKG_RED = "\x1b[6;37;41m"
-
-
 def log_once(output: Any, level: int = logging.INFO) -> None:
     """
     Log output to console and log file if the process is rank zero.
