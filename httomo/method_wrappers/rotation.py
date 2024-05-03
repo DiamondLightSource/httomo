@@ -2,7 +2,7 @@ from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.method_wrapper import MethodParameterDictType
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import Pattern, catchtime, log_rank, xp
+from httomo.utils import Pattern, catchtime, log_once, xp
 
 
 import numpy as np
@@ -181,8 +181,8 @@ class RotationWrapper(GenericMethodWrapper):
         if self.comm.size > 1:
             res = self.comm.bcast(res, root=0)
 
-        cor_str = f"The center of rotation is {res}"
-        log_rank(cor_str, comm=self.comm)
+        cor_str = f"    The center of rotation is {res}"
+        log_once(cor_str)
         return self._process_return_type(res, block)
 
     def normalize_sino(

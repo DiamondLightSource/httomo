@@ -1,10 +1,13 @@
 from itertools import islice
+import logging
 import time
 from typing import Any, Dict, Literal, Optional, List, Union
 import os
+
+import tqdm
 from mpi4py import MPI
+
 import httomo
-import logging
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.block_split import BlockSplitter
@@ -20,16 +23,14 @@ from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import Section, sectionize
 from httomo.utils import (
-    Colour,
     Pattern,
     _get_slicing_dim,
     catchtime,
     log_exception,
     log_once,
+    log_rank,
 )
 import numpy as np
-
-log = logging.getLogger(__name__)
 
 
 class TaskRunner:
@@ -53,9 +54,6 @@ class TaskRunner:
 
         self._memory_limit_bytes = memory_limit_bytes
 
-        self.output_colour_list = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
-        self.output_colour_list_short = [Colour.GREEN, Colour.CYAN]
-
     def execute(self) -> None:
         with catchtime() as t:
             sections = self._sectionize()
@@ -76,8 +74,6 @@ class TaskRunner:
         if num_stores > 3:
             log_once(
                 f"WARNING: Data saving or/and reslicing operation will be performed {num_stores} times. This increases the total run time, especially if the saving is performed through the disk.",
-                comm=self.comm,
-                colour=Colour.RED,
             )
 
         return sections
@@ -87,17 +83,38 @@ class TaskRunner:
         assert self.source is not None, "Dataset has not been loaded yet"
         assert self.sink is not None, "Sink setup failed"
 
+        self._log_pipeline(
+            f"Section {section_index} (pattern={section.methods[0].pattern.name})",
+            level=logging.INFO,
+        )
+        methods_info = [
+            f"    {method.method_name} ({method.package_name})\n"
+            for method in section.methods
+        ]
+        methods_info[-1] = methods_info[-1].rstrip("\n")
+        self._log_pipeline(methods_info, level=logging.INFO)
+
         slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
         self.determine_max_slices(section, slicing_dim_section)
 
         self._log_pipeline(
             f"Maximum amount of slices is {section.max_slices} for section {section_index}",
-            level=1,
+            level=logging.DEBUG,
         )
 
         splitter = BlockSplitter(self.source, section.max_slices)
         start_source = time.perf_counter_ns()
-        for block in splitter:
+        no_of_blocks = len(splitter)
+
+        # Redirect tqdm progress bar output to /dev/null, and instead manually write block
+        # processing progress to logfile within loop
+        progress = tqdm.tqdm(
+            iterable=splitter,
+            file=open(os.devnull, "w"),
+            unit="block",
+            ascii=True,
+        )
+        for idx, (block, _) in enumerate(zip(splitter, progress)):
             end_source = time.perf_counter_ns()
             if self.monitor is not None:
                 self.monitor.report_source_block(
@@ -110,7 +127,12 @@ class TaskRunner:
                     (end_source - start_source) * 1e-9,
                 )
 
+            log_once(f"   {str(progress)}", level=logging.INFO)
             block = self._execute_section_block(section, block)
+            log_rank(
+                f"    Completed processing block {idx + 1} of {no_of_blocks}",
+                comm=self.comm,
+            )
 
             start_sink = time.perf_counter_ns()
             self.sink.write_block(block)
@@ -127,6 +149,11 @@ class TaskRunner:
                 )
             gpumem_cleanup()
             start_source = time.perf_counter_ns()
+
+        self._log_pipeline(
+            "    Completed processing last block",
+            level=logging.INFO,
+        )
 
     def _setup_source_sink(self, section: Section):
         assert self.source is not None, "Dataset has not been loaded yet"
@@ -158,13 +185,12 @@ class TaskRunner:
             block = self._execute_method(method, block)
         return block
 
-    def _log_pipeline(self, str: str, level: int = 0, colour=Colour.BVIOLET):
-        log_once(str, comm=self.comm, colour=colour, level=level)
+    def _log_pipeline(self, msg: Any, level: int = logging.INFO):
+        log_once(msg, level=level)
 
     def _prepare(self):
         self._log_pipeline(
             f"See the full log file at: {httomo.globals.run_out_dir}/user.log",
-            colour=Colour.BVIOLET,
         )
         self._check_params_for_sweep()
         self._load_datasets()
@@ -187,9 +213,6 @@ class TaskRunner:
     def _execute_method(
         self, method: MethodWrapper, block: DataSetBlock
     ) -> DataSetBlock:
-        start_time = self._log_task_start(
-            method.task_id, method.pattern, method.method_name
-        )
         start = time.perf_counter_ns()
         block = method.execute(block)
         if block.is_last_in_chunk:
@@ -209,13 +232,6 @@ class TaskRunner:
                 method.gpu_time.host2device,
                 method.gpu_time.device2host,
             )
-        self._log_task_end(
-            method.task_id,
-            start_time,
-            method.pattern,
-            method.method_name,
-            method.package_name,
-        )
         return block
 
     def append_side_outputs(self, side_outputs: Dict[str, Any]):
@@ -234,9 +250,7 @@ class TaskRunner:
     def _log_task_start(self, id: str, pattern: Pattern, name: str) -> int:
         log_once(
             f"Running {id} (pattern={pattern.name}): {name}...",
-            self.comm,
-            colour=Colour.LIGHT_BLUE,
-            level=0,
+            level=logging.INFO,
         )
         return time.perf_counter_ns()
 
@@ -253,7 +267,7 @@ class TaskRunner:
             package,
             f") Took {float(time.perf_counter_ns() - start_time)*1e-6:.2f}ms",
         ]
-        log_once(output_str_list, comm=self.comm, colour=self.output_colour_list)
+        log_once(output_str_list)
 
     def _check_params_for_sweep(self):
         # Check pipeline for the number of parameter sweeps present. If one is
@@ -292,14 +306,12 @@ class TaskRunner:
         memory_str = (
             f"The amount of the available GPU memory is {available_memory_in_GB} GB"
         )
-        log_once(memory_str, comm=self.comm, colour=Colour.BVIOLET, level=1)
+        log_rank(memory_str, comm=self.comm)
         if self._memory_limit_bytes != 0:
             available_memory = min(available_memory, self._memory_limit_bytes)
             log_once(
                 f"The memory has been limited to {available_memory / (1024**3):4.2f} GB",
-                comm=self.comm,
-                colour=Colour.BVIOLET,
-                level=1,
+                level=logging.DEBUG,
             )
 
         max_slices_methods = [max_slices] * len(section)
