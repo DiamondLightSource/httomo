@@ -9,4 +9,5 @@
     perc_range_max: 100.0
     jpeg_quality: 95
     glob_stats: ${{statistics.side_outputs.glob_stats}}
+    offset: 0
     asynchronous: true

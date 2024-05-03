@@ -17,8 +17,7 @@ Previewing in the loader
 
 Previewing is an important part of the loader (see :ref:`reference_loaders`). Here,
 a brief explanation is given on how to use the :code:`preview` parameter in the
-:code:`standard_tomo` loader (see the corresponding template in
-:ref:`reference_templates_httomo`).
+:code:`standard_tomo` loader.
 
 .. note:: HTTomo assumes that the input data is a three dimensional (3D) array,
    where the 1st axis is the *angular* dimension, the 2nd axis is the *vertical*

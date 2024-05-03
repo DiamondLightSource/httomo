@@ -2,6 +2,6 @@
   module_path: httomolibgpu.prep.normalize
   parameters:
     cutoff: 10.0
-    minus_log: false
+    minus_log: true
     nonnegativity: false
     remove_nans: false
