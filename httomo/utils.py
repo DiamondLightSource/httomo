@@ -74,7 +74,7 @@ def log_once(output: Any, level: int = logging.INFO) -> None:
             elif "pattern" in output:
                 logger.opt(ansi=True).info("<green>{}</green>".format(output))
             elif "rotation" in output:
-                logger.opt(ansi=True).info("<yellow>--->{}</yellow>".format(output))
+                logger.opt(ansi=True).info("<yellow>{}</yellow>".format(output))
             elif "Finished" in output:
                 logger.opt(ansi=True).info("<magenta>{}</magenta>".format(output))
             elif "Pipeline" in output:
