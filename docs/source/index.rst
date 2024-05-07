@@ -66,6 +66,4 @@
     :caption: Developers
     :maxdepth: 2
 
-    developers/how_to_contribute
-    developers/new_module_integr
-    
+    developers/how_to_contribute    
