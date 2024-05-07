@@ -11,7 +11,7 @@ Sections is the essential element of HTTomo's framework which is related to how 
 In order to understand how sections are formed, we give here the list of rules with examples when sections are created.
 
 .. _fig_sec1:
-.. figure::  ../../_static/sections1.png
+.. figure::  ../../_static/sections/sections1.png
     :scale: 40 %
     :alt: Sections in pipelines
 
@@ -27,7 +27,7 @@ Example 1: Sections with re-slice
 =================================
 
 .. _fig_sec2:
-.. figure::  ../../_static/sections2.png
+.. figure::  ../../_static/sections/sections2.png
     :scale: 50 %
     :alt: Sections in pipelines
 
@@ -38,7 +38,7 @@ Example 2 : Sections with re-slice and data saving
 ==================================================
 
 .. _fig_sec3:
-.. figure::  ../../_static/sections3.png
+.. figure::  ../../_static/sections/sections3.png
     :scale: 50 %
     :alt: Sections in pipelines
 
@@ -51,7 +51,7 @@ Example 3 : Sections with side outputs
 ======================================
 
 .. _fig_sec4:
-.. figure::  ../../_static/sections4.png
+.. figure::  ../../_static/sections/sections4.png
     :scale: 50 %
     :alt: Sections in pipelines
 

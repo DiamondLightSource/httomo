@@ -25,7 +25,7 @@ a brief explanation is given on how to use the :code:`preview` parameter in the
    dimension (see :numref:`fig_dimsdata`).
 
 .. _fig_dimsdata:
-.. figure::  ../../_static/dims_prev.svg
+.. figure::  ../../_static/preview/dims_prev.svg
     :scale: 55 %
     :alt: 3D data
 
@@ -101,7 +101,7 @@ Before cropping |pic1| and after |pic2|
    In Python this will be interpreted as :code:`[:,200:1800,:]`.
 
 .. _fig_dimsdataY:
-.. figure::  ../../_static/dims_prevY.svg
+.. figure::  ../../_static/preview/dims_prevY.svg
     :scale: 55 %
     :alt: 3D data, Y slicing
 
@@ -126,7 +126,7 @@ Before cropping |pic1| and after |pic2|
    In Python this will be interpreted as :code:`[:,:,100:2000]`.
     
 .. _fig_dimsdataX:
-.. figure::  ../../_static/dims_prevX.svg
+.. figure::  ../../_static/preview/dims_prevX.svg
     :scale: 55 %
     :alt: 3D data, X slicing
 
@@ -170,7 +170,7 @@ when unnecessary information is omitted, there are several ways in which the
 - start/stop fields
 
 in the :code:`preview` parameter value can be omitted in the process list, and
-still achieve the desired cropping behaviour.
+still achieve the desired cropping behavior.
 
 Omitting one or more dimension fields
 -------------------------------------

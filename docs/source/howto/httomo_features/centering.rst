@@ -24,7 +24,7 @@ Therefore the optimisation problem usually involves minimising the artefacts in 
 by varying the CoR value.
 
 .. _fig_centerscheme:
-.. figure::  ../../_static/CoR.svg
+.. figure::  ../../_static/cor/CoR.svg
     :scale: 55 %
     :alt: CoR scheme for tomography
 
