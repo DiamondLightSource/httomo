@@ -2,7 +2,7 @@
 
 Templates generator
 *******************
-:ref:`backends_content` can be generated automatically using the YAML generator tool `provided <https://github.com/DiamondLightSource/httomo/tree/main/yaml_templates/yaml_templates_generator.py>`_ in the Github repo. 
+:ref:`backends_content` can be generated automatically using the YAML generator tool `provided <https://github.com/DiamondLightSource/httomo/tree/main/httomo/yaml_templates_generator.py>`_ in the Github repo. 
 
 The script does the following: 
 
@@ -22,7 +22,7 @@ How does it work:
  
 .. code-block:: console
    
-   $ python -m yaml_templates_generator -m /path/to/modules.yaml -o /path/to/outputfolder/
+   $ python -m yaml_templates_generator -i /path/to/modules.yaml -o /path/to/outputfolder/
 
 Please note that the package from which the modules are extracted, must be installed into your conda environment.
 

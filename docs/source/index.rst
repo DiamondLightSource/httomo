@@ -22,6 +22,7 @@
     howto/run_httomo
     howto/process_lists_guide
     howto/httomo_features
+    howto/interpret_logger
 
 .. _reference_content:
 
@@ -65,5 +66,6 @@
     :caption: Developers
     :maxdepth: 2
 
+    developers/how_to_contribute
     developers/new_module_integr
     
