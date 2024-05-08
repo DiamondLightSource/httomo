@@ -34,8 +34,10 @@ file and also stdout.
 
 * :code:`50%|#####     | 1/2 [00:02<00:02,  2.52s/block]`
    These are the progress bars showing how much data is being processed in every section. 
-   The progress in percents demonstrate how many blocks have been processed by the `M` number of methods of the current section. Specifically we have: :code:`1/2` means that one of two blocks completed (hence `50%`); :code:`00:02<00:02` shows the time in seconds to 
-   reach the current block (time elapsed) and the remaining time to complete the iterations over blocks; :code:`2.52s/block` is an estimation of how much time 
-   it's taking per block.
+   The percentage progress bar demonstrates how many blocks have been processed by the `M` number of methods of the current section. Specifically in this case 
+   we have :code:`1/2`, which means that one of two blocks completed (hence `50%`). Then :code:`00:02<00:02` shows the time in seconds to 
+   reach the current block (time elapsed) and the remaining time to complete all iterations over blocks. The :code:`2.52s/block` part is an 
+   estimation of how much time it's taking per block. When the time per block is less than one second then this can be presented as :code:`block/s` instead.
+   See :ref:`save_to_images` progress report, for instance. 
 
-.. note:: One possible misunderstanding, when interpreting progress bars, can be an association of the progress with the methods completed. Because each piece of data (a block) can be processed by multiple methods, we report on how many blocks have been processed instead.
+.. note:: When interpreting progress bars, one possible misunderstanding can be an association of the progress with the methods completed. Because each piece of data (a block) can be processed by multiple methods, we report on how many blocks have been processed instead.

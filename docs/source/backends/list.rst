@@ -41,6 +41,6 @@ by Data Analysis Group to work together with the HTTomo software.
 
 HTTomolib library (CPU)
 --------------------------
-`HTTomolib <https://github.com/DiamondLightSource/httomolib>`_ library is similar to HTTomolibgpu, but contains only CPU modules.
+`HTTomolib <https://github.com/DiamondLightSource/httomolib>`_ library is similar to HTTomolibgpu, but contains mostly CPU modules.
 
-*The HTTomo releases usually support a specific version of the backend package. Please check that the YAML templates are linked to the version advertised in the release.*
+.. note:: The HTTomo release usually supports a specific version of the backend package. Please check that the YAML templates are linked to the version advertised in the release.
