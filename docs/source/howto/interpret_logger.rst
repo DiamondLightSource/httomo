@@ -38,6 +38,6 @@ file and also stdout.
    we have :code:`1/2`, which means that one of two blocks completed (hence `50%`). Then :code:`00:02<00:02` shows the time in seconds to 
    reach the current block (time elapsed) and the remaining time to complete all iterations over blocks. The :code:`2.52s/block` part is an 
    estimation of how much time it's taking per block. When the time per block is less than one second then this can be presented as :code:`block/s` instead.
-   See :ref:`save_to_images` progress report, for instance. 
+   See :code:`save_to_images` progress report, for instance. 
 
 .. note:: When interpreting progress bars, one possible misunderstanding can be an association of the progress with the methods completed. Because each piece of data (a block) can be processed by multiple methods, we report on how many blocks have been processed instead.
