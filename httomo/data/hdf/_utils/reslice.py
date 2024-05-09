@@ -1,3 +1,4 @@
+import logging
 from os import PathLike
 from pathlib import Path
 from typing import Optional, Tuple
@@ -8,7 +9,7 @@ from mpi4py.MPI import Comm
 
 from httomo.data import mpiutil
 from httomo.data.hdf._utils import chunk, load
-from httomo.utils import Colour, log_once
+from httomo.utils import log_once
 
 
 def reslice(
@@ -37,19 +38,15 @@ def reslice(
         now sliced, and the starting index in slicing dimension for the current process.
     """
     log_once(
-        f"<-------Reslicing/rechunking the data-------->",
-        comm,
-        colour=Colour.BLUE,
-        level=1,
+        "<-------Reslicing/rechunking the data-------->",
+        level=logging.DEBUG,
     )
 
     # No need to reclice anything if there is only one process
     if mpiutil.size == 1:
         log_once(
             "Reslicing not necessary, as there is only one process",
-            comm=comm,
-            colour=Colour.BLUE,
-            level=1,
+            level=logging.DEBUG,
         )
         return data, next_slice_dim, 0
 
@@ -119,10 +116,8 @@ def reslice_filebased(
     chunks_data[next_slice_dim - 1] = slices_no_in_chunks
     
     log_once(
-        f"<-------Reslicing/rechunking the data-------->",
-        comm,
-        colour=Colour.BLUE,
-        level=1,
+        "<-------Reslicing/rechunking the data-------->",
+        level=logging.DEBUG,
     )
     # Pass the current slicing dim so then data can be gathered and assembled
     # correctly, and the new chunk shape to save the data in an hdf5 file with
@@ -150,9 +145,7 @@ def single_sino_reslice(
     if mpiutil.size == 1:
         log_once(
             "Reslicing for single sinogram not necessary, as there is only one process",
-            comm=mpiutil.comm,
-            colour=Colour.BLUE,
-            level=1,
+            level=logging.DEBUG,
         )
         return data[:, idx, :]
 

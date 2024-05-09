@@ -8,6 +8,7 @@ from typing import List, TextIO, Union
 
 import click
 from mpi4py import MPI
+from loguru import logger
 
 import httomo.globals
 from httomo.logger import setup_logger
@@ -126,11 +127,13 @@ def run(
     )
     comm = MPI.COMM_WORLD
     if comm.rank == 0:
-        # Setup global logger object
-        httomo.globals.logger = setup_logger(httomo.globals.run_out_dir)
+        # Create timestamped output directory
+        Path.mkdir(httomo.globals.run_out_dir, exist_ok=True)
 
         # Copy YAML pipeline file to output directory
         copy(yaml_config, httomo.globals.run_out_dir)
+
+    setup_logger(Path(httomo.globals.run_out_dir))
 
     # try to access the GPU with the ID given
     try:
