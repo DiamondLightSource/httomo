@@ -1,10 +1,13 @@
 .. _reference_templates:
 
-==========================
+================
 YAML Templates
-==========================
+================
 
-This section contains YAML templates from :ref:`backends_list`. 
+This section contains YAML templates from :ref:`backends_list`. These are ready-to-use templates can be either copy-pasted or
+downloaded in order to build your pipeline. 
+
+.. note:: When you click on a module you can find a link to the API of that module. This is where the description of the method and its arguments can be found. 
 
 
 TomoPy Modules
