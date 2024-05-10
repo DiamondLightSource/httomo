@@ -13,7 +13,7 @@ The ``calc_max_slices`` function must have the following signature::
 
 The ``httomo`` package will call this function, passing in the dimension along which it will slice
 (``0`` for projection, ``1`` for sinogram), the other dimensions of the data array shape,
-the data type for the input, and the avaialble memory on the GPU for method execution.
+the data type for the input, and the available memory on the GPU for method execution.
 Additionally it passes all other parameters of the method in the ``kwargs`` argument, 
 which can be used by the function in case parameters determine the memory consumption.
 The function should calculate how many slices along the slicing dimension it can fit into the given memory.
@@ -73,7 +73,7 @@ The strategy for testing is the other way around:
   used by the method.
 * Then, retrospectively, we call the ``calc_max_slices`` estimator function and pass in this memory
   as the ``available_memory`` argument. So we're asking the estimation function to assume that 
-  the memory availalbe is the actually used memory in the method call. 
+  the memory available is the actually used memory in the method call. 
 * The estimated number of slices should then be less or equal to the actual slices used earlier.
 * To make sure the function is not too conservative, we're checking that it returns at least 80%
   of the slices that actually fit
