@@ -29,7 +29,7 @@ file and also stdout.
 
 * :code:`Section N with the following methods`
    Each section contains a number of methods that run sequentially for each :ref:`blocks_data` 
-   of data. When all blocks are processed, the user will see the message :code:`Finished processing the last block`.` This means that all of the 
+   of data. When all blocks are processed, the user will see the message :code:`Finished processing the last block`. This means that all of the 
    input data have been processed in this section and the pipeline moves to the next section, if it exists.
 
 * :code:`50%|#####     | 1/2 [00:02<00:02,  2.52s/block]`
