@@ -10,8 +10,6 @@ import yaml
 
 from pathlib import Path
 
-from httomo.yaml_utils import get_packages_current_version
-
 from httomo.ui_layer import (
     get_regex_pattern,
     get_ref_split,
