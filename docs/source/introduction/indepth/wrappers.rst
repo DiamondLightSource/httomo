@@ -4,7 +4,7 @@ Method wrappers
 ===============
 
 HTTomo does not contain image processing methods and uses external libraries for processing, see :ref:`backends_list`. 
-However, because methods process data in a different manner, there a need to tell the framework what kind of processing that is. 
+However, because methods process data in a different manner, there's a need to tell the framework what kind of processing that is. 
 
 HTTomo currently has the following wrappers: 
 
