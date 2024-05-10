@@ -1,0 +1,6 @@
+- method: remove_dead_stripe
+  module_path: tomopy.prep.stripe
+  parameters:
+    snr: 3
+    size: 51
+    norm: true

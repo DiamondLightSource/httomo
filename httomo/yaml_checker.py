@@ -1,23 +1,51 @@
 """
 Module for checking the validity of yaml files.
 """
+
 import os
-from typing import Any
+from typing import Any, Dict, Iterator, List, Optional, TypeAlias
 
 import h5py
 import yaml
 
-from httomo.utils import Colour
-from httomo.yaml_utils import get_external_package_current_version, open_yaml_config
+from pathlib import Path
+
+from httomo.ui_layer import (
+    get_regex_pattern,
+    get_ref_split,
+    get_valid_ref_str,
+    yaml_loader,
+)
 
 __all__ = [
-    "check_one_method_per_module",
     "sanity_check",
     "validate_yaml_config",
 ]
 
+MethodConfig: TypeAlias = Dict[str, Any]
+PipelineConfig: TypeAlias = List[MethodConfig]
 
-def sanity_check(yaml_file):
+
+class Colour:
+    """
+    Class for storing the ANSI escape codes for different colours.
+    """
+
+    LIGHT_BLUE = "\033[1;34m"
+    LIGHT_BLUE_BCKGR = "\033[1;44m"
+    BLUE = "\33[94m"
+    CYAN = "\33[96m"
+    GREEN = "\33[92m"
+    YELLOW = "\33[93m"
+    MAGENTA = "\33[95m"
+    RED = "\33[91m"
+    END = "\033[0m"
+    BVIOLET = "\033[1;35m"
+    LYELLOW = "\033[33m"
+    BACKG_RED = "\x1b[6;37;41m"
+
+
+def sanity_check(conf_generator: Iterator[Any]) -> bool:
     """
     Check if the yaml file is properly indented, has valid mapping and tags.
     """
@@ -25,77 +53,311 @@ def sanity_check(yaml_file):
         "Checking that the YAML_CONFIG is properly indented and has valid mappings and tags...",
         colour=Colour.GREEN,
     )
-    with open(yaml_file, "r") as file:
-        try:
-            yaml_data = open_yaml_config(yaml_file)
+    try:
+        # Convert generator into a list, to force all elements to be attempted
+        # to be interpreted as python objects, and thus initiating all the YAML
+        # parsing checks performed by `yaml`
+        list(conf_generator)
+        _print_with_colour(
+            "Sanity check of the YAML_CONFIG was successfully done...\n",
+            colour=Colour.GREEN,
+        )
+        return True
+    except yaml.parser.ParserError as e:
+        line = e.problem_mark.line
+        _print_with_colour(
+            f"Incorrect indentation in the YAML_CONFIG file at line {line}. "
+            "Please recheck the indentation of the file."
+        )
+        return False
+    except yaml.scanner.ScannerError as e:
+        _print_with_colour(
+            f"Incorrect mapping in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
+        )
+        return False
+    except yaml.constructor.ConstructorError as e:
+        _print_with_colour(
+            f"Invalid tag in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
+        )
+        return False
+    except yaml.reader.ReaderError as e:
+        _print_with_colour(
+            f"Failed to parse YAML file at line {e.problem_mark.line + 1}: {e}"
+        )
+        return False
+    except yaml.YAMLError as e:
+        if hasattr(e, "problem_mark"):
             _print_with_colour(
-                "Sanity check of the YAML_CONFIG was successfully done...\n",
-                colour=Colour.GREEN,
+                f"Error in the YAML_CONFIG file at line {e.problem_mark.line}. "
+                "Please recheck the file."
             )
-            return yaml_data
-        except yaml.parser.ParserError as e:
-            line = e.problem_mark.line
-            _print_with_colour(
-                f"Incorrect indentation in the YAML_CONFIG file at line {line}. "
-                "Please recheck the indentation of the file."
-            )
-        except yaml.scanner.ScannerError as e:
-            _print_with_colour(
-                f"Incorrect mapping in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
-            )
-        except yaml.constructor.ConstructorError as e:
-            _print_with_colour(
-                f"Invalid tag in the YAML_CONFIG file at line {e.problem_mark.line + 1}."
-            )
-        except yaml.reader.ReaderError as e:
-            _print_with_colour(
-                f"Failed to parse YAML file at line {e.problem_mark.line + 1}: {e}"
-            )
-        except yaml.YAMLError as e:
-            if hasattr(e, "problem_mark"):
-                _print_with_colour(
-                    f"Error in the YAML_CONFIG file at line {e.problem_mark.line}. "
-                    "Please recheck the file."
-                )
+        return False
 
 
-def check_one_method_per_module(yaml_file):
+def check_first_method_is_loader(conf: PipelineConfig) -> bool:
     """
-    Check that we cannot have a yaml file with more than one method
-    being called from one module. For example, we cannot have:
-
-    - tomopy.prep.normalize:
-        normalize:
-          data_in: tomo
-          data_out: tomo
-          cutoff: null
-        minus_log:
-          data_in: tomo
-          data_out: tomo
+    Check that the first method in pipeline is a
+    loader.
     """
+    first_stage = conf[0]
+    module_path = first_stage["module_path"]
+
     _print_with_colour(
-        "Checking that YAML_CONFIG includes only one method from each module...\n"
-        "\nDoing a sanity check first...",
+        "Checking that the first method in the pipeline is a loader...",
         colour=Colour.GREEN,
     )
-    yaml_data = sanity_check(yaml_file)
+    if module_path != "httomo.data.hdf.loaders":
+        _print_with_colour(
+            "The first method in the YAML_CONFIG file is not a loader from "
+            "'httomo.data.hdf.loaders'. Please recheck the yaml file."
+        )
+        return False
+    _print_with_colour("Loader check successful!!\n", colour=Colour.GREEN)
 
-    lvalues = [value for d in yaml_data for value in d.values()]
-    for i, d in enumerate(lvalues):
-        assert isinstance(d, dict)
-        if len(d) != 1:
+    return True
+
+
+def check_hdf5_paths_against_loader(conf: PipelineConfig, in_file_path: str) -> bool:
+    """
+    Check that the hdf5 paths given as parameters to the loader indeed exist in
+    the given data file.
+    """
+    with h5py.File(in_file_path, "r") as f:
+        hdf5_members = []
+        _store_hdf5_members(f, hdf5_members)
+        hdf5_members = [m[0] for m in hdf5_members]
+
+    _print_with_colour(
+        "Checking that the paths to the data and keys in the YAML_CONFIG file "
+        "match the paths and keys in the input file (IN_DATA)...",
+        colour=Colour.GREEN,
+    )
+    params = conf[0]["parameters"]
+    _path_keys = [key for key in params if "_path" in key]
+    for key in _path_keys:
+        if params[key].strip("/") not in hdf5_members:
             _print_with_colour(
-                f"More than one method is being called from the"
-                f" module '{next(iter(yaml_data[i]))}'. "
+                f"'{params[key]}' is not a valid path to a dataset in YAML_CONFIG. "
                 "Please recheck the yaml file."
             )
             return False
+    _print_with_colour("Loader paths check successful!!\n", colour=Colour.GREEN)
+    return True
 
-    _print_with_colour(
-        "'One method per module' check was also successfully done...\n",
-        colour=Colour.GREEN,
-    )
-    return yaml_data
+
+def check_methods_exist_in_templates(conf: PipelineConfig) -> bool:
+    """
+    Check if the methods in the pipeline YAML file are valid methods, by
+    checking if they exist in the template YAML files.
+    """
+    packages = _get_package_info(conf)
+    template_yaml_files = _get_template_yaml(conf, packages)
+
+    for i, f in enumerate(template_yaml_files):
+        if not os.path.exists(f):
+            _print_with_colour(
+                f"'{conf[i]['module_path'] + '/' + conf[i]['method']}' is not a valid"
+                " method. Please recheck the yaml file."
+            )
+            return False
+
+    return True
+
+
+def check_parameter_names_are_known(conf: PipelineConfig) -> bool:
+    """
+    Check if the parameter name of config methods exists in yaml template method parameters
+    """
+    template_yaml_conf = _get_template_yaml_conf(conf)
+    for method_dict in conf:
+        yml_method_list = [
+            yml_method_dict
+            for yml_method_dict in template_yaml_conf
+            if (yml_method_dict["method"] == method_dict["method"])
+            and (yml_method_dict["module_path"] == method_dict["module_path"])
+        ]
+        unknown_param_dict = [
+            p
+            for yml_method in yml_method_list
+            for p, v in method_dict["parameters"].items()
+            if p not in yml_method["parameters"].keys()
+        ]
+        for p in unknown_param_dict:
+            _print_with_colour(
+                f"Parameter '{p}' in the '{method_dict['method']}' method is not valid."
+            )
+            return False
+    return True
+
+
+def check_parameter_names_are_str(conf: PipelineConfig) -> bool:
+    """Parameter names should be type string"""
+    non_str_param_names = {
+        method["method"]: param
+        for method in conf
+        for param, param_value in method["parameters"].items()
+        if not isinstance(param, str)
+    }
+    for method, param in non_str_param_names.items():
+        _print_with_colour(
+            f"A string is needed for the parameter name '{param}' in the '{method}' method."
+            " Refer to the method docstring for more information."
+        )
+        return False
+    return True
+
+
+def check_no_required_parameter_values(conf: PipelineConfig) -> bool:
+    """there should be no REQUIRED parameters in the config pipeline"""
+    required_values = {
+        method["method"]: param
+        for method in conf
+        for param, param_value in method["parameters"].items()
+        if param_value == "REQUIRED"
+    }
+    for method, param in required_values.items():
+        _print_with_colour(
+            f"A value is needed for the parameter '{param}' in the '{method}' method."
+            " Please specify a value instead of 'REQUIRED'."
+            " Refer to the method docstring for more information."
+        )
+        return False
+    return True
+
+
+def check_no_duplicated_keys(f: Path) -> bool:
+    """there should be no duplicate keys in yaml file
+    Parameters
+    ----------
+    f
+        yaml file to check
+    """
+    try:
+        conf = yaml_loader(f, loader=UniqueKeyLoader)
+    except ValueError as e:
+        # duplicate key found
+        _print_with_colour(str(e), colour=Colour.GREEN)
+        return False
+    return True
+
+
+def check_keys(conf: PipelineConfig) -> bool:
+    """There should be three main keys in each method"""
+    required_keys = ["method", "module_path", "parameters"]
+    for method in conf:
+        all_keys = method.keys()
+        if not all(k in all_keys for k in required_keys):
+            missing_keys = set(required_keys) - set(all_keys)
+            _print_with_colour(f"Missing keys:")
+            print(*missing_keys, sep=", ")
+            return False
+    return True
+
+
+def check_id_has_side_out(conf: PipelineConfig) -> bool:
+    """Check method with an id has side outputs"""
+    method_ids = [m.get("side_outputs") for m in conf if m.get("id")]
+    if None in method_ids:
+        _print_with_colour(f"A method with an id has no side outputs defined.")
+        return False
+    return True
+
+
+def check_ref_id_valid(conf: PipelineConfig) -> bool:
+    """Check reference str is matching a valid method id"""
+    pattern = get_regex_pattern()
+    method_ids = [m.get("id") for m in conf if m.get("id")]
+    ref_strs = {
+        k: v
+        for m in conf
+        for k, v in get_valid_ref_str(m.get("parameters", dict())).items()
+    }
+    for k, v in ref_strs.items():
+        (ref_id, side_str, ref_arg) = get_ref_split(v, pattern)
+        if ref_id not in method_ids:
+            _print_with_colour(
+                f"The reference id: {ref_id} was not found to have a matching method id."
+            )
+            return False
+    return True
+
+
+def check_side_out_matches_ref_arg(conf: PipelineConfig) -> bool:
+    """Check reference name exists"""
+    pattern = get_regex_pattern()
+    ref_strs = {
+        k: v
+        for m in conf
+        for k, v in get_valid_ref_str(m.get("parameters", dict())).items()
+    }
+    for k, v in ref_strs.items():
+        (ref_id, side_str, ref_arg) = get_ref_split(v, pattern)
+        side_dicts = [
+            m.get(side_str)
+            for m in conf
+            if m.get("id") == ref_id and m.get(side_str) is not None
+        ]
+        all_side_out = {k: v for d in side_dicts for k, v in d.items()}
+        if ref_arg not in all_side_out.values():
+            _print_with_colour(
+                f"The reference value: {ref_arg} was not found to have a matching side"
+                f"output value."
+            )
+            return False
+    return True
+
+
+def _get_template_yaml_conf(conf: PipelineConfig) -> PipelineConfig:
+    """Get the pipeline config method dictionaries from template yaml files
+
+    Parameters
+    ----------
+    conf
+       The list of method dictionaries in the pipeline
+        this specifies which yaml template methods to get
+
+    Returns
+    -------
+    list of method dictionaries which is loaded from yaml templates
+    """
+    packages = _get_package_info(conf)
+    template_yaml_files = _get_template_yaml(conf, packages)
+    template_yaml_conf: PipelineConfig = []
+    for f in template_yaml_files:
+        tmp_conf = yaml_loader(f)
+        # make an assumption there is one method inside each template
+        template_yaml_conf.append(tmp_conf[0])
+    return template_yaml_conf
+
+
+def _get_package_info(conf: PipelineConfig) -> List:
+    """
+    Helper function to get packages from module path.
+    """
+    modules = [m["module_path"] for m in conf]
+    packages = [m.split(".")[0] for m in modules]
+    return packages
+
+
+def _get_template_yaml(conf: PipelineConfig, packages: List) -> List:
+    """
+    Helper function that fetches template YAML file names associated with methods
+    passed.
+    """
+    parent_dir = Path(__file__).parent.parent
+    templates_dir = os.path.join(parent_dir, "yaml_templates")
+    assert os.path.exists(
+        templates_dir
+    ), "Dev error: expected YAML templates dir to exist"
+    return [
+        os.path.join(
+            templates_dir,
+            packages[i],
+            conf[i]["module_path"],
+            conf[i]["method"] + ".yaml",
+        )
+        for i in range(len(conf))
+    ]
 
 
 def _print_with_colour(end_str: Any, colour: Any = Colour.RED) -> None:
@@ -118,138 +380,68 @@ def _store_hdf5_members(group, members_list, path=""):
             members_list.append((new_path, value))
 
 
-def validate_yaml_config(yaml_file, in_file: str = None) -> bool:
+def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> bool:
     """
     Check that the modules, methods, and parameters in the `YAML_CONFIG` file
     are valid, and adhere to the same structure as in each corresponding
-    module in `httomo.templates`.
+    module in `httomo.yaml_templates`.
     """
-    yaml_data = check_one_method_per_module(yaml_file)
+    with open(yaml_file, "r") as f:
+        conf_generator: Iterator[Any] = yaml.load_all(f, Loader=yaml.FullLoader)
+        is_yaml_ok = sanity_check(conf_generator)
 
-    modules = [next(iter(d)) for d in yaml_data]
-    methods = [next(iter(d.values())) for d in yaml_data]
-    packages = [
-        m.split(".")[0] + "/" + get_external_package_current_version(m.split(".")[0])
-        if m.split(".")[0] != "httomo"
-        else m.split(".")[0]
-        for m in modules
-    ]
+    are_keys_duplicated = check_no_duplicated_keys(yaml_file)
+    conf = yaml_loader(yaml_file)
 
-    #: the first method is always a loader
-    #: so `testing_pipeline.yaml` should not pass.
-    _print_with_colour(
-        "Checking that the first method in the pipeline is a loader...",
-        colour=Colour.GREEN,
-    )
-    if modules[0] != "httomo.data.hdf.loaders":
-        _print_with_colour(
-            "The first method in the YAML_CONFIG file is not a loader from "
-            "'httomo.data.hdf.loaders'. Please recheck the yaml file."
-        )
-        return False
-    _print_with_colour("Loader check successful!!\n", colour=Colour.GREEN)
-
+    # Let all checks run before returning with the result, even if some checks
+    # fail, to show all errors present in YAML
+    is_first_method_loader = check_first_method_is_loader(conf)
+    are_hdf5_paths_correct = True
     if in_file is not None:
-        with h5py.File(in_file, "r") as f:
-            hdf5_members = []
-            _store_hdf5_members(f, hdf5_members)
-            hdf5_members = [m[0] for m in hdf5_members]
+        are_hdf5_paths_correct = check_hdf5_paths_against_loader(conf, str(in_file))
+    do_methods_exist = check_methods_exist_in_templates(conf)
+    are_param_names_known = check_parameter_names_are_known(conf)
+    are_param_names_type_str = check_parameter_names_are_str(conf)
+    id_and_side_out_present = check_id_has_side_out(conf)
+    are_ref_ids_valid = check_ref_id_valid(conf)
+    side_out_matches_ref_arg = check_side_out_matches_ref_arg(conf)
+    required_keys_present = check_keys(conf)
+    are_required_parameters_missing = check_no_required_parameter_values(conf)
 
-        _print_with_colour(
-            "Checking that the paths to the data and keys in the YAML_CONFIG file "
-            "match the paths and keys in the input file (IN_DATA)...",
-            colour=Colour.GREEN,
-        )
-        loader_params = next(iter(methods[0].values()))
-        _path_keys = [key for key in loader_params if "_path" in key]
-        for key in _path_keys:
-            if loader_params[key].strip("/") not in hdf5_members:
-                _print_with_colour(
-                    f"'{loader_params[key]}' is not a valid path to a dataset in YAML_CONFIG. "
-                    "Please recheck the yaml file."
-                )
-                return False
-        _print_with_colour("Loader paths check successful!!\n", colour=Colour.GREEN)
+    all_checks_pass = (
+        is_yaml_ok
+        and are_keys_duplicated
+        and is_first_method_loader
+        and are_hdf5_paths_correct
+        and do_methods_exist
+        and are_param_names_known
+        and are_param_names_type_str
+        and id_and_side_out_present
+        and are_ref_ids_valid
+        and side_out_matches_ref_arg
+        and required_keys_present
+        and are_required_parameters_missing
+    )
 
-    parent_dir = os.path.dirname(os.path.abspath("__file__"))
-    templates_dir = os.path.join(parent_dir, "templates")
-    assert os.path.exists(templates_dir)
+    if not all_checks_pass:
+        return False
 
-    _template_yaml_files = [
-        os.path.join(
-            templates_dir, packages[i], modules[i], next(iter(methods[i])) + ".yaml"
-        )
-        for i in range(len(modules))
-    ]
-
-    for i, f in enumerate(_template_yaml_files):
-        if not os.path.exists(f):
-            _print_with_colour(
-                f"'{modules[i] + '/' + next(iter(methods[i]))}' is not a valid"
-                " path to a method. Please recheck the yaml file."
-            )
-            return False
-
-    _template_yaml_data_list = [
-        next(iter(d.values()))
-        for f in _template_yaml_files
-        for d in open_yaml_config(f)
-    ]
-
-    for i, _ in enumerate(modules):
-        end_str_list = ["Checking '", next(iter(methods[i])), "' and its parameters..."]
-        colours = [Colour.GREEN, Colour.CYAN, Colour.GREEN]
-        _print_with_colour(end_str_list, colours)
-        d1 = methods[i]
-        d2 = _template_yaml_data_list[i]
-
-        for key in d1.keys():
-            for parameter in d1[key].keys():
-                assert isinstance(parameter, str)
-
-                # handle `data_in_multi` and `data_out_multi` as special cases
-                if parameter in ["data_in_multi", "data_out_multi"]:
-                    if not (
-                        isinstance(d1[key][parameter], list)
-                        and all(isinstance(x, str) for x in d1[key][parameter])
-                    ):
-                        _print_with_colour(
-                            f"Value assigned to parameter '{parameter}' in the '{modules[i]}' method"
-                            f" is not correct."
-                        )
-                        return False
-
-                    continue
-
-                if parameter not in d2[key].keys():
-                    _print_with_colour(
-                        f"Parameter '{parameter}' in the '{modules[i]}' method is not valid."
-                    )
-                    return False
-
-                # there should be no REQUIRED parameters in the YAML_CONFIG file
-                if d1[key][parameter] == "REQUIRED":
-                    _print_with_colour(
-                        f"A value is needed for the parameter '{parameter}' in the '{modules[i]}' method."
-                        " Please specify a value instead of 'REQUIRED'."
-                        " Refer to the method docstring for more information."
-                    )
-                    return False
-
-                # skip tuples for !Sweep and !SweepRange
-                if isinstance(d1[key][parameter], tuple) or None in (
-                    d1[key][parameter],
-                    d2[key][parameter],
-                ):
-                    continue
-
-                if not isinstance(d1[key][parameter], type(d2[key][parameter])):
-                    _print_with_colour(
-                        f"Value assigned to parameter '{parameter}' in the '{next(iter(methods[i]))}' method"
-                        f" is not correct. It should be of type {type(d2[key][parameter])}."
-                    )
-                    return False
-
-    end_str = "\nYAML validation successful!! Please feel free to use the `run` command to run the pipeline."
+    end_str = (
+        "\nYAML validation successful!! Please feel free to use the `run` "
+        "command to run the pipeline."
+    )
     _print_with_colour(end_str, colour=Colour.BVIOLET)
     return True
+
+
+class UniqueKeyLoader(yaml.SafeLoader):
+    """Check for duplicate keys in yaml"""
+
+    def construct_mapping(self, node, deep=False):
+        mapping = set()
+        for key_node, value_node in node.value:
+            each_key = self.construct_object(key_node, deep=deep)
+            if each_key in mapping:
+                raise ValueError(f"Duplicate Key: {each_key} found{key_node.end_mark}")
+            mapping.add(each_key)
+        return super().construct_mapping(node, deep)

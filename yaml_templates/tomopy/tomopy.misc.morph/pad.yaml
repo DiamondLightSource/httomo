@@ -1,0 +1,7 @@
+- method: pad
+  module_path: tomopy.misc.morph
+  parameters:
+    axis: REQUIRED
+    npad: null
+    mode: constant
+    '#additional parameters': AVAILABLE

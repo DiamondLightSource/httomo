@@ -1,8 +1,0 @@
-- tomopy.misc.morph:
-    pad:
-      data_in: tomo
-      data_out: tomo
-      axis: REQUIRED
-      npad: null
-      mode: constant
-      '#additional parameters': AVAILABLE

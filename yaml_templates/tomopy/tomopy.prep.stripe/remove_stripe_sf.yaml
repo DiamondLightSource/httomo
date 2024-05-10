@@ -1,0 +1,4 @@
+- method: remove_stripe_sf
+  module_path: tomopy.prep.stripe
+  parameters:
+    size: 5

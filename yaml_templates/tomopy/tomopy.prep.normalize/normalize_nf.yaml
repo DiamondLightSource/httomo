@@ -1,0 +1,6 @@
+- method: normalize_nf
+  module_path: tomopy.prep.normalize
+  parameters:
+    flat_loc: REQUIRED
+    cutoff: null
+    averaging: mean

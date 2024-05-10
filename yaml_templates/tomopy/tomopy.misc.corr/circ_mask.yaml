@@ -1,0 +1,6 @@
+- method: circ_mask
+  module_path: tomopy.misc.corr
+  parameters:
+    axis: REQUIRED
+    ratio: 1
+    val: 0.0

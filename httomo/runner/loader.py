@@ -1,0 +1,36 @@
+from typing import Protocol
+
+from httomo.runner.dataset_store_interfaces import DataSetSource
+from httomo.utils import Pattern
+
+
+class LoaderInterface(Protocol):
+    """Interface to a loader object"""
+
+    # Patterns the loader supports
+    pattern: Pattern = Pattern.all
+    # purely informational, for use by the logger
+    method_name: str
+    package_name: str = "httomo"
+
+    def make_data_source(self) -> DataSetSource:
+        """Create a dataset source that can produce blocks of data from the file.
+
+        This will be called after the patterns and sections have been determined,
+        just before the execution of the first section starts."""
+        ...  # pragma: no cover
+
+    @property
+    def detector_x(self) -> int:
+        """detector x-dimension of the loaded data"""
+        ...  # pragma: no cover
+
+    @property
+    def detector_y(self) -> int:
+        """detector y-dimension of the loaded data"""
+        ...  # pragma: no cover
+
+    @property
+    def angles_total(self) -> int:
+        """angles dimension of the loaded data"""
+        ...  # pragma: no cover

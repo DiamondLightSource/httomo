@@ -3,19 +3,46 @@
 How to run HTTomo
 -----------------
 
-For those interested in getting straight to the run commands, please feel free
-to :ref:`jump ahead<run-commands>`. Otherwise, carry on reading for more
-in-depth information on running HTTomo.
+The next section gives an overview of the commands to quickly get started running
+HTTomo.
 
-The Basics of Running HTTomo
-============================
+For those interested in learning about the different ways HTTomo can be configured
+to run, there is the :ref:`run-httomo-indepth` section.
+
+Quick Overview of Running HTTomo
+================================
 
 Required inputs
 +++++++++++++++
 
 In order to run HTTomo you require a data file (an HDF5 file) and a YAML process
 list file that describes the desired processing pipeline. For information on
-getting started creating this YAML file, please see :ref:`howto_process_list`.
+getting started creating this YAML file, please see :ref:`howto_process_list` 
+and also ready-to-be-used :ref:`tutorials_pl_templates`.
+
+Running HTTomo Inside or Outside of Diamond
++++++++++++++++++++++++++++++++++++++++++++
+
+As HTTomo was developed at the Diamond Light Source, there have been some extra
+efforts to accommodate the users at Diamond (for example, aliases for commands
+and launcher scripts). As such, there are some differences as to how one would run
+HTTomo at Diamond vs. outside of Diamond, and the guidance on running HTTomo has
+been split into two sections accordingly.
+
+Additionally, HTTomo is able to run in serial or in parallel depending on what
+computer hardware is available to the user, so some sections have been further
+split into these two subsections where relevant.
+
+.. toctree::
+   :maxdepth: 2
+
+   how_to_run/at_diamond
+   how_to_run/outside_diamond
+
+.. _run-httomo-indepth:
+
+In-depth Look at Running HTTomo
+===============================
 
 Interacting with HTTomo through the command line interface (CLI)
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -23,8 +50,8 @@ Interacting with HTTomo through the command line interface (CLI)
 The way to interact with the HTTomo software is through its "command line
 interface" (CLI).
 
-The preliminary step to accessing installed HTTomo software depends on if you
-are using a Diamond machine or not:
+As mentioned earlier, the preliminary step to accessing installed HTTomo software
+depends on if you are using a Diamond machine or not:
 
 - not on a Diamond machine: activate the conda environment that HTTomo was
   installed into (please refer to :doc:`installation` for instructions on how to
@@ -123,23 +150,26 @@ The :code:`run` command
 .. code-block:: console
 
     $ python -m httomo run --help
-    Usage: python -m httomo run [OPTIONS] IN_FILE YAML_CONFIG OUT_DIR
+    Usage: python -m httomo run [OPTIONS] IN_DATA_FILE YAML_CONFIG OUT_DIR
 
-      Run a processing pipeline defined in YAML on input data.
+      Run a pipeline defined in YAML on input data.
 
     Options:
-      -d, --dimension INTEGER RANGE  The dimension to slice through.  [1<=x<=3]
-      --pad INTEGER                  The number of slices to pad each block of
-                                     data.
-      --ncore INTEGER                The number of the CPU cores per process.
-      --save-all                     Save intermediate datasets for all tasks in
-                                     the pipeline.
-      --file-based-reslice           Reslice using intermediate files (default is
-                                     in-memory).
-      --reslice-dir DIRECTORY        Directory for reslice intermediate files
-                                     (defaults to out_dir, only relevant if
-                                     --reslice is also given)
-      --help                         Show this message and exit.
+      --save-all                 Save intermediate datasets for all tasks in the
+                                 pipeline.
+      --gpu-id INTEGER           The GPU ID of the device to use.
+      --reslice-dir DIRECTORY    Directory for temporary files potentially needed
+                                 for reslicing (defaults to output dir)
+      --max-cpu-slices INTEGER   Maximum number of slices to use for a block for
+                                 CPU-only sections (default: 64)
+      --max-memory TEXT          Limit the amount of memory used by the pipeline
+                                 to the given memory (supports strings like 3.2G
+                                 or bytes)
+      --monitor TEXT             Add monitor to the runner (can be given multiple
+                                 times). Available monitors: bench, summary
+      --monitor-output FILENAME  File to store the monitoring output. Defaults to
+                                 '-', which denotes stdout
+      --help                     Show this message and exit.
 
 Arguments
 #########
@@ -182,44 +212,12 @@ Options/flags
 
 The :code:`run` command has 6 options/flags:
 
-- :code:`-d/--dimension`
-- :code:`--pad`
-- :code:`--ncore`
 - :code:`--save-all`
-- :code:`--file-based-reslice`
 - :code:`--reslice-dir`
-
-:code:`-d/--dimension`
-~~~~~~~~~~~~~~~~~~~~~~
-
-This allows the user to specify what dimension of the data (counting from 1 to
-3) that the input data should be sliced in when it is first loaded by the loader
-method. In other words, it allows the user to specify if the input data should
-be loaded as projections (pass a value of 1, which is the default value) or
-sinograms (pass a value of 2).
-
-For example, if the method immediately after the loader processes *projections*,
-then the :code:`-d/--dimension` flag can be omitted entirely, or a value of 1
-can be explicitly provided like :code:`-d 1`.
-
-Another example: if the method immediately after the loader processes
-*sinograms*, then this flag needs to be passed and given a value of 2, like
-:code:`-d 2`.
-
-:code:`--pad`
-~~~~~~~~~~~~~
-
-TODO
-
-:code:`--ncore`
-~~~~~~~~~~~~~~~
-
-In the backends that HTTomo supports, there are CPU methods which support
-running multiple processes to enable the method's processing to be performed
-faster.
-
-Based on the hardware that HTTomo will be run on, the number of available CPU
-cores can be provided to take advantage of this multi-process capability.
+- :code:`--max-cpu-slices`
+- :code:`--max-memory`
+- :code:`--monitor`
+- :code:`--monitor-output`
 
 .. _httomo-saving:
 
@@ -238,23 +236,6 @@ following conditions is satisfied:
 However, there are certain cases such as debugging, where saving the output of
 all methods to files in the output directory is beneficial. This flag is a quick
 way of doing so.
-
-:code:`--file-based-reslice`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Please see the :ref:`pl_reslice` section for more information about the
-re-slicing operation that can occur during the execution of the processing
-pipeline.
-
-By default, HTTomo will perform the re-slice operation *without* writing a file
-to the output directory, and instead perform the operation "in-memory". This is
-because the latter has much better performance than the former, and is thus
-given preference.
-
-While performing the re-slice operation via writing a file has worse performance
-than in-memory, it is useful to have it as an option for backup. Therefore, this
-flag is for specifying to HTTomo that any re-slice operations should be done
-with a file, rather than with RAM.
 
 :code:`--reslice-dir`
 ~~~~~~~~~~~~~~~~~~~~~
@@ -293,81 +274,106 @@ File w/ local disk           Fast
 File w/ network-mounted disk Very slow
 ============================ =========
 
-.. _run-commands:
+:code:`--max-cpu-slices`
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Run Commands
-============
+This flag is only relevant only for runs which are using a pipeline that contains
+1 or more sections that are composed of purely CPU methods.
 
-As HTTomo was developed at the Diamond Light Source, there have been some extra
-efforts to accommodate the users at Diamond (for example, aliases for commands
-and launcher scripts). As such, there are some differences as to how one would run
-HTTomo at Diamond vs. outside of Diamond, and the guidance on running HTTomo has
-been split into two sections accordingly.
+Understanding this flag's usage is dependent on knowledge of the concept of
+"chunks", "blocks", and "sections" within HTTomo's framework, so please refer to
+:ref:`detailed_about` for information on these concepts.
 
-Additionally, HTTomo is able to run in serial or in parallel depending on what
-computer hardware is available to the user, so each section has been further
-split into these two subsections.
+The notion of a block is fully utilised to increase performance when a sequence of
+two or more GPU methods are being executed. When two or more CPU methods are
+executed in sequence, the notion of a block plays a less significant role in
+performance. The number of slices in a block is driven by the memory capacity of
+the GPU, but if no GPU is being used for executing a sequence of methods in the
+pipeline, there is no obvious way to choose the number of slices in a block (the
+"block size").
 
-Outside Diamond
-+++++++++++++++
+In such cases the user may wish to tweak the block size to explore if a specific
+block size happens to improve performance for the CPU-only section(s).
 
-As mentioned earlier, make sure to activate the conda environment that has
-HTTomo installed in it.
+:code:`--max-memory`
+~~~~~~~~~~~~~~~~~~~~
 
-Serial
-######
+HTTomo supports running on both:
 
-This is the simplest case:
+- a compute cluster, where RAM on the host machine is often quite large
+- a personal machine, where RAM is not nearly as large
 
-.. code-block:: console
+This is done by a mechanism within HTTomo to hold data in RAM wherever there is
+enough RAM to do the required processing, and write data to a file if there is not
+enough RAM.
 
-  python -m httomo run IN_FILE YAML_CONFIG OUT_DIR
+The :code:`--max-memory` flag is for telling HTTomo how much RAM the machine has,
+so then it can switch to using a file during execution of the pipeline if
+necessary.
 
-Parallel
-########
+:code:`--monitor`
+~~~~~~~~~~~~~~~~~
 
-HTTomo's parallel processing capability has been implemented with :code:`mpi4py`
-and :code:`h5py`. Therefore, HTTomo is intended to be run in parallel by using
-the :code:`mpirun` command (or equivalent, such as :code:`srun` for SLURM
-clusters):
+HTTomo has the capability of reporting information about the performance of the
+various methods involved in the specific pipeline that will be executed.
+Specifically:
 
-.. code-block:: console
+- time taken for methods to execute on the CPU/GPU
+- transfer time to and from the GPU
+- time taken to write to files (if HTTomo uses a file instead of RAM to hold data
+  during pipeline execution)
 
-  mpirun -np N python -m httomo run IN_FILE YAML_CONFIG OUT_DIR
+There are two options for this flag, :code:`summary` and :code:`bench`.
 
-where :code:`N` is the number of parallel processes to launch.
+:code:`--monitor=summary`
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Inside Diamond
-++++++++++++++
-
-Serial
-######
-
-As mentioned earlier, HTTomo can be loaded on a Diamond machine by doing
-:code:`module load httomo`. This will allow HTTomo to be run on the local
-machine like so:
-
-.. code-block:: console
-
-  httomo run IN_FILE YAML_CONFIG OUT_DIR
-
-Parallel
-########
-
-A parallel run of HTTomo at Diamond would usually be done on a compute cluster.
-However, there are cases where a parallel run on a local machine on cropped data
-is also useful, so that has also been described below.
-
-Cluster
-~~~~~~~
+The :code:`summary` option will produce a brief summary of the time taken for each
+method to execute in the pipeline, which will look something like the following:
 
 .. code-block:: console
 
-  ssh wilson
-  module load httomo
-  httomo_mpi IN_FILE YAML_CONFIG OUT_DIR
+    Summary Statistics (aggregated across 1 processes):
+      Total methods CPU time:     19.376s
+      Total methods GPU time:     19.042s
+      Total host2device time:      0.013s
+      Total device2host time:      0.548s
+      Total sources time    :      0.063s
+      Total sinks time      :      0.028s
+      Other overheads       :      0.362s
+      ---------------------------------------
+      Total pipeline time   :     19.829s
+      Total wall time       :     19.829s
+      ---------------------------------------
+    Method breakdowns:
+                        data_reducer :      0.001s ( 0.0%)
+                      find_center_vo :     11.586s (58.4%)
+                      remove_outlier :      3.312s (16.7%)
+                           normalize :      0.334s ( 1.7%)
+         remove_stripe_based_sorting :      2.987s (15.1%)
+                                 FBP :      0.966s ( 4.9%)
+              save_intermediate_data :      0.019s ( 0.1%)
+                      save_to_images :      0.171s ( 0.9%)
 
-Non-cluster
-~~~~~~~~~~~
+:code:`--monitor=bench`
+^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO (:code:`httomo_mpi_local`?)
+The :code:`bench` option (short for "benchmark") provides a much more in-depth
+breakdown of the time taken for each method to execute (dividing it into time
+taken on CPU vs. GPU, data transfer times to and from the GPU), and providing this
+information for all processes involved in the run.
+
+This output is very verbose, but can provide some insight if, for example, wanting
+to see what parts of the pipeline may be slower than expected.
+
+:code:`--monitor-output`
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default the output of any usage of the :code:`--monitor` flag will be written
+to :code:`stdout` (ie, printed to the terminal). However, there are times when
+it's useful to write the monitoring output to a file, such as for performance
+analysis.
+
+HTTomo supports writing the monitoring results in CSV format, and so any given
+filepath to the :code:`--monitor-output` flag will produce a file with the
+benchmarking results written in CSV format.

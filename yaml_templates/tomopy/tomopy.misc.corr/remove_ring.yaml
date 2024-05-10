@@ -1,0 +1,12 @@
+- method: remove_ring
+  module_path: tomopy.misc.corr
+  parameters:
+    rec: REQUIRED
+    center_x: null
+    center_y: null
+    thresh: 300.0
+    thresh_max: 300.0
+    thresh_min: -100.0
+    theta_min: 30
+    rwidth: 30
+    int_mode: WRAP

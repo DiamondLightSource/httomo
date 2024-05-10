@@ -1,0 +1,5 @@
+- method: stripes_detect3d
+  module_path: tomopy.prep.stripe
+  parameters:
+    size: 10
+    radius: 3

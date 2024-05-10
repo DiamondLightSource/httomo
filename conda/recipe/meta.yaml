@@ -16,7 +16,7 @@ build:
 test:
   files:
     - samples/*
-    - templates/*
+    - yaml_templates/*
   requires:
     - pip
     - pytest
@@ -36,8 +36,8 @@ requirements:
     - setuptools-git-versioning
   run:
     - python
-    - numpy>= 1.20, <= 1.23
-    - cupy>=12.0
+    - numpy>= 1.20, <= 1.25
+    - cupy>=12.3
     - mpi4py>=3.1
     - h5py>=3.8=mpi*
     - httomolib

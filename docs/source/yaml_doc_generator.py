@@ -39,8 +39,7 @@ def add_function_summary(doc_dir, root, files, t_version):
         if os.stat(doc_rst_file).st_size == 0:
             rst_name = root.split("/")[-1]
             add_title(edit_doc, rst_name)
-            add_tomopy_link(edit_doc, rst_name, t_version)
-            add_httomolib_link(edit_doc, rst_name)
+            add_backend_link(edit_doc, rst_name)
         else:
             edit_doc.write(f"\n\n   .. rubric:: **Functions**")
             edit_doc.write(f"\n\n   .. autosummary::\n")
@@ -141,8 +140,8 @@ def add_title(edit_doc, rst_name):
     edit_doc.write(f"{underline}\n")
 
 
-def add_tomopy_link(edit_doc, rst_name, t_version):
-    """Link to tomopy documentation.
+def add_backend_link(edit_doc, rst_name):
+    """Links to backends documentation.
 
     Parameters
     ----------
@@ -155,24 +154,14 @@ def add_tomopy_link(edit_doc, rst_name, t_version):
     """
     if "tomopy" in rst_name:
         # If it is a tomopy module, insert a link.
-        url = f"https://tomopy.readthedocs.io/en/{t_version}/api/"
-        edit_doc.write(f"\n{url}{rst_name}.html\n\n")
-
-
-def add_httomolib_link(edit_doc, rst_name):
-    """Link to httomolib documentation.
-
-    Parameters
-    ----------
-    edit_doc : File
-        Document to write to.
-    rst_name : str
-        name of rst file.
-    """
-    if "httomolib." in rst_name:
-        # If it is a httomolib module, insert a link.
+        url = "https://tomopy.readthedocs.io/en/stable/api/"
+    elif "httomolibgpu" in rst_name:
+        url = "https://diamondlightsource.github.io/httomolibgpu/api/"
+    elif "httomolib" in rst_name:
         url = "https://diamondlightsource.github.io/httomolib/api/"
-        edit_doc.write(f"\n{url}{rst_name}.html\n\n")
+    else:
+        raise ValueError("The name of the backend package is not recognised")
+    edit_doc.write(f"\n{url}{rst_name}.html\n\n")
 
 
 def save_all_yaml_functions(tmp_dir, yaml_files):
@@ -195,17 +184,14 @@ def save_all_yaml_functions(tmp_dir, yaml_files):
 
 
 if __name__ == "__main__":
-    """Create documentation for modules from httomo, tomopy and httomolib.
+    """Create documentation for modules from httomo, tomopy, httomolib and httomolibgpu.
     Append the yaml information to the documentation pages.
     """
     doc_source_dir = os.path.dirname(os.path.abspath(__file__))
-    path_to_templates = doc_source_dir + "/../../templates/"
-    tomopy_version = "v1.14.0"
+    path_to_templates = doc_source_dir + "/../build/yaml_templates/"
     for root, dirs, files in os.walk(path_to_templates, topdown=True):
         dirs[:] = [d for d in dirs]
         files[:] = [fi for fi in files if ".yaml" in fi]
-        # Don't include the module list on the documentation pages
-        files[:] = [fi for fi in files if "modules" not in fi]
         if files:
             add_function_summary(doc_source_dir, root, files, tomopy_version)
             save_all_yaml_functions(root, files)

@@ -1,0 +1,5 @@
+- method: normalize
+  module_path: tomopy.prep.normalize
+  parameters:
+    cutoff: null
+    averaging: mean

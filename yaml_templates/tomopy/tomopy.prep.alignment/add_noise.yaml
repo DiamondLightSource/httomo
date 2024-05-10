@@ -1,0 +1,4 @@
+- method: add_noise
+  module_path: tomopy.prep.alignment
+  parameters:
+    ratio: 0.05

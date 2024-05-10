@@ -1,0 +1,5 @@
+- method: upsample
+  module_path: tomopy.misc.morph
+  parameters:
+    level: 1
+    axis: auto

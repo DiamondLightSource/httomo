@@ -1,0 +1,5 @@
+- method: adjust_range
+  module_path: tomopy.misc.corr
+  parameters:
+    dmin: null
+    dmax: null

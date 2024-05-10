@@ -1,0 +1,4 @@
+- method: normalize_bg
+  module_path: tomopy.prep.normalize
+  parameters:
+    air: 1

@@ -1,0 +1,4 @@
+- method: remove_neg
+  module_path: tomopy.misc.corr
+  parameters:
+    val: 0.0

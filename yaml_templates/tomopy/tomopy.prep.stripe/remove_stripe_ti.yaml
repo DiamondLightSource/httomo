@@ -1,0 +1,5 @@
+- method: remove_stripe_ti
+  module_path: tomopy.prep.stripe
+  parameters:
+    nblock: 0
+    alpha: 1.5

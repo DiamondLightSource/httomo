@@ -1,15 +1,19 @@
+import logging
 from pathlib import Path
 
 import numpy
 from mpi4py.MPI import Comm
 
 from httomo.data.hdf._utils.chunk import save_dataset
-from httomo.utils import Colour, log_once
+from httomo.utils import log_once
 
 
 def intermediate_dataset(
     data: numpy.ndarray,
     run_out_dir: Path,
+    angles: numpy.ndarray,
+    detector_x: int,
+    detector_y: int,
     comm: Comm,
     task_no: int,
     package_name: str,
@@ -26,6 +30,12 @@ def intermediate_dataset(
         The data to be written.
     run_out_dir : Path
         The directory to write the file to.
+    angles : numpy.ndarray
+        Projection angles array.
+    detector_x : int
+        Horizontal detector dimension.
+    detector_y : int
+        Vertical detector dimension.
     comm : Comm
         The MPI communicator to use.
     task_no : int
@@ -54,7 +64,15 @@ def intermediate_dataset(
     else:
         filename = f"{filename}.h5"
 
-    log_once(
-        f"Saving intermediate file: {filename}", comm, colour=Colour.LYELLOW, level=1
+    log_once(f"Saving intermediate file: {filename}", level=logging.DEBUG)
+    save_dataset(
+        run_out_dir,
+        filename,
+        data,
+        angles,
+        detector_x,
+        detector_y,
+        slice_dim,
+        chunks_recon,
+        comm=comm,
     )
-    save_dataset(run_out_dir, filename, data, slice_dim, chunks_recon, comm=comm)

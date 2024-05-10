@@ -1,0 +1,6 @@
+- method: add_drift
+  module_path: tomopy.sim.project
+  parameters:
+    amp: 0.2
+    period: 50
+    mean: 1

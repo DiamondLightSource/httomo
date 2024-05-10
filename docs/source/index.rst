@@ -22,6 +22,7 @@
     howto/run_httomo
     howto/process_lists_guide
     howto/httomo_features
+    howto/interpret_logger
 
 .. _reference_content:
 
@@ -29,35 +30,35 @@
     :caption: Reference guides
     :maxdepth: 2
 
-    reference/templates
     reference/yaml
     reference/loaders
 
+.. _backends_content:
+
+.. toctree::
+    :caption: Templates for backends
+    :maxdepth: 2
+
+    backends/list
+    backends/templates
+
+.. _tutorials_content:
+
+.. toctree::
+    :caption: Ready-to-use pipelines
+    :maxdepth: 2
+    :glob:
+
+    pipelines/yaml
+    
 .. _utilities_content:
 
 .. toctree::
     :caption: Utilities
     :maxdepth: 2
 
-    utilities/yaml_checker   
-
-.. _backends_content:
-
-.. toctree::
-    :caption: Backends
-    :maxdepth: 2
-
-    backends/list
-
-.. _tutorials_content:
-
-.. toctree::
-    :caption: Tutorials/Examples
-    :maxdepth: 2
-    :glob:
-
-    tutorials/yaml
-    tutorials/jn
+    utilities/yaml_checker
+    utilities/yaml_generator
 
 .. _developers_content:
 
@@ -65,5 +66,5 @@
     :caption: Developers
     :maxdepth: 2
 
-    developers/yaml_generator
-    
+    developers/how_to_contribute    
+    developers/memory_calculation

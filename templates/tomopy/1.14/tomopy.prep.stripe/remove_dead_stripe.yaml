@@ -1,7 +1,0 @@
-- tomopy.prep.stripe:
-    remove_dead_stripe:
-      data_in: tomo
-      data_out: tomo
-      snr: 3
-      size: 51
-      norm: true

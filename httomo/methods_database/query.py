@@ -1,47 +1,15 @@
-from typing import List, Union
+from types import ModuleType
+from typing import Callable, List, Literal, Tuple
 from pathlib import Path
+import numpy as np
 
 import yaml
+from httomo.runner.methods_repository_interface import GpuMemoryRequirement, MethodQuery
 
-from httomo.utils import log_exception
+from httomo.utils import Pattern, log_exception
+from httomo.runner.methods_repository_interface import MethodRepository
 
 YAML_DIR = Path(__file__).parent / "packages/"
-
-
-def get_httomolibgpu_method_meta(method_path: Union[List[str], str]):
-    """
-    Get full method meta information for a httomolibgpu method.
-
-    Parameters
-    ----------
-    method_path : List[str] | str
-        Path to the method, either as ["prep", "normalize", "normalize"] or "prep.normalize.normalize"
-
-    Returns
-    -------
-    httomolibgpu.MethodMeta
-        Full method meta information as exported from httomolibgpu
-    """
-    if isinstance(method_path, str):
-        method_path = method_path.split(".")
-
-    from httomolibgpu import method_registry, MethodMeta
-
-    info = method_registry["httomolibgpu"]
-    for key in method_path:
-        try:
-            info = info[key]
-        except KeyError:
-            raise KeyError(
-                f"Method {'.'.join(method_path)} not found in httomolibgpu registry"
-            )
-
-    if not isinstance(info, MethodMeta):
-        raise ValueError(
-            f"method path {'.'.join(method_path)} is not resolving to a method"
-        )
-
-    return info
 
 
 def get_method_info(module_path: str, method_name: str, attr: str):
@@ -63,38 +31,18 @@ def get_method_info(module_path: str, method_name: str, attr: str):
 
     Returns
     -------
-    TODO: Needs a "generic" type to represent anything that could be stored in
-    the YAML files in the methods database?
-        The requested piece of information about the method.
+    The requested piece of information about the method.
     """
     method_path = f"{module_path}.{method_name}"
     split_method_path = method_path.split(".")
     package_name = split_method_path[0]
-    if package_name == "httomolibgpu":
-        return _get_method_info_httomolibgpu(split_method_path[1:], attr)
 
     yaml_info_path = Path(YAML_DIR, f"{package_name}.yaml")
 
-    # get information about the currently supported version of the package
-    yaml_versions_path = Path(YAML_DIR, "external/", "versions.yaml")
-
-    if not yaml_versions_path.exists():
-        err_str = f"The YAML file {yaml_versions_path} doesn't exist."
-        log_exception(err_str)
-        raise ValueError(err_str)
-
-    with open(yaml_versions_path, "r") as f:
-        yaml_versions_library = yaml.safe_load(f)
-
-    ext_package_path = ""
-    for module, versions_dict in yaml_versions_library.items():
-        if module == package_name:
-            for version_type, package_version in versions_dict.items():
-                if version_type == "current":
-                    package_version = package_version[0]
-                    ext_package_path = f"external/{package_name}/{package_version}/"
-
     # open the library file for the package
+    ext_package_path = ""
+    if package_name != "httomo":
+        ext_package_path = f"external/{package_name}/"
     yaml_info_path = Path(YAML_DIR, str(ext_package_path), f"{package_name}.yaml")
     if not yaml_info_path.exists():
         err_str = f"The YAML file {yaml_info_path} doesn't exist."
@@ -115,12 +63,98 @@ def get_method_info(module_path: str, method_name: str, attr: str):
         raise KeyError(f"The attribute {attr} is not present on {method_path}")
 
 
-def _get_method_info_httomolibgpu(method_path: List[str], attr: str):
-    meta = get_httomolibgpu_method_meta(method_path)
+# Implementation of methods database query class
+class MethodsDatabaseQuery(MethodQuery):
+    def __init__(self, module_path: str, method_name: str):
+        self.module_path = module_path
+        self.method_name = method_name
 
-    try:
-        return getattr(meta, attr)
-    except KeyError:
-        raise KeyError(
-            f"The attribute {attr} is not present on httomolibgpu.{'.'.join(method_path)}"
+    def get_pattern(self) -> Pattern:
+        p = get_method_info(self.module_path, self.method_name, "pattern")
+        assert p in ["projection", "sinogram", "all"], (
+            f"The pattern {p} that is listed for the method "
+            f"{self.module_path}.{self.method_name} is invalid."
         )
+        if p == "projection":
+            return Pattern.projection
+        if p == "sinogram":
+            return Pattern.sinogram
+        return Pattern.all
+
+    def get_output_dims_change(self) -> bool:
+        p = get_method_info(self.module_path, self.method_name, "output_dims_change")
+        return bool(p)
+
+    def get_implementation(self) -> Literal["cpu", "gpu", "gpu_cupy"]:
+        p = get_method_info(self.module_path, self.method_name, "implementation")
+        assert p in [
+            "gpu",
+            "gpu_cupy",
+            "cpu",
+        ], f"The implementation arch {p} listed for method {self.module_path}.{self.method_name} is invalid"
+        return p
+
+    def save_result_default(self) -> bool:
+        return get_method_info(
+            self.module_path, self.method_name, "save_result_default"
+        )
+
+    def get_memory_gpu_params(
+        self,
+    ) -> List[GpuMemoryRequirement]:
+        p = get_method_info(self.module_path, self.method_name, "memory_gpu")
+        if p is None or p == "None":
+            return []
+        if type(p) == list:
+            # convert to dict first
+            dd: dict = dict()
+            for item in p:
+                dd |= item
+        else:
+            dd = p
+        # now iterate and make it into one
+        assert (
+            len(dd["datasets"]) == len(dd["multipliers"]) == len(dd["methods"])
+        ), "Invalid data"
+        return [
+            GpuMemoryRequirement(
+                dataset=d, multiplier=dd["multipliers"][i], method=dd["methods"][i]
+            )
+            for i, d in enumerate(dd["datasets"])
+        ]
+
+    def calculate_memory_bytes(
+        self, non_slice_dims_shape: Tuple[int, int], dtype: np.dtype, **kwargs
+    ) -> Tuple[int, int]:
+        smodule = self._import_supporting_funcs_module()
+        module_mem: Callable = getattr(
+            smodule, "_calc_memory_bytes_" + self.method_name
+        )
+        memory_bytes: Tuple[int, int] = module_mem(
+            non_slice_dims_shape, dtype, **kwargs
+        )
+        return memory_bytes
+
+    def calculate_output_dims(
+        self, non_slice_dims_shape: Tuple[int, int], **kwargs
+    ) -> Tuple[int, int]:
+        smodule = self._import_supporting_funcs_module()
+        module_mem: Callable = getattr(smodule, "_calc_output_dim_" + self.method_name)
+        return module_mem(non_slice_dims_shape, **kwargs)
+
+    def _import_supporting_funcs_module(self) -> ModuleType:
+        from importlib import import_module
+
+        module_mem_path = "httomo.methods_database.packages.external."
+        path = self.module_path.split(".")
+        path.insert(1, "supporting_funcs")
+        module_mem_path += ".".join(path)
+        return import_module(module_mem_path)
+
+    def swap_dims_on_output(self) -> bool:
+        return self.module_path.startswith("tomopy.recon")
+
+
+class MethodDatabaseRepository(MethodRepository):
+    def query(self, module_path: str, method_name: str) -> MethodQuery:
+        return MethodsDatabaseQuery(module_path, method_name)

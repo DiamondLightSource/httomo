@@ -41,7 +41,7 @@ def test_load_data(
     file, dim, path_to_data, expected_shape, expected_sum, expected_mean
 ):
     preview = "0:180, :, :"
-    output = load_data(file, dim, path_to_data, preview, comm=comm)
+    output, _ = load_data(file, dim, path_to_data, preview, comm=comm)
 
     assert output.shape == expected_shape
     assert output.dtype == np.uint16

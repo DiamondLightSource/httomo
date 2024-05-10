@@ -1,0 +1,7 @@
+- method: remove_all_stripe
+  module_path: tomopy.prep.stripe
+  parameters:
+    snr: 3
+    la_size: 61
+    sm_size: 21
+    dim: 1

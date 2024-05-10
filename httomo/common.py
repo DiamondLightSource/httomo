@@ -3,7 +3,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import IntEnum, unique
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from httomo.utils import Pattern
 
@@ -17,17 +17,19 @@ class MethodFunc:
     ==========
 
     module_name : str
-        Fully qualified name of the module where the method is. E.g. httomolib.prep.normalize
+        Fully qualified name of the module where the method is. E.g. httomolibgpu.prep.normalize
     method_func : Callable
         The actual method callable
     wrapper_func: Optional[Callable]
         The wrapper function to handle the execution. It may be None,
         for example for loaders.
-    calc_max_slices: Optional[Callable]
-        A callable with the signature
-        (slice_dim: int, other_dims: int, dtype: np.dtype, available_memory: int) -> int
-        which determines the maximum number of slices it can fit in the given memory.
+    calc_max_slices: Optional[Dict[str, Any]]
+        None for the CPU method or Dictionary with parameters for GPU memory estimation.
+        This determines the maximum number of slices it can fit in the given memory.
         If it is not present (None), the method is assumed to fit any amount of slices.
+    output_dims_change : Dict[str, Any]
+        False - the output data dimensions of the method are the same as input
+        True - the data dimensions are different with respect to input data dimensions.
     parameters : Dict[str, Any]
         The method parameters that are specified in the pipeline yaml file.
         They are used as kwargs when the method is called.
@@ -35,23 +37,29 @@ class MethodFunc:
         Whether CPU execution is supported.
     gpu : bool
         Whether GPU execution is supported.
-    reslice_ahead : bool
-        Whether a reslice needs to be done due to a pattern change in the pipeline
-    is_last_method : bool
-        True if it is the last method in the pipeline
+    cupyrun : bool
+        Whether CuPy API is used.
+    return_numpy : bool
+        Returns numpy array if set to True.
+    idx_global: int
+        A global index of the method in the pipeline.
+    global_statistics: bool
+        Whether global statistics needs to be calculated on the output of the method.
     """
 
     module_name: str
     method_func: Callable
     wrapper_func: Optional[Callable] = None
-    calc_max_slices: Optional[Callable] = None
+    calc_max_slices: Optional[Dict[str, Any]] = None
+    output_dims_change: Dict[str, Any] = None
     parameters: Dict[str, Any] = field(default_factory=dict)
     pattern: Pattern = Pattern.projection
     cpu: bool = True
     gpu: bool = False
-    reslice_ahead: bool = False
-    is_loader: bool = False
-    is_last_method: bool = False
+    cupyrun: bool = False
+    return_numpy: bool = False
+    idx_global: int = 0
+    global_statistics: bool = False
 
 
 @dataclass
@@ -66,8 +74,6 @@ class ResliceInfo:
         Counter for how many reslices were done so far
     has_warn_printed : bool
         Whether the reslicing warning has been printed
-    reslice_bool_list : List[bool]
-        List of booleans to identify when reslicing is needed
     reslice_dir : Optional[Path]
         The directory to use with file-based reslicing. If None,
         reslicing will be done in-memory.
@@ -75,18 +81,20 @@ class ResliceInfo:
 
     count: int
     has_warn_printed: bool
-    reslice_bool_list: List[bool]
     reslice_dir: Optional[Path] = None
 
 
 @dataclass
 class PlatformSection:
     """
-    Data class to represent a section of the pipeline that runs on the same platform.
-    That is, all methods contained in this section of the pipeline run either all on CPU
-    or all on GPU.
+    Data class to represent a section of the pipeline. Section can combine methods
+    if they run on the same platform (cpu or gpu) and have the same pattern. 
+    The sections can be further divided if necessary if the results of the method
+    needed to be saved. 
+    NOTE: More fine division of sections into subsections will slow down 
+    the pipeline.
 
-    This is used to iterate through GPU memory in chunks.
+    Mainly used to iterate through GPU memory in chunks.
 
     Attributes
     ----------
@@ -94,6 +102,8 @@ class PlatformSection:
         Whether this section is a GPU section (True) or CPU section (False)
     pattern : Pattern
         To denote the slicing pattern - sinogram, projection
+    reslice : bool
+        This tells the runner if we need to reslice the data before next section
     max_slices : int
         Holds information about how many slices can be fit in one chunk without
         exhausting memory (relevant on GPU only)
@@ -103,6 +113,7 @@ class PlatformSection:
 
     gpu: bool
     pattern: Pattern
+    reslice: bool
     max_slices: int
     methods: List[MethodFunc]
 
@@ -117,42 +128,56 @@ class RunMethodInfo:
 
     dict_params_method : Dict
         The dict of param names and their values for a given method function.
-    data_in : List
-        Input datasets in a list
-    data_out : List
-        Output datasets in a list
-    param_sweep_name : str
-        The name of the param sweep involved
-    param_sweep_vals: Any
-        The tuple values of the param sweep
-    should_reslice : bool
-        To check if the input dataset should be resliced before the task runs
+    data_in : str
+        The name of the input dataset
+    data_out : Union[str, List[str]]
+        The name(s) of the output dataset(s)
     dict_httomo_params : Dict
         Dict containing extra params unrelated to wrapped packages but related to httomo
     save_result : bool
-        Bool to check if we need to save the result (e.g., if it is the last method)
-    current_slice_dim : int
-        the dimension of the data that the current method requires the data to be sliced in.
-    next_slice_dim : int
-        the dimension of the data that the next method requires the data to be sliced in
+        save the result into intermediate dataset
     task_idx: int
-        Index of the task in the pipeline being run
+        Index of the local task in the section being run
+    task_idx_global: int 
+        Index of the global task (method) in the pipeline
     package_name: str
         The name of the package the method is imported from
     method_name: str
         The name of the method being executed
+    global_statistics: bool
+        Whether global statistics needs to be calculated on the output of the method.        
     """
 
     dict_params_method: Dict[str, Any] = field(default_factory=dict)
-    data_in: List[str] = field(default_factory=list)
-    data_out: List[str] = field(default_factory=list)
-    should_reslice: bool = False
+    data_in: str = field(default_factory=str)
+    data_out: Union[str, List[str]] = field(default_factory=str)
     dict_httomo_params: Dict[str, Any] = field(default_factory=dict)
     save_result: bool = False
-    current_slice_dim: int = -1
-    next_slice_dim: int = -1
     task_idx: int = -1
-    param_sweep_name: str = None
-    param_sweep_vals: Tuple = field(default_factory=tuple)
+    task_idx_global: int = -1
     package_name: str = None
     method_name: str = None
+    global_statistics: bool = False
+
+
+@dataclass
+class PreProcessInfo:
+    """
+    Class holding execution info for each method in the pre-processing stage
+    of the pipeline
+    """
+    params: Dict[str, Any]
+    method_name: str
+    module_path: str
+    wrapper_func: Callable
+
+
+@dataclass
+class LoaderInfo:
+    """
+    Class holding execution info for the loader
+    """
+    params: Dict[str, Any]
+    method_name: str
+    method_func: Callable
+    pattern: Pattern

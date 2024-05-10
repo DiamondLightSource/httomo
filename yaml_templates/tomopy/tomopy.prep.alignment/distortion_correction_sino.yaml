@@ -1,0 +1,7 @@
+- method: distortion_correction_sino
+  module_path: tomopy.prep.alignment
+  parameters:
+    ind: REQUIRED
+    xcenter: REQUIRED
+    ycenter: REQUIRED
+    list_fact: REQUIRED

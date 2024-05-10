@@ -1,0 +1,8 @@
+- method: normalize_roi
+  module_path: tomopy.prep.normalize
+  parameters:
+    roi:
+    - 0
+    - 0
+    - 10
+    - 10

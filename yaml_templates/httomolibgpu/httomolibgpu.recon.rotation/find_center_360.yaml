@@ -1,0 +1,15 @@
+- method: find_center_360
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    ind: null
+    win_width: 10
+    side: null
+    denoise: true
+    norm: false
+    use_overlap: false
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+    overlap: overlap
+    side: side
+    overlap_position: overlap_position

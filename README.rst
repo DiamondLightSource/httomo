@@ -5,64 +5,22 @@ HTTomo is a user interface (UI) written in Python for fast big data processing u
 It orchestrates I/O data operations and enables processing on a CPU and/or a GPU. HTTomo utilises other libraries, such as `TomoPy <https://tomopy.readthedocs.io>`_ and `HTTomolibgpu <https://github.com/DiamondLightSource/httomolibgpu>`_
 as backends for data processing. The methods from the libraries are exposed through YAML templates to enable fast task programming.
 
+Installation
+============
+See detailed instructions for `installation <https://diamondlightsource.github.io/httomo/howto/installation.html>`_ . 
+
 Documentation
 ==============
-Please check the full documentation `here <https://diamondlightsource.github.io/httomo/>`_.
+Please check the full `documentation <https://diamondlightsource.github.io/httomo/>`_.
 
-Install HTTomo as a pre-built conda package
-======================================================
-.. code-block:: console
+Running HTTomo:
+================
 
-   $ conda create --name httomo # create a fresh conda environment
-   $ conda activate httomo
-   $ conda install -c conda-forge -c https://conda.anaconda.org/httomo/ httomo
-   $ conda install -c https://conda.anaconda.org/httomo/ httomolibgpu # for GPU methods
-
-Note: we recommend using `mamba <https://anaconda.org/conda-forge/mamba>`_ for a much faster dependency resolution.
-After creating a fresh environment and activating it, install `mamba` with
-
-.. code-block:: console
-
-   $ conda install -c conda-forge mamba
-
-And install the packages using :code:`mamba` instead (replace :code:`conda` with :code:`mamba`):
-
-.. code-block:: console
-
-   $ mamba install -c conda-forge -c https://conda.anaconda.org/httomo/ httomo
-
-
-Install as a Python module
-======================================================
-.. code-block:: console
-    
-   $ git clone git@github.com:DiamondLightSource/HTTomo.git # clone the repo
-   $ conda env create --name httomo --file conda/environment.yml # install dependencies
-   $ conda activate httomo # activate environment
-   $ pip install . # Install the module
-
-Setup HTTomo development environment:
-======================================================
-.. code-block:: console
-
-   $ pip install -e .[dev] # development mode 
-
-Running the code:
-======================================================
-
-* Install the module as described in "Install as a Python module"
-* Execute the python module with :code:`python -m httomo <args>`
+* Install the module following any chosen `installation <https://diamondlightsource.github.io/httomo/howto/installation.html>`_ path.
 * For help with the command line interface, execute :code:`python -m httomo --help`
-
-An example of running the code with test data:
-==============================================
-
-* Create an output directory :code:`mkdir output_dir/`
-* Go to the home directory and run: :code:`python -m httomo run tests/test_data/tomo_standard.nxs samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml output_dir/`
-
-An example of running validation on a YAML pipeline file
-========================================================
-* :code:`python -m httomo check samples/pipeline_template_examples/02_basic_cpu_pipeline_tomo_standard.yaml`
+* Choose the existing `YAML pipeline <https://diamondlightsource.github.io/httomo/pipelines/yaml.html>`_ or build a new one using ready-to-be-used `templates <https://diamondlightsource.github.io/httomo/backends/templates.html>`_.
+* Optional: perform the validity check of the YAML pipeline file with the `YAML checker <https://diamondlightsource.github.io/httomo/utilities/yaml_checker.html>`_.
+* Run HTTomo with :code:`python -m httomo run [OPTIONS] IN_DATA_FILE YAML_CONFIG OUT_DIR`, see more on that `here <https://diamondlightsource.github.io/httomo/howto/run_httomo.html>`_.
 
 Release Tagging Scheme
 ======================

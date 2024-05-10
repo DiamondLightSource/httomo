@@ -46,12 +46,5 @@ cov.xml
 .mypy_cache/
 output_dir/
 temp.yaml
+cufile.log
 
-# These are files that are created during the conda build process that need to
-# be ignored in order to avoid builds being marked as being in a "dirty" state
-build_env_setup.sh
-conda_build.sh
-metadata_conda_debug.yaml
-
-# vscode
-.vscode/

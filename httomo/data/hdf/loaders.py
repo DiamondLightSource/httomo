@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -8,8 +9,12 @@ from mpi4py.MPI import Comm
 from numpy import arange, asarray, deg2rad, linspace, ndarray
 
 from httomo.data.hdf._utils import load
-from httomo.utils import Colour, _parse_preview, log_once, log_rank
+from httomo.utils import _parse_preview, log_once, log_rank
 
+
+__all__ = [
+    "standard_tomo",
+]
 
 @dataclass
 class LoaderData:
@@ -24,7 +29,7 @@ class LoaderData:
 
 def standard_tomo(
     name: str,
-    in_file: os.PathLike | str,
+    in_file: Union[os.PathLike, str],
     data_path: str,
     dimension: int,
     preview: List[Dict[str, int]],
@@ -91,9 +96,7 @@ def standard_tomo(
     if comm.rank == 0:
         log_once(
             f"The full dataset shape is {shape}",
-            comm=comm,
-            colour=Colour.LYELLOW,
-            level=1,
+            level=logging.DEBUG,
         )
 
     # Get indices in data which contain projections
@@ -135,7 +138,7 @@ def standard_tomo(
         comm=comm,
     )
     log_rank(f"Pad values are {pad_values}.", comm)
-    data = load.load_data(
+    data, _ = load.load_data(
         str(in_file), dim, data_path, preview=preview_str, pad=pad_values, comm=comm
     )
 

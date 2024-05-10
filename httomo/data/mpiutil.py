@@ -5,8 +5,8 @@ import numpy as np
 try:
     from mpi4py import MPI
 
-    comm = MPI.COMM_WORLD.__sizeof__()
-    enabled = comm > 1
+    comsize = MPI.COMM_WORLD.__sizeof__()
+    enabled = comsize > 1
 except ImportError:
     enabled = False
 
@@ -92,41 +92,39 @@ def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
     sizes_rec = [np.prod(sh) for sh in shapes_rec]
     fulloutput = np.empty((np.sum(sizes_rec),), dtype=arrays[0].dtype)
 
-    if any(s >= _mpi_max_elements for s in sizes_send) or any(
-        s >= _mpi_max_elements for s in sizes_rec
-    ):
-        # find the dim which is equal in all arrays to send/receive
-        dim0s = [s[0] for s in shapes_send] + [s[0] for s in shapes_rec]
-        dim1s = [s[1] for s in shapes_send] + [s[1] for s in shapes_rec]
-        dim2s = [s[2] for s in shapes_send] + [s[2] for s in shapes_rec]
-        dim0equal = all(s == dim0s[0] for s in dim0s)
-        dim1equal = all(s == dim1s[1] for s in dim1s)
-        dim2equal = all(s == dim2s[2] for s in dim2s)
-        assert (
-            dim0equal or dim1equal or dim2equal
-        ), "At least one dimension of the input arrays must be of same size"
+    # NOTE: The custom MPI data type is being used below even when the number of elements
+    # doesn't exceed the limit which can be sent in a single MPI operation. See issue #274.
 
-        # create a new contiguous MPI datatype by repeating the input type by this common length
-        factor = (
-            arrays[0].shape[0]
-            if dim0equal
-            else arrays[0].shape[1]
-            if dim1equal
-            else arrays[0].shape[2]
-        )
-        dtype1 = dtype.Create_contiguous(factor).Commit()
-        # sanity check - this should always pass
-        assert all(s % factor == 0 for s in sizes_send), "Size does not divide evenly"
-        assert all(s % factor == 0 for s in sizes_rec), "Size does not divide evenly"
-        sizes_send1 = [s // factor for s in sizes_send]
-        sizes_rec1 = [s // factor for s in sizes_rec]
+    # find the dim which is equal in all arrays to send/receive
+    dim0s = [s[0] for s in shapes_send] + [s[0] for s in shapes_rec]
+    dim1s = [s[1] for s in shapes_send] + [s[1] for s in shapes_rec]
+    dim2s = [s[2] for s in shapes_send] + [s[2] for s in shapes_rec]
+    dim0equal = all(s == dim0s[0] for s in dim0s)
+    dim1equal = all(s == dim1s[1] for s in dim1s)
+    dim2equal = all(s == dim2s[2] for s in dim2s)
+    assert (
+        dim0equal or dim1equal or dim2equal
+    ), "At least one dimension of the input arrays must be of same size"
 
-        # now send the same data, but with the adjusted size+datatype (output is identical)
-        comm.Alltoallv(
-            (fullinput, sizes_send1, dtype1), (fulloutput, sizes_rec1, dtype1)
-        )
-    else:
-        comm.Alltoallv((fullinput, sizes_send, dtype), (fulloutput, sizes_rec, dtype))
+    # create a new contiguous MPI datatype by repeating the input type by this common length
+    factor = (
+        arrays[0].shape[0]
+        if dim0equal
+        else arrays[0].shape[1]
+        if dim1equal
+        else arrays[0].shape[2]
+    )
+    dtype1 = dtype.Create_contiguous(factor).Commit()
+    # sanity check - this should always pass
+    assert all(s % factor == 0 for s in sizes_send), "Size does not divide evenly"
+    assert all(s % factor == 0 for s in sizes_rec), "Size does not divide evenly"
+    sizes_send1 = [s // factor for s in sizes_send]
+    sizes_rec1 = [s // factor for s in sizes_rec]
+
+    # now send the same data, but with the adjusted size+datatype (output is identical)
+    comm.Alltoallv(
+        (fullinput, sizes_send1, dtype1), (fulloutput, sizes_rec1, dtype1)
+    )
 
     # build list of output arrays
     cumsizes = np.cumsum(sizes_rec)

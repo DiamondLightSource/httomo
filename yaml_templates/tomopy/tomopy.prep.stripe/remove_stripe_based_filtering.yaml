@@ -1,0 +1,6 @@
+- method: remove_stripe_based_filtering
+  module_path: tomopy.prep.stripe
+  parameters:
+    sigma: 3
+    size: null
+    dim: 1

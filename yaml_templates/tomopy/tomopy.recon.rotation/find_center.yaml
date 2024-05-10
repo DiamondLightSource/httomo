@@ -1,0 +1,15 @@
+- method: find_center
+  module_path: tomopy.recon.rotation
+  parameters:
+    ind: null
+    init: null
+    tol: 0.5
+    mask: true
+    ratio: 1.0
+    sinogram_order: false
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+    overlap: overlap
+    side: side
+    overlap_position: overlap_position

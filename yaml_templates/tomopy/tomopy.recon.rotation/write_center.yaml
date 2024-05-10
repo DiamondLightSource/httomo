@@ -1,0 +1,11 @@
+- method: write_center
+  module_path: tomopy.recon.rotation
+  parameters:
+    dpath: tmp/center
+    cen_range: null
+    ind: null
+    mask: false
+    ratio: 1.0
+    sinogram_order: false
+    algorithm: gridrec
+    filter_name: parzen
