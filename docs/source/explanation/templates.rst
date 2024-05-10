@@ -24,7 +24,7 @@ by importing the method as:
 
     from tomopy.misc.corr import median_filter3d
 
-The list of parameters for that method is given in the *parameters* list.
+The set of parameter values for that method is given in the *parameters* field.
 
 .. note:: Please note that in the original TomoPy's method, there is also the :code:`arr` parameter. This parameter is not exposed in the template because HTTomo will deal with all I/O aspects behind the scenes by using special wrappers. More on that in :ref:`detailed_about`. :ref:`utilities_yamlgenerator` will automatically generate the ready-to-be-used templates.
 
