@@ -22,6 +22,7 @@
     howto/run_httomo
     howto/process_lists_guide
     howto/httomo_features
+    howto/interpret_logger
 
 .. _reference_content:
 
@@ -57,6 +58,7 @@
     :maxdepth: 2
 
     utilities/yaml_checker
+    utilities/yaml_generator
 
 .. _developers_content:
 
@@ -64,5 +66,5 @@
     :caption: Developers
     :maxdepth: 2
 
-    developers/yaml_generator
-    
+    developers/how_to_contribute    
+    developers/memory_calculation

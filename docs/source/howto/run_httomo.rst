@@ -282,7 +282,7 @@ This flag is only relevant only for runs which are using a pipeline that contain
 
 Understanding this flag's usage is dependent on knowledge of the concept of
 "chunks", "blocks", and "sections" within HTTomo's framework, so please refer to
-(TODO) for information on these concepts.
+:ref:`detailed_about` for information on these concepts.
 
 The notion of a block is fully utilised to increase performance when a sequence of
 two or more GPU methods are being executed. When two or more CPU methods are

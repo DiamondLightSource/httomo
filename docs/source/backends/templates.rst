@@ -1,11 +1,14 @@
 .. _reference_templates:
 
-==========================
+================
 YAML Templates
-==========================
+================
 
-This section contains YAML templates from :ref:`backends_list`. 
-You can also download templates for all supported backends in HTTomo ver.2.0 in one archive `HERE <https://github.com/DiamondLightSource/httomo/blob/main/yaml_templates/all_templates_httomo_v2_0.zip>`_.
+This section contains YAML templates from :ref:`backends_list`. These are ready-to-use templates can be either copy-pasted or
+downloaded in order to build your pipeline. 
+
+.. note:: When you click on a module you can find a link to the API of that module. This is where the description of the method and its arguments can be found. 
+
 
 TomoPy Modules
 ---------------
@@ -39,18 +42,4 @@ v.2.0
 .. toctree::
    :glob:
 
-   ../api/httomolib.misc.images
-   ../api/httomolib.misc.segm
-
-.. _reference_templates_httomo:
-
-HTTomo
-------------------
-v.2.0
-'''''
-
-.. toctree::
-   :glob:
-   :maxdepth: 1
-
-   ../api/*load*
+   ../api/httomolib.*

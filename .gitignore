@@ -46,3 +46,5 @@ cov.xml
 .mypy_cache/
 output_dir/
 temp.yaml
+cufile.log
+

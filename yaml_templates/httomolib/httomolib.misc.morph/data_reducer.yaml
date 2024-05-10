@@ -1,0 +1,5 @@
+- method: data_reducer
+  module_path: httomolib.misc.morph
+  parameters:
+    axis: auto
+    method: mean

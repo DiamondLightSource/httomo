@@ -22,6 +22,8 @@ dependencies:
   - conda-forge::tqdm
   - conda-forge::typing_extensions
   - anaconda::ipython
-  - conda-forge::tomopy
+  - conda-forge::tomopy==1.15
+  - httomo::httomolib==2.0
+  - httomo::httomolibgpu==2.0
   - httomo::tomobar
   - rapidsai::cucim

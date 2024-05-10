@@ -1,87 +1,100 @@
 .. _howto_process_list:
 
-Configure process list using templates
-======================================
+Configure efficient pipelines
+=============================
 
-This section explains how to build a process list (see more on :ref:`explanation_process_list`) from YAML templates (see more on :ref:`explanation_templates`).
-
-We focus on several important aspects which can be helpful to keep in mind before configuring the process list. They are :ref:`pl_conf_order`, :ref:`pl_reslice`, and :ref:`pl_platform_sections`. The first two topics are
-recommended to read if you are new to HTTomo and :ref:`pl_platform_sections` is for more in-depth information about the inner workings of HTTomo when using GPUs.
-
-**The better understanding of those elements will enable you to build more computationally efficient pipelines**. 
-
-Please become familiar with :ref:`explanation_yaml` and use editors that support it. We can recommend Visual Studio Code, Atom, Notepad++. 
-To avoid errors during the HTTomo run using a process list, please validate it first using YAML checker tool (see :ref:`utilities_yamlchecker`).
+Here we focus on several important aspects which can be helpful while configuring a
+process list. In order to construct more efficient pipelines one needs to be
+familiar with :ref:`pl_conf_order`, :ref:`info_reslice`, and :ref:`info_sections`.
 
 .. _pl_conf_order:
 
-Methods order
+Method pattern and method order
+-------------------------------
+
+An HTTomo pipeline consists of multiple methods ordered sequentially and is
+executed in the given serial order (meaning that there is no branching in HTTomo
+pipelines). Behind the scenes HTTomo will take care of providing the input data
+for each method, and passing the output data of each method to the next method.
+
+Different methods require data to be provided in different orientations (ie, the
+direction of slicing an array). In order to satisfy those requirements, the notion
+of a method having a *pattern* was introduced in HTTomo, i.e., every method has a
+pattern associated with it. So far HTTomo supports three types of patterns:
+:code:`projection`, :code:`sinogram`, and  :code:`all`.
+
+.. note:: Transitioning between methods that change the pattern from
+   :code:`projection` to :code:`sinogram` or vice versa will trigger a costly
+   :ref:`info_reslice` operation. Methods with pattern :code:`all` inherit the
+   pattern of the previous method.
+
+In order to minimise the amount of reslice operations it is best to group methods
+together based on the pattern. For example, putting methods that work with
+projections in one group, and methods that work with sinograms in another group. It
+may not always be possible to group the methods in such way, especially with longer
+pipelines. However, it's useful to keep this in mind if one seeks the most
+computationally efficient pipeline.
+
+The pattern of any supported method can be found in :ref:`pl_library`.
+
+.. note:: Currently, HTTomo loaders use the :code:`projection` pattern by default,
+   therefore it's best for efficiency purposes that the first method after the
+   loader has the :code:`projection` pattern. It is also recommended to place
+   :ref:`centering` methods right after the loader.
+
+.. _pl_library:
+
+Library files
 -------------
-To build a process list with multiple tasks, you will need to copy-paste the content of YAML files from the provided :ref:`reference_templates`.
-The general rules for building a process list are the following: 
 
-* Any process list starts with :ref:`reference_loaders` which are provided as :ref:`reference_templates`.
-* The execution order of the methods in the process list is **sequential** starting from the top to the bottom.
+Here is the list of :ref:`pl_library` for backends where patterns and other fixed arguments for methods are specified. When HTTomo operates 
+with a certain method it always refers to its library file in order get the specific requirements for that method. 
 
-For example, for tomographic processing, we can build the following process list by using mostly TomoPy templates.
+.. dropdown:: TomoPy's library file
 
-.. dropdown:: A basic TomoPy full data processing pipeline
+    .. literalinclude:: ../../../../httomo/methods_database/packages/external/tomopy/tomopy.yaml    
 
-    .. literalinclude:: ../../../../tests/samples/pipeline_template_examples/pipeline_cpu1.yaml
-
-In this process list the data will be loaded using the standard HTTomo loader to read `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`_ dataset. 
-Then the loaded data is normalised, the centre of rotation estimated and provided to the reconstruction. 
-Finally the result of the reconstruction will be saved as tiff files using HTTomolib library as a backend. 
-Note that the result of the reconstruction will be also saved as an HDF5 file. 
-
-.. _pl_reslice:
-
-Re-slicing
--------------
-The re-slicing of data happens when we need to access a slice which is orthogonal to the current one. 
-In tomography, we normally work in the space of projections or in the space of sinograms. Different methods require different slicing 
-orientations, or, as we call it, a *pattern*. The change of the pattern is a **re-slice** operation or a transformation of an array by 
-re-slicing in a particular direction. For instance, from the projection space/pattern to the sinogram space/patterns, as in :numref:`fig_reslice`.
-
-.. _fig_reslice:
-.. figure::  ../../_static/reslice.png
-    :scale: 40 %
-    :alt: Reslicing procedure
-
-    The re-slicing operation for tomographic data. The transformation from the stack of projections to the stack of sinograms by slicing the 3D array in the direction parallel to the projection angles.
-
-In HTTomo, the re-slicing operation is performed on the CPU as we need to access all the data. Even if the pipeline consists of only GPU methods stacked together, 
-the re-slicing step will transfer the data from the GPU device to the CPU memory. This operation can be costly for big datasets and we recommend to minimise the number of 
-re-slicing operations in your pipeline. Normally for tomographic pre-processing and reconstruction there is just one re-slice needed. HTTomo checks if there is more than 
-one reslice in the pipeline and warn the user about it. The user will be prompted to change the order of the methods to minimise the number of the reslicing operations. 
-
-For example to execute the methods bellow, **two** re-slicing operations needed:
-
-.. code-block:: yaml
+.. dropdown:: Httomolibgpu's library file
     
-    1. normalisation
-    2. median_filter
-    3. centering
-    4. paganin_filter
-    5. reconstruction
+    .. literalinclude:: ../../../../httomo/methods_database/packages/external/httomolibgpu/httomolibgpu.yaml
 
-The main issue here is that the :code:`centering` method requires pattern to be `sinogram`, :code:`paganin_filter` needs `projections` and 
-:code:`reconstruction` needs sinogram pattern again. Therefore we need to re-slice two times to accommodate for that. To remove one 
-reslice operation and obtain exactly the same result (but quicker), one needs to change the order of methods like this: 
-
-.. code-block:: yaml
+.. dropdown:: Httomolib's library file
     
-    1. normalisation
-    2. median_filter
-    3. paganin_filter
-    4. centering    
-    5. reconstruction
+    .. literalinclude:: ../../../../httomo/methods_database/packages/external/httomolib/httomolib.yaml
 
-To conclude, it is useful to look for the order of methods in your pipelines and 
-rearrange them to reduce the amount of potentially unnecessary reslicing steps.
+.. _pl_grouping:
 
-.. _pl_platform_sections:
+Grouping CPU/GPU methods
+------------------------
 
-Platform Sections
------------------
-to be added...
+There are different implementations of methods in :ref:`backends_list`, and can be
+classified into three categories:
+
+- :code:`cpu` methods. These are traditional CPU implementations in Python or other
+  compiled languages. The exposed TomoPy functions are mostly pure CPU.
+- :code:`gpu` methods. These are methods that use GPU devices and require an input
+  array in CPU memory (e.g. Numpy ndarray).
+- :code:`gpu_cupy` methods. These are a special group of methods, mostly from the
+  `HTTomolibgpu <https://github.com/DiamondLightSource/httomolibgpu>`_ library,
+  that are executed on GPU devices using the CuPy API. The main difference between
+  :code:`gpu_cupy` methods and :code:`gpu` methods is that :code:`gpu_cupy` methods
+  require CuPy arrays as input instead of Numpy arrays. The CuPy arrays are then
+  kept in GPU memory across any consecutive :code:`gpu_cupy` methods until they are
+  requested back on the CPU. This approach allows more flexibility with the
+  sequences of GPU methods, as they can be chained together for more efficient
+  processing.
+
+.. note:: If GPUs are available to the user, it is recommended to use
+   :code:`gpu_cupy` or :code:`gpu` methods in process lists. The methods themselves
+   are usually optimised for performance and HTTomo will take care of chaining the
+   methods together to avoid unnecessary CPU-GPU data transfers.
+
+The implementation of any supported method can be found in :ref:`pl_library`.
+
+Minimise writing to disk
+------------------------
+
+HTTomo does not require :ref:`save-result-examples` by default. If the result of a
+method is not needed as a separate file, then there is no reason for it to be
+written to disk. This is because saving intermediate files can significantly slow
+down the execution time.
