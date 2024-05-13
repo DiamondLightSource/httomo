@@ -20,12 +20,6 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v2
 
-      # setup Python 3.9
-      - name: Setup Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
       # install dependencies with conda
       - name: Install dependencies with conda
         run: |
