@@ -47,7 +47,8 @@ jobs:
         - name: Build html
           run: sphinx-build -a -E -b html ./docs/source/ ./docs/build/
 
-        - name: Run ghp-import
+        - name: Publish docs
+          if: github.ref_type == 'tag' || github.ref_name == 'main'
           run: ghp-import -n -p -f ./docs/build
           env:
             GITHUB_TOKEN: ${{ github.token }}
