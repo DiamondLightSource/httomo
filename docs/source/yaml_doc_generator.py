@@ -19,7 +19,7 @@
 import os
 
 
-def add_function_summary(doc_dir, root, files, t_version):
+def add_function_summary(doc_dir, root, files):
     """Append title and function summary to documentation file.
 
     Parameters
@@ -30,8 +30,6 @@ def add_function_summary(doc_dir, root, files, t_version):
         Path to the yaml template directory.
     files : List
         List of yaml function templates for each module.
-    t_version : str
-        tomopy version.
     """
     rst_name = root.split("/")[-1]
     doc_rst_file = f"{doc_dir}/api/{rst_name}.rst"
@@ -48,7 +46,7 @@ def add_function_summary(doc_dir, root, files, t_version):
                 edit_doc.write(f"\n       {yml_title}")
 
 
-def create_yaml_dropdown(doc_dir, root, files, t_version):
+def create_yaml_dropdown(doc_dir, root, files):
     """Create dropdown panels to allow yaml functions to be downloaded.
 
     Parameters
@@ -59,51 +57,28 @@ def create_yaml_dropdown(doc_dir, root, files, t_version):
         Path to the yaml template directory.
     files : List
         List of functions for each module.
-    t_version : str
-        tomopy version.
     """
-    mod_name = root.split("/")[-1]
-    doc_rst_file = f"{doc_dir}/api/{mod_name}.rst"
+    rst_name = root.split("/")[-1]
+    doc_rst_file = f"{doc_dir}/api/{rst_name}.rst"
     template_dir = root.split("source")[-1]
     download_all_button(template_dir, doc_rst_file)
 
     for fi in files:
-        t_file = f"{template_dir}/{fi}"
+        t_name = f"{template_dir}/{fi}"
         f_name = fi.split(".yaml")[0]
-        link = link_to_function(t_file, f_name, mod_name, t_version)
+        url = (
+            f"https://tomopy.readthedocs.io/en/stable/api/{rst_name}"
+            f".html#{rst_name}.{f_name}"
+        )
         with open(doc_rst_file, "a") as edit_doc:
             edit_doc.write(f"\n\n.. dropdown:: {fi}")
-            edit_doc.write(f"\n\n    :download:`Download <{t_file}>`\n\n")
-            edit_doc.write(link)
-            edit_doc.write(f"\n\n    .. literalinclude:: {t_file}")
-
-
-def link_to_function(t_file, f_name, mod_name, t_version):
-    """Generate rst txt link to function.
-
-    Parameters
-    ----------
-    t_file : str
-        Template file name
-    f_name: str
-        Name of function
-    mod_name: str
-        Name of module
-    t_version : str
-        tomopy version.
-
-    Returns str link
-    """
-    if "tomopy" in t_file:
-        tomopy_api = f"https://tomopy.readthedocs.io/en/{t_version}/api/"
-        url = f"{tomopy_api}{mod_name}.html#{mod_name}.{f_name}"
-    elif "httomolib." in t_file:
-        htlib_api = "https://diamondlightsource.github.io/httomolib/api/"
-        url = f"{htlib_api}{mod_name}.html#{mod_name}.{f_name}"
-    else:
-        return ""
-    link_txt = f"    |link_icon| `Link to {f_name} function description <{url}>`_"
-    return link_txt
+            edit_doc.write(f"\n\n    :download:`Download <{t_name}>`\n\n")
+            if "tomopy" in t_name:
+                edit_doc.write(
+                    f"    |link_icon| `Link to {f_name}"
+                    f" function description <{url}>`_"
+                )
+            edit_doc.write(f"\n\n    .. literalinclude:: {t_name}")
 
 
 def download_all_button(template_dir, doc_rst_file):
@@ -149,8 +124,6 @@ def add_backend_link(edit_doc, rst_name):
         Document to write to.
     rst_name : str
         name of rst file.
-    t_version : str
-        tomopy version.
     """
     if "tomopy" in rst_name:
         # If it is a tomopy module, insert a link.
@@ -193,6 +166,6 @@ if __name__ == "__main__":
         dirs[:] = [d for d in dirs]
         files[:] = [fi for fi in files if ".yaml" in fi]
         if files:
-            add_function_summary(doc_source_dir, root, files, tomopy_version)
+            add_function_summary(doc_source_dir, root, files)
             save_all_yaml_functions(root, files)
-            create_yaml_dropdown(doc_source_dir, root, files, tomopy_version)
+            create_yaml_dropdown(doc_source_dir, root, files)
