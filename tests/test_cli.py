@@ -23,17 +23,15 @@ def test_cli_help_shows_help():
         .startswith("Usage: python -m httomo")
     )
 
-"""
-# TODO possibly re-enable after yaml checker is complete
+
 def test_cli_noargs_raises_error():
     cmd = [sys.executable, "-m", "httomo"]
     try:
         subprocess.check_output(cmd)
     except subprocess.CalledProcessError as e:
         assert e.returncode == 2
-"""
 
-"""
+
 def test_cli_check_pass_data_file(standard_loader, standard_data):
     cmd = [sys.executable, "-m", "httomo", "check", standard_loader, standard_data]
     check_data_str = (
@@ -41,9 +39,7 @@ def test_cli_check_pass_data_file(standard_loader, standard_data):
         "match the paths and keys in the input file (IN_DATA)..."
     )
     assert check_data_str in subprocess.check_output(cmd).decode().strip()
-"""
 
-"""
 def test_cli_pass_output_folder(
     standard_data, standard_loader, testing_pipeline, merge_yamls, output_folder
 ):
@@ -56,7 +52,7 @@ def test_cli_pass_output_folder(
         "-m",
         "httomo",
         "run",
-        "--output-folder",
+        "--create-folder",
         httomo_output_dir,
         standard_data,
         "temp.yaml",
@@ -64,7 +60,6 @@ def test_cli_pass_output_folder(
     ]
     subprocess.check_output(cmd)
     assert Path(custom_output_dir, "user.log").exists()
-"""
 
 @pytest.mark.cupy
 def test_cli_pass_gpu_id(cmd, standard_data, standard_loader, output_folder):
