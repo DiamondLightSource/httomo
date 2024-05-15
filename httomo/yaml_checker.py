@@ -427,8 +427,7 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
         return False
 
     end_str = (
-        "\nYAML validation successful!! Please feel free to use the `run` "
-        "command to run the pipeline."
+        "\nValidation of pipeline YAML file is successful."
     )
     _print_with_colour(end_str, colour=Colour.BVIOLET)
     return True
