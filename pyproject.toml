@@ -12,9 +12,9 @@ include = ["httomo*"]
 [tool.setuptools.package-data]
 httomo = ["methods_database/packages/*.yaml",
           "methods_database/packages/external/*.yaml",
-          "methods_database/packages/external/httomolibgpu/*/*.yaml",
-          "methods_database/packages/external/httomolib/*/*.yaml",
-          "methods_database/packages/external/tomopy/*/*.yaml",
+          "methods_database/packages/external/httomolibgpu/*.yaml",
+          "methods_database/packages/external/httomolib/*.yaml",
+          "methods_database/packages/external/tomopy/*.yaml",
           "../yaml_templates/httomolib/*/httomolib.misc.corr/*.yaml",
           "../yaml_templates/httomolib/*/httomolib.misc.images/*.yaml",
           "../yaml_templates/httomolib/*/httomolib.misc.segm/*.yaml",
