@@ -10,6 +10,7 @@ dependencies:
   - conda-forge::click>=8.1.3
   - conda-forge::cupy<=12.3.0
   - conda-forge::cudatoolkit
+  - conda-forge::graypy
   - conda-forge::h5py=*=*mpi_openmpi*
   - conda-forge::hdf5plugin
   - conda-forge::loguru

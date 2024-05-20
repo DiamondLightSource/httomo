@@ -1,7 +1,10 @@
+import graypy
 import sys
 from pathlib import Path
 
 from loguru import logger
+
+from httomo import globals
 
 
 def setup_logger(out_path: Path):
@@ -14,3 +17,6 @@ def setup_logger(out_path: Path):
     logger.add(sink=concise_logfile_path, level="INFO", colorize=False, format="{message}")
     # Verbose logs written to file
     logger.add(sink=verbose_logfile_path, level="DEBUG", colorize=False, enqueue=True)
+    # Verbose logs sent to syslog server in GELF format
+    syslog_handler = graypy.GELFTCPHandler(globals.SYSLOG_SERVER, globals.SYSLOG_PORT)
+    logger.add(sink=syslog_handler, level="DEBUG", colorize=False)
