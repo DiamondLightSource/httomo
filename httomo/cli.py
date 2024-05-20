@@ -106,6 +106,18 @@ def check(yaml_config: Path, in_data_file: Path = None):
     default=sys.stdout,
     help="File to store the monitoring output. Defaults to '-', which denotes stdout"
 )
+@click.option(
+    "--syslog-host",
+    type=click.STRING,
+    default="localhost",
+    help="Host of the syslog server",
+)
+@click.option(
+    "--syslog-port",
+    type=click.INT,
+    default=514,
+    help="Port on the host the syslog server is running on",
+)
 def run(
     in_data_file: Path,
     yaml_config: Path,
@@ -118,6 +130,8 @@ def run(
     max_memory: str,
     monitor: List[str],
     monitor_output: TextIO,
+    syslog_host: str,
+    syslog_port: int,
 ):
     """Run a pipeline defined in YAML on input data."""
 
@@ -127,6 +141,9 @@ def run(
     if max_cpu_slices < 1:
         raise ValueError("max-cpu-slices must be greater or equal to 1")
     httomo.globals.MAX_CPU_SLICES = max_cpu_slices
+
+    httomo.globals.SYSLOG_SERVER = syslog_host
+    httomo.globals.SYSLOG_PORT = syslog_port
 
     # Define httomo.globals.run_out_dir in all MPI processes
     if create_folder is None:
