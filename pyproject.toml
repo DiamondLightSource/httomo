@@ -10,32 +10,14 @@ where = ["."]
 include = ["httomo*"]
 
 [tool.setuptools.package-data]
-httomo = ["methods_database/packages/*.yaml",
-          "methods_database/packages/external/*.yaml",
-          "methods_database/packages/external/httomolibgpu/*.yaml",
-          "methods_database/packages/external/httomolib/*.yaml",
-          "methods_database/packages/external/tomopy/*.yaml",
-          "../yaml_templates/httomolib/*/httomolib.misc.corr/*.yaml",
-          "../yaml_templates/httomolib/*/httomolib.misc.images/*.yaml",
-          "../yaml_templates/httomolib/*/httomolib.misc.segm/*.yaml",
-          "../yaml_templates/httomolib/*/httomolib.prep.phase/*.yaml",
-          "../yaml_templates/httomolibgpu/*/httomolibgpu.misc.corr/*.yaml",
-          "../yaml_templates/httomolibgpu/*/httomolibgpu.misc.morph/*.yaml",
-          "../yaml_templates/httomolibgpu/*/httomolibgpu.prep.alignment/*.yaml",
-          "../yaml_templates/httomolibgpu/*/httomolibgpu.prep.normalize/*.yaml",
-          "../yaml_templates/httomolibgpu/*/httomolibgpu.prep.phase/*.yaml",
-          "../yaml_templates/httomolibgpu/*/httomolibgpu.prep.stripe/*.yaml",
-          "../yaml_templates/httomolibgpu/*/httomolibgpu.recon.algorithm/*.yaml",
-          "../yaml_templates/httomolibgpu/*/httomolibgpu.recon.rotation/*.yaml",
-          "../yaml_templates/tomopy/*/tomopy.misc.corr/*.yaml",
-          "../yaml_templates/tomopy/*/tomopy.misc.morph/*.yaml",
-          "../yaml_templates/tomopy/*/tomopy.prep.alignment/*.yaml",
-          "../yaml_templates/tomopy/*/tomopy.prep.normalize/*.yaml",
-          "../yaml_templates/tomopy/*/tomopy.prep.phase/*.yaml",
-          "../yaml_templates/tomopy/*/tomopy.prep.stripe/*.yaml",
-          "../yaml_templates/tomopy/*/tomopy.recon.algorithm/*.yaml",
-          "../yaml_templates/tomopy/*/tomopy.recon.rotation/*.yaml",
-          "../yaml_templates/tomopy/*/tomopy.sim.project/*.yaml"]
+httomo = [
+    "methods_database/packages/*.yaml",
+    "methods_database/packages/external/*.yaml",
+    "methods_database/packages/external/httomolibgpu/*.yaml",
+    "methods_database/packages/external/httomolib/*.yaml",
+    "methods_database/packages/external/tomopy/*.yaml",
+    "yaml_templates/*/*/*.yaml",
+]
 
 [tool.setuptools-git-versioning]
 enabled = true
