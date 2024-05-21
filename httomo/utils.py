@@ -13,19 +13,21 @@ from httomo.data import mpiutil
 gpu_enabled = False
 try:
     import cupy as xp
+    if mpiutil.rank == 0:
+        logger.debug("CuPy is installed")
 
     try:
         xp.cuda.Device(0).compute_capability
         gpu_enabled = True  # CuPy is installed and GPU is available
     except xp.cuda.runtime.CUDARuntimeError:
         import numpy as xp
-
-        print("CuPy is installed but GPU device inaccessible")
+        if mpiutil.rank == 0:
+            logger.debug("CuPy is installed but GPU device inaccessible")
 
 except ImportError:
     import numpy as xp
-
-    print("CuPy is not installed")
+    if mpiutil.rank == 0:
+        logger.debug("CuPy is not installed")
 
 
 def log_once(output: Any, level: int = logging.INFO) -> None:
