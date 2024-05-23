@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools-git-versioning"]
+requires = ["setuptools>=42", "wheel", "setuptools-git-versioning", "pyyaml"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -16,7 +16,6 @@ httomo = [
     "methods_database/packages/external/httomolibgpu/*.yaml",
     "methods_database/packages/external/httomolib/*.yaml",
     "methods_database/packages/external/tomopy/*.yaml",
-    "yaml_templates/*/*/*.yaml",
 ]
 
 [tool.setuptools-git-versioning]
