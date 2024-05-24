@@ -1,5 +1,0 @@
-- method: median_filter
-  module_path: tomopy.misc.corr
-  parameters:
-    size: 3
-    axis: auto

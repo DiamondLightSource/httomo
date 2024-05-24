@@ -1,5 +1,0 @@
-- method: remove_outlier3d
-  module_path: tomopy.misc.corr
-  parameters:
-    dif: REQUIRED
-    size: 3
