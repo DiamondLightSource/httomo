@@ -27,7 +27,7 @@ from httomolibgpu.prep.stripe import (
 )
 from httomolibgpu.prep.stripe import remove_stripe_based_sorting, remove_stripe_ti
 from httomolibgpu.misc.corr import remove_outlier
-from httomolibgpu.recon.algorithm import FBP, SIRT, CGLS
+from httomolibgpu.recon.algorithm import FBP, LPRec, SIRT, CGLS
 from httomolibgpu.misc.rescale import rescale_to_int
 
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.misc.morph import *
@@ -447,7 +447,45 @@ def test_recon_FBP_memoryhook(slices, recon_size_it, ensure_clean_memory):
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
-    assert percents_relative_maxmem <= 35
+    assert percents_relative_maxmem <= 20
+
+
+@pytest.mark.cupy
+@pytest.mark.parametrize("slices", [4, 7])
+def test_recon_LPRec_memoryhook(slices, ensure_clean_memory):
+    data = cp.random.random_sample((1801, slices, 2560), dtype=np.float32)
+    kwargs = {}
+    kwargs["angles"] = np.linspace(
+        0.0 * np.pi / 180.0, 180.0 * np.pi / 180.0, data.shape[0]
+    )
+    kwargs["center"] = 500
+    kwargs["recon_size"] = 2560
+    kwargs["recon_mask_radius"] = 0.8
+
+    hook = MaxMemoryHook()
+    with hook:
+        recon_data = LPRec(cp.copy(data), **kwargs)
+
+    # make sure estimator function is within range (80% min, 100% max)
+    max_mem = (
+        hook.max_mem
+    )  # the amount of memory in bytes needed for the method according to memoryhook
+
+    # now we estimate how much of the total memory required for this data
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_LPRec(
+        (1801, 2560), dtype=np.float32(), **kwargs
+    )
+    estimated_memory_mb = round(slices * estimated_memory_bytes / (1024**2), 2)
+    max_mem -= subtract_bytes
+    max_mem_mb = round(max_mem / (1024**2), 2)
+
+    # now we compare both memory estimations
+    difference_mb = abs(estimated_memory_mb - max_mem_mb)
+    percents_relative_maxmem = round((difference_mb / max_mem_mb) * 100)
+    # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
+    # the resulting percent value should not deviate from max_mem on more than 20%
+    assert estimated_memory_mb >= max_mem_mb
+    assert percents_relative_maxmem <= 20
 
 
 @pytest.mark.cupy
