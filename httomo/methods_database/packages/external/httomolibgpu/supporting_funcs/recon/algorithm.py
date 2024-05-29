@@ -32,6 +32,7 @@ __all__ = [
     "_calc_memory_bytes_CGLS",
     "_calc_output_dim_FBP",
     "_calc_output_dim_LPRec",
+    "_calc_output_dim_FBP_CIL",
     "_calc_output_dim_SIRT",
     "_calc_output_dim_CGLS",
 ]
@@ -58,10 +59,12 @@ def _calc_output_dim_FBP(non_slice_dims_shape, **kwargs):
 def _calc_output_dim_LPRec(non_slice_dims_shape, **kwargs):
     return __calc_output_dim_recon(non_slice_dims_shape, **kwargs)
 
+def _calc_output_dim_FBP_CIL(non_slice_dims_shape, **kwargs):
+    kwargs['recon_size'] = kwargs['objsize']
+    return __calc_output_dim_recon(non_slice_dims_shape, **kwargs)
 
 def _calc_output_dim_SIRT(non_slice_dims_shape, **kwargs):
     return __calc_output_dim_recon(non_slice_dims_shape, **kwargs)
-
 
 def _calc_output_dim_CGLS(non_slice_dims_shape, **kwargs):
     return __calc_output_dim_recon(non_slice_dims_shape, **kwargs)

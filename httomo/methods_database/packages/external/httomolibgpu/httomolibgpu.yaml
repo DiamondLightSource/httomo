@@ -129,6 +129,15 @@ recon:
         - datasets: [tomo]
         - multipliers: [None]
         - methods: [module]
+    FBP_CIL:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: gpu
+      save_result_default: True
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [3]
+        - methods: [direct]
     SIRT:
       pattern: sinogram
       output_dims_change: True
