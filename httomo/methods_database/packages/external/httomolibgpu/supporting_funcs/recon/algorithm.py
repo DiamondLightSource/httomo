@@ -91,11 +91,11 @@ def _calc_memory_bytes_FBP(
     astra_out_size = np.prod(output_dims) * np.float32().itemsize
 
     tot_memory_bytes = int(
-        3 * in_slice_size
+        2 * in_slice_size
         + filtered_in_data
         + freq_slice
         + fftplan_size
-        + astra_out_size
+        + 3.5 * astra_out_size
     )
     return (tot_memory_bytes, filter_size)
 
