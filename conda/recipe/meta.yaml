@@ -11,7 +11,7 @@ source:
 
 build:
   preserve_egg_dir: False
-  number: 0
+  string: py{{ py }}_openmpi_{{ openmpi_build }}
 
 test:
   files:
@@ -60,6 +60,11 @@ requirements:
     - pyyaml
     - numpy<=1.25
     - nvtx
+    {% if openmpi_build == 'regular' %}
+    - openmpi
+    {% else %}
+    - openmpi * *external*
+    {% endif %}
     - python
     - plumbum
     - tomobar
