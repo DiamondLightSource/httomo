@@ -21,13 +21,13 @@ misc:
   morph:
     sino_360_to_180:
       pattern: sinogram
-      output_dims_change: False
+      output_dims_change: True
       implementation: gpu_cupy
       save_result_default: False
       memory_gpu:
         - datasets: [tomo]
-        - multipliers: [2.2]
-        - methods: [direct]
+        - multipliers: [None]
+        - methods: [module]
     data_resampler:
       pattern: all
       output_dims_change: True

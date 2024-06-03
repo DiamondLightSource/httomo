@@ -5,7 +5,9 @@ import pytest
 from mpi4py import MPI
 import numpy as np
 from numpy import uint16, float32
+from unittest import mock
 
+from pytest_mock import MockerFixture
 from numpy.testing import assert_allclose, assert_equal
 import os
 
@@ -14,9 +16,10 @@ httomolibgpu = pytest.importorskip("httomolibgpu")
 import cupy as cp
 
 from httomo.methods_database.query import get_method_info
+from httomo.runner.output_ref import OutputRef
 
 
-from httomolibgpu.misc.morph import data_resampler
+from httomolibgpu.misc.morph import data_resampler, sino_360_to_180
 from httomolibgpu.prep.normalize import normalize
 from httomolibgpu.prep.phase import paganin_filter_tomopy, paganin_filter_savu
 from httomolibgpu.prep.alignment import distortion_correction_proj_discorpy
@@ -36,6 +39,9 @@ from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.pre
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.recon.algorithm import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.misc.rescale import *
 from httomo.methods_database.packages.external.httomolibgpu.supporting_funcs.prep.normalize import *
+
+from tests.testing_utils import make_test_method
+
 
 module_mem_path = "httomo.methods_database.packages.external."
 
@@ -569,3 +575,47 @@ def test_rescale_to_int_memoryhook(
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
     assert percents_relative_maxmem <= 35
+
+
+@pytest.mark.cupy
+@pytest.mark.parametrize("slices", [3, 5, 8])
+def test_sino_360_to_180_memoryhook(
+    ensure_clean_memory,
+    mocker: MockerFixture,
+    slices: int,
+):
+    OVERLAP = 350
+    shape = (1801, slices, 600)
+    data = cp.random.random_sample(shape, dtype=np.float32)
+
+    # Run method to see actual memory usage
+    hook = MaxMemoryHook()
+    with hook:
+        sino_360_to_180(cp.copy(data), OVERLAP)
+
+    # Call memory estimator to estimate memory usage
+    output_ref = OutputRef(
+        method=make_test_method(mocker),
+        mapped_output_name="overlap",
+    )
+    with mock.patch(
+        "httomo.runner.output_ref.OutputRef.value",
+        new_callable=mock.PropertyMock,
+    ) as mock_value_property:
+        mock_value_property.return_value = OVERLAP
+        (estimated_bytes, subtract_bytes) = _calc_memory_bytes_sino_360_to_180(
+            non_slice_dims_shape=(shape[0], shape[2]),
+            dtype=np.float32(),
+            overlap=output_ref,
+        )
+    estimated_bytes *= slices
+
+    max_mem = hook.max_mem - subtract_bytes
+
+    # For the difference between the actual memory usage and estimated memory usage, calculate
+    # that as a percentage of the actual memory used
+    difference = abs(estimated_bytes - max_mem)
+    percentage_difference = round((difference / max_mem) * 100)
+
+    assert estimated_bytes >= max_mem
+    assert percentage_difference <= 35
