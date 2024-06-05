@@ -23,7 +23,7 @@
 import math
 from typing import Tuple
 import numpy as np
-
+from httomo.cufft import CufftType, cufft_estimate_1d
 
 __all__ = [
     "_calc_memory_bytes_FBP",
@@ -66,28 +66,54 @@ def _calc_memory_bytes_FBP(
     dtype: np.dtype,
     **kwargs,
 ) -> Tuple[int, int]:
-    DetectorsLengthH = non_slice_dims_shape[1]
-    # calculate the output shape
+    det_width = non_slice_dims_shape[1]
     output_dims = _calc_output_dim_FBP(non_slice_dims_shape, **kwargs)
 
-    in_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
-    filter_size = (DetectorsLengthH // 2 + 1) * np.float32().itemsize
-    freq_slice = (
-        non_slice_dims_shape[0] * (DetectorsLengthH // 2 + 1) * np.complex64().itemsize
-    )
-    fftplan_size = freq_slice * 2
-    filtered_in_data = np.prod(non_slice_dims_shape) * np.float32().itemsize
-
+    input_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
+    filtered_input_slice_size = np.prod(non_slice_dims_shape) * np.float32().itemsize
     # astra backprojection will generate an output array
-    astra_out_size = np.prod(output_dims) * np.float32().itemsize
+    recon_output_size = np.prod(output_dims) * np.float32().itemsize
+
+    # filter needs to be created once and substracted from the total memory
+    filter_size = (det_width // 2 + 1) * np.float32().itemsize
+
+    # this stores the result of applying FFT to data. proj_f array in the code.
+    filtered_freq_slice = (
+        non_slice_dims_shape[0] * (det_width // 2 + 1) * np.complex64().itemsize
+    )
+
+    batch = non_slice_dims_shape[0]
+    SLICES = 200  # dummy multiplier+divisor to pass large batch size threshold
+    fftplan_size = (
+        cufft_estimate_1d(
+            nx=det_width,
+            fft_type=CufftType.CUFFT_R2C,
+            batch=batch * SLICES,
+        )
+        / SLICES
+    )
+    ifftplan_size = (
+        cufft_estimate_1d(
+            nx=det_width,
+            fft_type=CufftType.CUFFT_C2R,
+            batch=batch * SLICES,
+        )
+        / SLICES
+    )
 
     tot_memory_bytes = int(
-        2 * in_slice_size
-        + filtered_in_data
-        + freq_slice
+        input_slice_size
+        + filtered_input_slice_size
+        + filtered_freq_slice
         + fftplan_size
-        + 3.5 * astra_out_size
+        + ifftplan_size
+        + recon_output_size
     )
+
+    # Backprojection ASTRA part estimations
+    tot_memory_ASTRA_BP_bytes = 5 * input_slice_size + recon_output_size
+    if tot_memory_ASTRA_BP_bytes > tot_memory_bytes:
+        tot_memory_bytes = tot_memory_ASTRA_BP_bytes
     return (tot_memory_bytes, filter_size)
 
 
