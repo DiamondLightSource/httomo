@@ -120,6 +120,15 @@ recon:
         - datasets: [tomo]
         - multipliers: [None]
         - methods: [module]
+    LPRec:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: gpu_cupy
+      save_result_default: True
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
     SIRT:
       pattern: sinogram
       output_dims_change: True
