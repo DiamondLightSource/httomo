@@ -2,7 +2,7 @@
 
 Templates generator
 *******************
-:ref:`backends_content` can be generated automatically using the YAML generator tool `provided <https://github.com/DiamondLightSource/httomo/tree/main/httomo/yaml_templates_generator.py>`_ in the Github repo. 
+:ref:`backends_content` can be generated automatically using the YAML generator tool `provided <https://github.com/DiamondLightSource/httomo/tree/main/scripts/yaml_templates_generator.py>`_ in the Github repo. 
 
 The script does the following: 
 
