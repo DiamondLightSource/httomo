@@ -578,20 +578,23 @@ def test_rescale_to_int_memoryhook(
 
 
 @pytest.mark.cupy
-@pytest.mark.parametrize("slices", [3, 5, 8])
+@pytest.mark.parametrize("slices", [3, 8, 30, 80])
+@pytest.mark.parametrize("det_x", [600, 2160])
 def test_sino_360_to_180_memoryhook(
     ensure_clean_memory,
     mocker: MockerFixture,
+    det_x: int,
     slices: int,
 ):
-    OVERLAP = 350
-    shape = (1801, slices, 600)
+    # Use a different overlap value for stitching based on the width of the 360 sinogram
+    overlap = 350 if det_x == 600 else 1950
+    shape = (1801, slices, det_x)
     data = cp.random.random_sample(shape, dtype=np.float32)
 
     # Run method to see actual memory usage
     hook = MaxMemoryHook()
     with hook:
-        sino_360_to_180(cp.copy(data), OVERLAP)
+        sino_360_to_180(cp.copy(data), overlap)
 
     # Call memory estimator to estimate memory usage
     output_ref = OutputRef(
@@ -602,7 +605,7 @@ def test_sino_360_to_180_memoryhook(
         "httomo.runner.output_ref.OutputRef.value",
         new_callable=mock.PropertyMock,
     ) as mock_value_property:
-        mock_value_property.return_value = OVERLAP
+        mock_value_property.return_value = overlap
         (estimated_bytes, subtract_bytes) = _calc_memory_bytes_sino_360_to_180(
             non_slice_dims_shape=(shape[0], shape[2]),
             dtype=np.float32(),
