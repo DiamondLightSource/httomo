@@ -298,12 +298,13 @@ class TaskRunner:
         # loop over all methods in section
         has_gpu = False
         for idx, m in enumerate(section):
-            if m.implementation in ["gpu", "gpu_cupy"]:
+            if m.implementation in ["gpu", "gpu_cupy"] or m.is_gpu:
                 has_gpu = True
 
         # if section consists of all cpu method then MAX_CPU_SLICES defines the block size
         if not has_gpu:
             section.max_slices = min(httomo.globals.MAX_CPU_SLICES, max_slices)
+            return
 
         nsl_dim_l = list(data_shape)
         nsl_dim_l.pop(slicing_dim)
@@ -325,13 +326,11 @@ class TaskRunner:
         max_slices_methods = [max_slices] * len(section)
 
         # loop over all methods in section
-        has_gpu = False
         for idx, m in enumerate(section):
             if len(m.memory_gpu) == 0:
                 max_slices_methods[idx] = max_slices
                 continue
 
-            has_gpu = has_gpu or m.is_gpu
             output_dims = m.calculate_output_dims(non_slice_dims_shape)
             (slices_estimated, available_memory) = m.calculate_max_slices(
                 self.source.dtype,
