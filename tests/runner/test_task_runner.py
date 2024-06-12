@@ -4,8 +4,8 @@ from unittest.mock import ANY, call
 import pytest
 import numpy as np
 from pytest_mock import MockerFixture
-import httomo
-from httomo.globals import *
+
+import httomo.globals
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock

@@ -7,9 +7,7 @@ import os
 import tqdm
 from mpi4py import MPI
 
-import httomo
-from httomo.globals import *
-
+import httomo.globals
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.block_split import BlockSplitter
@@ -192,7 +190,7 @@ class TaskRunner:
 
     def _prepare(self):
         self._log_pipeline(
-            f"See the full log file at: {run_out_dir}/user.log",
+            f"See the full log file at: {httomo.globals.run_out_dir}/user.log",
         )
         self._check_params_for_sweep()
         self._load_datasets()
@@ -305,7 +303,7 @@ class TaskRunner:
 
         # if section consists of all cpu method then MAX_CPU_SLICES defines the block size
         if not has_gpu:
-            section.max_slices = min(MAX_CPU_SLICES, max_slices)
+            section.max_slices = min(httomo.globals.MAX_CPU_SLICES, max_slices)
 
         nsl_dim_l = list(data_shape)
         nsl_dim_l.pop(slicing_dim)
@@ -344,6 +342,8 @@ class TaskRunner:
             non_slice_dims_shape = output_dims
 
         if not has_gpu:
-            section.max_slices = min(min(max_slices_methods), MAX_CPU_SLICES)
+            section.max_slices = min(
+                min(max_slices_methods), httomo.globals.MAX_CPU_SLICES
+            )
         else:
             section.max_slices = min(max_slices_methods)
