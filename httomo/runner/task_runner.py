@@ -340,9 +340,4 @@ class TaskRunner:
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims
 
-        if not has_gpu:
-            section.max_slices = min(
-                min(max_slices_methods), httomo.globals.MAX_CPU_SLICES
-            )
-        else:
-            section.max_slices = min(max_slices_methods)
+        section.max_slices = min(max_slices_methods)
