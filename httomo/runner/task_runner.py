@@ -8,6 +8,8 @@ import tqdm
 from mpi4py import MPI
 
 import httomo
+from httomo.globals import *
+
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.block_split import BlockSplitter
@@ -190,7 +192,7 @@ class TaskRunner:
 
     def _prepare(self):
         self._log_pipeline(
-            f"See the full log file at: {httomo.globals.run_out_dir}/user.log",
+            f"See the full log file at: {run_out_dir}/user.log",
         )
         self._check_params_for_sweep()
         self._load_datasets()
@@ -290,12 +292,20 @@ class TaskRunner:
 
     def determine_max_slices(self, section: Section, slicing_dim: int):
         assert self.source is not None
-        data_shape = self.source.chunk_shape
+        assert len(section) > 0, "Section should contain at least 1 method"
 
+        data_shape = self.source.chunk_shape
         max_slices = data_shape[slicing_dim]
-        if len(section) == 0:
-            section.max_slices = min(httomo.globals.MAX_CPU_SLICES, max_slices)
-            return
+
+        # loop over all methods in section
+        has_gpu = False
+        for idx, m in enumerate(section):
+            if m.implementation in ["gpu", "gpu_cupy"]:
+                has_gpu = True
+
+        # if section consists of all cpu method then MAX_CPU_SLICES defines the block size
+        if not has_gpu:
+            section.max_slices = min(MAX_CPU_SLICES, max_slices)
 
         nsl_dim_l = list(data_shape)
         nsl_dim_l.pop(slicing_dim)
@@ -334,8 +344,6 @@ class TaskRunner:
             non_slice_dims_shape = output_dims
 
         if not has_gpu:
-            section.max_slices = min(
-                min(max_slices_methods), httomo.globals.MAX_CPU_SLICES
-            )
+            section.max_slices = min(min(max_slices_methods), MAX_CPU_SLICES)
         else:
             section.max_slices = min(max_slices_methods)
