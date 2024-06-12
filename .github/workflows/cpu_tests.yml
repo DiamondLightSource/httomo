@@ -31,6 +31,7 @@ jobs:
         run: |
           conda env create --name httomo --file conda/environment-cpu.yml
           conda activate httomo
+          conda run -n httomo pip install typing_extensions
           conda run -n httomo pip install .
           conda env list
           conda list
