@@ -9,4 +9,4 @@ MAX_CPU_SLICES: int = (
 )
 SYSLOG_SERVER = "localhost"
 SYSLOG_PORT = 514
-CHUNK_INTERMEDIATE: bool = False
+FRAMES_PER_CHUNK: int = 1
