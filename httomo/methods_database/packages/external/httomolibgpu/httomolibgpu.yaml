@@ -105,10 +105,11 @@ prep:
       pattern: sinogram
       output_dims_change: False
       implementation: gpu_cupy
+      save_result_default: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
-        - methods: [module]     
+        - methods: [module]
 recon:
   algorithm:
     FBP:
