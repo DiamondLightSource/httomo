@@ -100,11 +100,16 @@ def _calc_memory_bytes_FBP(
         )
         / SLICES
     )
+    # The multiplier_heuristic comes from the empirical testing of the module for various
+    # data sizes. So far, the need for it is cannot be explained from the algorithmic
+    # standpoint. Also, there is no association of it with filtered_freq_slice array,
+    # as we just need to bump up the memory to avoid the OOM error.
+    multiplier_heuristic = 2
 
     tot_memory_bytes = int(
-        input_slice_size
+        2 * input_slice_size
         + filtered_input_slice_size
-        + filtered_freq_slice
+        + multiplier_heuristic * filtered_freq_slice
         + fftplan_size
         + ifftplan_size
         + recon_output_size
