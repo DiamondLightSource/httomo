@@ -7,7 +7,7 @@ import os
 import tqdm
 from mpi4py import MPI
 
-import httomo
+import httomo.globals
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.block_split import BlockSplitter
@@ -290,10 +290,19 @@ class TaskRunner:
 
     def determine_max_slices(self, section: Section, slicing_dim: int):
         assert self.source is not None
-        data_shape = self.source.chunk_shape
+        assert len(section) > 0, "Section should contain at least 1 method"
 
+        data_shape = self.source.chunk_shape
         max_slices = data_shape[slicing_dim]
-        if len(section) == 0:
+
+        # loop over all methods in section
+        has_gpu = False
+        for idx, m in enumerate(section):
+            if m.implementation in ["gpu", "gpu_cupy"] or m.is_gpu:
+                has_gpu = True
+
+        # if section consists of all cpu method then MAX_CPU_SLICES defines the block size
+        if not has_gpu:
             section.max_slices = min(httomo.globals.MAX_CPU_SLICES, max_slices)
             return
 
@@ -317,13 +326,11 @@ class TaskRunner:
         max_slices_methods = [max_slices] * len(section)
 
         # loop over all methods in section
-        has_gpu = False
         for idx, m in enumerate(section):
             if len(m.memory_gpu) == 0:
                 max_slices_methods[idx] = max_slices
                 continue
 
-            has_gpu = has_gpu or m.is_gpu
             output_dims = m.calculate_output_dims(non_slice_dims_shape)
             (slices_estimated, available_memory) = m.calculate_max_slices(
                 self.source.dtype,
@@ -333,9 +340,4 @@ class TaskRunner:
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims
 
-        if not has_gpu:
-            section.max_slices = min(
-                min(max_slices_methods), httomo.globals.MAX_CPU_SLICES
-            )
-        else:
-            section.max_slices = min(max_slices_methods)
+        section.max_slices = min(max_slices_methods)
