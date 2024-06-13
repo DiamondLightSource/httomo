@@ -121,9 +121,10 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     help="Port on the host the syslog server is running on",
 )
 @click.option(
-    "--chunk-intermediate",
-    is_flag=True,
-    help="Write intermediate data in chunked format",
+    "--frames-per-chunk",
+    type=click.IntRange(0),
+    default=1,
+    help="Number of frames per-chunk in intermediate data (0 = write as contiguous)",
 )
 def run(
     in_data_file: Path,
@@ -139,10 +140,10 @@ def run(
     monitor_output: TextIO,
     syslog_host: str,
     syslog_port: int,
-    chunk_intermediate: bool,
+    frames_per_chunk: int,
 ):
     """Run a pipeline defined in YAML on input data."""
-    httomo.globals.CHUNK_INTERMEDIATE = chunk_intermediate
+    httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
 
     comm = MPI.COMM_WORLD
     does_contain_sweep = is_sweep_pipeline(yaml_config)

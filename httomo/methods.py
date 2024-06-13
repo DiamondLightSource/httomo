@@ -45,9 +45,9 @@ def save_intermediate_data(
     angles: np.ndarray,
 ) -> None:
     """Saves intermediate data to a file, including auxiliary"""
-    if httomo.globals.CHUNK_INTERMEDIATE:
+    if httomo.globals.FRAMES_PER_CHUNK > 0:
         chunk_shape = [0, 0, 0]
-        chunk_shape[slicing_dim] = 1
+        chunk_shape[slicing_dim] = httomo.globals.FRAMES_PER_CHUNK
         DIMS = [0, 1, 2]
         non_slicing_dims = list(set(DIMS) - set([slicing_dim]))
         for dim in non_slicing_dims:
