@@ -68,6 +68,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             global_index=block.global_index,
             slicing_dim=block.slicing_dim,
             file=self._file,
+            frames_per_chunk=httomo.globals.FRAMES_PER_CHUNK,
             path="/data",
             detector_x=self._loader.detector_x,
             detector_y=self._loader.detector_y,
