@@ -1,3 +1,4 @@
+import logging
 import pathlib
 from typing import Tuple
 import numpy as np
@@ -5,7 +6,7 @@ import h5py
 
 import httomo
 from httomo.runner.dataset import DataSetBlock
-from httomo.utils import xp
+from httomo.utils import log_once, xp
 
 __all__ = ["calculate_stats", "save_intermediate_data"]
 
@@ -46,6 +47,15 @@ def save_intermediate_data(
     angles: np.ndarray,
 ) -> None:
     """Saves intermediate data to a file, including auxiliary"""
+    if frames_per_chunk > data.shape[slicing_dim]:
+        warn_message = (
+            f"frames_per_chunk={frames_per_chunk} exceeds number of elements in "
+            f"slicing dim={slicing_dim} of data with shape {data.shape}. Falling "
+            "back to 1 frame per-chunk"
+        )
+        log_once(warn_message, logging.DEBUG)
+        frames_per_chunk = 1
+
     if frames_per_chunk > 0:
         chunk_shape = [0, 0, 0]
         chunk_shape[slicing_dim] = frames_per_chunk

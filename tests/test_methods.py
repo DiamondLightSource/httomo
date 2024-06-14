@@ -208,7 +208,7 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
         np.testing.assert_array_equal(file["data_dims"]["detector_x_y"], [10, 20])
 
 
-@pytest.mark.parametrize("frames_per_chunk", [0, 1, 5])
+@pytest.mark.parametrize("frames_per_chunk", [0, 1, 5, 1000])
 def test_save_intermediate_data_frames_per_chunk(
     tmp_path: Path,
     frames_per_chunk: int,
@@ -247,7 +247,9 @@ def test_save_intermediate_data_frames_per_chunk(
     # Define the expected chunk shape, based on the `frames_per_chunk` value and the slicing
     # dim of the data that was saved
     expected_chunk_shape = [0, 0, 0]
-    expected_chunk_shape[block.slicing_dim] = frames_per_chunk
+    expected_chunk_shape[block.slicing_dim] = (
+        frames_per_chunk if frames_per_chunk != 1000 else 1
+    )
     DIMS = [0, 1, 2]
     non_slicing_dims = list(set(DIMS) - set([block.slicing_dim]))
     for dim in non_slicing_dims:
@@ -266,7 +268,7 @@ def test_save_intermediate_data_frames_per_chunk(
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
-@pytest.mark.parametrize("frames_per_chunk", [0, 1, 5])
+@pytest.mark.parametrize("frames_per_chunk", [0, 1, 5, 1000])
 def test_save_intermediate_data_frames_per_chunk_mpi(
     tmp_path: Path,
     frames_per_chunk: int,
@@ -314,7 +316,9 @@ def test_save_intermediate_data_frames_per_chunk_mpi(
     # Define the expected chunk shape, based on the `frames_per_chunk` value and the slicing
     # dim of the data that was saved
     expected_chunk_shape = [0, 0, 0]
-    expected_chunk_shape[block.slicing_dim] = frames_per_chunk
+    expected_chunk_shape[block.slicing_dim] = (
+        frames_per_chunk if frames_per_chunk != 1000 else 1
+    )
     DIMS = [0, 1, 2]
     non_slicing_dims = list(set(DIMS) - set([block.slicing_dim]))
     for dim in non_slicing_dims:
