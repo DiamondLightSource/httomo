@@ -16,7 +16,6 @@ httomo = [
     "methods_database/packages/external/httomolibgpu/*.yaml",
     "methods_database/packages/external/httomolib/*.yaml",
     "methods_database/packages/external/tomopy/*.yaml",
-    "yaml_templates/*/*/*.yaml",
 ]
 
 [tool.setuptools-git-versioning]

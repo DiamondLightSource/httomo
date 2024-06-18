@@ -1,4 +1,0 @@
-- method: add_focal_spot_blur
-  module_path: tomopy.sim.project
-  parameters:
-    spotsize: REQUIRED
