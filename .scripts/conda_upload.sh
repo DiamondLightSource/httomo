@@ -2,7 +2,7 @@
 
 PKG_NAME=httomo
 USER=httomo-team
-OS=linux-64
+OS=noarch
 CONDA_TOKEN=$(cat $HOME/.secrets/my_secret.json)
 
 mkdir ~/conda-bld
