@@ -1,8 +1,7 @@
 python:
-  - 3.9
   - 3.10
 numpy:
-  - 1.24
+  - 1.25
 openmpi_build:
   - regular
   - external

@@ -34,4 +34,4 @@ Build HTTomo as a conda Python package
 ======================================================
 .. code-block:: console
 
-   $ conda build conda/recipe/ -c conda-forge -c https://conda.anaconda.org/httomo/ -c rapidsai
+   $ conda build conda/recipe/ -c conda-forge -c https://conda.anaconda.org/httomo/ -c rapidsai --no-test
