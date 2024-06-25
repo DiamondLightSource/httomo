@@ -1,3 +1,5 @@
+import pytest
+
 from httomo.data.param_sweep_store import ParamSweepWriter
 
 
@@ -30,25 +32,9 @@ def test_param_sweep_writer_get_total_shape():
     assert writer.total_shape == (180, 3 * 5, 160)
 
 
-def test_param_sweep_reader_get_no_of_sweeps():
+def test_param_sweep_write_make_reader_errors_if_data_none():
     writer = make_param_sweep_writer()
-    reader = writer.make_reader()
-    assert reader.no_of_sweeps == 5
+    with pytest.raises(ValueError) as e:
+        writer.make_reader()
 
-
-def test_param_sweep_reader_get_extract_dim():
-    writer = make_param_sweep_writer()
-    reader = writer.make_reader()
-    assert reader.extract_dim == 1
-
-
-def test_param_sweep_reader_get_single_shape():
-    writer = make_param_sweep_writer()
-    reader = writer.make_reader()
-    assert reader.single_shape == (180, 3, 160)
-
-
-def test_param_sweep_reader_get_total_shape():
-    writer = make_param_sweep_writer()
-    reader = writer.make_reader()
-    assert reader.total_shape == (180, 3 * 5, 160)
+    assert "no data has been written yet" in str(e)

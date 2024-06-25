@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Literal, Tuple
+from typing import Literal, Optional, Tuple
+
+import numpy as np
 
 
 class ParamSweepReader:
@@ -46,6 +48,7 @@ class ParamSweepWriter:
             single_shape[1] * no_of_sweeps,
             single_shape[2],
         )
+        self._data: Optional[np.ndarray] = None
 
     @property
     def no_of_sweeps(self) -> int:
@@ -64,4 +67,6 @@ class ParamSweepWriter:
         return self._total_shape
 
     def make_reader(self) -> ParamSweepReader:
+        if self._data is None:
+            raise ValueError("Cannot make reader when no data has been written yet")
         return ParamSweepReader(self)
