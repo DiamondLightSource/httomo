@@ -3,8 +3,12 @@ from typing import Literal, Optional, Tuple
 
 import numpy as np
 
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.runner.dataset import DataSetBlock
+from httomo.sweep_runner.param_sweep_store_interfaces import ParamSweepSource
 
-class ParamSweepReader:
+
+class ParamSweepReader(ParamSweepSource):
     """
     Read parameter sweep results, extracting middle slices along the `detector_y` dim
     """
@@ -14,6 +18,11 @@ class ParamSweepReader:
         self._extract_dim: Literal[1] = 1
         self._single_shape = source.single_shape
         self._total_shape = source.total_shape
+        assert (
+            source._data is not None
+        ), "Reader should be created from writer with data not `None`"
+        self._data = source._data
+        self._aux_data = source.aux_data
 
     @property
     def no_of_sweeps(self) -> int:
@@ -30,6 +39,21 @@ class ParamSweepReader:
     @property
     def total_shape(self) -> Tuple[int, int, int]:
         return self._total_shape
+
+    @property
+    def aux_data(self) -> AuxiliaryData:
+        return self._aux_data
+
+    def read_sweep_results(self) -> DataSetBlock:
+        slices = [slice(None, None, 1)] * 3
+        slices_per_sweep = self.single_shape[self.extract_dim]
+        first_middle_slice_index = slices_per_sweep // 2
+        detector_y_slice = slice(first_middle_slice_index, None, slices_per_sweep)
+        slices[self.extract_dim] = detector_y_slice
+        return DataSetBlock(
+            data=self._data[slices[0], slices[1], slices[2]],
+            aux_data=self.aux_data,
+        )
 
 
 class ParamSweepWriter:
@@ -49,6 +73,8 @@ class ParamSweepWriter:
             single_shape[2],
         )
         self._data: Optional[np.ndarray] = None
+        self._no_of_sweeps_written: int = 0
+        self._slices_per_sweep: int = single_shape[self.concat_dim]
 
     @property
     def no_of_sweeps(self) -> int:
@@ -70,3 +96,33 @@ class ParamSweepWriter:
         if self._data is None:
             raise ValueError("Cannot make reader when no data has been written yet")
         return ParamSweepReader(self)
+
+    @property
+    def no_of_sweeps_written(self) -> int:
+        return self._no_of_sweeps_written
+
+    def increment_no_of_sweeps_written(self):
+        self._no_of_sweeps_written += 1
+
+    @property
+    def slices_per_sweep(self) -> int:
+        return self._slices_per_sweep
+
+    @property
+    def aux_data(self) -> AuxiliaryData:
+        return self._aux_data
+
+    def write_sweep_result(self, block: DataSetBlock):
+        if self._data is None:
+            self._data = np.empty(shape=self.total_shape, dtype=block.data.dtype)
+            self._aux_data = block.aux_data
+
+        slices = [slice(None, None, 1)] * 3
+        sweep_res_start = self.no_of_sweeps_written * self.slices_per_sweep
+        slices[self._concat_dim] = slice(
+            sweep_res_start,
+            sweep_res_start + self.slices_per_sweep,
+            1,
+        )
+        self._data[slices[0], slices[1], slices[2]] = block.data
+        self.increment_no_of_sweeps_written()
