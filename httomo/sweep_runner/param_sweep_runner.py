@@ -10,6 +10,7 @@ class ParamSweepRunner:
         self,
         pipeline: Pipeline,
     ) -> None:
+        self._sino_slices_threshold = 7
         self._pipeline = pipeline
         self._block: Optional[DataSetBlock] = None
 
@@ -24,5 +25,16 @@ class ParamSweepRunner:
         Load single block containing small number of sinogram slices in input data
         """
         source = self._pipeline.loader.make_data_source()
+
+        SINO_SLICING_DIM = 1
+        no_of_middle_slices = source.global_shape[SINO_SLICING_DIM]
+        if no_of_middle_slices > self._sino_slices_threshold:
+            err_str = (
+                "Parameter sweep runs support input data containing "
+                f"<= {self._sino_slices_threshold} sinogram slices, input data "
+                f"contains {no_of_middle_slices} slices"
+            )
+            raise ValueError(err_str)
+
         splitter = BlockSplitter(source, source.global_shape[source.slicing_dim])
         self._block = splitter[0]
