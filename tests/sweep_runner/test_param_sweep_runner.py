@@ -145,3 +145,80 @@ def test_execute_non_sweep_stage_modifies_block(
     assert runner.block.data.shape == PREVIEWED_SLICES_SHAPE
     expected_block_data = data * 2 * 3
     np.testing.assert_array_equal(runner.block.data, expected_block_data)
+
+
+def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
+    # Define dummy block for loader to provide
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    data = np.ones(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    loader = make_test_loader(mocker, block=block)
+
+    # Define four dummy functions that are representing a single method configured with
+    # different parameter values
+    def method_sweep_val_1(block: DataSetBlock):
+        block.data = block.data * 2
+        return block
+
+    def method_sweep_val_2(block: DataSetBlock):
+        block.data = block.data * 3
+        return block
+
+    def method_sweep_val_3(block: DataSetBlock):
+        block.data = block.data * 5
+        return block
+
+    def method_sweep_val_4(block: DataSetBlock):
+        block.data = block.data * 7
+        return block
+
+    # Patch `the `execute() method in the mock method wrapper objects so then the functions
+    # that are used for the three methods executed in the sweep stage are the three dummy
+    # methods defined above
+    m1 = make_test_method(mocker=mocker, method_name="method_sweep_val_1")
+    mocker.patch.object(target=m1, attribute="execute", side_effect=method_sweep_val_1)
+    m2 = make_test_method(mocker=mocker, method_name="method_sweep_val_2")
+    mocker.patch.object(target=m2, attribute="execute", side_effect=method_sweep_val_2)
+    m3 = make_test_method(mocker=mocker, method_name="method_sweep_val_3")
+    mocker.patch.object(target=m3, attribute="execute", side_effect=method_sweep_val_3)
+    m4 = make_test_method(mocker=mocker, method_name="method_sweep_val_4")
+    mocker.patch.object(target=m4, attribute="execute", side_effect=method_sweep_val_4)
+
+    # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
+    #
+    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
+    # for the purpose of this test are only the ones in the sweep stage, which is why the
+    # pipeline and stages object both have only partial pipeline information
+    pipeline = Pipeline(loader=loader, methods=[])
+    stages = Stages(
+        before_sweep=[],
+        sweep=[m1, m2, m3, m4],
+        after_sweep=[],
+    )
+
+    runner = ParamSweepRunner(pipeline=pipeline, stages=stages)
+    runner.prepare()
+    runner.execute_sweep()
+
+    NO_OF_SWEEPS = 4
+    EXPECTED_BLOCK_SHAPE = (
+        PREVIEWED_SLICES_SHAPE[0],
+        NO_OF_SWEEPS,
+        PREVIEWED_SLICES_SHAPE[2],
+    )
+    assert runner.block.data.shape == EXPECTED_BLOCK_SHAPE
+    expected_data = np.ones(EXPECTED_BLOCK_SHAPE, dtype=np.float32)
+    expected_data[:, 0, :] *= 2
+    expected_data[:, 1, :] *= 3
+    expected_data[:, 2, :] *= 5
+    expected_data[:, 3, :] *= 7
+    np.testing.assert_array_equal(runner.block.data, expected_data)

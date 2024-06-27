@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
 from httomo.runner.block_split import BlockSplitter
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.method_wrapper import MethodWrapper
@@ -55,3 +56,28 @@ class ParamSweepRunner:
     def execute_after_sweep(self):
         """Execute all methods after the parameter sweep"""
         self._execute_non_sweep_stage(self._stages.after_sweep)
+
+    def execute_sweep(self):
+        """Execute all param variations of the same method in the sweep"""
+        writer = ParamSweepWriter(
+            no_of_sweeps=len(self._stages.sweep),
+            single_shape=self.block.global_shape,
+        )
+
+        for method in self._stages.sweep:
+            # Blocks are modified in-place by method wrappers, so a new block must be created
+            # that contains a copy of the input data to the sweep stage
+            block = DataSetBlock(
+                data=self.block.data.copy(),
+                aux_data=self.block.aux_data,
+                slicing_dim=self.block.slicing_dim,
+                global_shape=self.block.global_shape,
+                chunk_start=0,
+                chunk_shape=self.block.chunk_shape,
+                block_start=0,
+            )
+            block = method.execute(block)
+            writer.write_sweep_result(block)
+
+        reader = ParamSweepReader(writer)
+        self._block = reader.read_sweep_results()
