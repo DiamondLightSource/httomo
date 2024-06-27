@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import List, Optional
 
 from httomo.runner.block_split import BlockSplitter
 from httomo.runner.dataset import DataSetBlock
+from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.stages import Stages
 
@@ -42,8 +43,15 @@ class ParamSweepRunner:
         splitter = BlockSplitter(source, source.global_shape[source.slicing_dim])
         self._block = splitter[0]
 
+    def _execute_non_sweep_stage(self, wrappers: List[MethodWrapper]):
+        assert self._block is not None
+        for method in wrappers:
+            self._block = method.execute(self._block)
+
     def execute_before_sweep(self):
         """Execute all methods before the parameter sweep"""
-        assert self._block is not None
-        for method in self._stages.before_sweep:
-            self._block = method.execute(self._block)
+        self._execute_non_sweep_stage(self._stages.before_sweep)
+
+    def execute_after_sweep(self):
+        """Execute all methods after the parameter sweep"""
+        self._execute_non_sweep_stage(self._stages.after_sweep)
