@@ -3,15 +3,18 @@ from typing import Optional
 from httomo.runner.block_split import BlockSplitter
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.pipeline import Pipeline
+from httomo.sweep_runner.stages import Stages
 
 
 class ParamSweepRunner:
     def __init__(
         self,
         pipeline: Pipeline,
+        stages: Stages,
     ) -> None:
         self._sino_slices_threshold = 7
         self._pipeline = pipeline
+        self._stages = stages
         self._block: Optional[DataSetBlock] = None
 
     @property
@@ -38,3 +41,9 @@ class ParamSweepRunner:
 
         splitter = BlockSplitter(source, source.global_shape[source.slicing_dim])
         self._block = splitter[0]
+
+    def execute_before_sweep(self):
+        """Execute all methods before the parameter sweep"""
+        assert self._block is not None
+        for method in self._stages.before_sweep:
+            self._block = method.execute(self._block)
