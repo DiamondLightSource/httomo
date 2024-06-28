@@ -222,3 +222,97 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
     expected_data[:, 2, :] *= 5
     expected_data[:, 3, :] *= 7
     np.testing.assert_array_equal(runner.block.data, expected_data)
+
+
+def test_execute_modifies_block(mocker: MockerFixture):
+    # Define dummy block for loader to provide
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    data = np.ones(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    loader = make_test_loader(mocker, block=block)
+
+    # Define two dummy methods to be in the before and sweep stages in the runner
+    def dummy_method_1(block: DataSetBlock):  # type: ignore
+        block.data = block.data * 2
+        return block
+
+    def dummy_method_2(block: DataSetBlock):  # type: ignore
+        block.data = block.data * 3
+        return block
+
+    # Define four dummy functions that are representing a single method configured with
+    # different parameter values
+    def method_sweep_val_1(block: DataSetBlock):
+        block.data = block.data * 2
+        return block
+
+    def method_sweep_val_2(block: DataSetBlock):
+        block.data = block.data * 3
+        return block
+
+    def method_sweep_val_3(block: DataSetBlock):
+        block.data = block.data * 5
+        return block
+
+    def method_sweep_val_4(block: DataSetBlock):
+        block.data = block.data * 7
+        return block
+
+    # Create mock method wrapper objects and patch the `execute()` method on all of them to use
+    # the dummy method functions defined above
+    #
+    # "Before sweep" stage method wrappers (2)
+    m1 = make_test_method(mocker=mocker, method_name="method_1")
+    mocker.patch.object(target=m1, attribute="execute", side_effect=dummy_method_1)
+    m2 = make_test_method(mocker=mocker, method_name="method_2")
+    mocker.patch.object(target=m2, attribute="execute", side_effect=dummy_method_2)
+    # Sweep stage method wrappers (4)
+    m3 = make_test_method(mocker=mocker, method_name="method_sweep_val_1")
+    mocker.patch.object(target=m3, attribute="execute", side_effect=method_sweep_val_1)
+    m4 = make_test_method(mocker=mocker, method_name="method_sweep_val_2")
+    mocker.patch.object(target=m4, attribute="execute", side_effect=method_sweep_val_2)
+    m5 = make_test_method(mocker=mocker, method_name="method_sweep_val_3")
+    mocker.patch.object(target=m5, attribute="execute", side_effect=method_sweep_val_3)
+    m6 = make_test_method(mocker=mocker, method_name="method_sweep_val_4")
+    mocker.patch.object(target=m6, attribute="execute", side_effect=method_sweep_val_4)
+    # "After sweep" stage method wrappers (2)
+    m7 = make_test_method(mocker=mocker, method_name="method_7")
+    mocker.patch.object(target=m7, attribute="execute", side_effect=dummy_method_1)
+    m8 = make_test_method(mocker=mocker, method_name="method_8")
+    mocker.patch.object(target=m8, attribute="execute", side_effect=dummy_method_2)
+
+    # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
+    pipeline = Pipeline(loader=loader, methods=[m1, m2, m3, m4, m5, m6, m6, m7, m8])
+    stages = Stages(
+        before_sweep=[m1, m2],
+        sweep=[m3, m4, m5, m6],
+        after_sweep=[m7, m8],
+    )
+
+    runner = ParamSweepRunner(pipeline=pipeline, stages=stages)
+    runner.execute()
+
+    NO_OF_SWEEPS = 4
+    EXPECTED_BLOCK_SHAPE = (
+        PREVIEWED_SLICES_SHAPE[0],
+        NO_OF_SWEEPS,
+        PREVIEWED_SLICES_SHAPE[2],
+    )
+    assert runner.block.data.shape == EXPECTED_BLOCK_SHAPE
+    BEFORE_SWEEP_MULT_FACTOR = AFTER_SWEEP_MULT_FACTOR = 2 * 3
+    NON_SWEEP_STAGES_MULT_FACTOR = BEFORE_SWEEP_MULT_FACTOR * AFTER_SWEEP_MULT_FACTOR
+    expected_data = np.ones(EXPECTED_BLOCK_SHAPE, dtype=np.float32)
+    expected_data[:, 0, :] *= NON_SWEEP_STAGES_MULT_FACTOR * 2
+    expected_data[:, 1, :] *= NON_SWEEP_STAGES_MULT_FACTOR * 3
+    expected_data[:, 2, :] *= NON_SWEEP_STAGES_MULT_FACTOR * 5
+    expected_data[:, 3, :] *= NON_SWEEP_STAGES_MULT_FACTOR * 7
+    np.testing.assert_array_equal(runner.block.data, expected_data)

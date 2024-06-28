@@ -81,3 +81,10 @@ class ParamSweepRunner:
 
         reader = ParamSweepReader(writer)
         self._block = reader.read_sweep_results()
+
+    def execute(self):
+        """Load input data and execute all stages (before sweep, sweep, after sweep)"""
+        self.prepare()
+        self.execute_before_sweep()
+        self.execute_sweep()
+        self.execute_after_sweep()
