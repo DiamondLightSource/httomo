@@ -52,6 +52,7 @@ class ParamSweepRunner:
         for method in wrappers:
             self._side_output_manager.update_params(method)
             self._block = method.execute(self._block)
+            self._side_output_manager.append(method.get_side_output())
 
     def execute_before_sweep(self):
         """Execute all methods before the parameter sweep"""

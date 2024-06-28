@@ -151,6 +151,73 @@ def test_execute_non_sweep_stage_modifies_block(
 
 
 @pytest.mark.parametrize("non_sweep_stage", ["before", "after"])
+def test_execute_non_sweep_stage_method_output_updates_side_outputs(
+    mocker: MockerFixture,
+    non_sweep_stage: str,
+):
+    # Define dummy block for loader to provide
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    data = np.ones(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    loader = make_test_loader(mocker, block=block)
+
+    # Define side output that dummy method in stage will produce
+    SIDE_OUTPUT_LABEL = "some_side_output"
+    side_outputs = {SIDE_OUTPUT_LABEL: 5}
+
+    # Define mock method wrapper to produce the above side output
+    mock_wrapper = make_test_method(mocker)
+    mocker.patch.object(
+        target=mock_wrapper, attribute="get_side_output", return_value=side_outputs
+    )
+
+    # Define pipeline, stages, runner objects, and execute the methods in the stage
+    # before/after the sweep
+    #
+    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
+    # for the purpose of this test are only the ones in the "before/after sweep" stage, which
+    # is why the pipeline and stages object both have only partial pipeline information
+    pipeline = Pipeline(loader=loader, methods=[])
+    if non_sweep_stage == "before":
+        stages = Stages(
+            before_sweep=[mock_wrapper],
+            sweep=[],
+            after_sweep=[],
+        )
+    else:
+        stages = Stages(
+            before_sweep=[],
+            sweep=[],
+            after_sweep=[mock_wrapper],
+        )
+
+    # Pass in an empty side output manager object into the runner. The execution of the method
+    # should add the side output produced by it to the side output manager.
+    side_output_manager = SideOutputManager()
+    runner = ParamSweepRunner(
+        pipeline=pipeline, stages=stages, side_output_manager=side_output_manager
+    )
+    runner.prepare()
+    if non_sweep_stage == "before":
+        runner.execute_before_sweep()
+    else:
+        runner.execute_after_sweep()
+
+    # Check that the side output manager has been updated with the mock method's side output
+    assert SIDE_OUTPUT_LABEL in side_output_manager.labels
+    assert side_output_manager.get(SIDE_OUTPUT_LABEL) == side_outputs[SIDE_OUTPUT_LABEL]
+
+
+@pytest.mark.parametrize("non_sweep_stage", ["before", "after"])
 def test_execute_non_sweep_stage_method_params_updated_from_side_outputs(
     mocker: MockerFixture,
     non_sweep_stage: str,
