@@ -5,6 +5,7 @@ from httomo.runner.block_split import BlockSplitter
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
+from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import Stages
 
 
@@ -13,10 +14,12 @@ class ParamSweepRunner:
         self,
         pipeline: Pipeline,
         stages: Stages,
+        side_output_manager: SideOutputManager = SideOutputManager(),
     ) -> None:
         self._sino_slices_threshold = 7
         self._pipeline = pipeline
         self._stages = stages
+        self._side_output_manager = side_output_manager
         self._block: Optional[DataSetBlock] = None
 
     @property
@@ -47,6 +50,7 @@ class ParamSweepRunner:
     def _execute_non_sweep_stage(self, wrappers: List[MethodWrapper]):
         assert self._block is not None
         for method in wrappers:
+            self._side_output_manager.update_params(method)
             self._block = method.execute(self._block)
 
     def execute_before_sweep(self):

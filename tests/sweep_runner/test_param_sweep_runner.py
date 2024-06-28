@@ -2,13 +2,16 @@ import pytest
 from pytest_mock import MockerFixture
 
 import numpy as np
+from mpi4py import MPI
 
+from httomo.method_wrappers import make_method_wrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
+from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import Stages
-from tests.testing_utils import make_test_loader, make_test_method
+from tests.testing_utils import make_mock_repo, make_test_loader, make_test_method
 
 
 def test_without_prepare_block_property_raises_error(mocker: MockerFixture):
@@ -145,6 +148,79 @@ def test_execute_non_sweep_stage_modifies_block(
     assert runner.block.data.shape == PREVIEWED_SLICES_SHAPE
     expected_block_data = data * 2 * 3
     np.testing.assert_array_equal(runner.block.data, expected_block_data)
+
+
+@pytest.mark.parametrize("non_sweep_stage", ["before", "after"])
+def test_execute_non_sweep_stage_method_params_updated_from_side_outputs(
+    mocker: MockerFixture,
+    non_sweep_stage: str,
+):
+    # Define dummy block for loader to provide
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    data = np.ones(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    loader = make_test_loader(mocker, block=block)
+
+    # Define side output that dummy method in stage will require
+    SIDE_OUTPUT_LABEL = "some_side_output"
+    side_outputs = {SIDE_OUTPUT_LABEL: 5}
+    side_output_manager = SideOutputManager()
+    side_output_manager.append(side_outputs)
+
+    # Define mock module + mock method function that will be imported by method wrapper.
+    #
+    # The mock method function asserts that the param value it's given is the value of the side
+    # output that it requires.
+    class FakeModule:
+        def method_1(data, some_side_output) -> np.ndarray:  # type: ignore
+            assert some_side_output == side_outputs[SIDE_OUTPUT_LABEL]
+            return np.empty(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    method_wrapper = make_method_wrapper(
+        method_repository=make_mock_repo(mocker),
+        module_path="",
+        method_name="method_1",
+        comm=MPI.COMM_WORLD,
+    )
+
+    # Define pipeline, stages, runner objects, and execute the methods in the stage
+    # before/after the sweep
+    #
+    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
+    # for the purpose of this test are only the ones in the "before/after sweep" stage, which
+    # is why the pipeline and stages object both have only partial pipeline information
+    pipeline = Pipeline(loader=loader, methods=[])
+    if non_sweep_stage == "before":
+        stages = Stages(
+            before_sweep=[method_wrapper],
+            sweep=[],
+            after_sweep=[],
+        )
+    else:
+        stages = Stages(
+            before_sweep=[],
+            sweep=[],
+            after_sweep=[method_wrapper],
+        )
+
+    runner = ParamSweepRunner(
+        pipeline=pipeline, stages=stages, side_output_manager=side_output_manager
+    )
+    runner.prepare()
+    if non_sweep_stage == "before":
+        runner.execute_before_sweep()
+    else:
+        runner.execute_after_sweep()
 
 
 def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
