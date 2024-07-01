@@ -1,8 +1,8 @@
 .. _reference_templates:
 
-================
-YAML Templates
-================
+======================
+Methods YAML Templates
+======================
 
 This section contains YAML templates from :ref:`backends_list`. These are ready-to-use templates can be either copy-pasted or
 downloaded in order to build your pipeline. 

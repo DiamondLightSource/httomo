@@ -4,7 +4,7 @@ Installation Guide
 Install HTTomo as a pre-built conda Python package
 ==================================================
 
-This installation is preferable as it should take care all of dependencies for you by getting them from the dedicated anaconda channel. 
+This installation is preferable as it should take care all of dependencies including :ref:`backends_list` by getting them from the dedicated anaconda channel. 
 
 .. code-block:: console
 
