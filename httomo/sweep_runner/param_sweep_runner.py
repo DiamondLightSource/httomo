@@ -83,6 +83,10 @@ class ParamSweepRunner:
             )
             self._side_output_manager.update_params(method)
             block = method.execute(block)
+            if len(method.get_side_output().keys()) > 0:
+                raise ValueError(
+                    "Producing a side output is not supported in parameter sweep methods"
+                )
             writer.write_sweep_result(block)
 
         reader = ParamSweepReader(writer)

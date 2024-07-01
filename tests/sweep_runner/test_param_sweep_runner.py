@@ -523,3 +523,59 @@ def test_execute_sweep_stage_method_params_updated_from_side_outputs(
     )
     runner.prepare()
     runner.execute_sweep()
+
+
+def test_execute_sweep_stage_method_produces_side_output_raises_error(
+    mocker: MockerFixture,
+):
+    # Define dummy block for loader to provide
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    data = np.ones(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    loader = make_test_loader(mocker, block=block)
+
+    # Define side output that dummy method in sweep stage will produce
+    SIDE_OUTPUT_LABEL = "some_side_output"
+    side_outputs = {SIDE_OUTPUT_LABEL: 5}
+
+    # Define mock method wrapper to produce the above side output in the sweep stage
+    #
+    # NOTE: Even though a sweep stage should generally have more than one method wrapper in it,
+    # this test is for checking that a wrapper in the sweep stage producing a side output
+    # causes an error to be raised. If even one method wrapper in the sweep stage produces a
+    # side output, an error shoudl be raised, so only one method wrapper in the sweep stage is
+    # needed to fulfill the purpose of the test.
+    mock_wrapper = make_test_method(mocker)
+    mocker.patch.object(
+        target=mock_wrapper, attribute="get_side_output", return_value=side_outputs
+    )
+
+    # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
+    #
+    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
+    # for the purpose of this test are only the ones in the sweep stage, which is why the
+    # pipeline and stages object both have only partial pipeline information
+    pipeline = Pipeline(loader=loader, methods=[])
+    stages = Stages(
+        before_sweep=[],
+        sweep=[mock_wrapper],
+        after_sweep=[],
+    )
+    runner = ParamSweepRunner(pipeline=pipeline, stages=stages)
+    runner.prepare()
+
+    with pytest.raises(ValueError) as e:
+        runner.execute_sweep()
+    assert (
+        "Producing a side output is not supported in parameter sweep methods"
+        in str(e)
+    )
