@@ -459,3 +459,67 @@ def test_execute_modifies_block(mocker: MockerFixture):
     expected_data[:, 2, :] *= NON_SWEEP_STAGES_MULT_FACTOR * 5
     expected_data[:, 3, :] *= NON_SWEEP_STAGES_MULT_FACTOR * 7
     np.testing.assert_array_equal(runner.block.data, expected_data)
+
+
+def test_execute_sweep_stage_method_params_updated_from_side_outputs(
+    mocker: MockerFixture,
+):
+    # Define dummy block for loader to provide
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    data = np.ones(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    loader = make_test_loader(mocker, block=block)
+
+    # Define side output that dummy method in stage will require
+    SIDE_OUTPUT_LABEL = "some_side_output"
+    side_outputs = {SIDE_OUTPUT_LABEL: 5}
+    side_output_manager = SideOutputManager()
+    side_output_manager.append(side_outputs)
+
+    # Define mock module + mock method function that will be imported by the method wrappers
+    # that represent the parameter sweep.
+    #
+    # The mock method function asserts that the param value it's given is the value of the side
+    # output that it requires.
+    class FakeModule:
+        def sweep_method(data, some_side_output) -> np.ndarray:  # type: ignore
+            assert some_side_output == side_outputs[SIDE_OUTPUT_LABEL]
+            return np.empty(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    sweep_wrappers = []
+    NO_OF_SWEEP_VALS = 5
+    for _ in range(NO_OF_SWEEP_VALS):
+        method_wrapper = make_method_wrapper(
+            method_repository=make_mock_repo(mocker),
+            module_path="",
+            method_name="sweep_method",
+            comm=MPI.COMM_WORLD,
+        )
+        sweep_wrappers.append(method_wrapper)
+
+    # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
+    #
+    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
+    # for the purpose of this test are only the ones in the sweep stage, which is why the
+    # pipeline and stages object both have only partial pipeline information
+    pipeline = Pipeline(loader=loader, methods=[])
+    stages = Stages(
+        before_sweep=[],
+        sweep=sweep_wrappers,
+        after_sweep=[],
+    )
+    runner = ParamSweepRunner(
+        pipeline=pipeline, stages=stages, side_output_manager=side_output_manager
+    )
+    runner.prepare()
+    runner.execute_sweep()

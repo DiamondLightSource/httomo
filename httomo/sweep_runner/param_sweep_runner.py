@@ -81,6 +81,7 @@ class ParamSweepRunner:
                 chunk_shape=self.block.chunk_shape,
                 block_start=0,
             )
+            self._side_output_manager.update_params(method)
             block = method.execute(block)
             writer.write_sweep_result(block)
 
