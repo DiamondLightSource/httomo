@@ -1,0 +1,6 @@
+- method: data_resampler
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    newshape: REQUIRED
+    axis: auto
+    interpolation: linear

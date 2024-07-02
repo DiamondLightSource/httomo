@@ -1,0 +1,4 @@
+- method: median_filter3d
+  module_path: tomopy.misc.corr
+  parameters:
+    size: 3

@@ -1,0 +1,6 @@
+- method: remove_outlier1d
+  module_path: tomopy.misc.corr
+  parameters:
+    dif: REQUIRED
+    size: 3
+    axis: auto

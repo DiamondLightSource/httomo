@@ -1,0 +1,5 @@
+- method: add_gaussian
+  module_path: tomopy.sim.project
+  parameters:
+    mean: 0
+    std: null

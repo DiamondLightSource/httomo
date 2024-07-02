@@ -1,0 +1,5 @@
+- method: median_filter_nonfinite
+  module_path: tomopy.misc.corr
+  parameters:
+    size: 3
+    callback: null

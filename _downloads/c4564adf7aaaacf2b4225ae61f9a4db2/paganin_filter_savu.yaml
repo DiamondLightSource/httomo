@@ -1,0 +1,11 @@
+- method: paganin_filter_savu
+  module_path: httomolibgpu.prep.phase
+  parameters:
+    ratio: 250.0
+    energy: 53.0
+    distance: 1.0
+    resolution: 1.28
+    pad_y: 100
+    pad_x: 100
+    pad_method: edge
+    increment: 0.0

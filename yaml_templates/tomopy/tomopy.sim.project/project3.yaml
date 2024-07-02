@@ -1,0 +1,11 @@
+- method: project3
+  module_path: tomopy.sim.project
+  parameters:
+    objx: REQUIRED
+    objy: REQUIRED
+    objz: REQUIRED
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    emission: true
+    pad: true
+    sinogram_order: false
+    axis: auto

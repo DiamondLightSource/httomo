@@ -1,0 +1,5 @@
+- method: shift_images
+  module_path: tomopy.prep.alignment
+  parameters:
+    sx: REQUIRED
+    sy: REQUIRED

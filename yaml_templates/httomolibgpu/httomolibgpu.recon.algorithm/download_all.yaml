@@ -1,0 +1,27 @@
+- method: LPRec
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    recon_size: null
+    recon_mask_radius: null
+- method: FBP
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    filter_freq_cutoff: 0.6
+    recon_size: null
+    recon_mask_radius: null
+- method: CGLS
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    recon_size: null
+    iterations: 20
+    nonnegativity: true
+- method: SIRT
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    recon_size: null
+    iterations: 300
+    nonnegativity: true

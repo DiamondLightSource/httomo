@@ -1,0 +1,683 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>HTTomo Loaders &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/general.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'reference/loaders';</script>
+    <link rel="shortcut icon" href="../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Supported backends" href="../backends/list.html" />
+    <link rel="prev" title="What is YAML?" href="yaml.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo_light.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/logo_dark.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../introduction/about.html">HTTomo concept</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../introduction/indepth/detailed_about.html">Detailed concepts</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/sections.html">Sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/reslice.html">Re-slicing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/wrappers.html">Method Wrappers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/memory_estimators.html">Memory Estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/chunks.html">Chunks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/blocks.html">Blocks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../howto/installation.html">Installation Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/run_httomo.html">How to run HTTomo</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../howto/how_to_run/at_diamond.html">Inside Diamond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/how_to_run/outside_diamond.html">Outside Diamond</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/process_lists_guide.html">Process Lists Guide</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../howto/process_lists/httomo_parameters.html">HTTomo-specific parameters</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../howto/process_lists/side_outputs/side_out.html">Side outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../howto/process_lists/save_results/save_results.html">Saving intermediate files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/process_lists/process_list_configure.html">Configure efficient pipelines</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/httomo_features.html">HTTomo Features</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/parameter_tuning.html">Parameter Tuning</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../howto/interpret_logger.html">Interpret Log File</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="yaml.html">What is YAML?</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Templates for backends</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../backends/list.html">Supported backends</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../backends/templates.html">Methods YAML Templates</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/tomopy.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/tomopy.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/tomopy.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/tomopy.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/tomopy.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/tomopy.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/tomopy.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/tomopy.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/tomopy.sim.project.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">tomopy.sim.project</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolibgpu.misc.corr.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.corr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolibgpu.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolibgpu.misc.rescale.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.misc.rescale</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolibgpu.prep.alignment.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.alignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolibgpu.prep.normalize.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.normalize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolibgpu.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.phase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolibgpu.prep.stripe.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.prep.stripe</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolibgpu.recon.algorithm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolibgpu.recon.rotation.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolibgpu.recon.rotation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolib.misc.images.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.images</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolib.misc.morph.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.morph</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolib.misc.segm.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.misc.segm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/httomolib.prep.phase.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">httomolib.prep.phase</span></code></a></li>
+</ul>
+</li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Ready-to-use pipelines</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../pipelines/yaml.html">Full YAML pipelines</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utilities/yaml_generator.html">Templates generator</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../developers/how_to_contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/memory_calculation.html">GPU memory calculations</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/reference/loaders.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>HTTomo Loaders</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-loaders">Available Loaders</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage-of-the-standard-loader">Basic Usage of the Standard Loader</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-path"><code class="code docutils literal notranslate"><span class="pre">data_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#image-key-path"><code class="code docutils literal notranslate"><span class="pre">image_key_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rotation-angles"><code class="code docutils literal notranslate"><span class="pre">rotation_angles</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-with-separate-darks-and-or-flats">Data with Separate Darks and/or Flats</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#omitting-the-image-key">Omitting the image key</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#loading-the-separate-darks-and-flats">Loading the separate darks and flats</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#providing-overriding-angles-data">Providing/Overriding Angles Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#previewing">Previewing</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="httomo-loaders">
+<span id="reference-loaders"></span><h1>HTTomo Loaders<a class="headerlink" href="#httomo-loaders" title="Permalink to this headline">#</a></h1>
+<section id="available-loaders">
+<h2>Available Loaders<a class="headerlink" href="#available-loaders" title="Permalink to this headline">#</a></h2>
+<p>HTTomo currently has one loader, <code class="code docutils literal notranslate"><span class="pre">standard_tomo_loader</span></code>, which is geared
+towards loading “standard” tomography data collected at DLS beamlines.</p>
+</section>
+<section id="basic-usage-of-the-standard-loader">
+<h2>Basic Usage of the Standard Loader<a class="headerlink" href="#basic-usage-of-the-standard-loader" title="Permalink to this headline">#</a></h2>
+<p>This loader has several parameters which are fairly self-explanatory. Other
+parameters either require some more detail to use, or have extra capabilities which
+are not obvious if one has seen only one or two simple loader configurations.</p>
+<p>The following YAML configuration of the loader shows all the parameters needed, and
+is the standard case (ie, there’s no configuration in it for special cases), so it
+serves as a good starting point:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/entry1/tomo_entry/data/data</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/entry1/tomo_entry/instrument/detector/image_key</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/entry1/tomo_entry/data/rotation_angle</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The input data being loaded is assumed to be in hdf5/NeXuS file format,
+in accordance with the data typically collected at a DLS beamline.</p>
+</div>
+<section id="data-path">
+<h3><code class="code docutils literal notranslate"><span class="pre">data_path</span></code><a class="headerlink" href="#data-path" title="Permalink to this headline">#</a></h3>
+<p>The <code class="code docutils literal notranslate"><span class="pre">data_path</span></code> parameter is the path to the dataset in the input hdf5/NeXuS
+file containing the image data (usually, projections + darks + flats are in the
+same dataset).</p>
+</section>
+<section id="image-key-path">
+<h3><code class="code docutils literal notranslate"><span class="pre">image_key_path</span></code><a class="headerlink" href="#image-key-path" title="Permalink to this headline">#</a></h3>
+<p>The <code class="code docutils literal notranslate"><span class="pre">image_key_path</span></code> parameter is the path to the dataset in the input
+hdf5/NeXuS file containing the so called “image key”.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The “image key” is an array whose length is the same as the number of
+images in the collected data. Each element has a value of 0, 1, or 2, to
+indicate a projection (0), flat field image (1), or dark-field image (2).</p>
+</div>
+</section>
+<section id="rotation-angles">
+<h3><code class="code docutils literal notranslate"><span class="pre">rotation_angles</span></code><a class="headerlink" href="#rotation-angles" title="Permalink to this headline">#</a></h3>
+<p>Typically, the rotation angle values are stored in a dataset within the input
+hdf5/NeXuS file. This dataset is usually what is provided to serve as the
+rotation angle values during processing.</p>
+<p>In such cases, the <code class="code docutils literal notranslate"><span class="pre">rotation_angles</span></code> parameter has two lines of
+configuration. Specifying <code class="code docutils literal notranslate"><span class="pre">data_path</span></code> is meaning that the rotation angles are
+indeed stored in a dataset within the input hdf5/NeXuS file, and the given path is
+the path to that dataset within the input hdf5/NeXuS file.</p>
+<p>The reason the <code class="code docutils literal notranslate"><span class="pre">rotation_angles</span></code> parameter isn’t simply one value (a path)
+like the previously mentioned parameters is because there are situations when the
+angles dataset in the input hdf5/NeXus file doesn’t exist, or cannot be used.</p>
+<p>To configure the loader to handle such cases, please refer to
+<a class="reference internal" href="#user-defined-angles"><span class="std std-ref">Providing/Overriding Angles Data</span></a>.</p>
+</section>
+</section>
+<section id="data-with-separate-darks-and-or-flats">
+<h2>Data with Separate Darks and/or Flats<a class="headerlink" href="#data-with-separate-darks-and-or-flats" title="Permalink to this headline">#</a></h2>
+<p>It can sometimes be the case that darks and flats are written to separate
+hdf5/NeXuS files, rather than written to the same hdf5/NeXus file as the
+projections.</p>
+<section id="omitting-the-image-key">
+<h3>Omitting the image key<a class="headerlink" href="#omitting-the-image-key" title="Permalink to this headline">#</a></h3>
+<p>In such cases, there is no image key dataset in the hdf5/NeXus file containing the
+projections (because there are only projections in the dataset, rather than
+projections + darks + flats, so there’s no need to have an image key). Due to this,
+one difference to the previously shown configuration to handle this case is that
+the <code class="code docutils literal notranslate"><span class="pre">image_key_path</span></code> parameter is omitted.</p>
+</section>
+<section id="loading-the-separate-darks-and-flats">
+<h3>Loading the separate darks and flats<a class="headerlink" href="#loading-the-separate-darks-and-flats" title="Permalink to this headline">#</a></h3>
+<p>Additionally, there is a need to specify:</p>
+<ul class="simple">
+<li><p>the path to the hdf5/NeXuS file containing the darks/flats</p></li>
+<li><p>the dataset within the given hdf5/NeXus file that contains the darks/flats data</p></li>
+</ul>
+<p>In order to specify this information for both darks and flats, there is the
+<code class="code docutils literal notranslate"><span class="pre">darks</span></code> and <code class="code docutils literal notranslate"><span class="pre">flats</span></code> parameters, see the following as an example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">    </span><span class="nt">in_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/1-TempPlugin-tomo/data</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">user_defined</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">start_angle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">        </span><span class="nt">stop_angle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">180</span>
+<span class="w">        </span><span class="nt">angles_total</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">724</span>
+<span class="w">    </span><span class="nt">dimension</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="hll"><span class="w">    </span><span class="nt">darks</span><span class="p">:</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tests/test_data/i12/separate_flats_darks/dark_field.h5</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/1-NoProcessPlugin-tomo/data</span>
+</span><span class="hll"><span class="w">    </span><span class="nt">flats</span><span class="p">:</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tests/test_data/i12/separate_flats_darks/flat_field.h5</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/1-NoProcessPlugin-tomo/data</span>
+</span></pre></div>
+</div>
+<p>Both parameters have two fields that needs to be specified:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">file</span></code>, the path to the hdf5/NeXus file containing the darks/flats</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">data_path</span></code>, the dataset within the hdf5/NeXus file that contains the
+darks/flats</p></li>
+</ul>
+</section>
+</section>
+<section id="providing-overriding-angles-data">
+<span id="user-defined-angles"></span><h2>Providing/Overriding Angles Data<a class="headerlink" href="#providing-overriding-angles-data" title="Permalink to this headline">#</a></h2>
+<p>There are several situations in which overriding the angles dataset in the input
+hdf5/NeXuS file, or generating an array due to the absence of an angles dataset, is
+necessary. The loader offers the ability to specify an angles array via:</p>
+<ul class="simple">
+<li><p>start angle</p></li>
+<li><p>stop angle</p></li>
+<li><p>total number of angles</p></li>
+</ul>
+<p>values by configuring the <code class="code docutils literal notranslate"><span class="pre">rotation_angles</span></code> parameter slightly differently
+than shown earlier.</p>
+<p>The following is reusing the same example from the separate darks/flats example,
+but is now drawing attention to the <code class="code docutils literal notranslate"><span class="pre">rotation_angles</span></code> parameter:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomo</span>
+<span class="w">    </span><span class="nt">in_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/1-TempPlugin-tomo/data</span>
+<span class="hll"><span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">user_defined</span><span class="p">:</span>
+</span><span class="hll"><span class="w">        </span><span class="nt">start_angle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+</span><span class="hll"><span class="w">        </span><span class="nt">stop_angle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">180</span>
+</span><span class="hll"><span class="w">        </span><span class="nt">angles_total</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">724</span>
+</span><span class="w">    </span><span class="nt">dimension</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">    </span><span class="nt">darks</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tests/test_data/i12/separate_flats_darks/dark_field.h5</span>
+<span class="w">      </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/1-NoProcessPlugin-tomo/data</span>
+<span class="w">    </span><span class="nt">flats</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tests/test_data/i12/separate_flats_darks/flat_field.h5</span>
+<span class="w">      </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/1-NoProcessPlugin-tomo/data</span>
+</pre></div>
+</div>
+<p>It can be seen that <code class="code docutils literal notranslate"><span class="pre">user_defined</span></code> has been specified instead of
+<code class="code docutils literal notranslate"><span class="pre">data_path</span></code>. Furthermore, there are then three fields provided:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">start_angle</span></code>, which is the first angle (in degrees)</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">stop_angle</span></code>, which is the last angle (in degrees)</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">angles_total</span></code>, which is the number of angles on total to have in that
+range, equally spaced</p></li>
+</ul>
+<p>to generate the desired angles array that HTTomo will use during pipeline
+execution.</p>
+</section>
+<section id="previewing">
+<h2>Previewing<a class="headerlink" href="#previewing" title="Permalink to this headline">#</a></h2>
+<p>The data being loaded with the loader can be cropped/previewed prior to being
+passed along to the first method. The loader has the <code class="code docutils literal notranslate"><span class="pre">preview</span></code> parameter
+for configuring the cropping/previewing. Please see <a class="reference internal" href="../howto/httomo_features/previewing.html#previewing"><span class="std std-ref">Previewing</span></a> for more
+details on previewing.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="yaml.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">What is YAML?</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../backends/list.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Supported backends</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-loaders">Available Loaders</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage-of-the-standard-loader">Basic Usage of the Standard Loader</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-path"><code class="code docutils literal notranslate"><span class="pre">data_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#image-key-path"><code class="code docutils literal notranslate"><span class="pre">image_key_path</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rotation-angles"><code class="code docutils literal notranslate"><span class="pre">rotation_angles</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-with-separate-darks-and-or-flats">Data with Separate Darks and/or Flats</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#omitting-the-image-key">Omitting the image key</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#loading-the-separate-darks-and-flats">Loading the separate darks and flats</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#providing-overriding-angles-data">Providing/Overriding Angles Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#previewing">Previewing</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2024, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Jul 02, 2024.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

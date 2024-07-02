@@ -1,0 +1,5 @@
+- method: add_zingers
+  module_path: tomopy.sim.project
+  parameters:
+    f: 0.01
+    sat: 65536

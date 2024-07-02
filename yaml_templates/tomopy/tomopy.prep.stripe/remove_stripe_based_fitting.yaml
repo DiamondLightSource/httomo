@@ -1,0 +1,7 @@
+- method: remove_stripe_based_fitting
+  module_path: tomopy.prep.stripe
+  parameters:
+    order: 3
+    sigma: !!python/tuple
+    - 5
+    - 20
