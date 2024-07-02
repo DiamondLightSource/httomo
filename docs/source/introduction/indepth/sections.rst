@@ -3,12 +3,13 @@
 Sections
 --------
 
-Sections is the essential element of HTTomo's framework which is related to how the I/O operations and processing of data is organised. 
+Sections is the fundamental concept of the HTTomo's framework which is related to how the I/O operations and processing of data is organised.
 
-.. note:: The main purpose of sections is to organise the data input/output workflow, as well as, chaining together the processing elements so that the constructed pipeline is computationally efficient. 
+.. note:: The main purpose of a section is to organise the data input/output workflow, as well as, chain together the methods so that the constructed pipeline is computationally efficient. 
 
+To better understand the purpose of the section it is also useful to read information about :ref:`chunks_data`, :ref:`blocks_data` and :ref:`info_memory_estimators`.
 
-In order to understand how sections are formed, we give here the list of rules with examples when sections are created.
+Bellow we present different situations that can lead to the sections being organised in a specific manner.
 
 .. _fig_sec1:
 .. figure::  ../../_static/sections/sections1.png

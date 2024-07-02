@@ -4,12 +4,12 @@ Installation Guide
 Install HTTomo as a pre-built conda Python package
 ==================================================
 
-This installation is preferable as it should take care all of dependencies for you by getting them from the dedicated anaconda channel. 
+This installation is preferable as it should take care all of dependencies including :ref:`backends_list` by getting them from the dedicated anaconda channel. 
 
 .. code-block:: console
 
    $ conda env create --name httomo # create a fresh conda environment
-   $ conda install -c conda-forge -c https://conda.anaconda.org/httomo/ httomo
+   $ conda install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge -c astra-toolbox -c rapidsai
 
 Install as a Python module
 ===========================

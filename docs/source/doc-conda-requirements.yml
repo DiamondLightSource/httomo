@@ -5,7 +5,7 @@ channels:
   - httomo
   - rapidsai
 dependencies:
-  - python<=3.10
+  - python>=3.10
   - numpy
   - tomopy==1.15
   - httomolibgpu==2.0
@@ -20,3 +20,6 @@ dependencies:
   - pyyaml
   - ipython
   - ghp-import
+  - loguru
+  - graypy
+  - tqdm

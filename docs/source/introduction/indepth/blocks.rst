@@ -6,8 +6,16 @@ Blocks
 Definition
 ~~~~~~~~~~
 
-When a chunk is split into smaller pieces, these smaller pieces are called
+When a chunk (see :ref:`chunks_data`) is split into smaller pieces, these smaller pieces are called
 *blocks*.
+
+.. _fig_blocks1:
+.. figure::  ../../_static/blocks_chunks/chunks_blocks.png
+    :scale: 45 %
+    :alt: Chunks and blocks
+
+    An example of the data being divided into 4 parallel processes which are associated with 4 :ref:`chunks_data` of data. In each chunk there could be one or a number of blocks, depending on the information provided by :ref:`info_memory_estimators`.
+
 
 Motivation
 ~~~~~~~~~~
