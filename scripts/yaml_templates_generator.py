@@ -115,7 +115,9 @@ def _set_param_value(name: str, value: inspect.Parameter, params_dict: Dict[str,
         else:
             params_dict[name] = "REQUIRED"
     elif name == "kwargs":
-        params_dict["#additional parameters"] = "AVAILABLE"
+        # params_dict["#additional parameters"] = "AVAILABLE"
+        # parsing hashtag to yaml comes with quotes, for now we simply ignore the field
+        pass
     elif name == "axis":
         params_dict[name] = "auto"
     elif name == "asynchronous":
