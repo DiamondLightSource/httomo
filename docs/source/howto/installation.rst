@@ -15,12 +15,13 @@ Install as a Python module
 ===========================
 
 If installation above for some reason is not working for you, then the best way to install HTTomo is to create conda environment first and then 
-`pip install` HTTomo into it. You will need to `git clone` HTTomo repository to your disk first. 
+`pip install` HTTomo into it. You will need to `git clone` HTTomo repository to your disk first.  Use `environment.yml` file to install 
+the GPU-supported HTTomo. For CPU-only version, please use `environment-cpu.yml` instead.
 
 .. code-block:: console
     
    $ git clone git@github.com:DiamondLightSource/HTTomo.git # clone the repo
-   $ conda env create --name httomo --file conda/environment.yml # install dependencies
+   $ conda env create --name httomo --file conda/environment.yml # install dependencies for GPU version   
    $ conda activate httomo # activate environment
    $ pip install . # Install the module
 
