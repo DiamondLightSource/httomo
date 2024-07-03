@@ -81,7 +81,8 @@ class AuxiliaryData:
         if gpu:
             array = xp.asarray(array)
         else:
-            array = xp.asnumpy(array)
+            if xp.__name__ == 'cupy':
+                array = xp.asnumpy(array)
         
         setattr(self, f"_{field}", array)
         
