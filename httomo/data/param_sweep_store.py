@@ -113,6 +113,7 @@ class ParamSweepWriter:
         return self._aux_data
 
     def write_sweep_result(self, block: ParamSweepBlock):
+        block.to_cpu()
         if self._data is None:
             self._data = np.empty(shape=self.total_shape, dtype=block.data.dtype)
             self._aux_data = block.aux_data

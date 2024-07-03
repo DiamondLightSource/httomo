@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+from pytest_mock import MockerFixture
 
 from httomo.data.param_sweep_store import ParamSweepWriter
 from httomo.runner.auxiliary_data import AuxiliaryData
@@ -41,6 +42,26 @@ def test_param_sweep_write_make_reader_errors_if_data_none():
         writer.make_reader()
 
     assert "no data has been written yet" in str(e)
+
+
+def test_param_sweep_writer_write_sweep_result_transfers_gpu_arr_to_cpu(
+    mocker: MockerFixture,
+):
+    SWEEP_RES_SHAPE = (180, 3, 160)
+    writer = make_param_sweep_writer()
+    block = ParamSweepBlock(
+        data=np.ones(SWEEP_RES_SHAPE, dtype=np.float32),
+        aux_data=AuxiliaryData(angles=np.ones(SWEEP_RES_SHAPE[0], dtype=np.float32)),
+    )
+
+    # Patch `gpu_enabled` to simulate a GPU run
+    mocker.patch("httomo.base_block.gpu_enabled", True)
+    # Spy on the `block.to_gpu()` method, in order to detect if the block's data was
+    # transferred to CPU when written to the param sweep store
+    to_cpu_spy = mocker.patch.object(block, "to_cpu")
+
+    writer.write_sweep_result(block)
+    to_cpu_spy.assert_called_once()
 
 
 def test_param_sweep_writer_reader_write_res_and_read():
