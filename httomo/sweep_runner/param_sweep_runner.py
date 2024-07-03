@@ -2,9 +2,9 @@ from typing import List, Optional
 
 from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
 from httomo.runner.block_split import BlockSplitter
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
+from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import Stages
 
@@ -20,10 +20,10 @@ class ParamSweepRunner:
         self._pipeline = pipeline
         self._stages = stages
         self._side_output_manager = side_output_manager
-        self._block: Optional[DataSetBlock] = None
+        self._block: Optional[ParamSweepBlock] = None
 
     @property
-    def block(self) -> DataSetBlock:
+    def block(self) -> ParamSweepBlock:
         if self._block is None:
             raise ValueError("Block from input data has not yet been loaded")
         return self._block
@@ -45,7 +45,12 @@ class ParamSweepRunner:
             raise ValueError(err_str)
 
         splitter = BlockSplitter(source, source.global_shape[source.slicing_dim])
-        self._block = splitter[0]
+        dataset_block = splitter[0]
+        sweep_block = ParamSweepBlock(
+            data=dataset_block.data,
+            aux_data=dataset_block.aux_data,
+        )
+        self._block = sweep_block
 
     def _execute_non_sweep_stage(self, wrappers: List[MethodWrapper]):
         assert self._block is not None
@@ -72,14 +77,9 @@ class ParamSweepRunner:
         for method in self._stages.sweep:
             # Blocks are modified in-place by method wrappers, so a new block must be created
             # that contains a copy of the input data to the sweep stage
-            block = DataSetBlock(
+            block = ParamSweepBlock(
                 data=self.block.data.copy(),
                 aux_data=self.block.aux_data,
-                slicing_dim=self.block.slicing_dim,
-                global_shape=self.block.global_shape,
-                chunk_start=0,
-                chunk_shape=self.block.chunk_shape,
-                block_start=0,
             )
             self._side_output_manager.update_params(method)
             block = method.execute(block)

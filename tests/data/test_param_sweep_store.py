@@ -3,7 +3,7 @@ import numpy as np
 
 from httomo.data.param_sweep_store import ParamSweepWriter
 from httomo.runner.auxiliary_data import AuxiliaryData
-from httomo.runner.dataset import DataSetBlock
+from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 
 
 def make_param_sweep_writer() -> ParamSweepWriter:
@@ -67,37 +67,15 @@ def test_param_sweep_writer_reader_write_res_and_read():
         TOTAL_SHAPE
     )
 
-    # Param sweep writer doesn't care about data index/shape values due to not splitting
-    # data between multiple processes, so the following params to the constructor of
-    # `DataSetBlock` don't matter:
-    # - `global_shape`
-    # - `chunk_start`
-    # - `chunk_shape`
-    # - `block_start`
-    #
-    # NOTE: The `global_shape` and `chunk_shape` have been set to something non-trival purely
-    # to prevent the constructor for `DataSetBlock` from raising an error due to inconsistent
-    # indices.
-    DUMMY_GLOBAL_SHAPE = DUMMY_CHUNK_SHAPE = TOTAL_SHAPE
-    DUMMY_CHUNK_START = DUMMY_BLOCK_START = 0
+    # Define two blocks to write to the param sweep store
     aux_data = AuxiliaryData(np.ones(SWEEP_RES_SHAPE[0], dtype=np.float32))
-    sweep_result_1 = DataSetBlock(
+    sweep_result_1 = ParamSweepBlock(
         data=data[:, : SWEEP_RES_SHAPE[CONCAT_DIM], :],
         aux_data=aux_data,
-        slicing_dim=CONCAT_DIM,
-        global_shape=DUMMY_GLOBAL_SHAPE,
-        chunk_start=DUMMY_CHUNK_START,
-        chunk_shape=DUMMY_CHUNK_SHAPE,
-        block_start=DUMMY_BLOCK_START,
     )
-    sweep_result_2 = DataSetBlock(
+    sweep_result_2 = ParamSweepBlock(
         data=data[:, SWEEP_RES_SHAPE[CONCAT_DIM] :, :],
         aux_data=aux_data,
-        slicing_dim=CONCAT_DIM,
-        global_shape=DUMMY_GLOBAL_SHAPE,
-        chunk_start=DUMMY_CHUNK_START,
-        chunk_shape=DUMMY_CHUNK_SHAPE,
-        block_start=DUMMY_BLOCK_START,
     )
 
     # Write two different blocks to the param sweep store, to simulate writing the results of a

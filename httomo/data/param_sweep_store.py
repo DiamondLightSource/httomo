@@ -4,7 +4,7 @@ from typing import Literal, Optional, Tuple
 import numpy as np
 
 from httomo.runner.auxiliary_data import AuxiliaryData
-from httomo.runner.dataset import DataSetBlock
+from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 from httomo.sweep_runner.param_sweep_store_interfaces import ParamSweepSource
 
 
@@ -44,13 +44,13 @@ class ParamSweepReader(ParamSweepSource):
     def aux_data(self) -> AuxiliaryData:
         return self._aux_data
 
-    def read_sweep_results(self) -> DataSetBlock:
+    def read_sweep_results(self) -> ParamSweepBlock:
         slices = [slice(None, None, 1)] * 3
         slices_per_sweep = self.single_shape[self.extract_dim]
         first_middle_slice_index = slices_per_sweep // 2
         detector_y_slice = slice(first_middle_slice_index, None, slices_per_sweep)
         slices[self.extract_dim] = detector_y_slice
-        return DataSetBlock(
+        return ParamSweepBlock(
             data=self._data[slices[0], slices[1], slices[2]],
             aux_data=self.aux_data,
         )
@@ -112,7 +112,7 @@ class ParamSweepWriter:
     def aux_data(self) -> AuxiliaryData:
         return self._aux_data
 
-    def write_sweep_result(self, block: DataSetBlock):
+    def write_sweep_result(self, block: ParamSweepBlock):
         if self._data is None:
             self._data = np.empty(shape=self.total_shape, dtype=block.data.dtype)
             self._aux_data = block.aux_data
