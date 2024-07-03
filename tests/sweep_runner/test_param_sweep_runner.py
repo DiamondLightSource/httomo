@@ -100,11 +100,11 @@ def test_execute_non_sweep_stage_modifies_block(
     loader = make_test_loader(mocker, block=block)
 
     # Define two dummy methods to be in the "before sweep" stage in the runner
-    def dummy_method_1(block: DataSetBlock):  # type: ignore
+    def dummy_method_1(block):
         block.data = block.data * 2
         return block
 
-    def dummy_method_2(block: DataSetBlock):  # type: ignore
+    def dummy_method_2(block):
         block.data = block.data * 3
         return block
 
@@ -308,19 +308,19 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
 
     # Define four dummy functions that are representing a single method configured with
     # different parameter values
-    def method_sweep_val_1(block: DataSetBlock):
+    def method_sweep_val_1(block):
         block.data = block.data * 2
         return block
 
-    def method_sweep_val_2(block: DataSetBlock):
+    def method_sweep_val_2(block):
         block.data = block.data * 3
         return block
 
-    def method_sweep_val_3(block: DataSetBlock):
+    def method_sweep_val_3(block):
         block.data = block.data * 5
         return block
 
-    def method_sweep_val_4(block: DataSetBlock):
+    def method_sweep_val_4(block):
         block.data = block.data * 7
         return block
 
@@ -384,29 +384,29 @@ def test_execute_modifies_block(mocker: MockerFixture):
     loader = make_test_loader(mocker, block=block)
 
     # Define two dummy methods to be in the before and sweep stages in the runner
-    def dummy_method_1(block: DataSetBlock):  # type: ignore
+    def dummy_method_1(block):
         block.data = block.data * 2
         return block
 
-    def dummy_method_2(block: DataSetBlock):  # type: ignore
+    def dummy_method_2(block):
         block.data = block.data * 3
         return block
 
     # Define four dummy functions that are representing a single method configured with
     # different parameter values
-    def method_sweep_val_1(block: DataSetBlock):
+    def method_sweep_val_1(block):
         block.data = block.data * 2
         return block
 
-    def method_sweep_val_2(block: DataSetBlock):
+    def method_sweep_val_2(block):
         block.data = block.data * 3
         return block
 
-    def method_sweep_val_3(block: DataSetBlock):
+    def method_sweep_val_3(block):
         block.data = block.data * 5
         return block
 
-    def method_sweep_val_4(block: DataSetBlock):
+    def method_sweep_val_4(block):
         block.data = block.data * 7
         return block
 
