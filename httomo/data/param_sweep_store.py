@@ -59,22 +59,14 @@ class ParamSweepReader(ParamSweepSource):
 class ParamSweepWriter:
     """Write parameter sweep results, concatenating them along the `detector_y` dim"""
 
-    def __init__(
-        self,
-        no_of_sweeps: int,
-        single_shape: Tuple[int, int, int],
-    ) -> None:
+    def __init__(self, no_of_sweeps: int) -> None:
         self._concat_dim: Literal[1] = 1
         self._no_of_sweeps = no_of_sweeps
-        self._single_shape = single_shape
-        self._total_shape = (
-            single_shape[0],
-            single_shape[1] * no_of_sweeps,
-            single_shape[2],
-        )
-        self._data: Optional[np.ndarray] = None
         self._no_of_sweeps_written: int = 0
-        self._slices_per_sweep: int = single_shape[self.concat_dim]
+        self._single_shape: Optional[Tuple[int, int, int]] = None
+        self._total_shape: Optional[Tuple[int, int, int]] = None
+        self._data: Optional[np.ndarray] = None
+        self._slices_per_sweep: Optional[int] = None
 
     @property
     def no_of_sweeps(self) -> int:
@@ -86,10 +78,21 @@ class ParamSweepWriter:
 
     @property
     def single_shape(self) -> Tuple[int, int, int]:
+        if self._single_shape is None:
+            err_str = (
+                "Shape of single sweep result isn't known until the first write has occurred"
+            )
+            raise ValueError(err_str)
         return self._single_shape
 
     @property
     def total_shape(self) -> Tuple[int, int, int]:
+        if self._total_shape is None:
+            err_str = (
+                "Shape of full array holding sweep results isn't known until the first "
+                "write has occurred"
+            )
+            raise ValueError(err_str)
         return self._total_shape
 
     def make_reader(self) -> ParamSweepReader:
@@ -115,6 +118,13 @@ class ParamSweepWriter:
     def write_sweep_result(self, block: ParamSweepBlock):
         block.to_cpu()
         if self._data is None:
+            self._single_shape = block.shape
+            self._total_shape = (
+                self.single_shape[0],
+                self.single_shape[1] * self.no_of_sweeps,
+                self.single_shape[2],
+            )
+            self._slices_per_sweep = self.single_shape[self.concat_dim]
             self._data = np.empty(shape=self.total_shape, dtype=block.data.dtype)
             self._aux_data = block.aux_data
 

@@ -69,10 +69,7 @@ class ParamSweepRunner:
 
     def execute_sweep(self):
         """Execute all param variations of the same method in the sweep"""
-        writer = ParamSweepWriter(
-            no_of_sweeps=len(self._stages.sweep),
-            single_shape=self.block.global_shape,
-        )
+        writer = ParamSweepWriter(len(self._stages.sweep))
 
         for method in self._stages.sweep:
             # Blocks are modified in-place by method wrappers, so a new block must be created

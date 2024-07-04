@@ -9,11 +9,7 @@ from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 
 def make_param_sweep_writer() -> ParamSweepWriter:
     NO_OF_SWEEPS = 5
-    SWEEP_RES_SHAPE = (180, 3, 160)
-    return ParamSweepWriter(
-        no_of_sweeps=NO_OF_SWEEPS,
-        single_shape=SWEEP_RES_SHAPE,
-    )
+    return ParamSweepWriter(NO_OF_SWEEPS)
 
 
 def test_param_sweep_writer_get_no_of_sweeps():
@@ -26,14 +22,23 @@ def test_param_sweep_writer_get_concat_dim():
     assert writer.concat_dim == 1
 
 
-def test_param_sweep_writer_get_single_shape():
+def test_param_sweep_writer_get_single_shape_before_write_raises_error():
     writer = make_param_sweep_writer()
-    assert writer.single_shape == (180, 3, 160)
+    with pytest.raises(ValueError) as e:
+        writer.single_shape
+    assert (
+        "Shape of single sweep result isn't known until the first write has occurred"
+    ) in str(e)
 
 
-def test_param_sweep_writer_get_total_shape():
+def test_param_sweep_writer_get_total_shape_before_write_raises_error():
     writer = make_param_sweep_writer()
-    assert writer.total_shape == (180, 3 * 5, 160)
+    with pytest.raises(ValueError) as e:
+        writer.total_shape
+    assert (
+        "Shape of full array holding sweep results isn't known until the first write "
+        "has occurred"
+    ) in str(e)
 
 
 def test_param_sweep_write_make_reader_errors_if_data_none():
@@ -73,10 +78,7 @@ def test_param_sweep_writer_reader_write_res_and_read():
         SWEEP_RES_SHAPE[1] * NO_OF_SWEEPS,
         SWEEP_RES_SHAPE[2],
     )
-    writer = ParamSweepWriter(
-        no_of_sweeps=NO_OF_SWEEPS,
-        single_shape=SWEEP_RES_SHAPE,
-    )
+    writer = ParamSweepWriter(NO_OF_SWEEPS)
 
     # Define an array that will contain data representing the fake result of two parameter
     # sweep executions.
