@@ -22,7 +22,7 @@ from tomophantom.flatsgen import synth_flats
 print("Building 3D phantom using TomoPhantom software")
 tic = timeit.default_timer()
 model = 13  # select a model number from the library
-N_size = 128  # Define phantom dimensions using a scalar value (cubic phantom)
+N_size = 256  # Define phantom dimensions using a scalar value (cubic phantom)
 path = os.path.dirname(tomophantom.__file__)
 path_library3D = os.path.join(path, "phantomlib", "Phantom3DLibrary.dat")
 # This will generate a N_size x N_size x N_size phantom (3D)
@@ -119,25 +119,58 @@ darks -= np.min(darks)
 #plt.show()
 # %%
 data_full = np.zeros((angles_num + 2*flatsnum, Vert_det, Horiz_det), dtype="uint16")
-data_full[0:flatsnum, :, :] = flats
-data_full[flatsnum:2*flatsnum, :, :] = darks
-data_full[2*flatsnum::, :, :] = projData3D_raw
+data_full[:angles_num, :, :] = projData3D_raw
+data_full[angles_num:angles_num+flatsnum, :, :] = flats
+data_full[angles_num+flatsnum::, :, :] = darks
 # %%
-# create imagekeys
-image_keys = np.zeros(angles_num + 2*flatsnum, dtype="uint16")
-image_keys[0:flatsnum] = 1
-image_keys[flatsnum:2*flatsnum] = 2
-image_keys[2*flatsnum::] = 0
+# crop the data vertically
+start_ind_c = 85
+end_ind_c = 170
+darks = darks[:,start_ind_c:end_ind_c]
+flats = flats[:,start_ind_c:end_ind_c]
+data_full = data_full[:,start_ind_c:end_ind_c,:]
+projData3D_analyt = projData3D_analyt[:,start_ind_c:end_ind_c,:]
+phantom_tm = phantom_tm[start_ind_c:end_ind_c,:,:]
 # %%
 # extend angles (degrees)
 angles_full = np.zeros(angles_num + 2*flatsnum, dtype="float32")
-angles_full[0:2*flatsnum] = 0
-angles_full[2*flatsnum::] = angles
+angles_full[:angles_num] = angles
+angles_full[angles_num::] = 179.9
 #%%
-# saving the data
-h5f = h5py.File('/scratch/daniil/data/synthetic_data/synth_data_1.nxs', 'w')
-h5f.create_dataset('/entry1/tomo_entry/data/data', data=data_full)
-h5f.create_dataset('/entry1/tomo_entry/data/rotation_angle', data=angles_full)
-h5f.create_dataset('/entry1/tomo_entry/data/image_key', data=image_keys)
+# https://tomotools.gitlab-pages.esrf.fr/nxtomo/index.html
+# https://tomotools.gitlab-pages.esrf.fr/nxtomo/tutorials/create_from_scratch.html
+import nxtomo
+from nxtomo import NXtomo
+from nxtomo.nxobject.nxdetector import ImageKey
+
+my_nxtomo = NXtomo()
+
+# then register the data to the detector
+my_nxtomo.instrument.detector.data = data_full
+
+
+image_key_control = np.concatenate([
+    [ImageKey.PROJECTION] * angles_num,
+    [ImageKey.FLAT_FIELD] * flatsnum,
+    [ImageKey.DARK_FIELD] * flatsnum,    
+])
+print("flats indexes are", np.where(image_key_control == ImageKey.FLAT_FIELD))
+# then register the image keys to the detector
+my_nxtomo.instrument.detector.image_key_control = image_key_control
+
+
+my_nxtomo.sample.rotation_angle = -angles_full
+
+my_nxtomo.instrument.detector.field_of_view = "Full"
+#%%
+os.makedirs("output_nexus", exist_ok=True)
+nx_tomo_file_path = os.path.join("output_nexus", "nxtomo.nxs")
+my_nxtomo.save(file_path=nx_tomo_file_path, data_path="entry1/tomo_entry", overwrite=True)
+del my_nxtomo
+#%%
+# adding more data to the existing file
+h5f = h5py.File('/home/algol/output_nexus/nxtomo.nxs', 'r+')
+h5f.create_dataset('/entry1/tomo_entry/data/ground_truth_projections', data=projData3D_analyt)
+h5f.create_dataset('/entry1/tomo_entry/data/phantom', data=phantom_tm)
 h5f.close()
 # %%
