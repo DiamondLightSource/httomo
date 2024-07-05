@@ -10,17 +10,56 @@ from httomo.runner.dataset import DataSetBlock
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.sweep_runner.side_output_manager import SideOutputManager
-from httomo.sweep_runner.stages import Stages
+from httomo.sweep_runner.stages import NonSweepStage, Stages, SweepStage
 from tests.testing_utils import make_mock_repo, make_test_loader, make_test_method
+
+
+def test_raises_error_if_no_sweep_detected(mocker: MockerFixture):
+    loader = make_test_loader(mocker)
+    method = make_test_method(mocker)
+    pipeline = Pipeline(loader=loader, methods=[method])
+
+    with pytest.raises(ValueError) as e:
+        _ = ParamSweepRunner(pipeline)
+
+    assert "No parameter sweep detected in pipeline" in str(e)
+
+
+def test_raises_error_if_multiple_sweeps_detected(mocker: MockerFixture):
+    loader = make_test_loader(mocker)
+    m1 = make_test_method(mocker, param_1=(0, 1, 2, 3))
+    m2 = make_test_method(mocker, param_2=(4, 5, 6, 7))
+    pipeline = Pipeline(loader=loader, methods=[m1, m2])
+
+    with pytest.raises(ValueError) as e:
+        _ = ParamSweepRunner(pipeline)
+
+    assert "Parameter sweep over more than one parameter detected in pipeline" in str(e)
+
+
+def test_determine_stages_produces_correct_stages(mocker: MockerFixture):
+    SWEEP_VALS = (0, 1, 2, 3)
+    loader = make_test_loader(mocker)
+    m1 = make_test_method(mocker)
+    sweep_wrapper = make_test_method(mocker, param_1=SWEEP_VALS)
+    m3 = make_test_method(mocker)
+    pipeline = Pipeline(loader=loader, methods=[m1, sweep_wrapper, m3])
+    expected_stages = Stages(
+        before_sweep=NonSweepStage([m1]),
+        sweep=SweepStage(method=sweep_wrapper, param_name="param_1", values=SWEEP_VALS),
+        after_sweep=NonSweepStage([m3]),
+    )
+    runner = ParamSweepRunner(pipeline)
+    stages = runner.determine_stages()
+    assert stages == expected_stages
 
 
 def test_without_prepare_block_property_raises_error(mocker: MockerFixture):
     loader = make_test_loader(mocker)
-    pipeline = Pipeline(loader=loader, methods=[])
-    stages = Stages(before_sweep=[], sweep=None, after_sweep=[])  # type: ignore
-    runner = ParamSweepRunner(
-        pipeline=pipeline, stages=stages, sweep_param_name="", sweep_values=[]
-    )
+    m1 = make_test_method(mocker)
+    sweep_wrapper = make_test_method(mocker, param_1=(0,))
+    pipeline = Pipeline(loader=loader, methods=[m1, sweep_wrapper])
+    runner = ParamSweepRunner(pipeline)
     with pytest.raises(ValueError) as e:
         runner.block
     assert "Block from input data has not yet been loaded" in str(e)
@@ -42,11 +81,10 @@ def test_after_prepare_block_attr_contains_data(mocker: MockerFixture):
         block_start=0,
     )
     loader = make_test_loader(mocker, block=block)
-    pipeline = Pipeline(loader=loader, methods=[])
-    stages = Stages(before_sweep=[], sweep=None, after_sweep=[])  # type: ignore
-    runner = ParamSweepRunner(
-        pipeline=pipeline, stages=stages, sweep_param_name="", sweep_values=[]
-    )
+    m1 = make_test_method(mocker)
+    sweep_wrapper = make_test_method(mocker, param_1=(0,))
+    pipeline = Pipeline(loader=loader, methods=[m1, sweep_wrapper])
+    runner = ParamSweepRunner(pipeline)
     runner.prepare()
     assert runner.block is not None
     np.testing.assert_array_equal(runner.block.data, data)
@@ -69,11 +107,10 @@ def tests_prepare_raises_error_if_too_many_sino_slices(mocker: MockerFixture):
         block_start=0,
     )
     loader = make_test_loader(mocker, block=block)
-    pipeline = Pipeline(loader=loader, methods=[])
-    stages = Stages(before_sweep=[], sweep=None, after_sweep=[])  # type: ignore
-    runner = ParamSweepRunner(
-        pipeline=pipeline, stages=stages, sweep_param_name="", sweep_values=[]
-    )
+    m1 = make_test_method(mocker)
+    sweep_wrapper = make_test_method(mocker, param_1=(0,))
+    pipeline = Pipeline(loader=loader, methods=[m1, sweep_wrapper])
+    runner = ParamSweepRunner(pipeline)
 
     with pytest.raises(ValueError) as e:
         runner.prepare()
@@ -122,37 +159,26 @@ def test_execute_non_sweep_stage_modifies_block(
     m2 = make_test_method(mocker=mocker, method_name="method_2")
     mocker.patch.object(target=m2, attribute="execute", side_effect=dummy_method_2)
 
-    # Define pipeline, stages, runner objects, and execute the methods in the stage
-    # before/after the sweep
-    #
-    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
-    # for the purpose of this test are only the ones in the "before/after sweep" stage, which
-    # is why the pipeline and stages object both have only partial pipeline information
-    pipeline = Pipeline(loader=loader, methods=[])
-    if non_sweep_stage == "before":
-        stages = Stages(
-            before_sweep=[m1, m2],
-            sweep=None,  # type:ignore
-            after_sweep=[],
-        )
-    else:
-        stages = Stages(
-            before_sweep=[],
-            sweep=None,  # type:ignore
-            after_sweep=[m1, m2],
-        )
+    # Define sweep wrapper to to provide the runner the ability to distinguish between "before
+    # sweep" and "after sweep" stages
+    sweep_wrapper = make_test_method(mocker, param_1=(0,))
 
-    runner = ParamSweepRunner(
-        pipeline=pipeline, stages=stages, sweep_param_name="", sweep_values=[]
-    )
+    # Define pipeline object that produces the "before sweep" and "after sweep" stages desired
+    # for this parametrised test
+    if non_sweep_stage == "before":
+        pipeline = Pipeline(loader=loader, methods=[m1, m2, sweep_wrapper])
+    else:
+        pipeline = Pipeline(loader=loader, methods=[sweep_wrapper, m1, m2])
+
+    runner = ParamSweepRunner(pipeline)
     runner.prepare()
     if non_sweep_stage == "before":
         runner.execute_before_sweep()
     else:
         runner.execute_after_sweep()
 
-    # Inspect the block data after the "before sweep" stage has completed, asserting that the
-    # data reflects what the combination of two dummy methods in that stage should produce
+    # Inspect the block data after the non-sweep stage has completed, asserting that the data
+    # reflects what the combination of two dummy methods in that stage should produce
     assert runner.block.data.shape == PREVIEWED_SLICES_SHAPE
     expected_block_data = data * 2 * 3
     np.testing.assert_array_equal(runner.block.data, expected_block_data)
@@ -188,35 +214,22 @@ def test_execute_non_sweep_stage_method_output_updates_side_outputs(
         target=mock_wrapper, attribute="get_side_output", return_value=side_outputs
     )
 
-    # Define pipeline, stages, runner objects, and execute the methods in the stage
-    # before/after the sweep
-    #
-    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
-    # for the purpose of this test are only the ones in the "before/after sweep" stage, which
-    # is why the pipeline and stages object both have only partial pipeline information
-    pipeline = Pipeline(loader=loader, methods=[])
+    # Define sweep wrapper to to provide the runner the ability to distinguish between "before
+    # sweep" and "after sweep" stages
+    sweep_wrapper = make_test_method(mocker, param_1=(0,))
+
+    # Define pipeline object that produces the "before sweep" and "after sweep" stages desired
+    # for this parametrised test
     if non_sweep_stage == "before":
-        stages = Stages(
-            before_sweep=[mock_wrapper],
-            sweep=[],  # type: ignore
-            after_sweep=[],
-        )
+        pipeline = Pipeline(loader=loader, methods=[mock_wrapper, sweep_wrapper])
     else:
-        stages = Stages(
-            before_sweep=[],
-            sweep=[],  # type: ignore
-            after_sweep=[mock_wrapper],
-        )
+        pipeline = Pipeline(loader=loader, methods=[sweep_wrapper, mock_wrapper])
 
     # Pass in an empty side output manager object into the runner. The execution of the method
     # should add the side output produced by it to the side output manager.
     side_output_manager = SideOutputManager()
     runner = ParamSweepRunner(
-        pipeline=pipeline,
-        stages=stages,
-        side_output_manager=side_output_manager,
-        sweep_param_name="",
-        sweep_values=[],
+        pipeline=pipeline, side_output_manager=side_output_manager
     )
     runner.prepare()
     if non_sweep_stage == "before":
@@ -272,32 +285,19 @@ def test_execute_non_sweep_stage_method_params_updated_from_side_outputs(
         comm=MPI.COMM_WORLD,
     )
 
-    # Define pipeline, stages, runner objects, and execute the methods in the stage
-    # before/after the sweep
-    #
-    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
-    # for the purpose of this test are only the ones in the "before/after sweep" stage, which
-    # is why the pipeline and stages object both have only partial pipeline information
-    pipeline = Pipeline(loader=loader, methods=[])
+    # Define sweep wrapper to to provide the runner the ability to distinguish between "before
+    # sweep" and "after sweep" stages
+    sweep_wrapper = make_test_method(mocker, param_1=(0,))
+
+    # Define pipeline object that produces the "before sweep" and "after sweep" stages desired
+    # for this parametrised test
     if non_sweep_stage == "before":
-        stages = Stages(
-            before_sweep=[method_wrapper],
-            sweep=[],  # type: ignore
-            after_sweep=[],
-        )
+        pipeline = Pipeline(loader=loader, methods=[method_wrapper, sweep_wrapper])
     else:
-        stages = Stages(
-            before_sweep=[],
-            sweep=[],  # type: ignore
-            after_sweep=[method_wrapper],
-        )
+        pipeline = Pipeline(loader=loader, methods=[sweep_wrapper, method_wrapper])
 
     runner = ParamSweepRunner(
-        pipeline=pipeline,
-        stages=stages,
-        side_output_manager=side_output_manager,
-        sweep_param_name="",
-        sweep_values=[],
+        pipeline=pipeline, side_output_manager=side_output_manager
     )
     runner.prepare()
     if non_sweep_stage == "before":
@@ -331,34 +331,21 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
             return data * param_1
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    # Create sweep method wrapper, passing the sweep values for the param to sweep over
+    NO_OF_SWEEPS = 4
+    SWEEP_VALUES = (2, 3, 5, 7)
     sweep_method_wrapper = make_method_wrapper(
         method_repository=make_mock_repo(mocker),
         module_path="mocked_module_path.corr",
         method_name="sweep_method",
         comm=MPI.COMM_WORLD,
+        param_1=SWEEP_VALUES,
     )
 
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
-    #
-    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
-    # for the purpose of this test are only the ones in the sweep stage, which is why the
-    # pipeline and stages object both have only partial pipeline information
-    pipeline = Pipeline(loader=loader, methods=[])
-    stages = Stages(
-        before_sweep=[],
-        sweep=sweep_method_wrapper,
-        after_sweep=[],
-    )
-
-    NO_OF_SWEEPS = 4
-    SWEEP_VALUES = [2, 3, 5, 7]
-    SWEEP_PARAM_NAME = "param_1"
-    runner = ParamSweepRunner(
-        pipeline=pipeline,
-        stages=stages,
-        sweep_param_name=SWEEP_PARAM_NAME,
-        sweep_values=SWEEP_VALUES,
-    )
+    pipeline = Pipeline(loader=loader, methods=[sweep_method_wrapper])
+    runner = ParamSweepRunner(pipeline)
     runner.prepare()
     runner.execute_sweep()
 
@@ -417,11 +404,16 @@ def test_execute_modifies_block(mocker: MockerFixture):
             return data * param_1
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    # Create sweep method wrapper, passing the sweep values for the param to sweep over
+    NO_OF_SWEEPS = 4
+    SWEEP_VALUES = (2, 3, 5, 7)
     sweep_method_wrapper = make_method_wrapper(
         method_repository=make_mock_repo(mocker),
         module_path="mocked_module_path.corr",
         method_name="sweep_method",
         comm=MPI.COMM_WORLD,
+        param_1=SWEEP_VALUES,
     )
 
     # Create mock method wrapper objects to be used in the non-sweep stages and patch the
@@ -440,21 +432,7 @@ def test_execute_modifies_block(mocker: MockerFixture):
 
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
     pipeline = Pipeline(loader=loader, methods=[m1, m2, sweep_method_wrapper, m4, m5])
-    stages = Stages(
-        before_sweep=[m1, m2],
-        sweep=sweep_method_wrapper,
-        after_sweep=[m4, m5],
-    )
-
-    NO_OF_SWEEPS = 4
-    SWEEP_VALUES = [2, 3, 5, 7]
-    SWEEP_PARAM_NAME = "param_1"
-    runner = ParamSweepRunner(
-        pipeline=pipeline,
-        stages=stages,
-        sweep_param_name=SWEEP_PARAM_NAME,
-        sweep_values=SWEEP_VALUES,
-    )
+    runner = ParamSweepRunner(pipeline)
     runner.execute()
 
     NO_OF_SWEEPS = 4
@@ -507,33 +485,21 @@ def test_execute_sweep_stage_method_params_updated_from_side_outputs(
             return np.empty(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    # Create sweep method wrapper, passing the sweep values for the param to sweep over
+    SWEEP_VALUES = (2, 3, 5, 7)
     sweep_method_wrapper = make_method_wrapper(
         method_repository=make_mock_repo(mocker),
         module_path="mocked_module_path.corr",
         method_name="sweep_method",
         comm=MPI.COMM_WORLD,
+        param_1=SWEEP_VALUES,
     )
 
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
-    #
-    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
-    # for the purpose of this test are only the ones in the sweep stage, which is why the
-    # pipeline and stages object both have only partial pipeline information
-    pipeline = Pipeline(loader=loader, methods=[])
-    stages = Stages(
-        before_sweep=[],
-        sweep=sweep_method_wrapper,
-        after_sweep=[],
-    )
-
-    SWEEP_VALUES = [2, 3, 5, 7]
-    SWEEP_PARAM_NAME = "param_1"
+    pipeline = Pipeline(loader=loader, methods=[sweep_method_wrapper])
     runner = ParamSweepRunner(
-        pipeline=pipeline,
-        stages=stages,
-        side_output_manager=side_output_manager,
-        sweep_param_name=SWEEP_PARAM_NAME,
-        sweep_values=SWEEP_VALUES,
+        pipeline=pipeline, side_output_manager=side_output_manager
     )
     runner.prepare()
     runner.execute_sweep()
@@ -568,25 +534,14 @@ def test_execute_sweep_stage_method_produces_side_output_raises_error(
     # output causes an error to be raised. If even one method wrapper execution in the sweep
     # stage produces a side output, an error should be raised, so only one sweep value in the
     # sweep stage is needed to fulfill the purpose of the test.
-    mock_wrapper = make_test_method(mocker)
+    mock_wrapper = make_test_method(mocker, param_1=(1,))
     mocker.patch.object(
         target=mock_wrapper, attribute="get_side_output", return_value=side_outputs
     )
 
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
-    #
-    # NOTE: the pipeline object is only needed for providing the loader, and the methods needed
-    # for the purpose of this test are only the ones in the sweep stage, which is why the
-    # pipeline and stages object both have only partial pipeline information
-    pipeline = Pipeline(loader=loader, methods=[])
-    stages = Stages(
-        before_sweep=[],
-        sweep=mock_wrapper,
-        after_sweep=[],
-    )
-    runner = ParamSweepRunner(
-        pipeline=pipeline, stages=stages, sweep_param_name="param_1", sweep_values=[1]
-    )
+    pipeline = Pipeline(loader=loader, methods=[mock_wrapper])
+    runner = ParamSweepRunner(pipeline)
     runner.prepare()
 
     with pytest.raises(ValueError) as e:

@@ -1,6 +1,16 @@
-from typing import List, NamedTuple
+from typing import Any, List, NamedTuple, Tuple
 
 from httomo.runner.method_wrapper import MethodWrapper
+
+
+class NonSweepStage(NamedTuple):
+    methods: List[MethodWrapper]
+
+
+class SweepStage(NamedTuple):
+    method: MethodWrapper
+    param_name: str
+    values: Tuple[Any, ...]
 
 
 class Stages(NamedTuple):
@@ -11,6 +21,6 @@ class Stages(NamedTuple):
     - wrappers representing methods that are after the sweep
     """
 
-    before_sweep: List[MethodWrapper]
-    sweep: MethodWrapper
-    after_sweep: List[MethodWrapper]
+    before_sweep: NonSweepStage
+    sweep: SweepStage
+    after_sweep: NonSweepStage

@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
 from httomo.runner.block_split import BlockSplitter
@@ -6,31 +6,89 @@ from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 from httomo.sweep_runner.side_output_manager import SideOutputManager
-from httomo.sweep_runner.stages import Stages
+from httomo.sweep_runner.stages import NonSweepStage, Stages, SweepStage
+from httomo.utils import log_exception
 
 
 class ParamSweepRunner:
     def __init__(
         self,
         pipeline: Pipeline,
-        stages: Stages,
-        sweep_param_name: str,
-        sweep_values: List[Any],
         side_output_manager: SideOutputManager = SideOutputManager(),
     ) -> None:
         self._sino_slices_threshold = 7
         self._pipeline = pipeline
-        self._stages = stages
-        self._sweep_param_name = sweep_param_name
-        self._sweep_values = sweep_values
         self._side_output_manager = side_output_manager
         self._block: Optional[ParamSweepBlock] = None
+        self._check_params_for_sweep()
+        self._stages = self.determine_stages()
 
     @property
     def block(self) -> ParamSweepBlock:
         if self._block is None:
             raise ValueError("Block from input data has not yet been loaded")
         return self._block
+
+    def _check_params_for_sweep(self):
+        """
+        Check pipeline for the number of parameter sweeps present.
+
+        If none are defined, then raise an error. If more than one is defined, then also raise
+        an error, due to not supporting parameter sweeps over more than one parameter at a
+        time.
+        """
+        params = [m.config_params for m in self._pipeline]
+        no_of_sweeps = sum(map(_count_tuple_values, params))
+
+        if no_of_sweeps == 0:
+            err_str = "No parameter sweep detected in pipeline"
+            log_exception(err_str)
+            raise ValueError(err_str)
+
+        if no_of_sweeps > 1:
+            err_str = (
+                "Parameter sweep over more than one parameter detected in pipeline; "
+                "a sweep over only one parameter at a time is supported"
+            )
+            log_exception(err_str)
+            raise ValueError(err_str)
+
+    def determine_stages(self) -> Stages:
+        """
+        Groups methods into "before sweep", "sweep", and "after sweep" stages
+        """
+        before_sweep: List[MethodWrapper] = []
+        sweep_wrapper: Optional[MethodWrapper] = None
+        sweep_param_name: Optional[str] = None
+        sweep_param_vals: Optional[Tuple[Any, ...]] = None
+        after_sweep: List[MethodWrapper] = []
+
+        non_sweep_stage_methods: List[MethodWrapper] = before_sweep
+        for method in self._pipeline:
+            params = method.config_params
+            no_of_sweeps = sum(map(_count_tuple_values, [params]))
+            if no_of_sweeps == 0:
+                non_sweep_stage_methods.append(method)
+            else:
+                sweep_wrapper = method
+                sweep_param_name, sweep_param_vals = _get_param_sweep_name_and_vals(
+                    params
+                )
+                non_sweep_stage_methods = after_sweep
+
+        assert sweep_wrapper is not None
+        assert sweep_param_name is not None
+        assert sweep_param_vals is not None
+
+        return Stages(
+            before_sweep=NonSweepStage(before_sweep),
+            sweep=SweepStage(
+                method=sweep_wrapper,
+                param_name=sweep_param_name,
+                values=sweep_param_vals,
+            ),
+            after_sweep=NonSweepStage(after_sweep),
+        )
 
     def prepare(self):
         """
@@ -56,9 +114,9 @@ class ParamSweepRunner:
         )
         self._block = sweep_block
 
-    def _execute_non_sweep_stage(self, wrappers: List[MethodWrapper]):
+    def _execute_non_sweep_stage(self, stage: NonSweepStage):
         assert self._block is not None
-        for method in wrappers:
+        for method in stage.methods:
             self._side_output_manager.update_params(method)
             self._block = method.execute(self._block)
             self._side_output_manager.append(method.get_side_output())
@@ -73,10 +131,10 @@ class ParamSweepRunner:
 
     def execute_sweep(self):
         """Execute all param variations of the same method in the sweep"""
-        writer = ParamSweepWriter(len(self._sweep_values))
-        method = self._stages.sweep
+        writer = ParamSweepWriter(len(self._stages.sweep.values))
+        method = self._stages.sweep.method
 
-        for val in self._sweep_values:
+        for val in self._stages.sweep.values:
             # Blocks are modified in-place by method wrappers, so a new block must be created
             # that contains a copy of the input data to the sweep stage
             block = ParamSweepBlock(
@@ -84,7 +142,7 @@ class ParamSweepRunner:
                 aux_data=self.block.aux_data,
             )
             self._side_output_manager.update_params(method)
-            method.append_config_params({self._sweep_param_name: val})
+            method.append_config_params({self._stages.sweep.param_name: val})
             block = method.execute(block)
             if len(method.get_side_output().keys()) > 0:
                 raise ValueError(
@@ -101,3 +159,21 @@ class ParamSweepRunner:
         self.execute_before_sweep()
         self.execute_sweep()
         self.execute_after_sweep()
+
+
+def _count_tuple_values(d: Dict[str, Any]) -> int:
+    return sum(1 for v in d.values() if isinstance(v, tuple))
+
+
+def _get_param_sweep_name_and_vals(d: Dict[str, Any]) -> Tuple[str, Tuple[Any, ...]]:
+    param_name: Optional[str] = None
+    sweep_vals: Optional[Tuple[Any, ...]] = None
+
+    for k, v in d.items():
+        if isinstance(v, tuple):
+            param_name = k
+            sweep_vals = v
+
+    assert param_name is not None
+    assert sweep_vals is not None
+    return param_name, sweep_vals
