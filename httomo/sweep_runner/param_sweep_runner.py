@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
 from httomo.runner.block_split import BlockSplitter
@@ -14,11 +14,15 @@ class ParamSweepRunner:
         self,
         pipeline: Pipeline,
         stages: Stages,
+        sweep_param_name: str,
+        sweep_values: List[Any],
         side_output_manager: SideOutputManager = SideOutputManager(),
     ) -> None:
         self._sino_slices_threshold = 7
         self._pipeline = pipeline
         self._stages = stages
+        self._sweep_param_name = sweep_param_name
+        self._sweep_values = sweep_values
         self._side_output_manager = side_output_manager
         self._block: Optional[ParamSweepBlock] = None
 
@@ -69,9 +73,10 @@ class ParamSweepRunner:
 
     def execute_sweep(self):
         """Execute all param variations of the same method in the sweep"""
-        writer = ParamSweepWriter(len(self._stages.sweep))
+        writer = ParamSweepWriter(len(self._sweep_values))
+        method = self._stages.sweep
 
-        for method in self._stages.sweep:
+        for val in self._sweep_values:
             # Blocks are modified in-place by method wrappers, so a new block must be created
             # that contains a copy of the input data to the sweep stage
             block = ParamSweepBlock(
@@ -79,6 +84,7 @@ class ParamSweepRunner:
                 aux_data=self.block.aux_data,
             )
             self._side_output_manager.update_params(method)
+            method.append_config_params({self._sweep_param_name: val})
             block = method.execute(block)
             if len(method.get_side_output().keys()) > 0:
                 raise ValueError(

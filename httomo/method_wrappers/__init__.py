@@ -14,7 +14,7 @@ import httomo.method_wrappers.stats_calc
 import httomo.method_wrappers.save_intermediate
 
 from mpi4py.MPI import Comm
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 
 
 def make_method_wrapper(
@@ -76,57 +76,3 @@ def make_method_wrapper(
         output_mapping=output_mapping,
         **kwargs,
     )
-
-
-def make_param_sweep_method_wrappers(
-    method_repository: MethodRepository,
-    module_path: str,
-    method_name: str,
-    comm: Comm,
-    parameters: Dict[str, Any],
-    parameter_name: str,
-    sweep_values: List[Any],
-) -> List[MethodWrapper]:
-    """Factory function to generate a list of method wrappers that represent a parameter sweep
-    over a set of values.
-
-    Parameters
-    ----------
-
-    method_repository: MethodRepository
-        Repository of methods that we can use the query properties
-    module_path: str
-        Path to the module where the method is in python notation, e.g.
-        "httomolibgpu.prep.normalize"
-    method_name: str
-        Name of the method (function within the given module)
-    comm: Comm
-        MPI communicator object
-    parameters: Dict[str, Any]
-        Dict containing the parameter values for the method, excluding the parameter that the
-        sweep is performed on
-    parameter_name: str
-        Name of the parameter to perform the sweep on
-    sweep_values: List[Any]
-        List of values that the parameter should be swept over
-
-    Returns
-    -------
-
-    List[MethodWrapper]
-        A list of method wrapper instances
-    """
-
-    wrappers: List[MethodWrapper] = []
-    for val in sweep_values:
-        updated_params = parameters | {parameter_name: val}
-        wrapper = make_method_wrapper(
-            method_repository=method_repository,
-            module_path=module_path,
-            method_name=method_name,
-            comm=comm,
-            **updated_params,
-        )
-        wrappers.append(wrapper)
-
-    return wrappers

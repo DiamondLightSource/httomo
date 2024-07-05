@@ -17,8 +17,10 @@ from tests.testing_utils import make_mock_repo, make_test_loader, make_test_meth
 def test_without_prepare_block_property_raises_error(mocker: MockerFixture):
     loader = make_test_loader(mocker)
     pipeline = Pipeline(loader=loader, methods=[])
-    stages = Stages(before_sweep=[], sweep=[], after_sweep=[])
-    runner = ParamSweepRunner(pipeline=pipeline, stages=stages)
+    stages = Stages(before_sweep=[], sweep=None, after_sweep=[])  # type: ignore
+    runner = ParamSweepRunner(
+        pipeline=pipeline, stages=stages, sweep_param_name="", sweep_values=[]
+    )
     with pytest.raises(ValueError) as e:
         runner.block
     assert "Block from input data has not yet been loaded" in str(e)
@@ -41,8 +43,10 @@ def test_after_prepare_block_attr_contains_data(mocker: MockerFixture):
     )
     loader = make_test_loader(mocker, block=block)
     pipeline = Pipeline(loader=loader, methods=[])
-    stages = Stages(before_sweep=[], sweep=[], after_sweep=[])
-    runner = ParamSweepRunner(pipeline=pipeline, stages=stages)
+    stages = Stages(before_sweep=[], sweep=None, after_sweep=[])  # type: ignore
+    runner = ParamSweepRunner(
+        pipeline=pipeline, stages=stages, sweep_param_name="", sweep_values=[]
+    )
     runner.prepare()
     assert runner.block is not None
     np.testing.assert_array_equal(runner.block.data, data)
@@ -66,8 +70,10 @@ def tests_prepare_raises_error_if_too_many_sino_slices(mocker: MockerFixture):
     )
     loader = make_test_loader(mocker, block=block)
     pipeline = Pipeline(loader=loader, methods=[])
-    stages = Stages(before_sweep=[], sweep=[], after_sweep=[])
-    runner = ParamSweepRunner(pipeline=pipeline, stages=stages)
+    stages = Stages(before_sweep=[], sweep=None, after_sweep=[])  # type: ignore
+    runner = ParamSweepRunner(
+        pipeline=pipeline, stages=stages, sweep_param_name="", sweep_values=[]
+    )
 
     with pytest.raises(ValueError) as e:
         runner.prepare()
@@ -126,17 +132,19 @@ def test_execute_non_sweep_stage_modifies_block(
     if non_sweep_stage == "before":
         stages = Stages(
             before_sweep=[m1, m2],
-            sweep=[],
+            sweep=None,  # type:ignore
             after_sweep=[],
         )
     else:
         stages = Stages(
             before_sweep=[],
-            sweep=[],
+            sweep=None,  # type:ignore
             after_sweep=[m1, m2],
         )
 
-    runner = ParamSweepRunner(pipeline=pipeline, stages=stages)
+    runner = ParamSweepRunner(
+        pipeline=pipeline, stages=stages, sweep_param_name="", sweep_values=[]
+    )
     runner.prepare()
     if non_sweep_stage == "before":
         runner.execute_before_sweep()
@@ -190,13 +198,13 @@ def test_execute_non_sweep_stage_method_output_updates_side_outputs(
     if non_sweep_stage == "before":
         stages = Stages(
             before_sweep=[mock_wrapper],
-            sweep=[],
+            sweep=[],  # type: ignore
             after_sweep=[],
         )
     else:
         stages = Stages(
             before_sweep=[],
-            sweep=[],
+            sweep=[],  # type: ignore
             after_sweep=[mock_wrapper],
         )
 
@@ -204,7 +212,11 @@ def test_execute_non_sweep_stage_method_output_updates_side_outputs(
     # should add the side output produced by it to the side output manager.
     side_output_manager = SideOutputManager()
     runner = ParamSweepRunner(
-        pipeline=pipeline, stages=stages, side_output_manager=side_output_manager
+        pipeline=pipeline,
+        stages=stages,
+        side_output_manager=side_output_manager,
+        sweep_param_name="",
+        sweep_values=[],
     )
     runner.prepare()
     if non_sweep_stage == "before":
@@ -270,18 +282,22 @@ def test_execute_non_sweep_stage_method_params_updated_from_side_outputs(
     if non_sweep_stage == "before":
         stages = Stages(
             before_sweep=[method_wrapper],
-            sweep=[],
+            sweep=[],  # type: ignore
             after_sweep=[],
         )
     else:
         stages = Stages(
             before_sweep=[],
-            sweep=[],
+            sweep=[],  # type: ignore
             after_sweep=[method_wrapper],
         )
 
     runner = ParamSweepRunner(
-        pipeline=pipeline, stages=stages, side_output_manager=side_output_manager
+        pipeline=pipeline,
+        stages=stages,
+        side_output_manager=side_output_manager,
+        sweep_param_name="",
+        sweep_values=[],
     )
     runner.prepare()
     if non_sweep_stage == "before":
@@ -306,35 +322,21 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
     )
     loader = make_test_loader(mocker, block=block)
 
-    # Define four dummy functions that are representing a single method configured with
-    # different parameter values
-    def method_sweep_val_1(block):
-        block.data = block.data * 2
-        return block
+    # Define a dummy method function that the method wrapper will be patched to import. When
+    # executing the sweep stage, different values will be passed to it, which should influence
+    # the data in the block produced each time the method wrapper is executed in the
+    # sweep.
+    class FakeModule:
+        def sweep_method(data: np.ndarray, param_1: int):  # type: ignore
+            return data * param_1
 
-    def method_sweep_val_2(block):
-        block.data = block.data * 3
-        return block
-
-    def method_sweep_val_3(block):
-        block.data = block.data * 5
-        return block
-
-    def method_sweep_val_4(block):
-        block.data = block.data * 7
-        return block
-
-    # Patch `the `execute() method in the mock method wrapper objects so then the functions
-    # that are used for the three methods executed in the sweep stage are the three dummy
-    # methods defined above
-    m1 = make_test_method(mocker=mocker, method_name="method_sweep_val_1")
-    mocker.patch.object(target=m1, attribute="execute", side_effect=method_sweep_val_1)
-    m2 = make_test_method(mocker=mocker, method_name="method_sweep_val_2")
-    mocker.patch.object(target=m2, attribute="execute", side_effect=method_sweep_val_2)
-    m3 = make_test_method(mocker=mocker, method_name="method_sweep_val_3")
-    mocker.patch.object(target=m3, attribute="execute", side_effect=method_sweep_val_3)
-    m4 = make_test_method(mocker=mocker, method_name="method_sweep_val_4")
-    mocker.patch.object(target=m4, attribute="execute", side_effect=method_sweep_val_4)
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    sweep_method_wrapper = make_method_wrapper(
+        method_repository=make_mock_repo(mocker),
+        module_path="mocked_module_path.corr",
+        method_name="sweep_method",
+        comm=MPI.COMM_WORLD,
+    )
 
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
     #
@@ -344,15 +346,22 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
     pipeline = Pipeline(loader=loader, methods=[])
     stages = Stages(
         before_sweep=[],
-        sweep=[m1, m2, m3, m4],
+        sweep=sweep_method_wrapper,
         after_sweep=[],
     )
 
-    runner = ParamSweepRunner(pipeline=pipeline, stages=stages)
+    NO_OF_SWEEPS = 4
+    SWEEP_VALUES = [2, 3, 5, 7]
+    SWEEP_PARAM_NAME = "param_1"
+    runner = ParamSweepRunner(
+        pipeline=pipeline,
+        stages=stages,
+        sweep_param_name=SWEEP_PARAM_NAME,
+        sweep_values=SWEEP_VALUES,
+    )
     runner.prepare()
     runner.execute_sweep()
 
-    NO_OF_SWEEPS = 4
     EXPECTED_BLOCK_SHAPE = (
         PREVIEWED_SLICES_SHAPE[0],
         NO_OF_SWEEPS,
@@ -360,10 +369,8 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
     )
     assert runner.block.data.shape == EXPECTED_BLOCK_SHAPE
     expected_data = np.ones(EXPECTED_BLOCK_SHAPE, dtype=np.float32)
-    expected_data[:, 0, :] *= 2
-    expected_data[:, 1, :] *= 3
-    expected_data[:, 2, :] *= 5
-    expected_data[:, 3, :] *= 7
+    for sino_slice_idx, multiplier in enumerate(SWEEP_VALUES):
+        expected_data[:, sino_slice_idx, :] *= multiplier
     np.testing.assert_array_equal(runner.block.data, expected_data)
 
 
@@ -383,6 +390,15 @@ def test_execute_modifies_block(mocker: MockerFixture):
     )
     loader = make_test_loader(mocker, block=block)
 
+    # For non-sweep stages, the `execute()` method on the mock wrappers will be patched. For
+    # the sweep stage, the method function that the wrapper imports will be patched.
+    #
+    # This is because for non-sweep stages, all that is needed is to see the block data change.
+    # For the sweep stage, it needs to be confirmed that the sweep values are actually being
+    # used in the execution of the sweep. The easiest way to see this is for the parameter
+    # value to be used as a simple multiplier in the method function that the wrapper executes,
+    # which would cause the block data to change according to the given sweep values.
+
     # Define two dummy methods to be in the before and sweep stages in the runner
     def dummy_method_1(block):
         block.data = block.data * 2
@@ -392,56 +408,53 @@ def test_execute_modifies_block(mocker: MockerFixture):
         block.data = block.data * 3
         return block
 
-    # Define four dummy functions that are representing a single method configured with
-    # different parameter values
-    def method_sweep_val_1(block):
-        block.data = block.data * 2
-        return block
+    # Define a dummy method function that the method wrapper will be patched to import. When
+    # executing the sweep stage, different values will be passed to it, which should influence
+    # the data in the block produced each time the method wrapper is executed in the
+    # sweep.
+    class FakeModule:
+        def sweep_method(data: np.ndarray, param_1: int):  # type: ignore
+            return data * param_1
 
-    def method_sweep_val_2(block):
-        block.data = block.data * 3
-        return block
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+    sweep_method_wrapper = make_method_wrapper(
+        method_repository=make_mock_repo(mocker),
+        module_path="mocked_module_path.corr",
+        method_name="sweep_method",
+        comm=MPI.COMM_WORLD,
+    )
 
-    def method_sweep_val_3(block):
-        block.data = block.data * 5
-        return block
-
-    def method_sweep_val_4(block):
-        block.data = block.data * 7
-        return block
-
-    # Create mock method wrapper objects and patch the `execute()` method on all of them to use
-    # the dummy method functions defined above
+    # Create mock method wrapper objects to be used in the non-sweep stages and patch the
+    # `execute()` method on all of them to use the dummy method functions defined above
     #
     # "Before sweep" stage method wrappers (2)
     m1 = make_test_method(mocker=mocker, method_name="method_1")
     mocker.patch.object(target=m1, attribute="execute", side_effect=dummy_method_1)
     m2 = make_test_method(mocker=mocker, method_name="method_2")
     mocker.patch.object(target=m2, attribute="execute", side_effect=dummy_method_2)
-    # Sweep stage method wrappers (4)
-    m3 = make_test_method(mocker=mocker, method_name="method_sweep_val_1")
-    mocker.patch.object(target=m3, attribute="execute", side_effect=method_sweep_val_1)
-    m4 = make_test_method(mocker=mocker, method_name="method_sweep_val_2")
-    mocker.patch.object(target=m4, attribute="execute", side_effect=method_sweep_val_2)
-    m5 = make_test_method(mocker=mocker, method_name="method_sweep_val_3")
-    mocker.patch.object(target=m5, attribute="execute", side_effect=method_sweep_val_3)
-    m6 = make_test_method(mocker=mocker, method_name="method_sweep_val_4")
-    mocker.patch.object(target=m6, attribute="execute", side_effect=method_sweep_val_4)
     # "After sweep" stage method wrappers (2)
-    m7 = make_test_method(mocker=mocker, method_name="method_7")
-    mocker.patch.object(target=m7, attribute="execute", side_effect=dummy_method_1)
-    m8 = make_test_method(mocker=mocker, method_name="method_8")
-    mocker.patch.object(target=m8, attribute="execute", side_effect=dummy_method_2)
+    m4 = make_test_method(mocker=mocker, method_name="method_4")
+    mocker.patch.object(target=m4, attribute="execute", side_effect=dummy_method_1)
+    m5 = make_test_method(mocker=mocker, method_name="method_5")
+    mocker.patch.object(target=m5, attribute="execute", side_effect=dummy_method_2)
 
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
-    pipeline = Pipeline(loader=loader, methods=[m1, m2, m3, m4, m5, m6, m6, m7, m8])
+    pipeline = Pipeline(loader=loader, methods=[m1, m2, sweep_method_wrapper, m4, m5])
     stages = Stages(
         before_sweep=[m1, m2],
-        sweep=[m3, m4, m5, m6],
-        after_sweep=[m7, m8],
+        sweep=sweep_method_wrapper,
+        after_sweep=[m4, m5],
     )
 
-    runner = ParamSweepRunner(pipeline=pipeline, stages=stages)
+    NO_OF_SWEEPS = 4
+    SWEEP_VALUES = [2, 3, 5, 7]
+    SWEEP_PARAM_NAME = "param_1"
+    runner = ParamSweepRunner(
+        pipeline=pipeline,
+        stages=stages,
+        sweep_param_name=SWEEP_PARAM_NAME,
+        sweep_values=SWEEP_VALUES,
+    )
     runner.execute()
 
     NO_OF_SWEEPS = 4
@@ -454,10 +467,8 @@ def test_execute_modifies_block(mocker: MockerFixture):
     BEFORE_SWEEP_MULT_FACTOR = AFTER_SWEEP_MULT_FACTOR = 2 * 3
     NON_SWEEP_STAGES_MULT_FACTOR = BEFORE_SWEEP_MULT_FACTOR * AFTER_SWEEP_MULT_FACTOR
     expected_data = np.ones(EXPECTED_BLOCK_SHAPE, dtype=np.float32)
-    expected_data[:, 0, :] *= NON_SWEEP_STAGES_MULT_FACTOR * 2
-    expected_data[:, 1, :] *= NON_SWEEP_STAGES_MULT_FACTOR * 3
-    expected_data[:, 2, :] *= NON_SWEEP_STAGES_MULT_FACTOR * 5
-    expected_data[:, 3, :] *= NON_SWEEP_STAGES_MULT_FACTOR * 7
+    for sino_slice_idx, multiplier in enumerate(SWEEP_VALUES):
+        expected_data[:, sino_slice_idx, :] *= NON_SWEEP_STAGES_MULT_FACTOR * multiplier
     np.testing.assert_array_equal(runner.block.data, expected_data)
 
 
@@ -485,27 +496,23 @@ def test_execute_sweep_stage_method_params_updated_from_side_outputs(
     side_output_manager = SideOutputManager()
     side_output_manager.append(side_outputs)
 
-    # Define mock module + mock method function that will be imported by the method wrappers
-    # that represent the parameter sweep.
+    # Define mock module + mock method function that will be imported by the method wrapper
+    # that represents the parameter sweep.
     #
     # The mock method function asserts that the param value it's given is the value of the side
     # output that it requires.
     class FakeModule:
-        def sweep_method(data, some_side_output) -> np.ndarray:  # type: ignore
+        def sweep_method(data, param_1, some_side_output) -> np.ndarray:  # type: ignore
             assert some_side_output == side_outputs[SIDE_OUTPUT_LABEL]
             return np.empty(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
-    sweep_wrappers = []
-    NO_OF_SWEEP_VALS = 5
-    for _ in range(NO_OF_SWEEP_VALS):
-        method_wrapper = make_method_wrapper(
-            method_repository=make_mock_repo(mocker),
-            module_path="",
-            method_name="sweep_method",
-            comm=MPI.COMM_WORLD,
-        )
-        sweep_wrappers.append(method_wrapper)
+    sweep_method_wrapper = make_method_wrapper(
+        method_repository=make_mock_repo(mocker),
+        module_path="mocked_module_path.corr",
+        method_name="sweep_method",
+        comm=MPI.COMM_WORLD,
+    )
 
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
     #
@@ -515,11 +522,18 @@ def test_execute_sweep_stage_method_params_updated_from_side_outputs(
     pipeline = Pipeline(loader=loader, methods=[])
     stages = Stages(
         before_sweep=[],
-        sweep=sweep_wrappers,
+        sweep=sweep_method_wrapper,
         after_sweep=[],
     )
+
+    SWEEP_VALUES = [2, 3, 5, 7]
+    SWEEP_PARAM_NAME = "param_1"
     runner = ParamSweepRunner(
-        pipeline=pipeline, stages=stages, side_output_manager=side_output_manager
+        pipeline=pipeline,
+        stages=stages,
+        side_output_manager=side_output_manager,
+        sweep_param_name=SWEEP_PARAM_NAME,
+        sweep_values=SWEEP_VALUES,
     )
     runner.prepare()
     runner.execute_sweep()
@@ -549,11 +563,11 @@ def test_execute_sweep_stage_method_produces_side_output_raises_error(
 
     # Define mock method wrapper to produce the above side output in the sweep stage
     #
-    # NOTE: Even though a sweep stage should generally have more than one method wrapper in it,
-    # this test is for checking that a wrapper in the sweep stage producing a side output
-    # causes an error to be raised. If even one method wrapper in the sweep stage produces a
-    # side output, an error shoudl be raised, so only one method wrapper in the sweep stage is
-    # needed to fulfill the purpose of the test.
+    # NOTE: Even though a sweep stage should generally have more than one sweep value in it,
+    # this test is for checking that a wrapper execution in the sweep stage producing a side
+    # output causes an error to be raised. If even one method wrapper execution in the sweep
+    # stage produces a side output, an error should be raised, so only one sweep value in the
+    # sweep stage is needed to fulfill the purpose of the test.
     mock_wrapper = make_test_method(mocker)
     mocker.patch.object(
         target=mock_wrapper, attribute="get_side_output", return_value=side_outputs
@@ -567,15 +581,16 @@ def test_execute_sweep_stage_method_produces_side_output_raises_error(
     pipeline = Pipeline(loader=loader, methods=[])
     stages = Stages(
         before_sweep=[],
-        sweep=[mock_wrapper],
+        sweep=mock_wrapper,
         after_sweep=[],
     )
-    runner = ParamSweepRunner(pipeline=pipeline, stages=stages)
+    runner = ParamSweepRunner(
+        pipeline=pipeline, stages=stages, sweep_param_name="param_1", sweep_values=[1]
+    )
     runner.prepare()
 
     with pytest.raises(ValueError) as e:
         runner.execute_sweep()
-    assert (
-        "Producing a side output is not supported in parameter sweep methods"
-        in str(e)
+    assert "Producing a side output is not supported in parameter sweep methods" in str(
+        e
     )
