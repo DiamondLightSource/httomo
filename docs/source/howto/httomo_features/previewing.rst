@@ -9,7 +9,7 @@ It also can be interpreted as a data cropping or data slicing operation.
 
 Reduction of the input data is often done to remove unnecessary/useless
 information, and to accelerate the processing time. It is also recommended to use
-when searching for optimal parameter values, see :ref:`parameter_tuning`. Skip to
+when searching for optimal parameter values, see :ref:`parameter_sweeping`. Skip to
 :ref:`previewing_enable` for information about how to use it in HTTomo.
 
 Previewing in the loader
