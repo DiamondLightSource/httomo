@@ -98,9 +98,9 @@ def _calc_memory_bytes_sino_360_to_180(
 
     summand_shape: Tuple[int, int] = (n, int(overlap))
     # Multiplication between a subset of the original data (`float32`) and the 1D weights array
-    # (`float64`) causes a new array to be created that has dtype `float64` (for example,
+    # (`float32`) causes a new array to be created that has dtype `float32` (for example,
     # multiplications like `weights * data[:n, :, -overlap]`
-    summand_size = int(np.prod(summand_shape)) * np.float64().itemsize
+    summand_size = int(np.prod(summand_shape)) * np.float32().itemsize
 
     total_memory_bytes = (
         input_slice_size
