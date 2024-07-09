@@ -10,6 +10,10 @@ import yaml
 
 from pathlib import Path
 
+from httomo.sweep_runner.param_sweep_yaml_loader import (
+    ParamSweepYamlLoader,
+    get_param_sweep_yaml_loader,
+)
 from httomo.ui_layer import (
     get_regex_pattern,
     get_ref_split,
@@ -232,8 +236,11 @@ def check_no_duplicated_keys(f: Path) -> bool:
     f
         yaml file to check
     """
+    loader = UniqueKeyLoader
+    loader.add_constructor("!Sweep", ParamSweepYamlLoader.sweep_manual)
+    loader.add_constructor("!SweepRange", ParamSweepYamlLoader.sweep_range)
     try:
-        conf = yaml_loader(f, loader=UniqueKeyLoader)
+        yaml_loader(f, loader=loader)
     except ValueError as e:
         # duplicate key found
         _print_with_colour(str(e), colour=Colour.GREEN)
@@ -387,7 +394,9 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
     module in `httomo.yaml_templates`.
     """
     with open(yaml_file, "r") as f:
-        conf_generator: Iterator[Any] = yaml.load_all(f, Loader=yaml.FullLoader)
+        conf_generator: Iterator[Any] = yaml.load_all(
+            f, Loader=get_param_sweep_yaml_loader()
+        )
         is_yaml_ok = sanity_check(conf_generator)
 
     are_keys_duplicated = check_no_duplicated_keys(yaml_file)
