@@ -15,8 +15,7 @@ class MonitoringInterface(Protocol):
         gpu_kernel_time: float = 0.0,
         gpu_h2d_time: float = 0.0,
         gpu_d2h_time: float = 0.0,
-    ):
-        ...  # pragma: no cover
+    ): ...  # pragma: no cover
 
     def report_source_block(
         self,
@@ -27,8 +26,7 @@ class MonitoringInterface(Protocol):
         block_idx_chunk: Tuple[int, int, int],
         block_idx_global: Tuple[int, int, int],
         cpu_time: float,
-    ):
-        ...  # pragma: no cover
+    ): ...  # pragma: no cover
 
     def report_sink_block(
         self,
@@ -39,11 +37,8 @@ class MonitoringInterface(Protocol):
         block_idx_chunk: Tuple[int, int, int],
         block_idx_global: Tuple[int, int, int],
         cpu_time: float,
-    ):
-        ...  # pragma: no cover
+    ): ...  # pragma: no cover
 
-    def report_total_time(self, cpu_time: float):
-        ...  # pragma: no cover
+    def report_total_time(self, cpu_time: float): ...  # pragma: no cover
 
-    def write_results(self, dest: TextIO):
-        ...  # pragma: no cover
+    def write_results(self, dest: TextIO): ...  # pragma: no cover
