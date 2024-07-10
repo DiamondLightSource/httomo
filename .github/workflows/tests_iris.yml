@@ -1,4 +1,4 @@
-name: HTTomo tests Iris
+name: HTTomo tests
 
 on:
   push:

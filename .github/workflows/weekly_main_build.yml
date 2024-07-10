@@ -1,12 +1,11 @@
-name: HTTomo nightly build (no test)
+name: HTTomo weekly conda-build (main)
 
 on:
   schedule:
-    # Run at midnight every day
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * 4' # At 00:00 on Thursday
 
 jobs:
-  build-conda-upload:
+  notest-conda-upload:
     runs-on: ubuntu-20.04
 
     defaults:
@@ -24,7 +23,7 @@ jobs:
       - name: Setup Python 3.10
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install dependencies with Conda
         run: |
@@ -41,7 +40,7 @@ jobs:
 
       - name: Build and upload the package to httomo conda cloud
         env:
-          LABEL: dev
+          LABEL: main
         run: |
           chmod +x ./.scripts/conda_upload.sh
           ./.scripts/conda_upload.sh
