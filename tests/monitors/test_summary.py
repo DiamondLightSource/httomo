@@ -51,7 +51,6 @@ def test_summary_monitor_records_and_displays_data():
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
 def test_summary_monitor_records_and_displays_data_mpi():
-
     comm = MPI.COMM_WORLD
     mon = SummaryMonitor()
     # everything gets reported twice - once in each process - and the write_results should aggregate

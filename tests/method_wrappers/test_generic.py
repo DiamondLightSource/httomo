@@ -198,7 +198,6 @@ def test_generic_passes_communicator_if_needed(
 
 
 def test_generic_transforms_auto_axis(mocker: MockerFixture, dummy_block: DataSetBlock):
-
     PATTERN = Pattern.projection
 
     class FakeModule:

@@ -19,7 +19,7 @@ many reasons for this situation, such as being unfamiliar with the method, or
 working with unfamiliar data, etc.
 
 .. warning::
-    Because of the significant modifications in HTTomo ver.2.0, the parameters tuning feature is not 
-    currently supported. HTTomo developers recognise the importance of it for users and will be 
+    Because of the significant modifications in HTTomo ver.2.0, the parameters tuning feature is not
+    currently supported. HTTomo developers recognise the importance of it for users and will be
     delivered as soon possible with the next release.
 

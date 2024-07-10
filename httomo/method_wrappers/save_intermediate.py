@@ -16,7 +16,6 @@ import numpy as np
 
 
 class SaveIntermediateFilesWrapper(GenericMethodWrapper):
-
     @classmethod
     def should_select_this_class(cls, module_path: str, method_name: str) -> bool:
         return method_name == "save_intermediate_data"

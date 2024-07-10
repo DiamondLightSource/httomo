@@ -27,7 +27,7 @@ test:
     - tests/*
   commands:
     - pip check
-    - pytest 
+    - pytest
 requirements:
   build:
     - h5py=*=*mpi_openmpi*

@@ -216,7 +216,6 @@ def test_rotation_normalize_sino_no_darks_flats():
 
 
 def test_rotation_normalize_sino_same_darks_flats():
-
     self_mock = MagicMock()  # this mocks self - as function only sets gpu time
     ret = RotationWrapper.normalize_sino(
         self_mock,

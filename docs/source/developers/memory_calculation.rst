@@ -14,7 +14,7 @@ The ``calc_max_slices`` function must have the following signature::
 The ``httomo`` package will call this function, passing in the dimension along which it will slice
 (``0`` for projection, ``1`` for sinogram), the other dimensions of the data array shape,
 the data type for the input, and the available memory on the GPU for method execution.
-Additionally it passes all other parameters of the method in the ``kwargs`` argument, 
+Additionally it passes all other parameters of the method in the ``kwargs`` argument,
 which can be used by the function in case parameters determine the memory consumption.
 The function should calculate how many slices along the slicing dimension it can fit into the given memory.
 Further, it returns the output datatype of the method (given the input ``dtype`` argument),
@@ -33,7 +33,7 @@ it can fit, given the other two dimension sizes. For example:
     max_slices, outdtype = my_method.meta.calc_max_slices(0, (10, 20), np.float32(), 14450, **method_args)
 
 * The developer of the given method needs to provide this function implementation,
-  and it needs to calculate the maximum number of slices it can fit. 
+  and it needs to calculate the maximum number of slices it can fit.
 * Assuming that the method is very simple and does not need any local temporary memory,
   requiring only space for the input and output array, it could be implemented as follows::
 
@@ -57,12 +57,12 @@ it can fit, given the other two dimension sizes. For example:
   * ``input_mem_per_slice = 800``
   * ``output_mem_per_slice = 800``
   * => ``max_slices = 14450 // 1600 = 9``
-  
+
 
 Max Slices Tests
 ----------------
 
-In order to test that the slice calculation function is reflecting reality, each method has a 
+In order to test that the slice calculation function is reflecting reality, each method has a
 unit test implemented that verifies that the calculation is right (within bounds).
 That is, it tests that the estimated slices are between 80% and 100% of the actually used slices.
 These tests also help to keep the memory estimation functions in sync with the implementation.
@@ -72,12 +72,12 @@ The strategy for testing is the other way around:
 * We first run the actual method, given a specific data set, and record the maximum memory actually
   used by the method.
 * Then, retrospectively, we call the ``calc_max_slices`` estimator function and pass in this memory
-  as the ``available_memory`` argument. So we're asking the estimation function to assume that 
-  the memory available is the actually used memory in the method call. 
+  as the ``available_memory`` argument. So we're asking the estimation function to assume that
+  the memory available is the actually used memory in the method call.
 * The estimated number of slices should then be less or equal to the actual slices used earlier.
 * To make sure the function is not too conservative, we're checking that it returns at least 80%
   of the slices that actually fit
 
 
-  
-  
+
+

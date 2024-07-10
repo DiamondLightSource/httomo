@@ -110,8 +110,8 @@ float_to_top = true
 # Make flake8 respect black's line length (default 88),
 max-line-length = 88
 extend-ignore = [
-    "E203",  
-    "F811"  
+    "E203",
+    "F811"
 ]
 per-file-ignores = [
     "*pyi:E302"

@@ -60,13 +60,13 @@
   parameters:
     newshape: [256, 256]
     axis: auto
-    interpolation: nearest  
+    interpolation: nearest
 - method: calculate_stats
   module_path: httomo.methods
   parameters: {}
   id: statistics
   side_outputs:
-    glob_stats: glob_stats  
+    glob_stats: glob_stats
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:

@@ -112,7 +112,6 @@ def test_calculate_stats_2_processes(mocker: MockerFixture, dummy_block: DataSet
 def test_calculate_stats_uses_gpu_if_available(
     mocker: MockerFixture, dummy_block: DataSetBlock, gpu: bool
 ):
-
     if gpu and not gpu_enabled:
         pytest.skip("No GPU available")
 

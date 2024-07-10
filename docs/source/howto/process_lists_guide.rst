@@ -10,7 +10,7 @@ they are introduced here too.
 Editing process lists
 ---------------------
 
-This section explains how to build a process list (see more on :ref:`explanation_process_list`) from YAML templates 
+This section explains how to build a process list (see more on :ref:`explanation_process_list`) from YAML templates
 (see more on :ref:`explanation_templates`).
 
 Given time working with HTTomo, a user will likely settle on a workflow for
@@ -22,10 +22,10 @@ As a starting point, the general process of building the pipeline can be the fol
 
 - copy+paste templates for the desired methods from the
   :ref:`reference_templates` section
-- manually edit the parameter values within the copied template as needed. The user might want 
+- manually edit the parameter values within the copied template as needed. The user might want
   to check the documentation for the relevant method in the library itself.
 - intermittently run the :ref:`YAML checker <utilities_yamlchecker>` during
-  editing of the YAML file to detect any errors early on. It is strongly recommended to run 
+  editing of the YAML file to detect any errors early on. It is strongly recommended to run
   the checker at least once when the YAML pipeline is configured and ready to be run.
 
 Methods order
@@ -43,6 +43,6 @@ following:
 
 .. toctree::
    :maxdepth: 2
-   
+
    process_lists/httomo_parameters
    process_lists/process_list_configure
