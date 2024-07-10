@@ -1,4 +1,4 @@
-name: HTTomo version conda upload
+name: HTTomo version build
 
 # Run the workflow whenever a tag beginning with `v` is pushed to any branch
 on:
@@ -7,7 +7,7 @@ on:
       - v*
 
 jobs:
-  build-linux:
+  conda-build-upload:
     runs-on: ubuntu-20.04
 
     defaults:

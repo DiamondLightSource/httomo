@@ -1,4 +1,4 @@
-name: HTTomo nightly build + upload
+name: HTTomo nightly build (no test)
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
-  build-linux:
+  build-conda-upload:
     runs-on: ubuntu-20.04
 
     defaults:
