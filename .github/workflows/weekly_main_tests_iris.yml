@@ -1,12 +1,8 @@
-name: HTTomo tests
+name: Weekly main tests
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  schedule:
+    - cron: '55 0 * * 4' # At 00:55 every Thursday
 
 jobs:
   iris-gpu:
@@ -37,7 +33,7 @@ jobs:
 
       - name: Install httomo
         run: |
-          pip install .[dev]
+          conda install "httomo/linux-64::httomo * py310_openmpi_regular*"
           micromamba list
 
       - name: Run tests
