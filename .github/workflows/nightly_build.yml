@@ -1,4 +1,4 @@
-name: httomo nightly dev conda package build + upload
+name: HTTomo nightly build + upload
 
 on:
   schedule:
@@ -20,11 +20,11 @@ jobs:
           ref: "main"
           fetch-depth: 0
 
-      # setup Python 3.9
-      - name: Setup Python 3.9
+      # setup Python 3.10
+      - name: Setup Python 3.10
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: '3.9'
 
       - name: Install dependencies with Conda
         run: |

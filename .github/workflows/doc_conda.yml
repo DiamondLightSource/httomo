@@ -1,4 +1,4 @@
-name: HTTomo doc test
+name: HTTomo docs publish
 
 on:
   workflow_dispatch:
