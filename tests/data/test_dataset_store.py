@@ -13,26 +13,30 @@ from httomo.utils import make_3d_shape_from_shape
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
-def test_writer_can_set_sizes_and_shapes_dim(tmp_path: PathLike, slicing_dim: Literal[0, 1, 2]):
-    global_shape=(30, 15, 20)
-    chunk_shape_t=list(global_shape)
+def test_writer_can_set_sizes_and_shapes_dim(
+    tmp_path: PathLike, slicing_dim: Literal[0, 1, 2]
+):
+    global_shape = (30, 15, 20)
+    chunk_shape_t = list(global_shape)
     chunk_shape_t[slicing_dim] = 5
     chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
-    global_index_t=[0, 0, 0]
+    global_index_t = [0, 0, 0]
     global_index_t[slicing_dim] = 5
     global_index = make_3d_shape_from_shape(global_index_t)
     writer = DataSetStoreWriter(
-        slicing_dim=slicing_dim,        
+        slicing_dim=slicing_dim,
         comm=MPI.COMM_SELF,
         temppath=tmp_path,
     )
-    block = DataSetBlock(data=np.ones(chunk_shape, dtype=np.float32),
-                         aux_data=AuxiliaryData(angles=np.ones(global_shape[0], dtype=np.float32)),
-                         chunk_shape=chunk_shape,
-                         slicing_dim=slicing_dim,
-                         global_shape=global_shape,
-                         block_start=0,
-                         chunk_start=global_index[slicing_dim])
+    block = DataSetBlock(
+        data=np.ones(chunk_shape, dtype=np.float32),
+        aux_data=AuxiliaryData(angles=np.ones(global_shape[0], dtype=np.float32)),
+        chunk_shape=chunk_shape,
+        slicing_dim=slicing_dim,
+        global_shape=global_shape,
+        block_start=0,
+        chunk_start=global_index[slicing_dim],
+    )
     writer.write_block(block)
 
     assert writer.global_shape == global_shape
@@ -43,7 +47,7 @@ def test_writer_can_set_sizes_and_shapes_dim(tmp_path: PathLike, slicing_dim: Li
 
 def test_reader_throws_if_no_data(tmp_path: PathLike):
     writer = DataSetStoreWriter(
-        slicing_dim=0,        
+        slicing_dim=0,
         comm=MPI.COMM_SELF,
         temppath=tmp_path,
     )
@@ -62,7 +66,7 @@ def test_can_write_and_read_blocks(
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
     )
-    
+
     GLOBAL_SHAPE = (10, 10, 10)
     global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
         GLOBAL_SHAPE
@@ -70,22 +74,22 @@ def test_can_write_and_read_blocks(
     chunk_shape = (4, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
     chunk_start = 3
     block1 = DataSetBlock(
-        data=global_data[chunk_start:chunk_start+2, :, :],
+        data=global_data[chunk_start : chunk_start + 2, :, :],
         aux_data=AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32)),
         global_shape=GLOBAL_SHAPE,
         chunk_shape=chunk_shape,
         block_start=0,
         slicing_dim=0,
-        chunk_start=chunk_start
+        chunk_start=chunk_start,
     )
     block2 = DataSetBlock(
-        data=global_data[chunk_start+2:chunk_start+2+2, :, :],
+        data=global_data[chunk_start + 2 : chunk_start + 2 + 2, :, :],
         aux_data=AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32)),
         global_shape=GLOBAL_SHAPE,
         chunk_shape=chunk_shape,
         block_start=2,
         slicing_dim=0,
-        chunk_start=chunk_start
+        chunk_start=chunk_start,
     )
 
     if file_based:
@@ -112,7 +116,10 @@ def test_can_write_and_read_blocks(
 
 @pytest.mark.parametrize("file_based", [False, True])
 def test_write_after_read_throws(
-    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: PathLike, file_based: bool
+    mocker: MockerFixture,
+    dummy_block: DataSetBlock,
+    tmp_path: PathLike,
+    file_based: bool,
 ):
     writer = DataSetStoreWriter(
         slicing_dim=0,
@@ -186,22 +193,22 @@ def test_can_write_and_read_block_with_different_sizes(tmp_path: PathLike):
     chunk_shape = (4, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
     chunk_start = 3
     block1 = DataSetBlock(
-        data=global_data[chunk_start:chunk_start+2, :, :],
+        data=global_data[chunk_start : chunk_start + 2, :, :],
         aux_data=AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32)),
         global_shape=GLOBAL_SHAPE,
         chunk_shape=chunk_shape,
         block_start=0,
         slicing_dim=0,
-        chunk_start=chunk_start
+        chunk_start=chunk_start,
     )
     block2 = DataSetBlock(
-        data=global_data[chunk_start+2:chunk_start+2+2, :, :],
+        data=global_data[chunk_start + 2 : chunk_start + 2 + 2, :, :],
         aux_data=AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32)),
         global_shape=GLOBAL_SHAPE,
         chunk_shape=chunk_shape,
         block_start=2,
         slicing_dim=0,
-        chunk_start=chunk_start
+        chunk_start=chunk_start,
     )
 
     writer.write_block(block1)
@@ -211,7 +218,9 @@ def test_can_write_and_read_block_with_different_sizes(tmp_path: PathLike):
 
     rblock = reader.read_block(0, 4)
 
-    np.testing.assert_array_equal(rblock.data, global_data[chunk_start:chunk_start+4, :, :])
+    np.testing.assert_array_equal(
+        rblock.data, global_data[chunk_start : chunk_start + 4, :, :]
+    )
 
 
 def test_writing_inconsistent_global_shapes_fails(tmp_path: PathLike):
@@ -226,7 +235,7 @@ def test_writing_inconsistent_global_shapes_fails(tmp_path: PathLike):
     )
     chunk_shape = (4, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
     chunk_start = 3
-    aux_data=AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0]+10, dtype=np.float32))
+    aux_data = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0] + 10, dtype=np.float32))
     block1 = DataSetBlock(
         data=global_data[:2, :, :],
         aux_data=aux_data,
@@ -234,16 +243,16 @@ def test_writing_inconsistent_global_shapes_fails(tmp_path: PathLike):
         chunk_shape=chunk_shape,
         block_start=0,
         slicing_dim=0,
-        chunk_start=chunk_start
+        chunk_start=chunk_start,
     )
     block2 = DataSetBlock(
         data=global_data[:2, :, :],
         aux_data=aux_data,
-        global_shape=(GLOBAL_SHAPE[0]+1, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]),
+        global_shape=(GLOBAL_SHAPE[0] + 1, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]),
         chunk_shape=chunk_shape,
         block_start=2,
         slicing_dim=0,
-        chunk_start=chunk_start
+        chunk_start=chunk_start,
     )
 
     writer.write_block(block1)
@@ -251,6 +260,7 @@ def test_writing_inconsistent_global_shapes_fails(tmp_path: PathLike):
         writer.write_block(block2)
 
     assert "inconsistent shape" in str(e)
+
 
 def test_writing_inconsistent_chunk_shapes_fails(tmp_path: PathLike):
     writer = DataSetStoreWriter(
@@ -271,16 +281,16 @@ def test_writing_inconsistent_chunk_shapes_fails(tmp_path: PathLike):
         chunk_shape=chunk_shape,
         block_start=0,
         slicing_dim=0,
-        chunk_start=chunk_start
+        chunk_start=chunk_start,
     )
     block2 = DataSetBlock(
         data=global_data[2:2, :, :],
         aux_data=AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32)),
         global_shape=GLOBAL_SHAPE,
-        chunk_shape=(chunk_shape[0]-1, chunk_shape[1], chunk_shape[2]),
+        chunk_shape=(chunk_shape[0] - 1, chunk_shape[1], chunk_shape[2]),
         block_start=2,
         slicing_dim=0,
-        chunk_start=chunk_start
+        chunk_start=chunk_start,
     )
 
     writer.write_block(block1)
@@ -288,6 +298,7 @@ def test_writing_inconsistent_chunk_shapes_fails(tmp_path: PathLike):
         writer.write_block(block2)
 
     assert "inconsistent shape" in str(e)
+
 
 def test_writing_inconsistent_global_index_fails(tmp_path: PathLike):
     writer = DataSetStoreWriter(
@@ -308,7 +319,7 @@ def test_writing_inconsistent_global_index_fails(tmp_path: PathLike):
         chunk_shape=chunk_shape,
         block_start=0,
         slicing_dim=0,
-        chunk_start=chunk_start
+        chunk_start=chunk_start,
     )
     block2 = DataSetBlock(
         data=global_data[2:2, :, :],
@@ -317,7 +328,7 @@ def test_writing_inconsistent_global_index_fails(tmp_path: PathLike):
         chunk_shape=chunk_shape,
         block_start=2,
         slicing_dim=0,
-        chunk_start=chunk_start+2
+        chunk_start=chunk_start + 2,
     )
 
     writer.write_block(block1)
@@ -325,7 +336,6 @@ def test_writing_inconsistent_global_index_fails(tmp_path: PathLike):
         writer.write_block(block2)
 
     assert "inconsistent shape" in str(e)
-
 
 
 def test_create_new_data_goes_to_file_on_memory_error(
@@ -350,8 +360,8 @@ def test_create_new_data_goes_to_file_on_memory_error(
         ANY,
         writer.comm,
     )
-    
-    
+
+
 def test_create_new_data_goes_to_file_on_memory_limit(
     mocker: MockerFixture, tmp_path: PathLike
 ):
@@ -359,8 +369,8 @@ def test_create_new_data_goes_to_file_on_memory_limit(
     data = np.ones(GLOBAL_SHAPE, dtype=np.float32)
     aux_data = AuxiliaryData(
         angles=np.ones(data.shape[0], dtype=np.float32),
-        darks=2.*np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), dtype=np.float32),
-        flats=1.*np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), dtype=np.float32),
+        darks=2.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), dtype=np.float32),
+        flats=1.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), dtype=np.float32),
     )
     block = DataSetBlock(
         data=data[0:2, :, :],
@@ -375,7 +385,7 @@ def test_create_new_data_goes_to_file_on_memory_limit(
         slicing_dim=0,
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
-        memory_limit_bytes=block.data.nbytes + 5  # only one block will fit in memory
+        memory_limit_bytes=block.data.nbytes + 5,  # only one block will fit in memory
     )
 
     createh5_mock = mocker.patch.object(
@@ -412,7 +422,10 @@ def test_calls_reslice(
 
 @pytest.mark.parametrize("file_based", [False, True])
 def test_reslice_single_block_single_process(
-    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: PathLike, file_based: bool
+    mocker: MockerFixture,
+    dummy_block: DataSetBlock,
+    tmp_path: PathLike,
+    file_based: bool,
 ):
     writer = DataSetStoreWriter(
         slicing_dim=0,
@@ -489,7 +502,7 @@ def test_full_integration_with_reslice(
         global_shape=GLOBAL_DATA_SHAPE,
         block_start=0,
         chunk_start=chunk_start,
-        chunk_shape=(chunk_size, GLOBAL_DATA_SHAPE[1], GLOBAL_DATA_SHAPE[2])
+        chunk_shape=(chunk_size, GLOBAL_DATA_SHAPE[1], GLOBAL_DATA_SHAPE[2]),
     )
 
     writer = DataSetStoreWriter(

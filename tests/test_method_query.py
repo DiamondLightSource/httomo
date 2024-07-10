@@ -53,15 +53,17 @@ def test_httomolibgpu_default_save_result():
     save_result = get_method_info(
         "httomolibgpu.prep.normalize", "normalize", "save_result_default"
     )
-    
+
     assert save_result is False
-    
+
+
 def test_httomolibgpu_default_save_result_recon():
     save_result = get_method_info(
         "httomolibgpu.recon.algorithm", "FBP", "save_result_default"
     )
-    
+
     assert save_result is True
+
 
 def test_httomolibgpu_memory_gpu():
     memory_gpu = get_method_info(
@@ -80,7 +82,7 @@ def test_database_query_object():
     mempars = query.get_memory_gpu_params()
     assert set(p.dataset for p in mempars) == set(["tomo"])
     assert all(p.method == "module" for p in mempars)
-    assert all(p.multiplier == 'None' for p in mempars)
+    assert all(p.multiplier == "None" for p in mempars)
 
 
 def test_database_query_object_recon_swap_output():

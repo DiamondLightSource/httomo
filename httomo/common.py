@@ -88,10 +88,10 @@ class ResliceInfo:
 class PlatformSection:
     """
     Data class to represent a section of the pipeline. Section can combine methods
-    if they run on the same platform (cpu or gpu) and have the same pattern. 
+    if they run on the same platform (cpu or gpu) and have the same pattern.
     The sections can be further divided if necessary if the results of the method
-    needed to be saved. 
-    NOTE: More fine division of sections into subsections will slow down 
+    needed to be saved.
+    NOTE: More fine division of sections into subsections will slow down
     the pipeline.
 
     Mainly used to iterate through GPU memory in chunks.
@@ -138,14 +138,14 @@ class RunMethodInfo:
         save the result into intermediate dataset
     task_idx: int
         Index of the local task in the section being run
-    task_idx_global: int 
+    task_idx_global: int
         Index of the global task (method) in the pipeline
     package_name: str
         The name of the package the method is imported from
     method_name: str
         The name of the method being executed
     global_statistics: bool
-        Whether global statistics needs to be calculated on the output of the method.        
+        Whether global statistics needs to be calculated on the output of the method.
     """
 
     dict_params_method: Dict[str, Any] = field(default_factory=dict)
@@ -166,6 +166,7 @@ class PreProcessInfo:
     Class holding execution info for each method in the pre-processing stage
     of the pipeline
     """
+
     params: Dict[str, Any]
     method_name: str
     module_path: str
@@ -177,6 +178,7 @@ class LoaderInfo:
     """
     Class holding execution info for the loader
     """
+
     params: Dict[str, Any]
     method_name: str
     method_func: Callable

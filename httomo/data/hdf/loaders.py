@@ -16,6 +16,7 @@ __all__ = [
     "standard_tomo",
 ]
 
+
 @dataclass
 class LoaderData:
     data: ndarray

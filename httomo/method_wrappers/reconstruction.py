@@ -18,8 +18,10 @@ class ReconstructionWrapper(GenericMethodWrapper):
 
     def _preprocess_data(self, block: DataSetBlock) -> DataSetBlock:
         # this is essential for the angles cutting below to be valid
-        assert self.pattern == Pattern.sinogram, "reconstruction methods must be sinogram"
-        
+        assert (
+            self.pattern == Pattern.sinogram
+        ), "reconstruction methods must be sinogram"
+
         # for 360 degrees data the angular dimension will be truncated while angles are not.
         # Truncating angles if the angular dimension has got a different size
         datashape0 = block.data.shape[0]

@@ -15,7 +15,7 @@ class SummaryMonitor(MonitoringInterface):
         self._total = 0.0
         self._total_agg = 0.0
         self._comm = MPI.COMM_WORLD
-    
+
     def report_method_block(
         self,
         method_name: str,
@@ -28,7 +28,7 @@ class SummaryMonitor(MonitoringInterface):
         cpu_time: float,
         gpu_kernel_time: float = 0.0,
         gpu_h2d_time: float = 0.0,
-        gpu_d2h_time: float = 0.0        
+        gpu_d2h_time: float = 0.0,
     ):
         if method_name not in self._methods:
             self._methods[method_name] = 0.0
@@ -37,7 +37,7 @@ class SummaryMonitor(MonitoringInterface):
         self._methods_gpu += gpu_kernel_time
         self._h2d += gpu_h2d_time
         self._d2h += gpu_d2h_time
-        
+
     def report_source_block(
         self,
         name: str,
@@ -46,10 +46,10 @@ class SummaryMonitor(MonitoringInterface):
         block_dims: Tuple[int, int, int],
         block_idx_chunk: Tuple[int, int, int],
         block_idx_global: Tuple[int, int, int],
-        cpu_time: float
+        cpu_time: float,
     ):
         self._sources += cpu_time
-        
+
     def report_sink_block(
         self,
         name: str,
@@ -58,13 +58,13 @@ class SummaryMonitor(MonitoringInterface):
         block_dims: Tuple[int, int, int],
         block_idx_chunk: Tuple[int, int, int],
         block_idx_global: Tuple[int, int, int],
-        cpu_time: float
+        cpu_time: float,
     ):
         self._sinks += cpu_time
-        
+
     def report_total_time(self, cpu_time: float):
         self._total = cpu_time
-        
+
     def write_results(self, dest: TextIO):
         self._aggregate_mpi()
         if self._comm.rank == 0:
@@ -83,10 +83,12 @@ class SummaryMonitor(MonitoringInterface):
                 f"  ------------------------" + "-" * 15,
                 f"Method breakdowns:",
             ]
-            for k,v in self._methods.items():
-                lines.append(f"  {k:>30s} : {v:>10.3f}s ({v / self._total * 100:>4.1f}%)")
-            dest.write('\n'.join(lines))
-        
+            for k, v in self._methods.items():
+                lines.append(
+                    f"  {k:>30s} : {v:>10.3f}s ({v / self._total * 100:>4.1f}%)"
+                )
+            dest.write("\n".join(lines))
+
     def _aggregate_mpi(self):
         self._total_agg = self._total
         if self._comm.size == 1:

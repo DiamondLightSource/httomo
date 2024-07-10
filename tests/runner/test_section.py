@@ -253,10 +253,12 @@ def test_sectionizer_output_ref_after_regular_section_break_does_nothing(
     assert len(s[0]) == 6
     assert len(s[1]) == 6
 
-@pytest.mark.parametrize("patterns", [
-    (Pattern.sinogram, Pattern.projection),
-    (Pattern.projection, Pattern.sinogram)
-], ids=["sino-proj", "proj-sino"])
+
+@pytest.mark.parametrize(
+    "patterns",
+    [(Pattern.sinogram, Pattern.projection), (Pattern.projection, Pattern.sinogram)],
+    ids=["sino-proj", "proj-sino"],
+)
 def test_sectionizer_inserts_empty_section_if_loader_pattern_mismatches(
     mocker: MockerFixture, patterns: Tuple[Pattern, Pattern]
 ):

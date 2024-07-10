@@ -19,7 +19,7 @@ def make_test_method(
     method_name="testmethod",
     module_path="testpath",
     save_result=False,
-    task_id:Optional[str]=None,
+    task_id: Optional[str] = None,
     **kwargs,
 ) -> MethodWrapper:
     if task_id is None:
@@ -64,23 +64,23 @@ def make_test_loader(
                 chunk_shape=block.chunk_shape,
                 chunk_index=block.chunk_index,
                 slicing_dim=1 if interface.pattern == Pattern.sinogram else 0,
-                aux_data=block.aux_data
+                aux_data=block.aux_data,
             )
-            slicing_dim=1 if interface.pattern == Pattern.sinogram else 0
+            slicing_dim = 1 if interface.pattern == Pattern.sinogram else 0
             mocker.patch.object(
                 ret,
                 "read_block",
                 side_effect=lambda start, length: DataSetBlock(
-                    data=block.data[start: start+length, :, :],
+                    data=block.data[start : start + length, :, :],
                     aux_data=block.aux_data,
                     global_shape=block.global_shape,
                     chunk_shape=block.chunk_shape,
                     slicing_dim=slicing_dim,
                     block_start=start,
-                    chunk_start=block.chunk_index[slicing_dim]
-                )
+                    chunk_start=block.chunk_index[slicing_dim],
+                ),
             )
-            
+
             return ret
 
         mocker.patch.object(
@@ -100,7 +100,7 @@ def make_mock_repo(
         GpuMemoryRequirement(dataset="tomo", multiplier=1.2, method="direct")
     ],
     swap_dims_on_output=False,
-    save_result_default=False
+    save_result_default=False,
 ) -> MethodRepository:
     """Makes a mock MethodRepository that returns the given properties on any query"""
     mock_repo = mocker.MagicMock()
@@ -110,8 +110,12 @@ def make_mock_repo(
     mocker.patch.object(
         mock_query, "get_output_dims_change", return_value=output_dims_change
     )
-    mocker.patch.object(mock_query, "swap_dims_on_output", return_value=swap_dims_on_output)
+    mocker.patch.object(
+        mock_query, "swap_dims_on_output", return_value=swap_dims_on_output
+    )
     mocker.patch.object(mock_query, "get_implementation", return_value=implementation)
     mocker.patch.object(mock_query, "get_memory_gpu_params", return_value=memory_gpu)
-    mocker.patch.object(mock_query, "save_result_default", return_value=save_result_default)
+    mocker.patch.object(
+        mock_query, "save_result_default", return_value=save_result_default
+    )
     return mock_repo

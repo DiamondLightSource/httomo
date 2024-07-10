@@ -14,7 +14,7 @@ def test_tomo_standard_testing_pipeline_loaded(
     cmd, standard_data, standard_loader, output_folder, testing_pipeline, merge_yamls
 ):
     cmd.pop(4)  #: don't save all
-    cmd.insert(6, standard_data)    
+    cmd.insert(6, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
     cmd.insert(7, "temp.yaml")
     cmd.insert(8, output_folder)
@@ -29,7 +29,8 @@ def test_tomo_standard_testing_pipeline_loaded(
     assert "Running task 4 (pattern=projection): find_center_vo.." in result.stderr
     assert "Running task 5 (pattern=sinogram): remove_stripe_fw..." in result.stderr
     assert "Running task 6 (pattern=sinogram): recon..." in result.stderr
-    assert "Running task 7 (pattern=sinogram): save_to_images.." in result.stderr    
+    assert "Running task 7 (pattern=sinogram): save_to_images.." in result.stderr
+
 
 @pytest.mark.skip("outdated - to be removed after refactoring")
 def test_diad_testing_pipeline_loaded(
@@ -49,7 +50,8 @@ def test_diad_testing_pipeline_loaded(
     assert "Running task 4 (pattern=projection): find_center_vo.." in result.stderr
     assert "Running task 5 (pattern=sinogram): remove_stripe_fw..." in result.stderr
     assert "Running task 6 (pattern=sinogram): recon..." in result.stderr
-    assert "Running task 7 (pattern=sinogram): save_to_images.." in result.stderr    
+    assert "Running task 7 (pattern=sinogram): save_to_images.." in result.stderr
+
 
 def test_standard_tomo(standard_data, standard_data_path, standard_image_key_path):
     preview = [None, {"start": 5, "stop": 10}, None]

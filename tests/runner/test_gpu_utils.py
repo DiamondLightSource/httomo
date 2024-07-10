@@ -16,7 +16,6 @@ def test_get_available_memory():
     assert mem <= 0.9 * xp.cuda.Device(local_rank).mem_info[0]
 
 
-
 def test_get_available_memory_cpu(mocker: MockerFixture):
     # this function is called in the implementation try block -
     # we trigger an import error here to simulate cupy not being there

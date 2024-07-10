@@ -5,19 +5,19 @@ from httomo.monitors.summary import SummaryMonitor
 from httomo.runner.monitoring_interface import MonitoringInterface
 
 
-MONITORS_MAP = {
-    "bench": BenchmarkMonitoring,
-    "summary": SummaryMonitor
-}
+MONITORS_MAP = {"bench": BenchmarkMonitoring, "summary": SummaryMonitor}
+
 
 def make_monitors(monitor_descriptors: List[str]) -> Optional[MonitoringInterface]:
     if len(monitor_descriptors) == 0:
         return None
-    
+
     monitors: List[MonitoringInterface] = []
     for descriptor in monitor_descriptors:
         if descriptor not in MONITORS_MAP:
-            raise ValueError(f"Unknown monitor '{descriptor}'. Please choose one of {MONITORS_MAP.keys()}")
+            raise ValueError(
+                f"Unknown monitor '{descriptor}'. Please choose one of {MONITORS_MAP.keys()}"
+            )
         monitors.append(MONITORS_MAP[descriptor]())
-        
+
     return AggregateMonitoring(monitors)

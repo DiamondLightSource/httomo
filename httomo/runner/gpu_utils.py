@@ -7,8 +7,8 @@ def gpumem_cleanup():
         xp.get_default_memory_pool().free_all_blocks()
         cache = xp.fft.config.get_plan_cache()
         cache.clear()
-    
-        
+
+
 def get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
     try:
         import cupy as cp
@@ -22,4 +22,3 @@ def get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
             return int(available_memory * (1 - safety_margin_percent / 100.0))
     except:
         return int(100e9)  # arbitrarily high number - only used if GPU isn't available
-

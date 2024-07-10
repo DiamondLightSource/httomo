@@ -9,7 +9,6 @@ from pytest_mock import MockerFixture
 from httomo.utils import gpu_enabled, xp
 
 
-
 def test_calculate_stats(mocker: MockerFixture, dummy_block: DataSetBlock):
     class FakeModule:
         def calculate_stats(data, comm):
