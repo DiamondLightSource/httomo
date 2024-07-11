@@ -33,7 +33,8 @@ jobs:
 
       - name: Install httomo
         run: |
-          conda install "httomo/linux-64::httomo * py310_openmpi_regular*"
+          micromamba activate httomo
+          micromamba install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge -c astra-toolbox -c rapidsai
           micromamba list
 
       - name: Run tests

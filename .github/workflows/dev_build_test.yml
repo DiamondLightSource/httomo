@@ -10,8 +10,13 @@ on:
   
 jobs:
 
-  install-run-tests:
-    runs-on: ubuntu-latest
+  install-test-iris-gpu:
+    runs-on: iris-gpu
+    container:
+      image: nvidia/cuda:11.6.2-devel-ubi8
+      env:
+        NVIDIA_VISIBLE_DEVICES: ${{ env.NVIDIA_VISIBLE_DEVICES }}
+
     defaults:
       run:
         shell: bash -l {0}
