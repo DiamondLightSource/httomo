@@ -1,8 +1,8 @@
-name: HTTomo weekly conda-build (main)
+name: HTTomo weekly main build
 
 on:
   schedule:
-    - cron: '0 0 * * 4' # At 00:00 on Thursday
+    - cron: '0 0 * * 1' # At 00:00 on Monday
 
 jobs:
   notest-conda-upload:

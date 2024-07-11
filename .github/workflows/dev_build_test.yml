@@ -33,19 +33,25 @@ jobs:
           post-cleanup: 'all'
           init-shell: bash
 
-      - name: Install httomo-dev from conda-cloud
-        run: |
-          micromamba activate httomo
-          micromamba install "httomo/label/dev/linux-64::httomo * py310_openmpi_regular*" -c httomo -c conda-forge -c astra-toolbox -c rapidsai
-          micromamba list
+      # - name: Install httomo-dev from conda-cloud
+      #   run: |
+      #     micromamba activate httomo
+      #     micromamba install "httomo/label/dev/linux-64::httomo * py310_openmpi_regular*" -c httomo -c conda-forge -c astra-toolbox -c rapidsai -y
+      #     micromamba list
 
       - name: Generate yaml templates
         run: |
-          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./httomo/yaml_templates/tomopy
-          python ./scripts/yaml_unsupported_tomopy_remove.py -t ./httomo/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
-          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./httomo/yaml_templates/httomolib
-          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./httomo/yaml_templates/httomolibgpu
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./httomo/httomo/yaml_templates/tomopy
+          python ./scripts/yaml_unsupported_tomopy_remove.py -t ./httomo/httomo/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./httomo/httomo/yaml_templates/httomolib
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./httomo/httomo/yaml_templates/httomolibgpu
           
+      - name: Install httomo-dev
+        run: |
+          micromamba activate httomo
+          pip install .[dev]
+          micromamba list
+
       - name: Run tests
         run: |
           pytest tests/

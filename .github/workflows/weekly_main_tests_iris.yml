@@ -2,7 +2,7 @@ name: Weekly main tests
 
 on:
   schedule:
-    - cron: '55 0 * * 4' # At 00:55 every Thursday
+    - cron: '55 0 * * 1' # At 00:55 every Monday
 
 jobs:
   iris-gpu:
@@ -34,7 +34,7 @@ jobs:
       - name: Install httomo
         run: |
           micromamba activate httomo
-          micromamba install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge -c astra-toolbox -c rapidsai
+          micromamba install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge -c astra-toolbox -c rapidsai -y
           micromamba list
 
       - name: Run tests
