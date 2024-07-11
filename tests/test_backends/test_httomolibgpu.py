@@ -41,7 +41,6 @@ module_mem_path = "httomo.methods_database.packages.external."
 
 
 class MaxMemoryHook(cp.cuda.MemoryHook):
-
     def __init__(self, initial=0):
         self.max_mem = initial
         self.current = initial

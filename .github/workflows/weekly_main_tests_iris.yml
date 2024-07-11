@@ -1,0 +1,41 @@
+name: Weekly main tests
+
+on:
+  schedule:
+    - cron: '55 0 * * 4' # At 00:55 every Thursday
+
+jobs:
+  iris-gpu:
+    runs-on: iris-gpu
+    container:
+      image: nvidia/cuda:11.6.2-devel-ubi8
+      env:
+        NVIDIA_VISIBLE_DEVICES: ${{ env.NVIDIA_VISIBLE_DEVICES }}
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v3
+        with:
+          ref: "main"
+          fetch-depth: 0
+
+      - name: Create conda environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: conda/environment.yml
+          environment-name: httomo
+          post-cleanup: 'all'
+          init-shell: bash
+
+      - name: Install httomo
+        run: |
+          conda install "httomo/linux-64::httomo * py310_openmpi_regular*"
+          micromamba list
+
+      - name: Run tests
+        run: |
+          pytest tests/

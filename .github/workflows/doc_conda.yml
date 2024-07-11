@@ -1,16 +1,16 @@
-name: HTTomo doc test
+name: HTTomo docs
 
 on:
   workflow_dispatch:
   pull_request:
     branches:
-      - main
+      - dev
   push:
     branches:
-      - main
+      - dev
 
 jobs:
-  build-linux:
+  build-docs-publish:
     runs-on: ubuntu-latest
     defaults:
       run:

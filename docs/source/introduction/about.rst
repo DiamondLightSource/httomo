@@ -19,7 +19,7 @@ HTTomo orchestrates the optimal data splitting driven by the available GPU memor
 
 HTTomo is a User Interface (UI) package and does not contain any data processing methods, but rather utilises other libraries as `backends <https://en.wikipedia.org/wiki/Frontend_and_backend>`_.
 Please see the list of currently supported packages by HTTomo in :ref:`backends_list`. It should be relatively simple to integrate any other modular
-CPU/GPU Python library for data processing methods in HTTomo, please see more on that in :ref:`developers_content` section. 
+CPU/GPU Python library for data processing methods in HTTomo, please see more on that in :ref:`developers_content` section.
 
 A complex data analysis pipelines can be built by stacking together provided :ref:`reference_templates` and :ref:`tutorials_pl_templates` are also provided.
 

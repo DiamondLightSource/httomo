@@ -14,6 +14,7 @@ from pytest_mock import MockerFixture
 
 def test_recon_handles_reconstruction_angle_reshape(mocker: MockerFixture):
     GLOBAL_SHAPE = (10, 20, 30)
+
     class FakeModule:
         # we give the angles a different name on purpose
         def recon_tester(data, theta):
@@ -30,14 +31,21 @@ def test_recon_handles_reconstruction_angle_reshape(mocker: MockerFixture):
         MPI.COMM_WORLD,
     )
     assert isinstance(wrp, ReconstructionWrapper)
-    
-    
-    aux_data = AuxiliaryData(angles=2.*np.ones(GLOBAL_SHAPE[0]+10, dtype=np.float32))
+
+    aux_data = AuxiliaryData(
+        angles=2.0 * np.ones(GLOBAL_SHAPE[0] + 10, dtype=np.float32)
+    )
     data = np.ones(GLOBAL_SHAPE, dtype=np.float32)
-    input = DataSetBlock(data[:, 0:3, :], slicing_dim=1, aux_data=aux_data, chunk_shape=GLOBAL_SHAPE, global_shape=GLOBAL_SHAPE)
-    
+    input = DataSetBlock(
+        data[:, 0:3, :],
+        slicing_dim=1,
+        aux_data=aux_data,
+        chunk_shape=GLOBAL_SHAPE,
+        global_shape=GLOBAL_SHAPE,
+    )
+
     wrp.execute(input)
-    
+
     assert aux_data.get_angles().shape[0] == GLOBAL_SHAPE[0]
 
 
@@ -53,13 +61,15 @@ def test_recon_handles_reconstruction_axisswap(mocker: MockerFixture):
         "recon_tester",
         MPI.COMM_WORLD,
     )
-    block = DataSetBlock(data=np.ones((13, 14, 15), dtype=np.float32),
+    block = DataSetBlock(
+        data=np.ones((13, 14, 15), dtype=np.float32),
         aux_data=AuxiliaryData(angles=np.ones(13, dtype=np.float32)),
-        slicing_dim=1
+        slicing_dim=1,
     )
     res = wrp.execute(block)
 
     assert res.data.shape == (13, 14, 15)
+
 
 def test_recon_changes_global_shape_if_size_changes(mocker: MockerFixture):
     class FakeModule:
@@ -74,14 +84,15 @@ def test_recon_changes_global_shape_if_size_changes(mocker: MockerFixture):
         "recon_tester",
         MPI.COMM_WORLD,
     )
-    block = DataSetBlock(data=np.ones((13, 3, 15), dtype=np.float32),
+    block = DataSetBlock(
+        data=np.ones((13, 3, 15), dtype=np.float32),
         aux_data=AuxiliaryData(angles=np.ones(13, dtype=np.float32)),
         slicing_dim=1,
         global_shape=(13, 14, 15),
-        chunk_shape=(13, 14, 15)
+        chunk_shape=(13, 14, 15),
     )
     res = wrp.execute(block)
-    
+
     assert res.shape == (30, 3, 15)
     assert res.global_shape == (30, 14, 15)
     assert res.chunk_shape == (30, 14, 15)

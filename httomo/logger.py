@@ -14,7 +14,9 @@ def setup_logger(out_path: Path):
     # Concise logs displayed in terminal
     logger.add(sink=sys.stdout, level="INFO", colorize=True, format="{message}")
     # Concise logs written to file
-    logger.add(sink=concise_logfile_path, level="INFO", colorize=False, format="{message}")
+    logger.add(
+        sink=concise_logfile_path, level="INFO", colorize=False, format="{message}"
+    )
     # Verbose logs written to file
     logger.add(sink=verbose_logfile_path, level="DEBUG", colorize=False, enqueue=True)
     # Verbose logs sent to syslog server in GELF format

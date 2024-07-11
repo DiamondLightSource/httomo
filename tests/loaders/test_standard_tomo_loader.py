@@ -653,11 +653,13 @@ def test_standard_tomo_loader_user_defined_angles(
         stop_angle=180,
         angles_total=720,
     )
-    EXPECTED_ANGLES = np.deg2rad(np.linspace(
-        USER_DEFINED_ANGLES.start_angle,
-        USER_DEFINED_ANGLES.stop_angle,
-        USER_DEFINED_ANGLES.angles_total,
-    ))
+    EXPECTED_ANGLES = np.deg2rad(
+        np.linspace(
+            USER_DEFINED_ANGLES.start_angle,
+            USER_DEFINED_ANGLES.stop_angle,
+            USER_DEFINED_ANGLES.angles_total,
+        )
+    )
 
     with mock.patch(
         "httomo.darks_flats.get_darks_flats",

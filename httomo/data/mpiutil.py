@@ -110,9 +110,7 @@ def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
     factor = (
         arrays[0].shape[0]
         if dim0equal
-        else arrays[0].shape[1]
-        if dim1equal
-        else arrays[0].shape[2]
+        else arrays[0].shape[1] if dim1equal else arrays[0].shape[2]
     )
     dtype1 = dtype.Create_contiguous(factor).Commit()
     # sanity check - this should always pass
@@ -122,9 +120,7 @@ def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
     sizes_rec1 = [s // factor for s in sizes_rec]
 
     # now send the same data, but with the adjusted size+datatype (output is identical)
-    comm.Alltoallv(
-        (fullinput, sizes_send1, dtype1), (fulloutput, sizes_rec1, dtype1)
-    )
+    comm.Alltoallv((fullinput, sizes_send1, dtype1), (fulloutput, sizes_rec1, dtype1))
 
     # build list of output arrays
     cumsizes = np.cumsum(sizes_rec)

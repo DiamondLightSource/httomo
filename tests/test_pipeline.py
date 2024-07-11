@@ -48,7 +48,13 @@ def _check_tif(files: List, number: int, shape: Tuple):
 
 
 def test_tomo_standard_testing_pipeline_output(
-    get_files: Callable, cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable,
+    cmd,
+    standard_data,
+    standard_loader,
+    testing_pipeline,
+    output_folder,
+    merge_yamls,
 ):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
@@ -94,7 +100,9 @@ def test_tomo_standard_testing_pipeline_output(
     assert "Data shape is (180, 3, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_cpu1_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline1, output_folder):
+def test_run_pipeline_cpu1_yaml(
+    get_files: Callable, cmd, standard_data, yaml_cpu_pipeline1, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline1)
@@ -124,7 +132,9 @@ def test_run_pipeline_cpu1_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_cpu1_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline1, output_folder):
+def test_run_pipeline_cpu1_py(
+    get_files: Callable, cmd, standard_data, python_cpu_pipeline1, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_cpu_pipeline1)
@@ -151,7 +161,9 @@ def test_run_pipeline_cpu1_py(get_files: Callable, cmd, standard_data, python_cp
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_cpu2_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline2, output_folder):
+def test_run_pipeline_cpu2_yaml(
+    get_files: Callable, cmd, standard_data, yaml_cpu_pipeline2, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline2)
@@ -189,7 +201,9 @@ def test_run_pipeline_cpu2_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert "Data shape is (180, 30, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_cpu2_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline2, output_folder):
+def test_run_pipeline_cpu2_py(
+    get_files: Callable, cmd, standard_data, python_cpu_pipeline2, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_cpu_pipeline2)
@@ -227,7 +241,9 @@ def test_run_pipeline_cpu2_py(get_files: Callable, cmd, standard_data, python_cp
     assert "Data shape is (180, 30, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_cpu3_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline3, output_folder):
+def test_run_pipeline_cpu3_yaml(
+    get_files: Callable, cmd, standard_data, yaml_cpu_pipeline3, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline3)
@@ -260,7 +276,9 @@ def test_run_pipeline_cpu3_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert " Global mean 0.0016174" in verbose_log_contents
 
 
-def test_run_pipeline_cpu3_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline3, output_folder):
+def test_run_pipeline_cpu3_py(
+    get_files: Callable, cmd, standard_data, python_cpu_pipeline3, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_cpu_pipeline3)
@@ -293,7 +311,9 @@ def test_run_pipeline_cpu3_py(get_files: Callable, cmd, standard_data, python_cp
     assert " Global mean 0.0016174" in verbose_log_contents
 
 
-def test_run_pipeline_cpu4_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline4, output_folder):
+def test_run_pipeline_cpu4_yaml(
+    get_files: Callable, cmd, standard_data, yaml_cpu_pipeline4, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline4)
@@ -326,7 +346,9 @@ def test_run_pipeline_cpu4_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gpu_pipeline1, output_folder):
+def test_run_pipeline_gpu1_yaml(
+    get_files: Callable, cmd, standard_data, yaml_gpu_pipeline1, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_gpu_pipeline1)
@@ -362,10 +384,14 @@ def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gp
     assert "Preview: (0:180, 0:128, 0:160)" in verbose_log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
     assert "The amount of the available GPU memory is" in verbose_log_contents
-    assert "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
+    assert (
+        "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
+    )
 
 
-def test_run_pipeline_gpu1_py(get_files: Callable, cmd, standard_data, python_gpu_pipeline1, output_folder):
+def test_run_pipeline_gpu1_py(
+    get_files: Callable, cmd, standard_data, python_gpu_pipeline1, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_gpu_pipeline1)
@@ -401,11 +427,19 @@ def test_run_pipeline_gpu1_py(get_files: Callable, cmd, standard_data, python_gp
     assert "Preview: (0:180, 0:128, 0:160)" in verbose_log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
     assert "The amount of the available GPU memory is" in verbose_log_contents
-    assert "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
+    assert (
+        "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
+    )
 
 
 def test_tomo_standard_testing_pipeline_output_with_save_all(
-    get_files: Callable, cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable,
+    cmd,
+    standard_data,
+    standard_loader,
+    testing_pipeline,
+    output_folder,
+    merge_yamls,
 ):
     cmd.insert(7, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
@@ -417,7 +451,7 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     assert len(files) == 10
 
     _check_yaml(files, "temp.yaml")
-    _check_tif(files, 3, (160,160))
+    _check_tif(files, 3, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -433,7 +467,13 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
 
 
 def test_i12_testing_pipeline_output(
-    get_files: Callable, cmd, i12_data, i12_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable,
+    cmd,
+    i12_data,
+    i12_loader,
+    testing_pipeline,
+    output_folder,
+    merge_yamls,
 ):
     cmd.insert(7, i12_data)
     merge_yamls(i12_loader, testing_pipeline)
@@ -539,7 +579,13 @@ def test_i12_testing_pipeline_output(
 
 
 def test_diad_testing_pipeline_output(
-    get_files: Callable, cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable,
+    cmd,
+    diad_data,
+    diad_loader,
+    testing_pipeline,
+    output_folder,
+    merge_yamls,
 ):
     cmd.insert(7, diad_data)
     merge_yamls(diad_loader, testing_pipeline)
@@ -576,13 +622,17 @@ def test_diad_testing_pipeline_output(
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
     assert "The full dataset shape is (3201, 22, 26)" in verbose_log_contents
-    assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
+    assert (
+        "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
+    )
     assert "Path to data: /entry/imaging/data" in verbose_log_contents
     assert "Preview: (100:3101, 5:7, 0:26)" in verbose_log_contents
     assert "Data shape is (3001, 2, 26) of type uint16" in verbose_log_contents
 
 
-def test_run_diad_pipeline_gpu(get_files: Callable, cmd, diad_data, diad_pipeline_gpu, output_folder):
+def test_run_diad_pipeline_gpu(
+    get_files: Callable, cmd, diad_data, diad_pipeline_gpu, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, diad_data)
     cmd.insert(7, diad_pipeline_gpu)
@@ -603,7 +653,9 @@ def test_run_diad_pipeline_gpu(get_files: Callable, cmd, diad_data, diad_pipelin
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
     assert "The full dataset shape is (3201, 22, 26)" in verbose_log_contents
-    assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
+    assert (
+        "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
+    )
     assert "Path to data: /entry/imaging/data" in verbose_log_contents
     assert "Preview: (100:3101, 8:15, 0:26)" in verbose_log_contents
     assert "Data shape is (3001, 7, 26) of type uint16" in verbose_log_contents
@@ -612,7 +664,9 @@ def test_run_diad_pipeline_gpu(get_files: Callable, cmd, diad_data, diad_pipelin
     assert "Global mean 0.000291" in verbose_log_contents
 
 
-def test_run_pipeline_360deg_gpu2(get_files: Callable, cmd, data360, yaml_gpu_pipeline360_2, output_folder):
+def test_run_pipeline_360deg_gpu2(
+    get_files: Callable, cmd, data360, yaml_gpu_pipeline360_2, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, data360)
     cmd.insert(7, yaml_gpu_pipeline360_2)

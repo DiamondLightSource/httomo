@@ -43,7 +43,7 @@
   module_path: httomolibgpu.misc.morph
   parameters:
     overlap: ${{centering.side_outputs.overlap}}
-    rotation: right    
+    rotation: right
 - method: FBP
   module_path: httomolibgpu.recon.algorithm
   parameters:
@@ -57,7 +57,7 @@
   parameters: {}
   id: statistics
   side_outputs:
-    glob_stats: glob_stats  
+    glob_stats: glob_stats
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:
@@ -68,4 +68,4 @@
     perc_range_min: 0.0
     perc_range_max: 95.0
     jpeg_quality: 95
-    glob_stats: ${{statistics.side_outputs.glob_stats}}    
+    glob_stats: ${{statistics.side_outputs.glob_stats}}

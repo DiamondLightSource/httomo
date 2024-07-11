@@ -66,7 +66,7 @@ def reslice(
         mpiutil.alltoall(to_scatter), axis=current_slice_dim - 1
     )
 
-    start_idx = 0 if comm.rank == 0 else split_indices[comm.rank-1]
+    start_idx = 0 if comm.rank == 0 else split_indices[comm.rank - 1]
     return new_data, next_slice_dim, start_idx
 
 
@@ -98,7 +98,7 @@ def reslice_filebased(
     detector_x : int
         det_x (horizontal) detector of the loaded dataset.
     detector_y : int
-        det_y (vertical) detector of the loaded dataset.        
+        det_y (vertical) detector of the loaded dataset.
     comm : Comm
         The MPI communicator to be used.
     Returns:
@@ -114,7 +114,7 @@ def reslice_filebased(
     slices_no_in_chunks = 1
     chunks_data = list(data_shape)
     chunks_data[next_slice_dim - 1] = slices_no_in_chunks
-    
+
     log_once(
         "<-------Reslicing/rechunking the data-------->",
         level=logging.DEBUG,
@@ -138,6 +138,7 @@ def reslice_filebased(
 
     return data, next_slice_dim, start_idx
 
+
 def single_sino_reslice(
     data: numpy.ndarray,
     idx: int,
@@ -159,7 +160,7 @@ def single_sino_reslice(
     if mpiutil.rank == 0:
         # Define the numpy array that will hold the single sinogram that has
         # been gathered from data from all MPI processes
-        recvbuf = numpy.empty(data_shape[0]*data_shape[2], dtype=NUMPY_DTYPE)
+        recvbuf = numpy.empty(data_shape[0] * data_shape[2], dtype=NUMPY_DTYPE)
     else:
         recvbuf = None
     # From the full projections that an MPI process has, send the data that
@@ -171,9 +172,9 @@ def single_sino_reslice(
     sizes_rec = mpiutil.comm.gather(sendbuf.size)
     # Gather the data into the rank 0 process
     mpiutil.comm.Gatherv(
-        (sendbuf, data.shape[0]*data.shape[2], MPI_DTYPE),
+        (sendbuf, data.shape[0] * data.shape[2], MPI_DTYPE),
         (recvbuf, sizes_rec, MPI_DTYPE),
-        root=0
+        root=0,
     )
 
     if mpiutil.rank == 0:

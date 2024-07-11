@@ -19,6 +19,6 @@ used.
 
 .. toctree::
    :maxdepth: 1
-   
+
    side_outputs/side_out
    save_results/save_results

@@ -44,8 +44,8 @@ class ImagesWrapper(GenericMethodWrapper):
         self["out_dir"] = out_dir if out_dir is not None else httomo.globals.run_out_dir
         if "comm_rank" in self.parameters:
             raise ValueError(
-                "save_to_images with the comm_rank parameter is broken. " +
-                "Please upgrade to the latest version, taking an offset parameter"
+                "save_to_images with the comm_rank parameter is broken. "
+                + "Please upgrade to the latest version, taking an offset parameter"
             )
 
     # Images execute is leaving original data on the device where it is,
@@ -61,7 +61,7 @@ class ImagesWrapper(GenericMethodWrapper):
                 **self._config_params,
                 "offset": block.global_index[_get_slicing_dim(self.pattern) - 1],
             }
-            
+
         args = self._build_kwargs(self._transform_params(config_params), block)
         if block.is_gpu:
             with catchtime() as t:

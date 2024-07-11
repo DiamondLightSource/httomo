@@ -308,7 +308,7 @@ def distortion_correction_path(test_data_path):
 def merge_yamls(load_yaml: Callable):
     def _merge_yamls(*yamls) -> None:
         """Merge multiple yaml files into one"""
-        data : List = []
+        data: List = []
         for y in yamls:
             curr_yaml_list = load_yaml(y)
             for x in curr_yaml_list:
@@ -342,7 +342,7 @@ def dummy_block() -> DataSetBlock:
 @pytest.fixture()
 def get_files():
     def _get_files(dir_path: str, excl: List[str] = []) -> List[str]:
-        """ Returns list of files from provided directory
+        """Returns list of files from provided directory
 
         Parameters
         ----------
@@ -360,13 +360,14 @@ def get_files():
             str(f) for f in _dir if f.is_file() and not any(st in str(f) for st in excl)
         ]
         return _files
+
     return _get_files
 
 
 @pytest.fixture()
 def load_yaml():
     def _load_yaml(yaml_in: str) -> PipelineConfig:
-        """ Loads provided yaml and returns dict
+        """Loads provided yaml and returns dict
 
         Parameters
         ----------
@@ -380,5 +381,5 @@ def load_yaml():
         with open(yaml_in, "r") as f:
             conf = list(yaml.load_all(f, Loader=yaml.FullLoader))
         return conf[0]
-    return _load_yaml
 
+    return _load_yaml

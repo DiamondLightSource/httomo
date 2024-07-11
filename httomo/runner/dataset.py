@@ -16,7 +16,7 @@ class DataSetBlock:
     It stores the base object internally and routes all calls for the auxilliary
     arrays to the base object (darks/flats/angles). It does not store these directly.
     """
-    
+
     generic_array: TypeAlias = Union[np.ndarray, xp.ndarray]
 
     def __init__(
@@ -39,7 +39,7 @@ class DataSetBlock:
             self._global_shape = make_3d_shape_from_array(data)
         else:
             self._global_shape = global_shape
-            
+
         if chunk_shape is None:
             self._chunk_shape = make_3d_shape_from_array(data)
         else:
@@ -53,29 +53,45 @@ class DataSetBlock:
         self._global_index = make_3d_shape_from_shape(global_index)
 
         self._check_inconsistencies()
-        
+
     def _check_inconsistencies(self):
         if self.chunk_index[self.slicing_dim] < 0:
             raise ValueError("block start index must be >= 0")
-        if self.chunk_index[self.slicing_dim] + self.shape[self.slicing_dim] > self.chunk_shape[self.slicing_dim]:
+        if (
+            self.chunk_index[self.slicing_dim] + self.shape[self.slicing_dim]
+            > self.chunk_shape[self.slicing_dim]
+        ):
             raise ValueError("block spans beyond the chunk's boundaries")
         if self.global_index[self.slicing_dim] < 0:
             raise ValueError("chunk start index must be >= 0")
-        if self.global_index[self.slicing_dim] + self.shape[self.slicing_dim] > self.global_shape[self.slicing_dim]:
+        if (
+            self.global_index[self.slicing_dim] + self.shape[self.slicing_dim]
+            > self.global_shape[self.slicing_dim]
+        ):
             raise ValueError("chunk spans beyond the global data boundaries")
-        if any(self.chunk_shape[i] > self.global_shape[i] for i in range(3)):    
+        if any(self.chunk_shape[i] > self.global_shape[i] for i in range(3)):
             raise ValueError("chunk shape is larger than the global shape")
         if any(self.shape[i] > self.chunk_shape[i] for i in range(3)):
             raise ValueError("block shape is larger than the chunk shape")
-        if any(self.shape[i] != self.global_shape[i] for i in range(3) if i != self.slicing_dim):
-            raise ValueError("block shape inconsistent with non-slicing dims of global shape")
-        
-        assert not any(self.chunk_shape[i] != self.global_shape[i] for i in range(3) if i != self.slicing_dim)
+        if any(
+            self.shape[i] != self.global_shape[i]
+            for i in range(3)
+            if i != self.slicing_dim
+        ):
+            raise ValueError(
+                "block shape inconsistent with non-slicing dims of global shape"
+            )
+
+        assert not any(
+            self.chunk_shape[i] != self.global_shape[i]
+            for i in range(3)
+            if i != self.slicing_dim
+        )
 
     @property
     def aux_data(self) -> AuxiliaryData:
         return self._aux_data
-    
+
     @property
     def shape(self) -> Tuple[int, int, int]:
         """Shape of the data in this block"""
@@ -90,7 +106,7 @@ class DataSetBlock:
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Shape of the full chunk handled by the current process"""
         return self._chunk_shape
-    
+
     @property
     def global_index(self) -> Tuple[int, int, int]:
         """The index of this block within the global data across all processes"""
@@ -100,27 +116,27 @@ class DataSetBlock:
     def global_shape(self) -> Tuple[int, int, int]:
         """Shape of the global data across all processes"""
         return self._global_shape
-    
+
     @property
     def is_cpu(self) -> bool:
         return getattr(self._data, "device", None) is None
-    
+
     @property
     def is_gpu(self) -> bool:
         return not self.is_cpu
-    
+
     @property
     def angles(self) -> np.ndarray:
         return self._aux_data.get_angles()
-    
+
     @angles.setter
     def angles(self, new_angles: np.ndarray):
         self._aux_data.set_angles(new_angles)
-    
+
     @property
     def angles_radians(self) -> np.ndarray:
         return self.angles
-    
+
     @angles_radians.setter
     def angles_radians(self, new_angles: np.ndarray):
         self.angles = new_angles
@@ -136,7 +152,7 @@ class DataSetBlock:
     @property
     def slicing_dim(self) -> int:
         return self._slicing_dim
-    
+
     def _empty_aux_array(self):
         empty_shape = list(self._data.shape)
         empty_shape[self.slicing_dim] = 0
@@ -156,7 +172,7 @@ class DataSetBlock:
                 chunk_shape[i] = new_data.shape[i]
             elif self._data.shape[i] != new_data.shape[i]:
                 raise ValueError("shape mismatch in slicing dimension")
-                
+
         self._data = new_data
         self._global_shape = make_3d_shape_from_shape(global_shape)
         self._chunk_shape = make_3d_shape_from_shape(chunk_shape)
@@ -171,16 +187,16 @@ class DataSetBlock:
     @darks.setter
     def darks(self, darks: generic_array):
         self._aux_data.set_darks(darks)
-        
+
     # alias
     @property
     def dark(self) -> generic_array:
         return self.darks
-    
+
     @dark.setter
     def dark(self, darks: generic_array):
         self.darks = darks
-    
+
     @property
     def flats(self) -> generic_array:
         flats = self._aux_data.get_flats(self.is_gpu)
@@ -191,12 +207,12 @@ class DataSetBlock:
     @flats.setter
     def flats(self, flats: generic_array):
         self._aux_data.set_flats(flats)
-        
+
     # alias
     @property
     def flat(self) -> generic_array:
         return self.flats
-    
+
     @flat.setter
     def flat(self, flats: generic_array):
         self.flats = flats
@@ -205,13 +221,13 @@ class DataSetBlock:
         if not gpu_enabled:
             raise ValueError("no GPU available")
         # from doc: if already on GPU, no copy is taken
-        self._data = xp.asarray(self.data, order="C")        
+        self._data = xp.asarray(self.data, order="C")
 
     def to_cpu(self):
         if not gpu_enabled:
             return
         self._data = xp.asnumpy(self.data, order="C")
-    
+
     def __dir__(self) -> list[str]:
         """Return only those properties that are relevant for the data"""
         return ["data", "angles", "angles_radians", "darks", "flats", "dark", "flat"]

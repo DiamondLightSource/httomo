@@ -206,6 +206,7 @@ def update_side_output_references(
         check_valid_ref_id(side_str, ref_id, param_value, method)
         parameters[param_name] = OutputRef(method, ref_arg)
 
+
 def get_regex_pattern() -> re.Pattern:
     """Return the reference string regex pattern to search for
     Returns
