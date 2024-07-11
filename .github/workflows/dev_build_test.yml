@@ -41,11 +41,12 @@ jobs:
 
       - name: Generate yaml templates
         run: |
-          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./httomo/httomo/yaml_templates/tomopy
-          python ./scripts/yaml_unsupported_tomopy_remove.py -t ./httomo/httomo/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
-          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./httomo/httomo/yaml_templates/httomolib
-          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./httomo/httomo/yaml_templates/httomolibgpu
-          
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/httomo_modules.yaml -o ./httomo/yaml_templates/httomo
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./httomo/yaml_templates/tomopy
+          python ./scripts/yaml_unsupported_tomopy_remove.py -t ./httomo/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./httomo/yaml_templates/httomolib
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./httomo/yaml_templates/httomolibgpu
+
       - name: Install httomo-dev
         run: |
           micromamba activate httomo
