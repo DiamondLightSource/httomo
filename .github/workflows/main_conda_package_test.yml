@@ -1,11 +1,11 @@
-name: Weekly main tests
+name: Weekly conda package test
 
 on:
   schedule:
     - cron: '55 0 * * 1' # At 00:55 every Monday
 
 jobs:
-  iris-gpu:
+  download-test-iris:
     runs-on: iris-gpu
     container:
       image: nvidia/cuda:11.6.2-devel-ubi8
@@ -36,6 +36,14 @@ jobs:
           micromamba activate httomo
           micromamba install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge -c astra-toolbox -c rapidsai -y
           micromamba list
+          
+      - name: Generate yaml templates
+        run: |
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/httomo_modules.yaml -o ./httomo/yaml_templates/httomo
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./httomo/yaml_templates/tomopy
+          python ./scripts/yaml_unsupported_tomopy_remove.py -t ./httomo/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./httomo/yaml_templates/httomolib
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./httomo/yaml_templates/httomolibgpu          
 
       - name: Run tests
         run: |
