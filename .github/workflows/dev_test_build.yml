@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Create conda environment
         uses: mamba-org/setup-micromamba@v1
@@ -57,7 +57,7 @@ jobs:
 
     steps:
       - name: Checkout repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: "dev"
           fetch-depth: 0
