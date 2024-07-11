@@ -3,7 +3,7 @@ name: HTTomo dev build
 on:
   pull_request:
     branches:
-      - dev
+      - main
   
 jobs:
   build-conda-upload:
@@ -16,6 +16,10 @@ jobs:
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v3
+        with:
+          ref: "dev"
+          fetch-depth: 0
+
 
         # setup Python 3.10
       - name: Setup Python 3.10
