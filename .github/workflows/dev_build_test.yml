@@ -10,7 +10,7 @@ on:
   
 jobs:
 
-  install-test-iris-gpu:
+  install-httomo-dev-test-iris:
     runs-on: iris-gpu
     container:
       image: nvidia/cuda:11.6.2-devel-ubi8
@@ -39,6 +39,13 @@ jobs:
           micromamba install "httomo/label/dev/linux-64::httomo * py310_openmpi_regular*" -c httomo -c conda-forge -c astra-toolbox -c rapidsai
           micromamba list
 
+      - name: Generate yaml templates
+        run: |
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./httomo/yaml_templates/tomopy
+          python ./scripts/yaml_unsupported_tomopy_remove.py -t ./httomo/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./httomo/yaml_templates/httomolib
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./httomo/yaml_templates/httomolibgpu
+          
       - name: Run tests
         run: |
           pytest tests/
