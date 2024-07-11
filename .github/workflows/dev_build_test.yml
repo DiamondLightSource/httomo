@@ -34,10 +34,10 @@ jobs:
           post-cleanup: 'all'
           init-shell: bash
 
-      - name: Install httomo from conda-cloud
+      - name: Install httomo-dev from conda-cloud
         run: |
           micromamba activate httomo
-          micromamba install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge -c astra-toolbox -c rapidsai
+          micromamba install "httomo/label/dev/linux-64::httomo * py310_openmpi_regular*" -c httomo -c conda-forge -c astra-toolbox -c rapidsai
           micromamba list
 
       - name: Run tests
