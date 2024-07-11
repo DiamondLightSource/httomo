@@ -45,8 +45,7 @@ jobs:
           LABEL: dev
         run: |
           chmod +x ./.scripts/conda_upload.sh
-          ./.scripts/conda_upload.sh
-          run: exit 0
+          ./.scripts/conda_upload.sh          
 
   install-run-tests:
     runs-on: ubuntu-latest
@@ -82,6 +81,4 @@ jobs:
       - name: Run tests
         run: |
           pytest tests/
-          run: exit 0
-
           
