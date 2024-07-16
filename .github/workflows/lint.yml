@@ -1,4 +1,4 @@
-name: Python linters
+name: Lint
 
 on:
   push:
@@ -9,24 +9,10 @@ on:
       - main
 
 jobs:
-  run-linters:
-    name: Run linters
+  lint:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v4
-
-      # setup Python 3.10
-      - name: Setup Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install Python dependencies
-        run: pip install black
-
-      - name: Run Black linter
-        uses: wearerequired/lint-action@v2
-        with:
-          black: true
+      - name: Run black
+        uses: psf/black@stable
