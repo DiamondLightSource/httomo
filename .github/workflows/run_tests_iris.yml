@@ -9,7 +9,6 @@ on:
       - main
 
 jobs:
-
   iris-gpu:
     runs-on: iris-gpu
     container:
@@ -50,4 +49,3 @@ jobs:
       - name: Run tests
         run: |
           pytest tests/
-          
