@@ -9,6 +9,8 @@ from numpy import uint16, float32
 from numpy.testing import assert_allclose, assert_equal
 import os
 
+from pytest_mock import MockerFixture
+
 cupy = pytest.importorskip("cupy")
 httomolibgpu = pytest.importorskip("httomolibgpu")
 import cupy as cp
@@ -415,7 +417,9 @@ def test_data_sampler_memoryhook(slices, newshape, interpolation, ensure_clean_m
 @pytest.mark.parametrize("projections", [1801, 3601])
 @pytest.mark.parametrize("slices", [3, 5, 7, 11])
 @pytest.mark.parametrize("recon_size_it", [1200, 2560])
-def test_recon_FBP_memoryhook(slices, recon_size_it, projections, ensure_clean_memory):
+def test_recon_FBP_memoryhook(
+    slices, recon_size_it, projections, ensure_clean_memory, mocker: MockerFixture
+):
     data = cp.random.random_sample((projections, slices, 2560), dtype=np.float32)
     kwargs = {}
     kwargs["angles"] = np.linspace(
@@ -426,8 +430,23 @@ def test_recon_FBP_memoryhook(slices, recon_size_it, projections, ensure_clean_m
     kwargs["recon_mask_radius"] = 0.8
 
     hook = MaxMemoryHook()
+    # add another alloc using a mock, to capture the cudaArray that is allocated in astra
+    p1 = mocker.patch(
+        "tomobar.astra_wrappers.astra_base.astra.algorithm.run",
+        side_effect=lambda id, it: hook.malloc_postprocess(
+            0, data.nbytes, data.nbytes, 0, 0
+        ),
+    )
+    p2 = mocker.patch(
+        "tomobar.astra_wrappers.astra_base.astra.algorithm.delete",
+        side_effect=lambda id: hook.free_postprocess(0, data.nbytes, 0, 0),
+    )
+
     with hook:
         recon_data = FBP(cp.copy(data), **kwargs)
+
+    p1.assert_called_once()
+    p2.assert_called_once()
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = (
@@ -448,9 +467,7 @@ def test_recon_FBP_memoryhook(slices, recon_size_it, projections, ensure_clean_m
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
-    # significant overestimation partially because of
-    # the introduced multiplier that cannot be yet explained
-    assert percents_relative_maxmem <= 50
+    assert percents_relative_maxmem <= 20
 
 
 @pytest.mark.cupy
