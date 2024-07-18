@@ -144,6 +144,11 @@ class MethodsDatabaseQuery(MethodQuery):
         smodule = self._import_supporting_funcs_module()
         module_mem: Callable = getattr(smodule, "_calc_output_dim_" + self.method_name)
         return module_mem(non_slice_dims_shape, **kwargs)
+    
+    def calculate_padding(self, **kwargs) -> Tuple[int, int]:
+        smodule = self._import_supporting_funcs_module()
+        module_pad: Callable = getattr(smodule, "_calc_padding_" + self.method_name)
+        return module_pad(**kwargs)
 
     def _import_supporting_funcs_module(self) -> ModuleType:
         from importlib import import_module
