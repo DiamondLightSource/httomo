@@ -37,8 +37,6 @@ def get_method_info(module_path: str, method_name: str, attr: str):
     split_method_path = method_path.split(".")
     package_name = split_method_path[0]
 
-    yaml_info_path = Path(YAML_DIR, f"{package_name}.yaml")
-
     # open the library file for the package
     ext_package_path = ""
     if package_name != "httomo":
