@@ -172,24 +172,7 @@ def run(
             raise ValueError("max-cpu-slices must be greater or equal to 1")
         httomo.globals.MAX_CPU_SLICES = max_cpu_slices
 
-        # try to access the GPU with the ID given
-        try:
-            import cupy as cp
-
-            gpu_count = cp.cuda.runtime.getDeviceCount()
-
-            if gpu_id != -1:
-                if gpu_id not in range(0, gpu_count):
-                    raise ValueError(
-                        f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
-                    )
-
-                cp.cuda.Device(gpu_id).use()
-
-            httomo.globals.gpu_id = gpu_id
-
-        except ImportError:
-            pass  # silently pass and run if the CPU pipeline is given
+        _set_gpu_id(gpu_id)
 
         # Run the pipeline using Taskrunner, with temp dir or reslice dir
         mon = make_monitors(monitor)
@@ -228,3 +211,23 @@ def transform_limit_str_to_bytes(limit_str: str):
             return int(limit_str)
     except ValueError:
         raise ValueError(f"invalid memory limit string {limit_str}")
+
+
+def _set_gpu_id(gpu_id: int):
+    try:
+        import cupy as cp
+
+        gpu_count = cp.cuda.runtime.getDeviceCount()
+
+        if gpu_id != -1:
+            if gpu_id not in range(0, gpu_count):
+                raise ValueError(
+                    f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
+                )
+
+            cp.cuda.Device(gpu_id).use()
+
+        httomo.globals.gpu_id = gpu_id
+
+    except ImportError:
+        pass  # silently pass and run if the CPU pipeline is given
