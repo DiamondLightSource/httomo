@@ -1,7 +1,11 @@
 from pathlib import Path
 from pytest_mock import MockerFixture
 import yaml
-from httomo.methods_database.query import YAML_DIR, MethodsDatabaseQuery, get_method_info
+from httomo.methods_database.query import (
+    YAML_DIR,
+    MethodsDatabaseQuery,
+    get_method_info,
+)
 import pytest
 import numpy as np
 from httomo.utils import Pattern
@@ -84,7 +88,8 @@ def test_httomolibgpu_padding_true():
     padding = get_method_info("tomopy.misc.corr", "median_filter3d", "padding")
 
     assert padding is True
-    
+
+
 # this is just a quick check - until we have schema validation on the DB files
 def test_all_methods_have_padding_parameter():
     # we don't care about the httomo one - easy to check
@@ -96,11 +101,10 @@ def test_all_methods_have_padding_parameter():
             for package_name, module in info.items():
                 for f_name, file in module.items():
                     for method_name, method in file.items():
-                        assert "padding" in method, f"{m}.{package_name}.{f_name}.{method_name}"
+                        assert (
+                            "padding" in method
+                        ), f"{m}.{package_name}.{f_name}.{method_name}"
                         assert type(method["padding"]) == bool
-            
-            
-        
 
 
 def test_database_query_object():
@@ -163,3 +167,21 @@ def test_database_query_calculate_output_dims(mocker: MockerFixture):
         "httomo.methods_database.packages.external.sample.supporting_funcs.module.path"
     )
     assert dims == (10, 20)
+
+
+def test_database_query_calculate_padding(mocker: MockerFixture):
+    class FakeModule:
+        def _calc_padding_testmethod(size):
+            assert size == 5
+            return 5, 5
+
+    importmock = mocker.patch("importlib.import_module", return_value=FakeModule)
+    query = MethodsDatabaseQuery("sample.module.path", "testmethod")
+
+    pads = query.calculate_padding(size=5)
+
+    importmock.assert_called_once_with(
+        "httomo.methods_database.packages.external.sample.supporting_funcs.module.path"
+    )
+
+    assert pads == (5, 5)
