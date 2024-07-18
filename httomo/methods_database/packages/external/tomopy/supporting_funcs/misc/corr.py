@@ -25,7 +25,6 @@ from typing import Tuple
 __all__ = [
     "_calc_padding_median_filter3d",
     "_calc_padding_remove_outlier3d",
-    "_calc_padding_stripes_detect3d",
 ]
 
 
