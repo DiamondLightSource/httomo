@@ -6,6 +6,6 @@ HTTomo Features
 
    httomo_features/previewing
    httomo_features/centering
-   httomo_features/parameter_tuning
+   httomo_features/parameter_sweeping
 
 

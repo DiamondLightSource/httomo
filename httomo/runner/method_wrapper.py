@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from httomo.runner.dataset import DataSetBlock
+from httomo.block_interfaces import T
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.utils import Pattern, xp
 
@@ -7,7 +7,7 @@ import numpy as np
 from mpi4py import MPI
 
 import os
-from typing import Any, Callable, Dict, List, Literal, Optional, Protocol, Tuple, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Protocol, Tuple, TypeVar, Union
 
 MethodParameterValues = Union[str, bool, int, float, os.PathLike, np.ndarray, xp.ndarray]
 MethodParameterDictType = Dict[str, Union[MethodParameterValues, List[MethodParameterValues]]]
@@ -124,21 +124,25 @@ class MethodWrapper(Protocol):
     def append_config_params(self, params: MethodParameterDictType):
         """Appends to the configuration parameters all values that are in the given dictionary"""
         ... # pragma: nocover
-        
 
-    def execute(self, block: DataSetBlock) -> DataSetBlock:
+
+    # For a given type `T` that implements the `Block` protocol, the return type should be the
+    # same `T` as the input `T` (rather than allowing the input implementor of `Block` and the
+    # output implementor of `Block` to be different, which is what the signature
+    # `def execute(self, block: Block) -> Block` would imply).
+    def execute(self, block: T) -> T:
         """Execute the method.
 
         Parameters
         ----------
 
-        block: DataSetBlock
+        block: T (implements `Block`)
             A numpy or cupy dataset, mutable (method might work in-place).
 
         Returns
         -------
 
-        DataSetBlock
+        T (implements `Block`)
             A CPU or GPU-based dataset object with the output
         """
         ... # pragma: nocover

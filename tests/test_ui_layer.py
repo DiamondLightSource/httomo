@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any, Tuple
 from mpi4py import MPI
 from pytest_mock import MockerFixture
 from httomo.runner.output_ref import OutputRef
@@ -279,6 +280,33 @@ def test_pipeline_build_cpu3(
     assert ref.mapped_output_name == "glob_stats"
     assert ref.method.method_name == "calculate_stats"
     assert ref.method.task_id == "statistics"
+
+
+@pytest.mark.parametrize(
+    "pipeline_file, expected_sweep_vals",
+    [
+        ("samples/pipeline_template_examples/testing/sweep_manual.yaml", (3, 5)),
+        (
+            "samples/pipeline_template_examples/testing/sweep_range.yaml",
+            tuple(range(3, 13)),
+        ),
+    ],
+    ids=["manual", "range"],
+)
+def test_build_pipeline_with_param_sweeps(
+    standard_data, pipeline_file: Path, expected_sweep_vals: Tuple[Any, ...]
+):
+    pipeline_file_path = Path(__file__).parent / pipeline_file
+    ui_layer = UiLayer(
+        tasks_file_path=pipeline_file_path,
+        in_data_file_path=standard_data,
+        comm=MPI.COMM_WORLD,
+    )
+    pipeline = ui_layer.build_pipeline()
+    sweep_method_wrapper = pipeline[1]
+    SWEEP_PARAM_NAME = "size"
+    assert SWEEP_PARAM_NAME in sweep_method_wrapper.config_params.keys()
+    assert sweep_method_wrapper.config_params[SWEEP_PARAM_NAME] == expected_sweep_vals
 
 
 @pytest.mark.parametrize(

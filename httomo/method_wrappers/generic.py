@@ -1,6 +1,6 @@
 import httomo.globals
+from httomo.block_interfaces import T, Block
 from httomo.data import mpiutil
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.gpu_utils import gpumem_cleanup
 from httomo.runner.method_wrapper import (
     GpuTimeInfo,
@@ -222,7 +222,7 @@ class GenericMethodWrapper(MethodWrapper):
     def _build_kwargs(
         self,
         dict_params: MethodParameterDictType,
-        dataset: Optional[DataSetBlock] = None,
+        dataset: Optional[Block] = None,
     ) -> Dict[str, Any]:
         # first parameter is always the data (if given)
         ret: Dict[str, Any] = dict()
@@ -265,7 +265,7 @@ class GenericMethodWrapper(MethodWrapper):
             ret[k] = v
         return ret
 
-    def execute(self, block: DataSetBlock) -> DataSetBlock:
+    def execute(self, block: T) -> T:
         """Execute functions for external packages.
 
         Developer note: Derived classes may override this function or any of the methods
@@ -274,13 +274,13 @@ class GenericMethodWrapper(MethodWrapper):
         Parameters
         ----------
 
-        block: DataSetBlock
+        block: T (implements `Block`)
             A numpy or cupy dataset, mutable (method might work in-place).
 
         Returns
         -------
 
-        DataSetBlock
+        T (implements `Block`)
             A CPU or GPU-based dataset object with the output
         """
 
@@ -296,17 +296,17 @@ class GenericMethodWrapper(MethodWrapper):
 
         return block
 
-    def _run_method(self, block: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
+    def _run_method(self, block: T, args: Dict[str, Any]) -> T:
         """Runs the actual method - override if special handling is required
         Or side outputs are produced."""
         ret = self._method(**args)
         block = self._process_return_type(ret, block)
         return block
 
-    def _process_return_type(self, ret: Any, input_block: DataSetBlock) -> DataSetBlock:
-        """Checks return type of method call and assigns/creates return DataSetBlock object.
-        Override this method if a return type different from ndarray is produced and
-        needs to be processed in some way.
+    def _process_return_type(self, ret: Any, input_block: T) -> T:
+        """Checks return type of method call and assigns/creates a `T` object that
+        implements `Block` (the same type `T` that was given as input). Override this method if
+        a return type different from ndarray is produced and needs to be processed in some way.
         """
         if type(ret) != np.ndarray and type(ret) != xp.ndarray:
             raise ValueError(
@@ -323,7 +323,7 @@ class GenericMethodWrapper(MethodWrapper):
         follow in the pipeline"""
         return {v: self._side_output[k] for k, v in self._output_mapping.items()}
 
-    def _transfer_data(self, block: DataSetBlock) -> DataSetBlock:
+    def _transfer_data(self, block: T) -> T:
         if not self.cupyrun:
             with catchtime() as t:
                 block.to_cpu()
@@ -351,12 +351,12 @@ class GenericMethodWrapper(MethodWrapper):
         dictionary, for example to rename some of them or inspect them in some way"""
         return dict_params
 
-    def _preprocess_data(self, block: DataSetBlock) -> DataSetBlock:
+    def _preprocess_data(self, block: T) -> T:
         """Hook for derived classes to implement proprocessing steps, after the data has been
         transferred and before the method is called"""
         return block
 
-    def _postprocess_data(self, block: DataSetBlock) -> DataSetBlock:
+    def _postprocess_data(self, block: T) -> T:
         """Hook for derived classes to implement postprocessing steps, after the method has been
         called"""
         return block
