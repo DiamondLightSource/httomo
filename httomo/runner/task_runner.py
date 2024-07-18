@@ -40,12 +40,13 @@ class TaskRunner:
         self,
         pipeline: Pipeline,
         reslice_dir: os.PathLike,
+        comm: MPI.Comm,
         memory_limit_bytes: int = 0,
         monitor: Optional[MonitoringInterface] = None,
     ):
         self.pipeline = pipeline
         self.reslice_dir = reslice_dir
-        self.comm = MPI.COMM_WORLD
+        self.comm = comm
         self.monitor = monitor
 
         self.side_outputs: Dict[str, Any] = dict()

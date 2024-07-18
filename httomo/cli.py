@@ -183,7 +183,7 @@ def run(
         _set_gpu_id(gpu_id)
 
         # Run the pipeline using Taskrunner, with temp dir or reslice dir
-        mon = make_monitors(monitor)
+        mon = make_monitors(monitor, comm)
         ctx: AbstractContextManager = nullcontext(reslice_dir)
         if reslice_dir is None:
             ctx = tempfile.TemporaryDirectory()
@@ -191,6 +191,7 @@ def run(
             runner = TaskRunner(
                 pipeline,
                 Path(tmp_dir),
+                comm,
                 monitor=mon,
                 memory_limit_bytes=memory_limit,
             )

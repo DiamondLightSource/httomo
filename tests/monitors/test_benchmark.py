@@ -6,7 +6,7 @@ from httomo.monitors.benchmark import BenchmarkMonitoring
 
 
 def test_benchmark_monitor_records_and_displays_data():
-    mon = BenchmarkMonitoring()
+    mon = BenchmarkMonitoring(MPI.COMM_WORLD)
     mon.report_method_block(
         "method1", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0, 0.1, 0.2
     )
@@ -60,7 +60,7 @@ def test_benchmark_monitor_records_and_displays_data():
 )
 def test_summary_monitor_records_and_displays_data_mpi():
     comm = MPI.COMM_WORLD
-    mon = BenchmarkMonitoring()
+    mon = BenchmarkMonitoring(comm)
     # everything gets reported twice - once in each process - and the write_results should aggregate
     # in process 0
     mon.report_method_block(
