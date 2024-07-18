@@ -102,7 +102,6 @@ def data_file(test_data_path):
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def ensure_clean_memory():
     import cupy as cp
 
@@ -123,7 +122,6 @@ def host_data(data_file):
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def data(host_data, ensure_clean_memory):
     import cupy as cp
 
@@ -136,7 +134,6 @@ def host_angles(data_file):
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def angles(host_angles, ensure_clean_memory):
     import cupy as cp
 
@@ -149,7 +146,6 @@ def host_angles_radians(host_angles):
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def angles_radians(angles):
     return angles
 
@@ -160,7 +156,6 @@ def host_flats(data_file):
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def flats(host_flats, ensure_clean_memory):
     import cupy as cp
 
@@ -175,7 +170,6 @@ def host_darks(
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def darks(host_darks, ensure_clean_memory):
     import cupy as cp
 
