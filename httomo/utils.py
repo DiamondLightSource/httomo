@@ -53,15 +53,15 @@ def log_once(output: Any, level: int = logging.INFO) -> None:
         else:
             # logger.info(output)
             if "section" in output:
-                logger.opt(ansi=True).info("<cyan>{}</cyan>".format(output))
+                logger.opt(colors=True).info("<cyan>{}</cyan>".format(output))
             elif "pattern" in output:
-                logger.opt(ansi=True).info("<green>{}</green>".format(output))
+                logger.opt(colors=True).info("<green>{}</green>".format(output))
             elif "rotation" in output:
-                logger.opt(ansi=True).info("<yellow>{}</yellow>".format(output))
+                logger.opt(colors=True).info("<yellow>{}</yellow>".format(output))
             elif "Finished" in output:
-                logger.opt(ansi=True).info("<magenta>{}</magenta>".format(output))
+                logger.opt(colors=True).info("<magenta>{}</magenta>".format(output))
             elif "Pipeline" in output:
-                logger.opt(ansi=True).info("<red>{}</red>".format(output))
+                logger.opt(colors=True).info("<red>{}</red>".format(output))
             else:
                 logger.info(output)
 
