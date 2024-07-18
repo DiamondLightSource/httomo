@@ -110,6 +110,7 @@ def test_database_query_object():
     assert query.get_implementation() == "gpu_cupy"
     assert query.swap_dims_on_output() is False
     assert query.save_result_default() is False
+    assert query.padding() is False
     mempars = query.get_memory_gpu_params()
     assert set(p.dataset for p in mempars) == set(["tomo"])
     assert all(p.method == "module" for p in mempars)

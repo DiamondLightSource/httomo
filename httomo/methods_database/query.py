@@ -96,6 +96,11 @@ class MethodsDatabaseQuery(MethodQuery):
         return get_method_info(
             self.module_path, self.method_name, "save_result_default"
         )
+        
+    def padding(self) -> bool:
+        return get_method_info(
+            self.module_path, self.method_name, "padding"
+        )
 
     def get_memory_gpu_params(
         self,

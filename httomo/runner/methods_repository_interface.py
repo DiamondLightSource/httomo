@@ -45,6 +45,11 @@ class MethodQuery(Protocol):
         """Check if the output 3D array needs to wap axis 0 and 1 to match httomolib.
         (This is typically true for tomopy recon methods)"""
         ...  # pragma: no cover
+        
+    def padding(self) -> bool:
+        """Check if the method requires padding (i.e. is 3D and requires overlap
+        regions in slicing dimension)"""
+        ...
 
     def calculate_memory_bytes(
         self, non_slice_dims_shape: Tuple[int, int], dtype: np.dtype, **kwargs
