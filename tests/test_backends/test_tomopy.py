@@ -44,7 +44,7 @@ def test_calc_padding_stripes_detect3d_defaults() -> None:
 
 
 def test_calc_padding_stripes_mask3d() -> None:
-    kwargs: dict = {"threashold": .7, "min_stripe_depth": 5}
+    kwargs: dict = {"threshold": .7, "min_stripe_depth": 5}
     assert _calc_padding_stripes_mask3d(**kwargs) == (5, 5)
 
 
