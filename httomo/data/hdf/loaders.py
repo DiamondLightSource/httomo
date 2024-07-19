@@ -1,25 +1,11 @@
 import os
-from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
 from mpi4py.MPI import Comm
-from numpy import ndarray
-
-
 
 __all__ = [
     "standard_tomo",
 ]
-
-@dataclass
-class LoaderData:
-    data: ndarray
-    flats: ndarray
-    darks: ndarray
-    angles: ndarray
-    angles_total: int
-    detector_x: int
-    detector_y: int
 
 
 def standard_tomo(
@@ -78,11 +64,6 @@ def standard_tomo(
     ignore_flats : optional, Union[bool, Dict]
         If bool, specifies ignoring all or none of flats. If dict, specifies
         individual and batch flats to ignore.
-
-    Returns
-    -------
-    LoaderData
-        The values that all loader functions return.
     """
     # Note: this function is just here to define the interface for the yaml
     # TODO: remove this completely

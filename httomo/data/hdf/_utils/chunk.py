@@ -4,7 +4,6 @@ from typing import Optional, Tuple
 import h5py as h5
 from mpi4py import MPI
 from numpy import ndarray
-from httomo.data.hdf.loaders import LoaderData
 
 
 def save_dataset(
