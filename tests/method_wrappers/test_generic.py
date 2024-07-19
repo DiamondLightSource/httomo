@@ -21,10 +21,10 @@ def test_generic_get_name_and_paths(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_method_wrapper(
-        make_mock_repo(mocker),
+        make_mock_repo(mocker, padding=True),
         "testmodule.path",
         "fake_method",
-        MPI.COMM_WORLD,
+        MPI.COMM_WORLD
     )
     assert isinstance(wrp, GenericMethodWrapper)
     assert wrp.method_name == "fake_method"
@@ -32,6 +32,7 @@ def test_generic_get_name_and_paths(mocker: MockerFixture):
     assert wrp.package_name == "testmodule"
     assert wrp.task_id == ""
     assert wrp.save_result is False
+    assert wrp.padding is True
 
 
 def test_generic_set_task_id(mocker: MockerFixture):

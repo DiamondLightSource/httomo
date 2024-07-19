@@ -102,7 +102,8 @@ def make_mock_repo(
         GpuMemoryRequirement(dataset="tomo", multiplier=1.2, method="direct")
     ],
     swap_dims_on_output=False,
-    save_result_default=False
+    save_result_default=False,
+    padding=False
 ) -> MethodRepository:
     """Makes a mock MethodRepository that returns the given properties on any query"""
     mock_repo = mocker.MagicMock()
@@ -116,4 +117,5 @@ def make_mock_repo(
     mocker.patch.object(mock_query, "get_implementation", return_value=implementation)
     mocker.patch.object(mock_query, "get_memory_gpu_params", return_value=memory_gpu)
     mocker.patch.object(mock_query, "save_result_default", return_value=save_result_default)
+    mocker.patch.object(mock_query, "padding", return_value=padding)
     return mock_repo
