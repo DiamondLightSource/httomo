@@ -13,6 +13,8 @@ from httomo.utils import xp
 
 __all__ = ["calculate_stats", "save_intermediate_data"]
 
+# save a copy of the original guess_chunk if it needs to be restored
+ORIGINAL_GUESS_CHUNK = h5py._hl.filters.guess_chunk
 
 def calculate_stats(
     data: np.ndarray,
@@ -63,9 +65,17 @@ def save_intermediate_data(
     dataset: Union[h5py.Dataset, zarr.Array]
     if isinstance(file, h5py.File):
         _save_auxiliary_data_hdf5(file, angles, detector_x, detector_y)
-        compression: Union[dict, hdf5plugin.Blosc] = (
-            hdf5plugin.Blosc() if httomo.globals.COMPRESS_INTERMEDIATE else {}
-        )
+
+        # monkey-patch guess_chunk in h5py for compression
+        # this is to avoid FILL_TIME_ALLOC
+        compression: Union[dict, hdf5plugin.Blosc]
+        if httomo.globals.COMPRESS_INTERMEDIATE:
+            compression = hdf5plugin.Blosc()
+            h5py._hl.filters.guess_chunk = lambda *args, **kwargs: None
+        else:
+            compression = {}
+            h5py._hl.filters.guess_chunk = ORIGINAL_GUESS_CHUNK
+
         # create a dataset creation property list
         dcpl = _dcpl_fill_never(chunk_shape, global_shape)
 
