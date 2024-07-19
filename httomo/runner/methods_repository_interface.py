@@ -49,7 +49,7 @@ class MethodQuery(Protocol):
     def padding(self) -> bool:
         """Check if the method requires padding (i.e. is 3D and requires overlap
         regions in slicing dimension)"""
-        ...
+        ...  # pragma: no cover
 
     def calculate_memory_bytes(
         self, non_slice_dims_shape: Tuple[int, int], dtype: np.dtype, **kwargs
