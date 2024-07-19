@@ -170,18 +170,21 @@ def test_database_query_calculate_output_dims(mocker: MockerFixture):
 
 
 def test_database_query_calculate_padding(mocker: MockerFixture):
+    SIZE_PARAMETER = 5
+    PADDING_RETURNED = (5, 5)
+
     class FakeModule:
         def _calc_padding_testmethod(size):
-            assert size == 5
-            return 5, 5
+            assert size == SIZE_PARAMETER
+            return PADDING_RETURNED
 
     importmock = mocker.patch("importlib.import_module", return_value=FakeModule)
     query = MethodsDatabaseQuery("sample.module.path", "testmethod")
 
-    pads = query.calculate_padding(size=5)
+    pads = query.calculate_padding(size=SIZE_PARAMETER)
 
     importmock.assert_called_once_with(
         "httomo.methods_database.packages.external.sample.supporting_funcs.module.path"
     )
 
-    assert pads == (5, 5)
+    assert pads == PADDING_RETURNED
