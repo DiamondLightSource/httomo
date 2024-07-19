@@ -5,6 +5,7 @@ misc:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [2.1]
@@ -14,6 +15,7 @@ misc:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [2.1]
@@ -24,6 +26,7 @@ misc:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [2.2]
@@ -32,12 +35,14 @@ misc:
       pattern: all
       output_dims_change: True
       implementation: gpu_cupy
+      padding: False
   rescale:
     rescale_to_int:
       pattern: all
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -49,6 +54,7 @@ prep:
       output_dims_change: False      
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -59,6 +65,7 @@ prep:
       output_dims_change: False      
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -68,6 +75,7 @@ prep:
       output_dims_change: False      
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -78,6 +86,7 @@ prep:
       output_dims_change: False      
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [1.2]
@@ -88,6 +97,7 @@ prep:
       output_dims_change: False      
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [1.17]
@@ -97,6 +107,7 @@ prep:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -106,6 +117,7 @@ prep:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -117,6 +129,7 @@ recon:
       output_dims_change: True
       implementation: gpu_cupy
       save_result_default: True
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -126,6 +139,7 @@ recon:
       output_dims_change: True
       implementation: gpu_cupy
       save_result_default: True
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -135,6 +149,7 @@ recon:
       output_dims_change: True
       implementation: gpu_cupy
       save_result_default: True
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -145,6 +160,7 @@ recon:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [0]
@@ -154,6 +170,7 @@ recon:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [0]
@@ -163,6 +180,7 @@ recon:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [0]

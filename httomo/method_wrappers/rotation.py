@@ -188,8 +188,8 @@ class RotationWrapper(GenericMethodWrapper):
     def normalize_sino(
         self, sino: np.ndarray, flats: Optional[np.ndarray], darks: Optional[np.ndarray]
     ) -> np.ndarray:
-        flats1d = 1.0 if flats is None else flats.mean(0, dtype=np.float32)
-        darks1d = 0.0 if darks is None else darks.mean(0, dtype=np.float32)
+        flats1d = 1.0 if (flats is None or flats.size == 0) else flats.mean(0, dtype=np.float32)
+        darks1d = 0.0 if (darks is None or darks.size == 0) else darks.mean(0, dtype=np.float32)
         denom = flats1d - darks1d
         sino = sino.astype(np.float32)
         if np.shape(denom) == tuple():

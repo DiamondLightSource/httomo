@@ -37,8 +37,6 @@ def get_method_info(module_path: str, method_name: str, attr: str):
     split_method_path = method_path.split(".")
     package_name = split_method_path[0]
 
-    yaml_info_path = Path(YAML_DIR, f"{package_name}.yaml")
-
     # open the library file for the package
     ext_package_path = ""
     if package_name != "httomo":
@@ -98,6 +96,11 @@ class MethodsDatabaseQuery(MethodQuery):
         return get_method_info(
             self.module_path, self.method_name, "save_result_default"
         )
+        
+    def padding(self) -> bool:
+        return get_method_info(
+            self.module_path, self.method_name, "padding"
+        )
 
     def get_memory_gpu_params(
         self,
@@ -141,6 +144,11 @@ class MethodsDatabaseQuery(MethodQuery):
         smodule = self._import_supporting_funcs_module()
         module_mem: Callable = getattr(smodule, "_calc_output_dim_" + self.method_name)
         return module_mem(non_slice_dims_shape, **kwargs)
+    
+    def calculate_padding(self, **kwargs) -> Tuple[int, int]:
+        smodule = self._import_supporting_funcs_module()
+        module_pad: Callable = getattr(smodule, "_calc_padding_" + self.method_name)
+        return module_pad(**kwargs)
 
     def _import_supporting_funcs_module(self) -> ModuleType:
         from importlib import import_module
