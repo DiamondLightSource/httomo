@@ -62,8 +62,8 @@ def parse_preview(
 
     return PreviewConfig(
         angles=conv_param(param_value["angles"], data_shape[0]),
-        detector_x=conv_param(param_value["detector_x"], data_shape[1]),
-        detector_y=conv_param(param_value["detector_y"], data_shape[2]),
+        detector_y=conv_param(param_value["detector_y"], data_shape[1]),
+        detector_x=conv_param(param_value["detector_x"], data_shape[2]),
     )
 
 

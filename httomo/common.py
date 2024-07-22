@@ -51,7 +51,7 @@ class MethodFunc:
     method_func: Callable
     wrapper_func: Optional[Callable] = None
     calc_max_slices: Optional[Dict[str, Any]] = None
-    output_dims_change: Dict[str, Any] = None
+    output_dims_change: Optional[Dict[str, Any]] = None
     parameters: Dict[str, Any] = field(default_factory=dict)
     pattern: Pattern = Pattern.projection
     cpu: bool = True
