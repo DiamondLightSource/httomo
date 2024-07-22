@@ -138,7 +138,11 @@ class BlockIndexing(Protocol):
         
     @property
     def padding(self) -> Tuple[int, int]:
-        """Get the before and after padding values for this block (0, 0 is returned if no padding is used)"""
+        """Get the 'before' and 'after' padding values for this block. 
+        This is to be understood as the the number of padding slices in the 'slicing_dim' direction
+        that come before and after the core area of the block. 
+        If no padding is used, it returns (0, 0).
+        """
         ...  # pragma: no cover
 
 
