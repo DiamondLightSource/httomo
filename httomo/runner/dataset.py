@@ -3,11 +3,12 @@ from typing import Literal, Optional, Tuple
 import numpy as np
 
 from httomo.base_block import BaseBlock, generic_array
+from httomo.block_interfaces import BlockIndexing
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.utils import make_3d_shape_from_array, make_3d_shape_from_shape
 
 
-class DataSetBlock(BaseBlock):
+class DataSetBlock(BaseBlock, BlockIndexing):
     """
     Data storage type for block processing in high throughput runs
     """
@@ -23,6 +24,39 @@ class DataSetBlock(BaseBlock):
         chunk_shape: Optional[Tuple[int, int, int]] = None,
         padding: Tuple[int, int] = (0, 0),
     ):
+        """Constructs a data block for processing in the pipeline in high troughput runs.
+        
+        Parameters
+        ----------
+        
+        data: ndarray
+            A numpy or cupy array, 3D, holding the data represented by this block.
+        aux_data: AuxiliaryData
+            Object handling the flats, darks, and angles arrays
+        slicing_dim: Literal[0, 1, 2]
+            The slicing dimension in the global data that this block represents as slice of.
+            This is to facilitate parallel processing - data is sliced in one of the 3 dimensions.
+        block_start: int
+            The index in slicing dimensions within the chunk that this block starts at. It is relative
+            to the start of the chunk.
+        chunk_start: int
+            The index in slicing dimension within the global data that the underlying chunk starts.
+            A chunk is a unit of the global data that is handled by a single MPI process, while a block
+            might be a smaller part than the chunk.
+        global_shape:  Optional[Tuple[int, int, int]]
+            The shape of the global data across all processes. If not given, it assumes this block 
+            represents the full global data (no slicing done).
+        chunk_shape: Optional[Tuple[int, int, int]]
+            The shape of the chunk that this block belongs to. If not given, it assumes this block
+            spans the full chunk.
+        padding: Tuple[int, int]
+            Padding information - holds the number of padded slices before and after the core area of the block,
+            in slicing dimension. If not given, no padding is assumed.
+            
+            Note that the padding information should be added to the data's shape, i.e. block_start, chunk_start,
+            chunk_shape, and the data's shape includes the padded slices. And therefore block_start or chunk_start
+            may have negative values of up to -padding[0]. The global_shape is not adapted for padding.
+        """
         super().__init__(data, aux_data)
         self._slicing_dim = slicing_dim
         self._block_start = block_start
