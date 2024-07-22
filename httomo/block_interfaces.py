@@ -127,7 +127,7 @@ class BlockIndexing(Protocol):
         ...  # pragma: no cover
 
 
-class Block(BlockData, BlockIndexing, BlockTransfer):
+class Block(BlockData, BlockIndexing, BlockTransfer, Protocol):
     """
     All behaviour required for a block type to be processed by implementors of
     `MethodWrapper`
