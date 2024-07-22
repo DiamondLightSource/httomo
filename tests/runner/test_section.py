@@ -282,7 +282,7 @@ def test_sectionizer_sets_padding_property(mocker: MockerFixture, padding: bool)
     )
     s = sectionize(p)
 
-    assert s[-1].padding == padding
+    assert s[-1].padding is padding
     
 def test_sectionizer_splits_section_if_multiple_padding_methods(mocker: MockerFixture):
     p = Pipeline(
