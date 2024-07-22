@@ -160,13 +160,13 @@ def test_partial_block_for_chunked_data_with_padding_center(
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
-@pytest.mark.parametrize("boundary", ["left", "right"])
+@pytest.mark.parametrize("boundary", ["before", "after"])
 def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
-    slicing_dim: Literal[0, 1, 2], boundary: Literal["left", "right"]
+    slicing_dim: Literal[0, 1, 2], boundary: Literal["before", "after"]
 ):
     block_shape = [10, 10, 10]
     block_shape[slicing_dim] = 6
-    start_index = -2 if boundary == "left" else 6
+    start_index = -2 if boundary == "before" else 6
     data = np.ones(block_shape, dtype=np.float32)
     global_index = [0, 0, 0]
     global_index[slicing_dim] = 10 + start_index
@@ -190,18 +190,18 @@ def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
 
     assert block.is_padded is True
     assert block.padding == (2, 2)
-    assert block.is_last_in_chunk is (boundary == "right")
+    assert block.is_last_in_chunk is (boundary == "after")
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
-@pytest.mark.parametrize("boundary", ["left", "right"])
+@pytest.mark.parametrize("boundary", ["before", "after"])
 def test_partial_block_with_padding_global_boundaries(
-    slicing_dim: Literal[0, 1, 2], boundary: Literal["left", "right"]
+    slicing_dim: Literal[0, 1, 2], boundary: Literal["before", "after"]
 ):
     block_shape = [10, 10, 10]
     block_shape[slicing_dim] = 6
     padding = (2, 2)
-    start_index = -padding[0] if boundary == "left" else 6
+    start_index = -padding[0] if boundary == "before" else 6
     data = np.ones(block_shape, dtype=np.float32)
     chunk_shape_t = [10, 10, 10]
     chunk_shape_t[slicing_dim] += padding[0] + padding[1]  # for padding
@@ -209,10 +209,10 @@ def test_partial_block_with_padding_global_boundaries(
     global_index = [0, 0, 0]
     global_index[slicing_dim] = (
         -padding[0]
-        if boundary == "left"
+        if boundary == "before"
         else 30 - block_shape[slicing_dim] + padding[1]
     )
-    chunk_start = -padding[0] if boundary == "left" else 20 - padding[0]
+    chunk_start = -padding[0] if boundary == "before" else 20 - padding[0]
     global_shape_t = [10, 10, 10]
     global_shape_t[slicing_dim] = 30
     global_shape = make_3d_shape_from_shape(global_shape_t)
@@ -231,7 +231,7 @@ def test_partial_block_with_padding_global_boundaries(
     assert block.is_padded is True
     assert block.padding == padding
     assert block.global_index == tuple(global_index)
-    assert block.is_last_in_chunk is (boundary == "right")
+    assert block.is_last_in_chunk is (boundary == "after")
 
 
 # block_shape <= chunk_shape

@@ -138,7 +138,7 @@ class BlockIndexing(Protocol):
         
     @property
     def padding(self) -> Tuple[int, int]:
-        """Get the left and right padding values for this block (0, 0 is returned if no padding is used)"""
+        """Get the before and after padding values for this block (0, 0 is returned if no padding is used)"""
         ...  # pragma: no cover
 
 
