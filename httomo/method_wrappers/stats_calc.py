@@ -1,3 +1,4 @@
+from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import MethodRepository
@@ -46,11 +47,11 @@ class StatsCalcWrapper(GenericMethodWrapper):
         self._sum: float = 0.0
         self._elements: int = 0
 
-    def _transfer_data(self, dataset: DataSetBlock):
+    def _transfer_data(self, dataset: T) -> T:
         # don't transfer anything (either way) at this point
         return dataset
     
-    def _run_method(self, dataset: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
+    def _run_method(self, dataset: T, args: Dict[str, Any]) -> T:
         # transfer data to GPU if we can / have it available (always faster), 
         # but don't want to fail if we don't have a GPU (underlying method works for both)
         # and don't touch original dataset
@@ -63,8 +64,8 @@ class StatsCalcWrapper(GenericMethodWrapper):
         
 
     def _process_return_type(
-        self, ret: Any, input_block: DataSetBlock
-    ) -> DataSetBlock:
+        self, ret: Any, input_block: T
+    ) -> T:
         assert isinstance(ret, tuple), "expected return type is a tuple"
         assert len(ret) == 4, "A 4-tuple of stats values is expected"
 

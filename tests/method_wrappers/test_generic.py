@@ -21,10 +21,10 @@ def test_generic_get_name_and_paths(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_method_wrapper(
-        make_mock_repo(mocker),
+        make_mock_repo(mocker, padding=True),
         "testmodule.path",
         "fake_method",
-        MPI.COMM_WORLD,
+        MPI.COMM_WORLD
     )
     assert isinstance(wrp, GenericMethodWrapper)
     assert wrp.method_name == "fake_method"
@@ -32,6 +32,7 @@ def test_generic_get_name_and_paths(mocker: MockerFixture):
     assert wrp.package_name == "testmodule"
     assert wrp.task_id == ""
     assert wrp.save_result is False
+    assert wrp.padding is True
 
 
 def test_generic_set_task_id(mocker: MockerFixture):
@@ -50,6 +51,7 @@ def test_generic_set_task_id(mocker: MockerFixture):
     
     assert wrp.task_id == "fake_method_id"
 
+@pytest.mark.cupy
 def test_generic_execute_transfers_to_gpu(mocker: MockerFixture, dummy_block: DataSetBlock):
     class FakeModule:
         def fake_method(data):
@@ -93,6 +95,7 @@ def test_generic_excute_measures_gpu_times(dummy_block: DataSetBlock, mocker: Mo
         assert wrp.gpu_time.kernel > 0.0
 
 
+@pytest.mark.cupy
 def test_generic_execute_calls_pre_post_process(
     mocker: MockerFixture, dummy_block: DataSetBlock
 ):
@@ -136,6 +139,7 @@ def test_generic_fails_with_wrong_returntype(
     assert "return type" in str(e)
 
 
+@pytest.mark.cupy
 def test_generic_sets_gpuid(mocker: MockerFixture, dummy_block: DataSetBlock):
     mocker.patch("httomo.method_wrappers.generic.gpu_enabled", True)
     mocker.patch(
@@ -435,6 +439,7 @@ def test_generic_passes_darks_flats_to_normalize(
         ("gpu_cupy", False, True, True),
     ],
 )
+@pytest.mark.cupy
 def test_generic_method_queries(
     mocker: MockerFixture,
     implementation: str,
@@ -480,6 +485,7 @@ def test_generic_method_queries(
         [],
     ],
 )
+@pytest.mark.cupy
 def test_generic_calculate_max_slices_direct(
     mocker: MockerFixture,
   dummy_block: DataSetBlock,
@@ -526,6 +532,7 @@ def test_generic_calculate_max_slices_direct(
     assert available_memory == available_memory_in
 
 
+@pytest.mark.cupy
 def test_generic_calculate_max_slices_module(
     mocker: MockerFixture, dummy_block: DataSetBlock
 ):
@@ -572,6 +579,7 @@ def test_generic_calculate_max_slices_module(
         assert available_memory == 1_000_000_000
 
 
+@pytest.mark.cupy
 def test_generic_calculate_output_dims(mocker: MockerFixture):
     class FakeModule:
         def test_method(data, testparam):
@@ -604,6 +612,7 @@ def test_generic_calculate_output_dims(mocker: MockerFixture):
     memcalc_mock.assert_called_with((10, 10), testparam=32)
 
 
+@pytest.mark.cupy
 def test_generic_calculate_output_dims_no_change(mocker: MockerFixture):
     class FakeModule:
         def test_method(data):

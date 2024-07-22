@@ -42,9 +42,9 @@ def main():
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     required=False, default=None,
 )
-def check(yaml_config: Path, in_data_file: Path = None):
+def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     """Check a YAML pipeline file for errors."""
-    in_data = str(in_data_file) if isinstance(in_data_file, PurePath) else None
+    in_data = in_data_file if isinstance(in_data_file, PurePath) else None
     return validate_yaml_config(yaml_config, in_data)
 
 

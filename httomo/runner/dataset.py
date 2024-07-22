@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Literal, Optional, Tuple
 
 import numpy as np
 
@@ -16,7 +16,7 @@ class DataSetBlock(BaseBlock):
         self,
         data: np.ndarray,
         aux_data: AuxiliaryData,
-        slicing_dim: int = 0,
+        slicing_dim: Literal[0, 1, 2] = 0,
         block_start: int = 0,
         chunk_start: int = 0,
         global_shape: Optional[Tuple[int, int, int]] = None,
@@ -93,7 +93,7 @@ class DataSetBlock(BaseBlock):
         )
 
     @property
-    def slicing_dim(self) -> int:
+    def slicing_dim(self) -> Literal[0, 1, 2]:
         return self._slicing_dim
     
     def _empty_aux_array(self):
@@ -101,7 +101,11 @@ class DataSetBlock(BaseBlock):
         empty_shape[self.slicing_dim] = 0
         return np.empty_like(self._data, shape=empty_shape)
 
-    @BaseBlock.data.setter
+    @property
+    def data(self) -> generic_array:
+        return super().data
+
+    @data.setter
     def data(self, new_data: generic_array):
         global_shape = list(self._global_shape)
         chunk_shape = list(self._chunk_shape)

@@ -1,4 +1,4 @@
-from typing import Protocol, Tuple, TypeAlias, TypeVar
+from typing import Literal, Protocol, Tuple, TypeAlias, TypeVar
 
 import numpy as np
 
@@ -125,9 +125,14 @@ class BlockIndexing(Protocol):
         process
         """
         ...  # pragma: no cover
+        
+    @property
+    def slicing_dim(self) -> Literal[0, 1, 2]:
+        """Return the slicing dimenions of the block"""
+        ...  # pragma: no cover
 
 
-class Block(BlockData, BlockIndexing, BlockTransfer):
+class Block(BlockData, BlockIndexing, BlockTransfer, Protocol):
     """
     All behaviour required for a block type to be processed by implementors of
     `MethodWrapper`

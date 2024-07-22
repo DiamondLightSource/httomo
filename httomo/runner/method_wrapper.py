@@ -109,6 +109,11 @@ class MethodWrapper(Protocol):
         """Determine the recon algorithm used, if the method is reconstruction.
         Otherwise return None."""
         ... # pragma: nocover
+        
+    @property
+    def padding(self) -> bool:
+        """Deterime if the method needs padding"""
+        ... # pragma: nocover
 
     # Methods
 

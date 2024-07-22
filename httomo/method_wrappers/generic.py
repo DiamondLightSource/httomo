@@ -113,6 +113,7 @@ class GenericMethodWrapper(MethodWrapper):
         self._output_dims_change = self._query.get_output_dims_change()
         self._implementation = self._query.get_implementation()
         self._memory_gpu = self._query.get_memory_gpu_params()
+        self._padding = self._query.padding()
         self._save_result = (
             self._query.save_result_default() if save_result is None else save_result
         )
@@ -218,6 +219,10 @@ class GenericMethodWrapper(MethodWrapper):
         """Determine the recon algorithm used, if the method is reconstruction.
         Otherwise return None."""
         return None
+
+    @property
+    def padding(self) -> bool:
+        return self._padding
 
     def _build_kwargs(
         self,
