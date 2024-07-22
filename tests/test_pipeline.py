@@ -331,6 +331,7 @@ def test_run_pipeline_cpu4_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
 
 
+@pytest.mark.cupy
 def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gpu_pipeline1, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
@@ -371,6 +372,7 @@ def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gp
     assert "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
 
 
+@pytest.mark.cupy
 def test_run_pipeline_gpu1_py(get_files: Callable, cmd, standard_data, python_gpu_pipeline1, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
@@ -589,6 +591,7 @@ def test_diad_testing_pipeline_output(
     assert "Data shape is (3001, 2, 26) of type uint16" in verbose_log_contents
 
 
+@pytest.mark.cupy
 def test_run_diad_pipeline_gpu(get_files: Callable, cmd, diad_data, diad_pipeline_gpu, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, diad_data)
@@ -619,6 +622,7 @@ def test_run_diad_pipeline_gpu(get_files: Callable, cmd, diad_data, diad_pipelin
     assert "Global mean 0.000291" in verbose_log_contents
 
 
+@pytest.mark.cupy
 def test_run_pipeline_360deg_gpu2(get_files: Callable, cmd, data360, yaml_gpu_pipeline360_2, output_folder):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, data360)
