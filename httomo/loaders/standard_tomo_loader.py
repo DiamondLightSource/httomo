@@ -41,7 +41,7 @@ class StandardTomoLoader(DataSetSource):
         self._data_path = data_path
         self._image_key_path = image_key_path
         self._angles = angles
-        self._slicing_dim = slicing_dim
+        self._slicing_dim: Literal[0, 1, 2] = slicing_dim
         self._comm = comm
         self._h5file = h5py.File(in_file, "r")
         self._data: h5py.Dataset = self._get_data()

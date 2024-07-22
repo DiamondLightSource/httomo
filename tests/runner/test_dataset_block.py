@@ -1,5 +1,5 @@
 import math
-from typing import Tuple
+from typing import Literal, Tuple
 
 import pytest
 import numpy as np
@@ -38,7 +38,7 @@ def test_full_block_for_global_data():
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
-def test_full_block_for_chunked_data(slicing_dim: int):
+def test_full_block_for_chunked_data(slicing_dim: Literal[0, 1, 2]):
     data = np.ones((10, 10, 10), dtype=np.float32)
     chunk_start = 10
     global_shape_t = [10, 10, 10]
@@ -71,7 +71,7 @@ def test_full_block_for_chunked_data(slicing_dim: int):
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
 @pytest.mark.parametrize("last_in_chunk", [False, True], ids=["middle", "last"])
-def test_partial_block_for_chunked_data(slicing_dim: int, last_in_chunk: bool):
+def test_partial_block_for_chunked_data(slicing_dim: Literal[0, 1, 2], last_in_chunk: bool):
     block_shape = [10, 10, 10]
     block_shape[slicing_dim] = 2
     start_index = 3 if not last_in_chunk else 8
@@ -146,7 +146,7 @@ def test_inconsistent_block_shape(block_shape: Tuple[int, int, int]):
     ],
 )
 def test_inconsistent_non_slicing_dims_block_global(
-    block_shape: Tuple[int, int, int], slicing_dim: int
+    block_shape: Tuple[int, int, int], slicing_dim: Literal[0, 1, 2]
 ):
     data = np.ones(block_shape, dtype=np.float32)
     angles = np.linspace(0, math.pi, block_shape[0], dtype=np.float32)
@@ -164,7 +164,7 @@ def test_inconsistent_non_slicing_dims_block_global(
 
 # global and chunk shape in non-slicing dim must be the same
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
-def test_inconsistent_global_chunk_shape_non_slice_dim(slicing_dim: int):
+def test_inconsistent_global_chunk_shape_non_slice_dim(slicing_dim: Literal[0, 1, 2]):
     data = np.ones((10, 10, 10), dtype=np.float32)
     angles = np.linspace(0, math.pi, 10, dtype=np.float32)
     global_shape = [12, 12, 12]

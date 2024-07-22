@@ -250,6 +250,6 @@ def test_parse_preview_raises_error_mid_in_angle_dim():
     ],
     ids=["raw_angles", "user_defined_angles"],
 )
-def test_parse_angles(angles_param: AnglesParam, expected_angles_config: AnglesConfig):
+def test_parse_angles(angles_param: dict, expected_angles_config: AnglesConfig):
     angles_config = parse_angles(angles_param)
     assert angles_config == expected_angles_config

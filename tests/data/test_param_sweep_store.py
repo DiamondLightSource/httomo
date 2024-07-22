@@ -64,6 +64,7 @@ def test_param_sweep_writer_write_sweep_result_transfers_gpu_arr_to_cpu(
     block = ParamSweepBlock(
         data=np.ones(SWEEP_RES_SHAPE, dtype=np.float32),
         aux_data=AuxiliaryData(angles=np.ones(SWEEP_RES_SHAPE[0], dtype=np.float32)),
+        slicing_dim=1
     )
 
     # Patch `gpu_enabled` to simulate a GPU run
@@ -102,10 +103,12 @@ def test_param_sweep_writer_reader_write_res_and_read():
     sweep_result_1 = ParamSweepBlock(
         data=data[:, : SWEEP_RES_SHAPE[CONCAT_DIM], :],
         aux_data=aux_data,
+        slicing_dim=CONCAT_DIM
     )
     sweep_result_2 = ParamSweepBlock(
         data=data[:, SWEEP_RES_SHAPE[CONCAT_DIM] :, :],
         aux_data=aux_data,
+        slicing_dim=CONCAT_DIM
     )
 
     # Write two different blocks to the param sweep store, to simulate writing the results of a

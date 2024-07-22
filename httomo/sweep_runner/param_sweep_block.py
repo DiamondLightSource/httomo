@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Literal, Tuple
 
 import numpy as np
 
@@ -16,8 +16,10 @@ class ParamSweepBlock(BaseBlock):
         self,
         data: np.ndarray,
         aux_data: AuxiliaryData,
+        slicing_dim: Literal[0, 1, 2]
     ) -> None:
         super().__init__(data, aux_data)
+        self._slicing_dim = slicing_dim
 
     @property
     def chunk_index(self) -> Tuple[int, int, int]:
@@ -38,3 +40,7 @@ class ParamSweepBlock(BaseBlock):
     @property
     def is_last_in_chunk(self) -> bool:
         return True
+    
+    @property
+    def slicing_dim(self) -> Literal[0, 1, 2]:
+        return self._slicing_dim

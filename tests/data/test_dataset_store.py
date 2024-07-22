@@ -440,6 +440,7 @@ def test_reslice_single_block_single_process(
     assert block.chunk_index == (0, 1, 0)
     assert block.chunk_shape == reader.chunk_shape
 
+    assert isinstance(reader, DataSetStoreReader)
     assert reader.is_file_based is file_based
 
     np.testing.assert_array_equal(block.data, dummy_block.data[:, 1:3, :])

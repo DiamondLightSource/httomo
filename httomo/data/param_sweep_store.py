@@ -53,6 +53,7 @@ class ParamSweepReader(ParamSweepSource):
         return ParamSweepBlock(
             data=self._data[slices[0], slices[1], slices[2]],
             aux_data=self.aux_data,
+            slicing_dim=self.extract_dim
         )
 
 

@@ -2,6 +2,7 @@ from typing import Literal, Protocol, Tuple
 
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
+from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 
 
 class ParamSweepSource(Protocol):
@@ -36,7 +37,7 @@ class ParamSweepSource(Protocol):
         """Get auxiliary data"""
         ...  # pragma: no cover
 
-    def read_sweep_results(self) -> DataSetBlock:
+    def read_sweep_results(self) -> ParamSweepBlock:
         """
         Returns a single block containing the middle slices extracted along `extract_dim` from
         each sweep result
