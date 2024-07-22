@@ -130,6 +130,16 @@ class BlockIndexing(Protocol):
     def slicing_dim(self) -> Literal[0, 1, 2]:
         """Return the slicing dimenions of the block"""
         ...  # pragma: no cover
+        
+    @property
+    def is_padded(self) -> bool:
+        """Determine if this is a padded block"""
+        ...  # pragma: no cover
+        
+    @property
+    def padding(self) -> Tuple[int, int]:
+        """Get the left and right padding values for this block (0, 0 is returned if no padding is used)"""
+        ...  # pragma: no cover
 
 
 class Block(BlockData, BlockIndexing, BlockTransfer, Protocol):

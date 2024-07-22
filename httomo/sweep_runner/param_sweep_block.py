@@ -44,3 +44,11 @@ class ParamSweepBlock(BaseBlock):
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
         return self._slicing_dim
+
+    @property
+    def is_padded(self) -> bool:
+        return False
+
+    @property
+    def padding(self) -> Tuple[int, int]:
+        return (0, 0)

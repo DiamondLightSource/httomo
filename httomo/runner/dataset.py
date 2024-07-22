@@ -21,17 +21,21 @@ class DataSetBlock(BaseBlock):
         chunk_start: int = 0,
         global_shape: Optional[Tuple[int, int, int]] = None,
         chunk_shape: Optional[Tuple[int, int, int]] = None,
+        padding: Tuple[int, int] = (0, 0),
     ):
         super().__init__(data, aux_data)
         self._slicing_dim = slicing_dim
         self._block_start = block_start
         self._chunk_start = chunk_start
+        self._padding = padding
 
         if global_shape is None:
-            self._global_shape = make_3d_shape_from_array(data)
+            global_shape_t = list(data.shape)
+            global_shape_t[slicing_dim] -= padding[0] + padding[1]
+            self._global_shape = make_3d_shape_from_shape(global_shape_t)
         else:
             self._global_shape = global_shape
-            
+
         if chunk_shape is None:
             self._chunk_shape = make_3d_shape_from_array(data)
         else:
@@ -41,28 +45,50 @@ class DataSetBlock(BaseBlock):
         chunk_index[slicing_dim] += block_start
         self._chunk_index = make_3d_shape_from_shape(chunk_index)
         global_index = [0, 0, 0]
-        global_index[slicing_dim] += chunk_start + block_start
+        global_index[slicing_dim] += chunk_start + block_start + padding[0]
         self._global_index = make_3d_shape_from_shape(global_index)
 
         self._check_inconsistencies()
-        
+
     def _check_inconsistencies(self):
-        if self.chunk_index[self.slicing_dim] < 0:
+        if self.chunk_index[self.slicing_dim] + self._padding[0] < 0:
             raise ValueError("block start index must be >= 0")
-        if self.chunk_index[self.slicing_dim] + self.shape[self.slicing_dim] > self.chunk_shape[self.slicing_dim]:
+        if (
+            self.chunk_index[self.slicing_dim]
+            + self.shape[self.slicing_dim]
+            - self._padding[1]
+            > self.chunk_shape[self.slicing_dim]
+        ):
             raise ValueError("block spans beyond the chunk's boundaries")
-        if self.global_index[self.slicing_dim] < 0:
+        if self.global_index[self.slicing_dim] + self._padding[0] < 0:
             raise ValueError("chunk start index must be >= 0")
-        if self.global_index[self.slicing_dim] + self.shape[self.slicing_dim] > self.global_shape[self.slicing_dim]:
+        if (
+            self.global_index[self.slicing_dim]
+            + self.shape[self.slicing_dim]
+            - self._padding[1]
+            > self.global_shape[self.slicing_dim]
+        ):
             raise ValueError("chunk spans beyond the global data boundaries")
-        if any(self.chunk_shape[i] > self.global_shape[i] for i in range(3)):    
+        if any(self.chunk_shape[i] > self.global_shape[i] for i in range(3) if i != self.slicing_dim):
+            raise ValueError("chunk shape is larger than the global shape")
+        if self.chunk_shape[self.slicing_dim] - self.padding[0] - self.padding[1] > self.global_shape[self.slicing_dim]:
             raise ValueError("chunk shape is larger than the global shape")
         if any(self.shape[i] > self.chunk_shape[i] for i in range(3)):
             raise ValueError("block shape is larger than the chunk shape")
-        if any(self.shape[i] != self.global_shape[i] for i in range(3) if i != self.slicing_dim):
-            raise ValueError("block shape inconsistent with non-slicing dims of global shape")
-        
-        assert not any(self.chunk_shape[i] != self.global_shape[i] for i in range(3) if i != self.slicing_dim)
+        if any(
+            self.shape[i] != self.global_shape[i]
+            for i in range(3)
+            if i != self.slicing_dim
+        ):
+            raise ValueError(
+                "block shape inconsistent with non-slicing dims of global shape"
+            )
+
+        assert not any(
+            self.chunk_shape[i] != self.global_shape[i]
+            for i in range(3)
+            if i != self.slicing_dim
+        )
 
     @property
     def chunk_index(self) -> Tuple[int, int, int]:
@@ -73,7 +99,7 @@ class DataSetBlock(BaseBlock):
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Shape of the full chunk handled by the current process"""
         return self._chunk_shape
-    
+
     @property
     def global_index(self) -> Tuple[int, int, int]:
         """The index of this block within the global data across all processes"""
@@ -83,19 +109,19 @@ class DataSetBlock(BaseBlock):
     def global_shape(self) -> Tuple[int, int, int]:
         """Shape of the global data across all processes"""
         return self._global_shape
-    
+
     @property
     def is_last_in_chunk(self) -> bool:
         """Check if the current dataset is the final one for the chunk handled by the current process"""
         return (
             self.chunk_index[self._slicing_dim] + self.shape[self._slicing_dim]
-            == self.chunk_shape[self._slicing_dim]
+            == self.chunk_shape[self._slicing_dim] - self.padding[0]
         )
 
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
         return self._slicing_dim
-    
+
     def _empty_aux_array(self):
         empty_shape = list(self._data.shape)
         empty_shape[self.slicing_dim] = 0
@@ -115,7 +141,15 @@ class DataSetBlock(BaseBlock):
                 chunk_shape[i] = new_data.shape[i]
             elif self._data.shape[i] != new_data.shape[i]:
                 raise ValueError("shape mismatch in slicing dimension")
-                
+
         self._data = new_data
         self._global_shape = make_3d_shape_from_shape(global_shape)
         self._chunk_shape = make_3d_shape_from_shape(chunk_shape)
+
+    @property
+    def is_padded(self) -> bool:
+        return self._padding != (0, 0)
+
+    @property
+    def padding(self) -> Tuple[int, int]:
+        return self._padding

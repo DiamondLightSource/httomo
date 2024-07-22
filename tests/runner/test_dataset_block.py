@@ -37,6 +37,28 @@ def test_full_block_for_global_data():
     assert block.flat.dtype == data.dtype
 
 
+def test_full_block_for_global_data_with_padding():
+    padding = (2, 2)
+    data = np.ones((14, 10, 10), dtype=np.float32)
+    angles = np.linspace(0, math.pi, 10, dtype=np.float32)
+    block = DataSetBlock(data=data, aux_data=AuxiliaryData(angles=angles), padding=(2, 2), slicing_dim=0,
+                         block_start=-2, chunk_start=-2)
+
+    assert block.is_cpu is True
+    assert block.is_gpu is False
+    assert block.global_index == (-2, 0, 0)
+    assert block.global_shape == (10, 10, 10)
+    assert block.chunk_index == (-2, 0, 0)
+    assert block.chunk_shape == (14, 10, 10)
+    assert block.shape == (14, 10, 10)
+    assert block.is_last_in_chunk is True
+    assert block.slicing_dim == 0
+    assert block.is_padded is True
+    assert block.padding == padding
+
+    np.testing.assert_array_equal(data, block.data)
+
+
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
 def test_full_block_for_chunked_data(slicing_dim: Literal[0, 1, 2]):
     data = np.ones((10, 10, 10), dtype=np.float32)
@@ -71,7 +93,9 @@ def test_full_block_for_chunked_data(slicing_dim: Literal[0, 1, 2]):
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
 @pytest.mark.parametrize("last_in_chunk", [False, True], ids=["middle", "last"])
-def test_partial_block_for_chunked_data(slicing_dim: Literal[0, 1, 2], last_in_chunk: bool):
+def test_partial_block_for_chunked_data(
+    slicing_dim: Literal[0, 1, 2], last_in_chunk: bool
+):
     block_shape = [10, 10, 10]
     block_shape[slicing_dim] = 2
     start_index = 3 if not last_in_chunk else 8
@@ -101,6 +125,113 @@ def test_partial_block_for_chunked_data(slicing_dim: Literal[0, 1, 2], last_in_c
     assert block.shape == tuple(block_shape)
     assert block.is_last_in_chunk is last_in_chunk
     assert block.slicing_dim == slicing_dim
+
+
+@pytest.mark.parametrize("slicing_dim", [0, 1, 2])
+def test_partial_block_for_chunked_data_with_padding_center(
+    slicing_dim: Literal[0, 1, 2]
+):
+    block_shape = [10, 10, 10]
+    block_shape[slicing_dim] = 6
+    start_index = 3
+    data = np.ones(block_shape, dtype=np.float32)
+    global_index = [0, 0, 0]
+    global_index[slicing_dim] = 10 + start_index
+    global_shape_t = [10, 10, 10]
+    global_shape_t[slicing_dim] = 30
+    global_shape = make_3d_shape_from_shape(global_shape_t)
+    chunk_shape_t = [10, 10, 10]
+    chunk_shape_t[slicing_dim] += 4  # for padding
+    chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
+    angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
+    block = DataSetBlock(
+        data=data,
+        aux_data=AuxiliaryData(angles=angles),
+        slicing_dim=slicing_dim,
+        block_start=start_index,
+        chunk_start=10,
+        global_shape=global_shape,
+        chunk_shape=chunk_shape,
+        padding=(2, 2),
+    )
+
+    assert block.is_padded is True
+    assert block.padding == (2, 2)
+
+
+@pytest.mark.parametrize("slicing_dim", [0, 1, 2])
+@pytest.mark.parametrize("boundary", ["left", "right"])
+def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
+    slicing_dim: Literal[0, 1, 2], boundary: Literal["left", "right"]
+):
+    block_shape = [10, 10, 10]
+    block_shape[slicing_dim] = 6
+    start_index = -2 if boundary == "left" else 6
+    data = np.ones(block_shape, dtype=np.float32)
+    global_index = [0, 0, 0]
+    global_index[slicing_dim] = 10 + start_index
+    global_shape_t = [10, 10, 10]
+    global_shape_t[slicing_dim] = 30
+    global_shape = make_3d_shape_from_shape(global_shape_t)
+    chunk_shape_t = [10, 10, 10]
+    chunk_shape_t[slicing_dim] += 4  # for padding
+    chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
+    angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
+    block = DataSetBlock(
+        data=data,
+        aux_data=AuxiliaryData(angles=angles),
+        slicing_dim=slicing_dim,
+        block_start=start_index,
+        chunk_start=10,
+        global_shape=global_shape,
+        chunk_shape=chunk_shape,
+        padding=(2, 2),
+    )
+
+    assert block.is_padded is True
+    assert block.padding == (2, 2)
+    assert block.is_last_in_chunk is (boundary == "right")
+
+
+@pytest.mark.parametrize("slicing_dim", [0, 1, 2])
+@pytest.mark.parametrize("boundary", ["left", "right"])
+def test_partial_block_with_padding_global_boundaries(
+    slicing_dim: Literal[0, 1, 2], boundary: Literal["left", "right"]
+):
+    block_shape = [10, 10, 10]
+    block_shape[slicing_dim] = 6
+    padding = (2, 2)
+    start_index = -padding[0] if boundary == "left" else 6
+    data = np.ones(block_shape, dtype=np.float32)
+    chunk_shape_t = [10, 10, 10]
+    chunk_shape_t[slicing_dim] += padding[0] + padding[1]  # for padding
+    chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
+    global_index = [0, 0, 0]
+    global_index[slicing_dim] = (
+        -padding[0]
+        if boundary == "left"
+        else 30 - block_shape[slicing_dim] + padding[1]
+    )
+    chunk_start = -padding[0] if boundary == "left" else 20 - padding[0]
+    global_shape_t = [10, 10, 10]
+    global_shape_t[slicing_dim] = 30
+    global_shape = make_3d_shape_from_shape(global_shape_t)
+    angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
+    block = DataSetBlock(
+        data=data,
+        aux_data=AuxiliaryData(angles=angles),
+        slicing_dim=slicing_dim,
+        block_start=start_index,
+        chunk_start=chunk_start,
+        global_shape=global_shape,
+        chunk_shape=chunk_shape,
+        padding=padding,
+    )
+
+    assert block.is_padded is True
+    assert block.padding == padding
+    assert block.global_index == tuple(global_index)
+    assert block.is_last_in_chunk is (boundary == "right")
 
 
 # block_shape <= chunk_shape
