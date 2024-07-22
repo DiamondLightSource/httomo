@@ -109,6 +109,8 @@ class ParamSweepWriter:
 
     @property
     def slices_per_sweep(self) -> int:
+        if self._slices_per_sweep is None:
+            raise ValueError("Slices per sweep isn't known until the first write has occurred")
         return self._slices_per_sweep
 
     @property

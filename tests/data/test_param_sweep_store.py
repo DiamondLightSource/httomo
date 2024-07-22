@@ -30,6 +30,13 @@ def test_param_sweep_writer_get_single_shape_before_write_raises_error():
         "Shape of single sweep result isn't known until the first write has occurred"
     ) in str(e)
 
+def test_param_sweep_writer_get_slices_per_sweep_before_write_raises_error():
+    writer = make_param_sweep_writer()
+    with pytest.raises(ValueError) as e:
+        writer.slices_per_sweep
+    assert (
+        "Slices per sweep isn't known until the first write has occurred"
+    ) in str(e)
 
 def test_param_sweep_writer_get_total_shape_before_write_raises_error():
     writer = make_param_sweep_writer()
