@@ -7,7 +7,6 @@ from httomo.loaders.types import (
 )
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.transform_loader_params import (
-    AnglesParam,
     PreviewParam,
     parse_angles,
     parse_preview,
