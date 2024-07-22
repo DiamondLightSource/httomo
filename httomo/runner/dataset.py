@@ -101,7 +101,11 @@ class DataSetBlock(BaseBlock):
         empty_shape[self.slicing_dim] = 0
         return np.empty_like(self._data, shape=empty_shape)
 
-    @BaseBlock.data.setter
+    @property
+    def data(self) -> generic_array:
+        return super().data
+
+    @data.setter
     def data(self, new_data: generic_array):
         global_shape = list(self._global_shape)
         chunk_shape = list(self._chunk_shape)
