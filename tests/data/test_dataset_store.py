@@ -1,4 +1,5 @@
 from os import PathLike
+from pathlib import Path
 from typing import List, Literal
 from unittest.mock import ANY
 import numpy as np
@@ -6,6 +7,7 @@ import pytest
 from pytest_mock import MockerFixture
 from httomo.data.dataset_store import DataSetStoreReader, DataSetStoreWriter
 from mpi4py import MPI
+import h5py
 from httomo.runner.auxiliary_data import AuxiliaryData
 
 from httomo.runner.dataset import DataSetBlock
@@ -637,4 +639,66 @@ def test_can_write_blocks_with_padding_and_read(
     )
     np.testing.assert_array_equal(
         rblock2.data, global_data[core_chunk_start + 2 : core_chunk_start + 2 + 2, :, :]
+    )
+
+
+def test_can_write_and_read_padded_blocks_filebased(
+    mocker: MockerFixture, tmp_path: PathLike
+):
+    padding = (2, 2)
+    GLOBAL_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    chunk_shape = (4, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
+    chunk_start = 3
+    
+    # write global data to file and fake the source
+    file = Path(tmp_path) / "testfile.h5"
+    with h5py.File(file , "w") as f:
+        source_data = f.create_dataset("data", data=global_data)
+    
+    mock_source = mocker.create_autospec(
+        DataSetStoreWriter,
+        _data=source_data,
+        is_file_based=True,
+        filename=file,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        global_index=(chunk_start, 0, 0),
+        chunk_shape=chunk_shape,
+        finalise=mocker.MagicMock(),
+        instance=True
+    )
+    
+    reader = DataSetStoreReader(mock_source, 0, padding=padding)
+    padded_chunk_shape = (
+        chunk_shape[0] + padding[0] + padding[1],
+        chunk_shape[1],
+        chunk_shape[2],
+    )
+
+    rblock1 = reader.read_block(0, 2)
+    rblock2 = reader.read_block(2, 2)
+
+    assert reader.global_shape == GLOBAL_SHAPE
+    assert reader.chunk_shape == padded_chunk_shape
+    assert reader.global_index == (chunk_start - padding[0], 0, 0)
+    assert reader.slicing_dim == 0
+
+    assert isinstance(rblock1.data, np.ndarray)
+    assert isinstance(rblock2.data, np.ndarray)
+
+    assert rblock1.is_padded is True
+    assert rblock2.is_padded is True
+    assert rblock1.padding == padding
+    assert rblock2.padding == padding
+
+    np.testing.assert_array_equal(
+        rblock1.data,
+        global_data[chunk_start - padding[0] : chunk_start + 2 + padding[1], :, :],
+    )
+    np.testing.assert_array_equal(
+        rblock2.data,
+        global_data[chunk_start - padding[0] + 2 : chunk_start + 4 + padding[1], :, :],
     )

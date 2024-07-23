@@ -186,13 +186,16 @@ class DataSetStoreWriter(ReadableDataSetSink):
                     "Attempt to write a block with inconsistent shape to existing data"
                 )
 
-            if any(self._chunk_shape[i] != block.chunk_shape_unpadded[i] for i in range(3)):
+            if any(
+                self._chunk_shape[i] != block.chunk_shape_unpadded[i] for i in range(3)
+            ):
                 raise ValueError(
                     "Attempt to write a block with inconsistent shape to existing data"
                 )
 
             if any(
-                self._global_index[i] != block.global_index_unpadded[i] - block.chunk_index_unpadded[i]
+                self._global_index[i]
+                != block.global_index_unpadded[i] - block.chunk_index_unpadded[i]
                 for i in range(3)
             ):
                 raise ValueError(
@@ -283,16 +286,20 @@ class DataSetStoreWriter(ReadableDataSetSink):
         return h5data
 
     def make_reader(
-        self, new_slicing_dim: Optional[Literal[0, 1, 2]] = None
+        self,
+        new_slicing_dim: Optional[Literal[0, 1, 2]] = None,
+        padding: Optional[Tuple[int, int]] = None,
     ) -> DataSetSource:
-        """Create a reader from this writer, reading from the same store"""
+        """Create a reader from this writer, reading from the same store.
+        The optional parameter padding can be used if data should be returned with padding slices,
+        given as a tuple of (before, after)"""
         if self._data is None:
             raise ValueError("Cannot make reader when no data has been written yet")
         self._readonly = True
         if self._h5file is not None:
             self._h5file.close()
             self._h5file = None
-        reader = DataSetStoreReader(self, new_slicing_dim)
+        reader = DataSetStoreReader(self, new_slicing_dim, padding=padding)
         # make sure finalize is called when reader object is garbage-collected
         weakref.finalize(reader, weakref.WeakMethod(reader.finalize))
         return reader
@@ -310,7 +317,10 @@ class DataSetStoreReader(DataSetSource):
     """
 
     def __init__(
-        self, source: DataSetStoreWriter, slicing_dim: Optional[Literal[0, 1, 2]] = None
+        self,
+        source: DataSetStoreWriter,
+        slicing_dim: Optional[Literal[0, 1, 2]] = None,
+        padding: Optional[Tuple[int, int]] = None,
     ):
         self._comm = source.comm
         self._global_shape = source.global_shape
@@ -321,7 +331,7 @@ class DataSetStoreReader(DataSetSource):
             raise ValueError(
                 "Cannot create DataSetStoreReader when no data has been written"
             )
-
+            
         self._h5file: Optional[h5py.File] = None
         self._h5filename: Optional[Path] = None
         source_data = source._data
@@ -336,6 +346,17 @@ class DataSetStoreReader(DataSetSource):
         else:
             self._data = self._reslice(source.slicing_dim, slicing_dim, source_data)
             self._slicing_dim = slicing_dim
+            
+        self._padding = (0, 0) if padding is None else padding
+        if self._padding != (0, 0):
+            # correct indices for padding
+            global_index_t = list(self._global_index)
+            global_index_t[self.slicing_dim] -= self._padding[0]
+            self._global_index = make_3d_shape_from_shape(global_index_t)
+            
+            chunk_shape_t = list(self._chunk_shape)
+            chunk_shape_t[self.slicing_dim] += self._padding[0] + self._padding[1]
+            self._chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
 
         source.finalize()
 
@@ -415,9 +436,12 @@ class DataSetStoreReader(DataSetSource):
         start_idx = [0, 0, 0]
         start_idx[self._slicing_dim] = start
         if self.is_file_based:
-            start_idx[self._slicing_dim] += self._global_index[self._slicing_dim]
+            start_idx[self._slicing_dim] += self._global_index[self._slicing_dim] # includes padding
+        elif self._padding != (0, 0):
+            # TODO: read the neighborhood here?
+            pass
         shape = list(self._global_shape)
-        shape[self._slicing_dim] = length
+        shape[self._slicing_dim] = length + self._padding[0] + self._padding[1]
 
         block_data = self._data[
             start_idx[0] : start_idx[0] + shape[0],
@@ -429,10 +453,11 @@ class DataSetStoreReader(DataSetSource):
             data=block_data,
             aux_data=self._aux_data,
             slicing_dim=self._slicing_dim,
-            block_start=start,
+            block_start=start - self._padding[0],
             chunk_start=self._global_index[self._slicing_dim],
             global_shape=self._global_shape,
             chunk_shape=self._chunk_shape,
+            padding=self._padding
         )
 
         return block
