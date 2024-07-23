@@ -1,5 +1,0 @@
-- method: remove_stripe_based_sorting
-  module_path: httomolibgpu.prep.stripe
-  parameters:
-    size: 11
-    dim: 1

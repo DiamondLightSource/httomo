@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 from shutil import rmtree
+from typing import Any, Callable, Dict, List, TypeAlias
 import numpy as np
 
 import pytest
@@ -11,7 +12,9 @@ import yaml
 from httomo.darks_flats import DarksFlatsFileConfig
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
-from httomo.ui_layer import _yaml_loader
+
+MethodConfig: TypeAlias = Dict[str, Any]
+PipelineConfig: TypeAlias = List[MethodConfig]
 
 
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -99,7 +102,6 @@ def data_file(test_data_path):
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def ensure_clean_memory():
     import cupy as cp
 
@@ -120,7 +122,6 @@ def host_data(data_file):
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def data(host_data, ensure_clean_memory):
     import cupy as cp
 
@@ -133,7 +134,6 @@ def host_angles(data_file):
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def angles(host_angles, ensure_clean_memory):
     import cupy as cp
 
@@ -146,7 +146,6 @@ def host_angles_radians(host_angles):
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def angles_radians(angles):
     return angles
 
@@ -157,7 +156,6 @@ def host_flats(data_file):
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def flats(host_flats, ensure_clean_memory):
     import cupy as cp
 
@@ -172,7 +170,6 @@ def host_darks(
 
 
 @pytest.fixture
-@pytest.mark.cupy
 def darks(host_darks, ensure_clean_memory):
     import cupy as cp
 
@@ -191,7 +188,7 @@ def standard_image_key_path():
 
 @pytest.fixture
 def testing_pipeline():
-    return "samples/pipeline_template_examples/testing/testing_pipeline.yaml"
+    return "tests/samples/pipeline_template_examples/testing/testing_pipeline.yaml"
 
 
 @pytest.fixture
@@ -201,12 +198,12 @@ def diad_data():
 
 @pytest.fixture
 def diad_loader():
-    return "samples/loader_configs/diad.yaml"
+    return "tests/samples/loader_configs/diad.yaml"
 
 
 @pytest.fixture
 def diad_pipeline_gpu():
-    return "samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
+    return "tests/samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
 
 
 @pytest.fixture
@@ -215,83 +212,85 @@ def i12_data():
 
 
 @pytest.fixture
+def pipeline360():
+    return "samples/pipeline_template_examples/DLS/02_i12_360scan_pipeline.yaml"
+
+
+@pytest.fixture
 def i12_loader():
-    return "samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
+    return (
+        "tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
+    )
 
 
 @pytest.fixture
 def i12_loader_ignore_darks_flats():
-    return "samples/pipeline_template_examples/DLS/04_i12_ignore_darks_flats.yaml"
+    return "tests/samples/pipeline_template_examples/DLS/04_i12_ignore_darks_flats.yaml"
 
 
 @pytest.fixture
 def standard_loader():
-    return "samples/loader_configs/standard_tomo.yaml"
-
-
-@pytest.fixture
-def more_than_one_method():
-    return "samples/pipeline_template_examples/testing/more_than_one_method.yaml"
+    return "tests/samples/loader_configs/standard_tomo.yaml"
 
 
 @pytest.fixture
 def sample_pipelines():
-    return "samples/pipeline_template_examples/"
+    return "tests/samples/pipeline_template_examples/"
 
 
 @pytest.fixture
 def gpu_pipeline():
-    return "samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
+    return "tests/samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
 
 
 @pytest.fixture
 def python_cpu_pipeline1():
-    return "samples/python_templates/pipeline_cpu1.py"
+    return "tests/samples/python_templates/pipeline_cpu1.py"
 
 
 @pytest.fixture
 def python_cpu_pipeline2():
-    return "samples/python_templates/pipeline_cpu2.py"
+    return "tests/samples/python_templates/pipeline_cpu2.py"
 
 
 @pytest.fixture
 def python_cpu_pipeline3():
-    return "samples/python_templates/pipeline_cpu3.py"
+    return "tests/samples/python_templates/pipeline_cpu3.py"
 
 
 @pytest.fixture
 def python_gpu_pipeline1():
-    return "samples/python_templates/pipeline_gpu1.py"
+    return "tests/samples/python_templates/pipeline_gpu1.py"
 
 
 @pytest.fixture
 def yaml_cpu_pipeline1():
-    return "samples/pipeline_template_examples/pipeline_cpu1.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu1.yaml"
 
 
 @pytest.fixture
 def yaml_cpu_pipeline2():
-    return "samples/pipeline_template_examples/pipeline_cpu2.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu2.yaml"
 
 
 @pytest.fixture
 def yaml_cpu_pipeline3():
-    return "samples/pipeline_template_examples/pipeline_cpu3.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu3.yaml"
 
 
 @pytest.fixture
 def yaml_cpu_pipeline4():
-    return "samples/pipeline_template_examples/pipeline_cpu4.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_cpu4.yaml"
 
 
 @pytest.fixture
 def yaml_gpu_pipeline1():
-    return "samples/pipeline_template_examples/pipeline_gpu1.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_gpu1.yaml"
 
 
 @pytest.fixture
 def yaml_gpu_pipeline360_2():
-    return "samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml"
+    return "tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml"
 
 
 @pytest.fixture(scope="session")
@@ -300,27 +299,18 @@ def distortion_correction_path(test_data_path):
 
 
 @pytest.fixture
-def merge_yamls():
+def merge_yamls(load_yaml: Callable):
     def _merge_yamls(*yamls) -> None:
         """Merge multiple yaml files into one"""
-        data: list = []
+        data : List = []
         for y in yamls:
-            curr_yaml_list = _yaml_loader(y)
+            curr_yaml_list = load_yaml(y)
             for x in curr_yaml_list:
                 data.append(x)
         with open("temp.yaml", "w") as file_descriptor:
             yaml.dump(data, file_descriptor)
 
     return _merge_yamls
-
-
-@pytest.fixture
-def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
-    return DarksFlatsFileConfig(
-        file=Path("tests/test_data/tomo_standard.nxs"),
-        data_path="/entry1/tomo_entry/data/data",
-        image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
-    )
 
 
 @pytest.fixture
@@ -341,3 +331,48 @@ def dummy_block() -> DataSetBlock:
         flats=1.0 * np.ones((2, data.shape[1], data.shape[2]), dtype=np.float32),
     )
     return DataSetBlock(data=data, aux_data=aux_data)
+
+
+@pytest.fixture()
+def get_files():
+    def _get_files(dir_path: str, excl: List[str] = []) -> List[str]:
+        """ Returns list of files from provided directory
+
+        Parameters
+        ----------
+        dir_path
+            Directory to search
+        excl
+            Exclude files with a path containing any str in this list
+
+        Returns
+        -------
+        List of file paths
+        """
+        _dir = Path(dir_path).glob("**/*")
+        _files = [
+            str(f) for f in _dir if f.is_file() and not any(st in str(f) for st in excl)
+        ]
+        return _files
+    return _get_files
+
+
+@pytest.fixture()
+def load_yaml():
+    def _load_yaml(yaml_in: str) -> PipelineConfig:
+        """ Loads provided yaml and returns dict
+
+        Parameters
+        ----------
+        yaml_in
+            yaml to load
+
+        Returns
+        -------
+        PipelineConfig
+        """
+        with open(yaml_in, "r") as f:
+            conf = list(yaml.load_all(f, Loader=yaml.FullLoader))
+        return conf[0]
+    return _load_yaml
+

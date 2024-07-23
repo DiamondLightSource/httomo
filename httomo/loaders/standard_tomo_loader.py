@@ -1,3 +1,4 @@
+import logging
 import weakref
 from pathlib import Path
 from typing import Literal, Optional, Tuple
@@ -40,7 +41,7 @@ class StandardTomoLoader(DataSetSource):
         self._data_path = data_path
         self._image_key_path = image_key_path
         self._angles = angles
-        self._slicing_dim = slicing_dim
+        self._slicing_dim: Literal[0, 1, 2] = slicing_dim
         self._comm = comm
         self._h5file = h5py.File(in_file, "r")
         self._data: h5py.Dataset = self._get_data()
@@ -84,11 +85,11 @@ class StandardTomoLoader(DataSetSource):
         return self._data.dtype
 
     @property
-    def flats(self) -> np.ndarray:
+    def flats(self) -> Optional[AuxiliaryData.generic_array]:
         return self._aux_data.get_flats()
 
     @property
-    def darks(self) -> np.ndarray:
+    def darks(self) -> Optional[AuxiliaryData.generic_array]:
         return self._aux_data.get_darks()
 
     @property
@@ -214,15 +215,15 @@ class StandardTomoLoader(DataSetSource):
     def _log_info(self) -> None:
         log_once(
             f"The full dataset shape is {self._data.shape}",
-            comm=self._comm,
+            level=logging.DEBUG,
         )
         log_once(
             f"Loading data: {self._in_file}",
-            comm=self._comm,
+            level=logging.DEBUG,
         )
         log_once(
             f"Path to data: {self._data_path}",
-            comm=self._comm,
+            level=logging.DEBUG,
         )
         log_once(
             (
@@ -232,11 +233,11 @@ class StandardTomoLoader(DataSetSource):
                 f"{self._preview.config.detector_x.start}:{self._preview.config.detector_x.stop}"
                 ")"
             ),
-            comm=self._comm,
+            level=logging.DEBUG,
         )
         log_once(
             f"Data shape is {self._global_shape} of type {self._data.dtype}",
-            comm=self._comm,
+            level=logging.DEBUG,
         )
 
 

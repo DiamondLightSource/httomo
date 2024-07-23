@@ -1,0 +1,34 @@
+misc:
+  morph:
+    data_reducer:
+      pattern: all
+      output_dims_change: True
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+  images:
+    save_to_images:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+  segm:
+    binary_thresholding:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+prep:
+  phase:
+    paganin_filter:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False

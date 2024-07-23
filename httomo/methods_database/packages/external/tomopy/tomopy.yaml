@@ -1,0 +1,454 @@
+sim:
+  project:
+    add_drift:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    add_focal_spot_blur:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    add_gaussian:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    add_poisson:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    add_rings:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    add_salt_pepper:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    add_zingers:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    project:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    project2:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    project3:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+misc:
+  corr:
+    adjust_range:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    circ_mask:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    gaussian_filter:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    median_filter:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    median_filter3d:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: True
+    median_filter_nonfinite:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_nan:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_neg:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_outlier:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_outlier1d:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_outlier3d:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: True
+    remove_ring:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    sobel_filter:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+  morph:
+    downsample:
+      pattern: all
+      output_dims_change: True
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    pad:
+      pattern: all
+      output_dims_change: True
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    sino_360_to_180:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    trim_sinogram:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    upsample:
+      pattern: all
+      output_dims_change: True
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+prep:
+  alignment:
+    add_jitter:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    add_noise:
+      pattern: all
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    align_joint:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    align_seq:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    blur_edges:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    distortion_correction_proj:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    distortion_correction_sino:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    scale:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    shift_images:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+  normalize:
+    minus_log:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    normalize:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    normalize_roi:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    normalize_bg:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    normalize_nf:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+  phase:
+    retrieve_phase:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+  stripe:
+    remove_all_stripe:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_stripe_fw:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_stripe_ti:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_stripe_sf:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_stripe_based_sorting:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_stripe_based_filtering:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_stripe_based_fitting:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_large_stripe:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_dead_stripe:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    remove_stripe_based_interpolation:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    stripes_detect3d:
+      pattern: sinogram
+      implementation: cpu
+      output_dims_change: False
+      memory_gpu: None
+      save_result_default: False
+      padding: True
+    stripes_mask3d:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: True
+recon:
+  algorithm:
+    recon:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: True
+      padding: False
+  rotation:
+    find_center:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    find_center_pc:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: True
+      padding: False
+    find_center_vo:
+      pattern: projection
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+  wrappers:
+    astra:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    ufo_fbp:
+      pattern: sinogram
+      output_dims_change: False
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    ufo_dfi:
+      pattern: sinogram
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False
+    lprec:
+      pattern: sinogram
+      output_dims_change: True
+      implementation: cpu
+      memory_gpu: None
+      save_result_default: False
+      padding: False

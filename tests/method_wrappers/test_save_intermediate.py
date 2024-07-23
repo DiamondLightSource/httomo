@@ -16,6 +16,7 @@ import httomo
 import numpy as np
 
 
+@pytest.mark.cupy
 def test_save_intermediate(
     mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: Path
 ):
@@ -69,6 +70,7 @@ def test_save_intermediate(
     assert res == dummy_block
 
 
+@pytest.mark.cupy
 def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Path):
     loader: LoaderInterface = mocker.create_autospec(
         LoaderInterface, instance=True, detector_x=10, detector_y=20
@@ -146,7 +148,7 @@ def test_save_intermediate_leaves_gpu_data(
         recon_algorithm="XXX",
     )
     wrp = make_method_wrapper(
-        make_mock_repo(mocker, implementation="gpu_cupy"),
+        make_mock_repo(mocker, implementation="gpu_cupy" if gpu else "cpu"),
         "httomo.methods",
         "save_intermediate_data",
         MPI.COMM_WORLD,

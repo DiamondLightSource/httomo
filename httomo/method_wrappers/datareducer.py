@@ -1,5 +1,5 @@
+from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import MethodRepository
 
 from mpi4py.MPI import Comm
@@ -39,7 +39,7 @@ class DatareducerWrapper(GenericMethodWrapper):
         ), "Only data_reducer is supported at the moment"
         self._flats_darks_processed = False
 
-    def execute(self, block: DataSetBlock) -> DataSetBlock:
+    def execute(self, block: T) -> T:
         # check if data needs to be transfered host <-> device
         block = self._transfer_data(block)
 

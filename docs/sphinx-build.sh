@@ -27,6 +27,12 @@ rm -rf $DIR/build/
 # sphinx-apidoc generates source files that use sphinx.ext.autodoc to document all found modules
 sphinx-apidoc -feT -t=$DIR/source/_templates -o $DIR/source/api $DIR/../httomo
 
+# build yaml templates here:
+python $DIR/../scripts/yaml_templates_generator.py -i $DIR/../httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o $DIR/build/yaml_templates/tomopy
+python $DIR/../scripts/yaml_unsupported_tomopy_remove.py -t $DIR/build/yaml_templates/tomopy -l $DIR/../httomo/methods_database/packages/external/tomopy/tomopy.yaml
+python $DIR/../scripts/yaml_templates_generator.py -i $DIR/../httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o $DIR/build/yaml_templates/httomolibgpu
+python $DIR/../scripts/yaml_templates_generator.py -i $DIR/../httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o $DIR/build/yaml_templates/httomolib
+
 # Append yaml link to rst files
 python -m source.yaml_doc_generator
 

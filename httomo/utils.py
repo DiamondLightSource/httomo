@@ -1,54 +1,36 @@
+import logging
 from contextlib import contextmanager
-import re
 from enum import Enum
-from pathlib import Path
 from time import perf_counter_ns
 from typing import Any, Callable, Dict, List, Literal, Tuple
 
+from loguru import logger
 from mpi4py.MPI import Comm
 import numpy as np
 
-import httomo.globals
 from httomo.data import mpiutil
 
 gpu_enabled = False
 try:
     import cupy as xp
+    if mpiutil.rank == 0:
+        logger.debug("CuPy is installed")
 
     try:
         xp.cuda.Device(0).compute_capability
         gpu_enabled = True  # CuPy is installed and GPU is available
     except xp.cuda.runtime.CUDARuntimeError:
         import numpy as xp
-
-        print("CuPy is installed but GPU device inaccessible")
+        if mpiutil.rank == 0:
+            logger.debug("CuPy is installed but GPU device inaccessible")
 
 except ImportError:
     import numpy as xp
-
-    print("CuPy is not installed")
-
-
-class Colour:
-    """
-    Class for storing the ANSI escape codes for different colours.
-    """
-
-    LIGHT_BLUE = "\033[1;34m"
-    LIGHT_BLUE_BCKGR = "\033[1;44m"
-    BLUE = "\33[94m"
-    CYAN = "\33[96m"
-    GREEN = "\33[92m"
-    YELLOW = "\33[93m"
-    MAGENTA = "\33[95m"
-    RED = "\33[91m"
-    END = "\033[0m"
-    BVIOLET = "\033[1;35m"
-    LYELLOW = "\033[33m"
-    BACKG_RED = "\x1b[6;37;41m"
+    if mpiutil.rank == 0:
+        logger.debug("CuPy is not installed")
 
 
-def log_once(output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0) -> None:
+def log_once(output: Any, level: int = logging.INFO) -> None:
     """
     Log output to console and log file if the process is rank zero.
 
@@ -56,29 +38,32 @@ def log_once(output: Any, comm: Comm, colour: Any = Colour.GREEN, level=0) -> No
     ----------
     output : Any
         The item to be printed.
-    comm : Comm
-        The comm used to determine the rank zero process.
-    colour : str, optional
-        The colour of the output.
     level : int, optional
-        The level of the log message. 0 is info, 1 is debug, 2 is warning.
+        The level of the log message. See
+        https://docs.python.org/3/library/logging.html#logging-levels.
     """
     if mpiutil.rank == 0:
         if isinstance(output, list):
-            output = "".join(
-                [f"{colour}{out}{Colour.END}" for out, colour in zip(output, colour)]
-            )
+            output = "".join([f"{out}" for out in output])
+
+        if level == logging.DEBUG:
+            logger.debug(output)
+        elif level == logging.WARNING:
+            logger.warning(output)
         else:
-            output = f"{colour}{output}{Colour.END}"
-
-        if httomo.globals.logger is not None:
-            if level == 1:
-                httomo.globals.logger.debug(output)
-            elif level == 2:
-                httomo.globals.logger.warn(output)
+            # logger.info(output)
+            if "section" in output:
+                logger.opt(colors=True).info("<cyan>{}</cyan>".format(output))
+            elif "pattern" in output:
+                logger.opt(colors=True).info("<green>{}</green>".format(output))
+            elif "rotation" in output:
+                logger.opt(colors=True).info("<yellow>{}</yellow>".format(output))
+            elif "Finished" in output:
+                logger.opt(colors=True).info("<magenta>{}</magenta>".format(output))
+            elif "Pipeline" in output:
+                logger.opt(colors=True).info("<red>{}</red>".format(output))
             else:
-                httomo.globals.logger.info(output)
-
+                logger.info(output)
 
 def log_rank(output: Any, comm: Comm) -> None:
     """
@@ -91,11 +76,10 @@ def log_rank(output: Any, comm: Comm) -> None:
     comm : Comm
         The comm used to determine the process rank.
     """
-    if httomo.globals.logger is not None:
-        httomo.globals.logger.debug(f"RANK: [{comm.rank}], {output}")
+    logger.debug(f"RANK: [{comm.rank}], {output}")
 
 
-def log_exception(output: str, colour: str = Colour.RED) -> None:
+def log_exception(output: str) -> None:
     """
     Log an exception to the log file.
 
@@ -104,12 +88,7 @@ def log_exception(output: str, colour: str = Colour.RED) -> None:
     output : str
         The exception to be logged.
     """
-    if httomo.globals.logger is not None:
-        httomo.globals.logger.error(f"{colour}{output}{Colour.END}")
-
-    #: now this will cause the pipeline to crash
-    #: remove ansi escape sequences from the log file
-    remove_ansi_escape_sequences(f"{httomo.globals.run_out_dir}/user.log")
+    logger.error(output)
 
 
 def _parse_preview(
@@ -190,7 +169,7 @@ def _parse_preview(
                 str_warn = "The 'step' in preview cannot be negative"
 
             if warn_on:
-                log_exception(str_warn, colour=Colour.BACKG_RED)
+                log_exception(str_warn)
                 raise ValueError("Preview error: " + str_warn)
 
             start_str = f"{start if start is not None else ''}"
@@ -271,35 +250,23 @@ def get_data_in_data_out(method_name: str, dict_params_method: Dict[str, Any]) -
     return data_in, data_out
 
 
-def remove_ansi_escape_sequences(filename):
-    """
-    Remove ANSI escape sequences from a file.
-    """
-    ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")    
-    if Path(filename).exists():
-        with open(filename, "r") as f:
-            lines = f.readlines()
-        with open(filename, "w") as f:
-            for line in lines:
-                f.write(ansi_escape.sub("", line))
-
-
 class catchtime:
     """A context manager to measure ns-accurate time for the context block.
-    
+
     Usage:
         with catchtime() as t:
             ...
-            
+
         print(t.elapsed)
     """
+
     def __enter__(self):
         self.start = perf_counter_ns()
         return self
 
     def __exit__(self, type, value, traceback):
         self.elapsed = (perf_counter_ns() - self.start) * 1e-9
-    
+
 
 class catch_gputime:
     def __enter__(self):
@@ -307,12 +274,12 @@ class catch_gputime:
             self.start = xp.cuda.Event()
             self.start.record()
         return self
-            
+
     def __exit__(self, type, value, traceback):
         if gpu_enabled:
             self.end = xp.cuda.Event()
             self.end.record()
-    
+
     @property
     def elapsed(self) -> float:
         if gpu_enabled:
@@ -323,8 +290,8 @@ class catch_gputime:
 
 
 def make_3d_shape_from_shape(shape: List[int]) -> Tuple[int, int, int]:
-    """Given a shape as a list of length 3, return a corresponding tuple 
-       with the right typing type (required to make mypy type checks work)
+    """Given a shape as a list of length 3, return a corresponding tuple
+    with the right typing type (required to make mypy type checks work)
     """
     assert len(shape) == 3, "3D shape expected"
     return (shape[0], shape[1], shape[2])
@@ -332,6 +299,6 @@ def make_3d_shape_from_shape(shape: List[int]) -> Tuple[int, int, int]:
 
 def make_3d_shape_from_array(array: np.ndarray) -> Tuple[int, int, int]:
     """Given a 3D array, return a corresponding shape tuple
-       with the right typing type (required to make mypy type checks work)
+    with the right typing type (required to make mypy type checks work)
     """
     return make_3d_shape_from_shape(list(array.shape))

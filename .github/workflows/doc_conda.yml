@@ -24,15 +24,22 @@ jobs:
           with:
             python-version: 3.9
 
-        - name: httomo
+        - name: httomo-docs
           uses: conda-incubator/setup-miniconda@v2
           with:
             auto-update-conda: false
-            activate-environment: httomo
+            activate-environment: httomo-docs
             environment-file: ./docs/source/doc-conda-requirements.yml
 
         - name: Build api docs
           run: sphinx-apidoc -feT -t=./docs/source/_templates -o ./docs/source/api ./httomo
+
+        - name: Generate yaml templates
+          run: |
+            python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./docs/build/yaml_templates/tomopy
+            python ./scripts/yaml_unsupported_tomopy_remove.py -t ./docs/build/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
+            python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./docs/build/yaml_templates/httomolib
+            python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./docs/build/yaml_templates/httomolibgpu
 
         - name: Generate yml docs
           run: python ./docs/source/yaml_doc_generator.py
@@ -40,5 +47,8 @@ jobs:
         - name: Build html
           run: sphinx-build -a -E -b html ./docs/source/ ./docs/build/
 
-        - name: Run ghp-import
+        - name: Publish docs
+          if: github.ref_type == 'tag' || github.ref_name == 'main'
           run: ghp-import -n -p -f ./docs/build
+          env:
+            GITHUB_TOKEN: ${{ github.token }}

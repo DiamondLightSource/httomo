@@ -1,4 +1,0 @@
-- method: add_rings
-  module_path: tomopy.sim.project
-  parameters:
-    std: 0.05

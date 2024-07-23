@@ -18,8 +18,9 @@ def test_get_available_memory():
 
 
 def test_get_available_memory_cpu(mocker: MockerFixture):
-    # this function is called in the implementation try block -
-    # we trigger an import error here to simulate cupy not being there
-    mocker.patch("cupy.cuda.Device", side_effect=ImportError("can't use cupy"))
+    if gpu_enabled:
+        # this function is called in the implementation try block -
+        # we trigger an import error here to simulate cupy not being there
+        mocker.patch("cupy.cuda.Device", side_effect=ImportError("can't use cupy"))
     # greater 10GB
     assert get_available_gpu_memory() > 10e9

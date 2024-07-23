@@ -36,7 +36,7 @@ class MethodQuery(Protocol):
     def get_memory_gpu_params(self) -> List[GpuMemoryRequirement]:
         """Get the parameters for the GPU memory estimation"""
         ...  # pragma: no cover
-        
+
     def save_result_default(self) -> bool:
         """Check if this method saves results by default"""
         ...  # pragma: no cover
@@ -44,6 +44,11 @@ class MethodQuery(Protocol):
     def swap_dims_on_output(self) -> bool:
         """Check if the output 3D array needs to wap axis 0 and 1 to match httomolib.
         (This is typically true for tomopy recon methods)"""
+        ...  # pragma: no cover
+
+    def padding(self) -> bool:
+        """Check if the method requires padding (i.e. is 3D and requires overlap
+        regions in slicing dimension)"""
         ...  # pragma: no cover
 
     def calculate_memory_bytes(
@@ -56,6 +61,11 @@ class MethodQuery(Protocol):
         self, non_slice_dims_shape: Tuple[int, int], **kwargs
     ) -> Tuple[int, int]:
         """Calculate size of the non-slice dimensions for this method"""
+        ...  # pragma: no cover
+
+    def calculate_padding(self, **kwargs) -> Tuple[int, int]:
+        """Calculate how much padding is needed for the method, before and after the core,
+        in number of slices"""
         ...  # pragma: no cover
 
 

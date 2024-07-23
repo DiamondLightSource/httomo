@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple
+from typing import Literal, Tuple
 from unittest import mock
 
 import h5py
@@ -13,6 +13,7 @@ from httomo.loaders.standard_tomo_loader import StandardTomoLoader
 from httomo.loaders.types import RawAngles, UserDefinedAngles
 from httomo.preview import PreviewConfig, PreviewDimConfig
 
+SlicingDimType = Literal[0, 1, 2]
 
 def make_standard_tomo_loader() -> StandardTomoLoader:
     """
@@ -31,7 +32,7 @@ def make_standard_tomo_loader() -> StandardTomoLoader:
         detector_y=PreviewDimConfig(start=0, stop=128),
         detector_x=PreviewDimConfig(start=0, stop=160),
     )
-    SLICING_DIM = 0
+    SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
     loader = StandardTomoLoader(
         in_file=IN_FILE_PATH,
@@ -114,7 +115,7 @@ def test_standard_tomo_loader_previewed_get_chunk_index_two_procs(
         image_key_path=standard_image_key_path,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
-    SLICING_DIM = 0
+    SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
 
     chunk_index = (0, 0, 0) if COMM.rank == 0 else (DATA_SHAPE[0] // 2, 0, 0)
@@ -181,7 +182,7 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc(
         image_key_path=standard_image_key_path,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
-    SLICING_DIM = 0
+    SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
 
     with mock.patch(
@@ -250,7 +251,7 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs(
         image_key_path=standard_image_key_path,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
-    SLICING_DIM = 0
+    SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
 
     with mock.patch(
@@ -321,7 +322,7 @@ def test_standard_tomo_loader_read_block_single_proc(
         image_key_path=standard_image_key_path,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
-    SLICING_DIM = 0
+    SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
 
     BLOCK_START = 2
@@ -423,7 +424,7 @@ def test_standard_tomo_loader_read_block_two_procs(
         image_key_path=standard_image_key_path,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
-    SLICING_DIM = 0
+    SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
 
     BLOCK_START = 2
@@ -482,7 +483,7 @@ def test_standard_tomo_loader_read_block_two_procs(
     np.testing.assert_array_equal(block.data, projs)
 
 
-def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
+def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc() -> None:
     IN_FILE_PATH = Path(__file__).parent.parent / "test_data/k11_diad/k11-18014.nxs"
     DATA_PATH = "/entry/imaging/data"
     IMAGE_KEY_PATH = "/entry/instrument/imaging/image_key"
@@ -497,7 +498,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
         detector_y=PreviewDimConfig(start=0, stop=22),
         detector_x=PreviewDimConfig(start=0, stop=26),
     )
-    SLICING_DIM = 0
+    SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
 
     with mock.patch(
@@ -543,7 +544,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc():
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
-def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
+def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs() -> None:
     IN_FILE_PATH = Path(__file__).parent.parent / "test_data/k11_diad/k11-18014.nxs"
     DATA_PATH = "/entry/imaging/data"
     IMAGE_KEY_PATH = "/entry/instrument/imaging/image_key"
@@ -558,7 +559,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
         detector_y=PreviewDimConfig(start=0, stop=22),
         detector_x=PreviewDimConfig(start=0, stop=26),
     )
-    SLICING_DIM = 0
+    SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
 
     with mock.patch(
@@ -614,7 +615,7 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs():
     np.testing.assert_array_equal(block.data, projs)
 
 
-def test_standard_tomo_loader_generates_block_with_angles():
+def test_standard_tomo_loader_generates_block_with_angles() -> None:
     IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
     ANGLES_PATH = "/entry1/tomo_entry/data/rotation_angle"
     BLOCK_START = 0
@@ -645,7 +646,7 @@ def test_standard_tomo_loader_user_defined_angles(
         detector_y=PreviewDimConfig(start=0, stop=128),
         detector_x=PreviewDimConfig(start=0, stop=160),
     )
-    SLICING_DIM = 0
+    SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
     # Override angles in raw data with the config for some arbitrary array
     USER_DEFINED_ANGLES = UserDefinedAngles(
@@ -703,7 +704,7 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
         detector_y=PreviewDimConfig(start=0, stop=128),
         detector_x=PreviewDimConfig(start=0, stop=160),
     )
-    SLICING_DIM = 1
+    SLICING_DIM: SlicingDimType = 1
     COMM = MPI.COMM_WORLD
 
     with (

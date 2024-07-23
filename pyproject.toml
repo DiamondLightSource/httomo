@@ -10,32 +10,13 @@ where = ["."]
 include = ["httomo*"]
 
 [tool.setuptools.package-data]
-httomo = ["methods_database/packages/*.yaml",
-          "methods_database/packages/external/*.yaml",
-          "methods_database/packages/external/httomolibgpu/*/*.yaml",
-          "methods_database/packages/external/httomolib/*/*.yaml",
-          "methods_database/packages/external/tomopy/*/*.yaml",
-          "../templates/httomolib/*/httomolib.misc.corr/*.yaml",
-          "../templates/httomolib/*/httomolib.misc.images/*.yaml",
-          "../templates/httomolib/*/httomolib.misc.segm/*.yaml",
-          "../templates/httomolib/*/httomolib.prep.phase/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.misc.corr/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.misc.morph/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.prep.alignment/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.prep.normalize/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.prep.phase/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.prep.stripe/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.recon.algorithm/*.yaml",
-          "../templates/httomolibgpu/*/httomolibgpu.recon.rotation/*.yaml",
-          "../templates/tomopy/*/tomopy.misc.corr/*.yaml",
-          "../templates/tomopy/*/tomopy.misc.morph/*.yaml",
-          "../templates/tomopy/*/tomopy.prep.alignment/*.yaml",
-          "../templates/tomopy/*/tomopy.prep.normalize/*.yaml",
-          "../templates/tomopy/*/tomopy.prep.phase/*.yaml",
-          "../templates/tomopy/*/tomopy.prep.stripe/*.yaml",
-          "../templates/tomopy/*/tomopy.recon.algorithm/*.yaml",
-          "../templates/tomopy/*/tomopy.recon.rotation/*.yaml",
-          "../templates/tomopy/*/tomopy.sim.project/*.yaml"]
+httomo = [
+    "methods_database/packages/*.yaml",
+    "methods_database/packages/external/*.yaml",
+    "methods_database/packages/external/httomolibgpu/*.yaml",
+    "methods_database/packages/external/httomolib/*.yaml",
+    "methods_database/packages/external/tomopy/*.yaml",
+]
 
 [tool.setuptools-git-versioning]
 enabled = true
@@ -49,24 +30,29 @@ readme = "README.rst"
 license = {text = "BSD-3-Clause"}
 authors = [
     {name = "Daniil Kazantsev", email = "daniil.kazantsev@diamond.ac.uk"},
-    {name = "Jacob Williamson"},
     {name = "Yousef Moazzam", email = "yousef.moazzam@diamond.ac.uk"},
+    {name = "Jessica Verschoyle", email = "jessica.verschoyle@diamond.ac.uk"},
+    {name = "Naman Gera", email = "naman.gera@diamond.ac.uk"},
     {name = "Garry ODonnell"},
+    {name = "Jacob Williamson"},
     {email = "scientificsoftware@diamond.ac.uk"},
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: BSD 3-clause",
     "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.9",
 ]
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
     "click",
     "numpy",
-    "httomolib"
+    "httomolib",
+    "loguru",
+    "typing-extensions",
+    "tqdm",
+    "graypy"
 ]
 
 [project.scripts]
@@ -115,7 +101,7 @@ dev-gpu = [
 [tool.mypy]
 # Ignore missing stubs for modules we use
 ignore_missing_imports = true
-python_version = "3.9"  # make sure we're compatible with 3.9
+python_version = "3.10"  # make sure we're compatible with 3.9
 plugins = 'numpy.typing.mypy_plugin'
 
 [tool.isort]

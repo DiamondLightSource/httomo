@@ -1,36 +1,28 @@
-from typing import Optional, Tuple, Union
-from typing_extensions import TypeAlias
-from httomo.runner.auxiliary_data import AuxiliaryData
-from httomo.utils import gpu_enabled, xp
+from typing import Literal, Optional, Tuple
+
 import numpy as np
 
-from httomo.utils import make_3d_shape_from_shape
-from httomo.utils import make_3d_shape_from_array
+from httomo.base_block import BaseBlock, generic_array
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.utils import make_3d_shape_from_array, make_3d_shape_from_shape
 
 
-class DataSetBlock:
-    """Represents a slice/block of a dataset, as returned returned by `make_block`
-    in a DataSet object. It is a DataSet (inherits from it) and users can mostly
-    ignore the fact that it's just a view.
-
-    It stores the base object internally and routes all calls for the auxilliary
-    arrays to the base object (darks/flats/angles). It does not store these directly.
+class DataSetBlock(BaseBlock):
     """
-    
-    generic_array: TypeAlias = Union[np.ndarray, xp.ndarray]
+    Data storage type for block processing in high throughput runs
+    """
 
     def __init__(
         self,
         data: np.ndarray,
         aux_data: AuxiliaryData,
-        slicing_dim: int = 0,
+        slicing_dim: Literal[0, 1, 2] = 0,
         block_start: int = 0,
         chunk_start: int = 0,
         global_shape: Optional[Tuple[int, int, int]] = None,
         chunk_shape: Optional[Tuple[int, int, int]] = None,
     ):
-        self._data = data
-        self._aux_data = aux_data
+        super().__init__(data, aux_data)
         self._slicing_dim = slicing_dim
         self._block_start = block_start
         self._chunk_start = chunk_start
@@ -73,15 +65,6 @@ class DataSetBlock:
         assert not any(self.chunk_shape[i] != self.global_shape[i] for i in range(3) if i != self.slicing_dim)
 
     @property
-    def aux_data(self) -> AuxiliaryData:
-        return self._aux_data
-    
-    @property
-    def shape(self) -> Tuple[int, int, int]:
-        """Shape of the data in this block"""
-        return make_3d_shape_from_array(self._data)
-
-    @property
     def chunk_index(self) -> Tuple[int, int, int]:
         """The index of this block within the chunk handled by the current process"""
         return self._chunk_index
@@ -102,30 +85,6 @@ class DataSetBlock:
         return self._global_shape
     
     @property
-    def is_cpu(self) -> bool:
-        return getattr(self._data, "device", None) is None
-    
-    @property
-    def is_gpu(self) -> bool:
-        return not self.is_cpu
-    
-    @property
-    def angles(self) -> np.ndarray:
-        return self._aux_data.get_angles()
-    
-    @angles.setter
-    def angles(self, new_angles: np.ndarray):
-        self._aux_data.set_angles(new_angles)
-    
-    @property
-    def angles_radians(self) -> np.ndarray:
-        return self.angles
-    
-    @angles_radians.setter
-    def angles_radians(self, new_angles: np.ndarray):
-        self.angles = new_angles
-
-    @property
     def is_last_in_chunk(self) -> bool:
         """Check if the current dataset is the final one for the chunk handled by the current process"""
         return (
@@ -134,7 +93,7 @@ class DataSetBlock:
         )
 
     @property
-    def slicing_dim(self) -> int:
+    def slicing_dim(self) -> Literal[0, 1, 2]:
         return self._slicing_dim
     
     def _empty_aux_array(self):
@@ -144,7 +103,7 @@ class DataSetBlock:
 
     @property
     def data(self) -> generic_array:
-        return self._data
+        return super().data
 
     @data.setter
     def data(self, new_data: generic_array):
@@ -160,58 +119,3 @@ class DataSetBlock:
         self._data = new_data
         self._global_shape = make_3d_shape_from_shape(global_shape)
         self._chunk_shape = make_3d_shape_from_shape(chunk_shape)
-
-    @property
-    def darks(self) -> generic_array:
-        darks = self._aux_data.get_darks(self.is_gpu)
-        if darks is None:
-            darks = self._empty_aux_array()
-        return darks
-
-    @darks.setter
-    def darks(self, darks: generic_array):
-        self._aux_data.set_darks(darks)
-        
-    # alias
-    @property
-    def dark(self) -> generic_array:
-        return self.darks
-    
-    @dark.setter
-    def dark(self, darks: generic_array):
-        self.darks = darks
-    
-    @property
-    def flats(self) -> generic_array:
-        flats = self._aux_data.get_flats(self.is_gpu)
-        if flats is None:
-            flats = self._empty_aux_array()
-        return flats
-
-    @flats.setter
-    def flats(self, flats: generic_array):
-        self._aux_data.set_flats(flats)
-        
-    # alias
-    @property
-    def flat(self) -> generic_array:
-        return self.flats
-    
-    @flat.setter
-    def flat(self, flats: generic_array):
-        self.flats = flats
-
-    def to_gpu(self):
-        if not gpu_enabled:
-            raise ValueError("no GPU available")
-        # from doc: if already on GPU, no copy is taken
-        self._data = xp.asarray(self.data, order="C")        
-
-    def to_cpu(self):
-        if not gpu_enabled:
-            return
-        self._data = xp.asnumpy(self.data, order="C")
-    
-    def __dir__(self) -> list[str]:
-        """Return only those properties that are relevant for the data"""
-        return ["data", "angles", "angles_radians", "darks", "flats", "dark", "flat"]

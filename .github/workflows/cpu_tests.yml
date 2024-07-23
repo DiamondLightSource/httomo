@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     defaults:
       run:
@@ -29,10 +29,10 @@ jobs:
       # install dependencies with conda
       - name: Install dependencies with conda
         run: |
-          conda env create --name httomo --file conda/environment.yml
+          conda env create --name httomo --file conda/environment-cpu.yml
           conda activate httomo
-          conda run -n httomo pip install -e .
-          conda run -n httomo pip install httomolib
+          conda run -n httomo pip install typing_extensions
+          conda run -n httomo pip install .
           conda env list
           conda list
 

@@ -1,8 +1,8 @@
+from httomo.block_interfaces import T, Block
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.method_wrapper import MethodParameterDictType
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import Pattern, catchtime, log_rank, xp
+from httomo.utils import Pattern, catchtime, log_once, xp
 
 
 import numpy as np
@@ -62,7 +62,7 @@ class RotationWrapper(GenericMethodWrapper):
     def _build_kwargs(
         self,
         dict_params: MethodParameterDictType,
-        dataset: Optional[DataSetBlock] = None,
+        dataset: Optional[Block] = None,
     ) -> Dict[str, Any]:
         assert (
             dataset is not None
@@ -100,7 +100,7 @@ class RotationWrapper(GenericMethodWrapper):
             )
             return None
 
-    def _run_method(self, block: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
+    def _run_method(self, block: T, args: Dict[str, Any]) -> T:
         """Different CoR estimation methods require different inputs, e.g., the VoCentering
         method needs the full sinogram, while the PhaseCorrelation method needs specific projections.
         """
@@ -181,15 +181,15 @@ class RotationWrapper(GenericMethodWrapper):
         if self.comm.size > 1:
             res = self.comm.bcast(res, root=0)
 
-        cor_str = f"The center of rotation is {res}"
-        log_rank(cor_str, comm=self.comm)
+        cor_str = f"    --->The center of rotation is {res}"
+        log_once(cor_str)
         return self._process_return_type(res, block)
 
     def normalize_sino(
         self, sino: np.ndarray, flats: Optional[np.ndarray], darks: Optional[np.ndarray]
     ) -> np.ndarray:
-        flats1d = 1.0 if flats is None else flats.mean(0, dtype=np.float32)
-        darks1d = 0.0 if darks is None else darks.mean(0, dtype=np.float32)
+        flats1d = 1.0 if (flats is None or flats.size == 0) else flats.mean(0, dtype=np.float32)
+        darks1d = 0.0 if (darks is None or darks.size == 0) else darks.mean(0, dtype=np.float32)
         denom = flats1d - darks1d
         sino = sino.astype(np.float32)
         if np.shape(denom) == tuple():
@@ -207,7 +207,7 @@ class RotationWrapper(GenericMethodWrapper):
             sino -= darks1d / denom
         return sino[:, np.newaxis, :]
 
-    def _process_return_type(self, ret: Any, input_block: DataSetBlock) -> DataSetBlock:
+    def _process_return_type(self, ret: Any, input_block: T) -> T:
         if type(ret) == tuple:
             # cor, overlap, side, overlap_position - from find_center_360
             self._side_output["cor"] = float(ret[0])

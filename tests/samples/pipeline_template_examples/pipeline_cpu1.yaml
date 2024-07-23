@@ -1,0 +1,46 @@
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters: 
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    rotation_angles:
+      data_path: /entry1/tomo_entry/data/rotation_angle
+- method: normalize
+  module_path: tomopy.prep.normalize
+  parameters:
+    cutoff: null
+    averaging: mean
+- method: minus_log
+  module_path: tomopy.prep.normalize
+  parameters: {}
+- method: find_center_vo
+  module_path: tomopy.recon.rotation
+  parameters:
+    ind: null
+    smin: -50
+    smax: 50
+    srad: 6
+    step: 0.25
+    ratio: 0.5
+    drop: 20
+  id: centering
+  side_outputs:
+    cor : centre_of_rotation
+- method: recon
+  module_path: tomopy.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    sinogram_order: false
+    algorithm: 'gridrec'
+    init_recon: null
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif
+    bits: 8
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    jpeg_quality: 95

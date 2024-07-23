@@ -1,5 +1,5 @@
+from httomo.block_interfaces import T, Block
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.method_wrapper import MethodParameterDictType
 
 
@@ -16,7 +16,7 @@ class ReconstructionWrapper(GenericMethodWrapper):
     def should_select_this_class(cls, module_path: str, method_name: str) -> bool:
         return module_path.endswith(".algorithm")
 
-    def _preprocess_data(self, block: DataSetBlock) -> DataSetBlock:
+    def _preprocess_data(self, block: T) -> T:
         # this is essential for the angles cutting below to be valid
         assert self.pattern == Pattern.sinogram, "reconstruction methods must be sinogram"
         
@@ -31,7 +31,7 @@ class ReconstructionWrapper(GenericMethodWrapper):
     def _build_kwargs(
         self,
         dict_params: MethodParameterDictType,
-        dataset: Optional[DataSetBlock] = None,
+        dataset: Optional[Block] = None,
     ) -> Dict[str, Any]:
         assert dataset is not None, "Reconstruction wrappers require a dataset"
         # for recon methods, we assume that the second parameter is the angles in all cases

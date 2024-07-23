@@ -4,7 +4,7 @@ from unittest.mock import ANY, call
 import pytest
 import numpy as np
 from pytest_mock import MockerFixture
-import httomo
+
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
@@ -63,27 +63,6 @@ def test_can_determine_max_slices_no_gpu_estimator(
     t.determine_max_slices(s[0], 0)
 
     assert s[0].max_slices == dummy_block.chunk_shape[0]
-
-
-@pytest.mark.parametrize("slices", [10, 500])
-def test_can_determine_max_slices_empty_section(
-    mocker: MockerFixture, tmp_path: PathLike, slices: int
-):
-    data = np.ones((slices, 10, 10), dtype=np.float32)
-    aux = AuxiliaryData(angles=np.ones(slices, dtype=np.float32))
-    block = DataSetBlock(data, aux)
-
-    loader = make_test_loader(mocker, block)
-    method = make_test_method(mocker, gpu=True, memory_gpu=[])
-    p = Pipeline(loader=loader, methods=[method])
-    t = TaskRunner(p, reslice_dir=tmp_path)
-    t._prepare()
-    s = sectionize(p)
-    s.insert(0, Section(pattern=Pattern.sinogram, max_slices=0, methods=[]))
-
-    t.determine_max_slices(s[0], 0)
-
-    assert s[0].max_slices == min(slices, httomo.globals.MAX_CPU_SLICES)
 
 
 @pytest.mark.skipif(
@@ -168,12 +147,14 @@ def test_can_determine_max_slices_with_gpu_estimator_and_cpu_limit(
         )
         calc_max_slices_mocks.append(
             mocker.patch.object(
-                method, "calculate_max_slices", return_value=(10, limit if limit != 0 else 1e7)
+                method,
+                "calculate_max_slices",
+                return_value=(10, limit if limit != 0 else 1e7),
             )
         )
         methods.append(method)
     p = Pipeline(loader=loader, methods=methods)
-    
+
     t = TaskRunner(p, reslice_dir=tmp_path, memory_limit_bytes=limit)
     t._prepare()
     s = sectionize(p)
@@ -210,7 +191,6 @@ def test_can_determine_max_slices_with_cpu(
 def test_can_determine_max_slices_with_cpu_large(
     mocker: MockerFixture, tmp_path: PathLike
 ):
-    mocker.patch.object(httomo.globals, "MAX_CPU_SLICES", 16)
     data = np.ones((500, 10, 10), dtype=np.float32)
     aux = AuxiliaryData(angles=np.ones(500, dtype=np.float32))
     block = DataSetBlock(data, aux)
@@ -225,7 +205,7 @@ def test_can_determine_max_slices_with_cpu_large(
     s = sectionize(p)
 
     t.determine_max_slices(s[0], 0)
-    assert s[0].max_slices == 16
+    assert s[0].max_slices == 64
 
 
 def test_append_side_outputs(mocker: MockerFixture, tmp_path: PathLike):
@@ -233,30 +213,31 @@ def test_append_side_outputs(mocker: MockerFixture, tmp_path: PathLike):
     t = TaskRunner(p, reslice_dir=tmp_path)
     t.append_side_outputs({"answer": 42.0, "other": "xxx"})
     assert t.side_outputs == {"answer": 42.0, "other": "xxx"}
-    
+
 
 def test_calls_append_side_outputs_after_last_block(
-    mocker: MockerFixture, tmp_path: PathLike,
+    mocker: MockerFixture,
+    tmp_path: PathLike,
 ):
     GLOBAL_SHAPE = (500, 10, 10)
     CHUNK_SHAPE = GLOBAL_SHAPE
     data = np.ones(GLOBAL_SHAPE, dtype=np.float32)
     aux = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
     block1 = DataSetBlock(
-        data=data[:GLOBAL_SHAPE[0] // 2, :, :],
+        data=data[: GLOBAL_SHAPE[0] // 2, :, :],
         aux_data=aux,
         block_start=0,
         chunk_start=0,
         chunk_shape=CHUNK_SHAPE,
-        global_shape=GLOBAL_SHAPE
+        global_shape=GLOBAL_SHAPE,
     )
     block2 = DataSetBlock(
-        data=data[GLOBAL_SHAPE[0] // 2:, :, :],
+        data=data[GLOBAL_SHAPE[0] // 2 :, :, :],
         aux_data=aux,
         block_start=CHUNK_SHAPE[0] // 2,
         chunk_start=0,
         chunk_shape=CHUNK_SHAPE,
-        global_shape=GLOBAL_SHAPE
+        global_shape=GLOBAL_SHAPE,
     )
 
     method = make_test_method(mocker)
@@ -269,10 +250,14 @@ def test_calls_append_side_outputs_after_last_block(
     t = TaskRunner(p, reslice_dir=tmp_path)
     spy = mocker.patch.object(t, "append_side_outputs")
     t._prepare()
-    t._execute_method(method, block1) # the first block shouldn't trigger a side output append call
+    t._execute_method(
+        method, block1
+    )  # the first block shouldn't trigger a side output append call
     assert spy.call_count == 0
 
-    t._execute_method(method, block2)  # the last block should trigger side output append call
+    t._execute_method(
+        method, block2
+    )  # the last block should trigger side output append call
     getmock.assert_called_once()
     spy.assert_called_once_with(side_outputs)
 
@@ -300,12 +285,15 @@ def test_update_side_inputs_updates_downstream_methods(
     method3_calls = [call("answer", 42), call("other", "xxx")]
     setitem3.assert_has_calls(method3_calls)
 
+
 def test_execute_method_updates_monitor(
     mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):
     loader = make_test_loader(mocker)
     method1 = make_test_method(mocker)
-    mocker.patch.object(method1, "gpu_time", GpuTimeInfo(kernel=42.0, device2host=1.0, host2device=2.0))
+    mocker.patch.object(
+        method1, "gpu_time", GpuTimeInfo(kernel=42.0, device2host=1.0, host2device=2.0)
+    )
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
     p = Pipeline(loader=loader, methods=[method1])
     t = TaskRunner(p, reslice_dir=tmp_path, monitor=mon)
@@ -324,7 +312,7 @@ def test_execute_method_updates_monitor(
         ANY,
         42.0,
         2.0,
-        1.0
+        1.0,
     )
 
 
@@ -407,7 +395,7 @@ def test_does_reslice_when_needed_and_reports_time(
     assert t.sink is not None
     assert t.source.slicing_dim == 1
     assert t.sink.slicing_dim == 1
-    
+
     mon.report_total_time.assert_called_once()
 
 

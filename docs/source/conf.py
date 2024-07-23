@@ -18,7 +18,6 @@ sys.path.insert(0, os.path.abspath("../.."))
 
 # Mock imports instead of full environment in readthedocs
 MOCK_MODULES = [
-    "numpy",
     "click",
     "mpi4py",
     "cupy",
@@ -39,6 +38,9 @@ for mod_name in MOCK_MODULES:
 
 project = "HTTomo"
 copyright = f"{date.today().year}, Diamond Light Source"
+
+# Specify a base language to help assistive technology
+language = "en"
 
 # Save the commit hash, this is displayed in the page title
 release = os.popen('git log -1 --format="%H"').read().strip()

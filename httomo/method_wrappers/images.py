@@ -1,6 +1,6 @@
 import httomo.globals
+from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.method_wrapper import GpuTimeInfo
 from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import _get_slicing_dim, catchtime, xp
@@ -50,10 +50,7 @@ class ImagesWrapper(GenericMethodWrapper):
 
     # Images execute is leaving original data on the device where it is,
     # but gives the method a CPU copy of the data.
-    def execute(
-        self,
-        block: DataSetBlock,
-    ) -> DataSetBlock:
+    def execute(self, block: T) -> T:
         self._gpu_time_info = GpuTimeInfo()
         config_params = self._config_params
         if "offset" in self.parameters:

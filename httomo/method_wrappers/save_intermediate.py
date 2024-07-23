@@ -4,8 +4,8 @@ from typing import Any, Dict, Optional, Union
 import weakref
 from mpi4py.MPI import Comm
 import httomo
+from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from httomo.runner.methods_repository_interface import MethodRepository
@@ -45,7 +45,6 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         if out_dir is None:
             out_dir = httomo.globals.run_out_dir
         assert out_dir is not None
-
         self._file: Union[h5py.File, zarr.DirectoryStore]
         if httomo.globals.INTERMEDIATE_FORMAT == "hdf5":
             self._file = h5py.File(
@@ -56,7 +55,8 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         else:
             self._file = zarr.DirectoryStore(path=f"{out_dir}/{filename}.zarr")
 
-    def execute(self, block: DataSetBlock) -> DataSetBlock:
+        
+    def execute(self, block: T) -> T:
         # we overwrite the whole execute method here, as we do not need any of the helper
         # methods from the Generic Wrapper
         # What we know:

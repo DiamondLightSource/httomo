@@ -1,3 +1,4 @@
+import logging
 from os import PathLike
 from pathlib import Path
 import time
@@ -15,7 +16,7 @@ import numpy as np
 from numpy.typing import DTypeLike
 import weakref
 
-from httomo.utils import Colour, log_once, make_3d_shape_from_shape
+from httomo.utils import log_once, make_3d_shape_from_shape
 
 """
 This is from the final handover call:
@@ -236,9 +237,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         if bool(recvBuffer[0]) is True:
             log_once(
                 "Chunk does not fit in memory - using a file-based store",
-                self.comm,
-                Colour.YELLOW,
-                level=2,
+                level=logging.WARNING,
             )
             # we create a full file dataset, i.e. file-based,
             # with the full global shape in it

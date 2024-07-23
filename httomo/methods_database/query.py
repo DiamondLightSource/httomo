@@ -37,28 +37,10 @@ def get_method_info(module_path: str, method_name: str, attr: str):
     split_method_path = method_path.split(".")
     package_name = split_method_path[0]
 
-    yaml_info_path = Path(YAML_DIR, f"{package_name}.yaml")
-
-    # get information about the currently supported version of the package
-    yaml_versions_path = Path(YAML_DIR, "external/", "versions.yaml")
-
-    if not yaml_versions_path.exists():
-        err_str = f"The YAML file {yaml_versions_path} doesn't exist."
-        log_exception(err_str)
-        raise ValueError(err_str)
-
-    with open(yaml_versions_path, "r") as f:
-        yaml_versions_library = yaml.safe_load(f)
-
-    ext_package_path = ""
-    for module, versions_dict in yaml_versions_library.items():
-        if module == package_name:
-            for version_type, package_version in versions_dict.items():
-                if version_type == "current":
-                    package_version = package_version[0]
-                    ext_package_path = f"external/{package_name}/{package_version}/"
-
     # open the library file for the package
+    ext_package_path = ""
+    if package_name != "httomo":
+        ext_package_path = f"external/{package_name}/"
     yaml_info_path = Path(YAML_DIR, str(ext_package_path), f"{package_name}.yaml")
     if not yaml_info_path.exists():
         err_str = f"The YAML file {yaml_info_path} doesn't exist."
@@ -114,6 +96,11 @@ class MethodsDatabaseQuery(MethodQuery):
         return get_method_info(
             self.module_path, self.method_name, "save_result_default"
         )
+        
+    def padding(self) -> bool:
+        return get_method_info(
+            self.module_path, self.method_name, "padding"
+        )
 
     def get_memory_gpu_params(
         self,
@@ -157,6 +144,11 @@ class MethodsDatabaseQuery(MethodQuery):
         smodule = self._import_supporting_funcs_module()
         module_mem: Callable = getattr(smodule, "_calc_output_dim_" + self.method_name)
         return module_mem(non_slice_dims_shape, **kwargs)
+    
+    def calculate_padding(self, **kwargs) -> Tuple[int, int]:
+        smodule = self._import_supporting_funcs_module()
+        module_pad: Callable = getattr(smodule, "_calc_padding_" + self.method_name)
+        return module_pad(**kwargs)
 
     def _import_supporting_funcs_module(self) -> ModuleType:
         from importlib import import_module
