@@ -187,9 +187,11 @@ def test_partial_block_for_chunked_data_with_padding_center(
     padded_block_shape_t = unpadded_block_shape_t
     padded_block_shape_t[slicing_dim] += padding[0] + padding[1]
     padded_block_shape = make_3d_shape_from_shape(padded_block_shape_t)
-    block_start_index = 3
+    padded_block_start_index = 3
+    unpadded_block_start_index = padded_block_start_index + padding[0]
 
-    chunk_start_index = 10  # start of chunk within global data, without padding
+    padded_chunk_start_index = 10
+    unpadded_chunk_start_index = padded_chunk_start_index + padding[0]
 
     data = np.ones(padded_block_shape, dtype=np.float32)
     angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
@@ -197,8 +199,8 @@ def test_partial_block_for_chunked_data_with_padding_center(
         data=data,
         aux_data=AuxiliaryData(angles=angles),
         slicing_dim=slicing_dim,
-        block_start=block_start_index,
-        chunk_start=chunk_start_index,
+        block_start=padded_block_start_index,
+        chunk_start=padded_chunk_start_index,
         global_shape=global_shape,
         chunk_shape=padded_chunk_shape,
         padding=padding,
@@ -206,17 +208,17 @@ def test_partial_block_for_chunked_data_with_padding_center(
 
     assert block.is_padded is True
     assert block.padding == padding
-    assert block.chunk_index[slicing_dim] == block_start_index
-    assert block.chunk_index_unpadded[slicing_dim] == block_start_index + padding[0]
+    assert block.chunk_index[slicing_dim] == padded_block_start_index
+    assert block.chunk_index_unpadded[slicing_dim] == unpadded_block_start_index
     assert block.chunk_shape[slicing_dim] == padded_chunk_shape[slicing_dim]
     assert block.chunk_shape_unpadded[slicing_dim] == unpadded_chunk_shape[slicing_dim]
     assert (
         block.global_index[slicing_dim]
-        == chunk_start_index + padding[0] + block_start_index
+        == padded_chunk_start_index + unpadded_block_start_index
     )
     assert (
         block.global_index_unpadded[slicing_dim]
-        == chunk_start_index + padding[0] + block_start_index + padding[0]
+        == unpadded_chunk_start_index + unpadded_block_start_index
     )
     assert block.shape == padded_block_shape
     assert block.shape_unpadded[slicing_dim] == unpadded_block_shape[slicing_dim]
@@ -245,18 +247,24 @@ def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
     padded_block_shape_t = unpadded_block_shape_t
     padded_block_shape_t[slicing_dim] += padding[0] + padding[1]
     padded_block_shape = make_3d_shape_from_shape(padded_block_shape_t)
-    block_start_index = -padding[0] if boundary == "before" else unpadded_chunk_shape[slicing_dim] - unpadded_block_slices - padding[0]
+    unpadded_block_start_index = (
+        0
+        if boundary == "before"
+        else unpadded_chunk_shape[slicing_dim] - unpadded_block_slices
+    )
+    padded_block_start_index = unpadded_block_start_index - padding[0]
 
-    chunk_start_index = 10  # start of chunk within global data, without padding
-    
+    padded_chunk_start_index = 10
+    unpadded_chunk_start_index = padded_chunk_start_index + padding[0]
+
     data = np.ones(padded_block_shape, dtype=np.float32)
     angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
     block = DataSetBlock(
         data=data,
         aux_data=AuxiliaryData(angles=angles),
         slicing_dim=slicing_dim,
-        block_start=block_start_index,
-        chunk_start=chunk_start_index,
+        block_start=padded_block_start_index,
+        chunk_start=padded_chunk_start_index,
         global_shape=global_shape,
         chunk_shape=padded_chunk_shape,
         padding=padding,
@@ -265,13 +273,16 @@ def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
     assert block.is_padded is True
     assert block.padding == padding
     assert block.is_last_in_chunk is (boundary == "after")
-    assert block.global_index[slicing_dim] == chunk_start_index + padding[0] + block_start_index
+    assert (
+        block.global_index[slicing_dim]
+        == unpadded_chunk_start_index + padded_block_start_index
+    )
     assert (
         block.global_index_unpadded[slicing_dim]
-        == chunk_start_index + padding[0] + block_start_index + padding[0]
+        == unpadded_chunk_start_index + unpadded_block_start_index
     )
-    assert block.chunk_index[slicing_dim] == block_start_index
-    assert block.chunk_index_unpadded[slicing_dim] == block_start_index + padding[0]
+    assert block.chunk_index[slicing_dim] == padded_block_start_index
+    assert block.chunk_index_unpadded[slicing_dim] == unpadded_block_start_index
     assert block.shape == padded_block_shape
     assert block.shape_unpadded[slicing_dim] == unpadded_block_shape[slicing_dim]
 
@@ -299,18 +310,28 @@ def test_partial_block_with_padding_global_boundaries(
     padded_block_shape_t = unpadded_block_shape_t
     padded_block_shape_t[slicing_dim] += padding[0] + padding[1]
     padded_block_shape = make_3d_shape_from_shape(padded_block_shape_t)
-    block_start_index = -padding[0] if boundary == "before" else unpadded_chunk_shape[slicing_dim] - unpadded_block_slices - padding[0]
+    unpadded_block_start_index = (
+        0
+        if boundary == "before"
+        else unpadded_chunk_shape[slicing_dim] - unpadded_block_slices
+    )
+    padded_block_start_index = unpadded_block_start_index - padding[0]
 
-    chunk_start_index = -padding[0] if boundary == "before" else global_shape[slicing_dim] - unpadded_chunk_shape[slicing_dim] - padding[0]
-    
+    unpadded_chunk_start_index = (
+        0
+        if boundary == "before"
+        else global_shape[slicing_dim] - unpadded_chunk_shape[slicing_dim]
+    )
+    padded_chunk_start_index = unpadded_chunk_start_index - padding[0]
+
     data = np.ones(padded_block_shape, dtype=np.float32)
     angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
     block = DataSetBlock(
         data=data,
         aux_data=AuxiliaryData(angles=angles),
         slicing_dim=slicing_dim,
-        block_start=block_start_index,
-        chunk_start=chunk_start_index,
+        block_start=padded_block_start_index,
+        chunk_start=padded_chunk_start_index,
         global_shape=global_shape,
         chunk_shape=padded_chunk_shape,
         padding=padding,
@@ -318,14 +339,17 @@ def test_partial_block_with_padding_global_boundaries(
 
     assert block.is_padded is True
     assert block.padding == padding
-    assert block.chunk_index[slicing_dim] == block_start_index
-    assert block.chunk_index_unpadded[slicing_dim] == block_start_index + padding[0]
+    assert block.chunk_index[slicing_dim] == padded_block_start_index
+    assert block.chunk_index_unpadded[slicing_dim] == unpadded_block_start_index
     assert block.chunk_shape[slicing_dim] == padded_chunk_shape[slicing_dim]
     assert block.chunk_shape_unpadded[slicing_dim] == unpadded_chunk_shape[slicing_dim]
-    assert block.global_index[slicing_dim] == chunk_start_index + block_start_index + padding[0]
+    assert (
+        block.global_index[slicing_dim]
+        == unpadded_chunk_start_index + padded_block_start_index
+    )
     assert (
         block.global_index_unpadded[slicing_dim]
-        == chunk_start_index + block_start_index + 2*padding[0]
+        == unpadded_block_start_index + unpadded_chunk_start_index
     )
     assert block.is_last_in_chunk is (boundary == "after")
     assert block.shape == padded_block_shape
