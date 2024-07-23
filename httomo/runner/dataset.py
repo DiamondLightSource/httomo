@@ -24,7 +24,7 @@ class DataSetBlock(BaseBlock, BlockIndexing):
         chunk_shape: Optional[Tuple[int, int, int]] = None,
         padding: Tuple[int, int] = (0, 0),
     ):
-        """Constructs a data block for processing in the pipeline in high troughput runs.
+        """Constructs a data block for processing in the pipeline in high throughput runs.
 
         Parameters
         ----------
