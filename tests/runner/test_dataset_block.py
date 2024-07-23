@@ -75,6 +75,22 @@ def test_full_block_for_global_data_with_padding():
     np.testing.assert_array_equal(data, block.data)
 
 
+@pytest.mark.parametrize("padding", [(-1, 0), (0, -4), (-1, -2)])
+def test_negative_padding_values_raise_error(padding: Tuple[int, int]):
+    data = np.ones((14, 10, 10), dtype=np.float32)
+    angles = np.linspace(0, math.pi, 10, dtype=np.float32)
+    with pytest.raises(ValueError) as e:
+        DataSetBlock(
+            data=data,
+            aux_data=AuxiliaryData(angles=angles),
+            padding=padding,
+            slicing_dim=0,
+            block_start=-2,
+            chunk_start=-2,
+        )
+    assert "padding values cannot be negative" in str(e.value)
+
+
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
 def test_full_block_for_chunked_data(slicing_dim: Literal[0, 1, 2]):
     data = np.ones((10, 10, 10), dtype=np.float32)
@@ -223,8 +239,14 @@ def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
     assert block.is_padded is True
     assert block.padding == padding
     assert block.is_last_in_chunk is (boundary == "after")
-    assert block.global_index[slicing_dim] == 12 + start_index if (boundary == "before") else 18 + start_index
-    assert block.global_index_unpadded[slicing_dim] == 12 if (boundary == "before") else 18
+    assert (
+        block.global_index[slicing_dim] == 12 + start_index
+        if (boundary == "before")
+        else 18 + start_index
+    )
+    assert (
+        block.global_index_unpadded[slicing_dim] == 12 if (boundary == "before") else 18
+    )
     assert block.chunk_index[slicing_dim] == start_index
     assert block.chunk_index_unpadded[slicing_dim] == 0 if boundary == "before" else 8
 
@@ -269,7 +291,6 @@ def test_partial_block_with_padding_global_boundaries(
     assert block.global_index == tuple(global_index)
     assert block.global_index_unpadded[slicing_dim] == 0 if boundary == "before" else 28
     assert block.is_last_in_chunk is (boundary == "after")
-    
 
 
 # block_shape <= chunk_shape

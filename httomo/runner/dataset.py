@@ -85,6 +85,8 @@ class DataSetBlock(BaseBlock, BlockIndexing):
         self._check_inconsistencies()
 
     def _check_inconsistencies(self):
+        if self.padding[0] < 0 or self.padding[1] < 0:
+            raise ValueError("padding values cannot be negative")
         if self.chunk_index[self.slicing_dim] + self._padding[0] < 0:
             raise ValueError("block start index must be >= 0")
         if (
