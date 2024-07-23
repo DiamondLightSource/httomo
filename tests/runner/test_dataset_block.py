@@ -17,12 +17,18 @@ def test_full_block_for_global_data():
     assert block.is_cpu is True
     assert block.is_gpu is False
     assert block.global_index == (0, 0, 0)
+    assert block.global_index_unpadded == (0, 0, 0)
     assert block.global_shape == (10, 10, 10)
     assert block.chunk_index == (0, 0, 0)
+    assert block.chunk_index_unpadded == (0, 0, 0)
     assert block.chunk_shape == (10, 10, 10)
+    assert block.chunk_shape_unpadded == (10, 10, 10)
     assert block.shape == (10, 10, 10)
+    assert block.shape_unpadded == (10, 10, 10)
     assert block.is_last_in_chunk is True
     assert block.slicing_dim == 0
+    assert block.is_padded is False
+    assert block.padding == (0, 0)
 
     np.testing.assert_array_equal(data, block.data)
     np.testing.assert_array_equal(angles, block.angles)
@@ -41,16 +47,26 @@ def test_full_block_for_global_data_with_padding():
     padding = (2, 2)
     data = np.ones((14, 10, 10), dtype=np.float32)
     angles = np.linspace(0, math.pi, 10, dtype=np.float32)
-    block = DataSetBlock(data=data, aux_data=AuxiliaryData(angles=angles), padding=(2, 2), slicing_dim=0,
-                         block_start=-2, chunk_start=-2)
+    block = DataSetBlock(
+        data=data,
+        aux_data=AuxiliaryData(angles=angles),
+        padding=(2, 2),
+        slicing_dim=0,
+        block_start=-2,
+        chunk_start=-2,
+    )
 
     assert block.is_cpu is True
     assert block.is_gpu is False
     assert block.global_index == (-2, 0, 0)
+    assert block.global_index_unpadded == (0, 0, 0)
     assert block.global_shape == (10, 10, 10)
     assert block.chunk_index == (-2, 0, 0)
+    assert block.chunk_index_unpadded == (0, 0, 0)
     assert block.chunk_shape == (14, 10, 10)
+    assert block.chunk_shape_unpadded == (10, 10, 10)
     assert block.shape == (14, 10, 10)
+    assert block.shape_unpadded == (10, 10, 10)
     assert block.is_last_in_chunk is True
     assert block.slicing_dim == 0
     assert block.is_padded is True
@@ -131,6 +147,7 @@ def test_partial_block_for_chunked_data(
 def test_partial_block_for_chunked_data_with_padding_center(
     slicing_dim: Literal[0, 1, 2]
 ):
+    padding = (2, 2)
     block_shape = [10, 10, 10]
     block_shape[slicing_dim] = 6
     start_index = 3
@@ -152,11 +169,25 @@ def test_partial_block_for_chunked_data_with_padding_center(
         chunk_start=10,
         global_shape=global_shape,
         chunk_shape=chunk_shape,
-        padding=(2, 2),
+        padding=padding,
     )
 
     assert block.is_padded is True
-    assert block.padding == (2, 2)
+    assert block.padding == padding
+    assert block.chunk_index[slicing_dim] == start_index
+    assert block.chunk_index_unpadded[slicing_dim] == start_index + padding[0]
+    assert block.chunk_shape[slicing_dim] == 10 + padding[0] + padding[1]
+    assert block.chunk_shape_unpadded[slicing_dim] == 10
+    assert block.global_index[slicing_dim] == 10 + padding[0] + start_index
+    assert (
+        block.global_index_unpadded[slicing_dim]
+        == 10 + padding[0] + start_index + padding[0]
+    )
+    assert block.shape == tuple(block_shape)
+    assert (
+        block.shape_unpadded[slicing_dim]
+        == block_shape[slicing_dim] - padding[0] - padding[1]
+    )
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
@@ -164,6 +195,7 @@ def test_partial_block_for_chunked_data_with_padding_center(
 def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
     slicing_dim: Literal[0, 1, 2], boundary: Literal["before", "after"]
 ):
+    padding = (2, 2)
     block_shape = [10, 10, 10]
     block_shape[slicing_dim] = 6
     start_index = -2 if boundary == "before" else 6
@@ -185,12 +217,16 @@ def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
         chunk_start=10,
         global_shape=global_shape,
         chunk_shape=chunk_shape,
-        padding=(2, 2),
+        padding=padding,
     )
 
     assert block.is_padded is True
-    assert block.padding == (2, 2)
+    assert block.padding == padding
     assert block.is_last_in_chunk is (boundary == "after")
+    assert block.global_index[slicing_dim] == 12 + start_index if (boundary == "before") else 18 + start_index
+    assert block.global_index_unpadded[slicing_dim] == 12 if (boundary == "before") else 18
+    assert block.chunk_index[slicing_dim] == start_index
+    assert block.chunk_index_unpadded[slicing_dim] == 0 if boundary == "before" else 8
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
@@ -231,7 +267,9 @@ def test_partial_block_with_padding_global_boundaries(
     assert block.is_padded is True
     assert block.padding == padding
     assert block.global_index == tuple(global_index)
+    assert block.global_index_unpadded[slicing_dim] == 0 if boundary == "before" else 28
     assert block.is_last_in_chunk is (boundary == "after")
+    
 
 
 # block_shape <= chunk_shape

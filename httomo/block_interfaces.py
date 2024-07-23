@@ -90,6 +90,11 @@ class BlockData(Protocol):
     def shape(self) -> Tuple[int, int, int]:
         """Shape of the data in this block"""
         ...  # pragma: no cover
+        
+    @property
+    def shape_unpadded(self) -> Tuple[int, int, int]:
+        """Shape of the core date in this block, with padding removed"""
+        ...  # pragma: no cover
 
 
 class BlockIndexing(Protocol):
@@ -102,15 +107,30 @@ class BlockIndexing(Protocol):
     def chunk_index(self) -> Tuple[int, int, int]:
         """The index of this block within the chunk handled by the current process"""
         ...  # pragma: no cover
+        
+    @property
+    def chunk_index_unpadded(self) -> Tuple[int, int, int]:
+        """The index of the core area of this block within the chunk (padding removed)"""
+        ...  # pragma: no cover
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Shape of the full chunk handled by the current process"""
         ...  # pragma: no cover
+        
+    @property
+    def chunk_shape_unpadded(self) -> Tuple[int, int, int]:
+        """Shape of the full chunk core area handled by the current process (with padding removed)"""
+        ...  # pragma: no cover
 
     @property
     def global_index(self) -> Tuple[int, int, int]:
         """The index of this block within the global data across all processes"""
+        ...  # pragma: no cover
+        
+    @property
+    def global_index_unpadded(self) -> Tuple[int, int, int]:
+        """The index of the core area of this block within the global data across all processes (with padding removed)"""
         ...  # pragma: no cover
 
     @property
