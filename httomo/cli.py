@@ -123,6 +123,7 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     "--compress-intermediate",
     is_flag=True,
     help="Write intermediate data in chunked format with BLOSC compression applied",
+)
 @click.option(
     "--syslog-host",
     type=click.STRING,
