@@ -44,29 +44,35 @@ def test_full_block_for_global_data():
 
 
 def test_full_block_for_global_data_with_padding():
+    unpadded_block_shape = (10, 10, 10)
     padding = (2, 2)
-    data = np.ones((14, 10, 10), dtype=np.float32)
+    padded_block_shape = (
+        unpadded_block_shape[0] + padding[0] + padding[1],
+        unpadded_block_shape[1],
+        unpadded_block_shape[2],
+    )
+    data = np.ones(padded_block_shape, dtype=np.float32)
     angles = np.linspace(0, math.pi, 10, dtype=np.float32)
     block = DataSetBlock(
         data=data,
         aux_data=AuxiliaryData(angles=angles),
-        padding=(2, 2),
+        padding=padding,
         slicing_dim=0,
-        block_start=-2,
-        chunk_start=-2,
+        block_start=-padding[0],
+        chunk_start=-padding[0],
     )
 
     assert block.is_cpu is True
     assert block.is_gpu is False
-    assert block.global_index == (-2, 0, 0)
+    assert block.global_index == (-padding[0], 0, 0)
     assert block.global_index_unpadded == (0, 0, 0)
-    assert block.global_shape == (10, 10, 10)
-    assert block.chunk_index == (-2, 0, 0)
+    assert block.global_shape == unpadded_block_shape
+    assert block.chunk_index == (-padding[0], 0, 0)
     assert block.chunk_index_unpadded == (0, 0, 0)
-    assert block.chunk_shape == (14, 10, 10)
-    assert block.chunk_shape_unpadded == (10, 10, 10)
-    assert block.shape == (14, 10, 10)
-    assert block.shape_unpadded == (10, 10, 10)
+    assert block.chunk_shape == padded_block_shape
+    assert block.chunk_shape_unpadded == unpadded_block_shape
+    assert block.shape == padded_block_shape
+    assert block.shape_unpadded == unpadded_block_shape
     assert block.is_last_in_chunk is True
     assert block.slicing_dim == 0
     assert block.is_padded is True
@@ -163,47 +169,57 @@ def test_partial_block_for_chunked_data(
 def test_partial_block_for_chunked_data_with_padding_center(
     slicing_dim: Literal[0, 1, 2]
 ):
-    padding = (2, 2)
-    block_shape = [10, 10, 10]
-    block_shape[slicing_dim] = 6
-    start_index = 3
-    data = np.ones(block_shape, dtype=np.float32)
-    global_index = [0, 0, 0]
-    global_index[slicing_dim] = 10 + start_index
+    # sizes and shapes
     global_shape_t = [10, 10, 10]
     global_shape_t[slicing_dim] = 30
     global_shape = make_3d_shape_from_shape(global_shape_t)
-    chunk_shape_t = [10, 10, 10]
-    chunk_shape_t[slicing_dim] += 4  # for padding
-    chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
+
+    unpadded_chunk_shape = (10, 10, 10)
+    padding = (2, 2)
+    padded_chunk_shape_t = list(unpadded_chunk_shape)
+    padded_chunk_shape_t[slicing_dim] += padding[0] + padding[1]
+    padded_chunk_shape = make_3d_shape_from_shape(padded_chunk_shape_t)
+
+    unpadded_block_slices = 2
+    unpadded_block_shape_t = list(unpadded_chunk_shape)
+    unpadded_block_shape_t[slicing_dim] = unpadded_block_slices
+    unpadded_block_shape = make_3d_shape_from_shape(unpadded_block_shape_t)
+    padded_block_shape_t = unpadded_block_shape_t
+    padded_block_shape_t[slicing_dim] += padding[0] + padding[1]
+    padded_block_shape = make_3d_shape_from_shape(padded_block_shape_t)
+    block_start_index = 3
+
+    chunk_start_index = 10  # start of chunk within global data, without padding
+
+    data = np.ones(padded_block_shape, dtype=np.float32)
     angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
     block = DataSetBlock(
         data=data,
         aux_data=AuxiliaryData(angles=angles),
         slicing_dim=slicing_dim,
-        block_start=start_index,
-        chunk_start=10,
+        block_start=block_start_index,
+        chunk_start=chunk_start_index,
         global_shape=global_shape,
-        chunk_shape=chunk_shape,
+        chunk_shape=padded_chunk_shape,
         padding=padding,
     )
 
     assert block.is_padded is True
     assert block.padding == padding
-    assert block.chunk_index[slicing_dim] == start_index
-    assert block.chunk_index_unpadded[slicing_dim] == start_index + padding[0]
-    assert block.chunk_shape[slicing_dim] == 10 + padding[0] + padding[1]
-    assert block.chunk_shape_unpadded[slicing_dim] == 10
-    assert block.global_index[slicing_dim] == 10 + padding[0] + start_index
+    assert block.chunk_index[slicing_dim] == block_start_index
+    assert block.chunk_index_unpadded[slicing_dim] == block_start_index + padding[0]
+    assert block.chunk_shape[slicing_dim] == padded_chunk_shape[slicing_dim]
+    assert block.chunk_shape_unpadded[slicing_dim] == unpadded_chunk_shape[slicing_dim]
+    assert (
+        block.global_index[slicing_dim]
+        == chunk_start_index + padding[0] + block_start_index
+    )
     assert (
         block.global_index_unpadded[slicing_dim]
-        == 10 + padding[0] + start_index + padding[0]
+        == chunk_start_index + padding[0] + block_start_index + padding[0]
     )
-    assert block.shape == tuple(block_shape)
-    assert (
-        block.shape_unpadded[slicing_dim]
-        == block_shape[slicing_dim] - padding[0] - padding[1]
-    )
+    assert block.shape == padded_block_shape
+    assert block.shape_unpadded[slicing_dim] == unpadded_block_shape[slicing_dim]
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
@@ -211,44 +227,53 @@ def test_partial_block_for_chunked_data_with_padding_center(
 def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
     slicing_dim: Literal[0, 1, 2], boundary: Literal["before", "after"]
 ):
-    padding = (2, 2)
-    block_shape = [10, 10, 10]
-    block_shape[slicing_dim] = 6
-    start_index = -2 if boundary == "before" else 6
-    data = np.ones(block_shape, dtype=np.float32)
-    global_index = [0, 0, 0]
-    global_index[slicing_dim] = 10 + start_index
+    # sizes and shapes
     global_shape_t = [10, 10, 10]
     global_shape_t[slicing_dim] = 30
     global_shape = make_3d_shape_from_shape(global_shape_t)
-    chunk_shape_t = [10, 10, 10]
-    chunk_shape_t[slicing_dim] += 4  # for padding
-    chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
+
+    unpadded_chunk_shape = (10, 10, 10)
+    padding = (2, 2)
+    padded_chunk_shape_t = list(unpadded_chunk_shape)
+    padded_chunk_shape_t[slicing_dim] += padding[0] + padding[1]
+    padded_chunk_shape = make_3d_shape_from_shape(padded_chunk_shape_t)
+
+    unpadded_block_slices = 2
+    unpadded_block_shape_t = list(unpadded_chunk_shape)
+    unpadded_block_shape_t[slicing_dim] = unpadded_block_slices
+    unpadded_block_shape = make_3d_shape_from_shape(unpadded_block_shape_t)
+    padded_block_shape_t = unpadded_block_shape_t
+    padded_block_shape_t[slicing_dim] += padding[0] + padding[1]
+    padded_block_shape = make_3d_shape_from_shape(padded_block_shape_t)
+    block_start_index = -padding[0] if boundary == "before" else unpadded_chunk_shape[slicing_dim] - unpadded_block_slices - padding[0]
+
+    chunk_start_index = 10  # start of chunk within global data, without padding
+    
+    data = np.ones(padded_block_shape, dtype=np.float32)
     angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
     block = DataSetBlock(
         data=data,
         aux_data=AuxiliaryData(angles=angles),
         slicing_dim=slicing_dim,
-        block_start=start_index,
-        chunk_start=10,
+        block_start=block_start_index,
+        chunk_start=chunk_start_index,
         global_shape=global_shape,
-        chunk_shape=chunk_shape,
+        chunk_shape=padded_chunk_shape,
         padding=padding,
     )
 
     assert block.is_padded is True
     assert block.padding == padding
     assert block.is_last_in_chunk is (boundary == "after")
+    assert block.global_index[slicing_dim] == chunk_start_index + padding[0] + block_start_index
     assert (
-        block.global_index[slicing_dim] == 12 + start_index
-        if (boundary == "before")
-        else 18 + start_index
+        block.global_index_unpadded[slicing_dim]
+        == chunk_start_index + padding[0] + block_start_index + padding[0]
     )
-    assert (
-        block.global_index_unpadded[slicing_dim] == 12 if (boundary == "before") else 18
-    )
-    assert block.chunk_index[slicing_dim] == start_index
-    assert block.chunk_index_unpadded[slicing_dim] == 0 if boundary == "before" else 8
+    assert block.chunk_index[slicing_dim] == block_start_index
+    assert block.chunk_index_unpadded[slicing_dim] == block_start_index + padding[0]
+    assert block.shape == padded_block_shape
+    assert block.shape_unpadded[slicing_dim] == unpadded_block_shape[slicing_dim]
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
@@ -256,41 +281,55 @@ def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
 def test_partial_block_with_padding_global_boundaries(
     slicing_dim: Literal[0, 1, 2], boundary: Literal["before", "after"]
 ):
-    block_shape = [10, 10, 10]
-    block_shape[slicing_dim] = 6
-    padding = (2, 2)
-    start_index = -padding[0] if boundary == "before" else 6
-    data = np.ones(block_shape, dtype=np.float32)
-    chunk_shape_t = [10, 10, 10]
-    chunk_shape_t[slicing_dim] += padding[0] + padding[1]  # for padding
-    chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
-    global_index = [0, 0, 0]
-    global_index[slicing_dim] = (
-        -padding[0]
-        if boundary == "before"
-        else 30 - block_shape[slicing_dim] + padding[1]
-    )
-    chunk_start = -padding[0] if boundary == "before" else 20 - padding[0]
+    # sizes and shapes
     global_shape_t = [10, 10, 10]
     global_shape_t[slicing_dim] = 30
     global_shape = make_3d_shape_from_shape(global_shape_t)
+
+    unpadded_chunk_shape = (10, 10, 10)
+    padding = (2, 2)
+    padded_chunk_shape_t = list(unpadded_chunk_shape)
+    padded_chunk_shape_t[slicing_dim] += padding[0] + padding[1]
+    padded_chunk_shape = make_3d_shape_from_shape(padded_chunk_shape_t)
+
+    unpadded_block_slices = 2
+    unpadded_block_shape_t = list(unpadded_chunk_shape)
+    unpadded_block_shape_t[slicing_dim] = unpadded_block_slices
+    unpadded_block_shape = make_3d_shape_from_shape(unpadded_block_shape_t)
+    padded_block_shape_t = unpadded_block_shape_t
+    padded_block_shape_t[slicing_dim] += padding[0] + padding[1]
+    padded_block_shape = make_3d_shape_from_shape(padded_block_shape_t)
+    block_start_index = -padding[0] if boundary == "before" else unpadded_chunk_shape[slicing_dim] - unpadded_block_slices - padding[0]
+
+    chunk_start_index = -padding[0] if boundary == "before" else global_shape[slicing_dim] - unpadded_chunk_shape[slicing_dim] - padding[0]
+    
+    data = np.ones(padded_block_shape, dtype=np.float32)
     angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
     block = DataSetBlock(
         data=data,
         aux_data=AuxiliaryData(angles=angles),
         slicing_dim=slicing_dim,
-        block_start=start_index,
-        chunk_start=chunk_start,
+        block_start=block_start_index,
+        chunk_start=chunk_start_index,
         global_shape=global_shape,
-        chunk_shape=chunk_shape,
+        chunk_shape=padded_chunk_shape,
         padding=padding,
     )
 
     assert block.is_padded is True
     assert block.padding == padding
-    assert block.global_index == tuple(global_index)
-    assert block.global_index_unpadded[slicing_dim] == 0 if boundary == "before" else 28
+    assert block.chunk_index[slicing_dim] == block_start_index
+    assert block.chunk_index_unpadded[slicing_dim] == block_start_index + padding[0]
+    assert block.chunk_shape[slicing_dim] == padded_chunk_shape[slicing_dim]
+    assert block.chunk_shape_unpadded[slicing_dim] == unpadded_chunk_shape[slicing_dim]
+    assert block.global_index[slicing_dim] == chunk_start_index + block_start_index + padding[0]
+    assert (
+        block.global_index_unpadded[slicing_dim]
+        == chunk_start_index + block_start_index + 2*padding[0]
+    )
     assert block.is_last_in_chunk is (boundary == "after")
+    assert block.shape == padded_block_shape
+    assert block.shape_unpadded[slicing_dim] == unpadded_block_shape[slicing_dim]
 
 
 # block_shape <= chunk_shape

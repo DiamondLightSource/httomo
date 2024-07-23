@@ -110,12 +110,16 @@ class DataSetBlock(BaseBlock, BlockIndexing):
             for i in range(3)
             if i != self.slicing_dim
         ):
-            raise ValueError("chunk shape is larger than the global shape")
+            raise ValueError(
+                "chunk shape is larger than the global shape in non-slicing dimensions"
+            )
         if (
             self.chunk_shape[self.slicing_dim] - self.padding[0] - self.padding[1]
             > self.global_shape[self.slicing_dim]
         ):
-            raise ValueError("chunk shape is larger than the global shape")
+            raise ValueError(
+                "chunk shape is larger than the global shape in slicing dimension"
+            )
         if any(self.shape[i] > self.chunk_shape[i] for i in range(3)):
             raise ValueError("block shape is larger than the chunk shape")
         if any(
