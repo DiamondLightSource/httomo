@@ -10,20 +10,16 @@ try:
 except ImportError:
     enabled = False
 
-__all__ = ["enabled", "size", "rank", "local_size", "local_rank", "alltoall"]
+__all__ = ["enabled", "size", "rank", "alltoall"]
 
 if enabled:
     comm = MPI.COMM_WORLD
     size = comm.size
     rank = comm.rank
     local_comm = comm.Split_type(MPI.COMM_TYPE_SHARED)
-    local_size = local_comm.size
-    local_rank = local_comm.rank
 else:
     size = 1
     rank = 0
-    local_size = 1
-    local_rank = 0
 
 # add this here so that we can mock it in the tests
 _mpi_max_elements = 2**31

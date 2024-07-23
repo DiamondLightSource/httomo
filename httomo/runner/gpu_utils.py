@@ -14,9 +14,8 @@ def gpumem_cleanup():
 def get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
     try:
         import cupy as cp
-        from httomo.data.mpiutil import local_rank
 
-        dev = cp.cuda.Device(local_rank)
+        dev = cp.cuda.Device(get_gpu_id())
         with dev:
             gpumem_cleanup()
             pool = cp.get_default_memory_pool()

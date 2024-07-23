@@ -142,21 +142,23 @@ def test_generic_fails_with_wrong_returntype(
 @pytest.mark.cupy
 def test_generic_sets_gpuid(mocker: MockerFixture, dummy_block: DataSetBlock):
     mocker.patch("httomo.method_wrappers.generic.gpu_enabled", True)
-    mocker.patch(
-        "httomo.method_wrappers.generic.xp.cuda.runtime.getDeviceCount", return_value=4
-    )
     mocker.patch("httomo.method_wrappers.generic.httomo.globals.gpu_id", -1)
-    mocker.patch("httomo.method_wrappers.generic.mpiutil.local_rank", 3)
+    GPU_ID = 3
+    gpu_id_getter_spy = mocker.patch(
+        "httomo.method_wrappers.generic.get_gpu_id",
+        return_value=GPU_ID,
+    )
 
     class FakeModule:
         def fake_method(data, gpu_id: int):
-            assert gpu_id == 3
+            assert gpu_id == GPU_ID
             return data
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_method_wrapper(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
+    gpu_id_getter_spy.assert_called_once()
 
     wrp.execute(dummy_block)
 
