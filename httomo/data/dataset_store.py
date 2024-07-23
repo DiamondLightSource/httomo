@@ -165,15 +165,15 @@ class DataSetStoreWriter(ReadableDataSetSink):
         if self._readonly:
             raise ValueError("Cannot write after creating a reader")
         block.to_cpu()
-        start = max(block.chunk_index)
+        start = max(block.chunk_index_unpadded)
         if self._data is None:
             # if non-slice dims in block are different, update the shapes here
             self._global_shape = block.global_shape
-            self._chunk_shape = block.chunk_shape
+            self._chunk_shape = block.chunk_shape_unpadded
             self._global_index = (
-                block.global_index[0] - block.chunk_index[0],
-                block.global_index[1] - block.chunk_index[1],
-                block.global_index[2] - block.chunk_index[2],
+                block.global_index_unpadded[0] - block.chunk_index_unpadded[0],
+                block.global_index_unpadded[1] - block.chunk_index_unpadded[1],
+                block.global_index_unpadded[2] - block.chunk_index_unpadded[2],
             )
             self._aux_data = block.aux_data
             self._create_new_data(block)
@@ -186,13 +186,13 @@ class DataSetStoreWriter(ReadableDataSetSink):
                     "Attempt to write a block with inconsistent shape to existing data"
                 )
 
-            if any(self._chunk_shape[i] != block.chunk_shape[i] for i in range(3)):
+            if any(self._chunk_shape[i] != block.chunk_shape_unpadded[i] for i in range(3)):
                 raise ValueError(
                     "Attempt to write a block with inconsistent shape to existing data"
                 )
 
             if any(
-                self._global_index[i] != block.global_index[i] - block.chunk_index[i]
+                self._global_index[i] != block.global_index_unpadded[i] - block.chunk_index_unpadded[i]
                 for i in range(3)
             ):
                 raise ValueError(
@@ -206,10 +206,10 @@ class DataSetStoreWriter(ReadableDataSetSink):
         if self.is_file_based:
             start_idx[self._slicing_dim] += self._global_index[self._slicing_dim]
         self._data[
-            start_idx[0] : start_idx[0] + block.shape[0],
-            start_idx[1] : start_idx[1] + block.shape[1],
-            start_idx[2] : start_idx[2] + block.shape[2],
-        ] = block.data
+            start_idx[0] : start_idx[0] + block.shape_unpadded[0],
+            start_idx[1] : start_idx[1] + block.shape_unpadded[1],
+            start_idx[2] : start_idx[2] + block.shape_unpadded[2],
+        ] = block.data_unpadded
 
     def _get_global_h5_filename(self) -> PathLike:
         """Creates a temporary h5 file to back the storage (using nanoseconds timestamp

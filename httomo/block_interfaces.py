@@ -44,7 +44,7 @@ class BlockData(Protocol):
 
     @data.setter
     def data(self, new_data: generic_array): ...  # pragma: no cover
-
+    
     @property
     def aux_data(self) -> AuxiliaryData: ...  # pragma: no cover
 
@@ -163,6 +163,11 @@ class BlockIndexing(Protocol):
         that come before and after the core area of the block. 
         If no padding is used, it returns (0, 0).
         """
+        ...  # pragma: no cover
+
+    @property
+    def data_unpadded(self) -> generic_array: 
+        """Return the data, but with the padding slices removed"""
         ...  # pragma: no cover
 
 
