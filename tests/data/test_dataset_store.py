@@ -642,7 +642,7 @@ def test_can_write_blocks_with_padding_and_read(
     )
 
 
-def test_can_write_and_read_padded_blocks_filebased(
+def test_can_write_and_read_padded_blocks_filebased_center(
     mocker: MockerFixture, tmp_path: PathLike
 ):
     padding = (2, 2)
@@ -652,12 +652,12 @@ def test_can_write_and_read_padded_blocks_filebased(
     )
     chunk_shape = (4, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
     chunk_start = 3
-    
+
     # write global data to file and fake the source
     file = Path(tmp_path) / "testfile.h5"
-    with h5py.File(file , "w") as f:
+    with h5py.File(file, "w") as f:
         source_data = f.create_dataset("data", data=global_data)
-    
+
     mock_source = mocker.create_autospec(
         DataSetStoreWriter,
         _data=source_data,
@@ -668,9 +668,9 @@ def test_can_write_and_read_padded_blocks_filebased(
         global_index=(chunk_start, 0, 0),
         chunk_shape=chunk_shape,
         finalise=mocker.MagicMock(),
-        instance=True
+        instance=True,
     )
-    
+
     reader = DataSetStoreReader(mock_source, 0, padding=padding)
     padded_chunk_shape = (
         chunk_shape[0] + padding[0] + padding[1],
@@ -702,3 +702,112 @@ def test_can_write_and_read_padded_blocks_filebased(
         rblock2.data,
         global_data[chunk_start - padding[0] + 2 : chunk_start + 4 + padding[1], :, :],
     )
+
+
+@pytest.mark.parametrize("boundary", ["before", "after", "both"])
+def test_can_write_and_read_padded_blocks_filebased_boundaries(
+    mocker: MockerFixture,
+    tmp_path: PathLike,
+    boundary: Literal["before", "after", "both"],
+):
+    padding = (2, 2)
+    GLOBAL_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    chunk_shape = (
+        GLOBAL_SHAPE[0] if boundary == "both" else 4,
+        GLOBAL_SHAPE[1],
+        GLOBAL_SHAPE[2],
+    )
+    chunk_start = 0 if boundary == "before" else GLOBAL_SHAPE[0] - chunk_shape[0]
+
+    # write global data to file and fake the source
+    file = Path(tmp_path) / "testfile.h5"
+    with h5py.File(file, "w") as f:
+        source_data = f.create_dataset("data", data=global_data)
+
+    mock_source = mocker.create_autospec(
+        DataSetStoreWriter,
+        _data=source_data,
+        is_file_based=True,
+        filename=file,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        global_index=(chunk_start, 0, 0),
+        chunk_shape=chunk_shape,
+        finalise=mocker.MagicMock(),
+        instance=True,
+    )
+
+    reader = DataSetStoreReader(mock_source, 0, padding=padding)
+    padded_chunk_shape = (
+        chunk_shape[0] + padding[0] + padding[1],
+        chunk_shape[1],
+        chunk_shape[2],
+    )
+
+    blck_size = chunk_shape[0] // 2
+    rblock1 = reader.read_block(0, blck_size)
+    rblock2 = reader.read_block(blck_size, blck_size)
+
+    assert reader.global_shape == GLOBAL_SHAPE
+    assert reader.chunk_shape == padded_chunk_shape
+    assert reader.global_index == (chunk_start - padding[0], 0, 0)
+    assert reader.slicing_dim == 0
+
+    assert isinstance(rblock1.data, np.ndarray)
+    assert isinstance(rblock2.data, np.ndarray)
+
+    assert rblock1.is_padded is True
+    assert rblock2.is_padded is True
+    assert rblock1.padding == padding
+    assert rblock2.padding == padding
+
+    b1expected = np.zeros(
+        (
+            blck_size + padding[0] + padding[1],
+            GLOBAL_SHAPE[1],
+            GLOBAL_SHAPE[2],
+        ),
+        dtype=np.float32,
+    )
+    b2expected = np.zeros_like(b1expected)
+    if boundary == "before":
+        b1expected[padding[0] :, :, :] = global_data[
+            chunk_start : chunk_start + blck_size + padding[1], :, :
+        ]
+        # repeat on left edge
+        b1expected[: padding[0], :, :] = global_data[0, :, :]
+        b2expected[:] = global_data[
+            chunk_start
+            - padding[0]
+            + blck_size : chunk_start
+            + 2 * blck_size
+            + padding[1],
+            :,
+            :,
+        ]
+    elif boundary == "after":
+        b1expected[:] = global_data[
+            chunk_start - padding[0] : chunk_start + blck_size + padding[1], :, :
+        ]
+        b2expected[: blck_size + padding[0], :, :] = global_data[
+            chunk_start - padding[0] + blck_size : chunk_start + 2 * blck_size, :, :
+        ]
+        # repeat on right edge
+        b2expected[blck_size + padding[0] :, :, :] = global_data[-1, :, :]
+    else:
+        b1expected[padding[0] :, :, :] = global_data[
+            chunk_start : chunk_start + blck_size + padding[1], :, :
+        ]
+        # repeat on left edge
+        b1expected[: padding[0], :, :] = global_data[0, :, :]
+        b2expected[: blck_size + padding[0], :, :] = global_data[
+            chunk_start - padding[0] + blck_size : chunk_start + 2 * blck_size, :, :
+        ]
+        # repeat on right edge
+        b2expected[blck_size + padding[0] :, :, :] = global_data[-1, :, :]
+
+    np.testing.assert_array_equal(rblock1.data, b1expected)
+    np.testing.assert_array_equal(rblock2.data, b2expected)

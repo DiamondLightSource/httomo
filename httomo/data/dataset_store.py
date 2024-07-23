@@ -3,7 +3,7 @@ from os import PathLike
 from pathlib import Path
 import time
 import h5py
-from typing import Literal, Optional, Tuple, Union
+from typing import List, Literal, Optional, Tuple, Union
 from httomo.data.hdf._utils.reslice import reslice
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
@@ -331,7 +331,7 @@ class DataSetStoreReader(DataSetSource):
             raise ValueError(
                 "Cannot create DataSetStoreReader when no data has been written"
             )
-            
+
         self._h5file: Optional[h5py.File] = None
         self._h5filename: Optional[Path] = None
         source_data = source._data
@@ -346,14 +346,14 @@ class DataSetStoreReader(DataSetSource):
         else:
             self._data = self._reslice(source.slicing_dim, slicing_dim, source_data)
             self._slicing_dim = slicing_dim
-            
+
         self._padding = (0, 0) if padding is None else padding
         if self._padding != (0, 0):
             # correct indices for padding
             global_index_t = list(self._global_index)
             global_index_t[self.slicing_dim] -= self._padding[0]
             self._global_index = make_3d_shape_from_shape(global_index_t)
-            
+
             chunk_shape_t = list(self._chunk_shape)
             chunk_shape_t[self.slicing_dim] += self._padding[0] + self._padding[1]
             self._chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
@@ -432,22 +432,78 @@ class DataSetStoreReader(DataSetSource):
                 self._global_index = (idx[0], idx[1], idx[2])
                 return data
 
-    def read_block(self, start: int, length: int) -> DataSetBlock:
-        start_idx = [0, 0, 0]
-        start_idx[self._slicing_dim] = start
-        if self.is_file_based:
-            start_idx[self._slicing_dim] += self._global_index[self._slicing_dim] # includes padding
-        elif self._padding != (0, 0):
-            # TODO: read the neighborhood here?
-            pass
-        shape = list(self._global_shape)
-        shape[self._slicing_dim] = length + self._padding[0] + self._padding[1]
+    def _extrapolate_before(self, block_data: np.ndarray, slices: int, dim: int):
+        slices_wrt = [slice(None), slice(None), slice(None)]
+        slices_wrt[dim] = slice(slices)
+        slices_read = [slice(None), slice(None), slice(None)]
+        slices_read[dim] = slice(1)
+        block_data[slices_wrt[0], slices_wrt[1], slices_wrt[2]] = self._data[
+            slices_read[0], slices_read[1], slices_read[2]
+        ]
 
-        block_data = self._data[
+    def _extrapolate_after(self, block_data: np.ndarray, slices: int, dim: int):
+        slices_wrt = [slice(None), slice(None), slice(None)]
+        slices_wrt[dim] = slice(block_data.shape[dim] - slices, block_data.shape[dim])
+        slices_read = [slice(None), slice(None), slice(None)]
+        slices_read[dim] = slice(self._data.shape[dim] - 1, self._data.shape[dim])
+        block_data[slices_wrt[0], slices_wrt[1], slices_wrt[2]] = self._data[
+            slices_read[0], slices_read[1], slices_read[2]
+        ]
+
+    def _read_block_file(
+        self, shape: List[int], dim: int, start_idx: List[int]
+    ) -> np.ndarray:
+        start_idx[dim] += self._global_index[dim]  # includes padding
+        block_data = np.empty(shape, dtype=self._data.dtype)
+        before_cut = 0
+        after_cut = 0
+        # check before boundary
+        if start_idx[dim] < 0:  # edge interpolation
+            self._extrapolate_before(block_data, -start_idx[dim], dim)
+            before_cut = -start_idx[dim]
+        # check after boundary
+        if start_idx[dim] + shape[dim] > self._data.shape[dim]:
+            self._extrapolate_after(
+                block_data, start_idx[dim] + shape[dim] - self._data.shape[dim], dim
+            )
+            after_cut = start_idx[dim] + shape[dim] - self._data.shape[dim]
+        slices_read = [slice(None), slice(None), slice(None)]
+        slices_read[dim] = slice(
+            start_idx[dim] + before_cut, start_idx[dim] + shape[dim] - after_cut
+        )
+        slices_wrt = [slice(None), slice(None), slice(None)]
+        slices_wrt[dim] = slice(before_cut, shape[dim] - after_cut)
+        block_data[slices_wrt[0], slices_wrt[1], slices_wrt[2]] = self._data[
+            slices_read[0],
+            slices_read[1],
+            slices_read[2],
+        ]
+        return block_data
+
+    def _read_block_ram_nopadding(
+        self, shape: List[int], dim: int, start_idx: List[int]
+    ) -> np.ndarray:
+        return self._data[
             start_idx[0] : start_idx[0] + shape[0],
             start_idx[1] : start_idx[1] + shape[1],
             start_idx[2] : start_idx[2] + shape[2],
         ]
+
+    def read_block(self, start: int, length: int) -> DataSetBlock:
+        shape = list(self._global_shape)
+        shape[self._slicing_dim] = length + self._padding[0] + self._padding[1]
+        dim = self._slicing_dim
+
+        start_idx = [0, 0, 0]
+        start_idx[dim] = start
+        if self.is_file_based:
+            block_data = self._read_block_file(shape, dim, start_idx)
+        elif self._padding == (0, 0):
+            # RAM-based, no padding
+            block_data = self._read_block_ram_nopadding(shape, dim, start_idx)
+        elif self._padding != (0, 0):
+            # TODO: read the neighborhood here?
+            raise NotImplementedError
 
         block = DataSetBlock(
             data=block_data,
@@ -457,7 +513,7 @@ class DataSetStoreReader(DataSetSource):
             chunk_start=self._global_index[self._slicing_dim],
             global_shape=self._global_shape,
             chunk_shape=self._chunk_shape,
-            padding=self._padding
+            padding=self._padding,
         )
 
         return block
