@@ -12,6 +12,7 @@ from httomo.runner.dataset_store_interfaces import (
     ReadableDataSetSink,
 )
 from mpi4py import MPI
+from mpi4py.util import dtlib
 import numpy as np
 from numpy.typing import DTypeLike
 import weakref
@@ -358,6 +359,9 @@ class DataSetStoreReader(DataSetSource):
             chunk_shape_t[self.slicing_dim] += self._padding[0] + self._padding[1]
             self._chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
 
+            if not source.is_file_based:
+                self._exchange_neighbourhoods()
+
         source.finalize()
 
     @property
@@ -432,20 +436,30 @@ class DataSetStoreReader(DataSetSource):
                 self._global_index = (idx[0], idx[1], idx[2])
                 return data
 
-    def _extrapolate_before(self, block_data: np.ndarray, slices: int, dim: int):
+    def _extrapolate_before(
+        self, block_data: np.ndarray, slices: int, dim: int, offset: int = 0
+    ):
+        if slices == 0:
+            return
         slices_wrt = [slice(None), slice(None), slice(None)]
         slices_wrt[dim] = slice(slices)
         slices_read = [slice(None), slice(None), slice(None)]
-        slices_read[dim] = slice(1)
+        slices_read[dim] = slice(offset, offset + 1)
         block_data[slices_wrt[0], slices_wrt[1], slices_wrt[2]] = self._data[
             slices_read[0], slices_read[1], slices_read[2]
         ]
 
-    def _extrapolate_after(self, block_data: np.ndarray, slices: int, dim: int):
+    def _extrapolate_after(
+        self, block_data: np.ndarray, slices: int, dim: int, offset: int = 0
+    ):
+        if slices == 0:
+            return
         slices_wrt = [slice(None), slice(None), slice(None)]
         slices_wrt[dim] = slice(block_data.shape[dim] - slices, block_data.shape[dim])
         slices_read = [slice(None), slice(None), slice(None)]
-        slices_read[dim] = slice(self._data.shape[dim] - 1, self._data.shape[dim])
+        slices_read[dim] = slice(
+            self._data.shape[dim] - 1 - offset, self._data.shape[dim] - offset
+        )
         block_data[slices_wrt[0], slices_wrt[1], slices_wrt[2]] = self._data[
             slices_read[0], slices_read[1], slices_read[2]
         ]
@@ -480,14 +494,129 @@ class DataSetStoreReader(DataSetSource):
         ]
         return block_data
 
-    def _read_block_ram_nopadding(
+    def _mpi_exchange_padding_area_before(self):
+        if self._padding[0] == 0:
+            return
+        MPI_TAG = 33
+        mpi_dtype = dtlib.from_numpy_dtype(self._data.dtype)
+
+        # sender code to right neighbour
+        if self._comm.rank < self._comm.size - 1:
+            send_slices = [slice(None), slice(None), slice(None)]
+            send_slices[self._slicing_dim] = slice(
+                self._data.shape[self._slicing_dim]
+                - self._padding[0]
+                - self._padding[1],
+                self._data.shape[self._slicing_dim] - self._padding[1],
+            )
+            to_send_right_neighbour = np.ascontiguousarray(
+                self._data[send_slices[0], send_slices[1], send_slices[2]]
+            )
+            self._comm.Send(
+                [to_send_right_neighbour, mpi_dtype],
+                dest=self._comm.rank + 1,
+                tag=MPI_TAG,
+            )
+
+        # receiver code from right neighbour
+        if self._comm.rank > 0:
+            recv_shape = list(self._data.shape)
+            recv_shape[self._slicing_dim] = self._padding[0]
+            receive_buf_from_left_neighbour = np.empty(
+                tuple(recv_shape), self._data.dtype
+            )
+            self._comm.Recv(
+                [receive_buf_from_left_neighbour, mpi_dtype],
+                source=self._comm.rank - 1,
+                tag=MPI_TAG,
+            )
+            pad_slices = [slice(None), slice(None), slice(None)]
+            pad_slices[self._slicing_dim] = slice(0, self._padding[0])
+
+            self._data[pad_slices[0], pad_slices[1], pad_slices[2]] = (
+                receive_buf_from_left_neighbour
+            )
+
+    def _mpi_exchange_padding_area_after(self):
+        MPI_TAG = 44
+        if self._padding[1] == 0:
+            return
+        mpi_dtype = dtlib.from_numpy_dtype(self._data.dtype)
+
+        # sender code to left neighbour
+        if self._comm.rank > 0:
+            send_slices = [slice(None), slice(None), slice(None)]
+            send_slices[self._slicing_dim] = slice(
+                self._padding[0], self._padding[0] + self._padding[1]
+            )
+            to_send_left_neighbour = np.ascontiguousarray(
+                self._data[send_slices[0], send_slices[1], send_slices[2]]
+            )
+            self._comm.Send(
+                [to_send_left_neighbour, mpi_dtype],
+                dest=self._comm.rank - 1,
+                tag=MPI_TAG,
+            )
+
+        # receiver code from right neighbour
+        if self._comm.rank < self._comm.size - 1:
+            recv_shape = list(self._data.shape)
+            recv_shape[self._slicing_dim] = self._padding[1]
+            receive_buf_from_right_neighbour = np.empty(
+                tuple(recv_shape), dtype=self._data.dtype
+            )
+            self._comm.Recv(
+                [receive_buf_from_right_neighbour, mpi_dtype],
+                source=self._comm.rank + 1,
+                tag=MPI_TAG,
+            )
+            pad_slices = [slice(None), slice(None), slice(None)]
+            pad_slices[self._slicing_dim] = slice(
+                self._chunk_shape[self._slicing_dim] - self._padding[1],
+                self._chunk_shape[self._slicing_dim],
+            )
+            self._data[pad_slices[0], pad_slices[1], pad_slices[2]] = (
+                receive_buf_from_right_neighbour
+            )
+
+    def _extend_data_for_padding(self, core_data: np.ndarray) -> np.ndarray:
+        padded_data = np.empty(self._chunk_shape, self._data.dtype)
+        core_slices = [slice(None), slice(None), slice(None)]
+        core_slices[self._slicing_dim] = slice(
+            self._padding[0], self._chunk_shape[self._slicing_dim] - self._padding[1]
+        )
+        padded_data[core_slices[0], core_slices[1], core_slices[2]] = core_data
+        return padded_data
+
+    def _exchange_neighbourhoods(self):
+        # we have the core of the chunk in RAM, but without the padding are
+        # so we construct the full area with padding in RAM and exchange with MPI
+
+        self._data = self._extend_data_for_padding(self._data)
+
+        # before
+        self._mpi_exchange_padding_area_before()
+        if self._comm.rank == 0:
+            self._extrapolate_before(
+                self._data, self._padding[0], self._slicing_dim, offset=self._padding[0]
+            )
+
+        # after
+        self._mpi_exchange_padding_area_after()
+        if self._comm.rank == self._comm.size - 1:
+            self._extrapolate_after(
+                self._data, self._padding[1], self._slicing_dim, offset=self._padding[1]
+            )
+
+    def _read_block_ram(
         self, shape: List[int], dim: int, start_idx: List[int]
     ) -> np.ndarray:
-        return self._data[
-            start_idx[0] : start_idx[0] + shape[0],
-            start_idx[1] : start_idx[1] + shape[1],
-            start_idx[2] : start_idx[2] + shape[2],
+        read_slices = [
+            slice(start_idx[0], start_idx[0] + shape[0]),
+            slice(start_idx[1], start_idx[1] + shape[1]),
+            slice(start_idx[2], start_idx[2] + shape[2]),
         ]
+        return self._data[read_slices[0], read_slices[1], read_slices[2]]
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
         shape = list(self._global_shape)
@@ -498,14 +627,10 @@ class DataSetStoreReader(DataSetSource):
         start_idx[dim] = start
         if self.is_file_based:
             block_data = self._read_block_file(shape, dim, start_idx)
-        elif self._padding == (0, 0):
-            # RAM-based, no padding
-            block_data = self._read_block_ram_nopadding(shape, dim, start_idx)
-        elif self._padding != (0, 0):
-            # TODO: read the neighborhood here?
-            raise NotImplementedError
+        else:
+            block_data = self._read_block_ram(shape, dim, start_idx)
 
-        block = DataSetBlock(
+        return DataSetBlock(
             data=block_data,
             aux_data=self._aux_data,
             slicing_dim=self._slicing_dim,
@@ -515,8 +640,6 @@ class DataSetStoreReader(DataSetSource):
             chunk_shape=self._chunk_shape,
             padding=self._padding,
         )
-
-        return block
 
     def finalize(self):
         self._data = None

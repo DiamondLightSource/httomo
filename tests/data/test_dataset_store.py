@@ -811,3 +811,91 @@ def test_can_write_and_read_padded_blocks_filebased_boundaries(
 
     np.testing.assert_array_equal(rblock1.data, b1expected)
     np.testing.assert_array_equal(rblock2.data, b2expected)
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+def test_can_write_and_read_padded_blocks_ram(
+    mocker: MockerFixture, tmp_path: PathLike
+):
+    comm = MPI.COMM_WORLD
+    padding = (2, 2)
+    GLOBAL_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    chunk_shape = (5, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
+    if comm.rank == 0:
+        chunk_start = 0
+    else:
+        chunk_start = 5
+
+    source_data = np.copy(global_data[chunk_start : chunk_start + chunk_shape[0], :, :])
+
+    mock_source = mocker.create_autospec(
+        DataSetStoreWriter,
+        _data=source_data,
+        is_file_based=False,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        global_index=(chunk_start, 0, 0),
+        chunk_shape=chunk_shape,
+        finalise=mocker.MagicMock(),
+        comm=comm,
+        instance=True,
+    )
+
+    reader = DataSetStoreReader(mock_source, slicing_dim=0, padding=padding)
+    padded_chunk_shape = (
+        chunk_shape[0] + padding[0] + padding[1],
+        chunk_shape[1],
+        chunk_shape[2],
+    )
+
+    b1_size = chunk_shape[0] // 2
+    b2_size = chunk_shape[0] - b1_size
+    rblock1 = reader.read_block(0, b1_size)
+    rblock2 = reader.read_block(b1_size, b2_size)
+
+    assert reader.global_shape == GLOBAL_SHAPE
+    assert reader.chunk_shape == padded_chunk_shape
+    assert reader.global_index == (chunk_start - padding[0], 0, 0)
+    assert reader.slicing_dim == 0
+
+    assert isinstance(rblock1.data, np.ndarray)
+    assert isinstance(rblock2.data, np.ndarray)
+
+    assert rblock1.is_padded is True
+    assert rblock2.is_padded is True
+    assert rblock1.padding == padding
+    assert rblock2.padding == padding
+
+    rb1expected = np.empty(
+        (b1_size + padding[0] + padding[1], chunk_shape[1], chunk_shape[2]),
+        dtype=np.float32,
+    )
+    rb2expected = np.empty(
+        (b2_size + padding[0] + padding[1], chunk_shape[1], chunk_shape[2]),
+        dtype=np.float32,
+    )
+    if comm.rank == 0:
+        # fill left part by extrapolating
+        rb1expected[: padding[0], :, :] = global_data[0, :, :]
+        rb1expected[padding[0] :, :, :] = global_data[: b1_size + padding[1], :, :]
+        rb2expected[:, :, :] = global_data[
+            b1_size - padding[0] : b1_size + b2_size + padding[1], :, :
+        ]
+    elif comm.rank == 1:
+        rb1expected[:, :, :] = global_data[
+            chunk_shape[0] - padding[0] : chunk_shape[0] + b1_size + padding[1], :, :
+        ]
+        rb2expected[: -padding[1], :, :] = global_data[
+            -chunk_shape[0] - padding[0] + b1_size :, :, :
+        ]
+        # fill right part by extrapolating
+        rb2expected[-padding[1] :, :, :] = global_data[-1, :, :]
+
+    np.testing.assert_array_equal(rblock1.data, rb1expected)
+    np.testing.assert_array_equal(rblock2.data, rb2expected)
