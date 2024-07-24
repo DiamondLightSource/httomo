@@ -187,11 +187,12 @@ def test_partial_block_for_chunked_data_with_padding_center(
     padded_block_shape_t = unpadded_block_shape_t
     padded_block_shape_t[slicing_dim] += padding[0] + padding[1]
     padded_block_shape = make_3d_shape_from_shape(padded_block_shape_t)
-    padded_block_start_index = 3
-    unpadded_block_start_index = padded_block_start_index + padding[0]
 
-    padded_chunk_start_index = 10
-    unpadded_chunk_start_index = padded_chunk_start_index + padding[0]
+    unpadded_block_start_index = 5
+    padded_block_start_index = unpadded_block_start_index - padding[0]
+
+    unpadded_chunk_start_index = 12
+    padded_chunk_start_index = unpadded_chunk_start_index - padding[0]
 
     data = np.ones(padded_block_shape, dtype=np.float32)
     angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
@@ -254,8 +255,8 @@ def test_partial_block_for_chunked_data_with_padding_chunk_boundaries(
     )
     padded_block_start_index = unpadded_block_start_index - padding[0]
 
-    padded_chunk_start_index = 10
-    unpadded_chunk_start_index = padded_chunk_start_index + padding[0]
+    unpadded_chunk_start_index = 12
+    padded_chunk_start_index = unpadded_chunk_start_index - padding[0]
 
     data = np.ones(padded_block_shape, dtype=np.float32)
     angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
