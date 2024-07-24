@@ -704,6 +704,59 @@ def test_can_write_and_read_padded_blocks_filebased_center(
     )
 
 
+def test_adapts_shapes_with_padding_and_reslicing(
+    mocker: MockerFixture, tmp_path: PathLike
+):
+    padding = (2, 2)
+    GLOBAL_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    chunk_shape = GLOBAL_SHAPE  # the writer just ignores padding
+
+    # write global data to file and fake the source
+    file = Path(tmp_path) / "testfile.h5"
+    with h5py.File(file, "w") as f:
+        source_data = f.create_dataset("data", data=global_data)
+
+    mock_source = mocker.create_autospec(
+        DataSetStoreWriter,
+        _data=source_data,
+        is_file_based=True,
+        filename=file,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        global_index=(0, 0, 0),
+        chunk_shape=chunk_shape,
+        finalise=mocker.MagicMock(),
+        instance=True,
+        comm=MPI.COMM_SELF,
+    )
+
+    reader = DataSetStoreReader(mock_source, slicing_dim=1, padding=padding)
+
+    block = reader.read_block(0, 2)
+
+    assert reader.global_shape == GLOBAL_SHAPE
+    assert reader.chunk_shape == (
+        GLOBAL_SHAPE[0],
+        GLOBAL_SHAPE[1] + padding[0] + padding[1],
+        GLOBAL_SHAPE[2],
+    )
+    assert reader.global_index == (0, -padding[0], 0)
+    assert reader.slicing_dim == 1
+
+    assert block.shape == (
+        GLOBAL_SHAPE[0],
+        2 + padding[0] + padding[1],
+        GLOBAL_SHAPE[2],
+    )
+    assert block.padding == padding
+    assert block.chunk_shape == reader.chunk_shape
+    assert block.chunk_index == (0, -padding[0], 0)
+    assert block.global_index == (0, -padding[0], 0)
+
+
 @pytest.mark.parametrize("boundary", ["before", "after", "both"])
 def test_can_write_and_read_padded_blocks_filebased_boundaries(
     mocker: MockerFixture,
@@ -817,9 +870,7 @@ def test_can_write_and_read_padded_blocks_filebased_boundaries(
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
-def test_can_write_and_read_padded_blocks_ram(
-    mocker: MockerFixture, tmp_path: PathLike
-):
+def test_can_write_and_read_padded_blocks_ram(mocker: MockerFixture):
     comm = MPI.COMM_WORLD
     padding = (2, 2)
     GLOBAL_SHAPE = (10, 10, 10)
@@ -899,3 +950,98 @@ def test_can_write_and_read_padded_blocks_ram(
 
     np.testing.assert_array_equal(rblock1.data, rb1expected)
     np.testing.assert_array_equal(rblock2.data, rb2expected)
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+def test_adapts_shapes_with_padding_and_reslicing_mpi(
+    mocker: MockerFixture, tmp_path: PathLike
+):
+    # first, we write with 2 MPI processes in slicing_dim 0 (faking the store)
+    comm = MPI.COMM_WORLD
+    GLOBAL_SHAPE = (10, 10, 10)
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    chunk_shape = (5, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
+    if comm.rank == 0:
+        chunk_start = 0
+    else:
+        chunk_start = 5
+
+    source_data = np.copy(global_data[chunk_start : chunk_start + chunk_shape[0], :, :])
+
+    mock_source = mocker.create_autospec(
+        DataSetStoreWriter,
+        _data=source_data,
+        is_file_based=False,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        global_index=(chunk_start, 0, 0),
+        chunk_shape=chunk_shape,
+        finalise=mocker.MagicMock(),
+        comm=comm,
+        instance=True,
+    )
+
+    # now we read with padding in slicing_dim=1 (reslice required)
+    padding = (2, 2)
+    reader = DataSetStoreReader(mock_source, slicing_dim=1, padding=padding)
+
+    chunk_size = GLOBAL_SHAPE[1] // 2
+    b1_size = chunk_size // 2
+    b2_size = chunk_size - b1_size
+    block1 = reader.read_block(0, b1_size)
+    block2 = reader.read_block(b1_size, b2_size)
+
+    assert reader.global_shape == GLOBAL_SHAPE
+    assert reader.chunk_shape == (
+        GLOBAL_SHAPE[0],
+        chunk_size + padding[0] + padding[1],
+        GLOBAL_SHAPE[2],
+    )
+    assert reader.slicing_dim == 1
+    if comm.rank == 0:
+        assert reader.global_index == (0, -padding[0], 0)
+    else:
+        assert reader.global_index == (0, chunk_size - padding[0], 0)
+
+    assert block1.shape == (
+        GLOBAL_SHAPE[0],
+        b1_size + padding[0] + padding[1],
+        GLOBAL_SHAPE[2],
+    )
+    assert block1.padding == padding
+    assert block1.chunk_shape == reader.chunk_shape
+    assert block1.chunk_index == (0, -padding[0], 0)
+    assert block1.global_index == reader.global_index
+
+    assert block2.shape == (
+        GLOBAL_SHAPE[0],
+        b2_size + padding[0] + padding[1],
+        GLOBAL_SHAPE[2],
+    )
+    assert block2.padding == padding
+    assert block2.chunk_shape == reader.chunk_shape
+    assert block2.chunk_index == (0, b1_size - padding[0], 0)
+    assert block2.global_index == (0, reader.global_index[1] + b1_size, 0)
+
+    b1expected = np.empty(block1.shape, dtype=np.float32)
+    b2expected = np.empty(block2.shape, dtype=np.float32)
+    if comm.rank == 0:
+        b1expected[:, padding[0] :, :] = global_data[:, : b1_size + padding[1], :]
+        b1expected[:, : padding[0], :] = global_data[:, 0:1, :]
+        b2expected[:, :, :] = global_data[
+            :, b1_size - padding[0] : chunk_size + padding[1], :
+        ]
+    else:
+        b1expected[:, :, :] = global_data[
+            :, chunk_size - padding[0] : chunk_size + b1_size + padding[1], :
+        ]
+        b2expected[:, : -padding[1], :] = global_data[:, -b2_size - padding[0] :, :]
+        b2expected[:, -padding[1] :, :] = global_data[:, -1:, :]
+
+    np.testing.assert_array_equal(block1.data, b1expected)
+    np.testing.assert_array_equal(block2.data, b2expected)
