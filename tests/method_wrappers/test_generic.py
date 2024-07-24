@@ -639,3 +639,73 @@ def test_generic_calculate_output_dims_no_change(mocker: MockerFixture):
     dims = wrp.calculate_output_dims((10, 10))
 
     assert dims == (10, 10)
+
+
+def test_generic_execute_uses_comm_passed_to_constructor(
+    mocker: MockerFixture,
+    dummy_block: DataSetBlock,
+):
+    # Define mock global comm, to be used in place of `MPI.COMM_WORLD` in the code to be tested
+    global_comm_mock = mocker.create_autospec(MPI.Comm)
+    global_comm_mock.size = 8
+    global_comm_mock.rank = 0
+
+    # Patch `httomo.runner.gpu_utils` import of `MPI.COMM_WORLD` to be the mock global
+    # communicator object defined
+    mocker.patch("httomo.runner.gpu_utils.MPI.COMM_WORLD", global_comm_mock)
+
+    # Define spy on mock global communicator's `bcast()` method, for later assertions that its
+    # `bcast()` method is never called.
+    #
+    # The fact that its `bcast()` method should never be called is used as a proxy/marker that
+    # the global communicator is never used in method execution, only the communicator passed
+    # into the method wrapper's constructor should be used in method execution.
+    global_comm_bcast_spy = mocker.patch.object(target=global_comm_mock, attribute="bcast")
+
+    # Define mock comm object to pass into method wrapper constructor
+    passed_in_mock_comm = mocker.create_autospec(MPI.Comm)
+    passed_in_mock_comm.size = 1
+    passed_in_mock_comm.rank = 0
+
+    # Define spy on mock communicator passed into method wrapper constructor, for later
+    # assertions that its `bcast()` method is only called when the method is executed
+    passed_in_mock_comm_bcast_spy = mocker.patch.object(
+        target=passed_in_mock_comm,
+        attribute="bcast",
+    )
+
+    # Define dummy method function which has a `comm` parameter. This will make the method
+    # wrapper pass in its `self.comm` to the method function. This communicator is the
+    # communicator that is passed into the method wrapper constructor. Therefore, the
+    # communicator in the method function *should* be the communicator that is passed into the
+    # method wrapper's constructor, and *not* the global communicator.
+    #
+    # Suppose the communicator given to the method function is used in some manner (say, the
+    # `bcast()` method is called) during the method execution. Then, a spy on the `bcast()`
+    # method can be used to verify if the communicator being used for method execution is the
+    # one passed into the method wrapper's constructor and *not* the global communicator.
+    class FakeModule:
+        def test_method(data, comm):
+            comm.bcast(1, root=0)
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "test_method",
+        comm=passed_in_mock_comm,
+    )
+
+    # Run `execute()` method, which should trigger the dummy method function defined earlier,
+    # that will access the communicator given to it by the method wrapper (which will be the
+    # communicator that was passed into the method wrapper constructor)
+    #
+    # The global communicator should never be executed, and the communicator passed into the
+    # method wrapper constructor should only be executed once when the method is executed.
+    global_comm_bcast_spy.assert_not_called()
+    passed_in_mock_comm_bcast_spy.assert_not_called()
+    wrp.execute(dummy_block)
+    global_comm_bcast_spy.assert_not_called()
+    passed_in_mock_comm_bcast_spy.assert_called_once()
