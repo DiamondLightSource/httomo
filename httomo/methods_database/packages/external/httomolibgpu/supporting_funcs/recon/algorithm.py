@@ -135,8 +135,10 @@ def _calc_memory_bytes_FBP(
     # BUT: this swapaxis happens after the cudaArray inputs and the input swapaxis arrays are dropped,
     #      so it does not add to the memory overall
     
-    
-    tot_memory_bytes = int(filtersync_output_slice_size + max(projection_mem_size, filtersync_size))
+    if projection_mem_size > filtersync_size:
+        tot_memory_bytes = int(filtersync_output_slice_size + projection_mem_size)
+    else:
+        tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + recon_output_size)    
 
     return (tot_memory_bytes, fixed_amount)
 
