@@ -467,7 +467,7 @@ def test_recon_FBP_memoryhook(
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
-    assert percents_relative_maxmem <= 40
+    assert percents_relative_maxmem <= 60
 
 
 @pytest.mark.cupy

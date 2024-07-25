@@ -110,20 +110,20 @@ def _calc_memory_bytes_FBP(
     # separate
     filtersync_size = input_slice_size + fftplan_slice_size + proj_f_slice + ifftplan_slice_size
     
-    # 6. we swap the axes before passing data to Astra
-    # https://github.com/dkazanc/ToMoBAR/blob/master/tomobar/methodsDIR_CuPy.py#L135
-    astra_input_swapaxis_slice = np.prod(non_slice_dims_shape) * np.float32().itemsize
+    # 6. we swap the axes before passing data to Astra in ToMoBAR
+    # https://github.com/dkazanc/ToMoBAR/blob/54137829b6326406e09f6ef9c95eb35c213838a7/tomobar/methodsDIR_CuPy.py#L135
+    pre_astra_input_swapaxis_slice = np.prod(non_slice_dims_shape) * np.float32().itemsize
     
     # 7. astra backprojection will generate an output array 
-    # https://github.com/dkazanc/ToMoBAR/blob/master/tomobar/astra_wrappers/astra_base.py#L524
+    # https://github.com/dkazanc/ToMoBAR/blob/54137829b6326406e09f6ef9c95eb35c213838a7/tomobar/astra_wrappers/astra_base.py#L524
     output_dims = _calc_output_dim_FBP(non_slice_dims_shape, **kwargs)
     recon_output_size = np.prod(output_dims) * np.float32().itemsize
     
     # 7. astra backprojection makes a copy of the input
     astra_input_slice_size = np.prod(non_slice_dims_shape) * np.float32().itemsize
     
-    ## now we calculate back projection memory
-    projection_mem_size = astra_input_swapaxis_slice + astra_input_slice_size + recon_output_size
+    ## now we calculate back projection memory (2 copies of the input + reconstruction output)
+    projection_mem_size = 2*astra_input_slice_size + recon_output_size
     
     # 9. apply_circular_mask memory (fixed amount, not per slice)
     circular_mask_size = np.prod(output_dims) * np.int64().itemsize
@@ -131,14 +131,14 @@ def _calc_memory_bytes_FBP(
     fixed_amount = max(filter_size, circular_mask_size)
     
     # 9. this swapaxis makes another copy of the output data
-    # https://github.com/DiamondLightSource/httomolibgpu/blob/main/httomolibgpu/recon/algorithm.py#L118
+    # https://github.com/DiamondLightSource/httomolibgpu/blob/72d98ec7ac44e06ee0318043934fb3f68667d203/httomolibgpu/recon/algorithm.py#L118
     # BUT: this swapaxis happens after the cudaArray inputs and the input swapaxis arrays are dropped,
     #      so it does not add to the memory overall
     
     if projection_mem_size > filtersync_size:
-        tot_memory_bytes = int(filtersync_output_slice_size + projection_mem_size)
+        tot_memory_bytes = int(filtersync_output_slice_size + projection_mem_size + pre_astra_input_swapaxis_slice)
     else:
-        tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + recon_output_size)    
+        tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + pre_astra_input_swapaxis_slice + recon_output_size)
 
     return (tot_memory_bytes, fixed_amount)
 
