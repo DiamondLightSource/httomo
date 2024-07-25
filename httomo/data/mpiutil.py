@@ -10,22 +10,17 @@ try:
 except ImportError:
     enabled = False
 
-__all__ = ["enabled", "size", "rank", "alltoall"]
+__all__ = ["enabled", "alltoall"]
 
 if enabled:
     comm = MPI.COMM_WORLD
-    size = comm.size
-    rank = comm.rank
     local_comm = comm.Split_type(MPI.COMM_TYPE_SHARED)
-else:
-    size = 1
-    rank = 0
 
 # add this here so that we can mock it in the tests
 _mpi_max_elements = 2**31
 
 
-def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
+def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     """Distributes a list of contiguous numpy arrays from each rank to every other rank.
 
     It also handles the case where the array sizes are larger than the max allowed by MPI
@@ -45,17 +40,18 @@ def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
     Parameters
     ----------
     arrays : List[np.ndarray]
-        List of 3D numpy arrays to be distributed. Length must be the full size of the MPI world communicator.
+        List of 3D numpy arrays to be distributed. Length must be the full size of the given
+        communicator.
 
     Returns
     -------
     List[np.ndarray]
-        List of the numpy arrays received. Length is the full size of the MPI world communicator.
+        List of the numpy arrays received. Length is the full size of the given communicator.
     """
 
-    if len(arrays) != size:
+    if len(arrays) != comm.size:
         err_str = (
-            "list of arrays for MPI alltoall call must match global communicator size"
+            "list of arrays for MPI alltoall call must match communicator size"
         )
         raise ValueError(err_str)
 
@@ -70,7 +66,7 @@ def alltoall(arrays: List[np.ndarray]) -> List[np.ndarray]:
     assert all(a.ndim == 3 for a in arrays), "Only 3D arrays are supported"
 
     # no MPI or only one process
-    if size == 1:
+    if comm.size == 1:
         return arrays
 
     sizes_send = [a.size for a in arrays]

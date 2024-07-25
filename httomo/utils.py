@@ -5,34 +5,26 @@ from time import perf_counter_ns
 from typing import Any, Callable, Dict, List, Literal, Tuple
 
 from loguru import logger
-from mpi4py.MPI import Comm
+from mpi4py import MPI
 import numpy as np
-
-from httomo.data import mpiutil
 
 gpu_enabled = False
 try:
     import cupy as xp
-    if mpiutil.rank == 0:
-        logger.debug("CuPy is installed")
 
     try:
         xp.cuda.Device(0).compute_capability
         gpu_enabled = True  # CuPy is installed and GPU is available
     except xp.cuda.runtime.CUDARuntimeError:
         import numpy as xp
-        if mpiutil.rank == 0:
-            logger.debug("CuPy is installed but GPU device inaccessible")
 
 except ImportError:
     import numpy as xp
-    if mpiutil.rank == 0:
-        logger.debug("CuPy is not installed")
 
 
 def log_once(output: Any, level: int = logging.INFO) -> None:
     """
-    Log output to console and log file if the process is rank zero.
+    Log output to console and log file if the process' global rank is zero.
 
     Parameters
     ----------
@@ -42,7 +34,7 @@ def log_once(output: Any, level: int = logging.INFO) -> None:
         The level of the log message. See
         https://docs.python.org/3/library/logging.html#logging-levels.
     """
-    if mpiutil.rank == 0:
+    if MPI.COMM_WORLD.rank == 0:
         if isinstance(output, list):
             output = "".join([f"{out}" for out in output])
 
@@ -65,7 +57,7 @@ def log_once(output: Any, level: int = logging.INFO) -> None:
             else:
                 logger.info(output)
 
-def log_rank(output: Any, comm: Comm) -> None:
+def log_rank(output: Any, comm: MPI.Comm) -> None:
     """
     Log output to log file with the process rank.
 
