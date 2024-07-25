@@ -120,6 +120,12 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     default=514,
     help="Port on the host the syslog server is running on",
 )
+@click.option(
+    "--frames-per-chunk",
+    type=click.IntRange(0),
+    default=1,
+    help="Number of frames per-chunk in intermediate data (0 = write as contiguous)",
+)
 def run(
     in_data_file: Path,
     yaml_config: Path,
@@ -134,8 +140,10 @@ def run(
     monitor_output: TextIO,
     syslog_host: str,
     syslog_port: int,
+    frames_per_chunk: int,
 ):
     """Run a pipeline defined in YAML on input data."""
+    httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
 
     comm = MPI.COMM_WORLD
     does_contain_sweep = is_sweep_pipeline(yaml_config)
