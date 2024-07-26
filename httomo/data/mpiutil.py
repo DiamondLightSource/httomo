@@ -6,15 +6,13 @@ try:
     from mpi4py import MPI
 
     comsize = MPI.COMM_WORLD.__sizeof__()
-    enabled = comsize > 1
 except ImportError:
-    enabled = False
+    pass
 
-__all__ = ["enabled", "alltoall"]
+__all__ = ["alltoall"]
 
-if enabled:
-    comm = MPI.COMM_WORLD
-    local_comm = comm.Split_type(MPI.COMM_TYPE_SHARED)
+comm = MPI.COMM_WORLD
+local_comm = comm.Split_type(MPI.COMM_TYPE_SHARED)
 
 # add this here so that we can mock it in the tests
 _mpi_max_elements = 2**31
