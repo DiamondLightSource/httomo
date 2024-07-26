@@ -1,13 +1,8 @@
 from typing import List
 
 import numpy as np
+from mpi4py import MPI
 
-try:
-    from mpi4py import MPI
-
-    comsize = MPI.COMM_WORLD.__sizeof__()
-except ImportError:
-    pass
 
 __all__ = ["alltoall"]
 
