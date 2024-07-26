@@ -145,8 +145,9 @@ def run(
     """Run a pipeline defined in YAML on input data."""
     httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
 
-    comm = MPI.COMM_WORLD
     does_contain_sweep = is_sweep_pipeline(yaml_config)
+    global_comm = MPI.COMM_WORLD
+    method_wrapper_comm = global_comm
     httomo.globals.SYSLOG_SERVER = syslog_host
     httomo.globals.SYSLOG_PORT = syslog_port
 
@@ -159,17 +160,17 @@ def run(
         httomo.globals.run_out_dir = out_dir.joinpath(create_folder)
 
     # Various initialisation tasks
-    if comm.rank == 0:
+    if global_comm.rank == 0:
         Path.mkdir(httomo.globals.run_out_dir, exist_ok=True)
         copy(yaml_config, httomo.globals.run_out_dir)
     setup_logger(Path(httomo.globals.run_out_dir))
 
     # instantiate UiLayer class for pipeline build
-    init_UiLayer = UiLayer(yaml_config, in_data_file, comm=comm)
+    init_UiLayer = UiLayer(yaml_config, in_data_file, comm=method_wrapper_comm)
     pipeline = init_UiLayer.build_pipeline()
 
     # perform transformations on pipeline
-    tr = TransformLayer(comm=comm, save_all=save_all)
+    tr = TransformLayer(comm=method_wrapper_comm, save_all=save_all)
     pipeline = tr.transform(pipeline)
 
     if not does_contain_sweep:
@@ -183,7 +184,7 @@ def run(
         _set_gpu_id(gpu_id)
 
         # Run the pipeline using Taskrunner, with temp dir or reslice dir
-        mon = make_monitors(monitor, comm)
+        mon = make_monitors(monitor, global_comm)
         ctx: AbstractContextManager = nullcontext(reslice_dir)
         if reslice_dir is None:
             ctx = tempfile.TemporaryDirectory()
@@ -191,7 +192,7 @@ def run(
             runner = TaskRunner(
                 pipeline,
                 Path(tmp_dir),
-                comm,
+                global_comm,
                 monitor=mon,
                 memory_limit_bytes=memory_limit,
             )

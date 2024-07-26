@@ -6,8 +6,6 @@ from mpi4py import MPI
 
 __all__ = ["alltoall"]
 
-comm = MPI.COMM_WORLD
-local_comm = comm.Split_type(MPI.COMM_TYPE_SHARED)
 
 # add this here so that we can mock it in the tests
 _mpi_max_elements = 2**31
