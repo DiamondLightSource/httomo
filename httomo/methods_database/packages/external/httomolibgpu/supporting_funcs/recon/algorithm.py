@@ -123,7 +123,7 @@ def _calc_memory_bytes_FBP(
     astra_input_slice_size = np.prod(non_slice_dims_shape) * np.float32().itemsize
     
     ## now we calculate back projection memory (2 copies of the input + reconstruction output)
-    projection_mem_size = 2*astra_input_slice_size + recon_output_size
+    projection_mem_size = pre_astra_input_swapaxis_slice + astra_input_slice_size + recon_output_size
     
     # 9. apply_circular_mask memory (fixed amount, not per slice)
     circular_mask_size = np.prod(output_dims) * np.int64().itemsize
@@ -136,9 +136,9 @@ def _calc_memory_bytes_FBP(
     #      so it does not add to the memory overall
     
     if projection_mem_size > filtersync_size:
-        tot_memory_bytes = int(filtersync_output_slice_size + projection_mem_size + pre_astra_input_swapaxis_slice)
+        tot_memory_bytes = int(filtersync_output_slice_size + projection_mem_size)
     else:
-        tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + pre_astra_input_swapaxis_slice + recon_output_size)
+        tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + recon_output_size)
 
     return (tot_memory_bytes, fixed_amount)
 
