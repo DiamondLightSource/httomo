@@ -28,9 +28,8 @@ class ParamSweepRunner:
         self._block: Optional[ParamSweepBlock] = None
         self._check_params_for_sweep()
         self._stages = self.determine_stages()
-        self._start_sweep_idx, self._stop_sweep_idx = self._determine_sweep_indices(
-            comm
-        )
+        start_sweep_idx, stop_sweep_idx = self._determine_sweep_indices(comm)
+        self._sweep_values = self._stages.sweep.values[start_sweep_idx:stop_sweep_idx]
 
     @property
     def block(self) -> ParamSweepBlock:
@@ -154,11 +153,6 @@ class ParamSweepRunner:
         writer = ParamSweepWriter(len(self._stages.sweep.values))
         method = self._stages.sweep.method
 
-        # Define subset of parameter values that the process should sweep over
-        sweep_vals = self._stages.sweep.values[
-            self._start_sweep_idx : self._stop_sweep_idx
-        ]
-
         log_once(f"Running {method.method_name} ({method.package_name})")
         log_once("    Beginning parameter sweep")
         log_once(f"    Parameter name: {self._stages.sweep.param_name}")
@@ -167,17 +161,17 @@ class ParamSweepRunner:
             f"{len(self._stages.sweep.values)}"
         )
         log_once(total_vals_str)
-        log_once(f"    Values executed in this process: {len(sweep_vals)}")
+        log_once(f"    Values executed in this process: {len(self._sweep_values)}")
 
         # Redirect tqdm progress bar output to /dev/null, and instead manually write sweep
         # progress to logfile within loop
         progress = tqdm.tqdm(
-            iterable=sweep_vals,
+            iterable=self._sweep_values,
             file=open(os.devnull, "w"),
             unit="value",
             ascii=True,
         )
-        for val, _ in zip(sweep_vals, progress):
+        for val, _ in zip(self._sweep_values, progress):
             # Blocks are modified in-place by method wrappers, so a new block must be created
             # that contains a copy of the input data to the sweep stage
             block = ParamSweepBlock(
