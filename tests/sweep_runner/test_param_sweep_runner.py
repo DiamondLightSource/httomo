@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 from pytest_mock import MockerFixture
 
@@ -20,7 +22,7 @@ def test_raises_error_if_no_sweep_detected(mocker: MockerFixture):
     pipeline = Pipeline(loader=loader, methods=[method])
 
     with pytest.raises(ValueError) as e:
-        _ = ParamSweepRunner(pipeline)
+        _ = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
 
     assert "No parameter sweep detected in pipeline" in str(e)
 
@@ -32,7 +34,7 @@ def test_raises_error_if_multiple_sweeps_detected(mocker: MockerFixture):
     pipeline = Pipeline(loader=loader, methods=[m1, m2])
 
     with pytest.raises(ValueError) as e:
-        _ = ParamSweepRunner(pipeline)
+        _ = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
 
     assert "Parameter sweep over more than one parameter detected in pipeline" in str(e)
 
@@ -49,7 +51,7 @@ def test_determine_stages_produces_correct_stages(mocker: MockerFixture):
         sweep=SweepStage(method=sweep_wrapper, param_name="param_1", values=SWEEP_VALS),
         after_sweep=NonSweepStage([m3]),
     )
-    runner = ParamSweepRunner(pipeline)
+    runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
     stages = runner.determine_stages()
     assert stages == expected_stages
 
@@ -59,7 +61,7 @@ def test_without_prepare_block_property_raises_error(mocker: MockerFixture):
     m1 = make_test_method(mocker)
     sweep_wrapper = make_test_method(mocker, param_1=(0,))
     pipeline = Pipeline(loader=loader, methods=[m1, sweep_wrapper])
-    runner = ParamSweepRunner(pipeline)
+    runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
     with pytest.raises(ValueError) as e:
         runner.block
     assert "Block from input data has not yet been loaded" in str(e)
@@ -84,7 +86,7 @@ def test_after_prepare_block_attr_contains_data(mocker: MockerFixture):
     m1 = make_test_method(mocker)
     sweep_wrapper = make_test_method(mocker, param_1=(0,))
     pipeline = Pipeline(loader=loader, methods=[m1, sweep_wrapper])
-    runner = ParamSweepRunner(pipeline)
+    runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
     runner.prepare()
     assert runner.block is not None
     np.testing.assert_array_equal(runner.block.data, data)
@@ -110,7 +112,7 @@ def tests_prepare_raises_error_if_too_many_sino_slices(mocker: MockerFixture):
     m1 = make_test_method(mocker)
     sweep_wrapper = make_test_method(mocker, param_1=(0,))
     pipeline = Pipeline(loader=loader, methods=[m1, sweep_wrapper])
-    runner = ParamSweepRunner(pipeline)
+    runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
 
     with pytest.raises(ValueError) as e:
         runner.prepare()
@@ -170,7 +172,7 @@ def test_execute_non_sweep_stage_modifies_block(
     else:
         pipeline = Pipeline(loader=loader, methods=[sweep_wrapper, m1, m2])
 
-    runner = ParamSweepRunner(pipeline)
+    runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
     runner.prepare()
     if non_sweep_stage == "before":
         runner.execute_before_sweep()
@@ -229,7 +231,7 @@ def test_execute_non_sweep_stage_method_output_updates_side_outputs(
     # should add the side output produced by it to the side output manager.
     side_output_manager = SideOutputManager()
     runner = ParamSweepRunner(
-        pipeline=pipeline, side_output_manager=side_output_manager
+        pipeline=pipeline, comm=MPI.COMM_WORLD, side_output_manager=side_output_manager
     )
     runner.prepare()
     if non_sweep_stage == "before":
@@ -297,7 +299,7 @@ def test_execute_non_sweep_stage_method_params_updated_from_side_outputs(
         pipeline = Pipeline(loader=loader, methods=[sweep_wrapper, method_wrapper])
 
     runner = ParamSweepRunner(
-        pipeline=pipeline, side_output_manager=side_output_manager
+        pipeline=pipeline, comm=MPI.COMM_WORLD, side_output_manager=side_output_manager
     )
     runner.prepare()
     if non_sweep_stage == "before":
@@ -345,7 +347,7 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
 
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
     pipeline = Pipeline(loader=loader, methods=[sweep_method_wrapper])
-    runner = ParamSweepRunner(pipeline)
+    runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
     runner.prepare()
     runner.execute_sweep()
 
@@ -432,7 +434,7 @@ def test_execute_modifies_block(mocker: MockerFixture):
 
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
     pipeline = Pipeline(loader=loader, methods=[m1, m2, sweep_method_wrapper, m4, m5])
-    runner = ParamSweepRunner(pipeline)
+    runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
     runner.execute()
 
     NO_OF_SWEEPS = 4
@@ -499,7 +501,7 @@ def test_execute_sweep_stage_method_params_updated_from_side_outputs(
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
     pipeline = Pipeline(loader=loader, methods=[sweep_method_wrapper])
     runner = ParamSweepRunner(
-        pipeline=pipeline, side_output_manager=side_output_manager
+        pipeline=pipeline, comm=MPI.COMM_WORLD, side_output_manager=side_output_manager
     )
     runner.prepare()
     runner.execute_sweep()
@@ -541,7 +543,7 @@ def test_execute_sweep_stage_method_produces_side_output_raises_error(
 
     # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
     pipeline = Pipeline(loader=loader, methods=[mock_wrapper])
-    runner = ParamSweepRunner(pipeline)
+    runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
     runner.prepare()
 
     with pytest.raises(ValueError) as e:
@@ -549,3 +551,92 @@ def test_execute_sweep_stage_method_produces_side_output_raises_error(
     assert "Producing a side output is not supported in parameter sweep methods" in str(
         e
     )
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+def test_execute_sweep_stage_two_procs_correct_sweep_val_distribution(
+    mocker: MockerFixture,
+):
+    # Define communicator objects
+    global_comm = MPI.COMM_WORLD
+    method_wrapper_comm = MPI.COMM_SELF
+
+    # Define dummy block for loader to provide
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    data = np.ones(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    loader = make_test_loader(mocker, block=block)
+
+    # Define a dummy method function that the method wrapper will be patched to import. When
+    # executing the sweep stage, each rank should use a different subset of the given sweep
+    # values.
+    class FakeModule:
+        def sweep_method(data: np.ndarray, param_1: int):  # type: ignore
+            pass
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    # Cretae spy on dummy method function to later assert that, for each rank, it has been
+    # called with the expected subset of sweep values
+    method_function_spy = mocker.patch.object(
+        target=FakeModule,
+        attribute="sweep_method",
+        return_value=data,
+        autospec=FakeModule.sweep_method,  # type: ignore
+    )
+
+    # Create sweep method wrapper, passing the sweep values for the param to sweep over
+    SWEEP_VALUES = tuple(list(range(10)))
+    sweep_method_wrapper = make_method_wrapper(
+        method_repository=make_mock_repo(mocker),
+        module_path="mocked_module_path.corr",
+        method_name="sweep_method",
+        comm=method_wrapper_comm,
+        param_1=SWEEP_VALUES,
+    )
+
+    # Define pipeline + runner objects, and execute the sweep stage
+    pipeline = Pipeline(loader=loader, methods=[sweep_method_wrapper])
+    runner = ParamSweepRunner(pipeline, global_comm)
+    runner.prepare()
+    runner.execute_sweep()
+
+    # Rank 0 should execute the first five sweep values, and rank 1 should execute the last
+    # five sweep values
+    if global_comm.rank == 0:
+        expected_sweep_vals = list(SWEEP_VALUES)[:5]
+    else:
+        expected_sweep_vals = list(SWEEP_VALUES)[5:]
+
+    # Define a list of mock call objects that contain the expected sweep values the dummy
+    # method function should be called with
+    expected_mock_calls = [mock.call(args=data, param_1=i) for i in expected_sweep_vals]
+
+    assert len(method_function_spy.mock_calls) == len(expected_mock_calls)
+
+    # For each mock call object from the dummy method function executed in the sweep, assert
+    # that:
+    # - the args are the same (should be empty, no positional args are given, even the numpy
+    # array for the method function is passed as a kwarg)
+    # - the kwargs dict contains a `data` key and a `param_1` key (representing the two kwargs
+    # passed to the dummy method function)
+    for mock_call, expected_mock_call in zip(
+        method_function_spy.mock_calls, expected_mock_calls
+    ):
+        assert mock_call.args == expected_mock_call.args
+        assert len(mock_call.kwargs) == 2
+        assert "data" in mock_call.kwargs.keys()
+        assert "param_1" in mock_call.kwargs.keys()
+        assert mock_call.kwargs["param_1"] == expected_mock_call.kwargs["param_1"]

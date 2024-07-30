@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import tqdm
+from mpi4py.MPI import Comm
 
 import httomo
 from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
@@ -18,6 +19,7 @@ class ParamSweepRunner:
     def __init__(
         self,
         pipeline: Pipeline,
+        comm: Comm,
         side_output_manager: SideOutputManager = SideOutputManager(),
     ) -> None:
         self._sino_slices_threshold = 7
@@ -26,12 +28,23 @@ class ParamSweepRunner:
         self._block: Optional[ParamSweepBlock] = None
         self._check_params_for_sweep()
         self._stages = self.determine_stages()
+        self._start_sweep_idx, self._stop_sweep_idx = self._determine_sweep_indices(
+            comm
+        )
 
     @property
     def block(self) -> ParamSweepBlock:
         if self._block is None:
             raise ValueError("Block from input data has not yet been loaded")
         return self._block
+
+    def _determine_sweep_indices(self, comm: Comm) -> Tuple[int, int]:
+        no_of_sweep_vals = len(self._stages.sweep.values)
+        nprocs = comm.size
+        rank = comm.rank
+        start = round((no_of_sweep_vals / nprocs) * rank)
+        end = round((no_of_sweep_vals / nprocs) * (rank + 1))
+        return start, end
 
     def _check_params_for_sweep(self):
         """
@@ -141,22 +154,30 @@ class ParamSweepRunner:
         writer = ParamSweepWriter(len(self._stages.sweep.values))
         method = self._stages.sweep.method
 
+        # Define subset of parameter values that the process should sweep over
+        sweep_vals = self._stages.sweep.values[
+            self._start_sweep_idx : self._stop_sweep_idx
+        ]
+
         log_once(f"Running {method.method_name} ({method.package_name})")
-        sweep_info_str = (
-            f"    Parameter sweep over {len(self._stages.sweep.values)} values of "
-            f"parameter: {self._stages.sweep.param_name}"
+        log_once("    Beginning parameter sweep")
+        log_once(f"    Parameter name: {self._stages.sweep.param_name}")
+        total_vals_str = (
+            "    Total number of values across all processes: "
+            f"{len(self._stages.sweep.values)}"
         )
-        log_once(sweep_info_str)
+        log_once(total_vals_str)
+        log_once(f"    Values executed in this process: {len(sweep_vals)}")
 
         # Redirect tqdm progress bar output to /dev/null, and instead manually write sweep
         # progress to logfile within loop
         progress = tqdm.tqdm(
-            iterable=self._stages.sweep.values,
+            iterable=sweep_vals,
             file=open(os.devnull, "w"),
             unit="value",
             ascii=True,
         )
-        for val, _ in zip(self._stages.sweep.values, progress):
+        for val, _ in zip(sweep_vals, progress):
             # Blocks are modified in-place by method wrappers, so a new block must be created
             # that contains a copy of the input data to the sweep stage
             block = ParamSweepBlock(
