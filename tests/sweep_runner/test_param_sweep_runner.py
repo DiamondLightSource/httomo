@@ -640,3 +640,76 @@ def test_execute_sweep_stage_two_procs_correct_sweep_val_distribution(
         assert "data" in mock_call.kwargs.keys()
         assert "param_1" in mock_call.kwargs.keys()
         assert mock_call.kwargs["param_1"] == expected_mock_call.kwargs["param_1"]
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+def test_execute_sweep_stage_two_procs_correct_middle_slices_in_block(
+    mocker: MockerFixture,
+):
+    # Define communicator objects
+    global_comm = MPI.COMM_WORLD
+    method_wrapper_comm = MPI.COMM_SELF
+
+    # Define dummy block for loader to provide
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    data = np.ones(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    loader = make_test_loader(mocker, block=block)
+
+    # Define a dummy method function that the method wrapper will be patched to import. When
+    # executing the sweep stage, each rank should use a different subset of the given sweep
+    # values.
+    class FakeModule:
+        def sweep_method(data: np.ndarray, param_1: int):  # type: ignore
+            return data * param_1
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    # Create sweep method wrapper, passing the sweep values for the param to sweep over
+    SWEEP_VALUES = tuple(list(range(10)))
+    sweep_method_wrapper = make_method_wrapper(
+        method_repository=make_mock_repo(mocker),
+        module_path="mocked_module_path.corr",
+        method_name="sweep_method",
+        comm=method_wrapper_comm,
+        param_1=SWEEP_VALUES,
+    )
+
+    # Define pipeline + runner objects, and execute the sweep stage
+    pipeline = Pipeline(loader=loader, methods=[sweep_method_wrapper])
+    runner = ParamSweepRunner(pipeline, global_comm)
+    runner.prepare()
+    runner.execute_sweep()
+
+    # Verify that the middle slices contained in the block data for both processes are the
+    # expected middle slices (based on the sweep values that each process was responsible for
+    # executing)
+    NO_OF_MIDDLE_SLICES_PER_PROCESS = 5
+    middle_slices_shape = (
+        GLOBAL_SHAPE[0],
+        NO_OF_MIDDLE_SLICES_PER_PROCESS,
+        GLOBAL_SHAPE[2],
+    )
+    expected_data = np.ones(middle_slices_shape, dtype=np.float32)
+
+    if global_comm.rank == 0:
+        sweep_values = SWEEP_VALUES[:5]
+    else:
+        sweep_values = SWEEP_VALUES[5:]
+
+    for middle_slice_idx, val in enumerate(sweep_values):
+        expected_data[:, middle_slice_idx, :] *= val
+
+    np.testing.assert_array_equal(runner.block.data, expected_data)

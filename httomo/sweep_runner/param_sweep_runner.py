@@ -150,7 +150,7 @@ class ParamSweepRunner:
 
     def execute_sweep(self):
         """Execute all param variations of the same method in the sweep"""
-        writer = ParamSweepWriter(len(self._stages.sweep.values))
+        writer = ParamSweepWriter(len(self._sweep_values))
         method = self._stages.sweep.method
 
         log_once(f"Running {method.method_name} ({method.package_name})")
