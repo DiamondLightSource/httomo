@@ -6,6 +6,7 @@ from mpi4py.MPI import Comm
 
 import httomo
 from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
+from httomo.method_wrappers.images import ImagesWrapper
 from httomo.runner.block_split import BlockSplitter
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
@@ -28,8 +29,13 @@ class ParamSweepRunner:
         self._block: Optional[ParamSweepBlock] = None
         self._check_params_for_sweep()
         self._stages = self.determine_stages()
-        start_sweep_idx, stop_sweep_idx = self._determine_sweep_indices(comm)
-        self._sweep_values = self._stages.sweep.values[start_sweep_idx:stop_sweep_idx]
+        self._start_sweep_idx, self._stop_sweep_idx = self._determine_sweep_indices(
+            comm
+        )
+        self._sweep_values = self._stages.sweep.values[
+            self._start_sweep_idx : self._stop_sweep_idx
+        ]
+        self._set_image_saver_offset()
 
     @property
     def block(self) -> ParamSweepBlock:
@@ -68,6 +74,16 @@ class ParamSweepRunner:
             )
             log_exception(err_str)
             raise ValueError(err_str)
+
+    def _set_image_saver_offset(self) -> None:
+        """
+        Set the `offset` parameter for any `ImagesWrapper` instances in the pipeline.
+        """
+        non_sweep_stages = [self._stages.before_sweep, self._stages.after_sweep]
+        for non_sweep_stage in non_sweep_stages:
+            for method in non_sweep_stage.methods:
+                if isinstance(method, ImagesWrapper):
+                    method["offset"] = self._start_sweep_idx
 
     def determine_stages(self) -> Stages:
         """

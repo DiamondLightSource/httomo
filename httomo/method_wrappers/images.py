@@ -53,7 +53,7 @@ class ImagesWrapper(GenericMethodWrapper):
     def execute(self, block: T) -> T:
         self._gpu_time_info = GpuTimeInfo()
         config_params = self._config_params
-        if "offset" in self.parameters:
+        if "offset" not in config_params.keys() and "offset" in self.parameters:
             config_params = {
                 **self._config_params,
                 "offset": block.global_index[_get_slicing_dim(self.pattern) - 1],

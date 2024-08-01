@@ -7,6 +7,8 @@ import numpy as np
 from mpi4py import MPI
 
 from httomo.method_wrappers import make_method_wrapper
+from httomo.method_wrappers.generic import GenericMethodWrapper
+from httomo.method_wrappers.images import ImagesWrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.pipeline import Pipeline
@@ -713,3 +715,74 @@ def test_execute_sweep_stage_two_procs_correct_middle_slices_in_block(
         expected_data[:, middle_slice_idx, :] *= val
 
     np.testing.assert_array_equal(runner.block.data, expected_data)
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+def test_execute_sweep_stage_two_procs_image_wrapper_gets_correct_offset(
+    mocker: MockerFixture,
+):
+    # Define communicator objects
+    global_comm = MPI.COMM_WORLD
+    method_wrapper_comm = MPI.COMM_SELF
+
+    # Define dummy block for loader to provide
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    data = np.ones(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    loader = make_test_loader(mocker, block=block)
+
+    # Define mock method wrappers
+    SWEEP_VALUES = tuple(list(range(10)))
+    sweep_method_wrapper = mocker.create_autospec(
+        GenericMethodWrapper, instance=True, config_params={"sweep_param": SWEEP_VALUES}
+    )
+    before_sweep_wrapper = mocker.create_autospec(
+        GenericMethodWrapper, instance=True, config_params={"param_1": 5}
+    )
+    after_sweep_wrapper_images = mocker.create_autospec(
+        ImagesWrapper, instance=True, config_params={"param_2": 10}
+    )
+
+    # Define spies on the mock method wrapper's `__setitem__()` method, to be used later to
+    # verify if `__setitem__()` has been called or not (and if so, with what args)
+    sweep_wrapper_setitem_spy = mocker.patch.object(
+        target=sweep_method_wrapper, attribute="__setitem__"
+    )
+    before_sweep_wrapper_setitem_spy = mocker.patch.object(
+        target=before_sweep_wrapper, attribute="__setitem__"
+    )
+    after_sweep_wrapper_setitem_spy = mocker.patch.object(
+        target=after_sweep_wrapper_images, attribute="__setitem__"
+    )
+
+    # Define pipeline and runner objects
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[
+            before_sweep_wrapper,
+            sweep_method_wrapper,
+            after_sweep_wrapper_images,
+        ],
+    )
+    _ = ParamSweepRunner(pipeline, global_comm)
+
+    # Verify that:
+    # - the mock images wrapper has the correct offset parameter value set, based on the rank
+    # of the process
+    # - the before and after sweep method wrappers don't have any parameter values being set
+    expected_offset = 0 if global_comm.rank == 0 else len(SWEEP_VALUES) // 2
+    after_sweep_wrapper_setitem_spy.assert_called_once_with("offset", expected_offset)
+    before_sweep_wrapper_setitem_spy.assert_not_called()
+    sweep_wrapper_setitem_spy.assert_not_called()
