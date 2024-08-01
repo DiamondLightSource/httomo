@@ -135,10 +135,21 @@ def _calc_memory_bytes_FBP(
     # BUT: this swapaxis happens after the cudaArray inputs and the input swapaxis arrays are dropped,
     #      so it does not add to the memory overall
     
-    if projection_mem_size > filtersync_size:
-        tot_memory_bytes = int(filtersync_output_slice_size + projection_mem_size)
-    else:
-        tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + recon_output_size)
+    # NOTE
+    # Although the assumption that the memory will be cleared after filtration step (the fft plans)
+    # does hold for some WSs, on the cluster it results in OOM error in the IFFT step.
+    # It is not very clear why it is the case so far, therefore the workaround is to account for all memory required
+    # for the FBP step (filtering part + ASTRA backprojection). This is not ideal as it uses a lot of memory 
+    # and therefore the blocks will be smaller making I/O suboptimal. 
+
+    # The commented code bellow is how the memory should be estimated in principle 
+    # if projection_mem_size > filtersync_size:
+    #     tot_memory_bytes = int(filtersync_output_slice_size + projection_mem_size)
+    # else:
+    #     tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + recon_output_size)
+    
+    # this account for the memory used for filtration AND backprojection. 
+    tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + projection_mem_size)
 
     return (tot_memory_bytes, fixed_amount)
 
