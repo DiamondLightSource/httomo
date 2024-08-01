@@ -6,10 +6,10 @@ from collections import OrderedDict
 
 
 class BenchmarkMonitoring(MonitoringInterface):
-    def __init__(self) -> None:
+    def __init__(self, comm: MPI.Comm) -> None:
+        self._comm = comm
         self._data: List[Dict[str, str]] = []
         self._total = 0.0
-        self._comm = MPI.COMM_WORLD
 
     def report_method_block(
         self,

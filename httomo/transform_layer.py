@@ -11,8 +11,8 @@ import httomo
 class TransformLayer:
     def __init__(
         self,
+        comm: MPI.Comm,
         repo=MethodDatabaseRepository(),
-        comm: MPI.Comm = MPI.COMM_WORLD,
         save_all=False,
         out_dir: Optional[os.PathLike] = None,
     ):

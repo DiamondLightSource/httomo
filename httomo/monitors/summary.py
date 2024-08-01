@@ -4,7 +4,8 @@ from httomo.runner.monitoring_interface import MonitoringInterface
 
 
 class SummaryMonitor(MonitoringInterface):
-    def __init__(self) -> None:
+    def __init__(self, comm: MPI.Comm) -> None:
+        self._comm = comm
         self._methods_cpu = 0.0
         self._methods_gpu = 0.0
         self._methods: Dict[str, float] = dict()
@@ -14,7 +15,6 @@ class SummaryMonitor(MonitoringInterface):
         self._sinks = 0.0
         self._total = 0.0
         self._total_agg = 0.0
-        self._comm = MPI.COMM_WORLD
     
     def report_method_block(
         self,
