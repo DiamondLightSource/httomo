@@ -12,7 +12,6 @@ from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import catchtime, xp
 
 import h5py
-import zarr
 import numpy as np
 
 
@@ -45,17 +44,14 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         if out_dir is None:
             out_dir = httomo.globals.run_out_dir
         assert out_dir is not None
-        self._file: Union[h5py.File, zarr.DirectoryStore]
+        self._file: h5py.File
         if httomo.globals.INTERMEDIATE_FORMAT == "hdf5":
             self._file = h5py.File(
                 f"{out_dir}/{filename}.h5", "w", driver="mpio", comm=comm
             )
             # make sure hdf5 file gets closed properly
             weakref.finalize(self, self._file.close)
-        else:
-            self._file = zarr.DirectoryStore(path=f"{out_dir}/{filename}.zarr")
-
-        
+                    
     def execute(self, block: T) -> T:
         # we overwrite the whole execute method here, as we do not need any of the helper
         # methods from the Generic Wrapper

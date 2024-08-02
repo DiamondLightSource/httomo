@@ -4,8 +4,6 @@ from typing import Tuple, Union
 import numpy as np
 import h5py
 import hdf5plugin
-import zarr
-from zarr import storage
 from mpi4py import MPI
 
 import httomo
@@ -46,7 +44,7 @@ def save_intermediate_data(
     global_shape: Tuple[int, int, int],
     global_index: Tuple[int, int, int],
     slicing_dim: int,
-    file: Union[h5py.File, zarr.DirectoryStore],
+    file: h5py.File,
     frames_per_chunk: int,
     path: str,
     detector_x: int,
@@ -58,19 +56,17 @@ def save_intermediate_data(
     if isinstance(file, h5py.File):
         _save_auxiliary_data_hdf5(file, angles, detector_x, detector_y)
         dataset = setup_dataset(file, path, data, slicing_dim, frames_per_chunk, global_shape, filetype='hdf5')        
-    else:
-        _save_auxiliary_data_zarr(file, angles, detector_x, detector_y)
-        dataset = setup_dataset(file, path, data, slicing_dim, frames_per_chunk, global_shape, filetype='zarr')
+
     _save_dataset_data(dataset, data, global_shape, global_index)
 
-def setup_dataset(file: Union[h5py.File, zarr.DirectoryStore],
+def setup_dataset(file: h5py.File,
                   path: str,
                   data: np.ndarray, 
                   slicing_dim: int, 
                   frames_per_chunk: int,
                   global_shape: Tuple[int, int, int],
                   filetype: str
-                  ) -> Union[h5py.Dataset, zarr.Array]:   
+                  ) -> h5py.Dataset:   
     
     if filetype == 'hdf5':
         if frames_per_chunk > data.shape[slicing_dim]:
@@ -117,24 +113,10 @@ def setup_dataset(file: Union[h5py.File, zarr.DirectoryStore],
             **compression,
             dcpl=dcpl,
         )
-    if filetype == 'zarr':
-        dataset = zarr.open_array(
-            store=file,
-            path=path,
-            shape=global_shape,
-            chunks=True,  # guessed from `shape` and `dtype`
-            dtype=data.dtype,
-            compressor=(
-                storage.default_compressor
-                if httomo.globals.COMPRESS_INTERMEDIATE
-                else None
-            ),  # type: ignore
-        )
-
     return dataset
 
 def _save_dataset_data(
-    dataset: Union[h5py.Dataset, zarr.Array],
+    dataset: h5py.Dataset,
     data: np.ndarray,
     global_shape: Tuple[int, int, int],
     global_index: Tuple[int, int, int],
@@ -173,21 +155,6 @@ def _save_auxiliary_data_hdf5(
     g1 = file.create_group("data_dims")
     g1.create_dataset("detector_x_y", data=[detector_x, detector_y])
 
-
-def _save_auxiliary_data_zarr(
-    store: zarr.DirectoryStore,
-    angles: np.ndarray,
-    detector_x: int,
-    detector_y: int,
-):
-    comm = MPI.COMM_WORLD
-    if comm.rank != 0:
-        return
-
-    zarr.save(store=store, path="angles", data=angles)
-    zarr.save(
-        store=store, path="detector_x_y", detector_x=detector_x, detector_y=detector_y
-    )
 
 def _dcpl_fill_never(
     chunk_shape: Union[Tuple[int,int,int], None],

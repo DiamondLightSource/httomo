@@ -22,7 +22,6 @@ dependencies:
   - conda-forge::plumbum
   - conda-forge::tqdm
   - conda-forge::typing_extensions
-  - conda-forge::zarr
   - anaconda::ipython
   - conda-forge::tomopy==1.15
   - httomo::httomolib==2.0

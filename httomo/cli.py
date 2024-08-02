@@ -110,9 +110,9 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
 )
 @click.option(
     "--intermediate-format",
-    type=click.Choice(["hdf5", "zarr"], case_sensitive=False),
+    type=click.Choice(["hdf5"], case_sensitive=False),
     default="hdf5",
-    help="Write intermediate data in hdf5 or zarr format",
+    help="Write intermediate data in hdf5 format",
 )
 @click.option(
     "--compress-intermediate",
