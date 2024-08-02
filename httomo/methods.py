@@ -53,31 +53,44 @@ def save_intermediate_data(
     detector_y: int,
     angles: np.ndarray,
 ) -> None:
-    """Saves intermediate data to a file, including auxiliary"""
-    if frames_per_chunk > data.shape[slicing_dim]:
-        warn_message = (
-            f"frames_per_chunk={frames_per_chunk} exceeds number of elements in "
-            f"slicing dim={slicing_dim} of data with shape {data.shape}. Falling "
-            "back to 1 frame per-chunk"
-        )
-        log_once(warn_message, logging.DEBUG)
-        frames_per_chunk = 1
+    """Saves intermediate data to a file, including auxiliary"""  
 
-    if frames_per_chunk > 0:
-        chunk_shape = [0, 0, 0]
-        chunk_shape[slicing_dim] = frames_per_chunk
-        DIMS = [0, 1, 2]
-        non_slicing_dims = list(set(DIMS) - set([slicing_dim]))
-        for dim in non_slicing_dims:
-            chunk_shape[dim] = global_shape[dim]
-        chunk_shape = tuple(chunk_shape)
-    else:
-        chunk_shape = None
-
-    dataset: Union[h5py.Dataset, zarr.Array]
     if isinstance(file, h5py.File):
         _save_auxiliary_data_hdf5(file, angles, detector_x, detector_y)
+        dataset = setup_dataset(file, path, data, slicing_dim, frames_per_chunk, global_shape, filetype='hdf5')        
+    else:
+        _save_auxiliary_data_zarr(file, angles, detector_x, detector_y)
+        dataset = setup_dataset(file, path, data, slicing_dim, frames_per_chunk, global_shape, filetype='zarr')
+    _save_dataset_data(dataset, data, global_shape, global_index)
 
+def setup_dataset(file: Union[h5py.File, zarr.DirectoryStore],
+                  path: str,
+                  data: np.ndarray, 
+                  slicing_dim: int, 
+                  frames_per_chunk: int,
+                  global_shape: Tuple[int, int, int],
+                  filetype: str
+                  ) -> Union[h5py.Dataset, zarr.Array]:   
+    
+    if filetype == 'hdf5':
+        if frames_per_chunk > data.shape[slicing_dim]:
+            warn_message = (
+                f"frames_per_chunk={frames_per_chunk} exceeds number of elements in "
+                f"slicing dim={slicing_dim} of data with shape {data.shape}. Falling "
+                "back to 1 frame per-chunk"
+            )
+            log_once(warn_message, logging.DEBUG)
+            frames_per_chunk = 1
+        if frames_per_chunk > 0:
+            chunk_shape = [0, 0, 0]
+            chunk_shape[slicing_dim] = frames_per_chunk
+            DIMS = [0, 1, 2]
+            non_slicing_dims = list(set(DIMS) - set([slicing_dim]))
+            for dim in non_slicing_dims:
+                chunk_shape[dim] = global_shape[dim]           
+            chunk_shape = tuple(chunk_shape)
+        else:
+            chunk_shape = None
         # monkey-patch guess_chunk in h5py for compression
         # this is to avoid FILL_TIME_ALLOC
         compression: Union[dict, hdf5plugin.Blosc]
@@ -104,23 +117,21 @@ def save_intermediate_data(
             **compression,
             dcpl=dcpl,
         )
-    else:
-        _save_auxiliary_data_zarr(file, angles, detector_x, detector_y)
+    if filetype == 'zarr':
         dataset = zarr.open_array(
             store=file,
             path=path,
             shape=global_shape,
-            chunks=chunk_shape,  # type: ignore
+            chunks=True,  # guessed from `shape` and `dtype`
             dtype=data.dtype,
             compressor=(
                 storage.default_compressor
                 if httomo.globals.COMPRESS_INTERMEDIATE
                 else None
             ),  # type: ignore
-        )        
+        )
 
-    _save_dataset_data(dataset, data, global_shape, global_index)
-
+    return dataset
 
 def _save_dataset_data(
     dataset: Union[h5py.Dataset, zarr.Array],
@@ -178,9 +189,8 @@ def _save_auxiliary_data_zarr(
         store=store, path="detector_x_y", detector_x=detector_x, detector_y=detector_y
     )
 
-
 def _dcpl_fill_never(
-    chunk_shape: Tuple[int, int, int],
+    chunk_shape: Union[Tuple[int,int,int], None],
     shape: Tuple[int, int, int],
 ) -> h5py.h5p.PropDCID:
     """Create a dcpl with specified chunk shape and never fill value."""
