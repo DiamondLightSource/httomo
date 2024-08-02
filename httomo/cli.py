@@ -115,11 +115,6 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     help="Write intermediate data in hdf5 or zarr format",
 )
 @click.option(
-    "--chunk-intermediate",
-    is_flag=True,
-    help="Write intermediate data in chunked uncompressed format",
-)
-@click.option(
     "--compress-intermediate",
     is_flag=True,
     help="Write intermediate data in chunked format with BLOSC compression applied",
@@ -136,6 +131,12 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     default=514,
     help="Port on the host the syslog server is running on",
 )
+@click.option(
+    "--frames-per-chunk",
+    type=click.IntRange(0),
+    default=1,
+    help="Number of frames per-chunk in intermediate data (0 = write as contiguous)",
+)
 def run(
     in_data_file: Path,
     yaml_config: Path,
@@ -149,20 +150,21 @@ def run(
     monitor: List[str],
     monitor_output: TextIO,
     intermediate_format: str,
-    chunk_intermediate: bool,
     compress_intermediate: bool,
     syslog_host: str,
     syslog_port: int,
+    frames_per_chunk: int,
 ):
     """Run a pipeline defined in YAML on input data."""
     if compress_intermediate:
-        chunk_intermediate = True
+        frames_per_chunk = 1
     httomo.globals.INTERMEDIATE_FORMAT = intermediate_format
-    httomo.globals.CHUNK_INTERMEDIATE = chunk_intermediate
     httomo.globals.COMPRESS_INTERMEDIATE = compress_intermediate
+    httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
 
-    comm = MPI.COMM_WORLD
     does_contain_sweep = is_sweep_pipeline(yaml_config)
+    global_comm = MPI.COMM_WORLD
+    method_wrapper_comm = global_comm
     httomo.globals.SYSLOG_SERVER = syslog_host
     httomo.globals.SYSLOG_PORT = syslog_port
 
@@ -175,17 +177,17 @@ def run(
         httomo.globals.run_out_dir = out_dir.joinpath(create_folder)
 
     # Various initialisation tasks
-    if comm.rank == 0:
+    if global_comm.rank == 0:
         Path.mkdir(httomo.globals.run_out_dir, exist_ok=True)
         copy(yaml_config, httomo.globals.run_out_dir)
     setup_logger(Path(httomo.globals.run_out_dir))
 
     # instantiate UiLayer class for pipeline build
-    init_UiLayer = UiLayer(yaml_config, in_data_file, comm=comm)
+    init_UiLayer = UiLayer(yaml_config, in_data_file, comm=method_wrapper_comm)
     pipeline = init_UiLayer.build_pipeline()
 
     # perform transformations on pipeline
-    tr = TransformLayer(comm=comm, save_all=save_all)
+    tr = TransformLayer(comm=method_wrapper_comm, save_all=save_all)
     pipeline = tr.transform(pipeline)
 
     if not does_contain_sweep:
@@ -199,7 +201,7 @@ def run(
         _set_gpu_id(gpu_id)
 
         # Run the pipeline using Taskrunner, with temp dir or reslice dir
-        mon = make_monitors(monitor)
+        mon = make_monitors(monitor, global_comm)
         ctx: AbstractContextManager = nullcontext(reslice_dir)
         if reslice_dir is None:
             ctx = tempfile.TemporaryDirectory()
@@ -207,6 +209,7 @@ def run(
             runner = TaskRunner(
                 pipeline,
                 Path(tmp_dir),
+                global_comm,
                 monitor=mon,
                 memory_limit_bytes=memory_limit,
             )

@@ -16,6 +16,7 @@ dependencies:
   - anaconda::ipython
   - anaconda::loguru  
   - conda-forge::graypy
+  - conda-forge::zarr  
   - conda-forge::plumbum
   - conda-forge::tqdm
   - conda-forge::typing_extensions

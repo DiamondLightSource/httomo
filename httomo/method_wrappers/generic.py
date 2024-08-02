@@ -1,7 +1,6 @@
 import httomo.globals
 from httomo.block_interfaces import T, Block
-from httomo.data import mpiutil
-from httomo.runner.gpu_utils import gpumem_cleanup
+from httomo.runner.gpu_utils import get_gpu_id, gpumem_cleanup
 from httomo.runner.method_wrapper import (
     GpuTimeInfo,
     MethodParameterDictType,
@@ -126,9 +125,8 @@ class GenericMethodWrapper(MethodWrapper):
         self._gpu_time_info = GpuTimeInfo()
 
         if gpu_enabled:
-            self._num_gpus = xp.cuda.runtime.getDeviceCount()
             _id = httomo.globals.gpu_id
-            self._gpu_id = mpiutil.local_rank % self._num_gpus if _id == -1 else _id
+            self._gpu_id = get_gpu_id() if _id == -1 else _id
 
     @property
     def comm(self) -> Comm:

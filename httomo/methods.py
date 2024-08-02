@@ -1,3 +1,4 @@
+import logging
 import pathlib
 from typing import Tuple, Union
 import numpy as np
@@ -5,11 +6,12 @@ import h5py
 import hdf5plugin
 import zarr
 from zarr import storage
+from mpi4py import MPI
 
 import httomo
+from httomo import globals
 from httomo.runner.dataset import DataSetBlock
-from httomo.data import mpiutil
-from httomo.utils import xp
+from httomo.utils import log_once, xp
 
 __all__ = ["calculate_stats", "save_intermediate_data"]
 
@@ -45,22 +47,32 @@ def save_intermediate_data(
     global_index: Tuple[int, int, int],
     slicing_dim: int,
     file: Union[h5py.File, zarr.DirectoryStore],
+    frames_per_chunk: int,
     path: str,
     detector_x: int,
     detector_y: int,
     angles: np.ndarray,
 ) -> None:
     """Saves intermediate data to a file, including auxiliary"""
-    if httomo.globals.CHUNK_INTERMEDIATE:
+    if frames_per_chunk > data.shape[slicing_dim]:
+        warn_message = (
+            f"frames_per_chunk={frames_per_chunk} exceeds number of elements in "
+            f"slicing dim={slicing_dim} of data with shape {data.shape}. Falling "
+            "back to 1 frame per-chunk"
+        )
+        log_once(warn_message, logging.DEBUG)
+        frames_per_chunk = 1
+
+    if frames_per_chunk > 0:
         chunk_shape = [0, 0, 0]
-        chunk_shape[slicing_dim] = 1
+        chunk_shape[slicing_dim] = frames_per_chunk
         DIMS = [0, 1, 2]
         non_slicing_dims = list(set(DIMS) - set([slicing_dim]))
         for dim in non_slicing_dims:
             chunk_shape[dim] = global_shape[dim]
         chunk_shape = tuple(chunk_shape)
     else:
-        chunk_shape = None if isinstance(file, h5py.File) else False
+        chunk_shape = None
 
     dataset: Union[h5py.Dataset, zarr.Array]
     if isinstance(file, h5py.File):
@@ -77,7 +89,10 @@ def save_intermediate_data(
             h5py._hl.filters.guess_chunk = ORIGINAL_GUESS_CHUNK
 
         # create a dataset creation property list
-        dcpl = _dcpl_fill_never(chunk_shape, global_shape)
+        if chunk_shape is not None: 
+            dcpl = _dcpl_fill_never(chunk_shape, global_shape)
+        else:
+            dcpl = None
 
         # only create if not already present - otherwise return existing dataset
         dataset = file.require_dataset(
@@ -102,7 +117,7 @@ def save_intermediate_data(
                 if httomo.globals.COMPRESS_INTERMEDIATE
                 else None
             ),  # type: ignore
-        )
+        )        
 
     _save_dataset_data(dataset, data, global_shape, global_index)
 
@@ -154,7 +169,8 @@ def _save_auxiliary_data_zarr(
     detector_x: int,
     detector_y: int,
 ):
-    if mpiutil.comm.rank != 0:
+    comm = MPI.COMM_WORLD
+    if comm.rank != 0:
         return
 
     zarr.save(store=store, path="angles", data=angles)

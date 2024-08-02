@@ -22,7 +22,7 @@ def test_insert_save_methods(mocker: MockerFixture, tmp_path: Path):
             make_test_method(mocker, method_name="m2", save_result=False),
         ],
     )
-    trans = TransformLayer(repo, comm=comm, save_all=False, out_dir=tmp_path)
+    trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.insert_save_methods(pipeline)
 
     assert len(pipeline) == 3
@@ -44,7 +44,7 @@ def test_insert_save_methods_save_all(mocker: MockerFixture, tmp_path: Path):
             make_test_method(mocker, method_name="m2", save_result=False, task_id="t2"),
         ],
     )
-    trans = TransformLayer(repo, comm=comm, save_all=True, out_dir=tmp_path)
+    trans = TransformLayer(comm, repo=repo, save_all=True, out_dir=tmp_path)
     pipeline = trans.insert_save_methods(pipeline)
 
     assert len(pipeline) == 4
@@ -73,7 +73,7 @@ def test_insert_save_methods_does_not_save_for_save_to_images(
             ),
         ],
     )
-    trans = TransformLayer(repo, comm=comm, save_all=False, out_dir=tmp_path)
+    trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.insert_save_methods(pipeline)
 
     assert len(pipeline) == 2
@@ -95,7 +95,7 @@ def test_insert_save_methods_does_nothing_if_no_save(
             make_test_method(mocker, method_name="m2", save_result=False, task_id="t2"),
         ],
     )
-    trans = TransformLayer(repo, comm=comm, save_all=False, out_dir=tmp_path)
+    trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.insert_save_methods(pipeline)
 
     assert len(pipeline) == 2
@@ -134,7 +134,7 @@ def test_insert_data_reducer(mocker: MockerFixture, tmp_path: Path):
             make_test_method(mocker, method_name="normalize", save_result=False),
         ],
     )
-    trans = TransformLayer(repo, comm=comm, save_all=False, out_dir=tmp_path)
+    trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.insert_data_reducer(pipeline)
 
     assert len(pipeline) == 3

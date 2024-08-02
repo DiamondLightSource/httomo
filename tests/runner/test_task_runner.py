@@ -1,8 +1,10 @@
 from os import PathLike
 from typing import List
 from unittest.mock import ANY, call
+
 import pytest
 import numpy as np
+from mpi4py import MPI
 from pytest_mock import MockerFixture
 
 from httomo.data.dataset_store import DataSetStoreWriter
@@ -34,7 +36,7 @@ def test_check_params_for_sweep_raises_exception(
             )
         ],
     )
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     with pytest.raises(ValueError) as e:
         t._check_params_for_sweep()
 
@@ -43,7 +45,7 @@ def test_can_load_datasets(mocker: MockerFixture, tmp_path: PathLike):
     loader = make_test_loader(mocker)
     mksrc = mocker.patch.object(loader, "make_data_source")
     p = Pipeline(loader=loader, methods=[make_test_method(mocker)])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
 
     mksrc.assert_called()
@@ -56,7 +58,7 @@ def test_can_determine_max_slices_no_gpu_estimator(
     loader = make_test_loader(mocker, dummy_block)
     method = make_test_method(mocker, gpu=True, memory_gpu=[])
     p = Pipeline(loader=loader, methods=[method])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
     s = sectionize(p)
 
@@ -103,7 +105,7 @@ def test_can_determine_max_slices_with_gpu_estimator(
         )
         methods.append(method)
     p = Pipeline(loader=loader, methods=methods)
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
     s = sectionize(
         p,
@@ -155,7 +157,9 @@ def test_can_determine_max_slices_with_gpu_estimator_and_cpu_limit(
         methods.append(method)
     p = Pipeline(loader=loader, methods=methods)
 
-    t = TaskRunner(p, reslice_dir=tmp_path, memory_limit_bytes=limit)
+    t = TaskRunner(
+        p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, memory_limit_bytes=limit
+    )
     t._prepare()
     s = sectionize(p)
     shape = (dummy_block.shape[1], dummy_block.shape[2])
@@ -180,7 +184,7 @@ def test_can_determine_max_slices_with_cpu(
         method = make_test_method(mocker, gpu=False)
         methods.append(method)
     p = Pipeline(loader=loader, methods=methods)
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
     s = sectionize(p)
 
@@ -200,7 +204,7 @@ def test_can_determine_max_slices_with_cpu_large(
         method = make_test_method(mocker, gpu=False)
         methods.append(method)
     p = Pipeline(loader=loader, methods=methods)
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
     s = sectionize(p)
 
@@ -210,7 +214,7 @@ def test_can_determine_max_slices_with_cpu_large(
 
 def test_append_side_outputs(mocker: MockerFixture, tmp_path: PathLike):
     p = Pipeline(make_test_loader(mocker), methods=[])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t.append_side_outputs({"answer": 42.0, "other": "xxx"})
     assert t.side_outputs == {"answer": 42.0, "other": "xxx"}
 
@@ -247,7 +251,7 @@ def test_calls_append_side_outputs_after_last_block(
 
     loader = make_test_loader(mocker)
     p = Pipeline(loader=loader, methods=[method])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     spy = mocker.patch.object(t, "append_side_outputs")
     t._prepare()
     t._execute_method(
@@ -276,7 +280,7 @@ def test_update_side_inputs_updates_downstream_methods(
     setitem3 = mocker.patch.object(method3, "__setitem__")
 
     p = Pipeline(loader=loader, methods=[method1, method2, method3])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t.side_outputs = side_outputs
     t.set_side_inputs(method2)
     t.set_side_inputs(method3)
@@ -296,7 +300,7 @@ def test_execute_method_updates_monitor(
     )
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
     p = Pipeline(loader=loader, methods=[method1])
-    t = TaskRunner(p, reslice_dir=tmp_path, monitor=mon)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
     t._prepare()
     mocker.patch.object(method1, "execute", return_value=dummy_block)
     t._execute_method(method1, dummy_block)
@@ -325,7 +329,7 @@ def test_execute_section_calls_blockwise_execute_and_monitors(
     p = Pipeline(loader=loader, methods=[method])
     s = sectionize(p)
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
-    t = TaskRunner(p, reslice_dir=tmp_path, monitor=mon)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
     t._prepare()
     # make that do nothing
     mocker.patch.object(t, "determine_max_slices")
@@ -361,7 +365,7 @@ def test_execute_section_for_block(
     method2 = make_test_method(mocker, method_name="m2")
     p = Pipeline(loader=loader, methods=[method1, method2])
     s = sectionize(p)
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
     exec_method = mocker.patch.object(t, "_execute_method", return_value=dummy_block)
     t._execute_section_block(s[0], dummy_block)
@@ -386,7 +390,7 @@ def test_does_reslice_when_needed_and_reports_time(
     mocker.patch.object(method2, "execute", return_value=block2)
     p = Pipeline(loader=loader, methods=[method1, method2])
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
-    t = TaskRunner(p, reslice_dir=tmp_path, monitor=mon)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
 
     t.execute()
 
@@ -411,7 +415,7 @@ def test_warns_with_multiple_reslices(
     method4 = make_test_method(mocker, method_name="m4", pattern=Pattern.sinogram)
     method5 = make_test_method(mocker, method_name="m5", pattern=Pattern.projection)
     p = Pipeline(loader=loader, methods=[method1, method2, method3, method4, method5])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
 
     spy = mocker.patch("httomo.runner.task_runner.log_once")
 
@@ -458,7 +462,7 @@ def test_warns_with_multiple_stores_from_side_outputs(
     )
 
     p = Pipeline(loader=loader, methods=[method1, method2, method3, method4, method5])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
 
     spy = mocker.patch("httomo.runner.task_runner.log_once")
 
