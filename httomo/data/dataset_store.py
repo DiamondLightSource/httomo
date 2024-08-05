@@ -231,7 +231,11 @@ class DataSetStoreWriter(ReadableDataSetSink):
         sendBuffer = np.zeros(1, dtype=bool)
         recvBuffer = np.zeros(1, dtype=bool)
         try:
-            self._data = self._create_numpy_data(self.chunk_shape, block.data.dtype)
+            self._data = self._create_numpy_data(
+                unpadded_chunk_shape=block.chunk_shape_unpadded,
+                padded_chunk_shape=block.chunk_shape,
+                dtype=block.data.dtype,
+            )
         except MemoryError:
             sendBuffer[0] = True
 
@@ -253,17 +257,21 @@ class DataSetStoreWriter(ReadableDataSetSink):
             )
 
     def _create_numpy_data(
-        self, chunk_shape: Tuple[int, int, int], dtype: DTypeLike
+        self,
+        unpadded_chunk_shape: Tuple[int, int, int],
+        padded_chunk_shape: Tuple[int, int, int],
+        dtype: DTypeLike,
     ) -> np.ndarray:
         """Convenience method to enable mocking easily"""
+        unpadded_chunk_bytes = np.prod(unpadded_chunk_shape) * np.dtype(dtype).itemsize
+        padded_chunk_bytes = np.prod(padded_chunk_shape) * np.dtype(dtype).itemsize
         if (
             self._memory_limit_bytes > 0
-            and np.prod(chunk_shape) * np.dtype(dtype).itemsize
-            >= self._memory_limit_bytes
+            and unpadded_chunk_bytes + padded_chunk_bytes >= self._memory_limit_bytes
         ):
             raise MemoryError("Memory limit reached")
 
-        return np.empty(chunk_shape, dtype)
+        return np.empty(unpadded_chunk_shape, dtype)
 
     def _create_h5_data(
         self,

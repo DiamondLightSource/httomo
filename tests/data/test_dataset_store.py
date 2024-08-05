@@ -1045,3 +1045,63 @@ def test_adapts_shapes_with_padding_and_reslicing_mpi(
 
     np.testing.assert_array_equal(block1.data, b1expected)
     np.testing.assert_array_equal(block2.data, b2expected)
+
+
+def test_write_block_accounts_for_two_chunk_copies(tmp_path: PathLike):
+    MEMORY_LIMIT = 4 * 1024**2  # 4MB
+
+    # Core chunk array size ~3.4MB
+    # Padded chunk array size ~4.8MB
+    # -> Core chunk array fits within memory limit, but core chunk + padded chunk doesn't
+    PADDING = (2, 2)
+    SLICING_DIM = 0
+    DTYPE = np.float32
+    CORE_CHUNK_SHAPE = (10, 300, 300)
+    PADDED_CHUNK_SHAPE = (
+        CORE_CHUNK_SHAPE[0] + PADDING[0] + PADDING[1],
+        CORE_CHUNK_SHAPE[1],
+        CORE_CHUNK_SHAPE[2],
+    )
+
+    # Create block to later write to the store
+    data = np.ones(
+        (
+            CORE_CHUNK_SHAPE[0] // 2 + PADDING[0] + PADDING[1],
+            CORE_CHUNK_SHAPE[1],
+            CORE_CHUNK_SHAPE[2],
+        ),
+        dtype=DTYPE,
+    )
+    block = DataSetBlock(
+        data=data,
+        aux_data=AuxiliaryData(np.ones(CORE_CHUNK_SHAPE[0], dtype=DTYPE)),
+        slicing_dim=SLICING_DIM,
+        global_shape=CORE_CHUNK_SHAPE,
+        chunk_shape=PADDED_CHUNK_SHAPE,
+        block_start=0,
+        chunk_start=0,
+        padding=PADDING,
+    )
+
+    # Create writer with memory limit
+    COMM = MPI.COMM_WORLD
+    writer = DataSetStoreWriter(
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+        temppath=tmp_path,
+        memory_limit_bytes=MEMORY_LIMIT,
+    )
+
+    # A 4MB limit on RAM is enough to hold the core chunk, but not enough to hold the core
+    # chunk + padded chunk. Therefore, a `MemoryError` should be raised + handled by the writer
+    # when the first block is attempted to be written.
+    #
+    # A `MemoryError` being raised and handled by the writer will result in an hdf5 file
+    # backing the store. Thus, checking if the writer is file-based will show if a
+    # `MemoryError` was handled or not.
+    writer.write_block(block)
+    assert writer.is_file_based
+
+    # Execute finaliser to make sure the hdf5 file that should be backing the store is cleaned
+    # up (doing so avoids warnings in pytest output)
+    writer.finalize()
