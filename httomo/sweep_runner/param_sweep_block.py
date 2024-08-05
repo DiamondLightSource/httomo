@@ -2,7 +2,7 @@ from typing import Literal, Tuple
 
 import numpy as np
 
-from httomo.base_block import BaseBlock
+from httomo.base_block import BaseBlock, generic_array
 from httomo.block_interfaces import BlockIndexing
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.utils import make_3d_shape_from_array
@@ -14,10 +14,7 @@ class ParamSweepBlock(BaseBlock, BlockIndexing):
     """
 
     def __init__(
-        self,
-        data: np.ndarray,
-        aux_data: AuxiliaryData,
-        slicing_dim: Literal[0, 1, 2]
+        self, data: np.ndarray, aux_data: AuxiliaryData, slicing_dim: Literal[0, 1, 2]
     ) -> None:
         super().__init__(data, aux_data)
         self._slicing_dim = slicing_dim
@@ -41,7 +38,7 @@ class ParamSweepBlock(BaseBlock, BlockIndexing):
     @property
     def is_last_in_chunk(self) -> bool:
         return True
-    
+
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
         return self._slicing_dim
@@ -70,3 +67,6 @@ class ParamSweepBlock(BaseBlock, BlockIndexing):
     def global_index_unpadded(self) -> Tuple[int, int, int]:
         return self.global_index
 
+    @property
+    def data_unpadded(self) -> generic_array:
+        return self.data
