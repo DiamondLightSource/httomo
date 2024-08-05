@@ -375,6 +375,12 @@ class GenericMethodWrapper(MethodWrapper):
 
         return non_slice_dims_shape
 
+    def calculate_padding(self) -> Tuple[int, int]:
+        """Calculate the padding required by the method"""
+        if self.padding:
+            return self._query.calculate_padding(**self.config_params)
+        return (0, 0)
+
     def calculate_max_slices(
         self,
         data_dtype: np.dtype,
