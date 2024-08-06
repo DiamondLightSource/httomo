@@ -471,3 +471,73 @@ def test_warns_with_multiple_stores_from_side_outputs(
     spy.assert_called()
     args, _ = spy.call_args
     assert "Data saving or/and reslicing operation will be performed 4 times" in args[0]
+
+
+def test_determine_section_padding_no_padding_method_in_section(
+    mocker: MockerFixture,
+    tmp_path: PathLike,
+):
+    loader = make_test_loader(mocker)
+    method_1 = make_test_method(mocker=mocker, padding=False)
+    method_2 = make_test_method(mocker=mocker, padding=False)
+    method_3 = make_test_method(mocker=mocker, padding=False)
+
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[method_1, method_2, method_3],
+    )
+    runner = TaskRunner(pipeline=pipeline, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
+    sections = sectionize(pipeline)
+    section_padding = runner.determine_section_padding(sections[0])
+    assert section_padding == (0, 0)
+
+
+def test_determine_section_padding_one_padding_method_only_method_in_section(
+    mocker: MockerFixture,
+    tmp_path: PathLike,
+):
+    loader = make_test_loader(mocker)
+
+    PADDING = (3, 5)
+    padding_method = make_test_method(mocker=mocker, padding=True)
+    mocker.patch.object(
+        target=padding_method,
+        attribute="calculate_padding",
+        return_value=PADDING,
+    )
+
+    pipeline = Pipeline(loader=loader, methods=[padding_method])
+    runner = TaskRunner(pipeline=pipeline, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
+    sections = sectionize(pipeline)
+    section_padding = runner.determine_section_padding(sections[0])
+    assert section_padding == PADDING
+
+
+def test_determine_section_padding_one_padding_method_and_other_methods_in_section(
+    mocker: MockerFixture,
+    tmp_path: PathLike,
+):
+    loader = make_test_loader(mocker)
+
+    PADDING = (3, 5)
+    padding_method = make_test_method(mocker=mocker, padding=True)
+    mocker.patch.object(
+        target=padding_method,
+        attribute="calculate_padding",
+        return_value=PADDING,
+    )
+    method_1 = make_test_method(mocker=mocker, padding=False)
+    method_2 = make_test_method(mocker=mocker, padding=False)
+    method_3 = make_test_method(mocker=mocker, padding=False)
+
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[method_1, method_2, padding_method, method_3],
+    )
+    runner = TaskRunner(pipeline=pipeline, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
+
+    sections = sectionize(pipeline)
+    assert len(sections[0]) == 4
+
+    section_padding = runner.determine_section_padding(sections[0])
+    assert section_padding == PADDING
