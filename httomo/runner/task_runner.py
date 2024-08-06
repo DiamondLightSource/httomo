@@ -29,6 +29,7 @@ from httomo.utils import (
     log_exception,
     log_once,
     log_rank,
+    make_3d_shape_from_shape,
 )
 import numpy as np
 
@@ -350,3 +351,26 @@ class TaskRunner:
             if method.padding:
                 return method.calculate_padding()
         return (0, 0)
+
+
+def calculate_next_chunk_shape(
+    comm: MPI.Comm,
+    global_shape: Tuple[int, int, int],
+    next_section_slicing_dim: int,
+    next_section_padding: Tuple[int, int],
+) -> Tuple[int, int, int]:
+    """
+    Utility function for calculating the chunk shape (including padding) for the next section.
+    """
+    start = round(
+        (global_shape[next_section_slicing_dim] / comm.size) * comm.rank
+    )
+    stop = round(
+        (global_shape[next_section_slicing_dim] / comm.size) * (comm.rank + 1)
+    )
+    next_section_slicing_dim_len = stop - start
+    shape = list(global_shape)
+    shape[next_section_slicing_dim] = (
+        next_section_slicing_dim_len + next_section_padding[0] + next_section_padding[1]
+    )
+    return make_3d_shape_from_shape(shape)
