@@ -164,6 +164,9 @@ class MethodWrapper(Protocol):
         """Calculate the dimensions of the output for this method"""
         ... # pragma: nocover
         
+    def calculate_padding(self) -> Tuple[int, int]:
+        """Calculate the padding required by the method"""
+        ... # pragma: nocover
 
     def calculate_max_slices(
         self,
@@ -180,10 +183,3 @@ class MethodWrapper(Protocol):
         something persists afterwards.
         """
         ... # pragma: nocover
-        
-        
-
-
-
-
-

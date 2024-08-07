@@ -709,3 +709,65 @@ def test_generic_execute_uses_comm_passed_to_constructor(
     wrp.execute(dummy_block)
     global_comm_bcast_spy.assert_not_called()
     passed_in_mock_comm_bcast_spy.assert_called_once()
+
+
+@pytest.mark.cupy
+def test_generic_calculate_padding_none_required(mocker: MockerFixture):
+    class FakeModule:
+        def test_method(data):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    memory_gpu: List[GpuMemoryRequirement] = []
+    wrp = make_method_wrapper(
+        make_mock_repo(
+            mocker,
+            pattern=Pattern.projection,
+            implementation="gpu_cupy",
+            memory_gpu=memory_gpu,
+            padding=False,
+        ),
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+    )
+
+    padding = wrp.calculate_padding()
+    assert padding == (0, 0)
+
+
+@pytest.mark.cupy
+def test_generic_calculate_padding(mocker: MockerFixture):
+    EXPECTED_PADDING = (5, 10)
+    PARAM_AFFECTS_PADDING = 7
+
+    class FakeModule:
+        def test_method(data, param_affects_padding):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    memory_gpu: List[GpuMemoryRequirement] = []
+    repo = make_mock_repo(
+        mocker,
+        pattern=Pattern.projection,
+        implementation="gpu_cupy",
+        memory_gpu=memory_gpu,
+        padding=True,
+    )
+    padding_calc_mock = mocker.patch.object(
+        repo.query("", ""), "calculate_padding", return_value=EXPECTED_PADDING
+    )
+    wrp = make_method_wrapper(
+        repo,
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+    )
+    wrp["param_affects_padding"] = PARAM_AFFECTS_PADDING
+
+    padding = wrp.calculate_padding()
+
+    assert padding == EXPECTED_PADDING
+    padding_calc_mock.assert_called_with(param_affects_padding=PARAM_AFFECTS_PADDING)
