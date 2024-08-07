@@ -33,6 +33,7 @@ class StandardTomoLoader(DataSetSource):
         preview_config: PreviewConfig,
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
+        padding: Tuple[int, int] = (0, 0),
     ) -> None:
         if slicing_dim != 0:
             raise NotImplementedError("Only slicing dim 0 is currently supported")
@@ -43,6 +44,7 @@ class StandardTomoLoader(DataSetSource):
         self._angles = angles
         self._slicing_dim: Literal[0, 1, 2] = slicing_dim
         self._comm = comm
+        self._padding = padding
         self._h5file = h5py.File(in_file, "r")
         self._data: h5py.Dataset = self._get_data()
         self._preview = Preview(
@@ -111,7 +113,7 @@ class StandardTomoLoader(DataSetSource):
     ) -> int:
         """
         Calculate the index of the chunk that is associated with the given MPI process in the
-        slicing dimension
+        slicing dimension, not including padding
         """
         return round((len(self._data_indices) / nprocs) * rank)
 
@@ -122,9 +124,9 @@ class StandardTomoLoader(DataSetSource):
         chunk_index_slicing_dim: int,
     ) -> Tuple[int, int, int]:
         """
-        Calculates index of chunk relative to the previewed data
+        Calculates index of chunk relative to the previewed data, including padding
         """
-        return (chunk_index_slicing_dim, 0, 0)
+        return (chunk_index_slicing_dim - self._padding[0], 0, 0)
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
@@ -138,8 +140,15 @@ class StandardTomoLoader(DataSetSource):
         current_proc_chunk_index: int,
         next_proc_chunk_index: int,
     ) -> Tuple[int, int, int]:
+        """
+        Calculate shape of the chunk that is associated with the given MPI process, including
+        padding
+        """
         return (
-            next_proc_chunk_index - current_proc_chunk_index,
+            next_proc_chunk_index
+            - current_proc_chunk_index
+            + self._padding[0]
+            + self._padding[1],
             self._global_shape[1],
             self._global_shape[2],
         )

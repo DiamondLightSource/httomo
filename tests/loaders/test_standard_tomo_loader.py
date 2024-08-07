@@ -728,3 +728,50 @@ def test_standard_tomo_loader_raises_error_slicing_dim(
             slicing_dim=SLICING_DIM,
             comm=COMM,
         )
+
+
+def test_standard_tomo_loader_properties_reflect_nonzero_padding(
+    standard_data_path: str,
+    standard_image_key_path: str,
+):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+    DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
+        file=IN_FILE_PATH,
+        data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
+    )
+    ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
+    SLICING_DIM: SlicingDimType = 0
+    COMM = MPI.COMM_WORLD
+    PADDING = (2, 3)
+    PROJS, DET_Y, DET_X = (180, 128, 160)
+    PREVIEW_CONFIG = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=PROJS),
+        detector_y=PreviewDimConfig(start=0, stop=DET_Y),
+        detector_x=PreviewDimConfig(start=0, stop=DET_X),
+    )
+
+    EXPECTED_CHUNK_SHAPE = (PROJS + PADDING[0] + PADDING[1], DET_Y, DET_X)
+    EXPECTED_GLOBAL_SHAPE = (PROJS, DET_Y, DET_X)
+    EXPECTED_GLOBAL_INDEX = (-PADDING[0], 0, 0)
+
+    with mock.patch(
+        "httomo.darks_flats.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = StandardTomoLoader(
+            in_file=IN_FILE_PATH,
+            data_path=DARKS_FLATS_CONFIG.data_path,
+            image_key_path=DARKS_FLATS_CONFIG.image_key_path,
+            darks=DARKS_FLATS_CONFIG,
+            flats=DARKS_FLATS_CONFIG,
+            angles=ANGLES_CONFIG,
+            preview_config=PREVIEW_CONFIG,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+            padding=PADDING,
+        )
+
+    assert loader.chunk_shape == EXPECTED_CHUNK_SHAPE
+    assert loader.global_shape == EXPECTED_GLOBAL_SHAPE
+    assert loader.global_index == EXPECTED_GLOBAL_INDEX
