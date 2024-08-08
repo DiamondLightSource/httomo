@@ -91,9 +91,7 @@ def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     factor = (
         arrays[0].shape[0]
         if dim0equal
-        else arrays[0].shape[1]
-        if dim1equal
-        else arrays[0].shape[2]
+        else arrays[0].shape[1] if dim1equal else arrays[0].shape[2]
     )
     dtype1 = dtype.Create_contiguous(factor).Commit()
     # sanity check - this should always pass

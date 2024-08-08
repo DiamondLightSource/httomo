@@ -52,8 +52,7 @@ class DataSetSource(Protocol):
     the data can be read in *blocks*, sliced in the given slicing dimension"""
 
     @property
-    def dtype(self) -> np.dtype:
-        ...  # pragma: no cover
+    def dtype(self) -> np.dtype: ...  # pragma: no cover
 
     @property
     def global_shape(self) -> Tuple[int, int, int]:

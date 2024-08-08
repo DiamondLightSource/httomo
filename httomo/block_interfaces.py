@@ -15,19 +15,15 @@ class BlockTransfer(Protocol):
     `MethodWrapper`
     """
 
-    def to_gpu(self):
-        ...  # pragma: no cover
+    def to_gpu(self): ...  # pragma: no cover
 
-    def to_cpu(self):
-        ...  # pragma: no cover
+    def to_cpu(self): ...  # pragma: no cover
 
     @property
-    def is_gpu(self) -> bool:
-        ...  # pragma: no cover
+    def is_gpu(self) -> bool: ...  # pragma: no cover
 
     @property
-    def is_cpu(self) -> bool:
-        ...  # pragma: no cover
+    def is_cpu(self) -> bool: ...  # pragma: no cover
 
 
 class BlockData(Protocol):
@@ -44,66 +40,51 @@ class BlockData(Protocol):
         ...  # pragma: no cover
 
     @property
-    def data(self) -> generic_array:
-        ...  # pragma: no cover
+    def data(self) -> generic_array: ...  # pragma: no cover
 
     @data.setter
-    def data(self, new_data: generic_array):
-        ...  # pragma: no cover
+    def data(self, new_data: generic_array): ...  # pragma: no cover
 
     @property
-    def aux_data(self) -> AuxiliaryData:
-        ...  # pragma: no cover
+    def aux_data(self) -> AuxiliaryData: ...  # pragma: no cover
 
     @property
-    def angles(self) -> np.ndarray:
-        ...  # pragma: no cover
+    def angles(self) -> np.ndarray: ...  # pragma: no cover
 
     @angles.setter
-    def angles(self, new_angles: np.ndarray):
-        ...  # pragma: no cover
+    def angles(self, new_angles: np.ndarray): ...  # pragma: no cover
 
     @property
-    def angles_radians(self) -> np.ndarray:
-        ...  # pragma: no cover
+    def angles_radians(self) -> np.ndarray: ...  # pragma: no cover
 
     @angles_radians.setter
-    def angles_radians(self, new_angles: np.ndarray):
-        ...  # pragma: no cover
+    def angles_radians(self, new_angles: np.ndarray): ...  # pragma: no cover
 
     @property
-    def darks(self) -> generic_array:
-        ...  # pragma: no cover
+    def darks(self) -> generic_array: ...  # pragma: no cover
 
     @darks.setter
-    def darks(self, darks: generic_array):
-        ...  # pragma: no cover
+    def darks(self, darks: generic_array): ...  # pragma: no cover
 
     # alias
     @property
-    def dark(self) -> generic_array:
-        ...  # pragma: no cover
+    def dark(self) -> generic_array: ...  # pragma: no cover
 
     @dark.setter
-    def dark(self, darks: generic_array):
-        ...  # pragma: no cover
+    def dark(self, darks: generic_array): ...  # pragma: no cover
 
     @property
-    def flats(self) -> generic_array:
-        ...  # pragma: no cover
+    def flats(self) -> generic_array: ...  # pragma: no cover
 
     @flats.setter
-    def flats(self, flats: generic_array):
-        ...  # pragma: no cover
+    def flats(self, flats: generic_array): ...  # pragma: no cover
 
     # alias
     @property
-    def flat(self) -> generic_array:
-        ...  # pragma: no cover
+    def flat(self) -> generic_array: ...  # pragma: no cover
 
     @flat.setter
-    def flat(self, flats: generic_array):
-        ...  # pragma: no cover
+    def flat(self, flats: generic_array): ...  # pragma: no cover
 
     @property
     def shape(self) -> Tuple[int, int, int]:

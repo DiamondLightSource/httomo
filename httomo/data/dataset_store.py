@@ -491,9 +491,9 @@ class DataSetStoreReader(DataSetSource):
             pad_slices = [slice(None), slice(None), slice(None)]
             pad_slices[self._slicing_dim] = slice(0, self._padding[0])
 
-            self._data[
-                pad_slices[0], pad_slices[1], pad_slices[2]
-            ] = receive_buf_from_left_neighbour
+            self._data[pad_slices[0], pad_slices[1], pad_slices[2]] = (
+                receive_buf_from_left_neighbour
+            )
 
     def _mpi_exchange_padding_area_after(self):
         MPI_TAG = 44
@@ -533,9 +533,9 @@ class DataSetStoreReader(DataSetSource):
                 self._chunk_shape[self._slicing_dim] - self._padding[1],
                 self._chunk_shape[self._slicing_dim],
             )
-            self._data[
-                pad_slices[0], pad_slices[1], pad_slices[2]
-            ] = receive_buf_from_right_neighbour
+            self._data[pad_slices[0], pad_slices[1], pad_slices[2]] = (
+                receive_buf_from_right_neighbour
+            )
 
     def _extend_data_for_padding(self, core_data: np.ndarray) -> np.ndarray:
         padded_data = np.empty(self._chunk_shape, self._data.dtype)
