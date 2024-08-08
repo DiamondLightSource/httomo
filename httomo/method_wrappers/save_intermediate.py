@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 import weakref
 from mpi4py.MPI import Comm
 import httomo
@@ -44,10 +44,14 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         if out_dir is None:
             out_dir = httomo.globals.run_out_dir
         assert out_dir is not None
-        self._file = h5py.File(f"{out_dir}/{filename}.h5", "w", driver="mpio", comm=comm)
-        # make sure file gets closed properly
-        weakref.finalize(self, self._file.close)
-        
+        self._file: h5py.File
+        if httomo.globals.INTERMEDIATE_FORMAT == "hdf5":
+            self._file = h5py.File(
+                f"{out_dir}/{filename}.h5", "w", driver="mpio", comm=comm
+            )
+            # make sure hdf5 file gets closed properly
+            weakref.finalize(self, self._file.close)
+                    
     def execute(self, block: T) -> T:
         # we overwrite the whole execute method here, as we do not need any of the helper
         # methods from the Generic Wrapper
@@ -75,7 +79,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             angles=block.angles,
         )
         
-        if block.is_last_in_chunk:
+        if block.is_last_in_chunk and isinstance(self._file, h5py.File):
             self._file.close()
 
         return block
