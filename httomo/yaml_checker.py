@@ -435,9 +435,7 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
     if not all_checks_pass:
         return False
 
-    end_str = (
-        "\nValidation of pipeline YAML file is successful."
-    )
+    end_str = "\nValidation of pipeline YAML file is successful."
     _print_with_colour(end_str, colour=Colour.BVIOLET)
     return True
 

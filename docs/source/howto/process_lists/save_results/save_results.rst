@@ -15,7 +15,7 @@ with the :code:`save_result` parameter. Its value is a boolean, so either
 Example 1: save output of a specific method
 ###########################################
 
-Suppose we wanted to save the output of the normalisation function :code:`normalize`. Then we 
+Suppose we wanted to save the output of the normalisation function :code:`normalize`. Then we
 should add :code:`save_result: True` to the list of the function parameters, but NOT the method's parameters:
 
 .. code-block:: yaml
@@ -39,7 +39,7 @@ output.
 
 In contrast to the previous example, suppose we had a process list where we
 would like to save the output of all methods using :code:`--save_all`, *apart* from the
-:code:`normalize` method. 
+:code:`normalize` method.
 
 .. code-block:: yaml
   :emphasize-lines: 8

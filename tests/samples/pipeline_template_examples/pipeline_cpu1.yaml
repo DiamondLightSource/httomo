@@ -1,6 +1,6 @@
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
-  parameters: 
+  parameters:
     name: tomo
     data_path: entry1/tomo_entry/data/data
     image_key_path: entry1/tomo_entry/instrument/detector/image_key

@@ -68,7 +68,7 @@ to use. This can be especially helpful for those who are less familiar with prog
 or are new to the specific tools and libraries you are using.
 
 We have a :ref:`utilities_yamlchecker` that can help you to validate your YAML file.
-Before running your pipeline, we highly recommend that you validate your YAML file using this utility. 
+Before running your pipeline, we highly recommend that you validate your YAML file using this utility.
 The checker will help you to identify errors in your YAML file.
 
 We also recommend to use editors that `support <https://ozone.one/top-5-open-source-yaml-editors-for-streamlined-coding/>`_ YAML format naturally, e.g.: Atom, Visual Studio Code, Notepad++, and others.

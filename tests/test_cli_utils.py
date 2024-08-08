@@ -11,7 +11,7 @@ from httomo.cli_utils import is_sweep_pipeline
         ("samples/pipeline_template_examples/testing/example.yaml", False),
         ("samples/pipeline_template_examples/testing/sweep_manual.py", True),
         ("samples/python_templates/pipeline_cpu1.py", False),
-    ]
+    ],
 )
 def test_is_sweep_pipeline(pipeline_file: Path, expected_is_sweep_pipeline: bool):
     pipeline_file_path = Path(__file__).parent / pipeline_file

@@ -8,7 +8,6 @@ from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 class ParamSweepSource(Protocol):
     """Source for reading parameter sweep results from"""
 
-
     @property
     def no_of_sweeps(self) -> int:
         """Number of parameter values used to generate sweep results"""

@@ -241,6 +241,7 @@ class DataSetBlock(BaseBlock, BlockIndexing):
             return self.data
         d = self.data
         slices = [slice(None), slice(None), slice(None)]
-        slices[self.slicing_dim] = slice(self.padding[0], d.shape[self.slicing_dim] - self.padding[1])
+        slices[self.slicing_dim] = slice(
+            self.padding[0], d.shape[self.slicing_dim] - self.padding[1]
+        )
         return d[slices[0], slices[1], slices[2]]
-

@@ -3,7 +3,7 @@
 What is a template?
 ------------------------
 
-A YAML template (see :ref:`explanation_yaml`) is a textual interface to a method, which can be executed in HTTomo. 
+A YAML template (see :ref:`explanation_yaml`) is a textual interface to a method, which can be executed in HTTomo.
 The template provides a communication with a chosen method by setting its input/output entries and also additional parameters, if required.
 
 The combination of YAML templates results in a processing list, also called a pipeline. See more on :ref:`explanation_process_list`
@@ -11,7 +11,7 @@ The combination of YAML templates results in a processing list, also called a pi
 As a simple template example, let's consider the template for the median filter from the `TomoPy <https://tomopy.readthedocs.io/en/stable/api/tomopy.misc.corr.html#tomopy.misc.corr.median_filter3d>`_ package.
 
 .. code-block:: yaml
-    
+
     - method: median_filter3d
       module_path: tomopy.misc.corr
       parameters:

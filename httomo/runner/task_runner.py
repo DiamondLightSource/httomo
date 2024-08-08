@@ -362,12 +362,8 @@ def calculate_next_chunk_shape(
     """
     Utility function for calculating the chunk shape (including padding) for the next section.
     """
-    start = round(
-        (global_shape[next_section_slicing_dim] / comm.size) * comm.rank
-    )
-    stop = round(
-        (global_shape[next_section_slicing_dim] / comm.size) * (comm.rank + 1)
-    )
+    start = round((global_shape[next_section_slicing_dim] / comm.size) * comm.rank)
+    stop = round((global_shape[next_section_slicing_dim] / comm.size) * (comm.rank + 1))
     next_section_slicing_dim_len = stop - start
     shape = list(global_shape)
     shape[next_section_slicing_dim] = (

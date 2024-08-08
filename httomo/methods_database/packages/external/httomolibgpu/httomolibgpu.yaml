@@ -51,7 +51,7 @@ prep:
   normalize:
     normalize:
       pattern: projection
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
       padding: False
@@ -62,7 +62,7 @@ prep:
   phase:
     paganin_filter_tomopy:
       pattern: projection
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
       padding: False
@@ -72,7 +72,7 @@ prep:
         - methods: [module]
     paganin_filter_savu:
       pattern: projection
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
       padding: False
@@ -83,7 +83,7 @@ prep:
   alignment:
     distortion_correction_proj_discorpy:
       pattern: projection
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
       padding: False
@@ -94,7 +94,7 @@ prep:
   stripe:
     remove_stripe_based_sorting:
       pattern: sinogram
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
       padding: False

@@ -40,18 +40,18 @@ def test_calculate_stats_gpu():
     ret = calculate_stats(data)
 
     assert ret == (-10.0, 19.0, np.sum(data.get()), 30)
-    
+
 
 @pytest.mark.perf
 @pytest.mark.parametrize("gpu", [False, True], ids=["CPU", "GPU"])
 def test_calculcate_stats_performance(gpu: bool):
     if gpu and not gpu_enabled:
         pytest.skip("No GPU available")
-        
+
     data = np.random.randint(
         low=7515, high=37624, size=(1801, 5, 2560), dtype=np.uint32
     ).astype(np.float32)
-    
+
     if gpu:
         data = xp.asarray(data)
         xp.cuda.Device().synchronize()
@@ -61,32 +61,38 @@ def test_calculcate_stats_performance(gpu: bool):
     if gpu:
         xp.cuda.Device().synchronize()
     stop = time.perf_counter_ns()
-    duration_ms = float(stop-start) * 1e-6 / 10
-    
-    # Note: on Quadro RTX 6000 vs Xeon(R) Gold 6148, GPU is about 10x faster 
+    duration_ms = float(stop - start) * 1e-6 / 10
+
+    # Note: on Quadro RTX 6000 vs Xeon(R) Gold 6148, GPU is about 10x faster
     assert "performance in ms" == duration_ms
-    
-    
+
+
 def test_save_intermediate_data(tmp_path: Path):
     # use increasing numbers in the data, to make sure blocks have different content
-    GLOBAL_SHAPE=(10,10,10)
+    GLOBAL_SHAPE = (10, 10, 10)
     global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
         GLOBAL_SHAPE
     )
     aux_data = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
     bsize = 3
-    b1 = DataSetBlock(data=global_data[:bsize], aux_data=aux_data,
-                      slicing_dim=0,
-                      block_start=0,
-                      chunk_start=0,
-                      chunk_shape=GLOBAL_SHAPE,
-                      global_shape=GLOBAL_SHAPE)
-    b2 = DataSetBlock(data=global_data[bsize:], aux_data=aux_data,
-                      slicing_dim=0,
-                      block_start=bsize,
-                      chunk_start=0,
-                      chunk_shape=GLOBAL_SHAPE,
-                      global_shape=GLOBAL_SHAPE)
+    b1 = DataSetBlock(
+        data=global_data[:bsize],
+        aux_data=aux_data,
+        slicing_dim=0,
+        block_start=0,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        global_shape=GLOBAL_SHAPE,
+    )
+    b2 = DataSetBlock(
+        data=global_data[bsize:],
+        aux_data=aux_data,
+        slicing_dim=0,
+        block_start=bsize,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        global_shape=GLOBAL_SHAPE,
+    )
 
     with h5py.File(
         tmp_path / "test_file.h5", "w", driver="mpio", comm=MPI.COMM_WORLD
@@ -139,14 +145,16 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
     # make sure we use the same tmp_path on both processes
     tmp_path = comm.bcast(tmp_path)
     GLOBAL_SHAPE = (10, 10, 10)
-    csize=5
+    csize = 5
     # use increasing numbers in the data, to make sure blocks have different content
     global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
         GLOBAL_SHAPE
     )
     aux_data = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
     # give each process only a portion of the data
-    rank_data = global_data[:csize, :, :] if comm.rank == 0 else global_data[csize:, :, :]
+    rank_data = (
+        global_data[:csize, :, :] if comm.rank == 0 else global_data[csize:, :, :]
+    )
     # create 2 blocks per rank
     b1 = DataSetBlock(
         data=rank_data[:3, :, :],
@@ -155,7 +163,7 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
         block_start=0,
         chunk_start=0 if comm.rank == 0 else csize,
         global_shape=GLOBAL_SHAPE,
-        chunk_shape=(csize, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
+        chunk_shape=(csize, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]),
     )
     b2 = DataSetBlock(
         data=rank_data[3:, :, :],
@@ -164,7 +172,7 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
         block_start=3,
         chunk_start=0 if comm.rank == 0 else csize,
         global_shape=GLOBAL_SHAPE,
-        chunk_shape=(csize, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
+        chunk_shape=(csize, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]),
     )
 
     with h5py.File(tmp_path / "test_file.h5", "w", driver="mpio", comm=comm) as file:

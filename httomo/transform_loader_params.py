@@ -57,7 +57,7 @@ def parse_preview(
             start = 0 if val is None else val
             val = par.get("stop", None)
             stop = length if val is None else val
-            
+
         return PreviewDimConfig(start=start, stop=stop)
 
     return PreviewConfig(

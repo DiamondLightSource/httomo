@@ -1,3 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# ---------------------------------------------------------------------------
+# Copyright 2023 Diamond Light Source Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either ecpress or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ---------------------------------------------------------------------------
+# Created By  : Tomography Team at DLS <scientificsoftware@diamond.ac.uk>
+
+# ---------------------------------------------------------------------------
+
 import logging
 from os import PathLike
 from pathlib import Path
@@ -18,77 +39,6 @@ from numpy.typing import DTypeLike
 import weakref
 
 from httomo.utils import log_once, make_3d_shape_from_shape
-
-"""
-This is from the final handover call:
-
-# Cases
-
-- *We always process the data in blocks*
-
-## 1 Process, all fits memory
-
-- chunk_shape = global_shape   
-- chunk_index = (0, 0, 0)
-- the whole chunk is a numpy array, in a `DataSet` in-memory
-- `write_block` -> writes a `DataSetBlock` into the chunk `DataSet`
-- `read_block` -> get a block, which might be the full size of the `DataSet` for the chunk, 
-  it's an in-memory slice of the chunk `DataSet`
-
-### Reslice
-
-- does nothing mostly
-- updates `slicing_dim` somewhere, so that `read_block` knows how to slice the block
-
-## 2 Processes, all fits in memory (or more)
-
-(assume slicing dim is 0)
-
-- chunk_shape < global_shape, e.g. `(5, 20, 30) < (10, 20, 30)`
-- `chunk_index`: in rank 0: `(0, 0, 0)`, in rank 1: `(5, 0, 0)`
-- the whole chunk is in numpy array, in a `DataSet`, in-memory
-- BUT: each process as a part of the global data in-memory
-- `write_block` -> writes a `DataSetBlock` into the chunk `DataSet`
-- `read_block` -> get a block, which might be the full size of the `DataSet` for the chunk
-
-### Reslice
-
-- call the MPI memory-based reslice function we always had (using `MPI.allgather`)
-- we have a new chunk in each process, wich chunk_shape=`(10, 10, 30)`
-- we have `chunk_index`: in rank 0: `(0, 0, 0)`, in rank 1: `(0, 10, 0)`
-- updates `slicing_dim` somewhere, so that `read_block` knows how to slice the block
-
-
-## 2 Processes, doesn't memory (or more)
-
-(assume slicing dim is 0)
-
-- chunk_shape < global_shape, e.g. `(5, 20, 30) < (10, 20, 30)`
-- `chunk_index`: in rank 0: `(0, 0, 0)`, in rank 1: `(5, 0, 0)`
-- *the global data is fully is a single h5py file*
-  - it is the whole global cube!
-  - each process only needs to access a chunk, block-wise, out of that file
-  - has the same interface as numpy array (`shape`, indexing, ...)
-  - BUT: as soon as we index, we read the file into an in-memory numpy array
-  - --> we cannot create a "view" of a subset of the file, referencing the disk
-  - so, each process needs to keep track of the start of its chunk within the file, 
-    and when read_block is called with start index 0, we add the chunk_index to that
-- `write_block` -> writes a `DataSetBlock` into the file, with the correct offset (`chunk_index + block_index`)
-- `read_block` -> get a block from the file, with offset `chunk_index + block_index`
-- --> `FullFileDataSet` class takes care of that
-
-### Reslice
-
-- we have full globally shared file, all the data is there on disk already
-- does nothing mostly
-- updates `slicing_dim` somewhere, so that `read_block` knows how to slice the block
-- update `chunk_index`: in rank 0: `(0, 0, 0)`, in rank 1: `(0, 10, 0)`
-
-
-"""
-
-# Notes:
-# - refactoring the nested if into separate function is badly needed
 
 
 class DataSetStoreWriter(ReadableDataSetSink):
@@ -541,9 +491,9 @@ class DataSetStoreReader(DataSetSource):
             pad_slices = [slice(None), slice(None), slice(None)]
             pad_slices[self._slicing_dim] = slice(0, self._padding[0])
 
-            self._data[pad_slices[0], pad_slices[1], pad_slices[2]] = (
-                receive_buf_from_left_neighbour
-            )
+            self._data[
+                pad_slices[0], pad_slices[1], pad_slices[2]
+            ] = receive_buf_from_left_neighbour
 
     def _mpi_exchange_padding_area_after(self):
         MPI_TAG = 44
@@ -583,9 +533,9 @@ class DataSetStoreReader(DataSetSource):
                 self._chunk_shape[self._slicing_dim] - self._padding[1],
                 self._chunk_shape[self._slicing_dim],
             )
-            self._data[pad_slices[0], pad_slices[1], pad_slices[2]] = (
-                receive_buf_from_right_neighbour
-            )
+            self._data[
+                pad_slices[0], pad_slices[1], pad_slices[2]
+            ] = receive_buf_from_right_neighbour
 
     def _extend_data_for_padding(self, core_data: np.ndarray) -> np.ndarray:
         padded_data = np.empty(self._chunk_shape, self._data.dtype)

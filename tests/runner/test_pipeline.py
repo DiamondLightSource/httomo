@@ -45,6 +45,6 @@ def test_pipeline_can_access_by_index(mocker: MockerFixture):
             make_test_method(mocker, method_name="m3"),
         ],
     )
-    
+
     for i in range(3):
         assert p[i].method_name == f"m{i+1}"

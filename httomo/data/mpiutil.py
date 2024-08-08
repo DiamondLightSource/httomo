@@ -41,9 +41,7 @@ def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     """
 
     if len(arrays) != comm.size:
-        err_str = (
-            "list of arrays for MPI alltoall call must match communicator size"
-        )
+        err_str = "list of arrays for MPI alltoall call must match communicator size"
         raise ValueError(err_str)
 
     assert all(type(a) == np.ndarray for a in arrays), "All arrays must be numpy arrays"
@@ -105,9 +103,7 @@ def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     sizes_rec1 = [s // factor for s in sizes_rec]
 
     # now send the same data, but with the adjusted size+datatype (output is identical)
-    comm.Alltoallv(
-        (fullinput, sizes_send1, dtype1), (fulloutput, sizes_rec1, dtype1)
-    )
+    comm.Alltoallv((fullinput, sizes_send1, dtype1), (fulloutput, sizes_rec1, dtype1))
 
     # build list of output arrays
     cumsizes = np.cumsum(sizes_rec)

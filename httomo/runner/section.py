@@ -22,7 +22,7 @@ class Section:
         max_slices: int,
         methods: List[MethodWrapper],
         is_last: bool = False,
-        padding: bool = False
+        padding: bool = False,
     ):
         self.pattern = pattern
         self.max_slices = max_slices
@@ -66,7 +66,7 @@ def sectionize(pipeline: Pipeline) -> List[Section]:
             if r.method in current_methods:
                 return True
         return False
-    
+
     def is_second_padded_method(method: MethodWrapper) -> bool:
         return has_padding_method and method.padding
 
@@ -76,9 +76,11 @@ def sectionize(pipeline: Pipeline) -> List[Section]:
             sections[-1].padding = True
 
     for method in pipeline:
-        if not is_pattern_compatible(
-            current_pattern, method.pattern
-        ) or references_previous_method(method) or is_second_padded_method(method):
+        if (
+            not is_pattern_compatible(current_pattern, method.pattern)
+            or references_previous_method(method)
+            or is_second_padded_method(method)
+        ):
             finish_section()
             has_padding_method = False
             if method.pattern != Pattern.all:

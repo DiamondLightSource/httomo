@@ -1,4 +1,4 @@
-name: HTTomo doc test
+name: HTTomo docs
 
 on:
   workflow_dispatch:
@@ -10,19 +10,19 @@ on:
       - main
 
 jobs:
-  build-linux:
+  build-docs-publish:
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash -el {0}
     steps:
         - name: Checkout repository code
-          uses: actions/checkout@v3
+          uses: actions/checkout@v4
 
-        - name: Setup Python 3.9
-          uses: actions/setup-python@v3
+        - name: Setup Python 3.10
+          uses: actions/setup-python@v4
           with:
-            python-version: 3.9
+            python-version: '3.10'
 
         - name: httomo-docs
           uses: conda-incubator/setup-miniconda@v2

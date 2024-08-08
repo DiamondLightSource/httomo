@@ -29,8 +29,10 @@ def test_calc_padding_remove_outlier3d_defaults() -> None:
     kwargs: dict = {}
     assert _calc_padding_remove_outlier3d(**kwargs) == (1, 1)
 
+
 # TODO: unclear if the following function's padding behaviour is
-# doing the right thing... 
+# doing the right thing...
+
 
 def test_calc_padding_stripes_detect3d() -> None:
     kwargs: dict = {"size": 15, "radius": 2, "ncore": 10}
@@ -44,7 +46,7 @@ def test_calc_padding_stripes_detect3d_defaults() -> None:
 
 
 def test_calc_padding_stripes_mask3d() -> None:
-    kwargs: dict = {"threshold": .7, "min_stripe_depth": 5}
+    kwargs: dict = {"threshold": 0.7, "min_stripe_depth": 5}
     assert _calc_padding_stripes_mask3d(**kwargs) == (5, 5)
 
 

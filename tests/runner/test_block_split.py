@@ -133,4 +133,3 @@ def test_block_can_iterate(mocker: MockerFixture, slicing_dim: int):
     source.read_block.assert_has_calls(
         [call(0, max_slices), call(max_slices, max_slices)]
     )
-

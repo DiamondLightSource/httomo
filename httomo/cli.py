@@ -40,7 +40,8 @@ def main():
 @click.argument(
     "in_data_file",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    required=False, default=None,
+    required=False,
+    default=None,
 )
 def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     """Check a YAML pipeline file for errors."""
@@ -86,27 +87,29 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     "--max-cpu-slices",
     type=click.INT,
     default=64,
-    help="Maximum number of slices to use for a block for CPU-only sections (default: 64)"
+    help="Maximum number of slices to use for a block for CPU-only sections (default: 64)",
 )
 @click.option(
     "--max-memory",
     type=click.STRING,
     default="0",
-    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)"
+    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)",
 )
 @click.option(
     "--monitor",
     type=click.STRING,
     multiple=True,
     default=[],
-    help=("Add monitor to the runner (can be given multiple times). " +
-          f"Available monitors: {', '.join(MONITORS_MAP.keys())}")
+    help=(
+        "Add monitor to the runner (can be given multiple times). "
+        + f"Available monitors: {', '.join(MONITORS_MAP.keys())}"
+    ),
 )
 @click.option(
     "--monitor-output",
-    type=click.File('w'),
+    type=click.File("w"),
     default=sys.stdout,
-    help="File to store the monitoring output. Defaults to '-', which denotes stdout"
+    help="File to store the monitoring output. Defaults to '-', which denotes stdout",
 )
 @click.option(
     "--syslog-host",

@@ -43,7 +43,6 @@ module_mem_path = "httomo.methods_database.packages.external."
 
 
 class MaxMemoryHook(cp.cuda.MemoryHook):
-
     def __init__(self, initial=0):
         self.max_mem = initial
         self.current = initial
@@ -467,7 +466,7 @@ def test_recon_FBP_memoryhook(
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
-    assert percents_relative_maxmem <= 150 # big underestimation, to be looked into
+    assert percents_relative_maxmem <= 150  # big underestimation, to be looked into
 
 
 @pytest.mark.cupy

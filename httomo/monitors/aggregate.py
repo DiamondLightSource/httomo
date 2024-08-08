@@ -47,7 +47,13 @@ class AggregateMonitoring(MonitoringInterface):
     ):
         for m in self._monitors:
             m.report_source_block(
-                name, first_task_id, slicing_dim, block_dims, block_idx_chunk, block_idx_global, cpu_time
+                name,
+                first_task_id,
+                slicing_dim,
+                block_dims,
+                block_idx_chunk,
+                block_idx_global,
+                cpu_time,
             )
 
     def report_sink_block(
@@ -62,13 +68,18 @@ class AggregateMonitoring(MonitoringInterface):
     ):
         for m in self._monitors:
             m.report_sink_block(
-                name, last_task_id, slicing_dim, block_dims, block_idx_chunk, block_idx_global, cpu_time
+                name,
+                last_task_id,
+                slicing_dim,
+                block_dims,
+                block_idx_chunk,
+                block_idx_global,
+                cpu_time,
             )
-            
+
     def report_total_time(self, cpu_time: float):
         for m in self._monitors:
             m.report_total_time(cpu_time)
-    
 
     def write_results(self, dest: TextIO):
         for m in self._monitors:
