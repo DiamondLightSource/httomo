@@ -4,8 +4,8 @@ from typing import Any, Dict, Optional
 import weakref
 from mpi4py.MPI import Comm
 import httomo
+from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from httomo.runner.methods_repository_interface import MethodRepository
@@ -59,7 +59,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         # make sure file gets closed properly
         weakref.finalize(self, self._file.close)
 
-    def execute(self, block: DataSetBlock) -> DataSetBlock:
+    def execute(self, block: T) -> T:
         # we overwrite the whole execute method here, as we do not need any of the helper
         # methods from the Generic Wrapper
         # What we know:
@@ -77,7 +77,9 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             data,
             global_shape=block.global_shape,
             global_index=block.global_index,
+            slicing_dim=block.slicing_dim,
             file=self._file,
+            frames_per_chunk=httomo.globals.FRAMES_PER_CHUNK,
             path="/data",
             detector_x=self._loader.detector_x,
             detector_y=self._loader.detector_y,

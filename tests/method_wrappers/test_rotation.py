@@ -85,6 +85,7 @@ def test_rotation_accumulates_blocks(mocker: MockerFixture):
 @pytest.mark.parametrize("gpu", [False, True])
 @pytest.mark.parametrize("rank", [0, 1])
 @pytest.mark.parametrize("ind_par", ["mid", 2, None])
+@pytest.mark.cupy
 def test_rotation_gathers_single_sino_slice(
     mocker: MockerFixture,
     rank: int,

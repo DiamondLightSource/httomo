@@ -1,5 +1,5 @@
 import yaml
-from typing import Any, Dict, List, TypeAlias
+from typing import Any, Dict, List, Optional, TypeAlias
 from importlib import import_module, util
 from pathlib import Path
 import os
@@ -17,6 +17,7 @@ from httomo.method_wrappers import make_method_wrapper
 from httomo.loaders import make_loader
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.output_ref import OutputRef
+from httomo.sweep_runner.param_sweep_yaml_loader import get_param_sweep_yaml_loader
 from httomo.transform_loader_params import parse_angles, parse_preview
 
 
@@ -263,7 +264,7 @@ def check_valid_ref_id(
 
 
 def yaml_loader(
-    file_path: Path, loader: yaml.Loader = yaml.FullLoader
+    file_path: Path, loader: Optional[type[yaml.SafeLoader]] = None
 ) -> PipelineConfig:
     """Loads provided yaml file and returns dict
 
@@ -278,6 +279,8 @@ def yaml_loader(
     -------
     PipelineConfig
     """
+    if loader is None:
+        loader = get_param_sweep_yaml_loader()
     with open(file_path, "r") as f:
         tasks_list = list(yaml.load_all(f, Loader=loader))
     return tasks_list[0]

@@ -2,7 +2,7 @@ from httomo.runner.loader import LoaderInterface
 from httomo.utils import Pattern
 from httomo.runner.method_wrapper import MethodWrapper
 
-from typing import Iterator, List, Optional
+from typing import Iterator, List
 
 
 class Pipeline:

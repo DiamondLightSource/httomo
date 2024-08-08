@@ -66,60 +66,98 @@ def _calc_memory_bytes_FBP(
     dtype: np.dtype,
     **kwargs,
 ) -> Tuple[int, int]:
+    det_height = non_slice_dims_shape[0]
     det_width = non_slice_dims_shape[1]
-    output_dims = _calc_output_dim_FBP(non_slice_dims_shape, **kwargs)
-
-    input_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
-    filtered_input_slice_size = np.prod(non_slice_dims_shape) * np.float32().itemsize
-    # astra backprojection will generate an output array
-    recon_output_size = np.prod(output_dims) * np.float32().itemsize
-
-    # filter needs to be created once and substracted from the total memory
-    filter_size = (det_width // 2 + 1) * np.float32().itemsize
-
-    # this stores the result of applying FFT to data. proj_f array in the code.
-    filtered_freq_slice = (
-        non_slice_dims_shape[0] * (det_width // 2 + 1) * np.complex64().itemsize
-    )
-
-    batch = non_slice_dims_shape[0]
     SLICES = 200  # dummy multiplier+divisor to pass large batch size threshold
-    fftplan_size = (
+
+    # 1. input
+    input_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
+
+    ########## FFT / filter / IFFT (filtersync_cupy)
+
+    # 2. RFFT plan (R2C transform)
+    fftplan_slice_size = (
         cufft_estimate_1d(
             nx=det_width,
             fft_type=CufftType.CUFFT_R2C,
-            batch=batch * SLICES,
+            batch=det_height * SLICES,
         )
         / SLICES
     )
-    ifftplan_size = (
+
+    # 3. RFFT output size (proj_f in code)
+    proj_f_slice = det_height * (det_width // 2 + 1) * np.complex64().itemsize
+
+    # 4. Filter size (independent of number of slices)
+    filter_size = (det_width // 2 + 1) * np.float32().itemsize
+
+    # 5. IRFFT plan size
+    ifftplan_slice_size = (
         cufft_estimate_1d(
             nx=det_width,
             fft_type=CufftType.CUFFT_C2R,
-            batch=batch * SLICES,
+            batch=det_height * SLICES,
         )
         / SLICES
     )
-    # The multiplier_heuristic comes from the empirical testing of the module for various
-    # data sizes. So far, the need for it is cannot be explained from the algorithmic
-    # standpoint. Also, there is no association of it with filtered_freq_slice array,
-    # as we just need to bump up the memory to avoid the OOM error.
-    multiplier_heuristic = 2
 
-    tot_memory_bytes = int(
-        2 * input_slice_size
-        + filtered_input_slice_size
-        + multiplier_heuristic * filtered_freq_slice
-        + fftplan_size
-        + ifftplan_size
-        + recon_output_size
+    # 6. output of filtersync call
+    filtersync_output_slice_size = input_slice_size
+
+    # since the FFT plans, proj_f, and input data is dropped after the filtersync call, we track it here
+    # separate
+    filtersync_size = (
+        input_slice_size + fftplan_slice_size + proj_f_slice + ifftplan_slice_size
     )
 
-    # Backprojection ASTRA part estimations
-    tot_memory_ASTRA_BP_bytes = 5 * input_slice_size + recon_output_size
-    if tot_memory_ASTRA_BP_bytes > tot_memory_bytes:
-        tot_memory_bytes = tot_memory_ASTRA_BP_bytes
-    return (tot_memory_bytes, filter_size)
+    # 6. we swap the axes before passing data to Astra in ToMoBAR
+    # https://github.com/dkazanc/ToMoBAR/blob/54137829b6326406e09f6ef9c95eb35c213838a7/tomobar/methodsDIR_CuPy.py#L135
+    pre_astra_input_swapaxis_slice = (
+        np.prod(non_slice_dims_shape) * np.float32().itemsize
+    )
+
+    # 7. astra backprojection will generate an output array
+    # https://github.com/dkazanc/ToMoBAR/blob/54137829b6326406e09f6ef9c95eb35c213838a7/tomobar/astra_wrappers/astra_base.py#L524
+    output_dims = _calc_output_dim_FBP(non_slice_dims_shape, **kwargs)
+    recon_output_size = np.prod(output_dims) * np.float32().itemsize
+
+    # 7. astra backprojection makes a copy of the input
+    astra_input_slice_size = np.prod(non_slice_dims_shape) * np.float32().itemsize
+
+    ## now we calculate back projection memory (2 copies of the input + reconstruction output)
+    projection_mem_size = (
+        pre_astra_input_swapaxis_slice + astra_input_slice_size + recon_output_size
+    )
+
+    # 9. apply_circular_mask memory (fixed amount, not per slice)
+    circular_mask_size = np.prod(output_dims) * np.int64().itemsize
+
+    fixed_amount = max(filter_size, circular_mask_size)
+
+    # 9. this swapaxis makes another copy of the output data
+    # https://github.com/DiamondLightSource/httomolibgpu/blob/72d98ec7ac44e06ee0318043934fb3f68667d203/httomolibgpu/recon/algorithm.py#L118
+    # BUT: this swapaxis happens after the cudaArray inputs and the input swapaxis arrays are dropped,
+    #      so it does not add to the memory overall
+
+    # NOTE
+    # Although the assumption that the memory will be cleared after filtration step (the fft plans)
+    # does hold for some WSs, on the cluster it results in OOM error in the IFFT step.
+    # It is not very clear why it is the case so far, therefore the workaround is to account for all memory required
+    # for the FBP step (filtering part + ASTRA backprojection). This is not ideal as it uses a lot of memory
+    # and therefore the blocks will be smaller making I/O suboptimal.
+
+    # The commented code bellow is how the memory should be estimated in principle
+    # if projection_mem_size > filtersync_size:
+    #     tot_memory_bytes = int(filtersync_output_slice_size + projection_mem_size)
+    # else:
+    #     tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + recon_output_size)
+
+    # this account for the memory used for filtration AND backprojection.
+    tot_memory_bytes = int(
+        filtersync_output_slice_size + filtersync_size + projection_mem_size
+    )
+
+    return (tot_memory_bytes, fixed_amount)
 
 
 def _calc_memory_bytes_SIRT(

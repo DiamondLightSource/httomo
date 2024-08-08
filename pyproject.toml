@@ -48,7 +48,11 @@ dynamic = ["version"]
 dependencies = [
     "click",
     "numpy",
-    "httomolib"
+    "httomolib",
+    "loguru",
+    "typing-extensions",
+    "tqdm",
+    "graypy"
 ]
 
 [project.scripts]

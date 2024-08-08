@@ -146,12 +146,13 @@ def test_check_side_out_matches_ref_arg(
         ("pipeline_cpu1.yaml", True),
         ("pipeline_cpu2.yaml", True),
         ("pipeline_gpu1.yaml", True),
-        # ("parameter_sweeps/02_median_filter_kernel_sweep.yaml", True),
+        ("testing/sweep_manual.yaml", True),
     ],
     ids=[
         "cpu1_pipeline",
         "cpu2_pipeline",
         "gpu1_pipeline",
+        "sweep_manual",
     ],
 )
 def test_validate_yaml_config(

@@ -54,6 +54,13 @@ DLS Specific templates
 
 Parameter Sweeps templates
 ----------------------------
-Those templates demonstrate how to perform sweeps across multiple values a single parameter. See more on :ref:`parameter_tuning`.
 
-To be added in the forthcoming releases.
+These templates demonstrate how to perform a sweep across multiple values of a
+single parameter (see :ref:`parameter_sweeping` for more details).
+
+.. dropdown:: Parameter sweep over 10 CoR values (`center` param) in recon
+   method, and saving the result as tiffs
+
+   .. literalinclude:: ../../../tests/samples/pipeline_template_examples/parameter-sweep-cor.yaml
+       :language: yaml
+       :emphasize-lines: 9-11,37-40

@@ -93,7 +93,7 @@ Manual Centering
 =================
 
 Unfortunately, there could be various cases when :ref:`centering_auto` fails, e.g., the projection data is corrupted, incomplete, the object is outside the field of view of the detector, and possibly other issues.
-In that case, it is recommended to find the center of rotation manually. :ref:`parameter_tuning` can simplify such search significantly.
+In that case, it is recommended to find the center of rotation manually. :ref:`parameter_sweeping` can simplify such search significantly.
 
 To enable manual centering, one would need to do the following steps:
 

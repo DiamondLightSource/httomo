@@ -275,3 +275,36 @@ def test_sectionizer_inserts_empty_section_if_loader_pattern_mismatches(
     assert s[0].pattern == patterns[0]
     assert len(s[1]) == 1
     assert s[1].pattern == patterns[1]
+
+
+@pytest.mark.parametrize("padding", [False, True])
+def test_sectionizer_sets_padding_property(mocker: MockerFixture, padding: bool):
+    p = Pipeline(
+        loader=make_test_loader(mocker, pattern=Pattern.projection),
+        methods=[make_test_method(mocker, pattern=Pattern.projection, padding=padding)],
+    )
+    s = sectionize(p)
+
+    assert s[-1].padding is padding
+
+
+def test_sectionizer_splits_section_if_multiple_padding_methods(mocker: MockerFixture):
+    p = Pipeline(
+        loader=make_test_loader(mocker, pattern=Pattern.projection),
+        methods=[
+            make_test_method(mocker, pattern=Pattern.projection, padding=False),
+            make_test_method(mocker, pattern=Pattern.projection, padding=True),
+            make_test_method(mocker, pattern=Pattern.projection, padding=False),
+            make_test_method(mocker, pattern=Pattern.projection, padding=True),
+        ],
+    )
+
+    s = sectionize(p)
+
+    assert len(s) == 2
+    assert s[0].padding is True
+    assert s[1].padding is True
+    assert (
+        len(s[0]) == 3
+    )  # loader + 3 methods, as we want right before the next padding method
+    assert len(s[1]) == 1  # just the last method with padding

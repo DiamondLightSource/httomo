@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
@@ -20,6 +20,7 @@ def make_test_method(
     module_path="testpath",
     save_result=False,
     task_id: Optional[str] = None,
+    padding: bool = False,
     **kwargs,
 ) -> MethodWrapper:
     if task_id is None:
@@ -35,6 +36,7 @@ def make_test_method(
         save_result=save_result,
         task_id=task_id,
         config_params=kwargs,
+        padding=padding,
         __getitem__=lambda _, k: kwargs[k],  # return kwargs value from dict access
     )
 
@@ -66,7 +68,9 @@ def make_test_loader(
                 slicing_dim=1 if interface.pattern == Pattern.sinogram else 0,
                 aux_data=block.aux_data,
             )
-            slicing_dim = 1 if interface.pattern == Pattern.sinogram else 0
+            slicing_dim: Literal[0, 1, 2] = (
+                1 if interface.pattern == Pattern.sinogram else 0
+            )
             mocker.patch.object(
                 ret,
                 "read_block",
@@ -101,6 +105,7 @@ def make_mock_repo(
     ],
     swap_dims_on_output=False,
     save_result_default=False,
+    padding=False,
 ) -> MethodRepository:
     """Makes a mock MethodRepository that returns the given properties on any query"""
     mock_repo = mocker.MagicMock()
@@ -118,4 +123,5 @@ def make_mock_repo(
     mocker.patch.object(
         mock_query, "save_result_default", return_value=save_result_default
     )
+    mocker.patch.object(mock_query, "padding", return_value=padding)
     return mock_repo
