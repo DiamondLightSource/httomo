@@ -1,7 +1,25 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# ---------------------------------------------------------------------------
+# Copyright 2023 Diamond Light Source Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either ecpress or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ---------------------------------------------------------------------------
+# Created By  : Tomography Team at DLS <scientificsoftware@diamond.ac.uk>
+
 # -- General configuration ------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-#!/usr/bin/env python
 import os
 import sys
 from datetime import date
@@ -87,14 +105,6 @@ html_favicon = "_static/logo_light.png"
 html_last_updated_fmt = ""
 html_static_path = ["_static"]
 html_use_smartypants = True
-
-"""
-html_theme_options = {
-    "logo_only": True,
-    "display_version": False,
-    "githuburl": "https://github.com/DiamondLightSource/httomo",
-}
-"""
 
 html_theme_options = {
     "logo": {

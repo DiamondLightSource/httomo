@@ -3,7 +3,7 @@
 Full YAML pipelines
 ==============================
 
-This is a collection of ready to be used pipeline templates aka process lists. 
+This is a collection of ready to be used pipeline templates aka process lists.
 See more on :ref:`explanation_process_list` and how to :ref:`howto_process_list`.
 
 .. _tutorials_pl_templates_cpu:
@@ -16,11 +16,11 @@ CPU Pipeline templates
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu1.yaml
 
 .. dropdown:: TomoPy's pipeline where :ref:`previewing` is demonstrated
-    
+
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu2.yaml
 
 .. dropdown:: This pipeline shows how "calculate_stats" module extracts global statistics in order to be passed to "save_to_images" function which uses it to rescale data for saving images
-    
+
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu2.yaml
 
 .. _tutorials_pl_templates_gpu:
@@ -29,7 +29,7 @@ GPU Pipeline templates
 ----------------------------
 
 .. dropdown:: Basic GPU pipeline which uses functions from the httomolibgpu library.
-    
+
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_gpu1.yaml
 
 
@@ -42,18 +42,25 @@ DLS Specific templates
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml
 
-.. dropdown:: GPU-driven pipeline for the 360-degrees data which estimates the CoR value and the overlap. The 180-degrees sinogram is obtained by stitching using the overlap value. The pipeline shows the extensive use of side_outputs and refrencing. 
-    
+.. dropdown:: GPU-driven pipeline for the 360-degrees data which estimates the CoR value and the overlap. The 180-degrees sinogram is obtained by stitching using the overlap value. The pipeline shows the extensive use of side_outputs and refrencing.
+
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml
 
-.. dropdown:: More advanced GPU pipeline for the 360-degrees data. Here we preview the section and then reconstruct it iteratively, the result then downsampled before saving smaller images. 
-    
+.. dropdown:: More advanced GPU pipeline for the 360-degrees data. Here we preview the section and then reconstruct it iteratively, the result then downsampled before saving smaller images.
+
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_360deg_iterative_gpu3.yaml
 
 .. _tutorials_pl_templates_sweeps:
 
 Parameter Sweeps templates
 ----------------------------
-Those templates demonstrate how to perform sweeps across multiple values a single parameter. See more on :ref:`parameter_tuning`.
 
-To be added in the forthcoming releases. 
+These templates demonstrate how to perform a sweep across multiple values of a
+single parameter (see :ref:`parameter_sweeping` for more details).
+
+.. dropdown:: Parameter sweep over 10 CoR values (`center` param) in recon
+   method, and saving the result as tiffs
+
+   .. literalinclude:: ../../../tests/samples/pipeline_template_examples/parameter-sweep-cor.yaml
+       :language: yaml
+       :emphasize-lines: 9-11,37-40

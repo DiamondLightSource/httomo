@@ -4,12 +4,12 @@
 Previewing
 ^^^^^^^^^^
 
-Previewing is the way to change the dimensions of the input data by reducing them. 
+Previewing is the way to change the dimensions of the input data by reducing them.
 It also can be interpreted as a data cropping or data slicing operation.
 
 Reduction of the input data is often done to remove unnecessary/useless
 information, and to accelerate the processing time. It is also recommended to use
-when searching for optimal parameter values, see :ref:`parameter_tuning`. Skip to
+when searching for optimal parameter values, see :ref:`parameter_sweeping`. Skip to
 :ref:`previewing_enable` for information about how to use it in HTTomo.
 
 Previewing in the loader
@@ -29,7 +29,7 @@ a brief explanation is given on how to use the :code:`preview` parameter in the
     :scale: 55 %
     :alt: 3D data
 
-    3D projection data and their axes 
+    3D projection data and their axes
 
 
 Structure of the :code:`preview` parameter value
@@ -68,7 +68,7 @@ previewing is disabled in this case.
 Enabling data preview
 =====================
 
-In order to change the input data dimensions and accelerate the processing 
+In order to change the input data dimensions and accelerate the processing
 pipeline, one can do two of the following operations.
 
 .. note:: Although this is optional, by doing this the size of the reconstructed
@@ -87,7 +87,7 @@ Before cropping |pic1| and after |pic2|
 
 
 1. Reduce the size of the vertical dimension (detector- `Y`) by removing blank regions in your data (top and bottom cropping),
-   see :numref:`fig_dimsdataY`. The blank areas, if any, can be established by looking through the sequence of raw projections. 
+   see :numref:`fig_dimsdataY`. The blank areas, if any, can be established by looking through the sequence of raw projections.
 
    .. code-block:: yaml
 
@@ -109,10 +109,10 @@ Before cropping |pic1| and after |pic2|
 
 2. Reduce the size of the horizontal dimension (detector- `X`) by removing blank regions in your data (cropping the left and right sides),
    see :numref:`fig_dimsdataX`.
-   
+
    .. warning::
     Please be aware that cropping this dimension can create issues with the automatic centering
-    and potentially lead to reconstruction artefacts, especially if iterative methods are used. 
+    and potentially lead to reconstruction artefacts, especially if iterative methods are used.
     It is general practice to be more conservative with the cropping of the `X`
     detector dimension.
 
@@ -124,7 +124,7 @@ Before cropping |pic1| and after |pic2|
            stop: 2000
 
    In Python this will be interpreted as :code:`[:,:,100:2000]`.
-    
+
 .. _fig_dimsdataX:
 .. figure::  ../../_static/preview/dims_prevX.svg
     :scale: 55 %

@@ -4,13 +4,18 @@ channels:
   - anaconda
   - httomo
 dependencies:
-  - conda-forge::click
+  - conda-forge::tomopy==1.15
+  - httomo::httomolib==2.0
+  - conda-forge::click>=8.1.3
   - conda-forge::mpi4py>=3.1
-  - conda-forge::h5py==3.8.0[build=*openmpi*]
+  - conda-forge::h5py=*=*mpi_openmpi*
   - conda-forge::pyyaml
-  - conda-forge::numpy<1.24
+  - conda-forge::numpy<=1.25
   - conda-forge::python
-  - conda-forge::tomopy
   - conda-forge::numexpr>=2.8.4
   - anaconda::ipython
-  - httomo::httomolib
+  - anaconda::loguru
+  - conda-forge::graypy
+  - conda-forge::plumbum
+  - conda-forge::tqdm
+  - conda-forge::typing_extensions

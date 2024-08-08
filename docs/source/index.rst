@@ -7,7 +7,7 @@
     :maxdepth: 2
     :glob:
 
-    introduction/about    
+    introduction/about
     explanation/templates
     explanation/process_list
     explanation/faq
@@ -50,7 +50,7 @@
     :glob:
 
     pipelines/yaml
-    
+
 .. _utilities_content:
 
 .. toctree::
@@ -66,5 +66,5 @@
     :caption: Developers
     :maxdepth: 2
 
-    developers/how_to_contribute    
+    developers/how_to_contribute
     developers/memory_calculation

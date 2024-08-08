@@ -11,8 +11,10 @@ from mpi4py import MPI
 from loguru import logger
 
 import httomo.globals
+from httomo.cli_utils import is_sweep_pipeline
 from httomo.logger import setup_logger
 from httomo.monitors import MONITORS_MAP, make_monitors
+from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.transform_layer import TransformLayer
 from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
@@ -38,11 +40,12 @@ def main():
 @click.argument(
     "in_data_file",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    required=False, default=None,
+    required=False,
+    default=None,
 )
-def check(yaml_config: Path, in_data_file: Path = None):
+def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     """Check a YAML pipeline file for errors."""
-    in_data = str(in_data_file) if isinstance(in_data_file, PurePath) else None
+    in_data = in_data_file if isinstance(in_data_file, PurePath) else None
     return validate_yaml_config(yaml_config, in_data)
 
 
@@ -84,27 +87,29 @@ def check(yaml_config: Path, in_data_file: Path = None):
     "--max-cpu-slices",
     type=click.INT,
     default=64,
-    help="Maximum number of slices to use for a block for CPU-only sections (default: 64)"
+    help="Maximum number of slices to use for a block for CPU-only sections (default: 64)",
 )
 @click.option(
     "--max-memory",
     type=click.STRING,
     default="0",
-    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)"
+    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)",
 )
 @click.option(
     "--monitor",
     type=click.STRING,
     multiple=True,
     default=[],
-    help=("Add monitor to the runner (can be given multiple times). " +
-          f"Available monitors: {', '.join(MONITORS_MAP.keys())}")
+    help=(
+        "Add monitor to the runner (can be given multiple times). "
+        + f"Available monitors: {', '.join(MONITORS_MAP.keys())}"
+    ),
 )
 @click.option(
     "--monitor-output",
-    type=click.File('w'),
+    type=click.File("w"),
     default=sys.stdout,
-    help="File to store the monitoring output. Defaults to '-', which denotes stdout"
+    help="File to store the monitoring output. Defaults to '-', which denotes stdout",
 )
 @click.option(
     "--syslog-host",
@@ -117,6 +122,12 @@ def check(yaml_config: Path, in_data_file: Path = None):
     type=click.INT,
     default=514,
     help="Port on the host the syslog server is running on",
+)
+@click.option(
+    "--frames-per-chunk",
+    type=click.IntRange(0),
+    default=1,
+    help="Number of frames per-chunk in intermediate data (0 = write as contiguous)",
 )
 def run(
     in_data_file: Path,
@@ -132,16 +143,14 @@ def run(
     monitor_output: TextIO,
     syslog_host: str,
     syslog_port: int,
+    frames_per_chunk: int,
 ):
     """Run a pipeline defined in YAML on input data."""
+    httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
 
-    # we use half the memory for blocks since we typically have inputs/output
-    memory_limit = transform_limit_str_to_bytes(max_memory) // 2
-
-    if max_cpu_slices < 1:
-        raise ValueError("max-cpu-slices must be greater or equal to 1")
-    httomo.globals.MAX_CPU_SLICES = max_cpu_slices
-
+    does_contain_sweep = is_sweep_pipeline(yaml_config)
+    global_comm = MPI.COMM_WORLD
+    method_wrapper_comm = global_comm
     httomo.globals.SYSLOG_SERVER = syslog_host
     httomo.globals.SYSLOG_PORT = syslog_port
 
@@ -153,58 +162,48 @@ def run(
     else:
         httomo.globals.run_out_dir = out_dir.joinpath(create_folder)
 
-    comm = MPI.COMM_WORLD
-    if comm.rank == 0:
-        # Create timestamped output directory
+    # Various initialisation tasks
+    if global_comm.rank == 0:
         Path.mkdir(httomo.globals.run_out_dir, exist_ok=True)
-
-        # Copy YAML pipeline file to output directory
         copy(yaml_config, httomo.globals.run_out_dir)
-
     setup_logger(Path(httomo.globals.run_out_dir))
 
-    # try to access the GPU with the ID given
-    try:
-        import cupy as cp
-
-        gpu_count = cp.cuda.runtime.getDeviceCount()
-
-        if gpu_id != -1:
-            if gpu_id not in range(0, gpu_count):
-                raise ValueError(
-                    f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
-                )
-
-            cp.cuda.Device(gpu_id).use()
-
-        httomo.globals.gpu_id = gpu_id
-
-    except ImportError:
-        pass  # silently pass and run if the CPU pipeline is given
-
     # instantiate UiLayer class for pipeline build
-    init_UiLayer = UiLayer(yaml_config, in_data_file, comm=comm)
+    init_UiLayer = UiLayer(yaml_config, in_data_file, comm=method_wrapper_comm)
     pipeline = init_UiLayer.build_pipeline()
 
     # perform transformations on pipeline
-    tr = TransformLayer(comm=comm, save_all=save_all)
+    tr = TransformLayer(comm=method_wrapper_comm, save_all=save_all)
     pipeline = tr.transform(pipeline)
 
-    # Run the pipeline using Taskrunner, with temp dir or reslice dir
-    mon = make_monitors(monitor)
-    ctx: AbstractContextManager = nullcontext(reslice_dir)
-    if reslice_dir is None:
-        ctx = tempfile.TemporaryDirectory()
-    with ctx as tmp_dir:
-        runner = TaskRunner(
-            pipeline,
-            Path(tmp_dir),
-            monitor=mon,
-            memory_limit_bytes=memory_limit,
-        )
-        runner.execute()
-        if mon is not None:
-            mon.write_results(monitor_output)
+    if not does_contain_sweep:
+        # we use half the memory for blocks since we typically have inputs/output
+        memory_limit = transform_limit_str_to_bytes(max_memory) // 2
+
+        if max_cpu_slices < 1:
+            raise ValueError("max-cpu-slices must be greater or equal to 1")
+        httomo.globals.MAX_CPU_SLICES = max_cpu_slices
+
+        _set_gpu_id(gpu_id)
+
+        # Run the pipeline using Taskrunner, with temp dir or reslice dir
+        mon = make_monitors(monitor, global_comm)
+        ctx: AbstractContextManager = nullcontext(reslice_dir)
+        if reslice_dir is None:
+            ctx = tempfile.TemporaryDirectory()
+        with ctx as tmp_dir:
+            runner = TaskRunner(
+                pipeline,
+                Path(tmp_dir),
+                global_comm,
+                monitor=mon,
+                memory_limit_bytes=memory_limit,
+            )
+            runner.execute()
+            if mon is not None:
+                mon.write_results(monitor_output)
+    else:
+        ParamSweepRunner(pipeline).execute()
 
 
 def _check_yaml(yaml_config: Path, in_data: Path):
@@ -225,3 +224,23 @@ def transform_limit_str_to_bytes(limit_str: str):
             return int(limit_str)
     except ValueError:
         raise ValueError(f"invalid memory limit string {limit_str}")
+
+
+def _set_gpu_id(gpu_id: int):
+    try:
+        import cupy as cp
+
+        gpu_count = cp.cuda.runtime.getDeviceCount()
+
+        if gpu_id != -1:
+            if gpu_id not in range(0, gpu_count):
+                raise ValueError(
+                    f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
+                )
+
+            cp.cuda.Device(gpu_id).use()
+
+        httomo.globals.gpu_id = gpu_id
+
+    except ImportError:
+        pass  # silently pass and run if the CPU pipeline is given

@@ -13,7 +13,8 @@ class Section:
 
     A new section is added in with the following conditions:
     - the pattern changed (sino->proj or vice versa)
-    - a side output of a previous method in the same section is referenced"""
+    - a side output of a previous method in the same section is referenced
+    - a more than one padding method is included"""
 
     def __init__(
         self,
@@ -21,11 +22,13 @@ class Section:
         max_slices: int,
         methods: List[MethodWrapper],
         is_last: bool = False,
+        padding: bool = False,
     ):
         self.pattern = pattern
         self.max_slices = max_slices
         self.methods = methods
         self.is_last = is_last
+        self.padding = padding
 
     def __iter__(self) -> Iterator[MethodWrapper]:
         return iter(self.methods)
@@ -53,6 +56,7 @@ def sectionize(pipeline: Pipeline) -> List[Section]:
     # loop carried variables, to build up the sections
     current_pattern: Pattern = pipeline.loader_pattern
     current_methods: List[MethodWrapper] = []
+    has_padding_method: bool = False
 
     def references_previous_method(method: MethodWrapper) -> bool:
         # find output references in the method's parameters
@@ -63,14 +67,22 @@ def sectionize(pipeline: Pipeline) -> List[Section]:
                 return True
         return False
 
+    def is_second_padded_method(method: MethodWrapper) -> bool:
+        return has_padding_method and method.padding
+
     def finish_section():
         sections.append(Section(current_pattern, 0, current_methods))
+        if has_padding_method:
+            sections[-1].padding = True
 
     for method in pipeline:
-        if not is_pattern_compatible(
-            current_pattern, method.pattern
-        ) or references_previous_method(method):
+        if (
+            not is_pattern_compatible(current_pattern, method.pattern)
+            or references_previous_method(method)
+            or is_second_padded_method(method)
+        ):
             finish_section()
+            has_padding_method = False
             if method.pattern != Pattern.all:
                 current_pattern = method.pattern
             current_methods = [method]
@@ -78,6 +90,7 @@ def sectionize(pipeline: Pipeline) -> List[Section]:
             current_methods.append(method)
             if current_pattern == Pattern.all:
                 current_pattern = method.pattern
+        has_padding_method = has_padding_method or method.padding
 
     finish_section()
     sections[-1].is_last = True

@@ -28,7 +28,7 @@
     drop: 20
   id: centering
   side_outputs:
-    cor: centre_of_rotation  
+    cor: centre_of_rotation
 - method: remove_stripe_fw
   module_path: tomopy.prep.stripe
   parameters:

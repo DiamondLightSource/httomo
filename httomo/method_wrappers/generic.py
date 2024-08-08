@@ -1,7 +1,6 @@
 import httomo.globals
-from httomo.data import mpiutil
-from httomo.runner.dataset import DataSetBlock
-from httomo.runner.gpu_utils import gpumem_cleanup
+from httomo.block_interfaces import T, Block
+from httomo.runner.gpu_utils import get_gpu_id, gpumem_cleanup
 from httomo.runner.method_wrapper import (
     GpuTimeInfo,
     MethodParameterDictType,
@@ -113,6 +112,7 @@ class GenericMethodWrapper(MethodWrapper):
         self._output_dims_change = self._query.get_output_dims_change()
         self._implementation = self._query.get_implementation()
         self._memory_gpu = self._query.get_memory_gpu_params()
+        self._padding = self._query.padding()
         self._save_result = (
             self._query.save_result_default() if save_result is None else save_result
         )
@@ -121,13 +121,12 @@ class GenericMethodWrapper(MethodWrapper):
             raise ValueError("GPU is not available, please use only CPU methods")
 
         self._side_output: Dict[str, Any] = dict()
-        
+
         self._gpu_time_info = GpuTimeInfo()
 
         if gpu_enabled:
-            self._num_gpus = xp.cuda.runtime.getDeviceCount()
             _id = httomo.globals.gpu_id
-            self._gpu_id = mpiutil.local_rank % self._num_gpus if _id == -1 else _id
+            self._gpu_id = get_gpu_id() if _id == -1 else _id
 
     @property
     def comm(self) -> Comm:
@@ -168,7 +167,7 @@ class GenericMethodWrapper(MethodWrapper):
     @property
     def is_gpu(self) -> bool:
         return not self.is_cpu
-    
+
     @property
     def gpu_time(self) -> GpuTimeInfo:
         return self._gpu_time_info
@@ -219,10 +218,14 @@ class GenericMethodWrapper(MethodWrapper):
         Otherwise return None."""
         return None
 
+    @property
+    def padding(self) -> bool:
+        return self._padding
+
     def _build_kwargs(
         self,
         dict_params: MethodParameterDictType,
-        dataset: Optional[DataSetBlock] = None,
+        dataset: Optional[Block] = None,
     ) -> Dict[str, Any]:
         # first parameter is always the data (if given)
         ret: Dict[str, Any] = dict()
@@ -240,11 +243,15 @@ class GenericMethodWrapper(MethodWrapper):
             elif p == "gpu_id":
                 assert gpu_enabled, "methods with gpu_id parameter require GPU support"
                 ret[p] = self._gpu_id
-            elif p == 'axis' and p in remaining_dict_params and remaining_dict_params[p] == 'auto':
+            elif (
+                p == "axis"
+                and p in remaining_dict_params
+                and remaining_dict_params[p] == "auto"
+            ):
                 ret[p] = self.pattern.value
                 pass
             elif p in remaining_dict_params:
-                ret[p] = remaining_dict_params[p]            
+                ret[p] = remaining_dict_params[p]
             elif p in self._params_with_defaults:
                 pass
             else:
@@ -265,7 +272,7 @@ class GenericMethodWrapper(MethodWrapper):
             ret[k] = v
         return ret
 
-    def execute(self, block: DataSetBlock) -> DataSetBlock:
+    def execute(self, block: T) -> T:
         """Execute functions for external packages.
 
         Developer note: Derived classes may override this function or any of the methods
@@ -274,13 +281,13 @@ class GenericMethodWrapper(MethodWrapper):
         Parameters
         ----------
 
-        block: DataSetBlock
+        block: T (implements `Block`)
             A numpy or cupy dataset, mutable (method might work in-place).
 
         Returns
         -------
 
-        DataSetBlock
+        T (implements `Block`)
             A CPU or GPU-based dataset object with the output
         """
 
@@ -288,7 +295,9 @@ class GenericMethodWrapper(MethodWrapper):
         block = self._transfer_data(block)
         with catch_gputime() as t:
             block = self._preprocess_data(block)
-            args = self._build_kwargs(self._transform_params(self._config_params), block)
+            args = self._build_kwargs(
+                self._transform_params(self._config_params), block
+            )
             block = self._run_method(block, args)
             block = self._postprocess_data(block)
 
@@ -296,17 +305,17 @@ class GenericMethodWrapper(MethodWrapper):
 
         return block
 
-    def _run_method(self, block: DataSetBlock, args: Dict[str, Any]) -> DataSetBlock:
+    def _run_method(self, block: T, args: Dict[str, Any]) -> T:
         """Runs the actual method - override if special handling is required
         Or side outputs are produced."""
         ret = self._method(**args)
         block = self._process_return_type(ret, block)
         return block
 
-    def _process_return_type(self, ret: Any, input_block: DataSetBlock) -> DataSetBlock:
-        """Checks return type of method call and assigns/creates return DataSetBlock object.
-        Override this method if a return type different from ndarray is produced and
-        needs to be processed in some way.
+    def _process_return_type(self, ret: Any, input_block: T) -> T:
+        """Checks return type of method call and assigns/creates a `T` object that
+        implements `Block` (the same type `T` that was given as input). Override this method if
+        a return type different from ndarray is produced and needs to be processed in some way.
         """
         if type(ret) != np.ndarray and type(ret) != xp.ndarray:
             raise ValueError(
@@ -323,7 +332,7 @@ class GenericMethodWrapper(MethodWrapper):
         follow in the pipeline"""
         return {v: self._side_output[k] for k, v in self._output_mapping.items()}
 
-    def _transfer_data(self, block: DataSetBlock) -> DataSetBlock:
+    def _transfer_data(self, block: T) -> T:
         if not self.cupyrun:
             with catchtime() as t:
                 block.to_cpu()
@@ -351,12 +360,12 @@ class GenericMethodWrapper(MethodWrapper):
         dictionary, for example to rename some of them or inspect them in some way"""
         return dict_params
 
-    def _preprocess_data(self, block: DataSetBlock) -> DataSetBlock:
+    def _preprocess_data(self, block: T) -> T:
         """Hook for derived classes to implement proprocessing steps, after the data has been
         transferred and before the method is called"""
         return block
 
-    def _postprocess_data(self, block: DataSetBlock) -> DataSetBlock:
+    def _postprocess_data(self, block: T) -> T:
         """Hook for derived classes to implement postprocessing steps, after the method has been
         called"""
         return block
@@ -371,6 +380,12 @@ class GenericMethodWrapper(MethodWrapper):
             )
 
         return non_slice_dims_shape
+
+    def calculate_padding(self) -> Tuple[int, int]:
+        """Calculate the padding required by the method"""
+        if self.padding:
+            return self._query.calculate_padding(**self.config_params)
+        return (0, 0)
 
     def calculate_max_slices(
         self,

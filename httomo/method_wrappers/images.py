@@ -1,6 +1,6 @@
 import httomo.globals
+from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.method_wrapper import GpuTimeInfo
 from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import _get_slicing_dim, catchtime, xp
@@ -44,16 +44,13 @@ class ImagesWrapper(GenericMethodWrapper):
         self["out_dir"] = out_dir if out_dir is not None else httomo.globals.run_out_dir
         if "comm_rank" in self.parameters:
             raise ValueError(
-                "save_to_images with the comm_rank parameter is broken. " +
-                "Please upgrade to the latest version, taking an offset parameter"
+                "save_to_images with the comm_rank parameter is broken. "
+                + "Please upgrade to the latest version, taking an offset parameter"
             )
 
     # Images execute is leaving original data on the device where it is,
     # but gives the method a CPU copy of the data.
-    def execute(
-        self,
-        block: DataSetBlock,
-    ) -> DataSetBlock:
+    def execute(self, block: T) -> T:
         self._gpu_time_info = GpuTimeInfo()
         config_params = self._config_params
         if "offset" in self.parameters:
@@ -61,7 +58,7 @@ class ImagesWrapper(GenericMethodWrapper):
                 **self._config_params,
                 "offset": block.global_index[_get_slicing_dim(self.pattern) - 1],
             }
-            
+
         args = self._build_kwargs(self._transform_params(config_params), block)
         if block.is_gpu:
             with catchtime() as t:

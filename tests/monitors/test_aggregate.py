@@ -1,6 +1,9 @@
 from io import StringIO
+
 import pytest
+from mpi4py import MPI
 from pytest_mock import MockerFixture
+
 from httomo.monitors import make_monitors
 from httomo.monitors.aggregate import AggregateMonitoring
 
@@ -11,8 +14,19 @@ def test_aggregate_passes_on_method(mocker: MockerFixture):
     mon1 = mocker.create_autospec(MonitoringInterface, instance=True)
     mon2 = mocker.create_autospec(MonitoringInterface, instance=True)
     agg = AggregateMonitoring([mon1, mon2])
-    args = ("method", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 
-            42.0, 3.2, 1.2, 1.1)
+    args = (
+        "method",
+        "module",
+        "task",
+        0,
+        (1, 2, 3),
+        (0, 0, 0),
+        (10, 0, 0),
+        42.0,
+        3.2,
+        1.2,
+        1.1,
+    )
     agg.report_method_block(*args)
 
     mon1.report_method_block.assert_called_once_with(*args)
@@ -72,7 +86,7 @@ def test_make_monitors_2(mocker: MockerFixture):
         "httomo.monitors.MONITORS_MAP", {"m1": moncls1, "m2": moncls2, "m3": moncls3}
     )
 
-    mon = make_monitors(["m1", "m2"])
+    mon = make_monitors(["m1", "m2"], MPI.COMM_WORLD)
     assert isinstance(mon, AggregateMonitoring)
     assert len(mon._monitors) == 2
     moncls1.assert_called_once()
@@ -86,10 +100,10 @@ def test_make_monitors_unknown(mocker: MockerFixture):
     mocker.patch("httomo.monitors.MONITORS_MAP", {})
 
     with pytest.raises(ValueError) as e:
-        make_monitors(["m1"])
+        make_monitors(["m1"], MPI.COMM_WORLD)
 
     assert "Unknown monitor 'm1'" in str(e)
 
 
 def test_make_monitors_empty():
-    assert make_monitors([]) is None
+    assert make_monitors([], MPI.COMM_WORLD) is None

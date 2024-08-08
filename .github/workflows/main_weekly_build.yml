@@ -1,0 +1,89 @@
+name: HTTomo main build (weekly)
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # At 00:00 on Monday
+
+jobs:
+
+  install-httomo-main-test-iris:
+    runs-on: iris-gpu
+    container:
+      image: nvidia/cuda:11.6.2-devel-ubi8
+      env:
+        NVIDIA_VISIBLE_DEVICES: ${{ env.NVIDIA_VISIBLE_DEVICES }}
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Create conda environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: conda/environment.yml
+          environment-name: httomo
+          post-cleanup: 'all'
+          init-shell: bash
+          
+      - name: Install httomo-main
+        run: |
+          micromamba activate httomo
+          pip install .[dev]
+          micromamba list
+                
+      - name: Generate yaml templates
+        run: |
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/httomo_modules.yaml -o ./httomo/yaml_templates/httomo
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./httomo/yaml_templates/tomopy
+          python ./scripts/yaml_unsupported_tomopy_remove.py -t ./httomo/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./httomo/yaml_templates/httomolib
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./httomo/yaml_templates/httomolibgpu
+
+      - name: Run tests
+        run: |
+          pytest tests/
+
+  conda-upload:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+        with:
+          ref: "main"
+          fetch-depth: 0
+
+      # setup Python 3.10
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies with Conda
+        run: |
+          $CONDA/bin/conda install -c conda-forge conda-build
+          $CONDA/bin/conda install -c conda-forge anaconda-client
+          $CONDA/bin/conda update conda
+          $CONDA/bin/conda update conda-build
+          $CONDA/bin/conda list
+
+      - name: Decrypt a secret
+        run: ./.scripts/decrypt_secret.sh
+        env:
+          LARGE_SECRET_PASSPHRASE: ${{ secrets.LARGE_SECRET_PASSPHRASE }}
+
+      - name: Build and upload the package to httomo conda cloud
+        env:
+          LABEL: main
+        run: |
+          chmod +x ./.scripts/conda_upload.sh
+          ./.scripts/conda_upload.sh
+

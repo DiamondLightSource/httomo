@@ -1,5 +1,0 @@
-- method: add_jitter
-  module_path: tomopy.prep.alignment
-  parameters:
-    low: 0
-    high: 1

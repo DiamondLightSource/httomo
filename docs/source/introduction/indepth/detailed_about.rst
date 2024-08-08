@@ -5,15 +5,15 @@ Detailed concepts
 
 Here we present more detailed concepts of HTTomo's framework, such as,
 :ref:`info_sections`, :ref:`info_reslice`, :ref:`info_data` (:ref:`chunks_data`, :ref:`blocks_data`), :ref:`info_wrappers`,
-gpu-memory aware processing and others.
+:ref:`info_memory_estimators`, and others.
 
 .. toctree::
    :maxdepth: 2
-   
+
    sections
    reslice
    wrappers
-
+   memory_estimators
 
 .. _info_data:
 
@@ -37,6 +37,6 @@ of data splitting produces a piece of data called a *block*.
 
 .. toctree::
    :maxdepth: 2
-   
+
    chunks
    blocks

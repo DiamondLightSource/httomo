@@ -1,6 +1,0 @@
-- method: distortion_correction_proj
-  module_path: tomopy.prep.alignment
-  parameters:
-    xcenter: REQUIRED
-    ycenter: REQUIRED
-    list_fact: REQUIRED

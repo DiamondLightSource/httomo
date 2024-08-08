@@ -5,6 +5,7 @@ misc:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [2.1]
@@ -14,6 +15,7 @@ misc:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [2.1]
@@ -24,6 +26,7 @@ misc:
       output_dims_change: True
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -32,12 +35,14 @@ misc:
       pattern: all
       output_dims_change: True
       implementation: gpu_cupy
+      padding: False
   rescale:
     rescale_to_int:
       pattern: all
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -46,9 +51,10 @@ prep:
   normalize:
     normalize:
       pattern: projection
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -56,18 +62,20 @@ prep:
   phase:
     paganin_filter_tomopy:
       pattern: projection
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
         - methods: [module]
     paganin_filter_savu:
       pattern: projection
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -75,9 +83,10 @@ prep:
   alignment:
     distortion_correction_proj_discorpy:
       pattern: projection
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [1.2]
@@ -85,9 +94,10 @@ prep:
   stripe:
     remove_stripe_based_sorting:
       pattern: sinogram
-      output_dims_change: False      
+      output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [1.17]
@@ -97,6 +107,7 @@ prep:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -105,10 +116,12 @@ prep:
       pattern: sinogram
       output_dims_change: False
       implementation: gpu_cupy
+      save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
-        - methods: [module]     
+        - methods: [module]
 recon:
   algorithm:
     FBP:
@@ -116,6 +129,7 @@ recon:
       output_dims_change: True
       implementation: gpu_cupy
       save_result_default: True
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -125,6 +139,7 @@ recon:
       output_dims_change: True
       implementation: gpu_cupy
       save_result_default: True
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -134,6 +149,7 @@ recon:
       output_dims_change: True
       implementation: gpu_cupy
       save_result_default: True
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [None]
@@ -144,6 +160,7 @@ recon:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [0]
@@ -153,6 +170,7 @@ recon:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [0]
@@ -162,6 +180,7 @@ recon:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
+      padding: False
       memory_gpu:
         - datasets: [tomo]
         - multipliers: [0]

@@ -135,6 +135,7 @@ def cufft_estimate_1d(nx: int, fft_type: CufftType, batch: int = 1):
     `cufftEstimate1d <http://docs.nvidia.com/cuda/cufft/#function-cufftestimate1d>`_
     """
     worksize = _types.worksize()
+    assert _libcufft is not None
     status = _libcufft.cufftEstimate1d(
         nx, fft_type.value, batch, ctypes.byref(worksize)
     )
@@ -160,6 +161,7 @@ def cufft_estimate_2d(nx: int, ny: int, fft_type: CufftType):
     `cufftEstimate2d <http://docs.nvidia.com/cuda/cufft/#function-cufftestimate2d>`_
     """
     worksize = _types.worksize()
+    assert _libcufft is not None
     status = _libcufft.cufftEstimate2d(nx, ny, fft_type.value, ctypes.byref(worksize))
     cufftCheckStatus(status)
     return worksize.value

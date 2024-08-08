@@ -59,7 +59,7 @@ def make_method_wrapper(
 
     # go throw all subclasses of GenericMethodWrapper and see which one should be instantiated,
     # based on module path and method name
-    cls: type[GenericMethodWrapper] = GenericMethodWrapper
+    cls = GenericMethodWrapper
     for c in GenericMethodWrapper.__subclasses__():
         if c.should_select_this_class(module_path, method_name):
             assert cls == GenericMethodWrapper, (

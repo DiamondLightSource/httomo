@@ -1,10 +1,12 @@
+import logging
 import pathlib
 from typing import Tuple
 import numpy as np
 import h5py
 
+import httomo
 from httomo.runner.dataset import DataSetBlock
-from httomo.utils import xp
+from httomo.utils import log_once, xp
 
 __all__ = ["calculate_stats", "save_intermediate_data"]
 
@@ -36,15 +38,43 @@ def save_intermediate_data(
     data: np.ndarray,
     global_shape: Tuple[int, int, int],
     global_index: Tuple[int, int, int],
+    slicing_dim: int,
     file: h5py.File,
+    frames_per_chunk: int,
     path: str,
     detector_x: int,
     detector_y: int,
     angles: np.ndarray,
 ) -> None:
     """Saves intermediate data to a file, including auxiliary"""
+    if frames_per_chunk > data.shape[slicing_dim]:
+        warn_message = (
+            f"frames_per_chunk={frames_per_chunk} exceeds number of elements in "
+            f"slicing dim={slicing_dim} of data with shape {data.shape}. Falling "
+            "back to 1 frame per-chunk"
+        )
+        log_once(warn_message, logging.DEBUG)
+        frames_per_chunk = 1
+
+    if frames_per_chunk > 0:
+        chunk_shape = [0, 0, 0]
+        chunk_shape[slicing_dim] = frames_per_chunk
+        DIMS = [0, 1, 2]
+        non_slicing_dims = list(set(DIMS) - set([slicing_dim]))
+        for dim in non_slicing_dims:
+            chunk_shape[dim] = global_shape[dim]
+        chunk_shape = tuple(chunk_shape)
+    else:
+        chunk_shape = None
+
     # only create if not already present - otherwise return existing dataset
-    dataset = file.require_dataset(path, global_shape, data.dtype, exact=True)
+    dataset = file.require_dataset(
+        path,
+        global_shape,
+        data.dtype,
+        exact=True,
+        chunks=chunk_shape,
+    )
     _save_dataset_data(dataset, data, global_shape, global_index)
     _save_auxiliary_data(file, angles, detector_x, detector_y)
 

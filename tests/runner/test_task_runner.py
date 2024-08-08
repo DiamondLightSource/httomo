@@ -1,10 +1,12 @@
 from os import PathLike
-from typing import List
+from typing import List, Tuple
 from unittest.mock import ANY, call
+
 import pytest
 import numpy as np
+from mpi4py import MPI
 from pytest_mock import MockerFixture
-import httomo
+
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
@@ -13,8 +15,13 @@ from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import Section, sectionize
-from httomo.runner.task_runner import TaskRunner
-from httomo.utils import Pattern, xp, gpu_enabled
+from httomo.runner.task_runner import TaskRunner, calculate_next_chunk_shape
+from httomo.utils import (
+    Pattern,
+    make_3d_shape_from_shape,
+    xp,
+    gpu_enabled,
+)
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from ..testing_utils import make_test_loader, make_test_method
 
@@ -34,7 +41,7 @@ def test_check_params_for_sweep_raises_exception(
             )
         ],
     )
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     with pytest.raises(ValueError) as e:
         t._check_params_for_sweep()
 
@@ -43,7 +50,7 @@ def test_can_load_datasets(mocker: MockerFixture, tmp_path: PathLike):
     loader = make_test_loader(mocker)
     mksrc = mocker.patch.object(loader, "make_data_source")
     p = Pipeline(loader=loader, methods=[make_test_method(mocker)])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
 
     mksrc.assert_called()
@@ -56,34 +63,13 @@ def test_can_determine_max_slices_no_gpu_estimator(
     loader = make_test_loader(mocker, dummy_block)
     method = make_test_method(mocker, gpu=True, memory_gpu=[])
     p = Pipeline(loader=loader, methods=[method])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
     s = sectionize(p)
 
     t.determine_max_slices(s[0], 0)
 
     assert s[0].max_slices == dummy_block.chunk_shape[0]
-
-
-@pytest.mark.parametrize("slices", [10, 500])
-def test_can_determine_max_slices_empty_section(
-    mocker: MockerFixture, tmp_path: PathLike, slices: int
-):
-    data = np.ones((slices, 10, 10), dtype=np.float32)
-    aux = AuxiliaryData(angles=np.ones(slices, dtype=np.float32))
-    block = DataSetBlock(data, aux)
-
-    loader = make_test_loader(mocker, block)
-    method = make_test_method(mocker, gpu=True, memory_gpu=[])
-    p = Pipeline(loader=loader, methods=[method])
-    t = TaskRunner(p, reslice_dir=tmp_path)
-    t._prepare()
-    s = sectionize(p)
-    s.insert(0, Section(pattern=Pattern.sinogram, max_slices=0, methods=[]))
-
-    t.determine_max_slices(s[0], 0)
-
-    assert s[0].max_slices == min(slices, httomo.globals.MAX_CPU_SLICES)
 
 
 @pytest.mark.skipif(
@@ -124,7 +110,7 @@ def test_can_determine_max_slices_with_gpu_estimator(
         )
         methods.append(method)
     p = Pipeline(loader=loader, methods=methods)
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
     s = sectionize(
         p,
@@ -168,13 +154,17 @@ def test_can_determine_max_slices_with_gpu_estimator_and_cpu_limit(
         )
         calc_max_slices_mocks.append(
             mocker.patch.object(
-                method, "calculate_max_slices", return_value=(10, limit if limit != 0 else 1e7)
+                method,
+                "calculate_max_slices",
+                return_value=(10, limit if limit != 0 else 1e7),
             )
         )
         methods.append(method)
     p = Pipeline(loader=loader, methods=methods)
-    
-    t = TaskRunner(p, reslice_dir=tmp_path, memory_limit_bytes=limit)
+
+    t = TaskRunner(
+        p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, memory_limit_bytes=limit
+    )
     t._prepare()
     s = sectionize(p)
     shape = (dummy_block.shape[1], dummy_block.shape[2])
@@ -199,7 +189,7 @@ def test_can_determine_max_slices_with_cpu(
         method = make_test_method(mocker, gpu=False)
         methods.append(method)
     p = Pipeline(loader=loader, methods=methods)
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
     s = sectionize(p)
 
@@ -210,7 +200,6 @@ def test_can_determine_max_slices_with_cpu(
 def test_can_determine_max_slices_with_cpu_large(
     mocker: MockerFixture, tmp_path: PathLike
 ):
-    mocker.patch.object(httomo.globals, "MAX_CPU_SLICES", 16)
     data = np.ones((500, 10, 10), dtype=np.float32)
     aux = AuxiliaryData(angles=np.ones(500, dtype=np.float32))
     block = DataSetBlock(data, aux)
@@ -220,43 +209,44 @@ def test_can_determine_max_slices_with_cpu_large(
         method = make_test_method(mocker, gpu=False)
         methods.append(method)
     p = Pipeline(loader=loader, methods=methods)
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
     s = sectionize(p)
 
     t.determine_max_slices(s[0], 0)
-    assert s[0].max_slices == 16
+    assert s[0].max_slices == 64
 
 
 def test_append_side_outputs(mocker: MockerFixture, tmp_path: PathLike):
     p = Pipeline(make_test_loader(mocker), methods=[])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t.append_side_outputs({"answer": 42.0, "other": "xxx"})
     assert t.side_outputs == {"answer": 42.0, "other": "xxx"}
-    
+
 
 def test_calls_append_side_outputs_after_last_block(
-    mocker: MockerFixture, tmp_path: PathLike,
+    mocker: MockerFixture,
+    tmp_path: PathLike,
 ):
     GLOBAL_SHAPE = (500, 10, 10)
     CHUNK_SHAPE = GLOBAL_SHAPE
     data = np.ones(GLOBAL_SHAPE, dtype=np.float32)
     aux = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
     block1 = DataSetBlock(
-        data=data[:GLOBAL_SHAPE[0] // 2, :, :],
+        data=data[: GLOBAL_SHAPE[0] // 2, :, :],
         aux_data=aux,
         block_start=0,
         chunk_start=0,
         chunk_shape=CHUNK_SHAPE,
-        global_shape=GLOBAL_SHAPE
+        global_shape=GLOBAL_SHAPE,
     )
     block2 = DataSetBlock(
-        data=data[GLOBAL_SHAPE[0] // 2:, :, :],
+        data=data[GLOBAL_SHAPE[0] // 2 :, :, :],
         aux_data=aux,
         block_start=CHUNK_SHAPE[0] // 2,
         chunk_start=0,
         chunk_shape=CHUNK_SHAPE,
-        global_shape=GLOBAL_SHAPE
+        global_shape=GLOBAL_SHAPE,
     )
 
     method = make_test_method(mocker)
@@ -266,13 +256,17 @@ def test_calls_append_side_outputs_after_last_block(
 
     loader = make_test_loader(mocker)
     p = Pipeline(loader=loader, methods=[method])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     spy = mocker.patch.object(t, "append_side_outputs")
     t._prepare()
-    t._execute_method(method, block1) # the first block shouldn't trigger a side output append call
+    t._execute_method(
+        method, block1
+    )  # the first block shouldn't trigger a side output append call
     assert spy.call_count == 0
 
-    t._execute_method(method, block2)  # the last block should trigger side output append call
+    t._execute_method(
+        method, block2
+    )  # the last block should trigger side output append call
     getmock.assert_called_once()
     spy.assert_called_once_with(side_outputs)
 
@@ -291,7 +285,7 @@ def test_update_side_inputs_updates_downstream_methods(
     setitem3 = mocker.patch.object(method3, "__setitem__")
 
     p = Pipeline(loader=loader, methods=[method1, method2, method3])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t.side_outputs = side_outputs
     t.set_side_inputs(method2)
     t.set_side_inputs(method3)
@@ -300,15 +294,18 @@ def test_update_side_inputs_updates_downstream_methods(
     method3_calls = [call("answer", 42), call("other", "xxx")]
     setitem3.assert_has_calls(method3_calls)
 
+
 def test_execute_method_updates_monitor(
     mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):
     loader = make_test_loader(mocker)
     method1 = make_test_method(mocker)
-    mocker.patch.object(method1, "gpu_time", GpuTimeInfo(kernel=42.0, device2host=1.0, host2device=2.0))
+    mocker.patch.object(
+        method1, "gpu_time", GpuTimeInfo(kernel=42.0, device2host=1.0, host2device=2.0)
+    )
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
     p = Pipeline(loader=loader, methods=[method1])
-    t = TaskRunner(p, reslice_dir=tmp_path, monitor=mon)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
     t._prepare()
     mocker.patch.object(method1, "execute", return_value=dummy_block)
     t._execute_method(method1, dummy_block)
@@ -324,7 +321,7 @@ def test_execute_method_updates_monitor(
         ANY,
         42.0,
         2.0,
-        1.0
+        1.0,
     )
 
 
@@ -337,7 +334,7 @@ def test_execute_section_calls_blockwise_execute_and_monitors(
     p = Pipeline(loader=loader, methods=[method])
     s = sectionize(p)
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
-    t = TaskRunner(p, reslice_dir=tmp_path, monitor=mon)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
     t._prepare()
     # make that do nothing
     mocker.patch.object(t, "determine_max_slices")
@@ -373,7 +370,7 @@ def test_execute_section_for_block(
     method2 = make_test_method(mocker, method_name="m2")
     p = Pipeline(loader=loader, methods=[method1, method2])
     s = sectionize(p)
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
     t._prepare()
     exec_method = mocker.patch.object(t, "_execute_method", return_value=dummy_block)
     t._execute_section_block(s[0], dummy_block)
@@ -398,7 +395,7 @@ def test_does_reslice_when_needed_and_reports_time(
     mocker.patch.object(method2, "execute", return_value=block2)
     p = Pipeline(loader=loader, methods=[method1, method2])
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
-    t = TaskRunner(p, reslice_dir=tmp_path, monitor=mon)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
 
     t.execute()
 
@@ -407,7 +404,7 @@ def test_does_reslice_when_needed_and_reports_time(
     assert t.sink is not None
     assert t.source.slicing_dim == 1
     assert t.sink.slicing_dim == 1
-    
+
     mon.report_total_time.assert_called_once()
 
 
@@ -423,7 +420,7 @@ def test_warns_with_multiple_reslices(
     method4 = make_test_method(mocker, method_name="m4", pattern=Pattern.sinogram)
     method5 = make_test_method(mocker, method_name="m5", pattern=Pattern.projection)
     p = Pipeline(loader=loader, methods=[method1, method2, method3, method4, method5])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
 
     spy = mocker.patch("httomo.runner.task_runner.log_once")
 
@@ -470,7 +467,7 @@ def test_warns_with_multiple_stores_from_side_outputs(
     )
 
     p = Pipeline(loader=loader, methods=[method1, method2, method3, method4, method5])
-    t = TaskRunner(p, reslice_dir=tmp_path)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
 
     spy = mocker.patch("httomo.runner.task_runner.log_once")
 
@@ -479,3 +476,128 @@ def test_warns_with_multiple_stores_from_side_outputs(
     spy.assert_called()
     args, _ = spy.call_args
     assert "Data saving or/and reslicing operation will be performed 4 times" in args[0]
+
+
+def test_determine_section_padding_no_padding_method_in_section(
+    mocker: MockerFixture,
+    tmp_path: PathLike,
+):
+    loader = make_test_loader(mocker)
+    method_1 = make_test_method(mocker=mocker, padding=False)
+    method_2 = make_test_method(mocker=mocker, padding=False)
+    method_3 = make_test_method(mocker=mocker, padding=False)
+
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[method_1, method_2, method_3],
+    )
+    runner = TaskRunner(pipeline=pipeline, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
+    sections = sectionize(pipeline)
+    section_padding = runner.determine_section_padding(sections[0])
+    assert section_padding == (0, 0)
+
+
+def test_determine_section_padding_one_padding_method_only_method_in_section(
+    mocker: MockerFixture,
+    tmp_path: PathLike,
+):
+    loader = make_test_loader(mocker)
+
+    PADDING = (3, 5)
+    padding_method = make_test_method(mocker=mocker, padding=True)
+    mocker.patch.object(
+        target=padding_method,
+        attribute="calculate_padding",
+        return_value=PADDING,
+    )
+
+    pipeline = Pipeline(loader=loader, methods=[padding_method])
+    runner = TaskRunner(pipeline=pipeline, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
+    sections = sectionize(pipeline)
+    section_padding = runner.determine_section_padding(sections[0])
+    assert section_padding == PADDING
+
+
+def test_determine_section_padding_one_padding_method_and_other_methods_in_section(
+    mocker: MockerFixture,
+    tmp_path: PathLike,
+):
+    loader = make_test_loader(mocker)
+
+    PADDING = (3, 5)
+    padding_method = make_test_method(mocker=mocker, padding=True)
+    mocker.patch.object(
+        target=padding_method,
+        attribute="calculate_padding",
+        return_value=PADDING,
+    )
+    method_1 = make_test_method(mocker=mocker, padding=False)
+    method_2 = make_test_method(mocker=mocker, padding=False)
+    method_3 = make_test_method(mocker=mocker, padding=False)
+
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[method_1, method_2, padding_method, method_3],
+    )
+    runner = TaskRunner(pipeline=pipeline, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
+
+    sections = sectionize(pipeline)
+    assert len(sections[0]) == 4
+
+    section_padding = runner.determine_section_padding(sections[0])
+    assert section_padding == PADDING
+
+
+@pytest.mark.parametrize(
+    "nprocs, rank, next_section_slicing_dim, next_section_padding",
+    [
+        (2, 1, 0, (0, 0)),
+        (2, 1, 0, (3, 5)),
+        (2, 1, 1, (0, 0)),
+        (2, 1, 1, (3, 5)),
+        (4, 2, 0, (0, 0)),
+        (4, 2, 0, (3, 5)),
+        (4, 2, 1, (0, 0)),
+        (4, 2, 1, (3, 5)),
+    ],
+    ids=[
+        "2procs-proj-to-proj_unpadded",
+        "2procs-proj-to-proj_padded",
+        "2procs-proj-to-sino_unpadded",
+        "2procs-proj-to-sino_padded",
+        "4procs-proj-to-proj_unpadded",
+        "4procs-proj-to-proj_padded",
+        "4procs-proj-to-sino_unpadded",
+        "4procs-proj-to-sino_padded",
+    ],
+)
+def test_calculate_next_chunk_shape(
+    nprocs: int,
+    rank: int,
+    next_section_slicing_dim: int,
+    next_section_padding: Tuple[int, int],
+    mocker: MockerFixture,
+):
+    GLOBAL_SHAPE = (1801, 2160, 2560)
+
+    # Define mock communicator that reflects the desired data splitting/distribution to be
+    # tested
+    mock_global_comm = mocker.create_autospec(spec=MPI.Comm, size=nprocs, rank=rank)
+
+    # The chunk shape for the next section should reflect the padding needed for that section
+    expected_next_chunk_shape: List[int] = list(GLOBAL_SHAPE)
+    start = round(GLOBAL_SHAPE[next_section_slicing_dim] / nprocs * rank)
+    stop = round(GLOBAL_SHAPE[next_section_slicing_dim] / nprocs * (rank + 1))
+    slicing_dim_len = stop - start
+    expected_next_chunk_shape[next_section_slicing_dim] = (
+        slicing_dim_len + next_section_padding[0] + next_section_padding[1]
+    )
+    next_section_chunk_shape = calculate_next_chunk_shape(
+        comm=mock_global_comm,
+        global_shape=GLOBAL_SHAPE,
+        next_section_slicing_dim=next_section_slicing_dim,
+        next_section_padding=next_section_padding,
+    )
+    assert next_section_chunk_shape == make_3d_shape_from_shape(
+        expected_next_chunk_shape
+    )

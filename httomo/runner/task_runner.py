@@ -1,13 +1,13 @@
 from itertools import islice
 import logging
 import time
-from typing import Any, Dict, Literal, Optional, List, Union
+from typing import Any, Dict, Literal, Optional, List, Tuple, Union
 import os
 
 import tqdm
 from mpi4py import MPI
 
-import httomo
+import httomo.globals
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.block_split import BlockSplitter
@@ -29,6 +29,7 @@ from httomo.utils import (
     log_exception,
     log_once,
     log_rank,
+    make_3d_shape_from_shape,
 )
 import numpy as np
 
@@ -40,12 +41,13 @@ class TaskRunner:
         self,
         pipeline: Pipeline,
         reslice_dir: os.PathLike,
+        comm: MPI.Comm,
         memory_limit_bytes: int = 0,
         monitor: Optional[MonitoringInterface] = None,
     ):
         self.pipeline = pipeline
         self.reslice_dir = reslice_dir
-        self.comm = MPI.COMM_WORLD
+        self.comm = comm
         self.monitor = monitor
 
         self.side_outputs: Dict[str, Any] = dict()
@@ -290,10 +292,19 @@ class TaskRunner:
 
     def determine_max_slices(self, section: Section, slicing_dim: int):
         assert self.source is not None
-        data_shape = self.source.chunk_shape
+        assert len(section) > 0, "Section should contain at least 1 method"
 
+        data_shape = self.source.chunk_shape
         max_slices = data_shape[slicing_dim]
-        if len(section) == 0:
+
+        # loop over all methods in section
+        has_gpu = False
+        for idx, m in enumerate(section):
+            if m.implementation in ["gpu", "gpu_cupy"] or m.is_gpu:
+                has_gpu = True
+
+        # if section consists of all cpu method then MAX_CPU_SLICES defines the block size
+        if not has_gpu:
             section.max_slices = min(httomo.globals.MAX_CPU_SLICES, max_slices)
             return
 
@@ -317,13 +328,11 @@ class TaskRunner:
         max_slices_methods = [max_slices] * len(section)
 
         # loop over all methods in section
-        has_gpu = False
         for idx, m in enumerate(section):
             if len(m.memory_gpu) == 0:
                 max_slices_methods[idx] = max_slices
                 continue
 
-            has_gpu = has_gpu or m.is_gpu
             output_dims = m.calculate_output_dims(non_slice_dims_shape)
             (slices_estimated, available_memory) = m.calculate_max_slices(
                 self.source.dtype,
@@ -333,9 +342,31 @@ class TaskRunner:
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims
 
-        if not has_gpu:
-            section.max_slices = min(
-                min(max_slices_methods), httomo.globals.MAX_CPU_SLICES
-            )
-        else:
-            section.max_slices = min(max_slices_methods)
+        section.max_slices = min(max_slices_methods)
+
+    def determine_section_padding(self, section: Section) -> Tuple[int, int]:
+        # NOTE: Assumes that only one method with padding will be in a section, which is
+        # consistent with the assumptions made by `section.sectionizer()`
+        for method in section.methods:
+            if method.padding:
+                return method.calculate_padding()
+        return (0, 0)
+
+
+def calculate_next_chunk_shape(
+    comm: MPI.Comm,
+    global_shape: Tuple[int, int, int],
+    next_section_slicing_dim: int,
+    next_section_padding: Tuple[int, int],
+) -> Tuple[int, int, int]:
+    """
+    Utility function for calculating the chunk shape (including padding) for the next section.
+    """
+    start = round((global_shape[next_section_slicing_dim] / comm.size) * comm.rank)
+    stop = round((global_shape[next_section_slicing_dim] / comm.size) * (comm.rank + 1))
+    next_section_slicing_dim_len = stop - start
+    shape = list(global_shape)
+    shape[next_section_slicing_dim] = (
+        next_section_slicing_dim_len + next_section_padding[0] + next_section_padding[1]
+    )
+    return make_3d_shape_from_shape(shape)

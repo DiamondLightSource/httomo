@@ -1,3 +1,0 @@
-- method: add_poisson
-  module_path: tomopy.sim.project
-  parameters: {}

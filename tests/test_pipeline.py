@@ -1,5 +1,3 @@
-import glob
-import os
 import re
 import subprocess
 from typing import Callable, List, Tuple
@@ -48,7 +46,13 @@ def _check_tif(files: List, number: int, shape: Tuple):
 
 
 def test_tomo_standard_testing_pipeline_output(
-    get_files: Callable, cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable,
+    cmd,
+    standard_data,
+    standard_loader,
+    testing_pipeline,
+    output_folder,
+    merge_yamls,
 ):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
@@ -80,13 +84,14 @@ def test_tomo_standard_testing_pipeline_output(
     #: will slow down the execution of the test suite.
     #: It will be worth moving the unit tests for the logger to a separate file
     #: once we generate different log files for each MPI process and we can compare them.
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
-
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    user_log_file = list(filter(lambda x: "user.log" in x, files))
+    assert len(verbose_log_file) == 1
+    assert len(user_log_file) == 1
+
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert f"{log_files[0]}" in verbose_log_contents
+    assert f"{user_log_file[0]}" in verbose_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
@@ -94,7 +99,9 @@ def test_tomo_standard_testing_pipeline_output(
     assert "Data shape is (180, 3, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_cpu1_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline1, output_folder):
+def test_run_pipeline_cpu1_yaml(
+    get_files: Callable, cmd, standard_data, yaml_cpu_pipeline1, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline1)
@@ -115,7 +122,7 @@ def test_run_pipeline_cpu1_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert f"{log_files[0]}" in concise_log_contents
+    assert f"{concise_log_file[0]}" in concise_log_contents
     assert "The center of rotation is 79.5" in concise_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
@@ -124,7 +131,9 @@ def test_run_pipeline_cpu1_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_cpu1_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline1, output_folder):
+def test_run_pipeline_cpu1_py(
+    get_files: Callable, cmd, standard_data, python_cpu_pipeline1, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_cpu_pipeline1)
@@ -137,13 +146,13 @@ def test_run_pipeline_cpu1_py(get_files: Callable, cmd, standard_data, python_cp
 
     _check_tif(files, 128, (160, 160))
 
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
-
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    user_log_file = list(filter(lambda x: "user.log" in x, files))
+    assert len(verbose_log_file) == 1
+    assert len(user_log_file) == 1
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert f"{log_files[0]}" in verbose_log_contents
+    assert f"{user_log_file[0]}" in verbose_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
@@ -151,7 +160,9 @@ def test_run_pipeline_cpu1_py(get_files: Callable, cmd, standard_data, python_cp
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_cpu2_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline2, output_folder):
+def test_run_pipeline_cpu2_yaml(
+    get_files: Callable, cmd, standard_data, yaml_cpu_pipeline2, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline2)
@@ -164,8 +175,10 @@ def test_run_pipeline_cpu2_yaml(get_files: Callable, cmd, standard_data, yaml_cp
 
     _check_tif(files, 30, (160, 160))
 
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
+    verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    user_log_file = list(filter(lambda x: "user.log" in x, files))
+    assert len(verbose_log_file) == 1
+    assert len(user_log_file) == 1
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -178,10 +191,9 @@ def test_run_pipeline_cpu2_yaml(get_files: Callable, cmd, standard_data, yaml_cp
                 assert f["data"].dtype == np.float32
                 assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6, rtol=1e-6)
 
-    verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert f"{log_files[0]}" in verbose_log_contents
+    assert f"{user_log_file[0]}" in verbose_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
@@ -189,7 +201,9 @@ def test_run_pipeline_cpu2_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert "Data shape is (180, 30, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_cpu2_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline2, output_folder):
+def test_run_pipeline_cpu2_py(
+    get_files: Callable, cmd, standard_data, python_cpu_pipeline2, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_cpu_pipeline2)
@@ -213,13 +227,13 @@ def test_run_pipeline_cpu2_py(get_files: Callable, cmd, standard_data, python_cp
                 assert f["data"].dtype == np.float32
                 assert_allclose(np.sum(f["data"]), 694.70306, atol=1e-6, rtol=1e-6)
 
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
-
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    user_log_file = list(filter(lambda x: "user.log" in x, files))
+    assert len(verbose_log_file) == 1
+    assert len(user_log_file) == 1
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert f"{log_files[0]}" in verbose_log_contents
+    assert f"{user_log_file[0]}" in verbose_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
@@ -227,7 +241,9 @@ def test_run_pipeline_cpu2_py(get_files: Callable, cmd, standard_data, python_cp
     assert "Data shape is (180, 30, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_cpu3_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline3, output_folder):
+def test_run_pipeline_cpu3_yaml(
+    get_files: Callable, cmd, standard_data, yaml_cpu_pipeline3, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline3)
@@ -244,12 +260,13 @@ def test_run_pipeline_cpu3_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 1
 
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    user_log_file = list(filter(lambda x: "user.log" in x, files))
+    assert len(verbose_log_file) == 1
+    assert len(user_log_file) == 1
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert f"{log_files[0]}" in verbose_log_contents
+    assert f"{user_log_file[0]}" in verbose_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
@@ -260,7 +277,9 @@ def test_run_pipeline_cpu3_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert " Global mean 0.0016174" in verbose_log_contents
 
 
-def test_run_pipeline_cpu3_py(get_files: Callable, cmd, standard_data, python_cpu_pipeline3, output_folder):
+def test_run_pipeline_cpu3_py(
+    get_files: Callable, cmd, standard_data, python_cpu_pipeline3, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_cpu_pipeline3)
@@ -277,12 +296,13 @@ def test_run_pipeline_cpu3_py(get_files: Callable, cmd, standard_data, python_cp
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 1
 
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    user_log_file = list(filter(lambda x: "user.log" in x, files))
+    assert len(verbose_log_file) == 1
+    assert len(user_log_file) == 1
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert f"{log_files[0]}" in verbose_log_contents
+    assert f"{user_log_file[0]}" in verbose_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
@@ -293,7 +313,9 @@ def test_run_pipeline_cpu3_py(get_files: Callable, cmd, standard_data, python_cp
     assert " Global mean 0.0016174" in verbose_log_contents
 
 
-def test_run_pipeline_cpu4_yaml(get_files: Callable, cmd, standard_data, yaml_cpu_pipeline4, output_folder):
+def test_run_pipeline_cpu4_yaml(
+    get_files: Callable, cmd, standard_data, yaml_cpu_pipeline4, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline4)
@@ -317,7 +339,7 @@ def test_run_pipeline_cpu4_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert f"{log_files[0]}" in concise_log_contents
+    assert f"{concise_log_file[0]}" in concise_log_contents
     assert "The center of rotation is 79.5" in concise_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
@@ -326,7 +348,10 @@ def test_run_pipeline_cpu4_yaml(get_files: Callable, cmd, standard_data, yaml_cp
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
 
 
-def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gpu_pipeline1, output_folder):
+@pytest.mark.cupy
+def test_run_pipeline_gpu1_yaml(
+    get_files: Callable, cmd, standard_data, yaml_gpu_pipeline1, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_gpu_pipeline1)
@@ -350,22 +375,28 @@ def test_run_pipeline_gpu1_yaml(get_files: Callable, cmd, standard_data, yaml_gp
                 assert f["data"].dtype == np.float32
                 assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6, rtol=1e-6)
 
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    user_log_file = list(filter(lambda x: "user.log" in x, files))
+    assert len(verbose_log_file) == 1
+    assert len(user_log_file) == 1
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert f"{log_files[0]}" in verbose_log_contents
+    assert f"{user_log_file[0]}" in verbose_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in verbose_log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
     assert "The amount of the available GPU memory is" in verbose_log_contents
-    assert "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
+    assert (
+        "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
+    )
 
 
-def test_run_pipeline_gpu1_py(get_files: Callable, cmd, standard_data, python_gpu_pipeline1, output_folder):
+@pytest.mark.cupy
+def test_run_pipeline_gpu1_py(
+    get_files: Callable, cmd, standard_data, python_gpu_pipeline1, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
     cmd.insert(7, python_gpu_pipeline1)
@@ -389,23 +420,32 @@ def test_run_pipeline_gpu1_py(get_files: Callable, cmd, standard_data, python_gp
                 assert f["data"].dtype == np.float32
                 assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6, rtol=1e-6)
 
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    user_log_file = list(filter(lambda x: "user.log" in x, files))
+    assert len(verbose_log_file) == 1
+    assert len(user_log_file) == 1
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
-    assert f"{log_files[0]}" in verbose_log_contents
+    assert f"{user_log_file[0]}" in verbose_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in verbose_log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
     assert "The amount of the available GPU memory is" in verbose_log_contents
-    assert "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
+    assert (
+        "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
+    )
 
 
 def test_tomo_standard_testing_pipeline_output_with_save_all(
-    get_files: Callable, cmd, standard_data, standard_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable,
+    cmd,
+    standard_data,
+    standard_loader,
+    testing_pipeline,
+    output_folder,
+    merge_yamls,
 ):
     cmd.insert(7, standard_data)
     merge_yamls(standard_loader, testing_pipeline)
@@ -417,7 +457,7 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     assert len(files) == 10
 
     _check_yaml(files, "temp.yaml")
-    _check_tif(files, 3, (160,160))
+    _check_tif(files, 3, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -433,7 +473,13 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
 
 
 def test_i12_testing_pipeline_output(
-    get_files: Callable, cmd, i12_data, i12_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable,
+    cmd,
+    i12_data,
+    i12_loader,
+    testing_pipeline,
+    output_folder,
+    merge_yamls,
 ):
     cmd.insert(7, i12_data)
     merge_yamls(i12_loader, testing_pipeline)
@@ -539,7 +585,13 @@ def test_i12_testing_pipeline_output(
 
 
 def test_diad_testing_pipeline_output(
-    get_files: Callable, cmd, diad_data, diad_loader, testing_pipeline, output_folder, merge_yamls
+    get_files: Callable,
+    cmd,
+    diad_data,
+    diad_loader,
+    testing_pipeline,
+    output_folder,
+    merge_yamls,
 ):
     cmd.insert(7, diad_data)
     merge_yamls(diad_loader, testing_pipeline)
@@ -576,13 +628,18 @@ def test_diad_testing_pipeline_output(
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
     assert "The full dataset shape is (3201, 22, 26)" in verbose_log_contents
-    assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
+    assert (
+        "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
+    )
     assert "Path to data: /entry/imaging/data" in verbose_log_contents
     assert "Preview: (100:3101, 5:7, 0:26)" in verbose_log_contents
     assert "Data shape is (3001, 2, 26) of type uint16" in verbose_log_contents
 
 
-def test_run_diad_pipeline_gpu(get_files: Callable, cmd, diad_data, diad_pipeline_gpu, output_folder):
+@pytest.mark.cupy
+def test_run_diad_pipeline_gpu(
+    get_files: Callable, cmd, diad_data, diad_pipeline_gpu, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, diad_data)
     cmd.insert(7, diad_pipeline_gpu)
@@ -603,16 +660,21 @@ def test_run_diad_pipeline_gpu(get_files: Callable, cmd, diad_data, diad_pipelin
     verbose_log_contents = _get_log_contents(verbose_log_file[0])
 
     assert "The full dataset shape is (3201, 22, 26)" in verbose_log_contents
-    assert "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
+    assert (
+        "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
+    )
     assert "Path to data: /entry/imaging/data" in verbose_log_contents
     assert "Preview: (100:3101, 8:15, 0:26)" in verbose_log_contents
     assert "Data shape is (3001, 7, 26) of type uint16" in verbose_log_contents
-    assert "Global min -0.011995" in verbose_log_contents
-    assert "Global max 0.019879" in verbose_log_contents
-    assert "Global mean 0.000291" in verbose_log_contents
+    assert "Global min -0.0326580" in verbose_log_contents
+    assert "Global max 0.037757" in verbose_log_contents
+    assert "Global mean 0.000327" in verbose_log_contents
 
 
-def test_run_pipeline_360deg_gpu2(get_files: Callable, cmd, data360, yaml_gpu_pipeline360_2, output_folder):
+@pytest.mark.cupy
+def test_run_pipeline_360deg_gpu2(
+    get_files: Callable, cmd, data360, yaml_gpu_pipeline360_2, output_folder
+):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, data360)
     cmd.insert(7, yaml_gpu_pipeline360_2)
@@ -636,6 +698,6 @@ def test_run_pipeline_360deg_gpu2(get_files: Callable, cmd, data360, yaml_gpu_pi
     assert "Loading data: tests/test_data/360scan/360scan.hdf" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
     assert "Data shape is (3601, 3, 2560) of type uint16" in verbose_log_contents
-    assert "Global min -0.00315" in verbose_log_contents
-    assert "Global max 0.00575" in verbose_log_contents
-    assert "Global mean 0.00088" in verbose_log_contents
+    assert "Global min -0.003281" in verbose_log_contents
+    assert "Global max 0.006374" in verbose_log_contents
+    assert "Global mean 0.000887" in verbose_log_contents

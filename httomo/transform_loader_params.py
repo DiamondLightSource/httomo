@@ -22,11 +22,18 @@ class PreviewParam(TypedDict):
     detector_x: Optional[PreviewParamEntry]
 
 
+PreviewKeys = Literal["angles", "detector_y", "detector_x"]
+
+
 def parse_preview(
     param_value: Optional[PreviewParam],
     data_shape: tuple[int, int, int],
 ) -> PreviewConfig:
-    DIMENSION_MAPPINGS: dict[str, int] = {"angles": 0, "detector_y": 1, "detector_x": 2}
+    DIMENSION_MAPPINGS: dict[PreviewKeys, int] = {
+        "angles": 0,
+        "detector_y": 1,
+        "detector_x": 2,
+    }
 
     if param_value is None:
         param_value = {"angles": None, "detector_y": None, "detector_x": None}
@@ -39,23 +46,24 @@ def parse_preview(
     if param_value["angles"] == "mid":
         raise ValueError("'mid' keyword not supported for angles dimension")
 
-    dim_configs = {}
-    for dim, slice_info in param_value.items():
-        if slice_info is None:
+    def conv_param(par: Optional[PreviewParamEntry], length: int):
+        if par is None:
             start = 0
-            stop = data_shape[DIMENSION_MAPPINGS[dim]]
-        elif slice_info == "mid":
-            start, stop = _get_middle_slice_indices(data_shape[DIMENSION_MAPPINGS[dim]])
+            stop = length
+        elif par == "mid":
+            start, stop = _get_middle_slice_indices(length)
         else:
-            start = slice_info.get("start", 0)
-            stop = slice_info.get("stop", data_shape[DIMENSION_MAPPINGS[dim]])
+            val = par.get("start", None)
+            start = 0 if val is None else val
+            val = par.get("stop", None)
+            stop = length if val is None else val
 
-        dim_configs[dim] = PreviewDimConfig(start=start, stop=stop)
+        return PreviewDimConfig(start=start, stop=stop)
 
     return PreviewConfig(
-        angles=dim_configs["angles"],
-        detector_y=dim_configs["detector_y"],
-        detector_x=dim_configs["detector_x"],
+        angles=conv_param(param_value["angles"], data_shape[0]),
+        detector_y=conv_param(param_value["detector_y"], data_shape[1]),
+        detector_x=conv_param(param_value["detector_x"], data_shape[2]),
     )
 
 
@@ -102,13 +110,16 @@ class UserDefinedAnglesParam(TypedDict):
 AnglesParam: TypeAlias = Union[RawAnglesParam, UserDefinedAnglesParam]
 
 
-def parse_angles(angles_data: AnglesParam) -> AnglesConfig:
-    keys = angles_data.keys()
-
-    if "data_path" in keys:
+def parse_angles(angles_data: dict) -> AnglesConfig:
+    if "data_path" in angles_data and isinstance(angles_data["data_path"], str):
         return RawAngles(data_path=angles_data["data_path"])
 
-    if "user_defined" in keys:
+    if (
+        "user_defined" in angles_data
+        and "start_angle" in angles_data["user_defined"]
+        and "stop_angle" in angles_data["user_defined"]
+        and "angles_total" in angles_data["user_defined"]
+    ):
         return UserDefinedAngles(
             start_angle=angles_data["user_defined"]["start_angle"],
             stop_angle=angles_data["user_defined"]["stop_angle"],

@@ -1,5 +1,5 @@
+from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.method_wrapper import GpuTimeInfo
 from httomo.runner.methods_repository_interface import MethodRepository
 
@@ -43,7 +43,7 @@ class DezingingWrapper(GenericMethodWrapper):
         ), "Only remove_outlier is supported at the moment"
         self._flats_darks_processed = False
 
-    def execute(self, block: DataSetBlock) -> DataSetBlock:
+    def execute(self, block: T) -> T:
         self._gpu_time_info = GpuTimeInfo()
         # check if data needs to be transfered host <-> device
         block = self._transfer_data(block)

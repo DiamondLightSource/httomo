@@ -16,7 +16,6 @@ httomo = [
     "methods_database/packages/external/httomolibgpu/*.yaml",
     "methods_database/packages/external/httomolib/*.yaml",
     "methods_database/packages/external/tomopy/*.yaml",
-    "yaml_templates/*/*/*.yaml",
 ]
 
 [tool.setuptools-git-versioning]
@@ -42,15 +41,18 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: BSD 3-clause",
     "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.9",
 ]
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
     "click",
     "numpy",
-    "httomolib"
+    "httomolib",
+    "loguru",
+    "typing-extensions",
+    "tqdm",
+    "graypy"
 ]
 
 [project.scripts]
@@ -77,6 +79,7 @@ dev-cpu = [
   "typing_extensions",
   "mypy",
   "types-PyYAML",
+  "pre-commit"
 ]
 dev-gpu = [
   "pytest",
@@ -94,12 +97,13 @@ dev-gpu = [
   "typing_extensions",
   "mypy",
   "types-PyYAML",
+  "pre-commit"
 ]
 
 [tool.mypy]
 # Ignore missing stubs for modules we use
 ignore_missing_imports = true
-python_version = "3.9"  # make sure we're compatible with 3.9
+python_version = "3.10"  # make sure we're compatible with 3.9
 plugins = 'numpy.typing.mypy_plugin'
 
 [tool.isort]
@@ -110,8 +114,8 @@ float_to_top = true
 # Make flake8 respect black's line length (default 88),
 max-line-length = 88
 extend-ignore = [
-    "E203",  
-    "F811"  
+    "E203",
+    "F811"
 ]
 per-file-ignores = [
     "*pyi:E302"

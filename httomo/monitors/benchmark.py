@@ -6,10 +6,10 @@ from collections import OrderedDict
 
 
 class BenchmarkMonitoring(MonitoringInterface):
-    def __init__(self) -> None:
+    def __init__(self, comm: MPI.Comm) -> None:
+        self._comm = comm
         self._data: List[Dict[str, str]] = []
         self._total = 0.0
-        self._comm = MPI.COMM_WORLD
 
     def report_method_block(
         self,
@@ -23,7 +23,7 @@ class BenchmarkMonitoring(MonitoringInterface):
         cpu_time: float,
         gpu_kernel_time: float = 0.0,
         gpu_h2d_time: float = 0.0,
-        gpu_d2h_time: float = 0.0
+        gpu_d2h_time: float = 0.0,
     ):
         self._data.append(
             OrderedDict(
@@ -140,7 +140,7 @@ class BenchmarkMonitoring(MonitoringInterface):
             writer = csv.DictWriter(dest, fieldnames=self._data[0].keys())
             writer.writeheader()
             writer.writerows(self._data)
-        
+
     def _aggregate_mpi(self):
         alldata = self._comm.gather(self._data)
         if self._comm.rank == 0:
