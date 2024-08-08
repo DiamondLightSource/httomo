@@ -1,0 +1,9 @@
+- method: stripes_mask3d
+  module_path: tomopy.prep.stripe
+  parameters:
+    weights: REQUIRED
+    threshold: 0.6
+    min_stripe_length: 20
+    min_stripe_depth: 10
+    min_stripe_width: 5
+    sensitivity_perc: 85.0

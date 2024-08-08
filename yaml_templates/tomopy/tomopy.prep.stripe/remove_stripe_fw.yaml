@@ -1,0 +1,7 @@
+- method: remove_stripe_fw
+  module_path: tomopy.prep.stripe
+  parameters:
+    level: null
+    wname: db5
+    sigma: 2
+    pad: true

@@ -1,0 +1,7 @@
+- method: recon
+  module_path: tomopy.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    sinogram_order: false
+    algorithm: null
+    init_recon: null

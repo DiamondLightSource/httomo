@@ -1,0 +1,7 @@
+- method: binary_thresholding
+  module_path: httomolib.misc.segm
+  parameters:
+    val_intensity: 0.1
+    otsu: false
+    foreground: true
+    axis: auto

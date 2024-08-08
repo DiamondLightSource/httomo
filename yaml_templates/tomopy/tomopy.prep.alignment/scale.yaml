@@ -1,0 +1,3 @@
+- method: scale
+  module_path: tomopy.prep.alignment
+  parameters: {}

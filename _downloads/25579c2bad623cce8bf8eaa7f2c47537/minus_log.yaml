@@ -1,0 +1,3 @@
+- method: minus_log
+  module_path: tomopy.prep.normalize
+  parameters: {}

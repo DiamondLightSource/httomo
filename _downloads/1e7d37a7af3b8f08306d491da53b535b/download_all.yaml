@@ -1,0 +1,38 @@
+- method: find_center_pc
+  module_path: tomopy.recon.rotation
+  parameters:
+    proj1: auto
+    proj2: auto
+    tol: 0.5
+    rotc_guess: null
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+- method: find_center_vo
+  module_path: tomopy.recon.rotation
+  parameters:
+    ind: null
+    smin: -50
+    smax: 50
+    srad: 6
+    step: 0.25
+    ratio: 0.5
+    drop: 20
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+- method: find_center
+  module_path: tomopy.recon.rotation
+  parameters:
+    ind: null
+    init: null
+    tol: 0.5
+    mask: true
+    ratio: 1.0
+    sinogram_order: false
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+    overlap: overlap
+    side: side
+    overlap_position: overlap_position

@@ -1,0 +1,8 @@
+- method: project
+  module_path: tomopy.sim.project
+  parameters:
+    obj: REQUIRED
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    emission: true
+    pad: true
+    sinogram_order: false

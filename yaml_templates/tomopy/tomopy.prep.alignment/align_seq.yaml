@@ -1,0 +1,16 @@
+- method: align_seq
+  module_path: tomopy.prep.alignment
+  parameters:
+    fdir: .
+    iters: 10
+    pad: !!python/tuple
+    - 0
+    - 0
+    blur: true
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    algorithm: sirt
+    upsample_factor: 10
+    rin: 0.5
+    rout: 0.8
+    save: false
+    debug: true

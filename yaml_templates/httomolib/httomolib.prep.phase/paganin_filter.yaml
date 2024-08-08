@@ -1,0 +1,7 @@
+- method: paganin_filter
+  module_path: httomolib.prep.phase
+  parameters:
+    pixel_size: 0.0001
+    dist: 50.0
+    energy: 53.0
+    alpha: 0.001

@@ -1,0 +1,8 @@
+- method: retrieve_phase
+  module_path: tomopy.prep.phase
+  parameters:
+    pixel_size: 0.0001
+    dist: 50
+    energy: 20
+    alpha: 0.001
+    pad: true
