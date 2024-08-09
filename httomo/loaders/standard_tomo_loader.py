@@ -177,7 +177,11 @@ class StandardTomoLoader(DataSetSource):
         # Fill in numpy array with "before" and "after" padded areas needed for block
         if start_idx[self._slicing_dim] < 0:
             extrapolate_before(
-                self._data, block_data, self._padding[0], self._slicing_dim
+                self._data,
+                block_data,
+                self._padding[0],
+                self._slicing_dim,
+                offset=self._data_offset[self._slicing_dim],
             )
             before_extended_read = False
 

@@ -777,23 +777,25 @@ def test_standard_tomo_loader_properties_reflect_nonzero_padding(
     assert loader.global_index == EXPECTED_GLOBAL_INDEX
 
 
-def test_standard_tomo_loader_read_block_padded_lower_boundary_single_proc(
-    standard_data_path: str,
-    standard_image_key_path: str,
-):
-    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+def test_standard_tomo_loader_read_block_padded_lower_boundary_single_proc():
+    # NOTE: DIAD data contains darks/flats at the beginning of the dataset which requires more
+    # specific handling when getting padded blocks at the lower boundary of the data. This is
+    # why it has been used for testing laoding padded blocks at the lower boundary.
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/k11_diad/k11-18014.nxs"
+    DATA_PATH = "/entry/imaging/data"
+    IMAGE_KEY_PATH = "/entry/instrument/imaging/image_key"
     DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
         file=IN_FILE_PATH,
-        data_path=standard_data_path,
-        image_key_path=standard_image_key_path,
+        data_path=DATA_PATH,
+        image_key_path=IMAGE_KEY_PATH,
     )
-    ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
+    ANGLES_CONFIG = RawAngles(data_path="/entry/imaging_sum/gts_theta_value")
     SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
     PREVIEW_CONFIG = PreviewConfig(
-        angles=PreviewDimConfig(start=0, stop=180),
-        detector_y=PreviewDimConfig(start=0, stop=128),
-        detector_x=PreviewDimConfig(start=0, stop=160),
+        angles=PreviewDimConfig(start=0, stop=3201),
+        detector_y=PreviewDimConfig(start=0, stop=22),
+        detector_x=PreviewDimConfig(start=0, stop=26),
     )
     PADDING = (2, 3)
 
@@ -816,7 +818,7 @@ def test_standard_tomo_loader_read_block_padded_lower_boundary_single_proc(
 
     # Defining values for block-reading
     BLOCK_LENGTH = 4
-    PROJS_START = 0
+    PROJS_START = 100
     BLOCK1_START = 0
     BLOCK2_START = BLOCK1_START + BLOCK_LENGTH
     expected_block_shape = (
@@ -844,7 +846,7 @@ def test_standard_tomo_loader_read_block_padded_lower_boundary_single_proc(
     block2 = loader.read_block(BLOCK2_START, BLOCK_LENGTH)
 
     with h5py.File(IN_FILE_PATH, "r") as f:
-        dataset: h5py.Dataset = f[standard_data_path]
+        dataset: h5py.Dataset = f[DATA_PATH]
         expected_block1_data: np.ndarray = dataset[
             PROJS_START
             + BLOCK1_START : PROJS_START
