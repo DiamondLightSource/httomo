@@ -211,6 +211,7 @@ def _get_discard_keys() -> List[str]:
         "angles",
         "gpu_id",
         "comm",
+        "offset",
     ]
     return discard_keys
 
