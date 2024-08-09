@@ -161,20 +161,43 @@ class StandardTomoLoader(DataSetSource):
         block_shape[self._slicing_dim] = length + self._padding[0] + self._padding[1]
         block_data = np.empty(block_shape, dtype=self._data.dtype)
 
-        # Bool that reflects if an extended read is needed on the lower boundary of the block,
-        # in order to fill in the before padded area
+        # Bools that reflect if an extended read is needed on either the lower or upper
+        # boundary of the block, in order to fill in the before/after padded areas
+        # respectively.
         #
-        # Assume that an extended read is needed (as that is the most common case), and then
-        # reset to `False` if the "before" padded area will be filled in with an extrapolation
-        # of the first slice from the core of the block
+        # Assume that an extended read is needed on both sides (as that is the most common
+        # case), and then reset to `False` later if either:
+        # - the "before" padded area will be filled in with an extrapolation of the first slice
+        # in the core of the block
+        # - the "after" padded area will be filled in with an extrapolation of the last slice
+        # in the core of the block
         before_extended_read: bool = True
+        after_extended_read: bool = True
 
-        # Fill in numpy array with "before" padded area needed for block
+        # Fill in numpy array with "before" and "after" padded areas needed for block
         if start_idx[self._slicing_dim] < 0:
             extrapolate_before(
                 self._data, block_data, self._padding[0], self._slicing_dim
             )
             before_extended_read = False
+
+        if (
+            start_idx[self._slicing_dim] + block_shape[self._slicing_dim]
+            > self.global_shape[self._slicing_dim]
+        ):
+            proj_data_end = (
+                self._data_offset[self._slicing_dim]
+                + self.global_shape[self._slicing_dim]
+            )
+            offset = self._data.shape[self._slicing_dim] - proj_data_end
+            extrapolate_after(
+                self._data,
+                block_data,
+                self._padding[1],
+                self._slicing_dim,
+                offset=offset,
+            )
+            after_extended_read = False
 
         # Define slicing required to read the necessary parts from the h5py dataset (the core
         # part of the block + any extended reads)
@@ -211,9 +234,16 @@ class StandardTomoLoader(DataSetSource):
         # been filled in with an extrapolation beforehand (in which case the padded area should
         # not be written into by this slicing)
         #
-        # Assume "after" padded area is filled in with an extended read
+        # More specifically:
+        # - if `before_extended_read is True`, then an extended read is used to fill in
+        # the "before" padded area -> shift the read index down by the before-padding value to
+        # perform the extended read
+        # - if `before_extended_read is False`, then extrapolation is used to fill in the
+        # "before" padded are -> don't shift the read index down by the before-padding value
+        #
+        # Similarly for `after_extended_read`.
         start_read_shift = self._padding[0] if before_extended_read else 0
-        stop_read_shift = self._padding[1]
+        stop_read_shift = self._padding[1] if after_extended_read else 0
         slices_read[self._slicing_dim] = slice(
             self._data_offset[self._slicing_dim]
             + chunk_index_unpadded[self._slicing_dim]
@@ -230,13 +260,27 @@ class StandardTomoLoader(DataSetSource):
         # created numpy array `block_data` that has the padded areas already filled in
         slices_write = [slice(None)] * 3
 
-        # Define shift needed for writing to account for if the before/after padded areas have
+        # Define shifts needed for writing to account for if the before/after padded areas have
         # been filled in with an extrapolation beforehand (in which case the padded area should
         # not be written into by this slicing)
         #
-        # Assume "after" padded area is filled in with an extended read
+        # More specifically:
+        # - if `before_extended_read is True`, then an extended read is used to fill in the
+        # "before" padded area -> can write the data read from the h5py dataset at index 0
+        # along the slicing dim (because the read has been extended to get the "before" padded
+        # area from the h5py dataset
+        # - if `before_extended_read is False`, then extrapolation is used to fill in the
+        # "before" padded are -> can't write the data read from the h5py dataset at index 0
+        # along the slicing dim (because the extrapolation has filled in the "before" padded
+        # area already)
+        #
+        # Similarly for `after_extended_read_idx`.
         start_write_idx = 0 if before_extended_read else self._padding[0]
-        stop_write_idx = block_shape[self._slicing_dim]
+        stop_write_idx = (
+            block_shape[self._slicing_dim]
+            if after_extended_read
+            else block_shape[self._slicing_dim] - self._padding[1]
+        )
         slices_write[self._slicing_dim] = slice(start_write_idx, stop_write_idx)
 
         # Fill in numpy array with the core part of block + any padding from extended reads
