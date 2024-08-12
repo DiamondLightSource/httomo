@@ -777,7 +777,11 @@ def test_standard_tomo_loader_properties_reflect_nonzero_padding(
     assert loader.global_index == EXPECTED_GLOBAL_INDEX
 
 
-def test_standard_tomo_loader_read_block_padded_lower_boundary_single_proc():
+def test_standard_tomo_loader_read_block_padded_outer_chunk_boundary_lower_boundary_single_proc():
+    # NOTE: The phrase "outer chunk boundary" refers to either of the two boundaries of a chunk
+    # that lie on the boundary of the global data in the hdf5 file. For this test, the "outer
+    # chunk boundary" is the boundary of the chunk on the lower boundary of the global data.
+
     # NOTE: DIAD data contains darks/flats at the beginning of the dataset which requires more
     # specific handling when getting padded blocks at the lower boundary of the data. This is
     # why it has been used for testing laoding padded blocks at the lower boundary.
@@ -819,8 +823,7 @@ def test_standard_tomo_loader_read_block_padded_lower_boundary_single_proc():
     # Defining values for block-reading
     BLOCK_LENGTH = 4
     PROJS_START = 100
-    BLOCK1_START = 0
-    BLOCK2_START = BLOCK1_START + BLOCK_LENGTH
+    BLOCK_START = 0  # block is on the lower boundary of the chunk
     expected_block_shape = (
         BLOCK_LENGTH + PADDING[0] + PADDING[1],
         PREVIEW_CONFIG.detector_y.stop - PREVIEW_CONFIG.detector_y.start,
@@ -828,67 +831,43 @@ def test_standard_tomo_loader_read_block_padded_lower_boundary_single_proc():
     )
 
     # Index of block relative to the chunk it belongs to, including padding
-    BLOCK1_EXPECTED_CHUNK_INDEX = (BLOCK1_START - PADDING[0], 0, 0)
-    BLOCK1_EXPECTED_CHUNK_INDEX_UNPADDED = (BLOCK1_START, 0, 0)
-    BLOCK2_EXPECTED_CHUNK_INDEX = (BLOCK2_START - PADDING[0], 0, 0)
-    BLOCK2_EXPECTED_CHUNK_INDEX_UNPADDED = (BLOCK2_START, 0, 0)
+    BLOCK_EXPECTED_CHUNK_INDEX = (BLOCK_START - PADDING[0], 0, 0)
+    BLOCK_EXPECTED_CHUNK_INDEX_UNPADDED = (BLOCK_START, 0, 0)
 
     # Index of block relative to the global data it belongs to (ie, includes chunk shift - for
     # single proc, this is the same as the expected chunk index), including padding
-    BLOCK1_EXPECTED_GLOBAL_INDEX = (BLOCK1_START - PADDING[0], 0, 0)
-    BLOCK1_EXPECTED_GLOBAL_INDEX_UNPADDED = (BLOCK1_START, 0, 0)
-    BLOCK2_EXPECTED_GLOBAL_INDEX = (BLOCK2_START - PADDING[0], 0, 0)
-    BLOCK2_EXPECTED_GLOBAL_INDEX_UNPADDED = (BLOCK2_START, 0, 0)
+    BLOCK_EXPECTED_GLOBAL_INDEX = (BLOCK_START - PADDING[0], 0, 0)
+    BLOCK_EXPECTED_GLOBAL_INDEX_UNPADDED = (BLOCK_START, 0, 0)
 
     # Block on the lower boundary
-    block1 = loader.read_block(BLOCK1_START, BLOCK_LENGTH)
-    # Next block along
-    block2 = loader.read_block(BLOCK2_START, BLOCK_LENGTH)
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
 
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[DATA_PATH]
-        expected_block1_data: np.ndarray = dataset[
+        expected_block_data: np.ndarray = dataset[
             PROJS_START
-            + BLOCK1_START : PROJS_START
-            + BLOCK1_START
+            + BLOCK_START : PROJS_START
+            + BLOCK_START
             + BLOCK_LENGTH
             + PADDING[1],
             PREVIEW_CONFIG.detector_y.start : PREVIEW_CONFIG.detector_y.stop,
             PREVIEW_CONFIG.detector_x.start : PREVIEW_CONFIG.detector_x.stop,
         ]
 
-        expected_block2_data: np.ndarray = dataset[
-            PROJS_START
-            + BLOCK2_START
-            - PADDING[0] : PROJS_START
-            + BLOCK2_START
-            + BLOCK_LENGTH
-            + PADDING[1],
-            PREVIEW_CONFIG.detector_y.start : PREVIEW_CONFIG.detector_y.stop,
-            PREVIEW_CONFIG.detector_x.start : PREVIEW_CONFIG.detector_x.stop,
-        ]
-
-    # Pad the lower boundary of `block1` using edge mode, because `block1` is on the lower
+    # Pad the lower boundary of `block` using edge mode, because `block` is on the lower
     # boundary of the chunk it belongs to
-    expected_block1_data = np.pad(
-        expected_block1_data,
+    expected_block_data = np.pad(
+        expected_block_data,
         pad_width=((PADDING[0], 0), (0, 0), (0, 0)),
         mode="edge",
     )
 
-    np.testing.assert_array_equal(block1.data, expected_block1_data)
-    assert block1.global_index == BLOCK1_EXPECTED_GLOBAL_INDEX
-    assert block1.global_index_unpadded == BLOCK1_EXPECTED_GLOBAL_INDEX_UNPADDED
-    assert block1.chunk_index == BLOCK1_EXPECTED_CHUNK_INDEX
-    assert block1.chunk_index_unpadded == BLOCK1_EXPECTED_CHUNK_INDEX_UNPADDED
-    assert block1.data.shape == expected_block_shape
-
-    np.testing.assert_array_equal(block2.data, expected_block2_data)
-    assert block2.global_index == BLOCK2_EXPECTED_GLOBAL_INDEX
-    assert block2.global_index_unpadded == BLOCK2_EXPECTED_GLOBAL_INDEX_UNPADDED
-    assert block2.chunk_index == BLOCK2_EXPECTED_CHUNK_INDEX
-    assert block2.chunk_index_unpadded == BLOCK2_EXPECTED_CHUNK_INDEX_UNPADDED
-    assert block2.data.shape == expected_block_shape
+    np.testing.assert_array_equal(block.data, expected_block_data)
+    assert block.global_index == BLOCK_EXPECTED_GLOBAL_INDEX
+    assert block.global_index_unpadded == BLOCK_EXPECTED_GLOBAL_INDEX_UNPADDED
+    assert block.chunk_index == BLOCK_EXPECTED_CHUNK_INDEX
+    assert block.chunk_index_unpadded == BLOCK_EXPECTED_CHUNK_INDEX_UNPADDED
+    assert block.data.shape == expected_block_shape
 
 
 def test_standard_tomo_loader_read_block_padded_upper_boundary_single_proc(
@@ -1004,6 +983,90 @@ def test_standard_tomo_loader_read_block_padded_upper_boundary_single_proc(
     assert block2.chunk_index == BLOCK2_EXPECTED_CHUNK_INDEX
     assert block2.chunk_index_unpadded == BLOCK2_EXPECTED_CHUNK_INDEX_UNPADDED
     assert block2.data.shape == expected_block_shape
+
+
+def test_standard_tomo_loader_read_block_padded_middle_of_chunk_single_proc():
+    # NOTE: The phrase "middle of chunk" refers to reading a padded block from anywhere in a
+    # chunk that is not on the boundary of the chunk. In such a case, the information required
+    # for the padded areas comes solely from extended reads in the same chunk as where the
+    # "core" part of the block came from
+    #
+    # Ie, in order to get the information for the padded areas:
+    # - no extrapolation is needed
+    # - an extended read into the chunk of another process is not needed
+
+    # NOTE: DIAD data contains darks/flats at the beginning of the dataset which requires more
+    # specific handling when getting padded blocks in the middle of the chunk. This is why it
+    # has been used for testing loading padded blocks at the lower boundary.
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/k11_diad/k11-18014.nxs"
+    DATA_PATH = "/entry/imaging/data"
+    IMAGE_KEY_PATH = "/entry/instrument/imaging/image_key"
+    DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
+        file=IN_FILE_PATH,
+        data_path=DATA_PATH,
+        image_key_path=IMAGE_KEY_PATH,
+    )
+    ANGLES_CONFIG = RawAngles(data_path="/entry/imaging_sum/gts_theta_value")
+    SLICING_DIM: SlicingDimType = 0
+    COMM = MPI.COMM_WORLD
+    PREVIEW_CONFIG = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=3201),
+        detector_y=PreviewDimConfig(start=0, stop=22),
+        detector_x=PreviewDimConfig(start=0, stop=26),
+    )
+    PADDING = (2, 3)
+
+    with mock.patch(
+        "httomo.darks_flats.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = StandardTomoLoader(
+            in_file=IN_FILE_PATH,
+            data_path=DARKS_FLATS_CONFIG.data_path,
+            image_key_path=DARKS_FLATS_CONFIG.image_key_path,
+            darks=DARKS_FLATS_CONFIG,
+            flats=DARKS_FLATS_CONFIG,
+            angles=ANGLES_CONFIG,
+            preview_config=PREVIEW_CONFIG,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+            padding=PADDING,
+        )
+
+    BLOCK_LENGTH = 4
+    PROJS_START = 100
+    BLOCK_START = BLOCK_LENGTH  # block is in the middle of the chunk
+    expected_block_shape = (
+        BLOCK_LENGTH + PADDING[0] + PADDING[1],
+        PREVIEW_CONFIG.detector_y.stop - PREVIEW_CONFIG.detector_y.start,
+        PREVIEW_CONFIG.detector_x.stop - PREVIEW_CONFIG.detector_x.start,
+    )
+    BLOCK_EXPECTED_CHUNK_INDEX = (BLOCK_START - PADDING[0], 0, 0)
+    BLOCK_EXPECTED_CHUNK_INDEX_UNPADDED = (BLOCK_START, 0, 0)
+    BLOCK_EXPECTED_GLOBAL_INDEX = (BLOCK_START - PADDING[0], 0, 0)
+    BLOCK_EXPECTED_GLOBAL_INDEX_UNPADDED = (BLOCK_START, 0, 0)
+
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+
+    with h5py.File(IN_FILE_PATH, "r") as f:
+        dataset: h5py.Dataset = f[DATA_PATH]
+        expected_block_data: np.ndarray = dataset[
+            PROJS_START
+            + BLOCK_START
+            - PADDING[0] : PROJS_START
+            + BLOCK_START
+            + BLOCK_LENGTH
+            + PADDING[1],
+            PREVIEW_CONFIG.detector_y.start : PREVIEW_CONFIG.detector_y.stop,
+            PREVIEW_CONFIG.detector_x.start : PREVIEW_CONFIG.detector_x.stop,
+        ]
+
+    np.testing.assert_array_equal(block.data, expected_block_data)
+    assert block.global_index == BLOCK_EXPECTED_GLOBAL_INDEX
+    assert block.global_index_unpadded == BLOCK_EXPECTED_GLOBAL_INDEX_UNPADDED
+    assert block.chunk_index == BLOCK_EXPECTED_CHUNK_INDEX
+    assert block.chunk_index_unpadded == BLOCK_EXPECTED_CHUNK_INDEX_UNPADDED
+    assert block.data.shape == expected_block_shape
 
 
 @pytest.mark.mpi
