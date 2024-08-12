@@ -16,6 +16,7 @@ __all__ = ["calculate_stats", "save_intermediate_data"]
 # save a copy of the original guess_chunk if it needs to be restored
 ORIGINAL_GUESS_CHUNK = h5py._hl.filters.guess_chunk
 
+
 def calculate_stats(
     data: np.ndarray,
 ) -> Tuple[float, float, float, int]:
@@ -51,24 +52,34 @@ def save_intermediate_data(
     detector_y: int,
     angles: np.ndarray,
 ) -> None:
-    """Saves intermediate data to a file, including auxiliary"""  
+    """Saves intermediate data to a file, including auxiliary"""
 
     if isinstance(file, h5py.File):
         _save_auxiliary_data_hdf5(file, angles, detector_x, detector_y)
-        dataset = setup_dataset(file, path, data, slicing_dim, frames_per_chunk, global_shape, filetype='hdf5')        
+        dataset = setup_dataset(
+            file,
+            path,
+            data,
+            slicing_dim,
+            frames_per_chunk,
+            global_shape,
+            filetype="hdf5",
+        )
 
     _save_dataset_data(dataset, data, global_shape, global_index)
 
-def setup_dataset(file: h5py.File,
-                  path: str,
-                  data: np.ndarray, 
-                  slicing_dim: int, 
-                  frames_per_chunk: int,
-                  global_shape: Tuple[int, int, int],
-                  filetype: str
-                  ) -> h5py.Dataset:   
-    
-    if filetype == 'hdf5':
+
+def setup_dataset(
+    file: h5py.File,
+    path: str,
+    data: np.ndarray,
+    slicing_dim: int,
+    frames_per_chunk: int,
+    global_shape: Tuple[int, int, int],
+    filetype: str,
+) -> h5py.Dataset:
+
+    if filetype == "hdf5":
         if frames_per_chunk > data.shape[slicing_dim]:
             warn_message = (
                 f"frames_per_chunk={frames_per_chunk} exceeds number of elements in "
@@ -83,7 +94,7 @@ def setup_dataset(file: h5py.File,
             DIMS = [0, 1, 2]
             non_slicing_dims = list(set(DIMS) - set([slicing_dim]))
             for dim in non_slicing_dims:
-                chunk_shape[dim] = global_shape[dim]           
+                chunk_shape[dim] = global_shape[dim]
             chunk_shape = tuple(chunk_shape)
         else:
             chunk_shape = None
@@ -98,7 +109,7 @@ def setup_dataset(file: h5py.File,
             h5py._hl.filters.guess_chunk = ORIGINAL_GUESS_CHUNK
 
         # create a dataset creation property list
-        if chunk_shape is not None: 
+        if chunk_shape is not None:
             dcpl = _dcpl_fill_never(chunk_shape, global_shape)
         else:
             dcpl = None
@@ -109,11 +120,12 @@ def setup_dataset(file: h5py.File,
             global_shape,
             data.dtype,
             exact=True,
-            chunks=None, # set in dcpl
+            chunks=None,  # set in dcpl
             **compression,
             dcpl=dcpl,
         )
     return dataset
+
 
 def _save_dataset_data(
     dataset: h5py.Dataset,
@@ -157,7 +169,7 @@ def _save_auxiliary_data_hdf5(
 
 
 def _dcpl_fill_never(
-    chunk_shape: Union[Tuple[int,int,int], None],
+    chunk_shape: Union[Tuple[int, int, int], None],
     shape: Tuple[int, int, int],
 ) -> h5py.h5p.PropDCID:
     """Create a dcpl with specified chunk shape and never fill value."""
@@ -165,11 +177,12 @@ def _dcpl_fill_never(
     if isinstance(chunk_shape, int) and not isinstance(chunk_shape, bool):
         chunk_shape = (chunk_shape,)
     if isinstance(chunk_shape, tuple) and any(
-            chunk > dim for dim, chunk in zip(shape, chunk_shape)
-            if dim is not None):
-        errmsg = ("Chunk shape must not be greater than data shape in any "
-                  f"dimension. {chunk_shape} is not compatible with {shape}."
-                  )
+        chunk > dim for dim, chunk in zip(shape, chunk_shape) if dim is not None
+    ):
+        errmsg = (
+            "Chunk shape must not be greater than data shape in any "
+            f"dimension. {chunk_shape} is not compatible with {shape}."
+        )
         raise ValueError(errmsg)
 
     # dcpl initialisation

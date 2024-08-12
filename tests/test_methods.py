@@ -273,6 +273,7 @@ def test_save_intermediate_data_frames_per_chunk(
     else:
         assert chunk_shape is None
 
+
 @pytest.mark.mpi
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
@@ -342,6 +343,7 @@ def test_save_intermediate_data_chunked_compressed(
         assert chunk_shape == tuple(expected_chunk_shape)
     else:
         assert chunk_shape is None
+
 
 @pytest.mark.mpi
 @pytest.mark.skipif(

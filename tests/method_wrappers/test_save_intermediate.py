@@ -31,7 +31,7 @@ def test_save_intermediate(
             data,
             global_shape: Tuple[int, int, int],
             global_index: Tuple[int, int, int],
-            slicing_dim: int,            
+            slicing_dim: int,
             file: h5py.File,
             frames_per_chunk: int,
             path: str,
