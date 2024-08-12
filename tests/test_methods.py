@@ -4,8 +4,10 @@ from httomo.methods import calculate_stats, save_intermediate_data
 
 import numpy as np
 import pytest
+from unittest import mock
 from mpi4py import MPI
 import h5py
+import httomo
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 
@@ -251,6 +253,77 @@ def test_save_intermediate_data_frames_per_chunk(
             detector_y=block.global_shape[1],
             angles=block.angles,
         )
+
+    # Define the expected chunk shape, based on the `frames_per_chunk` value and the slicing
+    # dim of the data that was saved
+    expected_chunk_shape = [0, 0, 0]
+    expected_chunk_shape[block.slicing_dim] = (
+        frames_per_chunk if frames_per_chunk != 1000 else 1
+    )
+    DIMS = [0, 1, 2]
+    non_slicing_dims = list(set(DIMS) - set([block.slicing_dim]))
+    for dim in non_slicing_dims:
+        expected_chunk_shape[dim] = block.global_shape[dim]
+
+    with h5py.File(tmp_path / FILE_NAME, "r") as f:
+        chunk_shape = f[DATA_PATH].chunks
+
+    if frames_per_chunk != 0:
+        assert chunk_shape == tuple(expected_chunk_shape)
+    else:
+        assert chunk_shape is None
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+@pytest.mark.parametrize("frames_per_chunk", [5, 1000])
+def test_save_intermediate_data_chunked_compressed(
+    tmp_path: Path,
+    frames_per_chunk: int,
+):
+    COMPRESS_INTERMEDIATE = True
+    COMM = MPI.COMM_WORLD
+    tmp_path = COMM.bcast(tmp_path)
+    FILE_NAME = "test_file.h5"
+    DATA_PATH = "/data"
+    SLICING_DIM = 0
+    GLOBAL_SHAPE = (10, 10, 10)
+    CHUNK_SIZE = GLOBAL_SHAPE[SLICING_DIM] // 2
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    aux_data = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
+    rank_data = (
+        global_data[:CHUNK_SIZE, :, :]
+        if COMM.rank == 0
+        else global_data[CHUNK_SIZE:, :, :]
+    )
+    block = DataSetBlock(
+        data=rank_data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        block_start=0,
+        chunk_start=0 if COMM.rank == 0 else CHUNK_SIZE,
+        global_shape=GLOBAL_SHAPE,
+        chunk_shape=(CHUNK_SIZE, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]),
+    )
+
+    with mock.patch("httomo.globals.COMPRESS_INTERMEDIATE", COMPRESS_INTERMEDIATE):
+        with h5py.File(tmp_path / FILE_NAME, "w", driver="mpio", comm=COMM) as f:
+            save_intermediate_data(
+                data=block.data,
+                global_shape=block.global_shape,
+                global_index=block.global_index,
+                slicing_dim=block.slicing_dim,
+                file=f,
+                frames_per_chunk=frames_per_chunk,
+                path=DATA_PATH,
+                detector_x=block.global_shape[2],
+                detector_y=block.global_shape[1],
+                angles=block.angles,
+            )
 
     # Define the expected chunk shape, based on the `frames_per_chunk` value and the slicing
     # dim of the data that was saved

@@ -112,6 +112,17 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     help="File to store the monitoring output. Defaults to '-', which denotes stdout",
 )
 @click.option(
+    "--intermediate-format",
+    type=click.Choice(["hdf5"], case_sensitive=False),
+    default="hdf5",
+    help="Write intermediate data in hdf5 format",
+)
+@click.option(
+    "--compress-intermediate",
+    is_flag=True,
+    help="Write intermediate data in chunked format with BLOSC compression applied",
+)
+@click.option(
     "--syslog-host",
     type=click.STRING,
     default="localhost",
@@ -141,11 +152,17 @@ def run(
     max_memory: str,
     monitor: List[str],
     monitor_output: TextIO,
+    intermediate_format: str,
+    compress_intermediate: bool,
     syslog_host: str,
     syslog_port: int,
     frames_per_chunk: int,
 ):
     """Run a pipeline defined in YAML on input data."""
+    if compress_intermediate:
+        frames_per_chunk = 1
+    httomo.globals.INTERMEDIATE_FORMAT = intermediate_format
+    httomo.globals.COMPRESS_INTERMEDIATE = compress_intermediate
     httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
 
     does_contain_sweep = is_sweep_pipeline(yaml_config)

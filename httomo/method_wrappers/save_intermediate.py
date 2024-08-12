@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 import weakref
 from mpi4py.MPI import Comm
 import httomo
