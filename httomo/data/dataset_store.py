@@ -1,9 +1,30 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# ---------------------------------------------------------------------------
+# Copyright 2023 Diamond Light Source Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either ecpress or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ---------------------------------------------------------------------------
+# Created By  : Tomography Team at DLS <scientificsoftware@diamond.ac.uk>
+
+# ---------------------------------------------------------------------------
+
 import logging
 from os import PathLike
 from pathlib import Path
 import time
 import h5py
-from typing import Literal, Optional, Tuple, Union
+from typing import List, Literal, Optional, Tuple, Union
 from httomo.data.hdf._utils.reslice import reslice
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
@@ -12,82 +33,12 @@ from httomo.runner.dataset_store_interfaces import (
     ReadableDataSetSink,
 )
 from mpi4py import MPI
+from mpi4py.util import dtlib
 import numpy as np
 from numpy.typing import DTypeLike
 import weakref
 
 from httomo.utils import log_once, make_3d_shape_from_shape
-
-"""
-This is from the final handover call:
-
-# Cases
-
-- *We always process the data in blocks*
-
-## 1 Process, all fits memory
-
-- chunk_shape = global_shape   
-- chunk_index = (0, 0, 0)
-- the whole chunk is a numpy array, in a `DataSet` in-memory
-- `write_block` -> writes a `DataSetBlock` into the chunk `DataSet`
-- `read_block` -> get a block, which might be the full size of the `DataSet` for the chunk, 
-  it's an in-memory slice of the chunk `DataSet`
-
-### Reslice
-
-- does nothing mostly
-- updates `slicing_dim` somewhere, so that `read_block` knows how to slice the block
-
-## 2 Processes, all fits in memory (or more)
-
-(assume slicing dim is 0)
-
-- chunk_shape < global_shape, e.g. `(5, 20, 30) < (10, 20, 30)`
-- `chunk_index`: in rank 0: `(0, 0, 0)`, in rank 1: `(5, 0, 0)`
-- the whole chunk is in numpy array, in a `DataSet`, in-memory
-- BUT: each process as a part of the global data in-memory
-- `write_block` -> writes a `DataSetBlock` into the chunk `DataSet`
-- `read_block` -> get a block, which might be the full size of the `DataSet` for the chunk
-
-### Reslice
-
-- call the MPI memory-based reslice function we always had (using `MPI.allgather`)
-- we have a new chunk in each process, wich chunk_shape=`(10, 10, 30)`
-- we have `chunk_index`: in rank 0: `(0, 0, 0)`, in rank 1: `(0, 10, 0)`
-- updates `slicing_dim` somewhere, so that `read_block` knows how to slice the block
-
-
-## 2 Processes, doesn't memory (or more)
-
-(assume slicing dim is 0)
-
-- chunk_shape < global_shape, e.g. `(5, 20, 30) < (10, 20, 30)`
-- `chunk_index`: in rank 0: `(0, 0, 0)`, in rank 1: `(5, 0, 0)`
-- *the global data is fully is a single h5py file*
-  - it is the whole global cube!
-  - each process only needs to access a chunk, block-wise, out of that file
-  - has the same interface as numpy array (`shape`, indexing, ...)
-  - BUT: as soon as we index, we read the file into an in-memory numpy array
-  - --> we cannot create a "view" of a subset of the file, referencing the disk
-  - so, each process needs to keep track of the start of its chunk within the file, 
-    and when read_block is called with start index 0, we add the chunk_index to that
-- `write_block` -> writes a `DataSetBlock` into the file, with the correct offset (`chunk_index + block_index`)
-- `read_block` -> get a block from the file, with offset `chunk_index + block_index`
-- --> `FullFileDataSet` class takes care of that
-
-### Reslice
-
-- we have full globally shared file, all the data is there on disk already
-- does nothing mostly
-- updates `slicing_dim` somewhere, so that `read_block` knows how to slice the block
-- update `chunk_index`: in rank 0: `(0, 0, 0)`, in rank 1: `(0, 10, 0)`
-
-
-"""
-
-# Notes:
-# - refactoring the nested if into separate function is badly needed
 
 
 class DataSetStoreWriter(ReadableDataSetSink):
@@ -165,15 +116,15 @@ class DataSetStoreWriter(ReadableDataSetSink):
         if self._readonly:
             raise ValueError("Cannot write after creating a reader")
         block.to_cpu()
-        start = max(block.chunk_index)
+        start = max(block.chunk_index_unpadded)
         if self._data is None:
             # if non-slice dims in block are different, update the shapes here
             self._global_shape = block.global_shape
-            self._chunk_shape = block.chunk_shape
+            self._chunk_shape = block.chunk_shape_unpadded
             self._global_index = (
-                block.global_index[0] - block.chunk_index[0],
-                block.global_index[1] - block.chunk_index[1],
-                block.global_index[2] - block.chunk_index[2],
+                block.global_index_unpadded[0] - block.chunk_index_unpadded[0],
+                block.global_index_unpadded[1] - block.chunk_index_unpadded[1],
+                block.global_index_unpadded[2] - block.chunk_index_unpadded[2],
             )
             self._aux_data = block.aux_data
             self._create_new_data(block)
@@ -186,13 +137,16 @@ class DataSetStoreWriter(ReadableDataSetSink):
                     "Attempt to write a block with inconsistent shape to existing data"
                 )
 
-            if any(self._chunk_shape[i] != block.chunk_shape[i] for i in range(3)):
+            if any(
+                self._chunk_shape[i] != block.chunk_shape_unpadded[i] for i in range(3)
+            ):
                 raise ValueError(
                     "Attempt to write a block with inconsistent shape to existing data"
                 )
 
             if any(
-                self._global_index[i] != block.global_index[i] - block.chunk_index[i]
+                self._global_index[i]
+                != block.global_index_unpadded[i] - block.chunk_index_unpadded[i]
                 for i in range(3)
             ):
                 raise ValueError(
@@ -206,10 +160,10 @@ class DataSetStoreWriter(ReadableDataSetSink):
         if self.is_file_based:
             start_idx[self._slicing_dim] += self._global_index[self._slicing_dim]
         self._data[
-            start_idx[0] : start_idx[0] + block.shape[0],
-            start_idx[1] : start_idx[1] + block.shape[1],
-            start_idx[2] : start_idx[2] + block.shape[2],
-        ] = block.data
+            start_idx[0] : start_idx[0] + block.shape_unpadded[0],
+            start_idx[1] : start_idx[1] + block.shape_unpadded[1],
+            start_idx[2] : start_idx[2] + block.shape_unpadded[2],
+        ] = block.data_unpadded
 
     def _get_global_h5_filename(self) -> PathLike:
         """Creates a temporary h5 file to back the storage (using nanoseconds timestamp
@@ -227,7 +181,11 @@ class DataSetStoreWriter(ReadableDataSetSink):
         sendBuffer = np.zeros(1, dtype=bool)
         recvBuffer = np.zeros(1, dtype=bool)
         try:
-            self._data = self._create_numpy_data(self.chunk_shape, block.data.dtype)
+            self._data = self._create_numpy_data(
+                unpadded_chunk_shape=block.chunk_shape_unpadded,
+                padded_chunk_shape=block.chunk_shape,
+                dtype=block.data.dtype,
+            )
         except MemoryError:
             sendBuffer[0] = True
 
@@ -249,17 +207,21 @@ class DataSetStoreWriter(ReadableDataSetSink):
             )
 
     def _create_numpy_data(
-        self, chunk_shape: Tuple[int, int, int], dtype: DTypeLike
+        self,
+        unpadded_chunk_shape: Tuple[int, int, int],
+        padded_chunk_shape: Tuple[int, int, int],
+        dtype: DTypeLike,
     ) -> np.ndarray:
         """Convenience method to enable mocking easily"""
+        unpadded_chunk_bytes = np.prod(unpadded_chunk_shape) * np.dtype(dtype).itemsize
+        padded_chunk_bytes = np.prod(padded_chunk_shape) * np.dtype(dtype).itemsize
         if (
             self._memory_limit_bytes > 0
-            and np.prod(chunk_shape) * np.dtype(dtype).itemsize
-            >= self._memory_limit_bytes
+            and unpadded_chunk_bytes + padded_chunk_bytes >= self._memory_limit_bytes
         ):
             raise MemoryError("Memory limit reached")
 
-        return np.empty(chunk_shape, dtype)
+        return np.empty(unpadded_chunk_shape, dtype)
 
     def _create_h5_data(
         self,
@@ -283,16 +245,20 @@ class DataSetStoreWriter(ReadableDataSetSink):
         return h5data
 
     def make_reader(
-        self, new_slicing_dim: Optional[Literal[0, 1, 2]] = None
+        self,
+        new_slicing_dim: Optional[Literal[0, 1, 2]] = None,
+        padding: Optional[Tuple[int, int]] = None,
     ) -> DataSetSource:
-        """Create a reader from this writer, reading from the same store"""
+        """Create a reader from this writer, reading from the same store.
+        The optional parameter padding can be used if data should be returned with padding slices,
+        given as a tuple of (before, after)"""
         if self._data is None:
             raise ValueError("Cannot make reader when no data has been written yet")
         self._readonly = True
         if self._h5file is not None:
             self._h5file.close()
             self._h5file = None
-        reader = DataSetStoreReader(self, new_slicing_dim)
+        reader = DataSetStoreReader(self, new_slicing_dim, padding=padding)
         # make sure finalize is called when reader object is garbage-collected
         weakref.finalize(reader, weakref.WeakMethod(reader.finalize))
         return reader
@@ -310,7 +276,10 @@ class DataSetStoreReader(DataSetSource):
     """
 
     def __init__(
-        self, source: DataSetStoreWriter, slicing_dim: Optional[Literal[0, 1, 2]] = None
+        self,
+        source: DataSetStoreWriter,
+        slicing_dim: Optional[Literal[0, 1, 2]] = None,
+        padding: Optional[Tuple[int, int]] = None,
     ):
         self._comm = source.comm
         self._global_shape = source.global_shape
@@ -336,6 +305,20 @@ class DataSetStoreReader(DataSetSource):
         else:
             self._data = self._reslice(source.slicing_dim, slicing_dim, source_data)
             self._slicing_dim = slicing_dim
+
+        self._padding = (0, 0) if padding is None else padding
+        if self._padding != (0, 0):
+            # correct indices for padding
+            global_index_t = list(self._global_index)
+            global_index_t[self.slicing_dim] -= self._padding[0]
+            self._global_index = make_3d_shape_from_shape(global_index_t)
+
+            chunk_shape_t = list(self._chunk_shape)
+            chunk_shape_t[self.slicing_dim] += self._padding[0] + self._padding[1]
+            self._chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
+
+            if not source.is_file_based:
+                self._exchange_neighbourhoods()
 
         source.finalize()
 
@@ -411,31 +394,210 @@ class DataSetStoreReader(DataSetSource):
                 self._global_index = (idx[0], idx[1], idx[2])
                 return data
 
-    def read_block(self, start: int, length: int) -> DataSetBlock:
-        start_idx = [0, 0, 0]
-        start_idx[self._slicing_dim] = start
-        if self.is_file_based:
-            start_idx[self._slicing_dim] += self._global_index[self._slicing_dim]
-        shape = list(self._global_shape)
-        shape[self._slicing_dim] = length
-
-        block_data = self._data[
-            start_idx[0] : start_idx[0] + shape[0],
-            start_idx[1] : start_idx[1] + shape[1],
-            start_idx[2] : start_idx[2] + shape[2],
+    def _extrapolate_before(
+        self, block_data: np.ndarray, slices: int, dim: int, offset: int = 0
+    ):
+        if slices == 0:
+            return
+        slices_wrt = [slice(None), slice(None), slice(None)]
+        slices_wrt[dim] = slice(slices)
+        slices_read = [slice(None), slice(None), slice(None)]
+        slices_read[dim] = slice(offset, offset + 1)
+        block_data[slices_wrt[0], slices_wrt[1], slices_wrt[2]] = self._data[
+            slices_read[0], slices_read[1], slices_read[2]
         ]
 
-        block = DataSetBlock(
+    def _extrapolate_after(
+        self, block_data: np.ndarray, slices: int, dim: int, offset: int = 0
+    ):
+        if slices == 0:
+            return
+        slices_wrt = [slice(None), slice(None), slice(None)]
+        slices_wrt[dim] = slice(block_data.shape[dim] - slices, block_data.shape[dim])
+        slices_read = [slice(None), slice(None), slice(None)]
+        slices_read[dim] = slice(
+            self._data.shape[dim] - 1 - offset, self._data.shape[dim] - offset
+        )
+        block_data[slices_wrt[0], slices_wrt[1], slices_wrt[2]] = self._data[
+            slices_read[0], slices_read[1], slices_read[2]
+        ]
+
+    def _read_block_file(
+        self, shape: List[int], dim: int, start_idx: List[int]
+    ) -> np.ndarray:
+        start_idx[dim] += self._global_index[dim]  # includes padding
+        block_data = np.empty(shape, dtype=self._data.dtype)
+        before_cut = 0
+        after_cut = 0
+        # check before boundary
+        if start_idx[dim] < 0:  # edge interpolation
+            self._extrapolate_before(block_data, -start_idx[dim], dim)
+            before_cut = -start_idx[dim]
+        # check after boundary
+        if start_idx[dim] + shape[dim] > self._data.shape[dim]:
+            self._extrapolate_after(
+                block_data, start_idx[dim] + shape[dim] - self._data.shape[dim], dim
+            )
+            after_cut = start_idx[dim] + shape[dim] - self._data.shape[dim]
+        slices_read = [slice(None), slice(None), slice(None)]
+        slices_read[dim] = slice(
+            start_idx[dim] + before_cut, start_idx[dim] + shape[dim] - after_cut
+        )
+        slices_wrt = [slice(None), slice(None), slice(None)]
+        slices_wrt[dim] = slice(before_cut, shape[dim] - after_cut)
+        block_data[slices_wrt[0], slices_wrt[1], slices_wrt[2]] = self._data[
+            slices_read[0],
+            slices_read[1],
+            slices_read[2],
+        ]
+        return block_data
+
+    def _mpi_exchange_padding_area_before(self):
+        if self._padding[0] == 0:
+            return
+        MPI_TAG = 33
+        mpi_dtype = dtlib.from_numpy_dtype(self._data.dtype)
+
+        # sender code to right neighbour
+        if self._comm.rank < self._comm.size - 1:
+            send_slices = [slice(None), slice(None), slice(None)]
+            send_slices[self._slicing_dim] = slice(
+                self._data.shape[self._slicing_dim]
+                - self._padding[0]
+                - self._padding[1],
+                self._data.shape[self._slicing_dim] - self._padding[1],
+            )
+            to_send_right_neighbour = np.ascontiguousarray(
+                self._data[send_slices[0], send_slices[1], send_slices[2]]
+            )
+            self._comm.Send(
+                [to_send_right_neighbour, mpi_dtype],
+                dest=self._comm.rank + 1,
+                tag=MPI_TAG,
+            )
+
+        # receiver code from right neighbour
+        if self._comm.rank > 0:
+            recv_shape = list(self._data.shape)
+            recv_shape[self._slicing_dim] = self._padding[0]
+            receive_buf_from_left_neighbour = np.empty(
+                tuple(recv_shape), self._data.dtype
+            )
+            self._comm.Recv(
+                [receive_buf_from_left_neighbour, mpi_dtype],
+                source=self._comm.rank - 1,
+                tag=MPI_TAG,
+            )
+            pad_slices = [slice(None), slice(None), slice(None)]
+            pad_slices[self._slicing_dim] = slice(0, self._padding[0])
+
+            self._data[pad_slices[0], pad_slices[1], pad_slices[2]] = (
+                receive_buf_from_left_neighbour
+            )
+
+    def _mpi_exchange_padding_area_after(self):
+        MPI_TAG = 44
+        if self._padding[1] == 0:
+            return
+        mpi_dtype = dtlib.from_numpy_dtype(self._data.dtype)
+
+        # sender code to left neighbour
+        if self._comm.rank > 0:
+            send_slices = [slice(None), slice(None), slice(None)]
+            send_slices[self._slicing_dim] = slice(
+                self._padding[0], self._padding[0] + self._padding[1]
+            )
+            to_send_left_neighbour = np.ascontiguousarray(
+                self._data[send_slices[0], send_slices[1], send_slices[2]]
+            )
+            self._comm.Send(
+                [to_send_left_neighbour, mpi_dtype],
+                dest=self._comm.rank - 1,
+                tag=MPI_TAG,
+            )
+
+        # receiver code from right neighbour
+        if self._comm.rank < self._comm.size - 1:
+            recv_shape = list(self._data.shape)
+            recv_shape[self._slicing_dim] = self._padding[1]
+            receive_buf_from_right_neighbour = np.empty(
+                tuple(recv_shape), dtype=self._data.dtype
+            )
+            self._comm.Recv(
+                [receive_buf_from_right_neighbour, mpi_dtype],
+                source=self._comm.rank + 1,
+                tag=MPI_TAG,
+            )
+            pad_slices = [slice(None), slice(None), slice(None)]
+            pad_slices[self._slicing_dim] = slice(
+                self._chunk_shape[self._slicing_dim] - self._padding[1],
+                self._chunk_shape[self._slicing_dim],
+            )
+            self._data[pad_slices[0], pad_slices[1], pad_slices[2]] = (
+                receive_buf_from_right_neighbour
+            )
+
+    def _extend_data_for_padding(self, core_data: np.ndarray) -> np.ndarray:
+        padded_data = np.empty(self._chunk_shape, self._data.dtype)
+        core_slices = [slice(None), slice(None), slice(None)]
+        core_slices[self._slicing_dim] = slice(
+            self._padding[0], self._chunk_shape[self._slicing_dim] - self._padding[1]
+        )
+        padded_data[core_slices[0], core_slices[1], core_slices[2]] = core_data
+        return padded_data
+
+    def _exchange_neighbourhoods(self):
+        # we have the core of the chunk in RAM, but without the padding are
+        # so we construct the full area with padding in RAM and exchange with MPI
+
+        self._data = self._extend_data_for_padding(self._data)
+
+        # before
+        self._mpi_exchange_padding_area_before()
+        if self._comm.rank == 0:
+            self._extrapolate_before(
+                self._data, self._padding[0], self._slicing_dim, offset=self._padding[0]
+            )
+
+        # after
+        self._mpi_exchange_padding_area_after()
+        if self._comm.rank == self._comm.size - 1:
+            self._extrapolate_after(
+                self._data, self._padding[1], self._slicing_dim, offset=self._padding[1]
+            )
+
+    def _read_block_ram(
+        self, shape: List[int], dim: int, start_idx: List[int]
+    ) -> np.ndarray:
+        read_slices = [
+            slice(start_idx[0], start_idx[0] + shape[0]),
+            slice(start_idx[1], start_idx[1] + shape[1]),
+            slice(start_idx[2], start_idx[2] + shape[2]),
+        ]
+        return self._data[read_slices[0], read_slices[1], read_slices[2]]
+
+    def read_block(self, start: int, length: int) -> DataSetBlock:
+        shape = list(self._global_shape)
+        shape[self._slicing_dim] = length + self._padding[0] + self._padding[1]
+        dim = self._slicing_dim
+
+        start_idx = [0, 0, 0]
+        start_idx[dim] = start
+        if self.is_file_based:
+            block_data = self._read_block_file(shape, dim, start_idx)
+        else:
+            block_data = self._read_block_ram(shape, dim, start_idx)
+
+        return DataSetBlock(
             data=block_data,
             aux_data=self._aux_data,
             slicing_dim=self._slicing_dim,
-            block_start=start,
+            block_start=start - self._padding[0],
             chunk_start=self._global_index[self._slicing_dim],
             global_shape=self._global_shape,
             chunk_shape=self._chunk_shape,
+            padding=self._padding,
         )
-
-        return block
 
     def finalize(self):
         self._data = None

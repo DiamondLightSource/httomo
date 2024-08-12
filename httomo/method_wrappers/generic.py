@@ -121,7 +121,7 @@ class GenericMethodWrapper(MethodWrapper):
             raise ValueError("GPU is not available, please use only CPU methods")
 
         self._side_output: Dict[str, Any] = dict()
-        
+
         self._gpu_time_info = GpuTimeInfo()
 
         if gpu_enabled:
@@ -167,7 +167,7 @@ class GenericMethodWrapper(MethodWrapper):
     @property
     def is_gpu(self) -> bool:
         return not self.is_cpu
-    
+
     @property
     def gpu_time(self) -> GpuTimeInfo:
         return self._gpu_time_info
@@ -243,11 +243,15 @@ class GenericMethodWrapper(MethodWrapper):
             elif p == "gpu_id":
                 assert gpu_enabled, "methods with gpu_id parameter require GPU support"
                 ret[p] = self._gpu_id
-            elif p == 'axis' and p in remaining_dict_params and remaining_dict_params[p] == 'auto':
+            elif (
+                p == "axis"
+                and p in remaining_dict_params
+                and remaining_dict_params[p] == "auto"
+            ):
                 ret[p] = self.pattern.value
                 pass
             elif p in remaining_dict_params:
-                ret[p] = remaining_dict_params[p]            
+                ret[p] = remaining_dict_params[p]
             elif p in self._params_with_defaults:
                 pass
             else:
@@ -291,7 +295,9 @@ class GenericMethodWrapper(MethodWrapper):
         block = self._transfer_data(block)
         with catch_gputime() as t:
             block = self._preprocess_data(block)
-            args = self._build_kwargs(self._transform_params(self._config_params), block)
+            args = self._build_kwargs(
+                self._transform_params(self._config_params), block
+            )
             block = self._run_method(block, args)
             block = self._postprocess_data(block)
 
@@ -374,6 +380,12 @@ class GenericMethodWrapper(MethodWrapper):
             )
 
         return non_slice_dims_shape
+
+    def calculate_padding(self) -> Tuple[int, int]:
+        """Calculate the padding required by the method"""
+        if self.padding:
+            return self._query.calculate_padding(**self.config_params)
+        return (0, 0)
 
     def calculate_max_slices(
         self,

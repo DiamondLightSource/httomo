@@ -1,0 +1,51 @@
+name: HTTomo tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  iris-gpu:
+    runs-on: iris-gpu
+    container:
+      image: nvidia/cuda:11.6.2-devel-ubi8
+      env:
+        NVIDIA_VISIBLE_DEVICES: ${{ env.NVIDIA_VISIBLE_DEVICES }}
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Create conda environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: conda/environment.yml
+          environment-name: httomo
+          post-cleanup: 'all'
+          init-shell: bash
+          
+      - name: Install httomo-dev
+        run: |
+          micromamba activate httomo
+          pip install .[dev]
+          micromamba list
+                
+      - name: Generate yaml templates
+        run: |
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/httomo_modules.yaml -o ./httomo/yaml_templates/httomo
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./httomo/yaml_templates/tomopy
+          python ./scripts/yaml_unsupported_tomopy_remove.py -t ./httomo/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./httomo/yaml_templates/httomolib
+          python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./httomo/yaml_templates/httomolibgpu
+
+      - name: Run tests
+        run: |
+          pytest tests/

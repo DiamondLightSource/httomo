@@ -28,9 +28,9 @@ __all__ = [
     "_calc_output_dim_recon",
 ]
 
+
 def _calc_output_dim_recon(non_slice_dims_shape, **kwargs):
-    """Function to calculate output dimensions for all reconstructors. 
-    """
+    """Function to calculate output dimensions for all reconstructors."""
     DetectorsLengthH = non_slice_dims_shape[1]
     output_dims = (DetectorsLengthH, DetectorsLengthH)
     return output_dims

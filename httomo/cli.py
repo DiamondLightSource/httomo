@@ -40,7 +40,8 @@ def main():
 @click.argument(
     "in_data_file",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    required=False, default=None,
+    required=False,
+    default=None,
 )
 def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     """Check a YAML pipeline file for errors."""
@@ -86,27 +87,40 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     "--max-cpu-slices",
     type=click.INT,
     default=64,
-    help="Maximum number of slices to use for a block for CPU-only sections (default: 64)"
+    help="Maximum number of slices to use for a block for CPU-only sections (default: 64)",
 )
 @click.option(
     "--max-memory",
     type=click.STRING,
     default="0",
-    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)"
+    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)",
 )
 @click.option(
     "--monitor",
     type=click.STRING,
     multiple=True,
     default=[],
-    help=("Add monitor to the runner (can be given multiple times). " +
-          f"Available monitors: {', '.join(MONITORS_MAP.keys())}")
+    help=(
+        "Add monitor to the runner (can be given multiple times). "
+        + f"Available monitors: {', '.join(MONITORS_MAP.keys())}"
+    ),
 )
 @click.option(
     "--monitor-output",
-    type=click.File('w'),
+    type=click.File("w"),
     default=sys.stdout,
-    help="File to store the monitoring output. Defaults to '-', which denotes stdout"
+    help="File to store the monitoring output. Defaults to '-', which denotes stdout",
+)
+@click.option(
+    "--intermediate-format",
+    type=click.Choice(["hdf5"], case_sensitive=False),
+    default="hdf5",
+    help="Write intermediate data in hdf5 format",
+)
+@click.option(
+    "--compress-intermediate",
+    is_flag=True,
+    help="Write intermediate data in chunked format with BLOSC compression applied",
 )
 @click.option(
     "--syslog-host",
@@ -138,11 +152,17 @@ def run(
     max_memory: str,
     monitor: List[str],
     monitor_output: TextIO,
+    intermediate_format: str,
+    compress_intermediate: bool,
     syslog_host: str,
     syslog_port: int,
     frames_per_chunk: int,
 ):
     """Run a pipeline defined in YAML on input data."""
+    if compress_intermediate:
+        frames_per_chunk = 1
+    httomo.globals.INTERMEDIATE_FORMAT = intermediate_format
+    httomo.globals.COMPRESS_INTERMEDIATE = compress_intermediate
     httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
 
     does_contain_sweep = is_sweep_pipeline(yaml_config)

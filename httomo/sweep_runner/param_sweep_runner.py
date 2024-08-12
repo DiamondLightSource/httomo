@@ -144,7 +144,7 @@ class ParamSweepRunner:
         sweep_block = ParamSweepBlock(
             data=dataset_block.data,
             aux_data=dataset_block.aux_data,
-            slicing_dim=SINO_SLICING_DIM
+            slicing_dim=SINO_SLICING_DIM,
         )
         self._block = sweep_block
 
@@ -193,7 +193,7 @@ class ParamSweepRunner:
             block = ParamSweepBlock(
                 data=self.block.data.copy(),
                 aux_data=self.block.aux_data,
-                slicing_dim=self.block.slicing_dim
+                slicing_dim=self.block.slicing_dim,
             )
             self._side_output_manager.update_params(method)
             method.append_config_params({self._stages.sweep.param_name: val})

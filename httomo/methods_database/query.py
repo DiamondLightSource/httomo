@@ -96,11 +96,9 @@ class MethodsDatabaseQuery(MethodQuery):
         return get_method_info(
             self.module_path, self.method_name, "save_result_default"
         )
-        
+
     def padding(self) -> bool:
-        return get_method_info(
-            self.module_path, self.method_name, "padding"
-        )
+        return get_method_info(self.module_path, self.method_name, "padding")
 
     def get_memory_gpu_params(
         self,
@@ -144,7 +142,7 @@ class MethodsDatabaseQuery(MethodQuery):
         smodule = self._import_supporting_funcs_module()
         module_mem: Callable = getattr(smodule, "_calc_output_dim_" + self.method_name)
         return module_mem(non_slice_dims_shape, **kwargs)
-    
+
     def calculate_padding(self, **kwargs) -> Tuple[int, int]:
         smodule = self._import_supporting_funcs_module()
         module_pad: Callable = getattr(smodule, "_calc_padding_" + self.method_name)

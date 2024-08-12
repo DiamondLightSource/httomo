@@ -17,7 +17,6 @@ def test_get_available_memory():
     assert mem <= 0.9 * xp.cuda.Device(get_gpu_id()).mem_info[0]
 
 
-
 def test_get_available_memory_cpu(mocker: MockerFixture):
     if gpu_enabled:
         # this function is called in the implementation try block -

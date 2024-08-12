@@ -34,5 +34,3 @@ def _calc_padding_median_filter3d(size: int = 3, **kwargs) -> Tuple[int, int]:
 
 def _calc_padding_remove_outlier3d(size: int = 3, **kwargs) -> Tuple[int, int]:
     return size // 2, size // 2
-
-

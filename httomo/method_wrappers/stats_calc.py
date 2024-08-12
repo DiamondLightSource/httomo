@@ -1,6 +1,5 @@
 from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import catchtime, log_rank, xp, gpu_enabled
 
@@ -50,9 +49,9 @@ class StatsCalcWrapper(GenericMethodWrapper):
     def _transfer_data(self, dataset: T) -> T:
         # don't transfer anything (either way) at this point
         return dataset
-    
+
     def _run_method(self, dataset: T, args: Dict[str, Any]) -> T:
-        # transfer data to GPU if we can / have it available (always faster), 
+        # transfer data to GPU if we can / have it available (always faster),
         # but don't want to fail if we don't have a GPU (underlying method works for both)
         # and don't touch original dataset
         if gpu_enabled and dataset.is_cpu:
@@ -61,11 +60,8 @@ class StatsCalcWrapper(GenericMethodWrapper):
             self._gpu_time_info.host2device += t.elapsed
         ret = self._method(**args)
         return self._process_return_type(ret, dataset)
-        
 
-    def _process_return_type(
-        self, ret: Any, input_block: T
-    ) -> T:
+    def _process_return_type(self, ret: Any, input_block: T) -> T:
         assert isinstance(ret, tuple), "expected return type is a tuple"
         assert len(ret) == 4, "A 4-tuple of stats values is expected"
 

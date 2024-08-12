@@ -53,7 +53,7 @@ class ParamSweepReader(ParamSweepSource):
         return ParamSweepBlock(
             data=self._data[slices[0], slices[1], slices[2]],
             aux_data=self.aux_data,
-            slicing_dim=self.extract_dim
+            slicing_dim=self.extract_dim,
         )
 
 
@@ -80,9 +80,7 @@ class ParamSweepWriter:
     @property
     def single_shape(self) -> Tuple[int, int, int]:
         if self._single_shape is None:
-            err_str = (
-                "Shape of single sweep result isn't known until the first write has occurred"
-            )
+            err_str = "Shape of single sweep result isn't known until the first write has occurred"
             raise ValueError(err_str)
         return self._single_shape
 
@@ -111,7 +109,9 @@ class ParamSweepWriter:
     @property
     def slices_per_sweep(self) -> int:
         if self._slices_per_sweep is None:
-            raise ValueError("Slices per sweep isn't known until the first write has occurred")
+            raise ValueError(
+                "Slices per sweep isn't known until the first write has occurred"
+            )
         return self._slices_per_sweep
 
     @property

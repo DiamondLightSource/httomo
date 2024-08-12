@@ -24,9 +24,13 @@ import math
 from typing import Tuple
 import numpy as np
 
+from httomo.runner.output_ref import OutputRef
+
 __all__ = [
     "_calc_memory_bytes_data_resampler",
     "_calc_output_dim_data_resampler",
+    "_calc_memory_bytes_sino_360_to_180",
+    "_calc_output_dim_sino_360_to_180",
 ]
 
 
@@ -54,3 +58,63 @@ def _calc_memory_bytes_data_resampler(
 
     tot_memory_bytes = input_size + output_size + interpolator
     return (tot_memory_bytes, xi)
+
+
+def _calc_output_dim_sino_360_to_180(
+    non_slice_dims_shape: Tuple[int, int],
+    **kwargs,
+) -> Tuple[int, int]:
+    assert "overlap" in kwargs, "Expected overlap in method parameters"
+    overlap_side_output = kwargs["overlap"]
+    assert isinstance(
+        overlap_side_output, OutputRef
+    ), "Expected overlap to be in an OutputRef"
+    overlap: float = overlap_side_output.value
+
+    original_sino_width = non_slice_dims_shape[1]
+    stitched_sino_width = original_sino_width * 2 - math.ceil(overlap)
+    return non_slice_dims_shape[0] // 2, stitched_sino_width
+
+
+def _calc_memory_bytes_sino_360_to_180(
+    non_slice_dims_shape: Tuple[int, int],
+    dtype: np.dtype,
+    **kwargs,
+) -> Tuple[int, int]:
+    assert "overlap" in kwargs, "Expected overlap in method parameters"
+    overlap_side_output = kwargs["overlap"]
+    assert isinstance(
+        overlap_side_output, OutputRef
+    ), "Expected overlap to be in an OutputRef"
+    overlap: float = overlap_side_output.value
+
+    original_sino_width = non_slice_dims_shape[1]
+    stitched_sino_width = original_sino_width * 2 - math.ceil(overlap)
+    n = non_slice_dims_shape[0] // 2
+    stitched_non_slice_dims = (n, stitched_sino_width)
+
+    input_slice_size = int(np.prod(non_slice_dims_shape)) * dtype.itemsize
+    output_slice_size = int(np.prod(stitched_non_slice_dims)) * dtype.itemsize
+
+    summand_shape: Tuple[int, int] = (n, int(overlap))
+    # Multiplication between a subset of the original data (`float32`) and the 1D weights array
+    # (`float32`) causes a new array to be created that has dtype `float32` (for example,
+    # multiplications like `weights * data[:n, :, -overlap]`
+    summand_size = int(np.prod(summand_shape)) * np.float32().itemsize
+
+    total_memory_bytes = (
+        input_slice_size
+        + output_slice_size
+        # In both the `if` branch and the `else` branch checking the `rotation` variable value,
+        # in total, there are 4 copies of subsets of the `data` array that are made (note that
+        # the expressions below are referencing the `if` branch and are slightly different in
+        # the `else` branch):
+        # 1. fancy indexing: `data[n : 2 * n, :, overlap:][:, :, ::-1]`
+        # 2. multiplication: `weights * data[:n, :, :overlap]`
+        # 3. multiplication: `weights * data[n : 2 * n, :, :overlap]`
+        # 4. fancy indexing (performed on the result of 3):
+        # `(weights * data[n : 2 * n, :, :overlap])[:, :, ::-1]`
+        + 4 * summand_size
+    )
+
+    return total_memory_bytes, 0

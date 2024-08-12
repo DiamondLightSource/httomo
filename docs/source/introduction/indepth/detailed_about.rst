@@ -9,7 +9,7 @@ Here we present more detailed concepts of HTTomo's framework, such as,
 
 .. toctree::
    :maxdepth: 2
-   
+
    sections
    reslice
    wrappers
@@ -37,6 +37,6 @@ of data splitting produces a piece of data called a *block*.
 
 .. toctree::
    :maxdepth: 2
-   
+
    chunks
    blocks

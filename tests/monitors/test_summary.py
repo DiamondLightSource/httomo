@@ -27,7 +27,7 @@ def test_summary_monitor_records_and_displays_data():
     mon.write_results(dest)
     dest.flush()
     data = dest.getvalue()
-    
+
     assert "across 1 process" in data
     assert "Summary Statistics" in data
     assert "methods CPU time" in data
@@ -45,21 +45,41 @@ def test_summary_monitor_records_and_displays_data():
     assert "method1" in data
     assert "method2" in data
 
+
 @pytest.mark.mpi
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
 def test_summary_monitor_records_and_displays_data_mpi():
-
     comm = MPI.COMM_WORLD
     mon = SummaryMonitor(comm)
     # everything gets reported twice - once in each process - and the write_results should aggregate
     # in process 0
     mon.report_method_block(
-        "method1", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0, 0.1, 0.2
+        "method1",
+        "module",
+        "task",
+        0,
+        (1, 2, 3),
+        (0, 0, 0),
+        (10, 0, 0),
+        42.0,
+        2.0,
+        0.1,
+        0.2,
     )
     mon.report_method_block(
-        "method2", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 42.0, 2.0, 0.1, 0.2
+        "method2",
+        "module",
+        "task",
+        0,
+        (1, 2, 3),
+        (0, 0, 0),
+        (10, 0, 0),
+        42.0,
+        2.0,
+        0.1,
+        0.2,
     )
     mon.report_source_block(
         "loader", "method1", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 4.0

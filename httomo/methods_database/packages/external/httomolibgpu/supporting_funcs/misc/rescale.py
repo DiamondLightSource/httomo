@@ -7,9 +7,9 @@ __all__ = [
 
 
 def _calc_memory_bytes_rescale_to_int(
-        non_slice_dims_shape: Tuple[int, int],
-        dtype: np.dtype,
-        **kwargs,
+    non_slice_dims_shape: Tuple[int, int],
+    dtype: np.dtype,
+    **kwargs,
 ) -> Tuple[int, int]:
     bits: int = kwargs["bits"]
     if bits == 8:
@@ -19,4 +19,7 @@ def _calc_memory_bytes_rescale_to_int(
     else:
         itemsize = 4
     safety = 128
-    return (int(np.prod(non_slice_dims_shape)) * (dtype.itemsize + itemsize) + safety, 0)
+    return (
+        int(np.prod(non_slice_dims_shape)) * (dtype.itemsize + itemsize) + safety,
+        0,
+    )

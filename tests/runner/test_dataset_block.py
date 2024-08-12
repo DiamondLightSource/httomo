@@ -529,6 +529,29 @@ def test_inconsistent_chunk_start(chunk_start: int):
         )
 
 
+def test_get_padded_and_unpadded_data():
+    padding = (2, 2)
+    data = np.ones((10, 10, 10), dtype=np.float32)
+    # set the padding areas to something else
+    data[: padding[0], :, :] = -1
+    data[10 - padding[1] :, :, :] = -2
+    angles = np.linspace(0, math.pi, 30, dtype=np.float32)
+    block = DataSetBlock(
+        data=data,
+        aux_data=AuxiliaryData(angles=angles),
+        block_start=-2,
+        chunk_start=8,
+        slicing_dim=0,
+        global_shape=(30, 10, 10),
+        padding=padding,
+    )
+
+    np.testing.assert_array_equal(block.data, data)
+    unpadded = block.data_unpadded
+    assert unpadded.shape == (6, 10, 10)
+    np.testing.assert_array_equal(unpadded, 1.0)
+
+
 def test_modify_data_no_shape_change():
     # `DataSetBlock` overrides `data.setter` inherited from `BaseBlock` so should be tested,
     # even though this test looks very similar to analagous test for `BaseBlock.data.setter`
@@ -541,6 +564,25 @@ def test_modify_data_no_shape_change():
         chunk_start=10,
         slicing_dim=0,
         global_shape=(30, 10, 10),
+    )
+
+    block.data = 2 * data
+
+    np.testing.assert_array_equal(block.data, 2 * data)
+
+
+def test_modify_data_with_padding_no_shape_change():
+    padding = (2, 2)
+    data = np.ones((10, 10, 10), dtype=np.float32)
+    angles = np.linspace(0, math.pi, 30, dtype=np.float32)
+    block = DataSetBlock(
+        data=data,
+        aux_data=AuxiliaryData(angles=angles),
+        block_start=-2,
+        chunk_start=8,
+        slicing_dim=0,
+        global_shape=(30, 10, 10),
+        padding=padding,
     )
 
     block.data = 2 * data
@@ -574,6 +616,34 @@ def test_modify_data_shape_change():
     assert block.chunk_shape == (10, 30, 20)
     assert block.chunk_index == (block_start, 0, 0)
     assert block.global_index == (chunk_start + block_start, 0, 0)
+
+
+def test_modify_data_shape_change_with_padding():
+    padding = (2, 2)
+    block_start = 2 - padding[0]
+    chunk_start = 10 - padding[0]
+    data = np.ones((5 + padding[0] + padding[1], 10, 10), dtype=np.float32)
+    global_shape = (30, 10, 10)
+    angles = np.linspace(0, math.pi, global_shape[0], dtype=np.float32)
+    block = DataSetBlock(
+        data=data,
+        aux_data=AuxiliaryData(angles=angles),
+        block_start=block_start,
+        chunk_start=chunk_start,
+        slicing_dim=0,
+        global_shape=global_shape,
+        chunk_shape=(10 + padding[0] + padding[1], 10, 10),
+        padding=padding,
+    )
+
+    block.data = 2 * np.ones((data.shape[0], 30, 20), dtype=np.float32)
+
+    np.testing.assert_array_equal(block.data, 2.0)
+    assert block.shape == (data.shape[0], 30, 20)
+    assert block.global_shape == (global_shape[0], 30, 20)
+    assert block.chunk_shape == (10 + padding[0] + padding[1], 30, 20)
+    assert block.chunk_index == (block_start, 0, 0)
+    assert block.global_index == (chunk_start + block_start + padding[0], 0, 0)
 
 
 @pytest.mark.parametrize("new_size", [3, 7])

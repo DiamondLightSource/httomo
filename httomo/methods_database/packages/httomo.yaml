@@ -5,9 +5,9 @@ data:
         pattern: projection
         output_dims_change: False
         implementation: cpu
-        memory_gpu: None 
+        memory_gpu: None
         save_result_default: False
-methods:  
+methods:
   calculate_stats:
     pattern: all
     output_dims_change: False
