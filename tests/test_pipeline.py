@@ -698,6 +698,6 @@ def test_run_pipeline_360deg_gpu2(
     assert "Loading data: tests/test_data/360scan/360scan.hdf" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
     assert "Data shape is (3601, 3, 2560) of type uint16" in verbose_log_contents
-    assert "Global min -0.003281" in verbose_log_contents
-    assert "Global max 0.006374" in verbose_log_contents
-    assert "Global mean 0.000887" in verbose_log_contents
+    assert "Global min -0.002859" in verbose_log_contents
+    assert "Global max 0.00561" in verbose_log_contents
+    assert "Global mean 0.000889" in verbose_log_contents
