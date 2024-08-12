@@ -55,26 +55,27 @@ def test_cli_pass_gpu_id(cmd, standard_data, standard_loader, output_folder):
     assert "GPU Device not available for access." in result.stderr
 
 
-@pytest.mark.parametrize("cli_parameter,limit_bytes", [
-    ("0", 0),
-    ("500", 500),
-    ("500k", 500 * 1024),
-    ("1M",  1024*1024),
-    ("1m",  1024*1024),
-    ("3g", 3 * 1024**3),
-    ("3.2g", int(3.2 * 1024**3))
-])
+@pytest.mark.parametrize(
+    "cli_parameter,limit_bytes",
+    [
+        ("0", 0),
+        ("500", 500),
+        ("500k", 500 * 1024),
+        ("1M", 1024 * 1024),
+        ("1m", 1024 * 1024),
+        ("3g", 3 * 1024**3),
+        ("3.2g", int(3.2 * 1024**3)),
+    ],
+)
 def test_cli_transforms_memory_limits(cli_parameter: str, limit_bytes: int):
     assert transform_limit_str_to_bytes(cli_parameter) == limit_bytes
-    
 
-@pytest.mark.parametrize("cli_parameter", [
-    "abcd", "nolimit", "124A", "23ki"
-])
+
+@pytest.mark.parametrize("cli_parameter", ["abcd", "nolimit", "124A", "23ki"])
 def test_cli_fails_transforming_memory_limits(cli_parameter: str):
     with pytest.raises(ValueError) as e:
         transform_limit_str_to_bytes(cli_parameter)
-        
+
     assert f"invalid memory limit string {cli_parameter}" in str(e)
 
 

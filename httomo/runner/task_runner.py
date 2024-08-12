@@ -1,7 +1,7 @@
 from itertools import islice
 import logging
 import time
-from typing import Any, Dict, Literal, Optional, List, Union
+from typing import Any, Dict, Literal, Optional, List, Tuple, Union
 import os
 
 import tqdm
@@ -29,6 +29,7 @@ from httomo.utils import (
     log_exception,
     log_once,
     log_rank,
+    make_3d_shape_from_shape,
 )
 import numpy as np
 
@@ -342,3 +343,30 @@ class TaskRunner:
             non_slice_dims_shape = output_dims
 
         section.max_slices = min(max_slices_methods)
+
+    def determine_section_padding(self, section: Section) -> Tuple[int, int]:
+        # NOTE: Assumes that only one method with padding will be in a section, which is
+        # consistent with the assumptions made by `section.sectionizer()`
+        for method in section.methods:
+            if method.padding:
+                return method.calculate_padding()
+        return (0, 0)
+
+
+def calculate_next_chunk_shape(
+    comm: MPI.Comm,
+    global_shape: Tuple[int, int, int],
+    next_section_slicing_dim: int,
+    next_section_padding: Tuple[int, int],
+) -> Tuple[int, int, int]:
+    """
+    Utility function for calculating the chunk shape (including padding) for the next section.
+    """
+    start = round((global_shape[next_section_slicing_dim] / comm.size) * comm.rank)
+    stop = round((global_shape[next_section_slicing_dim] / comm.size) * (comm.rank + 1))
+    next_section_slicing_dim_len = stop - start
+    shape = list(global_shape)
+    shape[next_section_slicing_dim] = (
+        next_section_slicing_dim_len + next_section_padding[0] + next_section_padding[1]
+    )
+    return make_3d_shape_from_shape(shape)

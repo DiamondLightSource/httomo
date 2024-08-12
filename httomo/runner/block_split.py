@@ -6,6 +6,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class BlockSplitter:
     """Produces blocks from a DataSetSource according to the given max slices
     per block. It provides an iterator interface, so that it can be used as::
@@ -48,8 +49,8 @@ class BlockSplitter:
             def __init__(self, splitter):
                 self.splitter = splitter
                 self._current = 0
-                
-            def __iter__(self) -> 'BlockIterator':
+
+            def __iter__(self) -> "BlockIterator":
                 return self  # pragma: no cover
 
             def __next__(self) -> DataSetBlock:
@@ -60,4 +61,3 @@ class BlockSplitter:
                 return v
 
         return BlockIterator(self)
-

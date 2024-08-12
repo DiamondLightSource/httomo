@@ -30,13 +30,13 @@ def test_param_sweep_writer_get_single_shape_before_write_raises_error():
         "Shape of single sweep result isn't known until the first write has occurred"
     ) in str(e)
 
+
 def test_param_sweep_writer_get_slices_per_sweep_before_write_raises_error():
     writer = make_param_sweep_writer()
     with pytest.raises(ValueError) as e:
         writer.slices_per_sweep
-    assert (
-        "Slices per sweep isn't known until the first write has occurred"
-    ) in str(e)
+    assert ("Slices per sweep isn't known until the first write has occurred") in str(e)
+
 
 def test_param_sweep_writer_get_total_shape_before_write_raises_error():
     writer = make_param_sweep_writer()
@@ -64,7 +64,7 @@ def test_param_sweep_writer_write_sweep_result_transfers_gpu_arr_to_cpu(
     block = ParamSweepBlock(
         data=np.ones(SWEEP_RES_SHAPE, dtype=np.float32),
         aux_data=AuxiliaryData(angles=np.ones(SWEEP_RES_SHAPE[0], dtype=np.float32)),
-        slicing_dim=1
+        slicing_dim=1,
     )
 
     # Patch `gpu_enabled` to simulate a GPU run
@@ -103,12 +103,12 @@ def test_param_sweep_writer_reader_write_res_and_read():
     sweep_result_1 = ParamSweepBlock(
         data=data[:, : SWEEP_RES_SHAPE[CONCAT_DIM], :],
         aux_data=aux_data,
-        slicing_dim=CONCAT_DIM
+        slicing_dim=CONCAT_DIM,
     )
     sweep_result_2 = ParamSweepBlock(
         data=data[:, SWEEP_RES_SHAPE[CONCAT_DIM] :, :],
         aux_data=aux_data,
-        slicing_dim=CONCAT_DIM
+        slicing_dim=CONCAT_DIM,
     )
 
     # Write two different blocks to the param sweep store, to simulate writing the results of a

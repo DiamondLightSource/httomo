@@ -1,5 +1,4 @@
 import logging
-from contextlib import contextmanager
 from enum import Enum
 from time import perf_counter_ns
 from typing import Any, Callable, Dict, List, Literal, Tuple
@@ -56,6 +55,7 @@ def log_once(output: Any, level: int = logging.INFO) -> None:
                 logger.opt(colors=True).info("<red>{}</red>".format(output))
             else:
                 logger.info(output)
+
 
 def log_rank(output: Any, comm: MPI.Comm) -> None:
     """

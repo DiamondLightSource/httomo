@@ -59,11 +59,7 @@ def reslice(
 
     # all-to-all MPI call distributes every processes list to every other process,
     # and we concatenate them again across the resliced dimension
-    new_data = numpy.concatenate(
-        alltoall(to_scatter, comm), axis=current_slice_dim - 1
-    )
+    new_data = numpy.concatenate(alltoall(to_scatter, comm), axis=current_slice_dim - 1)
 
-    start_idx = 0 if comm.rank == 0 else split_indices[comm.rank-1]
+    start_idx = 0 if comm.rank == 0 else split_indices[comm.rank - 1]
     return new_data, next_slice_dim, start_idx
-
-

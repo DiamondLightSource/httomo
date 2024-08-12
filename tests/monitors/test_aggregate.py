@@ -14,8 +14,19 @@ def test_aggregate_passes_on_method(mocker: MockerFixture):
     mon1 = mocker.create_autospec(MonitoringInterface, instance=True)
     mon2 = mocker.create_autospec(MonitoringInterface, instance=True)
     agg = AggregateMonitoring([mon1, mon2])
-    args = ("method", "module", "task", 0, (1, 2, 3), (0, 0, 0), (10, 0, 0), 
-            42.0, 3.2, 1.2, 1.1)
+    args = (
+        "method",
+        "module",
+        "task",
+        0,
+        (1, 2, 3),
+        (0, 0, 0),
+        (10, 0, 0),
+        42.0,
+        3.2,
+        1.2,
+        1.1,
+    )
     agg.report_method_block(*args)
 
     mon1.report_method_block.assert_called_once_with(*args)

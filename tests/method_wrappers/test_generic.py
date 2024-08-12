@@ -24,7 +24,7 @@ def test_generic_get_name_and_paths(mocker: MockerFixture):
         make_mock_repo(mocker, padding=True),
         "testmodule.path",
         "fake_method",
-        MPI.COMM_WORLD
+        MPI.COMM_WORLD,
     )
     assert isinstance(wrp, GenericMethodWrapper)
     assert wrp.method_name == "fake_method"
@@ -46,13 +46,16 @@ def test_generic_set_task_id(mocker: MockerFixture):
         "testmodule.path",
         "fake_method",
         MPI.COMM_WORLD,
-        task_id="fake_method_id"
+        task_id="fake_method_id",
     )
-    
+
     assert wrp.task_id == "fake_method_id"
 
+
 @pytest.mark.cupy
-def test_generic_execute_transfers_to_gpu(mocker: MockerFixture, dummy_block: DataSetBlock):
+def test_generic_execute_transfers_to_gpu(
+    mocker: MockerFixture, dummy_block: DataSetBlock
+):
     class FakeModule:
         def fake_method(data):
             return data
@@ -74,7 +77,8 @@ def test_generic_execute_transfers_to_gpu(mocker: MockerFixture, dummy_block: Da
     reason="skipped as cupy is not available",
 )
 @pytest.mark.cupy
-def test_generic_excute_measures_gpu_times(dummy_block: DataSetBlock, mocker: MockerFixture
+def test_generic_excute_measures_gpu_times(
+    dummy_block: DataSetBlock, mocker: MockerFixture
 ):
     class FakeModule:
         def fake_method(data):
@@ -199,11 +203,9 @@ def test_generic_passes_communicator_if_needed(
     wrp.execute(dummy_block)
 
 
-def test_generic_transforms_auto_axis(
-    mocker: MockerFixture, dummy_block: DataSetBlock
-):    
-
+def test_generic_transforms_auto_axis(mocker: MockerFixture, dummy_block: DataSetBlock):
     PATTERN = Pattern.projection
+
     class FakeModule:
         def fake_method(data, axis: int):
             assert axis == PATTERN.value
@@ -211,8 +213,11 @@ def test_generic_transforms_auto_axis(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
     wrp = make_method_wrapper(
-        make_mock_repo(mocker, pattern=PATTERN), "mocked_module_path", "fake_method",
-        MPI.COMM_WORLD, axis="auto",
+        make_mock_repo(mocker, pattern=PATTERN),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        axis="auto",
     )
 
     wrp.execute(dummy_block)
@@ -251,7 +256,9 @@ def test_generic_build_kwargs_parameter_not_given(
     assert "Cannot map method parameter param to a value" in str(e)
 
 
-def test_generic_access_outputref_params(mocker: MockerFixture, dummy_block: DataSetBlock):
+def test_generic_access_outputref_params(
+    mocker: MockerFixture, dummy_block: DataSetBlock
+):
     class FakeModule:
         def fake_method(data, param):
             assert param == 42
@@ -303,7 +310,9 @@ def test_generic_different_data_parameter_name(
     wrp.execute(dummy_block)
 
 
-def test_generic_for_method_with_kwargs(mocker: MockerFixture, dummy_block: DataSetBlock):
+def test_generic_for_method_with_kwargs(
+    mocker: MockerFixture, dummy_block: DataSetBlock
+):
     class FakeModule:
         def fake_method(data, param, **kwargs):
             assert param == 42.0
@@ -490,7 +499,7 @@ def test_generic_method_queries(
 @pytest.mark.cupy
 def test_generic_calculate_max_slices_direct(
     mocker: MockerFixture,
-  dummy_block: DataSetBlock,
+    dummy_block: DataSetBlock,
     implementation: str,
     memory_gpu: List[GpuMemoryRequirement],
 ):
@@ -517,7 +526,11 @@ def test_generic_calculate_max_slices_direct(
     shape = (shape_t[0], shape_t[1])
     databytes = shape[0] * shape[1] * dummy_block.data.itemsize
     max_slices_expected = 5
-    multiplier = float(memory_gpu[0].multiplier if memory_gpu != [] and memory_gpu[0].multiplier is not None else 1)
+    multiplier = float(
+        memory_gpu[0].multiplier
+        if memory_gpu != [] and memory_gpu[0].multiplier is not None
+        else 1
+    )
     available_memory_in = int(databytes * max_slices_expected * multiplier)
     if available_memory_in == 0:
         available_memory_in = 5
@@ -660,7 +673,9 @@ def test_generic_execute_uses_comm_passed_to_constructor(
     # The fact that its `bcast()` method should never be called is used as a proxy/marker that
     # the global communicator is never used in method execution, only the communicator passed
     # into the method wrapper's constructor should be used in method execution.
-    global_comm_bcast_spy = mocker.patch.object(target=global_comm_mock, attribute="bcast")
+    global_comm_bcast_spy = mocker.patch.object(
+        target=global_comm_mock, attribute="bcast"
+    )
 
     # Define mock comm object to pass into method wrapper constructor
     passed_in_mock_comm = mocker.create_autospec(MPI.Comm)
@@ -709,3 +724,65 @@ def test_generic_execute_uses_comm_passed_to_constructor(
     wrp.execute(dummy_block)
     global_comm_bcast_spy.assert_not_called()
     passed_in_mock_comm_bcast_spy.assert_called_once()
+
+
+@pytest.mark.cupy
+def test_generic_calculate_padding_none_required(mocker: MockerFixture):
+    class FakeModule:
+        def test_method(data):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    memory_gpu: List[GpuMemoryRequirement] = []
+    wrp = make_method_wrapper(
+        make_mock_repo(
+            mocker,
+            pattern=Pattern.projection,
+            implementation="gpu_cupy",
+            memory_gpu=memory_gpu,
+            padding=False,
+        ),
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+    )
+
+    padding = wrp.calculate_padding()
+    assert padding == (0, 0)
+
+
+@pytest.mark.cupy
+def test_generic_calculate_padding(mocker: MockerFixture):
+    EXPECTED_PADDING = (5, 10)
+    PARAM_AFFECTS_PADDING = 7
+
+    class FakeModule:
+        def test_method(data, param_affects_padding):
+            return data
+
+    mocker.patch("importlib.import_module", return_value=FakeModule)
+
+    memory_gpu: List[GpuMemoryRequirement] = []
+    repo = make_mock_repo(
+        mocker,
+        pattern=Pattern.projection,
+        implementation="gpu_cupy",
+        memory_gpu=memory_gpu,
+        padding=True,
+    )
+    padding_calc_mock = mocker.patch.object(
+        repo.query("", ""), "calculate_padding", return_value=EXPECTED_PADDING
+    )
+    wrp = make_method_wrapper(
+        repo,
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+    )
+    wrp["param_affects_padding"] = PARAM_AFFECTS_PADDING
+
+    padding = wrp.calculate_padding()
+
+    assert padding == EXPECTED_PADDING
+    padding_calc_mock.assert_called_with(param_affects_padding=PARAM_AFFECTS_PADDING)

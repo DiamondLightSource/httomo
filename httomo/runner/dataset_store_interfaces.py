@@ -52,9 +52,8 @@ class DataSetSource(Protocol):
     the data can be read in *blocks*, sliced in the given slicing dimension"""
 
     @property
-    def dtype(self) -> np.dtype:
-        ...  # pragma: no cover
-    
+    def dtype(self) -> np.dtype: ...  # pragma: no cover
+
     @property
     def global_shape(self) -> Tuple[int, int, int]:
         """Global data shape across all processes that we eventually have to read."""
@@ -75,12 +74,12 @@ class DataSetSource(Protocol):
     def slicing_dim(self) -> Literal[0, 1, 2]:
         """Slicing dimension - 0, 1, or 2"""
         ...  # pragma: no cover
-        
+
     @property
     def aux_data(self) -> AuxiliaryData:
         """Auxiliary data"""
         ...  # pragma: no cover
-        
+
     def read_block(self, start: int, length: int) -> DataSetBlock:
         """Reads a block from the dataset, starting at `start` of length `length`,
         in the current slicing dimension. Note that `start` is chunk-based,
@@ -128,11 +127,12 @@ class DataSetSink(Protocol):
         to give implementations a chance to write everything to disk and close the file,
         etc."""
         ...  # pragma: no cover
-        
+
+
 class ReadableDataSetSink(DataSetSink):
     """Interface for a DataSetSink that is store-based, i.e. where it's possible to construct
-       a reader from the same data store that this sink has been written first"""
-       
+    a reader from the same data store that this sink has been written first"""
+
     @abc.abstractmethod
     def make_reader(
         self, new_slicing_dim: Optional[Literal[0, 1, 2]] = None

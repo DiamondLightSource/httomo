@@ -90,7 +90,7 @@ class BlockData(Protocol):
     def shape(self) -> Tuple[int, int, int]:
         """Shape of the data in this block"""
         ...  # pragma: no cover
-        
+
     @property
     def shape_unpadded(self) -> Tuple[int, int, int]:
         """Shape of the core date in this block, with padding removed"""
@@ -107,7 +107,7 @@ class BlockIndexing(Protocol):
     def chunk_index(self) -> Tuple[int, int, int]:
         """The index of this block within the chunk handled by the current process"""
         ...  # pragma: no cover
-        
+
     @property
     def chunk_index_unpadded(self) -> Tuple[int, int, int]:
         """The index of the core area of this block within the chunk (padding removed)"""
@@ -117,7 +117,7 @@ class BlockIndexing(Protocol):
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Shape of the full chunk handled by the current process"""
         ...  # pragma: no cover
-        
+
     @property
     def chunk_shape_unpadded(self) -> Tuple[int, int, int]:
         """Shape of the full chunk core area handled by the current process (with padding removed)"""
@@ -127,7 +127,7 @@ class BlockIndexing(Protocol):
     def global_index(self) -> Tuple[int, int, int]:
         """The index of this block within the global data across all processes"""
         ...  # pragma: no cover
-        
+
     @property
     def global_index_unpadded(self) -> Tuple[int, int, int]:
         """The index of the core area of this block within the global data across all processes (with padding removed)"""
@@ -145,24 +145,29 @@ class BlockIndexing(Protocol):
         process
         """
         ...  # pragma: no cover
-        
+
     @property
     def slicing_dim(self) -> Literal[0, 1, 2]:
         """Return the slicing dimenions of the block"""
         ...  # pragma: no cover
-        
+
     @property
     def is_padded(self) -> bool:
         """Determine if this is a padded block"""
         ...  # pragma: no cover
-        
+
     @property
     def padding(self) -> Tuple[int, int]:
-        """Get the 'before' and 'after' padding values for this block. 
+        """Get the 'before' and 'after' padding values for this block.
         This is to be understood as the the number of padding slices in the 'slicing_dim' direction
-        that come before and after the core area of the block. 
+        that come before and after the core area of the block.
         If no padding is used, it returns (0, 0).
         """
+        ...  # pragma: no cover
+
+    @property
+    def data_unpadded(self) -> generic_array:
+        """Return the data, but with the padding slices removed"""
         ...  # pragma: no cover
 
 

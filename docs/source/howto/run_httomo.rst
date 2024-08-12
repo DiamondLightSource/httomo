@@ -17,7 +17,7 @@ Required inputs
 
 In order to run HTTomo you require a data file (an HDF5 file) and a YAML process
 list file that describes the desired processing pipeline. For information on
-getting started creating this YAML file, please see :ref:`howto_process_list` 
+getting started creating this YAML file, please see :ref:`howto_process_list`
 and also ready-to-be-used :ref:`tutorials_pl_templates`.
 
 Running HTTomo Inside or Outside of Diamond

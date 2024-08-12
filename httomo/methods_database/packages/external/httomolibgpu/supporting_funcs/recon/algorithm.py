@@ -72,7 +72,7 @@ def _calc_memory_bytes_FBP(
 
     # 1. input
     input_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
-    
+
     ########## FFT / filter / IFFT (filtersync_cupy)
 
     # 2. RFFT plan (R2C transform)
@@ -84,12 +84,10 @@ def _calc_memory_bytes_FBP(
         )
         / SLICES
     )
-    
+
     # 3. RFFT output size (proj_f in code)
-    proj_f_slice = (
-        det_height * (det_width // 2 + 1) * np.complex64().itemsize
-    )
-    
+    proj_f_slice = det_height * (det_width // 2 + 1) * np.complex64().itemsize
+
     # 4. Filter size (independent of number of slices)
     filter_size = (det_width // 2 + 1) * np.float32().itemsize
 
@@ -102,54 +100,62 @@ def _calc_memory_bytes_FBP(
         )
         / SLICES
     )
-    
+
     # 6. output of filtersync call
     filtersync_output_slice_size = input_slice_size
-    
+
     # since the FFT plans, proj_f, and input data is dropped after the filtersync call, we track it here
     # separate
-    filtersync_size = input_slice_size + fftplan_slice_size + proj_f_slice + ifftplan_slice_size
-    
+    filtersync_size = (
+        input_slice_size + fftplan_slice_size + proj_f_slice + ifftplan_slice_size
+    )
+
     # 6. we swap the axes before passing data to Astra in ToMoBAR
     # https://github.com/dkazanc/ToMoBAR/blob/54137829b6326406e09f6ef9c95eb35c213838a7/tomobar/methodsDIR_CuPy.py#L135
-    pre_astra_input_swapaxis_slice = np.prod(non_slice_dims_shape) * np.float32().itemsize
-    
-    # 7. astra backprojection will generate an output array 
+    pre_astra_input_swapaxis_slice = (
+        np.prod(non_slice_dims_shape) * np.float32().itemsize
+    )
+
+    # 7. astra backprojection will generate an output array
     # https://github.com/dkazanc/ToMoBAR/blob/54137829b6326406e09f6ef9c95eb35c213838a7/tomobar/astra_wrappers/astra_base.py#L524
     output_dims = _calc_output_dim_FBP(non_slice_dims_shape, **kwargs)
     recon_output_size = np.prod(output_dims) * np.float32().itemsize
-    
+
     # 7. astra backprojection makes a copy of the input
     astra_input_slice_size = np.prod(non_slice_dims_shape) * np.float32().itemsize
-    
+
     ## now we calculate back projection memory (2 copies of the input + reconstruction output)
-    projection_mem_size = pre_astra_input_swapaxis_slice + astra_input_slice_size + recon_output_size
-    
+    projection_mem_size = (
+        pre_astra_input_swapaxis_slice + astra_input_slice_size + recon_output_size
+    )
+
     # 9. apply_circular_mask memory (fixed amount, not per slice)
     circular_mask_size = np.prod(output_dims) * np.int64().itemsize
-    
+
     fixed_amount = max(filter_size, circular_mask_size)
-    
+
     # 9. this swapaxis makes another copy of the output data
     # https://github.com/DiamondLightSource/httomolibgpu/blob/72d98ec7ac44e06ee0318043934fb3f68667d203/httomolibgpu/recon/algorithm.py#L118
     # BUT: this swapaxis happens after the cudaArray inputs and the input swapaxis arrays are dropped,
     #      so it does not add to the memory overall
-    
+
     # NOTE
     # Although the assumption that the memory will be cleared after filtration step (the fft plans)
     # does hold for some WSs, on the cluster it results in OOM error in the IFFT step.
     # It is not very clear why it is the case so far, therefore the workaround is to account for all memory required
-    # for the FBP step (filtering part + ASTRA backprojection). This is not ideal as it uses a lot of memory 
-    # and therefore the blocks will be smaller making I/O suboptimal. 
+    # for the FBP step (filtering part + ASTRA backprojection). This is not ideal as it uses a lot of memory
+    # and therefore the blocks will be smaller making I/O suboptimal.
 
-    # The commented code bellow is how the memory should be estimated in principle 
+    # The commented code bellow is how the memory should be estimated in principle
     # if projection_mem_size > filtersync_size:
     #     tot_memory_bytes = int(filtersync_output_slice_size + projection_mem_size)
     # else:
     #     tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + recon_output_size)
-    
-    # this account for the memory used for filtration AND backprojection. 
-    tot_memory_bytes = int(filtersync_output_slice_size + filtersync_size + projection_mem_size)
+
+    # this account for the memory used for filtration AND backprojection.
+    tot_memory_bytes = int(
+        filtersync_output_slice_size + filtersync_size + projection_mem_size
+    )
 
     return (tot_memory_bytes, fixed_amount)
 

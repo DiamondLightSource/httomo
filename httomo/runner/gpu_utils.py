@@ -9,8 +9,8 @@ def gpumem_cleanup():
         xp.get_default_memory_pool().free_all_blocks()
         cache = xp.fft.config.get_plan_cache()
         cache.clear()
-    
-        
+
+
 def get_available_gpu_memory(safety_margin_percent: float = 10.0) -> int:
     try:
         import cupy as cp

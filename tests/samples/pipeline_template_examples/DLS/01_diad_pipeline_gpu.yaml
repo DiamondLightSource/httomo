@@ -56,7 +56,7 @@
   parameters: {}
   id: statistics
   side_outputs:
-    glob_stats: glob_stats  
+    glob_stats: glob_stats
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:
