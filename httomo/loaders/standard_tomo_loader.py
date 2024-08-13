@@ -189,17 +189,12 @@ class StandardTomoLoader(DataSetSource):
             start_idx[self._slicing_dim] + block_shape[self._slicing_dim]
             > self.global_shape[self._slicing_dim]
         ):
-            proj_data_end = (
-                self._data_offset[self._slicing_dim]
-                + self.global_shape[self._slicing_dim]
-            )
-            offset = self._data.shape[self._slicing_dim] - proj_data_end
             extrapolate_after(
                 self._data,
                 block_data,
                 self._padding[1],
                 self._slicing_dim,
-                offset=offset,
+                preview_config=self._preview.config,
             )
             after_extended_read = False
 

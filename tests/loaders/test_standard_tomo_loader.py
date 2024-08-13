@@ -888,9 +888,31 @@ def test_standard_tomo_loader_read_block_padded_outer_chunk_boundary_lower_bound
     assert block.data.shape == expected_block_shape
 
 
+@pytest.mark.parametrize(
+    "preview_config",
+    [
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=128),
+            detector_x=PreviewDimConfig(start=0, stop=160),
+        ),
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=5, stop=123),
+            detector_x=PreviewDimConfig(start=0, stop=160),
+        ),
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=128),
+            detector_x=PreviewDimConfig(start=5, stop=155),
+        ),
+    ],
+    ids=["no_cropping", "crop_det_y_both_ends", "crop_det_x_both_ends"],
+)
 def test_standard_tomo_loader_read_block_padded_outer_chunk_boundary_upper_boundary_single_proc(
     standard_data_path: str,
     standard_image_key_path: str,
+    preview_config: PreviewConfig,
 ):
     # NOTE: The phrase "outer chunk boundary" refers to either of the two boundaries of a chunk
     # that lie on the boundary of the global data in the hdf5 file. For this test, the "outer
@@ -908,11 +930,6 @@ def test_standard_tomo_loader_read_block_padded_outer_chunk_boundary_upper_bound
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     SLICING_DIM: SlicingDimType = 0
     COMM = MPI.COMM_WORLD
-    PREVIEW_CONFIG = PreviewConfig(
-        angles=PreviewDimConfig(start=0, stop=180),
-        detector_y=PreviewDimConfig(start=0, stop=128),
-        detector_x=PreviewDimConfig(start=0, stop=160),
-    )
     PADDING = (2, 3)
 
     with mock.patch(
@@ -926,7 +943,7 @@ def test_standard_tomo_loader_read_block_padded_outer_chunk_boundary_upper_bound
             darks=DARKS_FLATS_CONFIG,
             flats=DARKS_FLATS_CONFIG,
             angles=ANGLES_CONFIG,
-            preview_config=PREVIEW_CONFIG,
+            preview_config=preview_config,
             slicing_dim=SLICING_DIM,
             comm=COMM,
             padding=PADDING,
@@ -940,8 +957,8 @@ def test_standard_tomo_loader_read_block_padded_outer_chunk_boundary_upper_bound
     )  # block is on the upper boundary of the chunk
     expected_block_shape = (
         BLOCK_LENGTH + PADDING[0] + PADDING[1],
-        PREVIEW_CONFIG.detector_y.stop - PREVIEW_CONFIG.detector_y.start,
-        PREVIEW_CONFIG.detector_x.stop - PREVIEW_CONFIG.detector_x.start,
+        preview_config.detector_y.stop - preview_config.detector_y.start,
+        preview_config.detector_x.stop - preview_config.detector_x.start,
     )
 
     # Index of block relative to the chunk it belongs to, including padding
@@ -964,8 +981,8 @@ def test_standard_tomo_loader_read_block_padded_outer_chunk_boundary_upper_bound
             - PADDING[0] : PROJS_START
             + BLOCK_START
             + BLOCK_LENGTH,
-            PREVIEW_CONFIG.detector_y.start : PREVIEW_CONFIG.detector_y.stop,
-            PREVIEW_CONFIG.detector_x.start : PREVIEW_CONFIG.detector_x.stop,
+            preview_config.detector_y.start : preview_config.detector_y.stop,
+            preview_config.detector_x.start : preview_config.detector_x.stop,
         ]
 
     # Pad the upper boundary of `block` using edge mode, because `block` is on the upper
