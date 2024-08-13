@@ -35,7 +35,12 @@ misc:
       pattern: all
       output_dims_change: True
       implementation: gpu_cupy
+      save_result_default: False
       padding: False
+      memory_gpu:
+        - datasets: [tomo]
+        - multipliers: [None]
+        - methods: [module]
   rescale:
     rescale_to_int:
       pattern: all

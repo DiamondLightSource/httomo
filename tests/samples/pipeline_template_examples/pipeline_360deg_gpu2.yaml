@@ -52,6 +52,12 @@
     recon_size: null
     recon_mask_radius: null
   save_result: true
+- method: data_resampler
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    newshape: [500, 500]
+    axis: auto
+    interpolation: linear
 - method: calculate_stats
   module_path: httomo.methods
   parameters: {}
