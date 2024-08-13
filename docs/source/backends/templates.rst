@@ -24,7 +24,7 @@ v.1.15
 
 HTTomolibgpu Modules
 --------------------
-v.2.0
+v.2.1
 '''''
 
 .. toctree::
