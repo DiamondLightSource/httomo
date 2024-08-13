@@ -181,7 +181,7 @@ class StandardTomoLoader(DataSetSource):
                 block_data,
                 self._padding[0],
                 self._slicing_dim,
-                offset=self._data_offset[self._slicing_dim],
+                preview_config=self._preview.config,
             )
             before_extended_read = False
 
