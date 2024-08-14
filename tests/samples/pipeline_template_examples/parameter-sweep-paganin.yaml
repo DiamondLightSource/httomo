@@ -19,18 +19,17 @@
 - method: paganin_filter_tomopy
   module_path: httomolibgpu.prep.phase
   parameters:
-    pixel_size: 0.0001
+    pixel_size: 0.0004
     dist: 50.0
     energy: 53.0
-    alpha: 0.001
+    alpha: !SweepRange
+      start: 0.001
+      stop: 0.5
+      step: 0.01 
 - method: FBP
   module_path: httomolibgpu.recon.algorithm
-  save_result: False
   parameters:
-    center: !SweepRange
-      start: 60
-      stop: 120
-      step: 10
+    center: 80
     filter_freq_cutoff: 1.1
     recon_size: null
     recon_mask_radius: null

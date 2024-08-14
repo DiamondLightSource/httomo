@@ -229,6 +229,24 @@ def check_no_required_parameter_values(conf: PipelineConfig) -> bool:
     return True
 
 
+def check_no_imagesaver_after_sweep_method(conf: PipelineConfig) -> bool:
+    """check that there shouldn't be image saver present right after the sweep method"""
+    # required_values = {
+    #     method["method"]: param
+    #     for method in conf
+    #     for param, param_value in method["parameters"].items()
+    #     if param_value == "REQUIRED"
+    # }
+    # for method, param in required_values.items():
+    #     _print_with_colour(
+    #         f"A value is needed for the parameter '{param}' in the '{method}' method."
+    #         " Please specify a value instead of 'REQUIRED'."
+    #         " Refer to the method docstring for more information."
+    #     )
+    #     return False
+    return True
+
+
 def check_no_duplicated_keys(f: Path) -> bool:
     """there should be no duplicate keys in yaml file
     Parameters

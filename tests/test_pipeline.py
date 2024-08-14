@@ -703,7 +703,6 @@ def test_run_pipeline_360deg_gpu2(
     assert "Global mean 0.000889" in verbose_log_contents
 
 
-
 @pytest.mark.cupy
 def test_run_gpu_pipeline_sweep_cor(
     get_files: Callable, cmd, standard_data, yaml_gpu_pipeline_sweep_cor, output_folder
@@ -730,3 +729,36 @@ def test_run_gpu_pipeline_sweep_cor(
     assert "Data shape is (180, 7, 160) of type uint16" in verbose_log_contents
     assert "Total number of values across all processes: 6" in verbose_log_contents
     assert "Values executed in this process: 6" in verbose_log_contents
+
+
+@pytest.mark.cupy
+def test_run_gpu_pipeline_sweep_paganin(
+    get_files: Callable,
+    cmd,
+    standard_data,
+    yaml_gpu_pipeline_sweep_paganin,
+    output_folder,
+):
+    cmd.pop(4)  #: don't save all
+    cmd.insert(6, standard_data)
+    cmd.insert(7, yaml_gpu_pipeline_sweep_paganin)
+    cmd.insert(8, output_folder)
+    subprocess.check_output(cmd)
+
+    # recurse through output_dir and check that all files are there
+    files = get_files("output_dir/")
+    assert len(files) == 104
+
+    #: check the generated h5 files
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    log_files = list(filter(lambda x: ".log" in x, files))
+    assert len(log_files) == 2
+    verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    verbose_log_contents = _get_log_contents(verbose_log_file[0])
+
+    assert "Data shape is (180, 7, 160) of type uint16" in verbose_log_contents
+    assert "Total number of values across all processes: 50" in verbose_log_contents
+    assert "Values executed in this process: 50" in verbose_log_contents
+    assert "Parameter name: alpha" in verbose_log_contents

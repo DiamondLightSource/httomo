@@ -21,6 +21,7 @@ from httomo.yaml_checker import (
     check_keys,
     sanity_check,
     validate_yaml_config,
+    check_no_imagesaver_after_sweep_method,
 )
 
 
@@ -78,6 +79,11 @@ def test_check_no_required_parameter_values(sample_pipelines: str, load_yaml: Ca
 def test_check_no_duplicated_keys(sample_pipelines: str, load_yaml: Callable):
     required_param_pipeline = sample_pipelines + "testing/duplicated_key.yaml"
     assert not check_no_duplicated_keys(required_param_pipeline)
+
+
+def test_imagesave_after_sweep(sample_pipelines: str, load_yaml: Callable):
+    required_param_pipeline = sample_pipelines + "testing/imagesave_after_sweep.yaml"
+    assert not check_no_imagesaver_after_sweep_method(required_param_pipeline)
 
 
 def test_check_keys(sample_pipelines: str, load_yaml: Callable):

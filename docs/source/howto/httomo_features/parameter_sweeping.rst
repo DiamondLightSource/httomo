@@ -77,6 +77,8 @@ pipeline to sweep over the :code:`size` parameter of a median filter:
 .. literalinclude:: ../../../../tests/samples/pipeline_template_examples/testing/sweep_manual.yaml
   :language: yaml
 
+.. note:: There is no need to add image saving method after the `sweep` method. The result of the `sweep` method will be saved into images automatically. 
+
 How big should the input data be?
 =================================
 

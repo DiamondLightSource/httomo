@@ -21,6 +21,7 @@ def make_test_method(
     save_result=False,
     task_id: Optional[str] = None,
     padding: bool = False,
+    sweep: bool = False,
     **kwargs,
 ) -> MethodWrapper:
     if task_id is None:
@@ -37,6 +38,7 @@ def make_test_method(
         task_id=task_id,
         config_params=kwargs,
         padding=padding,
+        sweep=sweep,
         __getitem__=lambda _, k: kwargs[k],  # return kwargs value from dict access
     )
 

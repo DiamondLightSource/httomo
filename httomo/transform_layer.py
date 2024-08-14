@@ -24,6 +24,9 @@ class TransformLayer:
     def transform(self, pipeline: Pipeline) -> Pipeline:
         pipeline = self.insert_save_methods(pipeline)
         pipeline = self.insert_data_reducer(pipeline)
+        pipeline = self.insert_save_images_after_sweep(
+            pipeline
+        )  # will be applied to sweep methods only
         return pipeline
 
     def insert_save_methods(self, pipeline: Pipeline) -> Pipeline:
@@ -67,4 +70,31 @@ class TransformLayer:
         )
         for m in pipeline:
             methods.append(m)
+        return Pipeline(loader, methods)
+
+    def insert_save_images_after_sweep(self, pipeline: Pipeline) -> Pipeline:
+        """For sweep methods we add image saving method after.
+        In addition we also add saving the results of the reconstruction,
+        if the module is present"""
+        loader = pipeline.loader
+        methods = []
+        sweep_before = False
+        for m in pipeline:
+            methods.append(m)
+            if m.sweep or "recon" in m.module_path and sweep_before:
+                methods.append(
+                    make_method_wrapper(
+                        self._repo,
+                        "httomolib.misc.images",
+                        "save_to_images",
+                        comm=self._comm,
+                        save_result=False,
+                        task_id=f"task_{0}",
+                        subfolder_name="images_sweep_" + str(m.method_name),
+                        axis=1,
+                        perc_range_min=5,
+                        perc_range_max=95,
+                    ),
+                )
+                sweep_before = True
         return Pipeline(loader, methods)
