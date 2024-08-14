@@ -7,15 +7,15 @@
       data_path: /entry1/tomo_entry/data/rotation_angle
     preview:
       detector_y:
-        start: 100
-        stop: 107
+        start: 60
+        stop: 67
 - method: normalize
   module_path: httomolibgpu.prep.normalize
   parameters:
     cutoff: 10.0
-    minus_log: true
+    minus_log: false
     nonnegativity: false
-    remove_nans: false
+    remove_nans: true
 - method: paganin_filter_tomopy
   module_path: httomolibgpu.prep.phase
   parameters:
@@ -23,22 +23,15 @@
     dist: 50.0
     energy: 53.0
     alpha: 0.001
-- method: remove_all_stripe
-  module_path: httomolibgpu.prep.stripe
-  parameters:
-    snr: 3.0
-    la_size: 61
-    sm_size: 21
-    dim: 1
 - method: FBP
   module_path: httomolibgpu.recon.algorithm
   save_result: False
   parameters:
     center: !SweepRange
-      start: 1000
-      stop: 1010
-      step: 1
-    filter_freq_cutoff: 0.6
+      start: 60
+      stop: 120
+      step: 10
+    filter_freq_cutoff: 1.1
     recon_size: null
     recon_mask_radius: null
 - method: save_to_images

@@ -292,6 +292,9 @@ def yaml_gpu_pipeline1():
 def yaml_gpu_pipeline360_2():
     return "tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml"
 
+@pytest.fixture
+def yaml_gpu_pipeline_sweep_cor():
+    return "tests/samples/pipeline_template_examples/parameter-sweep-cor.yaml"
 
 @pytest.fixture(scope="session")
 def distortion_correction_path(test_data_path):
