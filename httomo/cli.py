@@ -167,7 +167,7 @@ def run(
 
     does_contain_sweep = is_sweep_pipeline(yaml_config)
     global_comm = MPI.COMM_WORLD
-    method_wrapper_comm = global_comm
+    method_wrapper_comm = global_comm if not does_contain_sweep else MPI.COMM_SELF
     httomo.globals.SYSLOG_SERVER = syslog_host
     httomo.globals.SYSLOG_PORT = syslog_port
 
@@ -220,7 +220,7 @@ def run(
             if mon is not None:
                 mon.write_results(monitor_output)
     else:
-        ParamSweepRunner(pipeline).execute()
+        ParamSweepRunner(pipeline, global_comm).execute()
 
 
 def _check_yaml(yaml_config: Path, in_data: Path):
