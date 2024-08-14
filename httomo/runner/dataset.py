@@ -193,6 +193,12 @@ class DataSetBlock(BaseBlock, BlockIndexing):
         self._global_shape = make_3d_shape_from_shape(global_shape)
         self._chunk_shape = make_3d_shape_from_shape(chunk_shape)
 
+    @data.deleter
+    def data(self):
+        del self._data
+        del self._global_shape
+        del self._chunk_shape
+
     @property
     def is_padded(self) -> bool:
         return self._padding != (0, 0)
