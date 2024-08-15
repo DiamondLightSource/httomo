@@ -237,8 +237,8 @@ def check_no_imagesaver_after_sweep_method(f: Path) -> bool:
     pipeline = yaml_loader(f, loader=loader)
 
     method_is_sweep = False
-    for _, m in enumerate(pipeline):
-        for _, value in m["parameters"].items():
+    for m in pipeline:
+        for value in m["parameters"].values():
             if type(value) is tuple:
                 method_is_sweep = True
                 sweep_method_name = m["method"]

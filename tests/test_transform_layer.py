@@ -139,7 +139,7 @@ def test_insert_data_reducer(mocker: MockerFixture, tmp_path: Path):
 
     assert len(pipeline) == 3
     assert pipeline[0].method_name == "data_reducer"
-    assert pipeline[0].task_id == "task_0"
+    assert pipeline[0].task_id == "reducer_0"
 
 
 def test_insert_image_save_after_sweep(mocker: MockerFixture, tmp_path: Path):
@@ -181,7 +181,7 @@ def test_insert_image_save_after_sweep(mocker: MockerFixture, tmp_path: Path):
 
     assert len(pipeline) == 4
     assert pipeline[3].method_name == "save_to_images"
-    assert pipeline[3].task_id == "task_0"
+    assert pipeline[3].task_id == "saveimage_sweep_t3"
     assert (
         pipeline[3].config_params["subfolder_name"]
         == "images_sweep_paganin_filter_tomopy"
@@ -235,13 +235,13 @@ def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
 
     assert len(pipeline) == 6
     assert pipeline[3].method_name == "save_to_images"
-    assert pipeline[3].task_id == "task_0"
+    assert pipeline[3].task_id == "saveimage_sweep_t3"
     assert (
         pipeline[3].config_params["subfolder_name"]
         == "images_sweep_paganin_filter_tomopy"
     )
     assert pipeline[3].config_params["axis"] == 1
     assert pipeline[5].method_name == "save_to_images"
-    assert pipeline[5].task_id == "task_0"
+    assert pipeline[5].task_id == "saveimage_sweep_t4"
     assert pipeline[5].config_params["subfolder_name"] == "images_sweep_FBP"
     assert pipeline[5].config_params["axis"] == 1

@@ -65,7 +65,7 @@ class TransformLayer:
                 "data_reducer",
                 comm=self._comm,
                 save_result=False,
-                task_id=f"task_{0}",
+                task_id=f"reducer_{0}",
             ),
         )
         for m in pipeline:
@@ -89,7 +89,7 @@ class TransformLayer:
                         "save_to_images",
                         comm=self._comm,
                         save_result=False,
-                        task_id=f"task_{0}",
+                        task_id=f"saveimage_sweep_{m.task_id}",
                         subfolder_name="images_sweep_" + str(m.method_name),
                         axis=1,
                         perc_range_min=5,

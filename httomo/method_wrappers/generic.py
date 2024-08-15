@@ -105,8 +105,8 @@ class GenericMethodWrapper(MethodWrapper):
         self._config_params = kwargs
         # check if a tuple present in parameters to make the method a sweep method
         self._sweep = False
-        for _, value in enumerate(self._config_params):
-            if type(self._config_params[value]) is tuple:
+        for value in self._config_params.values():
+            if type(value) is tuple:
                 self._sweep = True
         self._output_mapping = output_mapping
         self._check_config_params()
