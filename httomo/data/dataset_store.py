@@ -26,6 +26,7 @@ import time
 import h5py
 from typing import List, Literal, Optional, Tuple, Union
 from httomo.data.hdf._utils.reslice import reslice
+from httomo.data.padding import extrapolate_after, extrapolate_before
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import (
@@ -394,34 +395,6 @@ class DataSetStoreReader(DataSetSource):
                 self._global_index = (idx[0], idx[1], idx[2])
                 return data
 
-    def _extrapolate_before(
-        self, block_data: np.ndarray, slices: int, dim: int, offset: int = 0
-    ):
-        if slices == 0:
-            return
-        slices_wrt = [slice(None), slice(None), slice(None)]
-        slices_wrt[dim] = slice(slices)
-        slices_read = [slice(None), slice(None), slice(None)]
-        slices_read[dim] = slice(offset, offset + 1)
-        block_data[slices_wrt[0], slices_wrt[1], slices_wrt[2]] = self._data[
-            slices_read[0], slices_read[1], slices_read[2]
-        ]
-
-    def _extrapolate_after(
-        self, block_data: np.ndarray, slices: int, dim: int, offset: int = 0
-    ):
-        if slices == 0:
-            return
-        slices_wrt = [slice(None), slice(None), slice(None)]
-        slices_wrt[dim] = slice(block_data.shape[dim] - slices, block_data.shape[dim])
-        slices_read = [slice(None), slice(None), slice(None)]
-        slices_read[dim] = slice(
-            self._data.shape[dim] - 1 - offset, self._data.shape[dim] - offset
-        )
-        block_data[slices_wrt[0], slices_wrt[1], slices_wrt[2]] = self._data[
-            slices_read[0], slices_read[1], slices_read[2]
-        ]
-
     def _read_block_file(
         self, shape: List[int], dim: int, start_idx: List[int]
     ) -> np.ndarray:
@@ -430,13 +403,16 @@ class DataSetStoreReader(DataSetSource):
         before_cut = 0
         after_cut = 0
         # check before boundary
-        if start_idx[dim] < 0:  # edge interpolation
-            self._extrapolate_before(block_data, -start_idx[dim], dim)
+        if start_idx[dim] < 0:
+            extrapolate_before(self._data, block_data, -start_idx[dim], dim)
             before_cut = -start_idx[dim]
         # check after boundary
         if start_idx[dim] + shape[dim] > self._data.shape[dim]:
-            self._extrapolate_after(
-                block_data, start_idx[dim] + shape[dim] - self._data.shape[dim], dim
+            extrapolate_after(
+                self._data,
+                block_data,
+                start_idx[dim] + shape[dim] - self._data.shape[dim],
+                dim,
             )
             after_cut = start_idx[dim] + shape[dim] - self._data.shape[dim]
         slices_read = [slice(None), slice(None), slice(None)]
@@ -555,15 +531,23 @@ class DataSetStoreReader(DataSetSource):
         # before
         self._mpi_exchange_padding_area_before()
         if self._comm.rank == 0:
-            self._extrapolate_before(
-                self._data, self._padding[0], self._slicing_dim, offset=self._padding[0]
+            extrapolate_before(
+                self._data,
+                self._data,
+                self._padding[0],
+                self._slicing_dim,
+                offset=self._padding[0],
             )
 
         # after
         self._mpi_exchange_padding_area_after()
         if self._comm.rank == self._comm.size - 1:
-            self._extrapolate_after(
-                self._data, self._padding[1], self._slicing_dim, offset=self._padding[1]
+            extrapolate_after(
+                self._data,
+                self._data,
+                self._padding[1],
+                self._slicing_dim,
+                offset=self._padding[1],
             )
 
     def _read_block_ram(
