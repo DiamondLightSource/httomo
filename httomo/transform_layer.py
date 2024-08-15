@@ -65,7 +65,7 @@ class TransformLayer:
                 "data_reducer",
                 comm=self._comm,
                 save_result=False,
-                task_id=f"reducer_{0}",
+                task_id="reducer_0",
             ),
         )
         for m in pipeline:
