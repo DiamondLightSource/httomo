@@ -229,21 +229,26 @@ def check_no_required_parameter_values(conf: PipelineConfig) -> bool:
     return True
 
 
-def check_no_imagesaver_after_sweep_method(conf: PipelineConfig) -> bool:
-    """check that there shouldn't be image saver present right after the sweep method"""
-    # required_values = {
-    #     method["method"]: param
-    #     for method in conf
-    #     for param, param_value in method["parameters"].items()
-    #     if param_value == "REQUIRED"
-    # }
-    # for method, param in required_values.items():
-    #     _print_with_colour(
-    #         f"A value is needed for the parameter '{param}' in the '{method}' method."
-    #         " Please specify a value instead of 'REQUIRED'."
-    #         " Refer to the method docstring for more information."
-    #     )
-    #     return False
+def check_no_imagesaver_after_sweep_method(f: Path) -> bool:
+    """check that there shouldn't be image saver present after the sweep method"""
+    loader = UniqueKeyLoader
+    loader.add_constructor("!Sweep", ParamSweepYamlLoader.sweep_manual)
+    loader.add_constructor("!SweepRange", ParamSweepYamlLoader.sweep_range)
+    pipeline = yaml_loader(f, loader=loader)
+
+    method_is_sweep = False
+    for _, m in enumerate(pipeline):
+        for _, value in m["parameters"].items():
+            if type(value) is tuple:
+                method_is_sweep = True
+                sweep_method_name = m["method"]
+        if method_is_sweep and m["method"] == "save_to_images":
+            _print_with_colour(
+                f"This pipeline contains a sweep method ({sweep_method_name}) and also save_to_images method(s)."
+                " Please note that the result of the sweep method will be automatically saved as images."
+                " Therefore there is no need to add save_to_images after any sweep method, please remove."
+            )
+            return False
     return True
 
 
