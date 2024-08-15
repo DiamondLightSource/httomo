@@ -8,6 +8,7 @@ import numpy as np
 from mpi4py import MPI
 
 from httomo.darks_flats import DarksFlatsFileConfig, get_darks_flats
+from httomo.data.padding import extrapolate_after, extrapolate_before
 from httomo.loaders.types import AnglesConfig, UserDefinedAngles
 from httomo.preview import Preview, PreviewConfig
 from httomo.runner.auxiliary_data import AuxiliaryData
@@ -33,6 +34,7 @@ class StandardTomoLoader(DataSetSource):
         preview_config: PreviewConfig,
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
+        padding: Tuple[int, int] = (0, 0),
     ) -> None:
         if slicing_dim != 0:
             raise NotImplementedError("Only slicing dim 0 is currently supported")
@@ -43,6 +45,7 @@ class StandardTomoLoader(DataSetSource):
         self._angles = angles
         self._slicing_dim: Literal[0, 1, 2] = slicing_dim
         self._comm = comm
+        self._padding = padding
         self._h5file = h5py.File(in_file, "r")
         self._data: h5py.Dataset = self._get_data()
         self._preview = Preview(
@@ -111,7 +114,7 @@ class StandardTomoLoader(DataSetSource):
     ) -> int:
         """
         Calculate the index of the chunk that is associated with the given MPI process in the
-        slicing dimension
+        slicing dimension, not including padding
         """
         return round((len(self._data_indices) / nprocs) * rank)
 
@@ -122,9 +125,9 @@ class StandardTomoLoader(DataSetSource):
         chunk_index_slicing_dim: int,
     ) -> Tuple[int, int, int]:
         """
-        Calculates index of chunk relative to the previewed data
+        Calculates index of chunk relative to the previewed data, including padding
         """
-        return (chunk_index_slicing_dim, 0, 0)
+        return (chunk_index_slicing_dim - self._padding[0], 0, 0)
 
     @property
     def chunk_shape(self) -> Tuple[int, int, int]:
@@ -138,45 +141,161 @@ class StandardTomoLoader(DataSetSource):
         current_proc_chunk_index: int,
         next_proc_chunk_index: int,
     ) -> Tuple[int, int, int]:
+        """
+        Calculate shape of the chunk that is associated with the given MPI process, including
+        padding
+        """
         return (
-            next_proc_chunk_index - current_proc_chunk_index,
+            next_proc_chunk_index
+            - current_proc_chunk_index
+            + self._padding[0]
+            + self._padding[1],
             self._global_shape[1],
             self._global_shape[2],
         )
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
-        slices = [
+        start_idx = [0, 0, 0]
+        start_idx[self._slicing_dim] += start + self._chunk_index[self._slicing_dim]
+        block_shape = list(self.global_shape)
+        block_shape[self._slicing_dim] = length + self._padding[0] + self._padding[1]
+        block_data = np.empty(block_shape, dtype=self._data.dtype)
+
+        # Bools that reflect if an extended read is needed on either the lower or upper
+        # boundary of the block, in order to fill in the before/after padded areas
+        # respectively.
+        #
+        # Assume that an extended read is needed on both sides (as that is the most common
+        # case), and then reset to `False` later if either:
+        # - the "before" padded area will be filled in with an extrapolation of the first slice
+        # in the core of the block
+        # - the "after" padded area will be filled in with an extrapolation of the last slice
+        # in the core of the block
+        before_extended_read: bool = True
+        after_extended_read: bool = True
+
+        # Fill in numpy array with "before" and "after" padded areas needed for block
+        if start_idx[self._slicing_dim] < 0:
+            extrapolate_before(
+                self._data,
+                block_data,
+                self._padding[0],
+                self._slicing_dim,
+                preview_config=self._preview.config,
+            )
+            before_extended_read = False
+
+        if (
+            start_idx[self._slicing_dim] + block_shape[self._slicing_dim]
+            > self.global_shape[self._slicing_dim]
+        ):
+            extrapolate_after(
+                self._data,
+                block_data,
+                self._padding[1],
+                self._slicing_dim,
+                preview_config=self._preview.config,
+            )
+            after_extended_read = False
+
+        # Define slicing required to read the necessary parts from the h5py dataset (the core
+        # part of the block + any extended reads)
+        #
+        # `self._chunk_index` includes padding, but padding shouldn't be accounted for when
+        # reading the h5py dataset for the core part of the block, so the padding needs to be
+        # removed
+        chunk_index_unpadded = list(self._chunk_index)
+        chunk_index_unpadded[self._slicing_dim] += self._padding[0]
+        chunk_shape_unpadded = list(self.chunk_shape)
+        chunk_shape_unpadded[self._slicing_dim] -= self._padding[0] + self._padding[1]
+        slices_read = [
             slice(
-                self._data_offset[0] + self._chunk_index[0],
-                self._data_offset[0] + self._chunk_index[0] + self.chunk_shape[0],
+                self._data_offset[0] + chunk_index_unpadded[0],
+                self._data_offset[0]
+                + chunk_index_unpadded[0]
+                + chunk_shape_unpadded[0],
             ),
             slice(
-                self._data_offset[1] + self._chunk_index[1],
-                self._data_offset[1] + self._chunk_index[1] + self.chunk_shape[1],
+                self._data_offset[1] + chunk_index_unpadded[1],
+                self._data_offset[1]
+                + chunk_index_unpadded[1]
+                + chunk_shape_unpadded[1],
             ),
             slice(
-                self._data_offset[2] + self._chunk_index[2],
-                self._data_offset[2] + self._chunk_index[2] + self.chunk_shape[2],
+                self._data_offset[2] + chunk_index_unpadded[2],
+                self._data_offset[2]
+                + chunk_index_unpadded[2]
+                + chunk_shape_unpadded[2],
             ),
         ]
-        slices[self._slicing_dim] = slice(
+
+        # Define shifts needed for reading to account for if the before/after padded areas have
+        # been filled in with an extrapolation beforehand (in which case the padded area should
+        # not be written into by this slicing)
+        #
+        # More specifically:
+        # - if `before_extended_read is True`, then an extended read is used to fill in
+        # the "before" padded area -> shift the read index down by the before-padding value to
+        # perform the extended read
+        # - if `before_extended_read is False`, then extrapolation is used to fill in the
+        # "before" padded are -> don't shift the read index down by the before-padding value
+        #
+        # Similarly for `after_extended_read`.
+        start_read_shift = self._padding[0] if before_extended_read else 0
+        stop_read_shift = self._padding[1] if after_extended_read else 0
+        slices_read[self._slicing_dim] = slice(
             self._data_offset[self._slicing_dim]
-            + self._chunk_index[self._slicing_dim]
-            + start,
-            self._data_offset[self._slicing_dim]
-            + self._chunk_index[self._slicing_dim]
+            + chunk_index_unpadded[self._slicing_dim]
             + start
-            + length,
+            - start_read_shift,
+            self._data_offset[self._slicing_dim]
+            + chunk_index_unpadded[self._slicing_dim]
+            + start
+            + length
+            + stop_read_shift,
         )
 
+        # Define the slicing required to write the core part of the block into the newly
+        # created numpy array `block_data` that has the padded areas already filled in
+        slices_write = [slice(None)] * 3
+
+        # Define shifts needed for writing to account for if the before/after padded areas have
+        # been filled in with an extrapolation beforehand (in which case the padded area should
+        # not be written into by this slicing)
+        #
+        # More specifically:
+        # - if `before_extended_read is True`, then an extended read is used to fill in the
+        # "before" padded area -> can write the data read from the h5py dataset at index 0
+        # along the slicing dim (because the read has been extended to get the "before" padded
+        # area from the h5py dataset
+        # - if `before_extended_read is False`, then extrapolation is used to fill in the
+        # "before" padded are -> can't write the data read from the h5py dataset at index 0
+        # along the slicing dim (because the extrapolation has filled in the "before" padded
+        # area already)
+        #
+        # Similarly for `after_extended_read_idx`.
+        start_write_idx = 0 if before_extended_read else self._padding[0]
+        stop_write_idx = (
+            block_shape[self._slicing_dim]
+            if after_extended_read
+            else block_shape[self._slicing_dim] - self._padding[1]
+        )
+        slices_write[self._slicing_dim] = slice(start_write_idx, stop_write_idx)
+
+        # Fill in numpy array with the core part of block + any padding from extended reads
+        block_data[slices_write[0], slices_write[1], slices_write[2]] = self._data[
+            slices_read[0], slices_read[1], slices_read[2]
+        ]
+
         return DataSetBlock(
-            data=self._data[slices[0], slices[1], slices[2]],
+            data=block_data,
             aux_data=self._aux_data,
             slicing_dim=self._slicing_dim,
-            block_start=start,
+            block_start=start - self._padding[0],
             chunk_start=self._chunk_index[self._slicing_dim],
             global_shape=self._global_shape,
             chunk_shape=self._chunk_shape,
+            padding=self._padding,
         )
 
     def _get_angles(self) -> np.ndarray:
