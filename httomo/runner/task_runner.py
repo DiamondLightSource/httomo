@@ -149,7 +149,12 @@ class TaskRunner:
                     block.global_index,
                     (end_sink - start_sink) * 1e-9,
                 )
+
+            # remove the reference pointing to the CuPy array before
+            # calling the clean-up rountine
+            del block.data
             gpumem_cleanup()
+
             start_source = time.perf_counter_ns()
 
         self._log_pipeline(
