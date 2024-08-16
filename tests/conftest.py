@@ -134,20 +134,8 @@ def host_angles(data_file):
 
 
 @pytest.fixture
-def angles(host_angles, ensure_clean_memory):
-    import cupy as cp
-
-    return cp.asarray(host_angles)
-
-
-@pytest.fixture
 def host_angles_radians(host_angles):
     return host_angles
-
-
-@pytest.fixture
-def angles_radians(angles):
-    return angles
 
 
 @pytest.fixture
