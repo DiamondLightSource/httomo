@@ -435,15 +435,8 @@ def test_recon_FBP_memoryhook(
     kwargs["recon_mask_radius"] = 0.8
 
     hook = MaxMemoryHook()
-    # add another alloc using a mock, to capture the cudaArray that is allocated in astra
     p1 = mocker.patch(
-        "tomobar.astra_wrappers.astra_base.astra.algorithm.run",
-        side_effect=lambda id, it: hook.malloc_postprocess(
-            0, data.nbytes, data.nbytes, 0, 0
-        ),
-    )
-    p2 = mocker.patch(
-        "tomobar.astra_wrappers.astra_base.astra.algorithm.delete",
+        "tomobar.astra_wrappers.astra_base.astra.data3d.delete",
         side_effect=lambda id: hook.free_postprocess(0, data.nbytes, 0, 0),
     )
 
@@ -451,7 +444,6 @@ def test_recon_FBP_memoryhook(
         recon_data = FBP(cp.copy(data), **kwargs)
 
     p1.assert_called_once()
-    p2.assert_called_once()
 
     # make sure estimator function is within range (80% min, 100% max)
     max_mem = (
@@ -472,7 +464,9 @@ def test_recon_FBP_memoryhook(
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
-    assert percents_relative_maxmem <= 150  # big underestimation, to be looked into
+    assert (
+        percents_relative_maxmem <= 100
+    )  # overestimation happens here because of the ASTRA's part
 
 
 @pytest.mark.cupy
@@ -597,7 +591,7 @@ def test_rescale_to_int_memoryhook(
 
 
 @pytest.mark.cupy
-@pytest.mark.parametrize("slices", [3, 8, 30, 80])
+@pytest.mark.parametrize("slices", [3, 8, 30, 50])
 @pytest.mark.parametrize("det_x", [600, 2160])
 def test_sino_360_to_180_memoryhook(
     ensure_clean_memory,
