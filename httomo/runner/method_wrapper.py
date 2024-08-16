@@ -129,7 +129,12 @@ class MethodWrapper(Protocol):
 
     @property
     def padding(self) -> bool:
-        """Deterime if the method needs padding"""
+        """Determine if the method needs padding"""
+        ...  # pragma: nocover
+
+    @property
+    def sweep(self) -> bool:
+        """Determine if the method performs sweep"""
         ...  # pragma: nocover
 
     # Methods

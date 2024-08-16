@@ -139,4 +139,109 @@ def test_insert_data_reducer(mocker: MockerFixture, tmp_path: Path):
 
     assert len(pipeline) == 3
     assert pipeline[0].method_name == "data_reducer"
-    assert pipeline[0].task_id == "task_0"
+    assert pipeline[0].task_id == "reducer_0"
+
+
+def test_insert_image_save_after_sweep(mocker: MockerFixture, tmp_path: Path):
+    comm = MPI.COMM_SELF
+    repo = make_mock_repo(mocker)
+    loader = mocker.create_autospec(
+        LoaderInterface,
+        instance=True,
+    )
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[
+            make_test_method(
+                mocker,
+                method_name="normalize",
+                module_path="httomolibgpu.prep.normalize",
+                save_result=False,
+                task_id="t1",
+            ),
+            make_test_method(
+                mocker,
+                method_name="remove_outlier",
+                module_path="httomolibgpu.misc.corr",
+                save_result=False,
+                task_id="t2",
+            ),
+            make_test_method(
+                mocker,
+                method_name="paganin_filter_tomopy",
+                module_path="httomolibgpu.prep.phase",
+                save_result=False,
+                sweep=True,
+                task_id="t3",
+            ),
+        ],
+    )
+    trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
+    pipeline = trans.insert_save_images_after_sweep(pipeline)
+
+    assert len(pipeline) == 4
+    assert pipeline[3].method_name == "save_to_images"
+    assert pipeline[3].task_id == "saveimage_sweep_t3"
+    assert (
+        pipeline[3].config_params["subfolder_name"]
+        == "images_sweep_paganin_filter_tomopy"
+    )
+    assert pipeline[3].config_params["axis"] == 1
+
+
+def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
+    comm = MPI.COMM_SELF
+    repo = make_mock_repo(mocker)
+    loader = mocker.create_autospec(
+        LoaderInterface,
+        instance=True,
+    )
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[
+            make_test_method(
+                mocker,
+                method_name="normalize",
+                module_path="httomolibgpu.prep.normalize",
+                save_result=False,
+                task_id="t1",
+            ),
+            make_test_method(
+                mocker,
+                method_name="remove_outlier",
+                module_path="httomolibgpu.misc.corr",
+                save_result=False,
+                task_id="t2",
+            ),
+            make_test_method(
+                mocker,
+                method_name="paganin_filter_tomopy",
+                module_path="httomolibgpu.prep.phase",
+                save_result=False,
+                sweep=True,
+                task_id="t3",
+            ),
+            make_test_method(
+                mocker,
+                method_name="FBP",
+                module_path="httomolibgpu.recon.algorithm",
+                save_result=False,
+                task_id="t4",
+            ),
+        ],
+    )
+    trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
+    pipeline = trans.insert_save_images_after_sweep(pipeline)
+
+    assert len(pipeline) == 6
+    assert pipeline[3].method_name == "save_to_images"
+    assert pipeline[3].task_id == "saveimage_sweep_t3"
+    assert (
+        pipeline[3].config_params["subfolder_name"]
+        == "images_sweep_paganin_filter_tomopy"
+    )
+    assert pipeline[3].config_params["axis"] == 1
+    assert pipeline[5].method_name == "save_to_images"
+    assert pipeline[5].task_id == "saveimage_sweep_t4"
+    assert pipeline[5].config_params["subfolder_name"] == "images_sweep_FBP"
+    assert pipeline[5].config_params["axis"] == 1

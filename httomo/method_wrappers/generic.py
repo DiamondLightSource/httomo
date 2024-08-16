@@ -103,6 +103,11 @@ class GenericMethodWrapper(MethodWrapper):
 
         # check if the given kwargs are actually supported by the method
         self._config_params = kwargs
+        # check if a tuple present in parameters to make the method a sweep method
+        self._sweep = False
+        for value in self._config_params.values():
+            if type(value) is tuple:
+                self._sweep = True
         self._output_mapping = output_mapping
         self._check_config_params()
 
@@ -221,6 +226,10 @@ class GenericMethodWrapper(MethodWrapper):
     @property
     def padding(self) -> bool:
         return self._padding
+
+    @property
+    def sweep(self) -> bool:
+        return self._sweep
 
     def _build_kwargs(
         self,

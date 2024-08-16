@@ -229,6 +229,29 @@ def check_no_required_parameter_values(conf: PipelineConfig) -> bool:
     return True
 
 
+def check_no_imagesaver_after_sweep_method(f: Path) -> bool:
+    """check that there shouldn't be image saver present after the sweep method"""
+    loader = UniqueKeyLoader
+    loader.add_constructor("!Sweep", ParamSweepYamlLoader.sweep_manual)
+    loader.add_constructor("!SweepRange", ParamSweepYamlLoader.sweep_range)
+    pipeline = yaml_loader(f, loader=loader)
+
+    method_is_sweep = False
+    for m in pipeline:
+        for value in m["parameters"].values():
+            if type(value) is tuple:
+                method_is_sweep = True
+                sweep_method_name = m["method"]
+        if method_is_sweep and m["method"] == "save_to_images":
+            _print_with_colour(
+                f"This pipeline contains a sweep method ({sweep_method_name}) and also save_to_images method(s)."
+                " Please note that the result of the sweep method will be automatically saved as images."
+                " Therefore there is no need to add save_to_images after any sweep method, please remove."
+            )
+            return False
+    return True
+
+
 def check_no_duplicated_keys(f: Path) -> bool:
     """there should be no duplicate keys in yaml file
     Parameters
