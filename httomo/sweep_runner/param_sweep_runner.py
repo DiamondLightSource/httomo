@@ -35,7 +35,7 @@ class ParamSweepRunner:
         self._sweep_values = self._stages.sweep.values[
             self._start_sweep_idx : self._stop_sweep_idx
         ]
-        self._set_image_saver_offset()
+        self._set_image_saver_params()
 
     @property
     def block(self) -> ParamSweepBlock:
@@ -75,15 +75,17 @@ class ParamSweepRunner:
             log_exception(err_str)
             raise ValueError(err_str)
 
-    def _set_image_saver_offset(self) -> None:
+    def _set_image_saver_params(self) -> None:
         """
-        Set the `offset` parameter for any `ImagesWrapper` instances in the pipeline.
+        Set the `offset` and `watermark_vals` parameters for any `ImagesWrapper`
+        instances in the pipeline.
         """
         non_sweep_stages = [self._stages.before_sweep, self._stages.after_sweep]
         for non_sweep_stage in non_sweep_stages:
             for method in non_sweep_stage.methods:
                 if isinstance(method, ImagesWrapper):
                     method["offset"] = self._start_sweep_idx
+                    method["watermark_vals"] = self._sweep_values
 
     def determine_stages(self) -> Stages:
         """
