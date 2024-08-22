@@ -36,7 +36,7 @@ v.2.1
 
 HTTomolib Modules
 ------------------
-v.2.0
+v.2.1
 '''''
 
 .. toctree::
