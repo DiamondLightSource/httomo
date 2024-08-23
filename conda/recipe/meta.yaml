@@ -31,8 +31,8 @@ test:
 requirements:
   build:
     - h5py=*=*mpi_openmpi*
-    - httomolib==2.0
-    - httomolibgpu==2.0
+    - httomolib==2.1
+    - httomolibgpu==2.1
     - loguru
     - mpi4py
     - numpy<=1.25

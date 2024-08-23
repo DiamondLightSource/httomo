@@ -9,7 +9,7 @@ dependencies:
   - numpy
   - tomopy==1.15
   - httomolibgpu==2.1
-  - httomolib==2.0
+  - httomolib==2.1
   - sphinx
   - sphinx-book-theme
   - nbsphinx
