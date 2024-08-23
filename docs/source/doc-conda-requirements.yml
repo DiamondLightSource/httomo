@@ -10,9 +10,9 @@ dependencies:
   - tomopy==1.15
   - httomolibgpu==2.1
   - httomolib==2.1
-  - conda-forge::cupy==12.3.0
-  - conda-forge::cudatoolkit
-  - rapidsai::cucim    
+  - cupy==12.3.0
+  - cudatoolkit
+  - cucim
   - sphinx
   - sphinx-book-theme
   - nbsphinx
