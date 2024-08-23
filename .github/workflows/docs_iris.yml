@@ -8,11 +8,10 @@ on:
   push:
     branches:
       - main
-
-
+      
 jobs:
   iris-gpu:
-    runs-on: iris-gpu
+    runs-on: iris-gpu-docs
     container:
       image: nvidia/cuda:11.6.2-devel-ubi8
       env:
@@ -38,16 +37,24 @@ jobs:
             activate-environment: httomo-docs
             environment-file: ./docs/source/doc-conda-requirements.yml
 
+        - name: Install httomo-dev
+          run: |
+            micromamba activate httomo
+            pip install .[dev]
+            pip install --upgrade --force-reinstall pillow
+            micromamba list
+
         - name: Build api docs
           run: sphinx-apidoc -feT -t=./docs/source/_templates -o ./docs/source/api ./httomo
 
         - name: Generate yaml templates
           run: |
-            python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./docs/build/yaml_templates/tomopy
-            python ./scripts/yaml_unsupported_tomopy_remove.py -t ./docs/build/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
-            python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./docs/build/yaml_templates/httomolib
-            python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./docs/build/yaml_templates/httomolibgpu
-
+            python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/httomo_modules.yaml -o ./httomo/yaml_templates/httomo
+            python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/tomopy/tomopy_modules.yaml -o ./httomo/yaml_templates/tomopy
+            python ./scripts/yaml_unsupported_tomopy_remove.py -t ./httomo/yaml_templates/tomopy -l ./httomo/methods_database/packages/external/tomopy/tomopy.yaml
+            python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./httomo/yaml_templates/httomolib
+            python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./httomo/yaml_templates/httomolibgpu
+            
         - name: Generate yml docs
           run: python ./docs/source/yaml_doc_generator.py
 
