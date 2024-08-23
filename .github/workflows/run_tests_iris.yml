@@ -36,6 +36,7 @@ jobs:
         run: |
           micromamba activate httomo
           pip install .[dev]
+          pip install --upgrade --force-reinstall pillow
           micromamba list
                 
       - name: Generate yaml templates
