@@ -9,6 +9,7 @@ dependencies:
   - astra-toolbox::astra-toolbox
   - conda-forge::click>=8.1.3
   - conda-forge::cupy<=12.3.0
+  - conda-forge::numpy<=1.25
   - conda-forge::cudatoolkit
   - conda-forge::graypy
   - conda-forge::h5py=*=*mpi_openmpi*
@@ -16,7 +17,6 @@ dependencies:
   - conda-forge::loguru
   - conda-forge::mpi4py
   - conda-forge::pyyaml
-  - conda-forge::numpy<=1.25
   - conda-forge::nvtx
   - conda-forge::python
   - conda-forge::plumbum
