@@ -1,4 +1,4 @@
-name: HTTomo version build
+name: version tag pushed
 
 # Run the workflow whenever a tag beginning with `v` is pushed to any branch
 on:
