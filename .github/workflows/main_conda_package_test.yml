@@ -34,7 +34,7 @@ jobs:
       - name: Install httomo
         run: |
           micromamba activate httomo
-          micromamba install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge -c astra-toolbox -c rapidsai -y
+          micromamba install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge -y
           micromamba list
           
       - name: Generate yaml templates

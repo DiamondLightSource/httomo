@@ -46,7 +46,6 @@ requirements:
   run:
     - astra-toolbox
     - click>=8.1.3
-    - cucim
     - cupy=12.3.0
     - cudatoolkit
     - graypy

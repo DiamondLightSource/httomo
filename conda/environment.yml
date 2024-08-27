@@ -2,7 +2,6 @@ name: httomo
 channels:
   - conda-forge
   - httomo
-  - rapidsai
 dependencies:
   - conda-forge::astra-toolbox
   - conda-forge::click>=8.1.3
@@ -25,4 +24,3 @@ dependencies:
   - httomo::httomolib=2.1
   - httomo::httomolibgpu=2.1
   - httomo::tomobar
-  - rapidsai::cucim
