@@ -52,7 +52,8 @@ class DezingingWrapper(GenericMethodWrapper):
         # plug in the correct value for axis instead of auto. In case if axis is absent we take
         # it equal to 0. This is to avoid failure, but (missing) template parameters should be
         # tested in the yaml checker potentially
-        self._config_params["axis"] = args.get("axis", 0)
+        if self.package_name == "tomopy":
+            self._config_params["axis"] = args.get("axis", 0)
 
         with catch_gputime() as t:
             block.data = self.method(block.data, **self._config_params)
