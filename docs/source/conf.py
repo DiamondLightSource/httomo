@@ -52,6 +52,24 @@ MOCK_MODULES = [
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
+class CustomMock(mock.Mock):
+    def __repr__(self):
+        return "<cp.ndarray>"
+
+
+sys.modules["cupy"] = CustomMock()
+sys.modules["numpy"] = CustomMock()
+sys.modules["cupyx.scipy.interpolate"] = CustomMock()
+sys.modules["cupyx.scipy.ndimage"] = CustomMock()
+sys.modules["cupyx.scipy.fft"] = CustomMock()
+sys.modules["cupyx.scipy.fftpack"] = CustomMock()
+sys.modules["scipy.fftpack"] = CustomMock()
+sys.modules["tomobar.methodsDIR_CuPy"] = CustomMock()
+sys.modules["tomobar.methodsIR_CuPy "] = CustomMock()
+sys.modules["skimage.registration"] = CustomMock()
+sys.modules["httomolibgpu.cuda_kernels"] = CustomMock()
+
+
 # ------------------------------------------------------------------------------
 
 project = "HTTomo"
