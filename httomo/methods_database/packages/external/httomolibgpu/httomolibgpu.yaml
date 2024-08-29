@@ -7,9 +7,9 @@ misc:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [2.1]
-        - methods: [direct]
+        datasets: tomo
+        multipliers: 2.1
+        methods: direct
     remove_outlier:
       pattern: all
       output_dims_change: False
@@ -17,9 +17,9 @@ misc:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [2.1]
-        - methods: [direct]
+        datasets: tomo
+        multipliers: 2.1
+        methods: direct
   morph:
     sino_360_to_180:
       pattern: sinogram
@@ -28,9 +28,9 @@ misc:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
     data_resampler:
       pattern: all
       output_dims_change: True
@@ -38,9 +38,9 @@ misc:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
   rescale:
     rescale_to_int:
       pattern: all
@@ -49,9 +49,9 @@ misc:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
 prep:
   normalize:
     normalize:
@@ -61,9 +61,9 @@ prep:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
   phase:
     paganin_filter_tomopy:
       pattern: projection
@@ -72,9 +72,9 @@ prep:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
     paganin_filter_savu:
       pattern: projection
       output_dims_change: False
@@ -82,9 +82,9 @@ prep:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
   alignment:
     distortion_correction_proj_discorpy:
       pattern: projection
@@ -93,9 +93,9 @@ prep:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [1.2]
-        - methods: [direct]
+        datasets: tomo
+        multipliers: 1.2
+        methods: direct
   stripe:
     remove_stripe_based_sorting:
       pattern: sinogram
@@ -104,9 +104,9 @@ prep:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [1.17]
-        - methods: [direct]
+        datasets: tomo
+        multipliers: 1.17
+        methods: direct
     remove_stripe_ti:
       pattern: sinogram
       output_dims_change: False
@@ -114,9 +114,9 @@ prep:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
     remove_all_stripe:
       pattern: sinogram
       output_dims_change: False
@@ -124,9 +124,9 @@ prep:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
 recon:
   algorithm:
     FBP:
@@ -136,9 +136,9 @@ recon:
       save_result_default: True
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
     SIRT:
       pattern: sinogram
       output_dims_change: True
@@ -146,9 +146,9 @@ recon:
       save_result_default: True
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
     CGLS:
       pattern: sinogram
       output_dims_change: True
@@ -156,9 +156,9 @@ recon:
       save_result_default: True
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [None]
-        - methods: [module]
+        datasets: tomo
+        multipliers: None
+        methods: module
   rotation:
     find_center_vo:
       pattern: projection
@@ -167,9 +167,9 @@ recon:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [0]
-        - methods: [direct]
+        datasets: tomo
+        multipliers: 0
+        methods: direct
     find_center_360:
       pattern: projection
       output_dims_change: False
@@ -177,9 +177,9 @@ recon:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [0]
-        - methods: [direct]
+        datasets: tomo
+        multipliers: 0
+        methods: direct
     find_center_pc:
       pattern: projection
       output_dims_change: False
@@ -187,6 +187,6 @@ recon:
       save_result_default: False
       padding: False
       memory_gpu:
-        - datasets: [tomo]
-        - multipliers: [0]
-        - methods: [direct]
+        datasets: tomo
+        multipliers: 0
+        methods: direct
