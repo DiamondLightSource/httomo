@@ -75,7 +75,7 @@ def test_httomolibgpu_memory_gpu():
     memory_gpu = get_method_info(
         "httomolibgpu.prep.normalize", "normalize", "memory_gpu"
     )
-    assert len(memory_gpu) == 3
+    assert len(memory_gpu) == 2
 
 
 def test_httomolibgpu_padding_false():
