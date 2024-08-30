@@ -426,25 +426,24 @@ class GenericMethodWrapper(MethodWrapper):
         # NOTE: This could go directly into the methodquery / method database,
         # and here we just call calculated_memory_bytes
         memory_bytes_method = 0
-        for field in self.memory_gpu:
-            subtract_bytes = 0
-            # loop over the dataset names given in the library file and extracting
-            # the corresponding dimensions from the available datasets
-            if field.method == "direct":
-                assert field.multiplier is not None
-                # this calculation assumes a direct (simple) correspondence through multiplier
-                memory_bytes_method += int(
-                    field.multiplier
-                    * np.prod(non_slice_dims_shape)
-                    * data_dtype.itemsize
-                )
-            else:
-                (
-                    memory_bytes_method,
-                    subtract_bytes,
-                ) = self._query.calculate_memory_bytes(
-                    non_slice_dims_shape, data_dtype, **self.config_params
-                )
+        subtract_bytes = 0
+        # loop over the dataset names given in the library file and extracting
+        # the corresponding dimensions from the available datasets
+        if self.memory_gpu.method == "direct":
+            assert self.memory_gpu.multiplier is not None
+            # this calculation assumes a direct (simple) correspondence through multiplier
+            memory_bytes_method += int(
+                self.memory_gpu.multiplier
+                * np.prod(non_slice_dims_shape)
+                * data_dtype.itemsize
+            )
+        else:
+            (
+                memory_bytes_method,
+                subtract_bytes,
+            ) = self._query.calculate_memory_bytes(
+                non_slice_dims_shape, data_dtype, **self.config_params
+            )
 
         if memory_bytes_method == 0:
             return available_memory - subtract_bytes, available_memory
