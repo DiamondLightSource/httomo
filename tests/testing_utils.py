@@ -103,7 +103,7 @@ def make_mock_repo(
     output_dims_change: bool = False,
     implementation: str = "cpu",
     memory_gpu: List[GpuMemoryRequirement] = [
-        GpuMemoryRequirement(dataset="tomo", multiplier=1.2, method="direct")
+        GpuMemoryRequirement(multiplier=1.2, method="direct")
     ],
     swap_dims_on_output=False,
     save_result_default=False,

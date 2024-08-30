@@ -7,7 +7,6 @@ from httomo.utils import Pattern
 
 @dataclass(frozen=True)
 class GpuMemoryRequirement:
-    dataset: Literal["data", "tomo", "darks", "flats"] = "tomo"
     multiplier: Optional[float] = 1.0
     method: Literal["direct", "module"] = "direct"
 

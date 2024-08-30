@@ -108,20 +108,16 @@ class MethodsDatabaseQuery(MethodQuery):
             return []
         if type(p) == list:
             # convert to dict first
-            dd: dict = dict()
+            d: dict = dict()
             for item in p:
-                dd |= item
+                d |= item
         else:
-            dd = p
+            d = p
         # now iterate and make it into one
-        assert (
-            len(dd["datasets"]) == len(dd["multipliers"]) == len(dd["methods"])
-        ), "Invalid data"
         return [
             GpuMemoryRequirement(
-                dataset=d, multiplier=dd["multipliers"][i], method=dd["methods"][i]
+                multiplier=d["multiplier"], method=d["method"]
             )
-            for i, d in enumerate(dd["datasets"])
         ]
 
     def calculate_memory_bytes(

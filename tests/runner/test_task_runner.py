@@ -98,7 +98,7 @@ def test_can_determine_max_slices_with_gpu_estimator(
         mocker.patch.object(
             method,
             "memory_gpu",
-            [GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")],
+            [GpuMemoryRequirement(multiplier=2.0, method="direct")],
         )
         calc_dims_mocks.append(
             mocker.patch.object(method, "calculate_output_dims", return_value=(10, 10))
@@ -147,7 +147,7 @@ def test_can_determine_max_slices_with_gpu_estimator_and_cpu_limit(
         mocker.patch.object(
             method,
             "memory_gpu",
-            [GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")],
+            [GpuMemoryRequirement(multiplier=2.0, method="direct")],
         )
         calc_dims_mocks.append(
             mocker.patch.object(method, "calculate_output_dims", return_value=(10, 10))

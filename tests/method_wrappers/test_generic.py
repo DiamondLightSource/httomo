@@ -464,7 +464,7 @@ def test_generic_method_queries(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
-    memory_gpu = [GpuMemoryRequirement(dataset="tomo", multiplier=1.2, method="direct")]
+    memory_gpu = [GpuMemoryRequirement(multiplier=1.2, method="direct")]
     wrp = make_method_wrapper(
         make_mock_repo(
             mocker,
@@ -491,8 +491,8 @@ def test_generic_method_queries(
 @pytest.mark.parametrize(
     "memory_gpu",
     [
-        [GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")],
-        [GpuMemoryRequirement(dataset="tomo", multiplier=0.0, method="direct")],
+        [GpuMemoryRequirement(multiplier=2.0, method="direct")],
+        [GpuMemoryRequirement(multiplier=0.0, method="direct")],
         [],
     ],
 )
@@ -558,7 +558,7 @@ def test_generic_calculate_max_slices_module(
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
     memory_gpu = [
-        GpuMemoryRequirement(dataset="tomo", multiplier=None, method="module")
+        GpuMemoryRequirement(multiplier=None, method="module")
     ]
     repo = make_mock_repo(
         mocker,
