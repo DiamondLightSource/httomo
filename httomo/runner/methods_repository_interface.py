@@ -32,7 +32,7 @@ class MethodQuery(Protocol):
         """Check for implementation of the method"""
         ...  # pragma: no cover
 
-    def get_memory_gpu_params(self) -> List[GpuMemoryRequirement]:
+    def get_memory_gpu_params(self) -> GpuMemoryRequirement:
         """Get the parameters for the GPU memory estimation"""
         ...  # pragma: no cover
 

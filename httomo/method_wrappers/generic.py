@@ -146,7 +146,7 @@ class GenericMethodWrapper(MethodWrapper):
         return self._parameters
 
     @property
-    def memory_gpu(self) -> List[GpuMemoryRequirement]:
+    def memory_gpu(self) -> GpuMemoryRequirement:
         return self._memory_gpu
 
     @property
@@ -414,7 +414,7 @@ class GenericMethodWrapper(MethodWrapper):
             return int(100e9), available_memory
 
         # if we have no information, we assume in-place operation with no extra memory
-        if len(self.memory_gpu) == 0:
+        if self.memory_gpu is None:
             return (
                 int(
                     available_memory

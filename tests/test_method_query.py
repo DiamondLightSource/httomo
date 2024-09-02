@@ -116,8 +116,8 @@ def test_database_query_object():
     assert query.save_result_default() is False
     assert query.padding() is False
     mempars = query.get_memory_gpu_params()
-    assert all(p.method == "module" for p in mempars)
-    assert all(p.multiplier == "None" for p in mempars)
+    assert mempars.method == "module"
+    assert mempars.multiplier == "None"
 
 
 def test_database_query_object_recon_swap_output():

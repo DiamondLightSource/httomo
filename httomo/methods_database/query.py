@@ -102,10 +102,10 @@ class MethodsDatabaseQuery(MethodQuery):
 
     def get_memory_gpu_params(
         self,
-    ) -> List[GpuMemoryRequirement]:
+    ) -> GpuMemoryRequirement:
         p = get_method_info(self.module_path, self.method_name, "memory_gpu")
         if p is None or p == "None":
-            return []
+            return None
         if type(p) == list:
             # convert to dict first
             d: dict = dict()
@@ -113,12 +113,7 @@ class MethodsDatabaseQuery(MethodQuery):
                 d |= item
         else:
             d = p
-        # now iterate and make it into one
-        return [
-            GpuMemoryRequirement(
-                multiplier=d["multiplier"], method=d["method"]
-            )
-        ]
+        return GpuMemoryRequirement(multiplier=d["multiplier"], method=d["method"])
 
     def calculate_memory_bytes(
         self, non_slice_dims_shape: Tuple[int, int], dtype: np.dtype, **kwargs

@@ -102,9 +102,9 @@ def make_mock_repo(
     pattern=Pattern.sinogram,
     output_dims_change: bool = False,
     implementation: str = "cpu",
-    memory_gpu: List[GpuMemoryRequirement] = [
-        GpuMemoryRequirement(multiplier=1.2, method="direct")
-    ],
+    memory_gpu: GpuMemoryRequirement = GpuMemoryRequirement(
+        multiplier=1.2, method="direct"
+    ),
     swap_dims_on_output=False,
     save_result_default=False,
     padding=False,
