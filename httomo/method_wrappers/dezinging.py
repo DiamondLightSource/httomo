@@ -48,11 +48,14 @@ class DezingingWrapper(GenericMethodWrapper):
         # check if data needs to be transfered host <-> device
         block = self._transfer_data(block)
 
-        args = self._build_kwargs(self._transform_params(self._config_params), block)
-        # plug in the correct value for axis instead of auto. In case if axis is absent we take
-        # it equal to 0. This is to avoid failure, but (missing) template parameters should be
-        # tested in the yaml checker potentially
-        self._config_params["axis"] = args.get("axis", 0)
+        if "axis" in self.parameters:
+            args = self._build_kwargs(
+                self._transform_params(self._config_params), block
+            )
+            # plug in the correct value for axis instead of auto. In case if axis is absent we
+            # take it equal to 0. This is to avoid failure, but (missing) template parameters
+            # should be tested in the yaml checker potentially
+            self._config_params["axis"] = args.get("axis", 0)
 
         with catch_gputime() as t:
             block.data = self.method(block.data, **self._config_params)
