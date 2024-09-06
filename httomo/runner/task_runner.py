@@ -353,14 +353,6 @@ class TaskRunner:
 
         section.max_slices = min(max_slices_methods)
 
-    def determine_section_padding(self, section: Section) -> Tuple[int, int]:
-        # NOTE: Assumes that only one method with padding will be in a section, which is
-        # consistent with the assumptions made by `section.sectionizer()`
-        for method in section.methods:
-            if method.padding:
-                return method.calculate_padding()
-        return (0, 0)
-
 
 def calculate_next_chunk_shape(
     comm: MPI.Comm,
