@@ -15,10 +15,9 @@ from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import Section, sectionize
-from httomo.runner.task_runner import TaskRunner, calculate_next_chunk_shape
+from httomo.runner.task_runner import TaskRunner
 from httomo.utils import (
     Pattern,
-    make_3d_shape_from_shape,
     xp,
     gpu_enabled,
 )
@@ -476,58 +475,3 @@ def test_warns_with_multiple_stores_from_side_outputs(
     spy.assert_called()
     args, _ = spy.call_args
     assert "Data saving or/and reslicing operation will be performed 4 times" in args[0]
-
-
-@pytest.mark.parametrize(
-    "nprocs, rank, next_section_slicing_dim, next_section_padding",
-    [
-        (2, 1, 0, (0, 0)),
-        (2, 1, 0, (3, 5)),
-        (2, 1, 1, (0, 0)),
-        (2, 1, 1, (3, 5)),
-        (4, 2, 0, (0, 0)),
-        (4, 2, 0, (3, 5)),
-        (4, 2, 1, (0, 0)),
-        (4, 2, 1, (3, 5)),
-    ],
-    ids=[
-        "2procs-proj-to-proj_unpadded",
-        "2procs-proj-to-proj_padded",
-        "2procs-proj-to-sino_unpadded",
-        "2procs-proj-to-sino_padded",
-        "4procs-proj-to-proj_unpadded",
-        "4procs-proj-to-proj_padded",
-        "4procs-proj-to-sino_unpadded",
-        "4procs-proj-to-sino_padded",
-    ],
-)
-def test_calculate_next_chunk_shape(
-    nprocs: int,
-    rank: int,
-    next_section_slicing_dim: int,
-    next_section_padding: Tuple[int, int],
-    mocker: MockerFixture,
-):
-    GLOBAL_SHAPE = (1801, 2160, 2560)
-
-    # Define mock communicator that reflects the desired data splitting/distribution to be
-    # tested
-    mock_global_comm = mocker.create_autospec(spec=MPI.Comm, size=nprocs, rank=rank)
-
-    # The chunk shape for the next section should reflect the padding needed for that section
-    expected_next_chunk_shape: List[int] = list(GLOBAL_SHAPE)
-    start = round(GLOBAL_SHAPE[next_section_slicing_dim] / nprocs * rank)
-    stop = round(GLOBAL_SHAPE[next_section_slicing_dim] / nprocs * (rank + 1))
-    slicing_dim_len = stop - start
-    expected_next_chunk_shape[next_section_slicing_dim] = (
-        slicing_dim_len + next_section_padding[0] + next_section_padding[1]
-    )
-    next_section_chunk_shape = calculate_next_chunk_shape(
-        comm=mock_global_comm,
-        global_shape=GLOBAL_SHAPE,
-        next_section_slicing_dim=next_section_slicing_dim,
-        next_section_padding=next_section_padding,
-    )
-    assert next_section_chunk_shape == make_3d_shape_from_shape(
-        expected_next_chunk_shape
-    )
