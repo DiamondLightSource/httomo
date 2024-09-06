@@ -1,5 +1,5 @@
 from types import ModuleType
-from typing import Callable, List, Literal, Tuple
+from typing import Callable, List, Literal, Optional, Tuple
 from pathlib import Path
 import numpy as np
 
@@ -102,7 +102,7 @@ class MethodsDatabaseQuery(MethodQuery):
 
     def get_memory_gpu_params(
         self,
-    ) -> GpuMemoryRequirement:
+    ) -> Optional[GpuMemoryRequirement]:
         p = get_method_info(self.module_path, self.method_name, "memory_gpu")
         if p is None or p == "None":
             return None

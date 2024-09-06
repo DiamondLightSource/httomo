@@ -18,7 +18,7 @@ def make_test_method(
     pattern=Pattern.projection,
     method_name="testmethod",
     module_path="testpath",
-    memory_gpu: GpuMemoryRequirement = None,
+    memory_gpu: Optional[GpuMemoryRequirement] = None,
     save_result=False,
     task_id: Optional[str] = None,
     padding: bool = False,
@@ -104,7 +104,7 @@ def make_mock_repo(
     pattern=Pattern.sinogram,
     output_dims_change: bool = False,
     implementation: str = "cpu",
-    memory_gpu: GpuMemoryRequirement = GpuMemoryRequirement(
+    memory_gpu: Optional[GpuMemoryRequirement] = GpuMemoryRequirement(
         multiplier=1.2, method="direct"
     ),
     swap_dims_on_output=False,

@@ -146,7 +146,7 @@ class GenericMethodWrapper(MethodWrapper):
         return self._parameters
 
     @property
-    def memory_gpu(self) -> GpuMemoryRequirement:
+    def memory_gpu(self) -> Optional[GpuMemoryRequirement]:
         return self._memory_gpu
 
     @property
