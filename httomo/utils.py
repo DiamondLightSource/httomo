@@ -1,7 +1,7 @@
 import logging
 from enum import Enum
 from time import perf_counter_ns
-from typing import Any, Callable, Dict, List, Literal, Tuple
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 from loguru import logger
 from mpi4py import MPI
@@ -84,7 +84,9 @@ def log_exception(output: str) -> None:
 
 
 def _parse_preview(
-    preview: List[Dict[str, int]], data_shape: Tuple[int], data_indices: List[int]
+    preview: List[Optional[Dict[str, int]]],
+    data_shape: Tuple[int],
+    data_indices: List[int],
 ) -> str:
     """Parse the python list that represents the preview parameter in the loader
     into a string that the helper loader functions in
