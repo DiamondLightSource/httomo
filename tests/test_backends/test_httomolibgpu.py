@@ -155,8 +155,8 @@ def test_remove_outlier_memoryhook(flats, ensure_clean_memory, dtype, slices):
 
 @pytest.mark.cupy
 @pytest.mark.parametrize("slices", [2, 4, 8])
-@pytest.mark.parametrize("dim_x", [1024, 2048])
-@pytest.mark.parametrize("dim_y", [1024, 2048])
+@pytest.mark.parametrize("dim_x", [81, 1024, 2048])
+@pytest.mark.parametrize("dim_y", [345, 1024, 2048])
 def test_paganin_filter_tomopy_memoryhook(slices, dim_x, dim_y, ensure_clean_memory):
     data = cp.random.random_sample((slices, dim_x, dim_y), dtype=np.float32)
     hook = MaxMemoryHook()
