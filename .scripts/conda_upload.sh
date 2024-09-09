@@ -9,7 +9,7 @@ mkdir ~/conda-bld
 conda config --set anaconda_upload no
 export CONDA_BLD_PATH=~/conda-bld
 
-$CONDA/bin/conda build . -c conda-forge -c https://conda.anaconda.org/httomo/ -c rapidsai --no-test
+$CONDA/bin/conda build . -c conda-forge -c https://conda.anaconda.org/httomo/ --no-test
 
 # upload packages to conda
 find $CONDA_BLD_PATH/$OS -name *.tar.bz2 | while read file
