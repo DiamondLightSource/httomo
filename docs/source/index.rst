@@ -36,7 +36,7 @@
 .. _backends_content:
 
 .. toctree::
-    :caption: Templates for backends
+    :caption: Data processing
     :maxdepth: 2
 
     backends/list
@@ -58,7 +58,6 @@
     :maxdepth: 2
 
     utilities/yaml_checker
-    utilities/yaml_generator
 
 .. _developers_content:
 

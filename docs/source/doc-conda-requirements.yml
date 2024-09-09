@@ -1,15 +1,9 @@
 name: httomo-docs
 channels:
-  - conda-forge
-  - defaults
-  - httomo
-  - rapidsai
+  - conda-forge 
 dependencies:
   - python>=3.10
   - numpy
-  - tomopy==1.15
-  - httomolibgpu==2.1
-  - httomolib==2.1
   - sphinx
   - sphinx-book-theme
   - nbsphinx

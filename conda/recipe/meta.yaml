@@ -33,6 +33,7 @@ requirements:
     - h5py=*=*mpi_openmpi*
     - httomolib==2.1
     - httomolibgpu==2.1
+    - tomopy==1.15    
     - loguru
     - mpi4py
     - numpy<=1.25
@@ -41,19 +42,18 @@ requirements:
     - pyyaml
     - setuptools
     - setuptools-git-versioning
-    - tomopy==1.15
     - typing_extensions
   run:
     - astra-toolbox
     - click>=8.1.3
-    - cucim
-    - cupy<=12.3.0
+    - cupy=12.3.0
     - cudatoolkit
     - graypy
     - h5py=*=*mpi_openmpi*
     - hdf5plugin
-    - httomolib==2.0
-    - httomolibgpu==2.0
+    - httomolib==2.1
+    - httomolibgpu==2.1
+    - tomopy==1.15    
     - ipython
     - loguru
     - mpi4py
@@ -68,7 +68,6 @@ requirements:
     - python
     - plumbum
     - tomobar
-    - tomopy==1.15
     - tqdm
     - typing_extensions
 

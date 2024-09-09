@@ -1,7 +1,6 @@
 name: httomo
 channels:
   - conda-forge
-  - anaconda
   - httomo
 dependencies:
   - conda-forge::tomopy==1.15
@@ -13,8 +12,8 @@ dependencies:
   - conda-forge::numpy<=1.25
   - conda-forge::python
   - conda-forge::numexpr>=2.8.4
-  - anaconda::ipython
-  - anaconda::loguru
+  - conda-forge::ipython
+  - conda-forge::loguru
   - conda-forge::graypy
   - conda-forge::plumbum
   - conda-forge::tqdm

@@ -9,7 +9,7 @@ This installation is preferable as it should take care all of dependencies inclu
 .. code-block:: console
 
    $ conda env create --name httomo # create a fresh conda environment
-   $ conda install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge -c astra-toolbox -c rapidsai
+   $ conda install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge
 
 Install as a Python module
 ===========================
@@ -35,4 +35,4 @@ Build HTTomo as a conda Python package
 ======================================================
 .. code-block:: console
 
-   $ conda build conda/recipe/ -c conda-forge -c https://conda.anaconda.org/httomo/ -c rapidsai --no-test
+   $ conda build conda/recipe/ -c conda-forge -c https://conda.anaconda.org/httomo/ --no-test
