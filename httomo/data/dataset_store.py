@@ -235,15 +235,8 @@ class DataSetStoreWriter(ReadableDataSetSink):
         The returned data object behaves like a numpy array, so can be used freely within
         a DataSet."""
 
-        self._h5file = h5py.File(
-            file,
-            "w",
-            driver="mpio",
-            comm=comm,
-            rdcc_nslots=1e5,
-            rdcc_nbytes=4 * (2048**2 * 16),
-            rdcc_w0=1,
-        )
+        self._h5file = h5py.File(file, "w", driver="mpio", comm=comm)
+
         # set how data should be chunked when saving
         # chunks = list(global_shape)
         # chunks[slicing_dim] = 1
