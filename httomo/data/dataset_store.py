@@ -236,6 +236,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         a DataSet."""
 
         self._h5file = h5py.File(file, "w", driver="mpio", comm=comm)
+
         # set how data should be chunked when saving
         # chunks = list(global_shape)
         # chunks[slicing_dim] = 1

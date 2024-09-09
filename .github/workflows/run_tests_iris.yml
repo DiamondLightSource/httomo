@@ -35,6 +35,7 @@ jobs:
       - name: Install httomo-dev
         run: |
           micromamba activate httomo
+          pip install --upgrade --force-reinstall pillow
           pip install .[dev]
           pip install --upgrade --force-reinstall pillow
           micromamba list

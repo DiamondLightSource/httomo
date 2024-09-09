@@ -18,6 +18,17 @@ difficult to guess a reasonable value of a method's parameter. There could be
 many reasons for this situation, such as being unfamiliar with the method, or
 working with unfamiliar data, etc.
 
+How the output looks like?
+==========================
+
+.. _fig_centergif:
+.. figure::  ../../_static/sweep/sweep_cor.gif
+    :scale: 55 %
+    :alt: Sweep for cor
+
+    The result of sweeping applied to find the correct :ref:`centering`. The images with the CoR values printed on them are saved in the folder. The user can find the correct value by looking through the images and then input the value manually into the pipeline, see :ref:`centering_manual`.
+
+
 How are parameter sweeps defined in the process list YAML file?
 ===============================================================
 

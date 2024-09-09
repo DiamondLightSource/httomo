@@ -95,7 +95,7 @@ Manual Centering
 Unfortunately, there could be various cases when :ref:`centering_auto` fails, e.g., the projection data is corrupted, incomplete, the object is outside the field of view of the detector, and possibly other issues.
 In that case, it is recommended to find the center of rotation manually. :ref:`parameter_sweeping` can simplify such search significantly.
 
-To enable manual centering, one would need to do the following steps:
+To enable manual centering without sweeping, one would need to do the following steps:
 
 1. Ensure that the auto centering estimation method is not in the process list (remove or comment it).
 2. Modify the centre of rotation value :code:`center` in the reconstruction plugin by substituting a number instead of the reference to side outputs.

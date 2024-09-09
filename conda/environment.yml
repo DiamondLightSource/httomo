@@ -5,6 +5,7 @@ channels:
 dependencies:
   - conda-forge::astra-toolbox
   - conda-forge::click>=8.1.3
+  - conda-forge::numpy
   - conda-forge::cupy=12.3.0
   - conda-forge::cudatoolkit>=11.2
   - conda-forge::graypy
@@ -13,7 +14,6 @@ dependencies:
   - conda-forge::loguru
   - conda-forge::mpi4py
   - conda-forge::pyyaml
-  - conda-forge::numpy<=1.25
   - conda-forge::nvtx
   - conda-forge::python
   - conda-forge::plumbum
@@ -24,3 +24,4 @@ dependencies:
   - httomo::httomolib=2.1
   - httomo::httomolibgpu=2.1
   - httomo::tomobar
+
