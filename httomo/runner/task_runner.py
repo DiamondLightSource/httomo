@@ -55,12 +55,13 @@ class TaskRunner:
 
         self._memory_limit_bytes = memory_limit_bytes
 
+        self._sections = self._sectionize()
+
     def execute(self) -> None:
         with catchtime() as t:
-            sections = self._sectionize()
 
             self._prepare()
-            for i, section in enumerate(sections):
+            for i, section in enumerate(self._sections):
                 self._execute_section(section, i)
                 gpumem_cleanup()
 
