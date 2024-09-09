@@ -66,7 +66,7 @@ information of :ref:`centering` is stored in the reference
 There could be various configurations when this reference is required from other methods as well. We present more verbose :ref:`side_output_example` below.
 
 .. note:: Side outputs and references to them are generated automatically with the
-   :ref:`utilities_yamlgenerator`. Usually there is no need to modify them when
+   `YAML generator <https://diamondlightsource.github.io/httomo-backends/utilities/yaml_generator.html>`_. Usually there is no need to modify them when
    editing a process list.
 
 .. _side_output_example:

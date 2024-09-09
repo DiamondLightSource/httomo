@@ -29,7 +29,7 @@ the issues section on `HTTomo's Github page <https://github.com/DiamondLightSour
 4. Generate the Yaml template
 
    HTTomo's UI requires :ref:`reference_templates` to execute the created method. One can either construct that YAML template manually or employ
-   :ref:`utilities_yamlgenerator`.
+   `YAML generator <https://diamondlightsource.github.io/httomo-backends/utilities/yaml_generator.html>`_.
 
 
 

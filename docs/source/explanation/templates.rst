@@ -26,6 +26,6 @@ by importing the method as:
 
 The set of parameter values for that method is given in the *parameters* field.
 
-.. note:: Please note that in the original TomoPy's method, there is also the :code:`arr` parameter. This parameter is not exposed in the template because HTTomo will deal with all I/O aspects behind the scenes by using special wrappers. More on that in :ref:`detailed_about`. :ref:`utilities_yamlgenerator` will automatically generate the ready-to-be-used templates.
+.. note:: Please note that in the original TomoPy's method, there is also the :code:`arr` parameter. This parameter is not exposed in the template because HTTomo will deal with all I/O aspects behind the scenes by using special wrappers. More on that in :ref:`detailed_about`. `YAML generator <https://diamondlightsource.github.io/httomo-backends/utilities/yaml_generator.html>`_ will automatically generate the ready-to-be-used templates.
 
 Please see the list of all supported :ref:`reference_templates`.
