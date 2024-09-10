@@ -783,6 +783,8 @@ def test_execute_sweep_stage_two_procs_image_wrapper_gets_correct_offset(
     # of the process
     # - the before and after sweep method wrappers don't have any parameter values being set
     expected_offset = 0 if global_comm.rank == 0 else len(SWEEP_VALUES) // 2
-    after_sweep_wrapper_setitem_spy.assert_called_once_with("offset", expected_offset)
+    after_sweep_wrapper_setitem_spy.assert_has_calls(
+        [mock.call("offset", expected_offset)]
+    )
     before_sweep_wrapper_setitem_spy.assert_not_called()
     sweep_wrapper_setitem_spy.assert_not_called()
