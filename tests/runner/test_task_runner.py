@@ -10,6 +10,7 @@ from pytest_mock import MockerFixture
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
+from httomo.runner.dataset_store_backing import DataSetStoreBacking
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.output_ref import OutputRef
@@ -334,6 +335,13 @@ def test_execute_section_calls_blockwise_execute_and_monitors(
     s = sectionize(p)
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
     t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
+
+    # Patch the store backing calculator function to assume being backed by RAM
+    mocker.patch(
+        "httomo.runner.task_runner.determine_store_backing",
+        return_value=DataSetStoreBacking.RAM,
+    )
+
     t._prepare()
     # make that do nothing
     mocker.patch.object(t, "determine_max_slices")
@@ -349,7 +357,7 @@ def test_execute_section_calls_blockwise_execute_and_monitors(
     )
 
     s[0].is_last = False  # should setup a DataSetStoreWriter as sink
-    t._execute_section(s[0], 1)
+    t._execute_section(s[0])
     assert isinstance(t.sink, DataSetStoreWriter)
     reader = t.sink.make_reader()
     data = reader.read_block(0, dummy_block.shape[0])
@@ -396,6 +404,11 @@ def test_does_reslice_when_needed_and_reports_time(
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
     t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
 
+    # Patch the store backing calculator function to assume being backed by RAM
+    mocker.patch(
+        "httomo.runner.task_runner.determine_store_backing",
+        return_value=DataSetStoreBacking.RAM,
+    )
     t.execute()
 
     assert loader.pattern == Pattern.projection

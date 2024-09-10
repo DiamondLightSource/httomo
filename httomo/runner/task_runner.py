@@ -9,6 +9,7 @@ from mpi4py import MPI
 
 import httomo.globals
 from httomo.data.dataset_store import DataSetStoreWriter
+from httomo.runner.dataset_store_backing import determine_store_backing
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.block_split import BlockSplitter
 from httomo.runner.dataset import DataSetBlock
@@ -81,7 +82,7 @@ class TaskRunner:
         return sections
 
     def _execute_section(self, section: Section, section_index: int = 0):
-        self._setup_source_sink(section)
+        self._setup_source_sink(section, section_index)
         assert self.source is not None, "Dataset has not been loaded yet"
         assert self.sink is not None, "Sink setup failed"
 
@@ -162,7 +163,7 @@ class TaskRunner:
             level=logging.INFO,
         )
 
-    def _setup_source_sink(self, section: Section):
+    def _setup_source_sink(self, section: Section, idx: int):
         assert self.source is not None, "Dataset has not been loaded yet"
 
         slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
@@ -173,6 +174,15 @@ class TaskRunner:
             assert isinstance(self.sink, ReadableDataSetSink)
             self.source = self.sink.make_reader(slicing_dim_section)
 
+        store_backing = determine_store_backing(
+            comm=self.comm,
+            sections=self._sections,
+            memory_limit_bytes=self._memory_limit_bytes,
+            dtype=self.source.dtype,
+            global_shape=self.source.global_shape,
+            section_idx=idx,
+        )
+
         if section.is_last:
             # we don't need to store the results - this sink just discards it
             self.sink = DummySink(slicing_dim_section)
@@ -181,7 +191,7 @@ class TaskRunner:
                 slicing_dim_section,
                 self.comm,
                 self.reslice_dir,
-                memory_limit_bytes=self._memory_limit_bytes,
+                store_backing=store_backing,
             )
 
     def _execute_section_block(
