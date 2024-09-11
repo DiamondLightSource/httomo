@@ -1,7 +1,7 @@
 import logging
 from enum import Enum
 from time import perf_counter_ns
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
+from typing import Any, Callable, Dict, List, Literal, Tuple
 
 from loguru import logger
 from mpi4py import MPI
@@ -84,7 +84,7 @@ def log_exception(output: str) -> None:
 
 
 def _parse_preview(
-    preview: List[Optional[Dict[str, int]]],
+    preview: List[Dict[str, int]],
     data_shape: Tuple[int],
     data_indices: List[int],
 ) -> str:
