@@ -427,8 +427,6 @@ class GenericMethodWrapper(MethodWrapper):
         # and here we just call calculated_memory_bytes
         memory_bytes_method = 0
         subtract_bytes = 0
-        # loop over the dataset names given in the library file and extracting
-        # the corresponding dimensions from the available datasets
         if self.memory_gpu.method == "direct":
             assert self.memory_gpu.multiplier is not None
             # this calculation assumes a direct (simple) correspondence through multiplier
