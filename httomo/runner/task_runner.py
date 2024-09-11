@@ -301,7 +301,7 @@ class TaskRunner:
 
         data_shape = self.source.chunk_shape
         max_slices = data_shape[slicing_dim]
-
+        
         # loop over all methods in section
         has_gpu = False
         for idx, m in enumerate(section):
@@ -332,6 +332,10 @@ class TaskRunner:
 
         max_slices_methods = [max_slices] * len(section)
 
+        # NOTE: as the convertion of the raw data from uint16 to float32 happens after the data gets loaded,
+        # we should consider self.source.dtype to be float for memeory estimators. This should change later
+        # when the direct memory estimators will be able to tackle the change of data type.
+
         # loop over all methods in section
         for idx, m in enumerate(section):
             if len(m.memory_gpu) == 0:
@@ -340,7 +344,7 @@ class TaskRunner:
 
             output_dims = m.calculate_output_dims(non_slice_dims_shape)
             (slices_estimated, available_memory) = m.calculate_max_slices(
-                self.source.dtype,
+                np.dtype('float32'), # self.source.dtype, # see the NOTE about the dtype above
                 non_slice_dims_shape,
                 available_memory,
             )
