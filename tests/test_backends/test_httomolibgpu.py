@@ -138,7 +138,7 @@ def test_remove_outlier_memoryhook(flats, ensure_clean_memory, dtype, slices):
         "httomolibgpu.misc.corr", "remove_outlier", "memory_gpu"
     )
     estimated_memory_bytes = (
-        library_info[1]["multipliers"][0] * np.prod(cp.shape(data)) * uint16().nbytes
+        library_info["multiplier"] * np.prod(cp.shape(data)) * uint16().nbytes
     )
 
     estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
@@ -264,7 +264,7 @@ def test_distortion_correction_memoryhook(
         "memory_gpu",
     )
     estimated_memory_bytes = (
-        library_info[1]["multipliers"][0] * np.prod(cp.shape(data)) * float32().nbytes
+        library_info["multiplier"] * np.prod(cp.shape(data)) * float32().nbytes
     )
     estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
     # now we compare both memory estimations
@@ -301,7 +301,7 @@ def test_remove_stripe_based_sorting_memoryhook(
         "httomolibgpu.prep.stripe", "remove_stripe_based_sorting", "memory_gpu"
     )
     estimated_memory_bytes = (
-        library_info[1]["multipliers"][0] * np.prod(cp.shape(data)) * float32().nbytes
+        library_info["multiplier"] * np.prod(cp.shape(data)) * float32().nbytes
     )
     estimated_memory_mb = round(estimated_memory_bytes / (1024**2), 2)
     # now we compare both memory estimations

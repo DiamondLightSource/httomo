@@ -75,7 +75,7 @@ def test_httomolibgpu_memory_gpu():
     memory_gpu = get_method_info(
         "httomolibgpu.prep.normalize", "normalize", "memory_gpu"
     )
-    assert len(memory_gpu) == 3
+    assert len(memory_gpu) == 2
 
 
 def test_httomolibgpu_padding_false():
@@ -116,9 +116,8 @@ def test_database_query_object():
     assert query.save_result_default() is False
     assert query.padding() is False
     mempars = query.get_memory_gpu_params()
-    assert set(p.dataset for p in mempars) == set(["tomo"])
-    assert all(p.method == "module" for p in mempars)
-    assert all(p.multiplier == "None" for p in mempars)
+    assert mempars.method == "module"
+    assert mempars.multiplier == "None"
 
 
 def test_database_query_object_recon_swap_output():

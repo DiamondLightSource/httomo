@@ -62,7 +62,7 @@ class MethodWrapper(Protocol):
         ...  # pragma: nocover
 
     @property
-    def memory_gpu(self) -> List[GpuMemoryRequirement]:
+    def memory_gpu(self) -> Optional[GpuMemoryRequirement]:
         """Memory requirements for GPU execution"""
         ...  # pragma: nocover
 

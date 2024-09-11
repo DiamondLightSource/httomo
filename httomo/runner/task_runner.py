@@ -334,7 +334,7 @@ class TaskRunner:
 
         # loop over all methods in section
         for idx, m in enumerate(section):
-            if len(m.memory_gpu) == 0:
+            if m.memory_gpu is None:
                 max_slices_methods[idx] = max_slices
                 continue
 
