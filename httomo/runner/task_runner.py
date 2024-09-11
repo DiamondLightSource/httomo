@@ -333,8 +333,8 @@ class TaskRunner:
         max_slices_methods = [max_slices] * len(section)
 
         # NOTE: as the convertion of the raw data from uint16 to float32 happens after the data gets loaded,
-        # we should consider self.source.dtype to be float for memeory estimators. This should change later
-        # when the direct memory estimators will be able to tackle the change of data type.
+        # we should consider self.source.dtype to be float for memory estimators. This should change later
+        # when we deal with a possibility of data blocks being of different data type.
 
         # loop over all methods in section
         for idx, m in enumerate(section):
