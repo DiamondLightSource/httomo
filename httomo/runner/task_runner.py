@@ -301,7 +301,6 @@ class TaskRunner:
 
         data_shape = self.source.chunk_shape
         max_slices = data_shape[slicing_dim]
-
         # loop over all methods in section
         has_gpu = False
         for idx, m in enumerate(section):
@@ -332,6 +331,11 @@ class TaskRunner:
 
         max_slices_methods = [max_slices] * len(section)
 
+        SOURCE_DTYPE = np.dtype("float32")
+        # NOTE: as the convertion of the raw data from uint16 to float32 happens after the data gets loaded,
+        # we should consider self.source.dtype to be float for memory estimators.
+        # see https://github.com/DiamondLightSource/httomo/issues/440
+
         # loop over all methods in section
         for idx, m in enumerate(section):
             if m.memory_gpu is None:
@@ -340,7 +344,7 @@ class TaskRunner:
 
             output_dims = m.calculate_output_dims(non_slice_dims_shape)
             (slices_estimated, available_memory) = m.calculate_max_slices(
-                self.source.dtype,
+                SOURCE_DTYPE,  # self.source.dtype,
                 non_slice_dims_shape,
                 available_memory,
             )
