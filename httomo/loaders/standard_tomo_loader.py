@@ -15,7 +15,7 @@ from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
-from httomo.utils import Pattern, log_once
+from httomo.utils import Pattern, log_once, make_3d_shape_from_shape
 
 
 class StandardTomoLoader(DataSetSource):
@@ -284,6 +284,11 @@ class StandardTomoLoader(DataSetSource):
             slices_read[0], slices_read[1], slices_read[2]
         ]
 
+        padded_chunk_shape_list = list(self._chunk_shape)
+        padded_chunk_shape_list[self._slicing_dim] += (
+            self._padding[0] + self._padding[1]
+        )
+
         return DataSetBlock(
             data=block_data,
             aux_data=self._aux_data,
@@ -291,7 +296,7 @@ class StandardTomoLoader(DataSetSource):
             block_start=start - self._padding[0],
             chunk_start=self._chunk_index[self._slicing_dim],
             global_shape=self._global_shape,
-            chunk_shape=self._chunk_shape,
+            chunk_shape=make_3d_shape_from_shape(padded_chunk_shape_list),
             padding=self._padding,
         )
 
