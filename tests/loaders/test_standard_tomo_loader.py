@@ -751,8 +751,7 @@ def test_standard_tomo_loader_properties_reflect_nonzero_padding(
         detector_x=PreviewDimConfig(start=0, stop=DET_X),
     )
 
-    EXPECTED_CHUNK_SHAPE = (PROJS + PADDING[0] + PADDING[1], DET_Y, DET_X)
-    EXPECTED_GLOBAL_SHAPE = (PROJS, DET_Y, DET_X)
+    EXPECTED_GLOBAL_SHAPE = EXPECTED_CHUNK_SHAPE = (PROJS, DET_Y, DET_X)
     EXPECTED_GLOBAL_INDEX = (-PADDING[0], 0, 0)
 
     with mock.patch(

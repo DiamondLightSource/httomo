@@ -142,14 +142,11 @@ class StandardTomoLoader(DataSetSource):
         next_proc_chunk_index: int,
     ) -> Tuple[int, int, int]:
         """
-        Calculate shape of the chunk that is associated with the given MPI process, including
+        Calculate shape of the chunk that is associated with the given MPI process, excluding
         padding
         """
         return (
-            next_proc_chunk_index
-            - current_proc_chunk_index
-            + self._padding[0]
-            + self._padding[1],
+            next_proc_chunk_index - current_proc_chunk_index,
             self._global_shape[1],
             self._global_shape[2],
         )
