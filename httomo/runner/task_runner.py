@@ -22,7 +22,7 @@ from httomo.runner.dataset_store_interfaces import (
 from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.section import Section, sectionize
+from httomo.runner.section import Section, determine_section_padding, sectionize
 from httomo.utils import (
     Pattern,
     _get_slicing_dim,
@@ -99,6 +99,10 @@ class TaskRunner:
 
         slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
         self.determine_max_slices(section, slicing_dim_section)
+
+        # Account for potential padding in number of max slices
+        padding = determine_section_padding(section)
+        section.max_slices -= padding[0] + padding[1]
 
         self._log_pipeline(
             f"Maximum amount of slices is {section.max_slices} for section {section_index}",
@@ -218,7 +222,8 @@ class TaskRunner:
             self.pipeline.loader.pattern,
             self.pipeline.loader.method_name,
         )
-        self.source = self.pipeline.loader.make_data_source(padding=(0, 0))
+        loader_padding = determine_section_padding(self._sections[0])
+        self.source = self.pipeline.loader.make_data_source(padding=loader_padding)
         self._log_task_end(
             "loader",
             start_time,
