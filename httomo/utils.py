@@ -84,7 +84,9 @@ def log_exception(output: str) -> None:
 
 
 def _parse_preview(
-    preview: List[Dict[str, int]], data_shape: Tuple[int], data_indices: List[int]
+    preview: List[Dict[str, int]],
+    data_shape: Tuple[int],
+    data_indices: List[int],
 ) -> str:
     """Parse the python list that represents the preview parameter in the loader
     into a string that the helper loader functions in

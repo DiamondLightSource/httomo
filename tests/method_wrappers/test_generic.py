@@ -464,7 +464,7 @@ def test_generic_method_queries(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
-    memory_gpu = [GpuMemoryRequirement(dataset="tomo", multiplier=1.2, method="direct")]
+    memory_gpu = GpuMemoryRequirement(multiplier=1.2, method="direct")
     wrp = make_method_wrapper(
         make_mock_repo(
             mocker,
@@ -491,9 +491,9 @@ def test_generic_method_queries(
 @pytest.mark.parametrize(
     "memory_gpu",
     [
-        [GpuMemoryRequirement(dataset="tomo", multiplier=2.0, method="direct")],
-        [GpuMemoryRequirement(dataset="tomo", multiplier=0.0, method="direct")],
-        [],
+        GpuMemoryRequirement(multiplier=2.0, method="direct"),
+        GpuMemoryRequirement(multiplier=0.0, method="direct"),
+        None,
     ],
 )
 @pytest.mark.cupy
@@ -501,7 +501,7 @@ def test_generic_calculate_max_slices_direct(
     mocker: MockerFixture,
     dummy_block: DataSetBlock,
     implementation: str,
-    memory_gpu: List[GpuMemoryRequirement],
+    memory_gpu: Optional[GpuMemoryRequirement],
 ):
     class FakeModule:
         def test_method(data):
@@ -527,8 +527,8 @@ def test_generic_calculate_max_slices_direct(
     databytes = shape[0] * shape[1] * dummy_block.data.itemsize
     max_slices_expected = 5
     multiplier = float(
-        memory_gpu[0].multiplier
-        if memory_gpu != [] and memory_gpu[0].multiplier is not None
+        memory_gpu.multiplier
+        if memory_gpu is not None and memory_gpu.multiplier is not None
         else 1
     )
     available_memory_in = int(databytes * max_slices_expected * multiplier)
@@ -557,9 +557,7 @@ def test_generic_calculate_max_slices_module(
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
-    memory_gpu = [
-        GpuMemoryRequirement(dataset="tomo", multiplier=None, method="module")
-    ]
+    memory_gpu = GpuMemoryRequirement(multiplier=None, method="module")
     repo = make_mock_repo(
         mocker,
         pattern=Pattern.projection,
@@ -602,7 +600,7 @@ def test_generic_calculate_output_dims(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
-    memory_gpu: List[GpuMemoryRequirement] = []
+    memory_gpu: Optional[GpuMemoryRequirement] = None
     repo = make_mock_repo(
         mocker,
         pattern=Pattern.projection,
@@ -635,7 +633,7 @@ def test_generic_calculate_output_dims_no_change(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
-    memory_gpu: List[GpuMemoryRequirement] = []
+    memory_gpu: Optional[GpuMemoryRequirement] = None
     wrp = make_method_wrapper(
         make_mock_repo(
             mocker,
@@ -734,7 +732,7 @@ def test_generic_calculate_padding_none_required(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
-    memory_gpu: List[GpuMemoryRequirement] = []
+    memory_gpu: Optional[GpuMemoryRequirement] = None
     wrp = make_method_wrapper(
         make_mock_repo(
             mocker,
@@ -763,7 +761,7 @@ def test_generic_calculate_padding(mocker: MockerFixture):
 
     mocker.patch("importlib.import_module", return_value=FakeModule)
 
-    memory_gpu: List[GpuMemoryRequirement] = []
+    memory_gpu: Optional[GpuMemoryRequirement] = None
     repo = make_mock_repo(
         mocker,
         pattern=Pattern.projection,

@@ -7,7 +7,6 @@ from httomo.utils import Pattern
 
 @dataclass(frozen=True)
 class GpuMemoryRequirement:
-    dataset: Literal["data", "tomo", "darks", "flats"] = "tomo"
     multiplier: Optional[float] = 1.0
     method: Literal["direct", "module"] = "direct"
 
@@ -33,7 +32,7 @@ class MethodQuery(Protocol):
         """Check for implementation of the method"""
         ...  # pragma: no cover
 
-    def get_memory_gpu_params(self) -> List[GpuMemoryRequirement]:
+    def get_memory_gpu_params(self) -> Optional[GpuMemoryRequirement]:
         """Get the parameters for the GPU memory estimation"""
         ...  # pragma: no cover
 

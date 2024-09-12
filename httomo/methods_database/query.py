@@ -1,5 +1,5 @@
 from types import ModuleType
-from typing import Callable, List, Literal, Tuple
+from typing import Callable, List, Literal, Optional, Tuple
 from pathlib import Path
 import numpy as np
 
@@ -102,27 +102,18 @@ class MethodsDatabaseQuery(MethodQuery):
 
     def get_memory_gpu_params(
         self,
-    ) -> List[GpuMemoryRequirement]:
+    ) -> Optional[GpuMemoryRequirement]:
         p = get_method_info(self.module_path, self.method_name, "memory_gpu")
         if p is None or p == "None":
-            return []
+            return None
         if type(p) == list:
             # convert to dict first
-            dd: dict = dict()
+            d: dict = dict()
             for item in p:
-                dd |= item
+                d |= item
         else:
-            dd = p
-        # now iterate and make it into one
-        assert (
-            len(dd["datasets"]) == len(dd["multipliers"]) == len(dd["methods"])
-        ), "Invalid data"
-        return [
-            GpuMemoryRequirement(
-                dataset=d, multiplier=dd["multipliers"][i], method=dd["methods"][i]
-            )
-            for i, d in enumerate(dd["datasets"])
-        ]
+            d = p
+        return GpuMemoryRequirement(multiplier=d["multiplier"], method=d["method"])
 
     def calculate_memory_bytes(
         self, non_slice_dims_shape: Tuple[int, int], dtype: np.dtype, **kwargs
