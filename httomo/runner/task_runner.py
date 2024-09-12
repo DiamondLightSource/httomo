@@ -218,7 +218,7 @@ class TaskRunner:
             self.pipeline.loader.pattern,
             self.pipeline.loader.method_name,
         )
-        self.source = self.pipeline.loader.make_data_source()
+        self.source = self.pipeline.loader.make_data_source(padding=(0, 0))
         self._log_task_end(
             "loader",
             start_time,

@@ -390,7 +390,7 @@ class StandardLoaderWrapper(LoaderInterface):
         self.angles = angles
         self.preview = preview
 
-    def make_data_source(self) -> DataSetSource:
+    def make_data_source(self, padding: Tuple[int, int] = (0, 0)) -> DataSetSource:
         assert self.pattern in [Pattern.sinogram, Pattern.projection]
         loader = StandardTomoLoader(
             in_file=self.in_file,
@@ -402,6 +402,7 @@ class StandardLoaderWrapper(LoaderInterface):
             preview_config=self.preview,
             slicing_dim=1 if self.pattern == Pattern.sinogram else 0,
             comm=self.comm,
+            padding=padding,
         )
         (self._angles_total, self._detector_y, self._detector_x) = loader.global_shape
         return loader

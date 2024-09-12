@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Protocol, Tuple
 
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.utils import Pattern
@@ -13,8 +13,8 @@ class LoaderInterface(Protocol):
     method_name: str
     package_name: str = "httomo"
 
-    def make_data_source(self) -> DataSetSource:
-        """Create a dataset source that can produce blocks of data from the file.
+    def make_data_source(self, padding: Tuple[int, int]) -> DataSetSource:
+        """Create a dataset source that can produce padded blocks of data from the file.
 
         This will be called after the patterns and sections have been determined,
         just before the execution of the first section starts."""
