@@ -29,6 +29,7 @@ from httomo.data.hdf._utils.reslice import reslice
 from httomo.data.padding import extrapolate_after, extrapolate_before
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
+from httomo.runner.dataset_store_backing import DataSetStoreBacking
 from httomo.runner.dataset_store_interfaces import (
     DataSetSource,
     ReadableDataSetSink,
@@ -57,7 +58,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         slicing_dim: Literal[0, 1, 2],
         comm: MPI.Comm,
         temppath: PathLike,
-        memory_limit_bytes: int = 0,
+        store_backing: DataSetStoreBacking = DataSetStoreBacking.RAM,
     ):
         self._slicing_dim = slicing_dim
         self._comm = comm
@@ -66,7 +67,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         self._readonly = False
         self._h5file: Optional[h5py.File] = None
         self._h5filename: Optional[Path] = None
-        self._memory_limit_bytes: int = memory_limit_bytes
+        self._store_backing = store_backing
 
         self._data: Optional[Union[np.ndarray, h5py.Dataset]] = None
 
@@ -79,7 +80,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
 
     @property
     def is_file_based(self) -> bool:
-        return self._h5filename is not None
+        return self._store_backing is DataSetStoreBacking.File
 
     @property
     def filename(self) -> Optional[Path]:
@@ -177,23 +178,12 @@ class DataSetStoreWriter(ReadableDataSetSink):
         return self._h5filename
 
     def _create_new_data(self, block: DataSetBlock):
-        # reduce memory errors across all processes - if any has a memory problem,
-        # all should use a file
-        sendBuffer = np.zeros(1, dtype=bool)
-        recvBuffer = np.zeros(1, dtype=bool)
-        try:
+        if self._store_backing is DataSetStoreBacking.RAM:
             self._data = self._create_numpy_data(
                 unpadded_chunk_shape=block.chunk_shape_unpadded,
-                padded_chunk_shape=block.chunk_shape,
                 dtype=block.data.dtype,
             )
-        except MemoryError:
-            sendBuffer[0] = True
-
-        # do a logical or of all the memory errors across the processes
-        self.comm.Allreduce([sendBuffer, MPI.BOOL], [recvBuffer, MPI.BOOL], MPI.LOR)
-
-        if bool(recvBuffer[0]) is True:
+        else:
             log_once(
                 "Chunk does not fit in memory - using a file-based store",
                 level=logging.WARNING,
@@ -208,20 +198,9 @@ class DataSetStoreWriter(ReadableDataSetSink):
             )
 
     def _create_numpy_data(
-        self,
-        unpadded_chunk_shape: Tuple[int, int, int],
-        padded_chunk_shape: Tuple[int, int, int],
-        dtype: DTypeLike,
+        self, unpadded_chunk_shape: Tuple[int, int, int], dtype: DTypeLike
     ) -> np.ndarray:
         """Convenience method to enable mocking easily"""
-        unpadded_chunk_bytes = np.prod(unpadded_chunk_shape) * np.dtype(dtype).itemsize
-        padded_chunk_bytes = np.prod(padded_chunk_shape) * np.dtype(dtype).itemsize
-        if (
-            self._memory_limit_bytes > 0
-            and unpadded_chunk_bytes + padded_chunk_bytes >= self._memory_limit_bytes
-        ):
-            raise MemoryError("Memory limit reached")
-
         return np.empty(unpadded_chunk_shape, dtype)
 
     def _create_h5_data(

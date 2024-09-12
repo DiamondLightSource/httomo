@@ -1,5 +1,5 @@
 import logging
-from typing import Iterator, List, Optional
+from typing import Iterator, List, Optional, Tuple
 
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
@@ -142,3 +142,12 @@ def _set_method_patterns(sections: List[Section]):
     for s in sections:
         for m in s:
             m.pattern = s.pattern
+
+
+def determine_section_padding(section: Section) -> Tuple[int, int]:
+    # NOTE: Assumes that only one method with padding will be in a section, which is
+    # consistent with the assumptions made by `sectionize()`
+    for method in section.methods:
+        if method.padding:
+            return method.calculate_padding()
+    return (0, 0)

@@ -9,6 +9,7 @@ from mpi4py import MPI
 
 import httomo.globals
 from httomo.data.dataset_store import DataSetStoreWriter
+from httomo.runner.dataset_store_backing import determine_store_backing
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.block_split import BlockSplitter
 from httomo.runner.dataset import DataSetBlock
@@ -29,7 +30,6 @@ from httomo.utils import (
     log_exception,
     log_once,
     log_rank,
-    make_3d_shape_from_shape,
 )
 import numpy as np
 
@@ -56,12 +56,13 @@ class TaskRunner:
 
         self._memory_limit_bytes = memory_limit_bytes
 
+        self._sections = self._sectionize()
+
     def execute(self) -> None:
         with catchtime() as t:
-            sections = self._sectionize()
 
             self._prepare()
-            for i, section in enumerate(sections):
+            for i, section in enumerate(self._sections):
                 self._execute_section(section, i)
                 gpumem_cleanup()
 
@@ -81,7 +82,7 @@ class TaskRunner:
         return sections
 
     def _execute_section(self, section: Section, section_index: int = 0):
-        self._setup_source_sink(section)
+        self._setup_source_sink(section, section_index)
         assert self.source is not None, "Dataset has not been loaded yet"
         assert self.sink is not None, "Sink setup failed"
 
@@ -162,7 +163,7 @@ class TaskRunner:
             level=logging.INFO,
         )
 
-    def _setup_source_sink(self, section: Section):
+    def _setup_source_sink(self, section: Section, idx: int):
         assert self.source is not None, "Dataset has not been loaded yet"
 
         slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
@@ -173,6 +174,15 @@ class TaskRunner:
             assert isinstance(self.sink, ReadableDataSetSink)
             self.source = self.sink.make_reader(slicing_dim_section)
 
+        store_backing = determine_store_backing(
+            comm=self.comm,
+            sections=self._sections,
+            memory_limit_bytes=self._memory_limit_bytes,
+            dtype=self.source.dtype,
+            global_shape=self.source.global_shape,
+            section_idx=idx,
+        )
+
         if section.is_last:
             # we don't need to store the results - this sink just discards it
             self.sink = DummySink(slicing_dim_section)
@@ -181,7 +191,7 @@ class TaskRunner:
                 slicing_dim_section,
                 self.comm,
                 self.reslice_dir,
-                memory_limit_bytes=self._memory_limit_bytes,
+                store_backing=store_backing,
             )
 
     def _execute_section_block(
@@ -352,30 +362,3 @@ class TaskRunner:
             non_slice_dims_shape = output_dims
 
         section.max_slices = min(max_slices_methods)
-
-    def determine_section_padding(self, section: Section) -> Tuple[int, int]:
-        # NOTE: Assumes that only one method with padding will be in a section, which is
-        # consistent with the assumptions made by `section.sectionizer()`
-        for method in section.methods:
-            if method.padding:
-                return method.calculate_padding()
-        return (0, 0)
-
-
-def calculate_next_chunk_shape(
-    comm: MPI.Comm,
-    global_shape: Tuple[int, int, int],
-    next_section_slicing_dim: int,
-    next_section_padding: Tuple[int, int],
-) -> Tuple[int, int, int]:
-    """
-    Utility function for calculating the chunk shape (including padding) for the next section.
-    """
-    start = round((global_shape[next_section_slicing_dim] / comm.size) * comm.rank)
-    stop = round((global_shape[next_section_slicing_dim] / comm.size) * (comm.rank + 1))
-    next_section_slicing_dim_len = stop - start
-    shape = list(global_shape)
-    shape[next_section_slicing_dim] = (
-        next_section_slicing_dim_len + next_section_padding[0] + next_section_padding[1]
-    )
-    return make_3d_shape_from_shape(shape)

@@ -1,6 +1,6 @@
 from os import PathLike
 from pathlib import Path
-from typing import List, Literal
+from typing import Literal
 from unittest.mock import ANY
 import numpy as np
 import pytest
@@ -11,6 +11,7 @@ import h5py
 from httomo.runner.auxiliary_data import AuxiliaryData
 
 from httomo.runner.dataset import DataSetBlock
+from httomo.runner.dataset_store_backing import DataSetStoreBacking
 from httomo.utils import make_3d_shape_from_shape
 
 
@@ -59,14 +60,18 @@ def test_reader_throws_if_no_data(tmp_path: PathLike):
     assert "no data" in str(e)
 
 
-@pytest.mark.parametrize("file_based", [False, True])
+@pytest.mark.parametrize(
+    "store_backing", [DataSetStoreBacking.RAM, DataSetStoreBacking.File]
+)
 def test_can_write_and_read_blocks(
-    mocker: MockerFixture, tmp_path: PathLike, file_based: bool
+    tmp_path: PathLike,
+    store_backing: DataSetStoreBacking,
 ):
     writer = DataSetStoreWriter(
         slicing_dim=0,
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
+        store_backing=store_backing,
     )
 
     GLOBAL_SHAPE = (10, 10, 10)
@@ -94,8 +99,6 @@ def test_can_write_and_read_blocks(
         chunk_start=chunk_start,
     )
 
-    if file_based:
-        mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
     writer.write_block(block1)
     writer.write_block(block2)
 
@@ -116,25 +119,22 @@ def test_can_write_and_read_blocks(
     np.testing.assert_array_equal(rblock2.data, block2.data)
 
 
-@pytest.mark.parametrize("file_based", [False, True])
+@pytest.mark.parametrize(
+    "store_backing", [DataSetStoreBacking.RAM, DataSetStoreBacking.File]
+)
 def test_write_after_read_throws(
-    mocker: MockerFixture,
     dummy_block: DataSetBlock,
     tmp_path: PathLike,
-    file_based: bool,
+    store_backing: DataSetStoreBacking,
 ):
     writer = DataSetStoreWriter(
         slicing_dim=0,
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
+        store_backing=store_backing,
     )
-
-    if file_based:
-        mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
     writer.write_block(dummy_block)
-
     writer.make_reader()
-
     with pytest.raises(ValueError):
         writer.write_block(dummy_block)
 
@@ -146,9 +146,9 @@ def test_writer_closes_file_on_finalize(
         slicing_dim=0,
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
+        store_backing=DataSetStoreBacking.File,
     )
 
-    mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
     writer.write_block(dummy_block)
     fileclose = mocker.patch.object(writer._h5file, "close")
     writer.finalize()
@@ -157,16 +157,15 @@ def test_writer_closes_file_on_finalize(
 
 
 def test_making_reader_closes_file_and_deletes(
-    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: PathLike
+    dummy_block: DataSetBlock, tmp_path: PathLike
 ):
     writer = DataSetStoreWriter(
         slicing_dim=0,
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
+        store_backing=DataSetStoreBacking.File,
     )
-    mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
     writer.write_block(dummy_block)
-
     reader = writer.make_reader()
 
     assert writer._h5file is None
@@ -340,16 +339,16 @@ def test_writing_inconsistent_global_index_fails(tmp_path: PathLike):
     assert "inconsistent shape" in str(e)
 
 
-def test_create_new_data_goes_to_file_on_memory_error(
+def test_create_new_data_goes_to_file_for_file_store_backing(
     mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: PathLike
 ):
     writer = DataSetStoreWriter(
         slicing_dim=0,
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
+        store_backing=DataSetStoreBacking.File,
     )
 
-    mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
     createh5_mock = mocker.patch.object(
         writer, "_create_h5_data", return_value=dummy_block.data
     )
@@ -359,46 +358,6 @@ def test_create_new_data_goes_to_file_on_memory_error(
     createh5_mock.assert_called_with(
         writer.global_shape,
         dummy_block.data.dtype,
-        ANY,
-        writer.comm,
-    )
-
-
-def test_create_new_data_goes_to_file_on_memory_limit(
-    mocker: MockerFixture, tmp_path: PathLike
-):
-    GLOBAL_SHAPE = (500, 10, 10)
-    data = np.ones(GLOBAL_SHAPE, dtype=np.float32)
-    aux_data = AuxiliaryData(
-        angles=np.ones(data.shape[0], dtype=np.float32),
-        darks=2.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), dtype=np.float32),
-        flats=1.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), dtype=np.float32),
-    )
-    block = DataSetBlock(
-        data=data[0:2, :, :],
-        aux_data=aux_data,
-        slicing_dim=0,
-        block_start=0,
-        chunk_start=0,
-        global_shape=GLOBAL_SHAPE,
-        chunk_shape=GLOBAL_SHAPE,
-    )
-    writer = DataSetStoreWriter(
-        slicing_dim=0,
-        comm=MPI.COMM_WORLD,
-        temppath=tmp_path,
-        memory_limit_bytes=block.data.nbytes + 5,  # only one block will fit in memory
-    )
-
-    createh5_mock = mocker.patch.object(
-        writer, "_create_h5_data", return_value=block.data
-    )
-
-    writer.write_block(block)
-
-    createh5_mock.assert_called_with(
-        writer.global_shape,
-        block.data.dtype,
         ANY,
         writer.comm,
     )
@@ -422,24 +381,25 @@ def test_calls_reslice(
     reslice_mock.assert_called_with(0, 1, d)
 
 
-@pytest.mark.parametrize("file_based", [False, True])
+@pytest.mark.parametrize(
+    "store_backing", [DataSetStoreBacking.RAM, DataSetStoreBacking.File]
+)
 def test_reslice_single_block_single_process(
-    mocker: MockerFixture,
     dummy_block: DataSetBlock,
     tmp_path: PathLike,
-    file_based: bool,
+    store_backing: DataSetStoreBacking,
 ):
     writer = DataSetStoreWriter(
         slicing_dim=0,
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
+        store_backing=store_backing,
     )
-    if file_based:
-        mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
 
     writer.write_block(dummy_block)
 
-    assert writer.is_file_based is file_based
+    expected_is_file_based = store_backing is DataSetStoreBacking.File
+    assert writer.is_file_based is expected_is_file_based
 
     reader = writer.make_reader(new_slicing_dim=1)
 
@@ -456,7 +416,7 @@ def test_reslice_single_block_single_process(
     assert block.chunk_shape == reader.chunk_shape
 
     assert isinstance(reader, DataSetStoreReader)
-    assert reader.is_file_based is file_based
+    assert reader.is_file_based is expected_is_file_based
 
     np.testing.assert_array_equal(block.data, dummy_block.data[:, 1:3, :])
     np.testing.assert_array_equal(block.flats, dummy_block.flats)
@@ -469,18 +429,12 @@ def test_reslice_single_block_single_process(
     MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
 )
 @pytest.mark.parametrize(
-    "out_of_memory_ranks",
-    [[], [1], [0, 1]],
-    ids=[
-        "out_of_memory=none",
-        "out_of_memory=one process",
-        "out_of_memory=both processes",
-    ],
+    "store_backing",
+    [DataSetStoreBacking.RAM, DataSetStoreBacking.File],
 )
 def test_full_integration_with_reslice(
-    mocker: MockerFixture,
     tmp_path: PathLike,
-    out_of_memory_ranks: List[int],
+    store_backing: DataSetStoreBacking,
 ):
     ########### ARRANGE DATA and mocks
 
@@ -512,11 +466,8 @@ def test_full_integration_with_reslice(
         slicing_dim=0,
         comm=comm,
         temppath=tmp_path,
+        store_backing=store_backing,
     )
-
-    if comm.rank in out_of_memory_ranks:
-        # make it throw an exception, so it reverts to file-based store
-        mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
 
     ############# ACT
 
@@ -560,14 +511,18 @@ def test_full_integration_with_reslice(
         )
 
 
-@pytest.mark.parametrize("file_based", [False, True])
+@pytest.mark.parametrize(
+    "store_backing", [DataSetStoreBacking.RAM, DataSetStoreBacking.File]
+)
 def test_can_write_blocks_with_padding_and_read(
-    mocker: MockerFixture, tmp_path: PathLike, file_based: bool
+    tmp_path: PathLike,
+    store_backing: DataSetStoreBacking,
 ):
     writer = DataSetStoreWriter(
         slicing_dim=0,
         comm=MPI.COMM_WORLD,
         temppath=tmp_path,
+        store_backing=store_backing,
     )
 
     GLOBAL_SHAPE = (10, 10, 10)
@@ -616,8 +571,6 @@ def test_can_write_blocks_with_padding_and_read(
         padding=padding,
     )
 
-    if file_based:
-        mocker.patch.object(writer, "_create_numpy_data", side_effect=MemoryError)
     writer.write_block(block1)
     writer.write_block(block2)
 
@@ -1045,63 +998,3 @@ def test_adapts_shapes_with_padding_and_reslicing_mpi(
 
     np.testing.assert_array_equal(block1.data, b1expected)
     np.testing.assert_array_equal(block2.data, b2expected)
-
-
-def test_write_block_accounts_for_two_chunk_copies(tmp_path: PathLike):
-    MEMORY_LIMIT = 4 * 1024**2  # 4MB
-
-    # Core chunk array size ~3.4MB
-    # Padded chunk array size ~4.8MB
-    # -> Core chunk array fits within memory limit, but core chunk + padded chunk doesn't
-    PADDING = (2, 2)
-    SLICING_DIM = 0
-    DTYPE = np.float32
-    CORE_CHUNK_SHAPE = (10, 300, 300)
-    PADDED_CHUNK_SHAPE = (
-        CORE_CHUNK_SHAPE[0] + PADDING[0] + PADDING[1],
-        CORE_CHUNK_SHAPE[1],
-        CORE_CHUNK_SHAPE[2],
-    )
-
-    # Create block to later write to the store
-    data = np.ones(
-        (
-            CORE_CHUNK_SHAPE[0] // 2 + PADDING[0] + PADDING[1],
-            CORE_CHUNK_SHAPE[1],
-            CORE_CHUNK_SHAPE[2],
-        ),
-        dtype=DTYPE,
-    )
-    block = DataSetBlock(
-        data=data,
-        aux_data=AuxiliaryData(np.ones(CORE_CHUNK_SHAPE[0], dtype=DTYPE)),
-        slicing_dim=SLICING_DIM,
-        global_shape=CORE_CHUNK_SHAPE,
-        chunk_shape=PADDED_CHUNK_SHAPE,
-        block_start=0,
-        chunk_start=0,
-        padding=PADDING,
-    )
-
-    # Create writer with memory limit
-    COMM = MPI.COMM_WORLD
-    writer = DataSetStoreWriter(
-        slicing_dim=SLICING_DIM,
-        comm=COMM,
-        temppath=tmp_path,
-        memory_limit_bytes=MEMORY_LIMIT,
-    )
-
-    # A 4MB limit on RAM is enough to hold the core chunk, but not enough to hold the core
-    # chunk + padded chunk. Therefore, a `MemoryError` should be raised + handled by the writer
-    # when the first block is attempted to be written.
-    #
-    # A `MemoryError` being raised and handled by the writer will result in an hdf5 file
-    # backing the store. Thus, checking if the writer is file-based will show if a
-    # `MemoryError` was handled or not.
-    writer.write_block(block)
-    assert writer.is_file_based
-
-    # Execute finaliser to make sure the hdf5 file that should be backing the store is cleaned
-    # up (doing so avoids warnings in pytest output)
-    writer.finalize()

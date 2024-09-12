@@ -3,7 +3,7 @@ import pytest
 from pytest_mock import MockerFixture
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.section import sectionize, Section
+from httomo.runner.section import determine_section_padding, sectionize, Section
 from httomo.utils import Pattern
 from ..testing_utils import make_test_loader, make_test_method
 
@@ -308,3 +308,67 @@ def test_sectionizer_splits_section_if_multiple_padding_methods(mocker: MockerFi
         len(s[0]) == 3
     )  # loader + 3 methods, as we want right before the next padding method
     assert len(s[1]) == 1  # just the last method with padding
+
+
+def test_determine_section_padding_no_padding_method_in_section(
+    mocker: MockerFixture,
+):
+    loader = make_test_loader(mocker)
+    method_1 = make_test_method(mocker=mocker, padding=False)
+    method_2 = make_test_method(mocker=mocker, padding=False)
+    method_3 = make_test_method(mocker=mocker, padding=False)
+
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[method_1, method_2, method_3],
+    )
+    sections = sectionize(pipeline)
+    section_padding = determine_section_padding(sections[0])
+    assert section_padding == (0, 0)
+
+
+def test_determine_section_padding_one_padding_method_only_method_in_section(
+    mocker: MockerFixture,
+):
+    loader = make_test_loader(mocker)
+
+    PADDING = (3, 5)
+    padding_method = make_test_method(mocker=mocker, padding=True)
+    mocker.patch.object(
+        target=padding_method,
+        attribute="calculate_padding",
+        return_value=PADDING,
+    )
+
+    pipeline = Pipeline(loader=loader, methods=[padding_method])
+    sections = sectionize(pipeline)
+    section_padding = determine_section_padding(sections[0])
+    assert section_padding == PADDING
+
+
+def test_determine_section_padding_one_padding_method_and_other_methods_in_section(
+    mocker: MockerFixture,
+):
+    loader = make_test_loader(mocker)
+
+    PADDING = (3, 5)
+    padding_method = make_test_method(mocker=mocker, padding=True)
+    mocker.patch.object(
+        target=padding_method,
+        attribute="calculate_padding",
+        return_value=PADDING,
+    )
+    method_1 = make_test_method(mocker=mocker, padding=False)
+    method_2 = make_test_method(mocker=mocker, padding=False)
+    method_3 = make_test_method(mocker=mocker, padding=False)
+
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[method_1, method_2, padding_method, method_3],
+    )
+
+    sections = sectionize(pipeline)
+    assert len(sections[0]) == 4
+
+    section_padding = determine_section_padding(sections[0])
+    assert section_padding == PADDING

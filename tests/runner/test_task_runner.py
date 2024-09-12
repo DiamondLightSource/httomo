@@ -10,15 +10,15 @@ from pytest_mock import MockerFixture
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
+from httomo.runner.dataset_store_backing import DataSetStoreBacking
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import Section, sectionize
-from httomo.runner.task_runner import TaskRunner, calculate_next_chunk_shape
+from httomo.runner.task_runner import TaskRunner
 from httomo.utils import (
     Pattern,
-    make_3d_shape_from_shape,
     xp,
     gpu_enabled,
 )
@@ -335,6 +335,13 @@ def test_execute_section_calls_blockwise_execute_and_monitors(
     s = sectionize(p)
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
     t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
+
+    # Patch the store backing calculator function to assume being backed by RAM
+    mocker.patch(
+        "httomo.runner.task_runner.determine_store_backing",
+        return_value=DataSetStoreBacking.RAM,
+    )
+
     t._prepare()
     # make that do nothing
     mocker.patch.object(t, "determine_max_slices")
@@ -350,7 +357,7 @@ def test_execute_section_calls_blockwise_execute_and_monitors(
     )
 
     s[0].is_last = False  # should setup a DataSetStoreWriter as sink
-    t._execute_section(s[0], 1)
+    t._execute_section(s[0])
     assert isinstance(t.sink, DataSetStoreWriter)
     reader = t.sink.make_reader()
     data = reader.read_block(0, dummy_block.shape[0])
@@ -397,6 +404,11 @@ def test_does_reslice_when_needed_and_reports_time(
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
     t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
 
+    # Patch the store backing calculator function to assume being backed by RAM
+    mocker.patch(
+        "httomo.runner.task_runner.determine_store_backing",
+        return_value=DataSetStoreBacking.RAM,
+    )
     t.execute()
 
     assert loader.pattern == Pattern.projection
@@ -476,128 +488,3 @@ def test_warns_with_multiple_stores_from_side_outputs(
     spy.assert_called()
     args, _ = spy.call_args
     assert "Data saving or/and reslicing operation will be performed 4 times" in args[0]
-
-
-def test_determine_section_padding_no_padding_method_in_section(
-    mocker: MockerFixture,
-    tmp_path: PathLike,
-):
-    loader = make_test_loader(mocker)
-    method_1 = make_test_method(mocker=mocker, padding=False)
-    method_2 = make_test_method(mocker=mocker, padding=False)
-    method_3 = make_test_method(mocker=mocker, padding=False)
-
-    pipeline = Pipeline(
-        loader=loader,
-        methods=[method_1, method_2, method_3],
-    )
-    runner = TaskRunner(pipeline=pipeline, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
-    sections = sectionize(pipeline)
-    section_padding = runner.determine_section_padding(sections[0])
-    assert section_padding == (0, 0)
-
-
-def test_determine_section_padding_one_padding_method_only_method_in_section(
-    mocker: MockerFixture,
-    tmp_path: PathLike,
-):
-    loader = make_test_loader(mocker)
-
-    PADDING = (3, 5)
-    padding_method = make_test_method(mocker=mocker, padding=True)
-    mocker.patch.object(
-        target=padding_method,
-        attribute="calculate_padding",
-        return_value=PADDING,
-    )
-
-    pipeline = Pipeline(loader=loader, methods=[padding_method])
-    runner = TaskRunner(pipeline=pipeline, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
-    sections = sectionize(pipeline)
-    section_padding = runner.determine_section_padding(sections[0])
-    assert section_padding == PADDING
-
-
-def test_determine_section_padding_one_padding_method_and_other_methods_in_section(
-    mocker: MockerFixture,
-    tmp_path: PathLike,
-):
-    loader = make_test_loader(mocker)
-
-    PADDING = (3, 5)
-    padding_method = make_test_method(mocker=mocker, padding=True)
-    mocker.patch.object(
-        target=padding_method,
-        attribute="calculate_padding",
-        return_value=PADDING,
-    )
-    method_1 = make_test_method(mocker=mocker, padding=False)
-    method_2 = make_test_method(mocker=mocker, padding=False)
-    method_3 = make_test_method(mocker=mocker, padding=False)
-
-    pipeline = Pipeline(
-        loader=loader,
-        methods=[method_1, method_2, padding_method, method_3],
-    )
-    runner = TaskRunner(pipeline=pipeline, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
-
-    sections = sectionize(pipeline)
-    assert len(sections[0]) == 4
-
-    section_padding = runner.determine_section_padding(sections[0])
-    assert section_padding == PADDING
-
-
-@pytest.mark.parametrize(
-    "nprocs, rank, next_section_slicing_dim, next_section_padding",
-    [
-        (2, 1, 0, (0, 0)),
-        (2, 1, 0, (3, 5)),
-        (2, 1, 1, (0, 0)),
-        (2, 1, 1, (3, 5)),
-        (4, 2, 0, (0, 0)),
-        (4, 2, 0, (3, 5)),
-        (4, 2, 1, (0, 0)),
-        (4, 2, 1, (3, 5)),
-    ],
-    ids=[
-        "2procs-proj-to-proj_unpadded",
-        "2procs-proj-to-proj_padded",
-        "2procs-proj-to-sino_unpadded",
-        "2procs-proj-to-sino_padded",
-        "4procs-proj-to-proj_unpadded",
-        "4procs-proj-to-proj_padded",
-        "4procs-proj-to-sino_unpadded",
-        "4procs-proj-to-sino_padded",
-    ],
-)
-def test_calculate_next_chunk_shape(
-    nprocs: int,
-    rank: int,
-    next_section_slicing_dim: int,
-    next_section_padding: Tuple[int, int],
-    mocker: MockerFixture,
-):
-    GLOBAL_SHAPE = (1801, 2160, 2560)
-
-    # Define mock communicator that reflects the desired data splitting/distribution to be
-    # tested
-    mock_global_comm = mocker.create_autospec(spec=MPI.Comm, size=nprocs, rank=rank)
-
-    # The chunk shape for the next section should reflect the padding needed for that section
-    expected_next_chunk_shape: List[int] = list(GLOBAL_SHAPE)
-    start = round(GLOBAL_SHAPE[next_section_slicing_dim] / nprocs * rank)
-    stop = round(GLOBAL_SHAPE[next_section_slicing_dim] / nprocs * (rank + 1))
-    slicing_dim_len = stop - start
-    expected_next_chunk_shape[next_section_slicing_dim] = (
-        slicing_dim_len + next_section_padding[0] + next_section_padding[1]
-    )
-    next_section_chunk_shape = calculate_next_chunk_shape(
-        comm=mock_global_comm,
-        global_shape=GLOBAL_SHAPE,
-        next_section_slicing_dim=next_section_slicing_dim,
-        next_section_padding=next_section_padding,
-    )
-    assert next_section_chunk_shape == make_3d_shape_from_shape(
-        expected_next_chunk_shape
-    )
