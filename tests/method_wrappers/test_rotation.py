@@ -1,11 +1,11 @@
-from typing import Union
+from typing import List, Tuple, Union
 from unittest.mock import MagicMock
 import numpy as np
 from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.rotation import RotationWrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
-from httomo.utils import Pattern, gpu_enabled, xp
+from httomo.utils import Pattern, gpu_enabled, make_3d_shape_from_shape, xp
 from ..testing_utils import make_mock_repo
 
 
@@ -29,7 +29,12 @@ def test_rotation_fails_with_sinogram_method(mocker: MockerFixture):
         )
 
 
-def test_rotation_accumulates_blocks(mocker: MockerFixture):
+@pytest.mark.parametrize(
+    "padding",
+    [(0, 0), (2, 3)],
+    ids=["zero-padding", "non-zero-padding"],
+)
+def test_rotation_accumulates_blocks(mocker: MockerFixture, padding: Tuple[int, int]):
     GLOBAL_SHAPE = (10, 10, 30)
     global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
         GLOBAL_SHAPE
@@ -39,19 +44,39 @@ def test_rotation_accumulates_blocks(mocker: MockerFixture):
         darks=2.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), np.float32),
         flats=3.0 * np.ones((2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2]), np.float32),
     )
+
+    chunk_shape_list: List[int] = list(GLOBAL_SHAPE)
+    if padding != (0, 0):
+        chunk_shape_list[0] += padding[0] + padding[1]
+
+    b1_data = global_data[0 : GLOBAL_SHAPE[0] // 2, :, :]
+    b1_block_start = 0
+    if padding != (0, 0):
+        b1_data = np.pad(b1_data, pad_width=(padding, (0, 0), (0, 0)))
+        b1_block_start -= padding[0]
     b1 = DataSetBlock(
-        data=global_data[0 : GLOBAL_SHAPE[0] // 2, :, :],
+        data=b1_data,
         aux_data=aux_data,
-        block_start=0,
+        block_start=b1_block_start,
+        chunk_start=0 if padding == (0, 0) else -padding[0],
         global_shape=GLOBAL_SHAPE,
-        chunk_shape=GLOBAL_SHAPE,
+        chunk_shape=make_3d_shape_from_shape(chunk_shape_list),
+        padding=padding,
     )
+
+    b2_data = global_data[GLOBAL_SHAPE[0] // 2 :, :, :]
+    b2_block_start = GLOBAL_SHAPE[0] // 2
+    if padding != (0, 0):
+        b2_data = np.pad(b2_data, pad_width=(padding, (0, 0), (0, 0)))
+        b2_block_start -= padding[0]
     b2 = DataSetBlock(
-        data=global_data[GLOBAL_SHAPE[0] // 2 :, :, :],
+        data=b2_data,
         aux_data=aux_data,
-        block_start=GLOBAL_SHAPE[0] // 2,
+        block_start=b2_block_start,
+        chunk_start=0 if padding == (0, 0) else -padding[0],
         global_shape=GLOBAL_SHAPE,
-        chunk_shape=GLOBAL_SHAPE,
+        chunk_shape=make_3d_shape_from_shape(chunk_shape_list),
+        padding=padding,
     )
 
     class FakeModule:

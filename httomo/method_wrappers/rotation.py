@@ -147,15 +147,27 @@ class RotationWrapper(GenericMethodWrapper):
             # append to internal sinogram, until we have the last block
             if self.sino is None:
                 self.sino = np.empty(
-                    (block.chunk_shape[0], block.chunk_shape[2]), dtype=np.float32
+                    (block.chunk_shape_unpadded[0], block.chunk_shape_unpadded[2]),
+                    dtype=np.float32,
                 )
-            data = block.data[:, slice_for_cor, :]
+
+            # Extract core of block, in case padding slices are present
+            core_angles_start = 0
+            core_angles_stop = block.shape_unpadded[0]
+            if block.is_padded:
+                core_angles_start = block.padding[0]
+                core_angles_stop = core_angles_start + block.shape_unpadded[0]
+
+            data = block.data[core_angles_start:core_angles_stop, slice_for_cor, :]
+
             if block.is_gpu:
                 with catchtime() as t:
                     data = xp.asnumpy(data)
                 self._gpu_time_info.device2host += t.elapsed
             self.sino[
-                block.chunk_index[0] : block.chunk_index[0] + block.shape[0], :
+                block.chunk_index_unpadded[0] : block.chunk_index_unpadded[0]
+                + block.shape_unpadded[0],
+                :,
             ] = data
 
             if not block.is_last_in_chunk:  # exit if we didn't process all blocks yet
