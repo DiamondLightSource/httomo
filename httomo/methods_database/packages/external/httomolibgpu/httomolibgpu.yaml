@@ -14,7 +14,7 @@ misc:
       output_dims_change: False
       implementation: gpu_cupy
       save_result_default: False
-      padding: False
+      padding: True
       memory_gpu:
         multiplier: 2.1
         method: direct
