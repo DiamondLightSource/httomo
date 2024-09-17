@@ -15,7 +15,9 @@ def test_calculate_stats(mocker: MockerFixture, dummy_block: DataSetBlock):
             # outputs min/max/sum/total_elements
             return (1.2, 3.1, 42.0, 10)
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path.calculate_stats",
@@ -39,7 +41,9 @@ def test_calculate_stats_supports_blockwise(
             # outputs min/max/sum/total_elements
             return (1.2, 3.1, 42.0, 10)
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path.calculate_stats",
@@ -93,7 +97,9 @@ def test_calculate_stats_2_processes(mocker: MockerFixture, dummy_block: DataSet
             else:
                 return (1.1, 3.5, 40.0, 9)
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path.calculate_stats",
@@ -124,7 +130,9 @@ def test_calculate_stats_uses_gpu_if_available(
                 assert getattr(data, "device", None) is None
             return (1.2, 3.1, 42.0, 10)
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path.calculate_stats",

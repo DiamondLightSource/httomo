@@ -51,7 +51,9 @@ def test_save_intermediate(
             assert detector_y == 20
             assert path == "/data"
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     prev_method = mocker.create_autospec(
         MethodWrapper,
         instance=True,
@@ -97,7 +99,9 @@ def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Pat
         ):
             pass
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     prev_method = mocker.create_autospec(
         MethodWrapper,
         instance=True,
@@ -147,7 +151,9 @@ def test_save_intermediate_leaves_gpu_data(
             assert isinstance(data, np.ndarray)
             assert getattr(data, "device", None) is None
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     prev_method = mocker.create_autospec(
         MethodWrapper,
         instance=True,
@@ -229,7 +235,9 @@ def test_writes_core_of_blocks_only(
             assert data.shape == BLOCK_SHAPE_UNPADDED
             assert global_index == GLOBAL_INDEX_UNPADDED
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     # Create intermediate data wrapper
     mocker.patch.object(httomo.globals, "run_out_dir", tmp_path)
