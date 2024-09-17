@@ -136,7 +136,9 @@ def test_database_query_calculate_memory(mocker: MockerFixture):
             assert testparam == 42.0
             return 10, 20
 
-    importmock = mocker.patch("importlib.import_module", return_value=FakeModule)
+    importmock = mocker.patch(
+        "httomo.methods_database.query.import_module", return_value=FakeModule
+    )
     query = MethodsDatabaseQuery("sample.module.path", "testmethod")
 
     mem = query.calculate_memory_bytes((42, 3), np.float32, testparam=42.0)
@@ -157,7 +159,9 @@ def test_database_query_calculate_output_dims(mocker: MockerFixture):
             assert testparam == 42.0
             return 10, 20
 
-    importmock = mocker.patch("importlib.import_module", return_value=FakeModule)
+    importmock = mocker.patch(
+        "httomo.methods_database.query.import_module", return_value=FakeModule
+    )
     query = MethodsDatabaseQuery("sample.module.path", "testmethod")
 
     dims = query.calculate_output_dims((42, 3), testparam=42.0)
@@ -177,7 +181,9 @@ def test_database_query_calculate_padding(mocker: MockerFixture):
             assert size == SIZE_PARAMETER
             return PADDING_RETURNED
 
-    importmock = mocker.patch("importlib.import_module", return_value=FakeModule)
+    importmock = mocker.patch(
+        "httomo.methods_database.query.import_module", return_value=FakeModule
+    )
     query = MethodsDatabaseQuery("sample.module.path", "testmethod")
 
     pads = query.calculate_padding(size=SIZE_PARAMETER)
