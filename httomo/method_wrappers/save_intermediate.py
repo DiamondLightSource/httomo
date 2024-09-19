@@ -70,13 +70,15 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         # - we return just the input as it is
         self._gpu_time_info = GpuTimeInfo()
         with catchtime() as t:
-            data = block.data if block.is_cpu else xp.asnumpy(block.data)
+            data = (
+                block.data_unpadded if block.is_cpu else xp.asnumpy(block.data_unpadded)
+            )
         self._gpu_time_info.device2host += t.elapsed
 
         self._method(
             data,
             global_shape=block.global_shape,
-            global_index=block.global_index,
+            global_index=block.global_index_unpadded,
             slicing_dim=block.slicing_dim,
             file=self._file,
             frames_per_chunk=httomo.globals.FRAMES_PER_CHUNK,

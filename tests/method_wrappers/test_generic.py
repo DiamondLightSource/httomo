@@ -19,7 +19,9 @@ def test_generic_get_name_and_paths(mocker: MockerFixture):
         def fake_method(data):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, padding=True),
         "testmodule.path",
@@ -40,7 +42,9 @@ def test_generic_set_task_id(mocker: MockerFixture):
         def fake_method(data):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "testmodule.path",
@@ -60,7 +64,9 @@ def test_generic_execute_transfers_to_gpu(
         def fake_method(data):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, implementation="gpu_cupy"),
         "module_path",
@@ -84,7 +90,9 @@ def test_generic_excute_measures_gpu_times(
         def fake_method(data):
             return xp.exp(data) + data  # make sure some kernel code is run
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, implementation="gpu_cupy"),
         "module_path",
@@ -107,7 +115,9 @@ def test_generic_execute_calls_pre_post_process(
         def fake_method(data):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, implementation="gpu_cupy"),
         "module_path",
@@ -134,7 +144,9 @@ def test_generic_fails_with_wrong_returntype(
             # it must be a cpu or gpu array (data)
             return None
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
@@ -158,7 +170,9 @@ def test_generic_sets_gpuid(mocker: MockerFixture, dummy_block: DataSetBlock):
             assert gpu_id == GPU_ID
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
@@ -174,7 +188,9 @@ def test_generic_fails_for_gpumethods_with_no_gpu(mocker: MockerFixture):
         def fake_method(data):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     with pytest.raises(ValueError) as e:
         make_method_wrapper(
@@ -195,7 +211,9 @@ def test_generic_passes_communicator_if_needed(
             assert comm is not None
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
@@ -211,7 +229,9 @@ def test_generic_transforms_auto_axis(mocker: MockerFixture, dummy_block: DataSe
             assert axis == PATTERN.value
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, pattern=PATTERN),
         "mocked_module_path",
@@ -231,7 +251,9 @@ def test_generic_allows_parameters_with_defaults(
             assert defaultpar == 10
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
@@ -246,7 +268,9 @@ def test_generic_build_kwargs_parameter_not_given(
         def fake_method(data, param):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
@@ -264,7 +288,9 @@ def test_generic_access_outputref_params(
             assert param == 42
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
@@ -283,7 +309,9 @@ def test_generic_access_outputref_params_kwargs(
             assert kwargs["param"] == 42
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
@@ -302,7 +330,9 @@ def test_generic_different_data_parameter_name(
             np.testing.assert_array_equal(array, 42)
             return array
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
     )
@@ -319,7 +349,9 @@ def test_generic_for_method_with_kwargs(
             assert kwargs == {"extra": 123}
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path",
@@ -340,7 +372,9 @@ def test_generic_sets_config_params_constructor(
             assert param == 42
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path",
@@ -361,7 +395,9 @@ def test_generic_sets_config_params_setter(
             assert param == 42
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path",
@@ -382,7 +418,9 @@ def test_generic_sets_config_params_setter_not_in_arguments(
             assert param == 42
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path",
@@ -402,7 +440,9 @@ def test_generic_sets_config_params_append_dict(
             assert param2 == 43
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path",
@@ -426,7 +466,9 @@ def test_generic_passes_darks_flats_to_normalize(
             np.testing.assert_array_equal(flats, 3)
             return data
 
-    importmock = mocker.patch("importlib.import_module", return_value=FakeModule)
+    importmock = mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path",
@@ -462,7 +504,9 @@ def test_generic_method_queries(
         def test_method(data):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     memory_gpu = GpuMemoryRequirement(multiplier=1.2, method="direct")
     wrp = make_method_wrapper(
@@ -507,7 +551,9 @@ def test_generic_calculate_max_slices_direct(
         def test_method(data):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     wrp = make_method_wrapper(
         make_mock_repo(
@@ -555,7 +601,9 @@ def test_generic_calculate_max_slices_module(
         def test_method(data):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     memory_gpu = GpuMemoryRequirement(multiplier=None, method="module")
     repo = make_mock_repo(
@@ -598,7 +646,9 @@ def test_generic_calculate_output_dims(mocker: MockerFixture):
         def test_method(data, testparam):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     memory_gpu: Optional[GpuMemoryRequirement] = None
     repo = make_mock_repo(
@@ -631,7 +681,9 @@ def test_generic_calculate_output_dims_no_change(mocker: MockerFixture):
         def test_method(data):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     memory_gpu: Optional[GpuMemoryRequirement] = None
     wrp = make_method_wrapper(
@@ -702,7 +754,9 @@ def test_generic_execute_uses_comm_passed_to_constructor(
             comm.bcast(1, root=0)
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
@@ -730,7 +784,9 @@ def test_generic_calculate_padding_none_required(mocker: MockerFixture):
         def test_method(data):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     memory_gpu: Optional[GpuMemoryRequirement] = None
     wrp = make_method_wrapper(
@@ -759,7 +815,9 @@ def test_generic_calculate_padding(mocker: MockerFixture):
         def test_method(data, param_affects_padding):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     memory_gpu: Optional[GpuMemoryRequirement] = None
     repo = make_mock_repo(

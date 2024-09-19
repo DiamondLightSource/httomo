@@ -62,7 +62,10 @@ def make_test_loader(
     )
     if block is not None:
 
-        def mock_make_data_source() -> DataSetSource:
+        # NOTE: Even though the `padding` parameter is unused, this is needed in order to
+        # replicate the signature of the `make_data_source()` method defined on the
+        # `LoaderInterface` protocol
+        def mock_make_data_source(padding) -> DataSetSource:
             ret = mocker.create_autospec(
                 DataSetSource,
                 global_shape=block.global_shape,

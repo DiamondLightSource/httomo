@@ -1,12 +1,13 @@
 from pathlib import Path
-from typing import Tuple
+from typing import List, Tuple
 from unittest import mock
 import pytest
 from pytest_mock import MockerFixture
 from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 
-from httomo.utils import gpu_enabled
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.utils import gpu_enabled, make_3d_shape_from_shape
 from httomo.runner.dataset import DataSetBlock
 import h5py
 from mpi4py import MPI
@@ -50,7 +51,9 @@ def test_save_intermediate(
             assert detector_y == 20
             assert path == "/data"
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     prev_method = mocker.create_autospec(
         MethodWrapper,
         instance=True,
@@ -96,7 +99,9 @@ def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Pat
         ):
             pass
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     prev_method = mocker.create_autospec(
         MethodWrapper,
         instance=True,
@@ -146,7 +151,9 @@ def test_save_intermediate_leaves_gpu_data(
             assert isinstance(data, np.ndarray)
             assert getattr(data, "device", None) is None
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     prev_method = mocker.create_autospec(
         MethodWrapper,
         instance=True,
@@ -173,3 +180,97 @@ def test_save_intermediate_leaves_gpu_data(
         res = wrp.execute(dummy_block)
 
     assert res.is_gpu == gpu
+
+
+@pytest.mark.parametrize(
+    "padding",
+    [(0, 0), (2, 3)],
+    ids=["zero-padding", "non-zero-padding"],
+)
+def test_writes_core_of_blocks_only(
+    mocker: MockerFixture, tmp_path: Path, padding: Tuple[int, int]
+):
+    # Define global data which, for a single process, is equal chunk data
+    GLOBAL_SHAPE = (10, 10, 30)
+    CHUNK_SHAPE_UNPADDED = GLOBAL_SHAPE
+    BLOCK_SHAPE_UNPADDED = (
+        CHUNK_SHAPE_UNPADDED[0] // 2,
+        CHUNK_SHAPE_UNPADDED[1],
+        CHUNK_SHAPE_UNPADDED[2],
+    )
+    GLOBAL_INDEX_UNPADDED = (0, 0, 0)
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    aux_data = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
+
+    # Define a mock loader (wrapper needs this for metadata, such as the detector shape) and a
+    # mock "previous method" to the intermediate data wrapper
+    loader: LoaderInterface = mocker.create_autospec(
+        LoaderInterface, instance=True, detector_x=10, detector_y=20
+    )
+    prev_method = mocker.create_autospec(
+        MethodWrapper,
+        instance=True,
+        task_id="task1",
+        package_name="testpackage",
+        method_name="testmethod",
+        recon_algorithm="XXX",
+    )
+
+    # Define dummy method function that the intermediate data wrapper will be patched to import
+    class FakeModule:
+        def save_intermediate_data(
+            data: np.ndarray,  # type: ignore
+            global_shape: Tuple[int, int, int],
+            global_index: Tuple[int, int, int],
+            slicing_dim: int,
+            file: h5py.File,
+            frames_per_chunk: int,
+            path: str,
+            detector_x: int,
+            detector_y: int,
+            angles: np.ndarray,
+        ):
+            assert data.shape == BLOCK_SHAPE_UNPADDED
+            assert global_index == GLOBAL_INDEX_UNPADDED
+
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
+
+    # Create intermediate data wrapper
+    mocker.patch.object(httomo.globals, "run_out_dir", tmp_path)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, implementation="gpu_cupy"),
+        "httomo.methods",
+        "save_intermediate_data",
+        MPI.COMM_WORLD,
+        loader=loader,
+        prev_method=prev_method,
+    )
+
+    # Create block from the global/chunk data
+    chunk_shape_list: List[int] = list(GLOBAL_SHAPE)
+    if padding != (0, 0):
+        chunk_shape_list[0] += padding[0] + padding[1]
+
+    block_data = global_data[0 : GLOBAL_SHAPE[0] // 2, :, :]
+    block_start = 0
+    if padding != (0, 0):
+        block_data = np.pad(block_data, pad_width=(padding, (0, 0), (0, 0)))
+        block_start -= padding[0]
+
+    block = DataSetBlock(
+        data=block_data,
+        aux_data=aux_data,
+        block_start=block_start,
+        chunk_start=0 if padding == (0, 0) else -padding[0],
+        global_shape=GLOBAL_SHAPE,
+        chunk_shape=make_3d_shape_from_shape(chunk_shape_list),
+        padding=padding,
+    )
+
+    # Execute the padded block with the intermediate wrapper and let the assertions in the
+    # dummy method function run the appropriate checks
+    wrp.execute(block)

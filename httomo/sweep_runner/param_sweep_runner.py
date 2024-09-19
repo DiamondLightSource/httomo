@@ -128,7 +128,7 @@ class ParamSweepRunner:
         """
         Load single block containing small number of sinogram slices in input data
         """
-        source = self._pipeline.loader.make_data_source()
+        source = self._pipeline.loader.make_data_source(padding=(0, 0))
 
         SINO_SLICING_DIM = 1
         no_of_middle_slices = source.global_shape[SINO_SLICING_DIM]

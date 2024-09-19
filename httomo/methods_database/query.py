@@ -1,3 +1,4 @@
+from importlib import import_module
 from types import ModuleType
 from typing import Callable, List, Literal, Optional, Tuple
 from pathlib import Path
@@ -140,7 +141,6 @@ class MethodsDatabaseQuery(MethodQuery):
         return module_pad(**kwargs)
 
     def _import_supporting_funcs_module(self) -> ModuleType:
-        from importlib import import_module
 
         module_mem_path = "httomo.methods_database.packages.external."
         path = self.module_path.split(".")

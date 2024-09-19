@@ -19,7 +19,9 @@ def test_rotation_fails_with_sinogram_method(mocker: MockerFixture):
         def rotation_tester(data, ind=None):
             return 42.0
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     with pytest.raises(NotImplementedError):
         make_method_wrapper(
             make_mock_repo(mocker, pattern=Pattern.sinogram),
@@ -87,7 +89,9 @@ def test_rotation_accumulates_blocks(mocker: MockerFixture, padding: Tuple[int, 
             )
             return 42.0
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, pattern=Pattern.projection),
         "mocked_module_path.rotation",
@@ -152,7 +156,9 @@ def test_rotation_gathers_single_sino_slice(
                 xp.testing.assert_array_equal(global_data[:, ind_par, :], data)
             return 42.0
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     comm = mocker.MagicMock()
     comm.rank = rank
     comm.size = 2
@@ -199,7 +205,9 @@ def test_rotation_gather_sino_slice(mocker: MockerFixture, rank: int):
         def rotation_tester(data, ind=None):
             return 42.0
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     comm = mocker.MagicMock()
     comm.rank = rank
     comm.size = 2
@@ -332,7 +340,9 @@ def test_rotation_180(mocker: MockerFixture):
         def rotation_tester(data, ind):
             return 42.0  # center of rotation
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, pattern=Pattern.projection),
         "mocked_module_path.rotation",
@@ -357,7 +367,9 @@ def test_rotation_pc_180(mocker: MockerFixture):
         def find_center_pc(proj1, proj2=None):
             return 42.0  # center of rotation
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, pattern=Pattern.projection),
         "mocked_module_path.rotation",
@@ -382,7 +394,9 @@ def test_rotation_360(mocker: MockerFixture):
             # cor, overlap, side, overlap_position - from find_center_360
             return 42.0, 3.0, 1, 10.0
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, pattern=Pattern.projection),
         "mocked_module_path.rotation",

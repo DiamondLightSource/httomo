@@ -21,7 +21,9 @@ def test_save_to_images(mocker: MockerFixture):
             assert axis == 1
             assert file_format == "tif"
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, implementation="cpu"),
         "mocked_module_path.images",
@@ -51,7 +53,9 @@ def test_save_to_images_with_comm_rank_raises(mocker: MockerFixture):
         def save_to_images(data, out_dir, comm_rank, axis, file_format):
             pass
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     with pytest.raises(ValueError) as e:
         make_method_wrapper(
             make_mock_repo(mocker, implementation="cpu"),
@@ -75,7 +79,9 @@ def test_images_leaves_gpudata(mocker: MockerFixture, dummy_block: DataSetBlock)
         def save_to_images(data, out_dir, offset):
             assert getattr(data, "device", None) is None  # make sure it's on CPU
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path.images",

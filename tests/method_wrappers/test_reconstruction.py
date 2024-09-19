@@ -23,7 +23,9 @@ def test_recon_handles_reconstruction_angle_reshape(mocker: MockerFixture):
             assert data.shape[0] == len(theta)
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, pattern=Pattern.sinogram),
         "mocked_module_path.algorithm",
@@ -54,7 +56,9 @@ def test_recon_handles_reconstruction_axisswap(mocker: MockerFixture):
         def recon_tester(data, theta):
             return data.swapaxes(0, 1)
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, swap_dims_on_output=True),
         "mocked_module_path.algorithm",
@@ -77,7 +81,9 @@ def test_recon_changes_global_shape_if_size_changes(mocker: MockerFixture):
             data = np.ones((30, data.shape[1], 15), dtype=np.float32)
             return data.swapaxes(0, 1)
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker, swap_dims_on_output=True),
         "mocked_module_path.algorithm",
@@ -103,7 +109,9 @@ def test_recon_gives_recon_algorithm(mocker: MockerFixture):
         def recon_tester(data, algorithm, center):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "test.algorithm",
@@ -121,7 +129,9 @@ def test_recon_gives_no_recon_algorithm_if_not_recon_method(mocker: MockerFixtur
         def tester(data, algorithm):
             return data
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "test.something",

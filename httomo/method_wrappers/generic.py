@@ -1,3 +1,5 @@
+from importlib import import_module
+
 import httomo.globals
 from httomo.block_interfaces import T, Block
 from httomo.runner.gpu_utils import get_gpu_id, gpumem_cleanup
@@ -83,7 +85,6 @@ class GenericMethodWrapper(MethodWrapper):
         self._comm = comm
         self._module_path = module_path
         self._method_name = method_name
-        from importlib import import_module
 
         self._module = import_module(module_path)
         self._method: Callable = getattr(self._module, method_name)

@@ -16,7 +16,9 @@ def test_datareducer(mocker: MockerFixture):
         def data_reducer(x):
             return 2 * x
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     wrp = make_method_wrapper(
         make_mock_repo(mocker),
         "mocked_module_path.morph",

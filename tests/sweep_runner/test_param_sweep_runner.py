@@ -281,7 +281,9 @@ def test_execute_non_sweep_stage_method_params_updated_from_side_outputs(
             assert some_side_output == side_outputs[SIDE_OUTPUT_LABEL]
             return np.empty(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
     method_wrapper = make_method_wrapper(
         method_repository=make_mock_repo(mocker),
         module_path="",
@@ -334,7 +336,9 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
         def sweep_method(data: np.ndarray, param_1: int):  # type: ignore
             return data * param_1
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     # Create sweep method wrapper, passing the sweep values for the param to sweep over
     NO_OF_SWEEPS = 4
@@ -407,7 +411,9 @@ def test_execute_modifies_block(mocker: MockerFixture):
         def sweep_method(data: np.ndarray, param_1: int):  # type: ignore
             return data * param_1
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     # Create sweep method wrapper, passing the sweep values for the param to sweep over
     NO_OF_SWEEPS = 4
@@ -488,7 +494,9 @@ def test_execute_sweep_stage_method_params_updated_from_side_outputs(
             assert some_side_output == side_outputs[SIDE_OUTPUT_LABEL]
             return np.empty(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     # Create sweep method wrapper, passing the sweep values for the param to sweep over
     SWEEP_VALUES = (2, 3, 5, 7)
@@ -588,7 +596,9 @@ def test_execute_sweep_stage_two_procs_correct_sweep_val_distribution(
         def sweep_method(data: np.ndarray, param_1: int):  # type: ignore
             pass
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     # Cretae spy on dummy method function to later assert that, for each rank, it has been
     # called with the expected subset of sweep values
@@ -677,7 +687,9 @@ def test_execute_sweep_stage_two_procs_correct_middle_slices_in_block(
         def sweep_method(data: np.ndarray, param_1: int):  # type: ignore
             return data * param_1
 
-    mocker.patch("importlib.import_module", return_value=FakeModule)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
 
     # Create sweep method wrapper, passing the sweep values for the param to sweep over
     SWEEP_VALUES = tuple(list(range(10)))
