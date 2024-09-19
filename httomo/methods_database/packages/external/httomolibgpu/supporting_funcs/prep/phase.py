@@ -24,6 +24,8 @@ import math
 from typing import Tuple
 import numpy as np
 
+from httomo.cufft import CufftType, cufft_estimate_2d
+
 __all__ = [
     "_calc_memory_bytes_paganin_filter_savu",
     "_calc_memory_bytes_paganin_filter_tomopy",
@@ -88,13 +90,21 @@ def _calc_memory_bytes_paganin_filter_tomopy(
     # Padded input cast to `complex64`
     complex_slice = padded_in_slice_size / dtype.itemsize * np.complex64().nbytes
 
+    # Plan size for 2D FFT
+    ny = non_slice_dims_shape[0] + pad_tup[0][0] + pad_tup[0][1]
+    nx = non_slice_dims_shape[1] + pad_tup[1][0] + pad_tup[1][1]
+    fftplan_slice_size = cufft_estimate_2d(
+        nx=nx,
+        ny=ny,
+        fft_type=CufftType.CUFFT_C2C,
+    )
+
     out_slice_size = (
         (non_slice_dims_shape[0] + pad_tup[0][0] + pad_tup[0][1])
         * (non_slice_dims_shape[1] + pad_tup[1][0] + pad_tup[1][1])
         * dtype.itemsize
     )
 
-    fftplan_slice = complex_slice
     grid_size = np.prod(non_slice_dims_shape) * np.float32().nbytes
     filter_size = grid_size
     res_slice = grid_size
@@ -102,9 +112,9 @@ def _calc_memory_bytes_paganin_filter_tomopy(
     tot_memory_bytes = int(
         unpadded_in_slice_size
         + padded_in_slice_size
+        + fftplan_slice_size
         + out_slice_size
         + 2 * complex_slice
-        + 0.5 * fftplan_slice
         + 2 * res_slice
     )
     subtract_bytes = int(filter_size + grid_size)
