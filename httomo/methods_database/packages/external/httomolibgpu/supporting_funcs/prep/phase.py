@@ -61,6 +61,9 @@ def _calc_memory_bytes_paganin_filter_tomopy(
 ) -> Tuple[int, int]:
     from httomolibgpu.prep.phase import _shift_bit_length
 
+    # Input (unpadded)
+    unpadded_in_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
+
     # estimate padding size here based on non_slice dimensions
     pad_tup = []
     for dim_len in non_slice_dims_shape:
@@ -74,8 +77,6 @@ def _calc_memory_bytes_paganin_filter_tomopy(
             right_pad = diff - left_pad
             pad_width = (left_pad, right_pad)
         pad_tup.append(pad_width)
-
-    input_size = np.prod(non_slice_dims_shape) * dtype.itemsize
 
     in_slice_size = (
         (non_slice_dims_shape[0] + pad_tup[0][0] + pad_tup[0][1])
@@ -96,7 +97,7 @@ def _calc_memory_bytes_paganin_filter_tomopy(
     res_slice = grid_size
 
     tot_memory_bytes = int(
-        input_size
+        unpadded_in_slice_size
         + in_slice_size
         + out_slice_size
         + 2 * complex_slice
