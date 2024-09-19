@@ -63,9 +63,9 @@ def _calc_memory_bytes_paganin_filter_tomopy(
 
     # estimate padding size here based on non_slice dimensions
     pad_tup = []
-    for element in non_slice_dims_shape:
-        diff = _shift_bit_length(element + 1) - element
-        if element % 2 == 0:
+    for dim_len in non_slice_dims_shape:
+        diff = _shift_bit_length(dim_len + 1) - dim_len
+        if dim_len % 2 == 0:
             pad_width = diff // 2
             pad_width = (pad_width, pad_width)
         else:
