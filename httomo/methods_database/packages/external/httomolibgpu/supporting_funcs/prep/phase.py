@@ -107,6 +107,9 @@ def _calc_memory_bytes_paganin_filter_tomopy(
         unpadded_in_slice_size
         + padded_in_slice_size
         + complex_slice
+        # The padded float32 array is deallocated when a copy is made when casting to complex64
+        # and the variable `padded_tomo` is reassigned to the complex64 version
+        - padded_in_slice_size
         + fftplan_slice_size
         + 2 * res_slice
     )
