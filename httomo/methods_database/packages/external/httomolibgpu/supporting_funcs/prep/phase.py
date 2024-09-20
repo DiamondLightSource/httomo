@@ -106,6 +106,9 @@ def _calc_memory_bytes_paganin_filter_tomopy(
     # Size of cropped/unpadded + cast to float32 result of 2D IFFT
     cropped_float32_res_slice = np.prod(non_slice_dims_shape) * np.float32().nbytes
 
+    # Size of negative log of cropped float32 result of 2D IFFT
+    negative_log_slice = cropped_float32_res_slice
+
     tot_memory_bytes = int(
         unpadded_in_slice_size
         + padded_in_slice_size
@@ -114,7 +117,8 @@ def _calc_memory_bytes_paganin_filter_tomopy(
         # and the variable `padded_tomo` is reassigned to the complex64 version
         - padded_in_slice_size
         + fftplan_slice_size
-        + 2 * cropped_float32_res_slice
+        + cropped_float32_res_slice
+        + negative_log_slice
     )
     subtract_bytes = int(filter_size + grid_size)
 
