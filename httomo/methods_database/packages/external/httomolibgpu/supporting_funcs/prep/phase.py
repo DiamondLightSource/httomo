@@ -99,7 +99,8 @@ def _calc_memory_bytes_paganin_filter_tomopy(
         fft_type=CufftType.CUFFT_C2C,
     )
 
-    grid_size = np.prod(non_slice_dims_shape) * np.float32().nbytes
+    # Size of "reciprocal grid" generated, based on padded projections shape
+    grid_size = np.prod((ny, nx)) * np.float32().nbytes
     filter_size = grid_size
     res_slice = grid_size
 
