@@ -106,8 +106,8 @@ def _calc_memory_bytes_paganin_filter_tomopy(
     tot_memory_bytes = int(
         unpadded_in_slice_size
         + padded_in_slice_size
+        + complex_slice
         + fftplan_slice_size
-        + 2 * complex_slice
         + 2 * res_slice
     )
     subtract_bytes = int(filter_size + grid_size)
