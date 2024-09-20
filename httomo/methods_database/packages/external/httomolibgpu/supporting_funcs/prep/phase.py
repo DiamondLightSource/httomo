@@ -102,7 +102,9 @@ def _calc_memory_bytes_paganin_filter_tomopy(
     # Size of "reciprocal grid" generated, based on padded projections shape
     grid_size = np.prod((ny, nx)) * np.float32().nbytes
     filter_size = grid_size
-    res_slice = grid_size
+
+    # Size of cropped/unpadded + cast to float32 result of 2D IFFT
+    cropped_float32_res_slice = np.prod(non_slice_dims_shape) * np.float32().nbytes
 
     tot_memory_bytes = int(
         unpadded_in_slice_size
@@ -112,7 +114,7 @@ def _calc_memory_bytes_paganin_filter_tomopy(
         # and the variable `padded_tomo` is reassigned to the complex64 version
         - padded_in_slice_size
         + fftplan_slice_size
-        + 2 * res_slice
+        + 2 * cropped_float32_res_slice
     )
     subtract_bytes = int(filter_size + grid_size)
 
