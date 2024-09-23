@@ -44,23 +44,31 @@ def _calc_memory_bytes_paganin_filter_savu(
     unpadded_in_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
 
     # Padded input
+    padded_non_slice_dims_shape = (
+        non_slice_dims_shape[0] + 2 * pad_y,
+        non_slice_dims_shape[1] + 2 * pad_x,
+    )
     padded_in_slice_size = (
-        (non_slice_dims_shape[0] + 2 * pad_y)
-        * (non_slice_dims_shape[1] + 2 * pad_x)
-        * dtype.itemsize
+        padded_non_slice_dims_shape[0] * padded_non_slice_dims_shape[1] * dtype.itemsize
     )
 
     # Padded input cast to `complex64`
     complex_slice = padded_in_slice_size / dtype.itemsize * np.complex64().nbytes
 
-    fftplan_slice = complex_slice
+    # Plan size for 2D FFT
+    fftplan_slice_size = cufft_estimate_2d(
+        nx=padded_non_slice_dims_shape[1],
+        ny=padded_non_slice_dims_shape[0],
+        fft_type=CufftType.CUFFT_C2C,
+    )
+
     filter_size = complex_slice
     res_slice = np.prod(non_slice_dims_shape) * np.float32().nbytes
     tot_memory_bytes = (
         unpadded_in_slice_size
         + padded_in_slice_size
         + complex_slice
-        + fftplan_slice
+        + fftplan_slice_size
         + res_slice
     )
     return (tot_memory_bytes, filter_size)
