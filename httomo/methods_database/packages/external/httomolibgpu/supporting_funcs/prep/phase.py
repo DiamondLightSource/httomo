@@ -69,13 +69,25 @@ def _calc_memory_bytes_paganin_filter_savu(
     # Size of cropped/unpadded + cast to float32 result of 2D IFFT
     cropped_float32_res_slice = np.prod(non_slice_dims_shape) * np.float32().nbytes
 
-    tot_memory_bytes = (
-        unpadded_in_slice_size
-        + padded_in_slice_size
-        + complex_slice
-        + fftplan_slice_size
-        + cropped_float32_res_slice
-    )
+    # If the FFT plan size is negligible for some reason, this changes where the peak GPU
+    # memory usage occurs. Hence, the if/else branching below for calculating the total bytes.
+    NEGLIGIBLE_FFT_PLAN_SIZE = 16
+    if fftplan_slice_size < NEGLIGIBLE_FFT_PLAN_SIZE:
+        tot_memory_bytes = int(
+            unpadded_in_slice_size + padded_in_slice_size + complex_slice
+        )
+    else:
+        tot_memory_bytes = int(
+            unpadded_in_slice_size
+            + padded_in_slice_size
+            + complex_slice
+            # The padded float32 array is deallocated when a copy is made when casting to complex64
+            # and the variable `padded_tomo` is reassigned to the complex64 version
+            - padded_in_slice_size
+            + fftplan_slice_size
+            + cropped_float32_res_slice
+        )
+
     return (tot_memory_bytes, filter_size)
 
 
@@ -132,17 +144,26 @@ def _calc_memory_bytes_paganin_filter_tomopy(
     # Size of negative log of cropped float32 result of 2D IFFT
     negative_log_slice = cropped_float32_res_slice
 
-    tot_memory_bytes = int(
-        unpadded_in_slice_size
-        + padded_in_slice_size
-        + complex_slice
-        # The padded float32 array is deallocated when a copy is made when casting to complex64
-        # and the variable `padded_tomo` is reassigned to the complex64 version
-        - padded_in_slice_size
-        + fftplan_slice_size
-        + cropped_float32_res_slice
-        + negative_log_slice
-    )
+    # If the FFT plan size is negligible for some reason, this changes where the peak GPU
+    # memory usage occurs. Hence, the if/else branching below for calculating the total bytes.
+    NEGLIGIBLE_FFT_PLAN_SIZE = 16
+    if fftplan_slice_size < NEGLIGIBLE_FFT_PLAN_SIZE:
+        tot_memory_bytes = int(
+            unpadded_in_slice_size + padded_in_slice_size + complex_slice
+        )
+    else:
+        tot_memory_bytes = int(
+            unpadded_in_slice_size
+            + padded_in_slice_size
+            + complex_slice
+            # The padded float32 array is deallocated when a copy is made when casting to complex64
+            # and the variable `padded_tomo` is reassigned to the complex64 version
+            - padded_in_slice_size
+            + fftplan_slice_size
+            + cropped_float32_res_slice
+            + negative_log_slice
+        )
+
     subtract_bytes = int(filter_size + grid_size)
 
     return (tot_memory_bytes, subtract_bytes)
