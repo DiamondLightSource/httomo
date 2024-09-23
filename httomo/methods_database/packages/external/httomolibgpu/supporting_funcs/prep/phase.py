@@ -63,13 +63,16 @@ def _calc_memory_bytes_paganin_filter_savu(
     )
 
     filter_size = complex_slice
-    res_slice = np.prod(non_slice_dims_shape) * np.float32().nbytes
+
+    # Size of cropped/unpadded + cast to float32 result of 2D IFFT
+    cropped_float32_res_slice = np.prod(non_slice_dims_shape) * np.float32().nbytes
+
     tot_memory_bytes = (
         unpadded_in_slice_size
         + padded_in_slice_size
         + complex_slice
         + fftplan_slice_size
-        + res_slice
+        + cropped_float32_res_slice
     )
     return (tot_memory_bytes, filter_size)
 
