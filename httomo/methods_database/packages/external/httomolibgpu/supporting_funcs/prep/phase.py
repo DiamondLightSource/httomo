@@ -62,6 +62,8 @@ def _calc_memory_bytes_paganin_filter_savu(
         fft_type=CufftType.CUFFT_C2C,
     )
 
+    # Shape of 2D filter is the same as the padded `complex64` slice shape, so the size will be
+    # the same
     filter_size = complex_slice
 
     # Size of cropped/unpadded + cast to float32 result of 2D IFFT
