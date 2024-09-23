@@ -42,19 +42,21 @@ def _calc_memory_bytes_paganin_filter_savu(
 
     # Input (unpadded)
     unpadded_in_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
-    in_slice_size = (
+
+    # Padded input
+    padded_in_slice_size = (
         (non_slice_dims_shape[0] + 2 * pad_y)
         * (non_slice_dims_shape[1] + 2 * pad_x)
         * dtype.itemsize
     )
     # FFT needs complex inputs, so copy to complex happens first
-    complex_slice = in_slice_size / dtype.itemsize * np.complex64().nbytes
+    complex_slice = padded_in_slice_size / dtype.itemsize * np.complex64().nbytes
     fftplan_slice = complex_slice
     filter_size = complex_slice
     res_slice = np.prod(non_slice_dims_shape) * np.float32().nbytes
     tot_memory_bytes = (
         unpadded_in_slice_size
-        + in_slice_size
+        + padded_in_slice_size
         + complex_slice
         + fftplan_slice
         + res_slice
