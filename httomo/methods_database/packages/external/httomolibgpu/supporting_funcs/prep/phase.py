@@ -39,7 +39,9 @@ def _calc_memory_bytes_paganin_filter_savu(
 ) -> Tuple[int, int]:
     pad_x = kwargs["pad_x"]
     pad_y = kwargs["pad_y"]
-    input_size = np.prod(non_slice_dims_shape) * dtype.itemsize
+
+    # Input (unpadded)
+    unpadded_in_slice_size = np.prod(non_slice_dims_shape) * dtype.itemsize
     in_slice_size = (
         (non_slice_dims_shape[0] + 2 * pad_y)
         * (non_slice_dims_shape[1] + 2 * pad_x)
@@ -51,7 +53,11 @@ def _calc_memory_bytes_paganin_filter_savu(
     filter_size = complex_slice
     res_slice = np.prod(non_slice_dims_shape) * np.float32().nbytes
     tot_memory_bytes = (
-        input_size + in_slice_size + complex_slice + fftplan_slice + res_slice
+        unpadded_in_slice_size
+        + in_slice_size
+        + complex_slice
+        + fftplan_slice
+        + res_slice
     )
     return (tot_memory_bytes, filter_size)
 
