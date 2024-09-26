@@ -92,8 +92,6 @@ class TransformLayer:
                         task_id=f"saveimage_sweep_{m.task_id}",
                         subfolder_name="images_sweep_" + str(m.method_name),
                         axis=1,
-                        perc_range_min=5,
-                        perc_range_max=95,
                     ),
                 )
                 sweep_before = True
