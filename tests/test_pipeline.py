@@ -454,14 +454,14 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
     subprocess.check_output(cmd)
 
     files = get_files("output_dir/")
-    assert len(files) == 10
+    assert len(files) == 11
 
     _check_yaml(files, "temp.yaml")
     _check_tif(files, 3, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 4
+    assert len(h5_files) == 5
 
     for file_to_open in h5_files:
         if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
@@ -488,7 +488,7 @@ def test_i12_testing_pipeline_output(
     subprocess.check_output(cmd)
 
     files = get_files("output_dir/")
-    assert len(files) == 17
+    assert len(files) == 18
 
     _check_yaml(files, "temp.yaml")
 
@@ -499,7 +499,7 @@ def test_i12_testing_pipeline_output(
     assert len(tif_files) == 10
 
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 4
+    assert len(h5_files) == 5
 
     gridrec_recon = list(filter(lambda x: "recon-gridrec.h5" in x, h5_files))[0]
     minus_log_tomo = list(filter(lambda x: "minus_log.h5" in x, h5_files))[0]
@@ -600,14 +600,14 @@ def test_diad_testing_pipeline_output(
     subprocess.check_output(cmd)
 
     files = get_files("output_dir/")
-    assert len(files) == 9
+    assert len(files) == 10
 
     _check_yaml(files, "temp.yaml")
     _check_tif(files, 2, (26, 26))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 4
+    assert len(h5_files) == 5
 
     for file_to_open in h5_files:
         if "tomopy-normalize-tomo.h5" in file_to_open:
