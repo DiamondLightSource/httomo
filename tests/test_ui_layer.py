@@ -19,7 +19,7 @@ def test_can_read_cpu1_python(python_cpu_pipeline1, yaml_cpu_pipeline1, version)
     else:
         pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline1)
 
-    assert len(pipline_stage_config) == 6
+    assert len(pipline_stage_config) == 7
     assert pipline_stage_config[0]["method"] == "standard_tomo"
     assert pipline_stage_config[0]["module_path"] == "httomo.data.hdf.loaders"
     assert pipline_stage_config[1]["method"] == "normalize"
@@ -30,9 +30,11 @@ def test_can_read_cpu1_python(python_cpu_pipeline1, yaml_cpu_pipeline1, version)
     assert pipline_stage_config[3]["module_path"] == "tomopy.recon.rotation"
     assert pipline_stage_config[3]["side_outputs"] == {"cor": "centre_of_rotation"}
     assert pipline_stage_config[4]["method"] == "recon"
+    assert pipline_stage_config[5]["method"] == "rescale_to_int"
+    assert pipline_stage_config[5]["module_path"] == "httomolibgpu.misc.rescale"
     assert pipline_stage_config[4]["module_path"] == "tomopy.recon.algorithm"
-    assert pipline_stage_config[5]["method"] == "save_to_images"
-    assert pipline_stage_config[5]["module_path"] == "httomolib.misc.images"
+    assert pipline_stage_config[6]["method"] == "save_to_images"
+    assert pipline_stage_config[6]["module_path"] == "httomolib.misc.images"
 
 
 @pytest.mark.parametrize("version", ["python", "yaml"])
@@ -42,7 +44,7 @@ def test_can_read_cpu2_python(python_cpu_pipeline2, yaml_cpu_pipeline2, version)
     else:
         pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline2)
 
-    assert len(pipline_stage_config) == 9
+    assert len(pipline_stage_config) == 10
     assert pipline_stage_config[0]["method"] == "standard_tomo"
     assert pipline_stage_config[0]["module_path"] == "httomo.data.hdf.loaders"
     assert pipline_stage_config[0]["parameters"]["preview"] == {
@@ -64,8 +66,10 @@ def test_can_read_cpu2_python(python_cpu_pipeline2, yaml_cpu_pipeline2, version)
     assert pipline_stage_config[6]["save_result"] == True
     assert pipline_stage_config[7]["method"] == "median_filter"
     assert pipline_stage_config[7]["module_path"] == "tomopy.misc.corr"
-    assert pipline_stage_config[8]["method"] == "save_to_images"
-    assert pipline_stage_config[8]["module_path"] == "httomolib.misc.images"
+    assert pipline_stage_config[8]["method"] == "rescale_to_int"
+    assert pipline_stage_config[8]["module_path"] == "httomolibgpu.misc.rescale"
+    assert pipline_stage_config[9]["method"] == "save_to_images"
+    assert pipline_stage_config[9]["module_path"] == "httomolib.misc.images"
 
 
 @pytest.mark.parametrize("version", ["python", "yaml"])
@@ -75,7 +79,7 @@ def test_can_read_cpu3_python(python_cpu_pipeline3, yaml_cpu_pipeline3, version)
     else:
         pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline3)
 
-    assert len(pipline_stage_config) == 8
+    assert len(pipline_stage_config) == 9
     assert pipline_stage_config[0]["method"] == "standard_tomo"
     assert pipline_stage_config[0]["module_path"] == "httomo.data.hdf.loaders"
     assert pipline_stage_config[1]["method"] == "find_center_vo"
@@ -92,8 +96,10 @@ def test_can_read_cpu3_python(python_cpu_pipeline3, yaml_cpu_pipeline3, version)
     assert pipline_stage_config[6]["method"] == "calculate_stats"
     assert pipline_stage_config[6]["module_path"] == "httomo.methods"
     assert pipline_stage_config[6]["side_outputs"] == {"glob_stats": "glob_stats"}
-    assert pipline_stage_config[7]["method"] == "save_to_images"
-    assert pipline_stage_config[7]["module_path"] == "httomolib.misc.images"
+    assert pipline_stage_config[7]["method"] == "rescale_to_int"
+    assert pipline_stage_config[7]["module_path"] == "httomolibgpu.misc.rescale"
+    assert pipline_stage_config[8]["method"] == "save_to_images"
+    assert pipline_stage_config[8]["module_path"] == "httomolib.misc.images"
 
 
 @pytest.mark.parametrize("version", ["python", "yaml"])
@@ -103,7 +109,7 @@ def test_can_read_gpu1_python(python_gpu_pipeline1, yaml_gpu_pipeline1, version)
     else:
         pipline_stage_config = ui_layer.yaml_loader(yaml_gpu_pipeline1)
 
-    assert len(pipline_stage_config) == 7
+    assert len(pipline_stage_config) == 8
     assert pipline_stage_config[0]["method"] == "standard_tomo"
     assert pipline_stage_config[0]["module_path"] == "httomo.data.hdf.loaders"
     assert pipline_stage_config[1]["method"] == "find_center_vo"
@@ -117,8 +123,10 @@ def test_can_read_gpu1_python(python_gpu_pipeline1, yaml_gpu_pipeline1, version)
     assert pipline_stage_config[4]["module_path"] == "httomolibgpu.prep.stripe"
     assert pipline_stage_config[5]["method"] == "FBP"
     assert pipline_stage_config[5]["module_path"] == "httomolibgpu.recon.algorithm"
-    assert pipline_stage_config[6]["method"] == "save_to_images"
-    assert pipline_stage_config[6]["module_path"] == "httomolib.misc.images"
+    assert pipline_stage_config[6]["method"] == "rescale_to_int"
+    assert pipline_stage_config[6]["module_path"] == "httomolibgpu.misc.rescale"
+    assert pipline_stage_config[7]["method"] == "save_to_images"
+    assert pipline_stage_config[7]["module_path"] == "httomolib.misc.images"
 
 
 @pytest.mark.parametrize("extension", ["yaml", "yml", "YaML", "YAML"])
@@ -200,8 +208,15 @@ def test_pipeline_build_cpu1(
 
     pipeline = LayerUI.build_pipeline()
 
-    assert len(pipeline) == 5
-    methods = ["normalize", "minus_log", "find_center_vo", "recon", "save_to_images"]
+    assert len(pipeline) == 6
+    methods = [
+        "normalize",
+        "minus_log",
+        "find_center_vo",
+        "recon",
+        "rescale_to_int",
+        "save_to_images",
+    ]
     for i in range(5):
         assert pipeline[i].method_name == methods[i]
         if i != 2:
@@ -229,7 +244,7 @@ def test_pipeline_build_cpu2(
 
     pipeline = LayerUI.build_pipeline()
 
-    assert len(pipeline) == 8
+    assert len(pipeline) == 9
     methods = [
         "find_center_vo",
         "remove_outlier",
@@ -238,6 +253,7 @@ def test_pipeline_build_cpu2(
         "remove_stripe_fw",
         "recon",
         "median_filter",
+        "rescale_to_int",
         "save_to_images",
     ]
     for i in range(8):
@@ -263,7 +279,7 @@ def test_pipeline_build_cpu3(
 
     pipeline = LayerUI.build_pipeline()
 
-    assert len(pipeline) == 7
+    assert len(pipeline) == 8
     methods = [
         "find_center_vo",
         "remove_outlier",
@@ -271,9 +287,10 @@ def test_pipeline_build_cpu3(
         "minus_log",
         "recon",
         "calculate_stats",
+        "rescale_to_int",
         "save_to_images",
     ]
-    for i in range(7):
+    for i in range(8):
         assert pipeline[i].method_name == methods[i]
     ref = pipeline[6]["glob_stats"]
     assert isinstance(ref, OutputRef)
