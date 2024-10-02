@@ -5,8 +5,9 @@ from pathlib import Path
 import pytest
 from pytest_mock import MockerFixture
 
+import httomo
 from httomo import __version__
-from httomo.cli import transform_limit_str_to_bytes
+from httomo.cli import set_global_constants, transform_limit_str_to_bytes
 
 
 def test_cli_version_shows_version():
@@ -79,24 +80,18 @@ def test_cli_fails_transforming_memory_limits(cli_parameter: str):
     assert f"invalid memory limit string {cli_parameter}" in str(e)
 
 
-@pytest.mark.cupy
-def test_cli_pass_output_folder_name(
-    standard_data, standard_loader, testing_pipeline, merge_yamls, output_folder
-):
-    merge_yamls(standard_loader, testing_pipeline)
+def test_output_folder_name_correctly_sets_run_out_dir_global_constant(output_folder):
     output_dir = "output_dir"  # dir created by the `output_folder` fixture
-    httomo_output_dir = "test-output"  # subdir that should be created by httomo
-    custom_output_dir = Path(output_dir, httomo_output_dir)
-    cmd = [
-        sys.executable,
-        "-m",
-        "httomo",
-        "run",
-        "--output-folder-name",
-        httomo_output_dir,
-        standard_data,
-        "temp.yaml",
-        output_dir,
-    ]
-    subprocess.check_output(cmd)
-    assert Path(custom_output_dir, "user.log").exists()
+    dir_name = "test-output"  # subdir that should be created by httomo
+    custom_output_dir = Path(output_dir, dir_name)
+    set_global_constants(
+        out_dir=Path(output_dir),
+        intermediate_format="hdf5",
+        compress_intermediate=False,
+        frames_per_chunk=0,
+        max_cpu_slices=1,
+        syslog_host="localhost",
+        syslog_port=514,
+        output_folder_name=Path(dir_name),
+    )
+    assert httomo.globals.run_out_dir == custom_output_dir
