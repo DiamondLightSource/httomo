@@ -1,6 +1,14 @@
 Installation Guide
 ******************
 
+
+Install HTTomo as a PyPi package
+=========================================================
+.. code-block:: console
+
+   $ pip install httomo # this will install the CPU-only version
+   $ pip install httomo httomolibgpu # this will install the GPU backend
+
 Install HTTomo as a pre-built conda Python package
 ==================================================
 
