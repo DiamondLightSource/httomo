@@ -275,12 +275,14 @@ def set_global_constants(
         )
         raise ValueError(msg)
 
-    if output_folder_name is None:
+    if output_folder_name is None and output_folder_path is None:
         httomo.globals.run_out_dir = out_dir.joinpath(
             f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
         )
-    else:
+    if output_folder_name is not None:
         httomo.globals.run_out_dir = out_dir.joinpath(output_folder_name)
+    if output_folder_path is not None:
+        httomo.globals.run_out_dir = output_folder_path
 
     if max_cpu_slices < 1:
         raise ValueError("max-cpu-slices must be greater or equal to 1")
