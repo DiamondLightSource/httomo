@@ -63,14 +63,17 @@
   id: statistics
   side_outputs:
     glob_stats: glob_stats
+- method: rescale_to_int
+  module_path: httomolibgpu.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+    glob_stats: ${{statistics.side_outputs.glob_stats}}
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:
     subfolder_name: images
     axis: auto
     file_format: tif
-    bits: 8
-    perc_range_min: 0.0
-    perc_range_max: 95.0
     jpeg_quality: 95
-    glob_stats: ${{statistics.side_outputs.glob_stats}}

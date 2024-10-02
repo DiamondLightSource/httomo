@@ -91,19 +91,26 @@ def methods_to_list() -> PipelineConfig:
     }
     full_pipeline_list.append(method6)
     method7 = {
+        "method": "rescale_to_int",
+        "module_path": "httomolibgpu.misc.rescale",
+        "parameters": {
+            "perc_range_min": 0.0,
+            "perc_range_max": 100.0,
+            "bits": 8,
+            "glob_stats": "${{statistics.side_outputs.glob_stats}}",
+        },
+    }
+    full_pipeline_list.append(method7)
+    method8 = {
         "method": "save_to_images",
         "module_path": "httomolib.misc.images",
         "parameters": {
             "subfolder_name": "images",
             "axis": 1,
             "file_format": "tif",
-            "bits": 8,
-            "perc_range_min": 0.0,
-            "perc_range_max": 100.0,
             "jpeg_quality": 95,
-            "glob_stats": "${{statistics.side_outputs.glob_stats}}",
         },
     }
-    full_pipeline_list.append(method7)
+    full_pipeline_list.append(method8)
 
     return full_pipeline_list

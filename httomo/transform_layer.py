@@ -73,15 +73,28 @@ class TransformLayer:
         return Pipeline(loader, methods)
 
     def insert_save_images_after_sweep(self, pipeline: Pipeline) -> Pipeline:
-        """For sweep methods we add image saving method after.
-        In addition we also add saving the results of the reconstruction,
-        if the module is present"""
+        """For sweep methods we add image saving method after, and also a rescaling method to
+        rescale the data passed to the image saver. In addition we also add saving the results
+        of the reconstruction, if the module is present"""
         loader = pipeline.loader
         methods = []
         sweep_before = False
         for m in pipeline:
             methods.append(m)
             if m.sweep or "recon" in m.module_path and sweep_before:
+                methods.append(
+                    make_method_wrapper(
+                        self._repo,
+                        "httomolibgpu.misc.rescale",
+                        "rescale_to_int",
+                        comm=self._comm,
+                        save_result=False,
+                        task_id=f"rescale_sweep_{m.task_id}",
+                        perc_range_min=0.0,
+                        perc_range_max=100.0,
+                        bits=8,
+                    )
+                )
                 methods.append(
                     make_method_wrapper(
                         self._repo,
@@ -92,8 +105,6 @@ class TransformLayer:
                         task_id=f"saveimage_sweep_{m.task_id}",
                         subfolder_name="images_sweep_" + str(m.method_name),
                         axis=1,
-                        perc_range_min=5,
-                        perc_range_max=95,
                     ),
                 )
                 sweep_before = True
