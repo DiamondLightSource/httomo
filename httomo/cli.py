@@ -61,7 +61,7 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
 )
 @click.option(
-    "--create-folder",
+    "--output-folder-name",
     type=click.Path(exists=False, file_okay=False, writable=True, path_type=Path),
     default=None,
     help="Define the name of the output folder created by HTTomo",
@@ -144,7 +144,7 @@ def run(
     in_data_file: Path,
     yaml_config: Path,
     out_dir: Path,
-    create_folder: Optional[Path],
+    output_folder_name: Optional[Path],
     gpu_id: int,
     save_all: bool,
     reslice_dir: Union[Path, None],
@@ -172,12 +172,12 @@ def run(
     httomo.globals.SYSLOG_PORT = syslog_port
 
     # Define httomo.globals.run_out_dir in all MPI processes
-    if create_folder is None:
+    if output_folder_name is None:
         httomo.globals.run_out_dir = out_dir.joinpath(
             f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
         )
     else:
-        httomo.globals.run_out_dir = out_dir.joinpath(create_folder)
+        httomo.globals.run_out_dir = out_dir.joinpath(output_folder_name)
 
     # Various initialisation tasks
     if global_comm.rank == 0:

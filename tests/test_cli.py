@@ -80,7 +80,7 @@ def test_cli_fails_transforming_memory_limits(cli_parameter: str):
 
 
 @pytest.mark.cupy
-def test_cli_pass_create_folder(
+def test_cli_pass_output_folder_name(
     standard_data, standard_loader, testing_pipeline, merge_yamls, output_folder
 ):
     merge_yamls(standard_loader, testing_pipeline)
@@ -92,7 +92,7 @@ def test_cli_pass_create_folder(
         "-m",
         "httomo",
         "run",
-        "--create-folder",
+        "--output-folder-name",
         httomo_output_dir,
         standard_data,
         "temp.yaml",
