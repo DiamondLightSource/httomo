@@ -19,5 +19,9 @@ dependencies:
   - tqdm
   - typing_extensions
   - ipython
+  - pytest
+  - pytest-xdist
+  - pytest-cov
+  - pytest-mock
   - tomopy=1.15
 

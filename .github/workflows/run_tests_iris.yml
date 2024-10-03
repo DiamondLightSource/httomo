@@ -36,7 +36,7 @@ jobs:
         run: |
           micromamba activate httomo
           pip install --upgrade --force-reinstall pillow
-          pip install httomolibgpu tomobar pytest
+          pip install httomolibgpu tomobar
           pip install .         
           micromamba list
                 
