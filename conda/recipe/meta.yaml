@@ -35,6 +35,7 @@ requirements:
     - httomolibgpu==2.1.2
     - tomopy==1.15    
     - loguru
+    - hdf5plugin # added because of the yaml templates dependency script
     - mpi4py
     - numpy<=1.25
     - pip
