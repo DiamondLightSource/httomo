@@ -2,22 +2,22 @@ name: httomo
 channels:
   - conda-forge
 dependencies:
-  - conda-forge::astra-toolbox
-  - conda-forge::click>=8.1.3
-  - conda-forge::numpy
-  - conda-forge::cupy=12.3.0
-  - conda-forge::cudatoolkit>=11.2
-  - conda-forge::graypy
-  - conda-forge::h5py=*=*mpi_openmpi*
-  - conda-forge::hdf5plugin
-  - conda-forge::loguru
-  - conda-forge::mpi4py
-  - conda-forge::pyyaml
-  - conda-forge::nvtx
-  - conda-forge::python
-  - conda-forge::plumbum
-  - conda-forge::tqdm
-  - conda-forge::typing_extensions
-  - conda-forge::ipython
-  - conda-forge::tomopy=1.15
+  - astra-toolbox
+  - click
+  - numpy
+  - cupy=12.3.0
+  - cudatoolkit>=11.2
+  - graypy
+  - h5py=*=*mpi_openmpi*
+  - hdf5plugin
+  - loguru
+  - mpi4py
+  - pyyaml
+  - nvtx
+  - python
+  - plumbum
+  - tqdm
+  - typing_extensions
+  - ipython
+  - tomopy=1.15
 
