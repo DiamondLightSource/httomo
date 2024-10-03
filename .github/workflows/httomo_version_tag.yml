@@ -1,10 +1,18 @@
 name: version tag pushed
 
-# Run the workflow whenever a tag beginning with `v` is pushed to any branch
 on:
+  pull_request:
+    branches:
+      - main
   push:
-    tags:
-      - v*
+    branches:
+      - main
+
+# Run the workflow whenever a tag beginning with `v` is pushed to any branch
+# on:
+#   push:
+#     tags:
+#       - v*
 
 jobs:
   conda-build-upload:
@@ -21,22 +29,32 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
 
-      # setup Python 3.10
-      - name: Setup Python 3.10
-        uses: actions/setup-python@v2
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v1
         with:
-          python-version: '3.10'
+          environment-file: conda/environment.yml
+          environment-name: httomo
+          post-cleanup: 'all'
+          init-shell: bash         
+          condarc: |
+            channels:
+              - conda-forge
+              - httomo
+
+      # # setup Python 3.10
+      # - name: Setup Python 3.10
+      #   uses: actions/setup-python@v2
+      #   with:
+      #     python-version: '3.10'
 
       # install dependencies with conda
       - name: Install dependencies with conda
         run: |
-          $CONDA/bin/conda env create --name httomo --file conda/environment.yml
-          $CONDA/bin/conda run -n httomo pip install .
-          $CONDA/bin/conda install -c conda-forge conda-build
-          $CONDA/bin/conda install -c conda-forge anaconda-client
-          $CONDA/bin/conda update conda
-          $CONDA/bin/conda update conda-build
-          $CONDA/bin/conda list
+          micromamba activate httomo
+          pip install .
+          mamba install -c conda-forge conda-build
+          mamba install -c conda-forge anaconda-client
+          micromamba list
 
       - name: Decrypt a secret
         run: ./.scripts/decrypt_secret.sh

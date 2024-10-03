@@ -21,7 +21,7 @@ dependencies:
   - conda-forge::typing_extensions
   - conda-forge::ipython
   - conda-forge::tomopy=1.15
-  - httomo::httomolib=2.1
-  - httomo::httomolibgpu=2.1
+  - httomo::httomolib=2.1.2
+  - httomo::httomolibgpu=2.1.2
   - httomo::tomobar
 
