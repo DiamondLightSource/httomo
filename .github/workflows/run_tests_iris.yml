@@ -32,12 +32,12 @@ jobs:
           post-cleanup: 'all'
           init-shell: bash
           
-      - name: Install httomo-dev
+      - name: Install httomo libraries and httomo
         run: |
           micromamba activate httomo
           pip install --upgrade --force-reinstall pillow
-          pip install .[dev]
-          pip install --upgrade --force-reinstall pillow
+          pip install httomolibgpu tomobar
+          pip install .         
           micromamba list
                 
       - name: Generate yaml templates
@@ -48,6 +48,6 @@ jobs:
           python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolib/httomolib_modules.yaml -o ./httomo/yaml_templates/httomolib
           python ./scripts/yaml_templates_generator.py -i ./httomo/methods_database/packages/external/httomolibgpu/httomolibgpu_modules.yaml -o ./httomo/yaml_templates/httomolibgpu
 
-      - name: Run tests
+      - name: Run HTTomo tests
         run: |
           pytest tests/
