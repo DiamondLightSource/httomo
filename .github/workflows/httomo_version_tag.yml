@@ -1,18 +1,10 @@
 name: version tag pushed
 
-on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
-
 # Run the workflow whenever a tag beginning with `v` is pushed to any branch
-# on:
-#   push:
-#     tags:
-#       - v*
+on:
+  push:
+    tags:
+      - v*
 
 jobs:
   conda-build-upload:
@@ -25,9 +17,9 @@ jobs:
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v4
-        # with:
-        #   fetch-depth: 0
-        #   ref: ${{ github.ref_name }}
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
 
       # setup Python 3.10
       - name: Setup Python 3.11
