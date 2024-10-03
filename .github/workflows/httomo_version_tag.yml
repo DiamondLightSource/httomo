@@ -25,9 +25,9 @@ jobs:
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.ref_name }}
+        # with:
+        #   fetch-depth: 0
+        #   ref: ${{ github.ref_name }}
 
       - name: Setup micromamba
         uses: mamba-org/setup-micromamba@v1
