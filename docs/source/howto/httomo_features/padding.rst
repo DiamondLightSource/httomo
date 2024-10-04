@@ -7,7 +7,7 @@ Padding
 Padding is an important feature of HTTomo when performing computations on :ref:`chunks_data` and :ref:`blocks_data`.
 If the method is a 2D method (work with 2D frames), e.g., a denoising filter, then the data does not require any padding as 
 the boundary conditions between blocks will not be violated. However, when the method is a 3D method and it works 
-with 3D volumes, then in order to satisfy boundary conditions and avoid artefacts, one need to pad blocks. 
+with 3D volumes, then in order to satisfy boundary conditions and avoid artefacts, one needs to pad blocks. 
 
 How this can be useful?
 =======================
