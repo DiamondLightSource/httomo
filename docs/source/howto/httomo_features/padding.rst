@@ -12,7 +12,7 @@ with 3D volumes, then in order to satisfy boundary conditions and avoid artefact
 How this can be useful?
 =======================
 
-It is useful because when padding feature exists one can use true fullly 3D methods which provide a consistent resolution in
+It is useful because when padding feature exists one can use true fully 3D methods which provide a consistent resolution in
 all three dimensions, see the image bellow. Because of the access to 3D data, one can perform better in removing artefacts,
 improving contrast, etc. 
 
