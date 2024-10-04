@@ -58,7 +58,7 @@ information of :ref:`centering` is stored in the reference
     module_path: httomolibgpu.recon.algorithm
     parameters:
       center: ${{centering.side_outputs.centre_of_rotation}}
-      filter_freq_cutoff: 0.6
+      filter_freq_cutoff: 1.1
       recon_size: null
       recon_mask_radius: null
 
@@ -103,16 +103,16 @@ extract the global statistics for normalisation of the data using the
 
 .. literalinclude:: ../../../../../tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml
   :language: yaml
-  :lines: 1-71
-  :emphasize-lines: 18,19,20,21,22,23,45,50,58,59,60,71
+  :lines: 1-79
+  :emphasize-lines: 18,19,20,21,22,23,44,49,63,64,65,72
   :caption: Pipeline for 360 degrees scan, a double field of view (DFoV) data.
 
 Please see below for a concise description of how each of the individual side
 outputs of methods are connected to the method using them:
 
 1. :code:`find_center_360` produces a side output called :code:`overlap` that the
-   :code:`sino_360_to_180` method uses
+   :code:`sino_360_to_180` method uses.
 2. :code:`find_center_360` produces another side output called
-   :code:`centre_of_rotation` that the :code:`FBP` method uses
+   :code:`centre_of_rotation` that the :code:`FBP` method uses.
 3. :code:`calculate_stats` produces a side output called :code:`glob_stats` that
-   the :code:`save_to_images` method uses
+   the :code:`rescale_to_int` method uses.

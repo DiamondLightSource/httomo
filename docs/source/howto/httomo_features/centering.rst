@@ -81,7 +81,7 @@ Here are the steps to enable the auto-centering and then use the estimated value
     module_path: httomolibgpu.recon.algorithm
     parameters:
       center: ${{centering.side_outputs.centre_of_rotation}}
-      filter_freq_cutoff: 0.6
+      filter_freq_cutoff: 1.1
       recon_size: null
       recon_mask_radius: null
 
