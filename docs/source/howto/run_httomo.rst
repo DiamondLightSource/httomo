@@ -248,7 +248,14 @@ The :code:`run` command has 14 options/flags:
 :code:`--output-folder-name`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+As described in the documentation for the :code:`OUT_DIR` argument, the default name of the
+output directory created by HTTomo consists primarily of a timestamp. If one wishes to provide
+a name for the directory created by HTTomo instead of using the default timestamp name, then
+the :code:`--output-folder-name` flag may be used to achieve this.
+
+For example, if the :code:`OUT_DIR` path provided was :code:`/home/myuser`, and
+:code:`--output-folder-name=test-1` was given, then the absolute path of the output directory
+created by HTTomo would be :code:`/home/myuser/test-1/`.
 
 :code:`--output-folder-path`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
