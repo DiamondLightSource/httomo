@@ -155,21 +155,37 @@ The :code:`run` command
       Run a pipeline defined in YAML on input data.
 
     Options:
-      --save-all                 Save intermediate datasets for all tasks in the
-                                 pipeline.
-      --gpu-id INTEGER           The GPU ID of the device to use.
-      --reslice-dir DIRECTORY    Directory for temporary files potentially needed
-                                 for reslicing (defaults to output dir)
-      --max-cpu-slices INTEGER   Maximum number of slices to use for a block for
-                                 CPU-only sections (default: 64)
-      --max-memory TEXT          Limit the amount of memory used by the pipeline
-                                 to the given memory (supports strings like 3.2G
-                                 or bytes)
-      --monitor TEXT             Add monitor to the runner (can be given multiple
-                                 times). Available monitors: bench, summary
-      --monitor-output FILENAME  File to store the monitoring output. Defaults to
-                                 '-', which denotes stdout
-      --help                     Show this message and exit.
+      --output-folder-name DIRECTORY  Define the name of the output folder created
+                                      by HTTomo
+      --output-folder-path DIRECTORY  Provide path to folder in which output
+                                      should be stored. This overrides the
+                                      `out_dir` argument
+      --save-all                      Save intermediate datasets for all tasks in
+                                      the pipeline.
+      --gpu-id INTEGER                The GPU ID of the device to use.
+      --reslice-dir DIRECTORY         Directory for temporary files potentially
+                                      needed for reslicing (defaults to output
+                                      dir)
+      --max-cpu-slices INTEGER        Maximum number of slices to use for a block
+                                      for CPU-only sections (default: 64)
+      --max-memory TEXT               Limit the amount of memory used by the
+                                      pipeline to the given memory (supports
+                                      strings like 3.2G or bytes)
+      --monitor TEXT                  Add monitor to the runner (can be given
+                                      multiple times). Available monitors: bench,
+                                      summary
+      --monitor-output FILENAME       File to store the monitoring output.
+                                      Defaults to '-', which denotes stdout
+      --intermediate-format [hdf5]    Write intermediate data in hdf5 format
+      --compress-intermediate         Write intermediate data in chunked format
+                                      with BLOSC compression applied
+      --syslog-host TEXT              Host of the syslog server
+      --syslog-port INTEGER           Port on the host the syslog server is
+                                      running on
+      --frames-per-chunk INTEGER RANGE
+                                      Number of frames per-chunk in intermediate
+                                      data (0 = write as contiguous)  [x>=0]
+      --help                          Show this message and exit.
 
 Arguments
 #########
@@ -210,16 +226,34 @@ directory created by HTTomo would be
 Options/flags
 #############
 
-The :code:`run` command has 6 options/flags:
+The :code:`run` command has 14 options/flags:
 
+- :code:`--output-folder-name`
+- :code:`--output-folder-path`
 - :code:`--save-all`
+- :code:`--gpu-id`
 - :code:`--reslice-dir`
 - :code:`--max-cpu-slices`
 - :code:`--max-memory`
 - :code:`--monitor`
 - :code:`--monitor-output`
+- :code:`--intermediate-format`
+- :code:`--compress-intermediate`
+- :code:`--syslog-host`
+- :code:`--syslog-port`
+- :code:`--frames-per-chunk`
 
 .. _httomo-saving:
+
+:code:`--output-folder-name`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+:code:`--output-folder-path`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
 
 :code:`--save-all`
 ~~~~~~~~~~~~~~~~~~
@@ -236,6 +270,11 @@ following conditions is satisfied:
 However, there are certain cases such as debugging, where saving the output of
 all methods to files in the output directory is beneficial. This flag is a quick
 way of doing so.
+
+:code:`--gpu-id`
+~~~~~~~~~~~~~~~~
+
+TODO
 
 :code:`--reslice-dir`
 ~~~~~~~~~~~~~~~~~~~~~
@@ -377,3 +416,28 @@ analysis.
 HTTomo supports writing the monitoring results in CSV format, and so any given
 filepath to the :code:`--monitor-output` flag will produce a file with the
 benchmarking results written in CSV format.
+
+:code:`--intermediate-format`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+:code:`--compress-intermediate`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+:code:`--syslog-host`
+~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+:code:`--syslog-port`
+~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+:code:`--frames-per-chunk`
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
