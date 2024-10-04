@@ -260,7 +260,15 @@ created by HTTomo would be :code:`/home/myuser/test-1/`.
 :code:`--output-folder-path`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+If one wishes to have HTTomo *not* create an output directory, and instead for HTTomo to place
+the output in an existing directory, then the :code:`--output-folder-path` flag may be used.
+
+For example, if :code:`--output-folder-path=/home/myuser/my-output` was given, then HTTomo
+wouldn't create an output directory and would simply place the results in
+:code:`/home/myuser/my-output`.
+
+.. note:: This flag overrides the :code:`OUT_DIR` argument. Also, the given directory must
+          exist prior to running HTTomo
 
 :code:`--save-all`
 ~~~~~~~~~~~~~~~~~~
