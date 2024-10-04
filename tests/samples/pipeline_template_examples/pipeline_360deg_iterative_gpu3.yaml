@@ -6,13 +6,10 @@
     image_key_path: entry1/tomo_entry/instrument/detector/image_key
     rotation_angles:
       data_path: /entry1/tomo_entry/data/rotation_angle
-    dimension: 1
     preview:
-      -
-      - start: 1000
+      detector_y:
+        start: 1000
         stop: 1005
-      -
-    pad: 0
 - method: find_center_360
   module_path: httomolibgpu.recon.rotation
   parameters:
@@ -67,14 +64,17 @@
   id: statistics
   side_outputs:
     glob_stats: glob_stats
+- method: rescale_to_int
+  module_path: httomolibgpu.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+    glob_stats: ${{statistics.side_outputs.glob_stats}}
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:
     subfolder_name: images
     axis: auto
     file_format: tif
-    bits: 8
-    perc_range_min: 0.0
-    perc_range_max: 90.0
     jpeg_quality: 95
-    glob_stats: ${{statistics.side_outputs.glob_stats}}

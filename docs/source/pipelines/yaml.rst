@@ -21,7 +21,7 @@ CPU Pipeline templates
 
 .. dropdown:: This pipeline shows how "calculate_stats" module extracts global statistics in order to be passed to "save_to_images" function which uses it to rescale data for saving images
 
-    .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu2.yaml
+    .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu3.yaml
 
 .. _tutorials_pl_templates_gpu:
 

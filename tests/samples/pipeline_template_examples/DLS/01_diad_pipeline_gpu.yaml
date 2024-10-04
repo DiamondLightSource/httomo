@@ -6,12 +6,10 @@
     image_key_path: /entry/instrument/imaging/image_key
     rotation_angles:
         data_path: /entry/imaging_sum/gts_theta_value
-    dimension: 1
     preview:
       detector_y:
         start: 8
         stop: 15
-    pad: 0
 - method: find_center_vo
   module_path: httomolibgpu.recon.rotation
   parameters:

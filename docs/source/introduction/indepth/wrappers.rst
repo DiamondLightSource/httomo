@@ -18,3 +18,9 @@ HTTomo currently has the following wrappers:
 
 5. Image Saving wrapper. This wrapper is needed because no output in HTTomo is produced, we just save images to the disk.
 
+.. _fig_wrappers:
+.. figure::  ../../_static/wrappers/wrappers.png
+    :scale: 40 %
+    :alt: Different wrappers of HTTomo
+
+    Wrappers of HTTomo deal with the i/o differences in methods from the external libraries.
