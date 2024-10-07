@@ -29,4 +29,3 @@ We use the `setuptools-git-versioning <https://setuptools-git-versioning.readthe
 package for automatically determining the version from the latest git tag.
 For this to work, release tags should start with a :code:`v` followed by the actual version,
 e.g. :code:`v1.1.0a`.
-We have setup a  :code:`tag_filter` in :code:`pyproject.toml` to filter tags following this pattern.
