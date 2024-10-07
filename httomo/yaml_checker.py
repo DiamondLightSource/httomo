@@ -6,6 +6,7 @@ import os
 from typing import Any, Dict, Iterator, List, Optional, TypeAlias
 
 import h5py
+import httomo_backends as hb
 import yaml
 
 from pathlib import Path
@@ -374,8 +375,8 @@ def _get_template_yaml(conf: PipelineConfig, packages: List) -> List:
     Helper function that fetches template YAML file names associated with methods
     passed.
     """
-    parent_dir = Path(__file__).parent
-    templates_dir = os.path.join(parent_dir, "yaml_templates")
+    httomo_backends_dir = Path(hb.__path__[0])
+    templates_dir = httomo_backends_dir / "yaml_templates"
     assert os.path.exists(
         templates_dir
     ), "Dev error: expected YAML templates dir to exist"

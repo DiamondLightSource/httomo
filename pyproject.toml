@@ -49,6 +49,7 @@ dependencies = [
     "click",
     "numpy",
     "httomolib",
+    "httomo-backends",
     "loguru",
     "typing-extensions",
     "tqdm",
