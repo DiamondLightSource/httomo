@@ -14,6 +14,7 @@ import httomo.globals
 from httomo.cli_utils import is_sweep_pipeline
 from httomo.logger import setup_logger
 from httomo.monitors import MONITORS_MAP, make_monitors
+from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.transform_layer import TransformLayer
 from httomo.yaml_checker import validate_yaml_config
@@ -61,10 +62,19 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
 )
 @click.option(
-    "--create-folder",
+    "--output-folder-name",
     type=click.Path(exists=False, file_okay=False, writable=True, path_type=Path),
     default=None,
     help="Define the name of the output folder created by HTTomo",
+)
+@click.option(
+    "--output-folder-path",
+    type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
+    default=None,
+    help=(
+        "Provide path to folder in which output should be stored. This overrides "
+        "the `out_dir` argument"
+    ),
 )
 @click.option(
     "--save-all",
@@ -144,7 +154,8 @@ def run(
     in_data_file: Path,
     yaml_config: Path,
     out_dir: Path,
-    create_folder: Optional[Path],
+    output_folder_name: Optional[Path],
+    output_folder_path: Optional[Path],
     gpu_id: int,
     save_all: bool,
     reslice_dir: Union[Path, None],
@@ -159,68 +170,43 @@ def run(
     frames_per_chunk: int,
 ):
     """Run a pipeline defined in YAML on input data."""
-    if compress_intermediate:
-        frames_per_chunk = 1
-    httomo.globals.INTERMEDIATE_FORMAT = intermediate_format
-    httomo.globals.COMPRESS_INTERMEDIATE = compress_intermediate
-    httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
+    set_global_constants(
+        out_dir,
+        intermediate_format,
+        compress_intermediate,
+        frames_per_chunk,
+        max_cpu_slices,
+        syslog_host,
+        syslog_port,
+        output_folder_name,
+        output_folder_path,
+    )
 
     does_contain_sweep = is_sweep_pipeline(yaml_config)
     global_comm = MPI.COMM_WORLD
     method_wrapper_comm = global_comm if not does_contain_sweep else MPI.COMM_SELF
-    httomo.globals.SYSLOG_SERVER = syslog_host
-    httomo.globals.SYSLOG_PORT = syslog_port
 
-    # Define httomo.globals.run_out_dir in all MPI processes
-    if create_folder is None:
-        httomo.globals.run_out_dir = out_dir.joinpath(
-            f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
-        )
-    else:
-        httomo.globals.run_out_dir = out_dir.joinpath(create_folder)
-
-    # Various initialisation tasks
     if global_comm.rank == 0:
-        Path.mkdir(httomo.globals.run_out_dir, exist_ok=True)
-        copy(yaml_config, httomo.globals.run_out_dir)
+        initialise_output_directory(yaml_config)
+
     setup_logger(Path(httomo.globals.run_out_dir))
 
-    # instantiate UiLayer class for pipeline build
-    init_UiLayer = UiLayer(yaml_config, in_data_file, comm=method_wrapper_comm)
-    pipeline = init_UiLayer.build_pipeline()
-
-    # perform transformations on pipeline
-    tr = TransformLayer(comm=method_wrapper_comm, save_all=save_all)
-    pipeline = tr.transform(pipeline)
+    pipeline = generate_pipeline(
+        in_data_file, yaml_config, save_all, method_wrapper_comm
+    )
 
     if not does_contain_sweep:
-        # we use half the memory for blocks since we typically have inputs/output
-        memory_limit = transform_limit_str_to_bytes(max_memory) // 2
-
-        if max_cpu_slices < 1:
-            raise ValueError("max-cpu-slices must be greater or equal to 1")
-        httomo.globals.MAX_CPU_SLICES = max_cpu_slices
-
-        _set_gpu_id(gpu_id)
-
-        # Run the pipeline using Taskrunner, with temp dir or reslice dir
-        mon = make_monitors(monitor, global_comm)
-        ctx: AbstractContextManager = nullcontext(reslice_dir)
-        if reslice_dir is None:
-            ctx = tempfile.TemporaryDirectory()
-        with ctx as tmp_dir:
-            runner = TaskRunner(
-                pipeline,
-                Path(tmp_dir),
-                global_comm,
-                monitor=mon,
-                memory_limit_bytes=memory_limit,
-            )
-            runner.execute()
-            if mon is not None:
-                mon.write_results(monitor_output)
+        execute_high_throughput_run(
+            pipeline,
+            global_comm,
+            gpu_id,
+            max_memory,
+            monitor,
+            monitor_output,
+            reslice_dir,
+        )
     else:
-        ParamSweepRunner(pipeline, global_comm).execute()
+        execute_sweep_run(pipeline, global_comm)
 
 
 def _check_yaml(yaml_config: Path, in_data: Path):
@@ -261,3 +247,98 @@ def _set_gpu_id(gpu_id: int):
 
     except ImportError:
         pass  # silently pass and run if the CPU pipeline is given
+
+
+def set_global_constants(
+    out_dir: Path,
+    intermediate_format: str,
+    compress_intermediate: bool,
+    frames_per_chunk: int,
+    max_cpu_slices: int,
+    syslog_host: str,
+    syslog_port: int,
+    output_folder_name: Optional[Path],
+    output_folder_path: Optional[Path],
+) -> None:
+    if compress_intermediate:
+        frames_per_chunk = 1
+    httomo.globals.INTERMEDIATE_FORMAT = intermediate_format
+    httomo.globals.COMPRESS_INTERMEDIATE = compress_intermediate
+    httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
+    httomo.globals.SYSLOG_SERVER = syslog_host
+    httomo.globals.SYSLOG_PORT = syslog_port
+
+    if output_folder_name is not None and output_folder_path is not None:
+        msg = (
+            "The flags `--output-folder-name` and `--output-folder-path` are mutually "
+            "exclusive, please use only one at most"
+        )
+        raise ValueError(msg)
+
+    if output_folder_name is None and output_folder_path is None:
+        httomo.globals.run_out_dir = out_dir.joinpath(
+            f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
+        )
+    if output_folder_name is not None:
+        httomo.globals.run_out_dir = out_dir.joinpath(output_folder_name)
+    if output_folder_path is not None:
+        httomo.globals.run_out_dir = output_folder_path
+
+    if max_cpu_slices < 1:
+        raise ValueError("max-cpu-slices must be greater or equal to 1")
+    httomo.globals.MAX_CPU_SLICES = max_cpu_slices
+
+
+def initialise_output_directory(yaml_config: Path) -> None:
+    Path.mkdir(httomo.globals.run_out_dir, exist_ok=True)
+    copy(yaml_config, httomo.globals.run_out_dir)
+
+
+def generate_pipeline(
+    in_data_file: Path, yaml_config: Path, save_all: bool, method_wrapper_comm: MPI.Comm
+) -> Pipeline:
+    # instantiate UiLayer class for pipeline build
+    init_UiLayer = UiLayer(yaml_config, in_data_file, comm=method_wrapper_comm)
+    pipeline = init_UiLayer.build_pipeline()
+
+    # perform transformations on pipeline
+    tr = TransformLayer(comm=method_wrapper_comm, save_all=save_all)
+    pipeline = tr.transform(pipeline)
+
+    return pipeline
+
+
+def execute_high_throughput_run(
+    pipeline: Pipeline,
+    global_comm: MPI.Comm,
+    gpu_id: int,
+    max_memory: str,
+    monitor: List[str],
+    monitor_output: TextIO,
+    reslice_dir: Union[Path, None],
+) -> None:
+    # we use half the memory for blocks since we typically have inputs/output
+    memory_limit = transform_limit_str_to_bytes(max_memory) // 2
+
+    _set_gpu_id(gpu_id)
+
+    # Run the pipeline using Taskrunner, with temp dir or reslice dir
+    mon = make_monitors(monitor, global_comm)
+    ctx: AbstractContextManager = nullcontext(reslice_dir)
+    if reslice_dir is None:
+        ctx = tempfile.TemporaryDirectory()
+    with ctx as tmp_dir:
+        runner = TaskRunner(
+            pipeline,
+            Path(tmp_dir),
+            global_comm,
+            monitor=mon,
+            memory_limit_bytes=memory_limit,
+        )
+        runner.execute()
+        if mon is not None:
+            mon.write_results(monitor_output)
+
+
+def execute_sweep_run(pipeline: Pipeline, global_comm: MPI.Comm) -> None:
+    ParamSweepRunner(pipeline, global_comm).execute()
