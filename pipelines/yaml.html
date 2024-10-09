@@ -1,0 +1,1129 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Full YAML pipelines &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/general.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'pipelines/yaml';</script>
+    <link rel="shortcut icon" href="../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="YAML Checker - Why use it?" href="../utilities/yaml_checker.html" />
+    <link rel="prev" title="Methods YAML Templates" href="../backends/templates.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo_light.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/logo_dark.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../introduction/about.html">HTTomo concept</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../introduction/indepth/detailed_about.html">Detailed concepts</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/sections.html">Sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/reslice.html">Re-slicing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/wrappers.html">Method Wrappers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/memory_estimators.html">Memory Estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/chunks.html">Chunks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/blocks.html">Blocks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../howto/installation.html">Installation Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/run_httomo.html">How to run HTTomo</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../howto/how_to_run/at_diamond.html">Inside Diamond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/how_to_run/outside_diamond.html">Outside Diamond</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/process_lists_guide.html">Process Lists Guide</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../howto/process_lists/httomo_parameters.html">HTTomo-specific parameters</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../howto/process_lists/side_outputs/side_out.html">Side outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../howto/process_lists/save_results/save_results.html">Saving intermediate files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/process_lists/process_list_configure.html">Configure efficient pipelines</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/httomo_features.html">HTTomo Features</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/parameter_sweeping.html">Parameter Sweeping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/padding.html">Padding</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../howto/interpret_logger.html">Interpret Log File</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../backends/list.html">Supported libraries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../backends/templates.html">Methods YAML Templates</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Ready-to-use pipelines</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Full YAML pipelines</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../developers/how_to_contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/memory_calculation.html">GPU memory calculations</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/pipelines/yaml.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Full YAML pipelines</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-pipeline-templates">CPU Pipeline templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-pipeline-templates">GPU Pipeline templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dls-specific-templates">DLS Specific templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-sweeps-templates">Parameter Sweeps templates</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="full-yaml-pipelines">
+<span id="tutorials-pl-templates"></span><h1>Full YAML pipelines<a class="headerlink" href="#full-yaml-pipelines" title="Permalink to this headline">#</a></h1>
+<p>This is a collection of ready to be used pipeline templates aka process lists.
+See more on <a class="reference internal" href="../explanation/process_list.html#explanation-process-list"><span class="std std-ref">What is a process list?</span></a> and how to <a class="reference internal" href="../howto/process_lists/process_list_configure.html#howto-process-list"><span class="std std-ref">Configure efficient pipelines</span></a>.</p>
+<section id="cpu-pipeline-templates">
+<span id="tutorials-pl-templates-cpu"></span><h2>CPU Pipeline templates<a class="headerlink" href="#cpu-pipeline-templates" title="Permalink to this headline">#</a></h2>
+<details class="sphinx-bs dropdown card mb-3">
+<summary class="summary-title card-header">
+Basic TomoPy’s (CPU-only) pipeline for the classical 180-degrees scan<div class="summary-down docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-down" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.72a.75.75 0 000 1.06l6.25 6.25a.75.75 0 001.06 0l6.25-6.25a.75.75 0 00-1.06-1.06L12 14.44 6.28 8.72a.75.75 0 00-1.06 0z"></path></svg></div>
+<div class="summary-up docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-up" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M18.78 15.28a.75.75 0 000-1.06l-6.25-6.25a.75.75 0 00-1.06 0l-6.25 6.25a.75.75 0 101.06 1.06L12 9.56l5.72 5.72a.75.75 0 001.06 0z"></path></svg></div>
+</summary><div class="summary-content card-body docutils">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    rotation_angles:
+      data_path: /entry1/tomo_entry/data/rotation_angle
+- method: normalize
+  module_path: tomopy.prep.normalize
+  parameters:
+    cutoff: null
+    averaging: mean
+- method: minus_log
+  module_path: tomopy.prep.normalize
+  parameters: {}
+- method: find_center_vo
+  module_path: tomopy.recon.rotation
+  parameters:
+    ind: null
+    smin: -50
+    smax: 50
+    srad: 6
+    step: 0.25
+    ratio: 0.5
+    drop: 20
+  id: centering
+  side_outputs:
+    cor : centre_of_rotation
+- method: recon
+  module_path: tomopy.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    sinogram_order: false
+    algorithm: &#39;gridrec&#39;
+    init_recon: null
+- method: rescale_to_int
+  module_path: httomolibgpu.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif
+    jpeg_quality: 95
+</pre></div>
+</div>
+</div>
+</details><details class="sphinx-bs dropdown card mb-3">
+<summary class="summary-title card-header">
+TomoPy’s pipeline where <a class="reference internal" href="../howto/httomo_features/previewing.html#previewing"><span class="std std-ref">Previewing</span></a> is demonstrated<div class="summary-down docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-down" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.72a.75.75 0 000 1.06l6.25 6.25a.75.75 0 001.06 0l6.25-6.25a.75.75 0 00-1.06-1.06L12 14.44 6.28 8.72a.75.75 0 00-1.06 0z"></path></svg></div>
+<div class="summary-up docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-up" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M18.78 15.28a.75.75 0 000-1.06l-6.25-6.25a.75.75 0 00-1.06 0l-6.25 6.25a.75.75 0 101.06 1.06L12 9.56l5.72 5.72a.75.75 0 001.06 0z"></path></svg></div>
+</summary><div class="summary-content card-body docutils">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    rotation_angles:
+        data_path: /entry1/tomo_entry/data/rotation_angle
+    preview:
+      detector_y:
+        start: 30
+        stop: 60
+- method: find_center_vo
+  module_path: tomopy.recon.rotation
+  parameters:
+    ind: mid
+    smin: -50
+    smax: 50
+    srad: 6
+    step: 0.25
+    ratio: 0.5
+    drop: 20
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+- method: remove_outlier
+  module_path: tomopy.misc.corr
+  parameters:
+    dif: 0.1
+    size: 3
+    axis: auto
+- method: normalize
+  module_path: tomopy.prep.normalize
+  parameters:
+    cutoff: null
+    averaging: mean
+- method: minus_log
+  module_path: tomopy.prep.normalize
+  parameters: {}
+- method: remove_stripe_fw
+  module_path: tomopy.prep.stripe
+  parameters:
+    level: null
+    wname: db5
+    sigma: 2
+    pad: true
+- method: recon
+  module_path: tomopy.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    sinogram_order: false
+    algorithm: gridrec
+    init_recon: null
+    #additional parameters: AVAILABLE
+  save_result: true
+- method: median_filter
+  module_path: tomopy.misc.corr
+  parameters:
+    size: 3
+    axis: auto
+- method: rescale_to_int
+  module_path: httomolibgpu.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif
+    jpeg_quality: 95
+</pre></div>
+</div>
+</div>
+</details><details class="sphinx-bs dropdown card mb-3">
+<summary class="summary-title card-header">
+This pipeline shows how “calculate_stats” module extracts global statistics in order to be passed to “save_to_images” function which uses it to rescale data for saving images<div class="summary-down docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-down" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.72a.75.75 0 000 1.06l6.25 6.25a.75.75 0 001.06 0l6.25-6.25a.75.75 0 00-1.06-1.06L12 14.44 6.28 8.72a.75.75 0 00-1.06 0z"></path></svg></div>
+<div class="summary-up docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-up" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M18.78 15.28a.75.75 0 000-1.06l-6.25-6.25a.75.75 0 00-1.06 0l-6.25 6.25a.75.75 0 101.06 1.06L12 9.56l5.72 5.72a.75.75 0 001.06 0z"></path></svg></div>
+</summary><div class="summary-content card-body docutils">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    rotation_angles:
+        data_path: /entry1/tomo_entry/data/rotation_angle
+- method: find_center_vo
+  module_path: tomopy.recon.rotation
+  parameters:
+    ind: mid
+    smin: -50
+    smax: 50
+    srad: 6
+    step: 0.25
+    ratio: 0.5
+    drop: 20
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+- method: remove_outlier
+  module_path: tomopy.misc.corr
+  parameters:
+    dif: 0.1
+    size: 3
+    axis: auto
+- method: normalize
+  module_path: tomopy.prep.normalize
+  parameters:
+    cutoff: null
+    averaging: mean
+- method: minus_log
+  module_path: tomopy.prep.normalize
+  parameters: {}
+- method: recon
+  module_path: tomopy.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    sinogram_order: false
+    algorithm: gridrec
+    init_recon: null
+    #additional parameters: AVAILABLE
+- method: calculate_stats
+  module_path: httomo.methods
+  parameters: {}
+  id: statistics
+  side_outputs:
+    glob_stats: glob_stats
+- method: rescale_to_int
+  module_path: httomolibgpu.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+    glob_stats: ${{statistics.side_outputs.glob_stats}}
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif
+    jpeg_quality: 95
+</pre></div>
+</div>
+</div>
+</details></section>
+<section id="gpu-pipeline-templates">
+<span id="tutorials-pl-templates-gpu"></span><h2>GPU Pipeline templates<a class="headerlink" href="#gpu-pipeline-templates" title="Permalink to this headline">#</a></h2>
+<details class="sphinx-bs dropdown card mb-3">
+<summary class="summary-title card-header">
+Basic GPU pipeline which uses functions from the httomolibgpu library.<div class="summary-down docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-down" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.72a.75.75 0 000 1.06l6.25 6.25a.75.75 0 001.06 0l6.25-6.25a.75.75 0 00-1.06-1.06L12 14.44 6.28 8.72a.75.75 0 00-1.06 0z"></path></svg></div>
+<div class="summary-up docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-up" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M18.78 15.28a.75.75 0 000-1.06l-6.25-6.25a.75.75 0 00-1.06 0l-6.25 6.25a.75.75 0 101.06 1.06L12 9.56l5.72 5.72a.75.75 0 001.06 0z"></path></svg></div>
+</summary><div class="summary-content card-body docutils">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    rotation_angles:
+      data_path: /entry1/tomo_entry/data/rotation_angle
+    dimension: 1
+    pad: 0
+- method: find_center_vo
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    ind: mid
+    smin: -50
+    smax: 50
+    srad: 6.0
+    step: 0.25
+    ratio: 0.5
+    drop: 20
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+- method: remove_outlier
+  module_path: httomolibgpu.misc.corr
+  parameters:
+    dif: 0.1
+    kernel_size: 3
+- method: normalize
+  module_path: httomolibgpu.prep.normalize
+  parameters:
+    cutoff: 10.0
+    minus_log: true
+    nonnegativity: false
+    remove_nans: false
+- method: remove_stripe_based_sorting
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    size: 11
+    dim: 1
+- method: FBP
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    filter_freq_cutoff: 0.6
+    recon_size: null
+    recon_mask_radius: null
+  save_result: true
+- method: rescale_to_int
+  module_path: httomolibgpu.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif
+    jpeg_quality: 95
+</pre></div>
+</div>
+</div>
+</details></section>
+<section id="dls-specific-templates">
+<span id="tutorials-pl-templates-dls"></span><h2>DLS Specific templates<a class="headerlink" href="#dls-specific-templates" title="Permalink to this headline">#</a></h2>
+<details class="sphinx-bs dropdown card mb-3">
+<summary class="summary-title card-header">
+GPU-based pipeline using httomolibgpu methods for DIAD (k11) data. Global statistics and referencing is used.<div class="summary-down docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-down" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.72a.75.75 0 000 1.06l6.25 6.25a.75.75 0 001.06 0l6.25-6.25a.75.75 0 00-1.06-1.06L12 14.44 6.28 8.72a.75.75 0 00-1.06 0z"></path></svg></div>
+<div class="summary-up docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-up" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M18.78 15.28a.75.75 0 000-1.06l-6.25-6.25a.75.75 0 00-1.06 0l-6.25 6.25a.75.75 0 101.06 1.06L12 9.56l5.72 5.72a.75.75 0 001.06 0z"></path></svg></div>
+</summary><div class="summary-content card-body docutils">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: /entry/imaging/data
+    image_key_path: /entry/instrument/imaging/image_key
+    rotation_angles:
+        data_path: /entry/imaging_sum/gts_theta_value
+    preview:
+      detector_y:
+        start: 8
+        stop: 15
+- method: find_center_vo
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    ind: mid
+    smin: -50
+    smax: 50
+    srad: 6
+    step: 0.25
+    ratio: 0.5
+    drop: 20
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+- method: remove_outlier
+  module_path: httomolibgpu.misc.corr
+  parameters:
+    dif: 0.1
+    kernel_size: 3
+- method: normalize
+  module_path: httomolibgpu.prep.normalize
+  parameters:
+    cutoff: 10.0
+    minus_log: true
+    nonnegativity: false
+    remove_nans: false
+- method: remove_stripe_based_sorting
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    size: 11
+    dim: 1
+- method: FBP
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    filter_freq_cutoff: 0.6
+    recon_size: null
+    recon_mask_radius: null
+  save_result: true
+- method: calculate_stats
+  module_path: httomo.methods
+  parameters: {}
+  id: statistics
+  side_outputs:
+    glob_stats: glob_stats
+- method: rescale_to_int
+  module_path: httomolibgpu.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+    glob_stats: ${{statistics.side_outputs.glob_stats}}
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif
+    jpeg_quality: 95
+</pre></div>
+</div>
+</div>
+</details><details class="sphinx-bs dropdown card mb-3">
+<summary class="summary-title card-header">
+GPU-driven pipeline for the 360-degrees data which estimates the CoR value and the overlap. The 180-degrees sinogram is obtained by stitching using the overlap value. The pipeline shows the extensive use of side_outputs and refrencing.<div class="summary-down docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-down" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.72a.75.75 0 000 1.06l6.25 6.25a.75.75 0 001.06 0l6.25-6.25a.75.75 0 00-1.06-1.06L12 14.44 6.28 8.72a.75.75 0 00-1.06 0z"></path></svg></div>
+<div class="summary-up docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-up" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M18.78 15.28a.75.75 0 000-1.06l-6.25-6.25a.75.75 0 00-1.06 0l-6.25 6.25a.75.75 0 101.06 1.06L12 9.56l5.72 5.72a.75.75 0 001.06 0z"></path></svg></div>
+</summary><div class="summary-content card-body docutils">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    rotation_angles:
+      data_path: /entry1/tomo_entry/data/rotation_angle
+- method: find_center_360
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    ind: mid
+    win_width: 10
+    side: null
+    denoise: true
+    norm: false
+    use_overlap: false
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+    overlap: overlap
+    side: side
+    overlap_position: overlap_position
+- method: remove_outlier
+  module_path: httomolibgpu.misc.corr
+  parameters:
+    dif: 0.1
+    kernel_size: 3
+- method: normalize
+  module_path: httomolibgpu.prep.normalize
+  parameters:
+    cutoff: 10.0
+    minus_log: true
+    nonnegativity: false
+    remove_nans: false
+- method: remove_stripe_based_sorting
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    size: 11
+    dim: 1
+- method: sino_360_to_180
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    overlap: ${{centering.side_outputs.overlap}}
+    rotation: right
+- method: FBP
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    filter_freq_cutoff: 0.6
+    recon_size: null
+    recon_mask_radius: null
+  save_result: true
+- method: data_resampler
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    newshape: [500, 500]
+    axis: auto
+    interpolation: linear
+- method: calculate_stats
+  module_path: httomo.methods
+  parameters: {}
+  id: statistics
+  side_outputs:
+    glob_stats: glob_stats
+- method: rescale_to_int
+  module_path: httomolibgpu.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+    glob_stats: ${{statistics.side_outputs.glob_stats}}
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif
+    jpeg_quality: 95
+</pre></div>
+</div>
+</div>
+</details><details class="sphinx-bs dropdown card mb-3">
+<summary class="summary-title card-header">
+More advanced GPU pipeline for the 360-degrees data. Here we preview the section and then reconstruct it iteratively, the result then downsampled before saving smaller images.<div class="summary-down docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-down" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.72a.75.75 0 000 1.06l6.25 6.25a.75.75 0 001.06 0l6.25-6.25a.75.75 0 00-1.06-1.06L12 14.44 6.28 8.72a.75.75 0 00-1.06 0z"></path></svg></div>
+<div class="summary-up docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-up" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M18.78 15.28a.75.75 0 000-1.06l-6.25-6.25a.75.75 0 00-1.06 0l-6.25 6.25a.75.75 0 101.06 1.06L12 9.56l5.72 5.72a.75.75 0 001.06 0z"></path></svg></div>
+</summary><div class="summary-content card-body docutils">
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    name: tomo
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    rotation_angles:
+      data_path: /entry1/tomo_entry/data/rotation_angle
+    preview:
+      detector_y:
+        start: 1000
+        stop: 1005
+- method: find_center_360
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    ind: mid
+    win_width: 10
+    side: null
+    denoise: true
+    norm: false
+    use_overlap: false
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+    overlap: overlap
+    side: side
+    overlap_position: overlap_position
+- method: normalize
+  module_path: httomolibgpu.prep.normalize
+  parameters:
+    cutoff: 10.0
+    minus_log: true
+    nonnegativity: false
+    remove_nans: false
+- method: sino_360_to_180
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    overlap: ${{centering.side_outputs.overlap}}
+    rotation: right
+- method: remove_all_stripe
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    snr: 3.0
+    la_size: 61
+    sm_size: 21
+    dim: 1
+- method: CGLS
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    recon_size: null
+    iterations: 3
+    nonnegativity: true
+  save_result: true
+- method: data_resampler
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    newshape: [256, 256]
+    axis: auto
+    interpolation: nearest
+- method: calculate_stats
+  module_path: httomo.methods
+  parameters: {}
+  id: statistics
+  side_outputs:
+    glob_stats: glob_stats
+- method: rescale_to_int
+  module_path: httomolibgpu.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+    glob_stats: ${{statistics.side_outputs.glob_stats}}
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif
+    jpeg_quality: 95
+</pre></div>
+</div>
+</div>
+</details></section>
+<section id="parameter-sweeps-templates">
+<span id="tutorials-pl-templates-sweeps"></span><h2>Parameter Sweeps templates<a class="headerlink" href="#parameter-sweeps-templates" title="Permalink to this headline">#</a></h2>
+<p>These templates demonstrate how to perform a sweep across multiple values of a
+single parameter (see <a class="reference internal" href="../howto/httomo_features/parameter_sweeping.html#parameter-sweeping"><span class="std std-ref">Parameter Sweeping</span></a> for more details).</p>
+<details class="sphinx-bs dropdown card mb-3">
+<summary class="summary-title card-header">
+Parameter sweep over 6 CoR values (<cite>center</cite> param) in recon
+method, and saving the result as tiffs. Note that there is need to add image saving plugin in this case. It is also preferable to keep <cite>preview</cite> small.<div class="summary-down docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-down" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.72a.75.75 0 000 1.06l6.25 6.25a.75.75 0 001.06 0l6.25-6.25a.75.75 0 00-1.06-1.06L12 14.44 6.28 8.72a.75.75 0 00-1.06 0z"></path></svg></div>
+<div class="summary-up docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-up" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M18.78 15.28a.75.75 0 000-1.06l-6.25-6.25a.75.75 0 00-1.06 0l-6.25 6.25a.75.75 0 101.06 1.06L12 9.56l5.72 5.72a.75.75 0 001.06 0z"></path></svg></div>
+</summary><div class="summary-content card-body docutils">
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">entry1/tomo_entry/data/data</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">entry1/tomo_entry/instrument/detector/image_key</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/entry1/tomo_entry/data/rotation_angle</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">detector_y</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">67</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normalize</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+<span class="w">    </span><span class="nt">minus_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">nonnegativity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">remove_nans</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">paganin_filter_tomopy</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.phase</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">pixel_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0001</span>
+<span class="w">    </span><span class="nt">dist</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50.0</span>
+<span class="w">    </span><span class="nt">energy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">53.0</span>
+<span class="w">    </span><span class="nt">alpha</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FBP</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.algorithm</span>
+<span class="w">  </span><span class="nt">save_result</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="hll"><span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="kt">!SweepRange</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">120</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+</span><span class="w">    </span><span class="nt">filter_freq_cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.1</span>
+<span class="w">    </span><span class="nt">recon_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">recon_mask_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+</pre></div>
+</div>
+</div>
+</details><details class="sphinx-bs dropdown card mb-3">
+<summary class="summary-title card-header">
+Parameter sweep over 50 (<cite>alpha</cite> param) values of Paganin filter
+method, and saving the result as tiffs for both Paganin filter and the reconstruction module.<div class="summary-down docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-down" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.72a.75.75 0 000 1.06l6.25 6.25a.75.75 0 001.06 0l6.25-6.25a.75.75 0 00-1.06-1.06L12 14.44 6.28 8.72a.75.75 0 00-1.06 0z"></path></svg></div>
+<div class="summary-up docutils">
+<svg version="1.1" width="24" height="24" class="octicon octicon-chevron-up" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M18.78 15.28a.75.75 0 000-1.06l-6.25-6.25a.75.75 0 00-1.06 0l-6.25 6.25a.75.75 0 101.06 1.06L12 9.56l5.72 5.72a.75.75 0 001.06 0z"></path></svg></div>
+</summary><div class="summary-content card-body docutils">
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">entry1/tomo_entry/data/data</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">entry1/tomo_entry/instrument/detector/image_key</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/entry1/tomo_entry/data/rotation_angle</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">detector_y</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">67</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normalize</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+<span class="w">    </span><span class="nt">minus_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">nonnegativity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">remove_nans</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">paganin_filter_tomopy</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.phase</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">pixel_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0004</span>
+<span class="w">    </span><span class="nt">dist</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50.0</span>
+<span class="w">    </span><span class="nt">energy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">53.0</span>
+<span class="hll"><span class="w">    </span><span class="nt">alpha</span><span class="p">:</span><span class="w"> </span><span class="kt">!SweepRange</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w"> </span>
+</span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FBP</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.algorithm</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="nt">filter_freq_cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.1</span>
+<span class="w">    </span><span class="nt">recon_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">recon_mask_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+</pre></div>
+</div>
+</div>
+</details></section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../backends/templates.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Methods YAML Templates</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../utilities/yaml_checker.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">YAML Checker - Why use it?</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-pipeline-templates">CPU Pipeline templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-pipeline-templates">GPU Pipeline templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dls-specific-templates">DLS Specific templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-sweeps-templates">Parameter Sweeps templates</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2024, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Oct 09, 2024.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
