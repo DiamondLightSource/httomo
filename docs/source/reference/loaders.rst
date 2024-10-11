@@ -98,7 +98,7 @@ In order to specify this information for both darks and flats, there is the
 
 .. literalinclude:: ../../../tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml
    :language: yaml
-   :emphasize-lines: 14-19
+   :emphasize-lines: 10-15
 
 Both parameters have two fields that needs to be specified:
 
@@ -128,7 +128,7 @@ but is now drawing attention to the :code:`rotation_angles` parameter:
 
 .. literalinclude:: ../../../tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml
    :language: yaml
-   :emphasize-lines: 7-11
+   :emphasize-lines: 5-9
 
 It can be seen that :code:`user_defined` has been specified instead of
 :code:`data_path`. Furthermore, there are then three fields provided:

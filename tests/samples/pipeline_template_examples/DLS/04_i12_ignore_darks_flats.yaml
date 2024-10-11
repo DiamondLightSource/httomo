@@ -1,16 +1,12 @@
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
   parameters:
-    name: tomo
-    in_file: tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs
     data_path: /1-TempPlugin-tomo/data
     rotation_angles:
       user_defined:
         start_angle: 0
         stop_angle: 180
         angles_total: 724
-    dimension: 1
-    pad: 0
     darks:
       file: tests/test_data/i12/separate_flats_darks/dark_field.h5
       data_path: /1-NoProcessPlugin-tomo/data

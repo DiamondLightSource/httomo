@@ -103,8 +103,7 @@ extract the global statistics for normalisation of the data using the
 
 .. literalinclude:: ../../../../../tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml
   :language: yaml
-  :lines: 1-79
-  :emphasize-lines: 18,19,20,21,22,23,44,49,63,64,65,72
+  :emphasize-lines: 17-22,43,48,62-64,71
   :caption: Pipeline for 360 degrees scan, a double field of view (DFoV) data.
 
 Please see below for a concise description of how each of the individual side

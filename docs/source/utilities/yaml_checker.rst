@@ -85,7 +85,8 @@ For instance, we cannot have the following in a YAML file:
 .. literalinclude:: ../../../tests/samples/pipeline_template_examples/testing/wrong_indentation_pipeline.yaml
    :language: yaml
 
-This will raise a warning because :code:`name` is not in the same indentation level as :code:`data_path` and :code:`image_key_path`.
+This will raise a warning because :code:`data_path` is not at the same indentation level as the
+other fields directly under the :code:`parameters` field.
 
 * We check that the first method in the pipeline is always a loader from :code:`'httomo.data.hdf.loaders'`.
 * We check methods exist for the given module path.

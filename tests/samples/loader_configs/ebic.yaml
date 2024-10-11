@@ -1,8 +1,6 @@
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
   parameters:
-    name: tomo
-    in_file: # /path/to/data_file/
     data_path: /exchange/data
     rotation_angles:
         data_path: /exchange/theta
@@ -12,5 +10,3 @@
     flats:
         file: # /path/to/file/containing/flats
         data_path: /exchange/data_white_post
-    dimension: 1
-    pad: 0
