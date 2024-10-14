@@ -93,41 +93,5 @@ def test_output_folder_name_correctly_sets_run_out_dir_global_constant(output_fo
         syslog_host="localhost",
         syslog_port=514,
         output_folder_name=Path(dir_name),
-        output_folder_path=None,
     )
     assert httomo.globals.run_out_dir == custom_output_dir
-
-
-def test_output_folder_name_and_path_flags_raise_error_if_both_provided():
-    with pytest.raises(ValueError) as e:
-        set_global_constants(
-            out_dir=Path("/"),
-            intermediate_format="hdf5",
-            compress_intermediate=False,
-            frames_per_chunk=0,
-            max_cpu_slices=1,
-            syslog_host="localhost",
-            syslog_port=514,
-            output_folder_name=Path("folder-1"),
-            output_folder_path=Path("/path/to/folder-2"),
-        )
-    assert (
-        "The flags `--output-folder-name` and `--output-folder-path` are mutually exclusive"
-        in str(e)
-    )
-
-
-def test_output_folder_path_correctly_sets_run_out_dir_global_constant():
-    output_folder_path = Path("/some/path/for/output")
-    set_global_constants(
-        out_dir=Path("/"),
-        intermediate_format="hdf5",
-        compress_intermediate=False,
-        frames_per_chunk=0,
-        max_cpu_slices=1,
-        syslog_host="localhost",
-        syslog_port=514,
-        output_folder_name=None,
-        output_folder_path=output_folder_path,
-    )
-    assert httomo.globals.run_out_dir == output_folder_path

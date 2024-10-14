@@ -68,15 +68,6 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
     help="Define the name of the output folder created by HTTomo",
 )
 @click.option(
-    "--output-folder-path",
-    type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
-    default=None,
-    help=(
-        "Provide path to folder in which output should be stored. This overrides "
-        "the `out_dir` argument"
-    ),
-)
-@click.option(
     "--save-all",
     is_flag=True,
     help="Save intermediate datasets for all tasks in the pipeline.",
@@ -155,7 +146,6 @@ def run(
     yaml_config: Path,
     out_dir: Path,
     output_folder_name: Optional[Path],
-    output_folder_path: Optional[Path],
     gpu_id: int,
     save_all: bool,
     reslice_dir: Union[Path, None],
@@ -179,7 +169,6 @@ def run(
         syslog_host,
         syslog_port,
         output_folder_name,
-        output_folder_path,
     )
 
     does_contain_sweep = is_sweep_pipeline(yaml_config)
@@ -258,7 +247,6 @@ def set_global_constants(
     syslog_host: str,
     syslog_port: int,
     output_folder_name: Optional[Path],
-    output_folder_path: Optional[Path],
 ) -> None:
     if compress_intermediate:
         frames_per_chunk = 1
@@ -268,21 +256,12 @@ def set_global_constants(
     httomo.globals.SYSLOG_SERVER = syslog_host
     httomo.globals.SYSLOG_PORT = syslog_port
 
-    if output_folder_name is not None and output_folder_path is not None:
-        msg = (
-            "The flags `--output-folder-name` and `--output-folder-path` are mutually "
-            "exclusive, please use only one at most"
-        )
-        raise ValueError(msg)
-
-    if output_folder_name is None and output_folder_path is None:
+    if output_folder_name is None:
         httomo.globals.run_out_dir = out_dir.joinpath(
             f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
         )
-    if output_folder_name is not None:
+    else:
         httomo.globals.run_out_dir = out_dir.joinpath(output_folder_name)
-    if output_folder_path is not None:
-        httomo.globals.run_out_dir = output_folder_path
 
     if max_cpu_slices < 1:
         raise ValueError("max-cpu-slices must be greater or equal to 1")

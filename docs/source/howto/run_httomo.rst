@@ -157,9 +157,6 @@ The :code:`run` command
     Options:
       --output-folder-name DIRECTORY  Define the name of the output folder created
                                       by HTTomo
-      --output-folder-path DIRECTORY  Provide path to folder in which output
-                                      should be stored. This overrides the
-                                      `out_dir` argument
       --save-all                      Save intermediate datasets for all tasks in
                                       the pipeline.
       --gpu-id INTEGER                The GPU ID of the device to use.
@@ -226,10 +223,9 @@ directory created by HTTomo would be
 Options/flags
 #############
 
-The :code:`run` command has 14 options/flags:
+The :code:`run` command has 13 options/flags:
 
 - :code:`--output-folder-name`
-- :code:`--output-folder-path`
 - :code:`--save-all`
 - :code:`--gpu-id`
 - :code:`--reslice-dir`
@@ -256,19 +252,6 @@ the :code:`--output-folder-name` flag may be used to achieve this.
 For example, if the :code:`OUT_DIR` path provided was :code:`/home/myuser`, and
 :code:`--output-folder-name=test-1` was given, then the absolute path of the output directory
 created by HTTomo would be :code:`/home/myuser/test-1/`.
-
-:code:`--output-folder-path`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If one wishes to have HTTomo *not* create an output directory, and instead for HTTomo to place
-the output in an existing directory, then the :code:`--output-folder-path` flag may be used.
-
-For example, if :code:`--output-folder-path=/home/myuser/my-output` was given, then HTTomo
-wouldn't create an output directory and would simply place the results in
-:code:`/home/myuser/my-output`.
-
-.. note:: This flag overrides the :code:`OUT_DIR` argument. Also, the given directory must
-          exist prior to running HTTomo
 
 :code:`--save-all`
 ~~~~~~~~~~~~~~~~~~
