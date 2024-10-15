@@ -9,7 +9,7 @@ dependencies:
   - nbsphinx
   - pandoc
   - jinja2
-  - sphinx-panels
+  - sphinx-design
   - sphinx-copybutton
   - pyyaml
   - ipython
