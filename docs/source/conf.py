@@ -38,13 +38,6 @@ autodoc_mock_imports = [
     "cupy",
     "h5py",
     "hdf5plugin",
-    "yaml",
-    "skimage",
-    "skimage.exposure",
-    "nvtx",
-    "mpi4py.MPI",
-    "scipy",
-    "scipy.ndimage",
 ]
 
 # ------------------------------------------------------------------------------
