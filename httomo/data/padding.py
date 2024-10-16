@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 import h5py
 import numpy as np
@@ -10,7 +10,7 @@ DIMS = [0, 1, 2]
 
 
 def extrapolate_before(
-    global_data: h5py.Dataset | np.ndarray,
+    global_data: Union[h5py.Dataset, np.ndarray],
     block_data: np.ndarray,
     slices: int,
     dim: int,
@@ -50,7 +50,7 @@ def extrapolate_before(
 
 
 def extrapolate_after(
-    global_data: h5py.Dataset | np.ndarray,
+    global_data: Union[h5py.Dataset, np.ndarray],
     block_data: np.ndarray,
     slices: int,
     dim: int,
