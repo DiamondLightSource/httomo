@@ -15,6 +15,7 @@ from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
+from httomo.types import generic_array
 from httomo.utils import Pattern, log_once, make_3d_shape_from_shape
 
 
@@ -88,11 +89,11 @@ class StandardTomoLoader(DataSetSource):
         return self._data.dtype
 
     @property
-    def flats(self) -> Optional[AuxiliaryData.generic_array]:
+    def flats(self) -> Optional[generic_array]:
         return self._aux_data.get_flats()
 
     @property
-    def darks(self) -> Optional[AuxiliaryData.generic_array]:
+    def darks(self) -> Optional[generic_array]:
         return self._aux_data.get_darks()
 
     @property

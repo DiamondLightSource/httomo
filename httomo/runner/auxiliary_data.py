@@ -1,6 +1,8 @@
-from typing import Optional, Tuple, Union
-from typing_extensions import TypeAlias
+from typing import Optional, Tuple
+
 import numpy as np
+
+from httomo.types import generic_array
 from httomo.utils import xp, gpu_enabled
 
 
@@ -12,16 +14,14 @@ class AuxiliaryData:
     including the GPU/CPU transfers if needed.
     """
 
-    generic_array: TypeAlias = Union[xp.ndarray, np.ndarray]
-
     def __init__(
         self,
         angles: np.ndarray,
         darks: Optional[np.ndarray] = None,
         flats: Optional[np.ndarray] = None,
     ):
-        self._darks: Optional[AuxiliaryData.generic_array] = darks
-        self._flats: Optional[AuxiliaryData.generic_array] = flats
+        self._darks: Optional[generic_array] = darks
+        self._flats: Optional[generic_array] = flats
         self._angles: np.ndarray = angles
 
     @property
