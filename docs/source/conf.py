@@ -72,9 +72,8 @@ extensions = [
     "sphinx_copybutton",
     # use jupyter notebooks
     "nbsphinx",
-    #'IPython.sphinxext.ipython_console_highlighting',
-    "sphinx.ext.githubpages",
     # Generate .nojekyll file for git pages build
+    "sphinx.ext.githubpages",
 ]
 
 autosummary_generate = True
