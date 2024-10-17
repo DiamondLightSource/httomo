@@ -31,10 +31,7 @@ jobs:
             activate-environment: httomo-docs
             environment-file: ./docs/source/doc-conda-requirements.yml
 
-        - name: Build api docs
-          run: sphinx-apidoc -feT -t=./docs/source/_templates -o ./docs/source/api ./httomo
-
-        - name: Build html
+        - name: Build docs
           run: sphinx-build -a -E -b html ./docs/source/ ./docs/build/
 
         - name: Publish docs

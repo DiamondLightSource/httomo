@@ -1,12 +1,9 @@
-from typing import Literal, Protocol, Tuple, TypeAlias, TypeVar
+from typing import Literal, Protocol, Tuple, TypeVar
 
 import numpy as np
 
+from httomo.types import generic_array
 from httomo.runner.auxiliary_data import AuxiliaryData
-from httomo.utils import xp
-
-
-generic_array: TypeAlias = np.ndarray | xp.ndarray
 
 
 class BlockTransfer(Protocol):
