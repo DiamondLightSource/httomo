@@ -14,14 +14,17 @@ CPU Pipeline templates
 .. dropdown:: Basic TomoPy's (CPU-only) pipeline for the classical 180-degrees scan
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu1.yaml
+        :language: yaml
 
 .. dropdown:: TomoPy's pipeline where :ref:`previewing` is demonstrated
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu2.yaml
+        :language: yaml
 
 .. dropdown:: This pipeline shows how "calculate_stats" module extracts global statistics in order to be passed to "save_to_images" function which uses it to rescale data for saving images
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu3.yaml
+        :language: yaml
 
 .. _tutorials_pl_templates_gpu:
 
@@ -31,6 +34,7 @@ GPU Pipeline templates
 .. dropdown:: Basic GPU pipeline which uses functions from the httomolibgpu library.
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_gpu1.yaml
+        :language: yaml
 
 
 .. _tutorials_pl_templates_dls:
@@ -41,14 +45,17 @@ DLS Specific templates
 .. dropdown:: GPU-based pipeline using httomolibgpu methods for DIAD (k11) data. Global statistics and referencing is used.
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml
+        :language: yaml
 
 .. dropdown:: GPU-driven pipeline for the 360-degrees data which estimates the CoR value and the overlap. The 180-degrees sinogram is obtained by stitching using the overlap value. The pipeline shows the extensive use of side_outputs and refrencing.
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml
+        :language: yaml
 
 .. dropdown:: More advanced GPU pipeline for the 360-degrees data. Here we preview the section and then reconstruct it iteratively, the result then downsampled before saving smaller images.
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_360deg_iterative_gpu3.yaml
+        :language: yaml
 
 .. _tutorials_pl_templates_sweeps:
 
