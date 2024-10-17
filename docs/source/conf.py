@@ -44,6 +44,7 @@ autodoc_mock_imports = [
 # ------------------------------------------------------------------------------
 
 project = "HTTomo"
+author = "the Imaging Team"
 copyright = f"{date.today().year}, Diamond Light Source"
 
 # Specify a base language to help assistive technology
