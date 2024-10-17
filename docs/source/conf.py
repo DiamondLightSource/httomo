@@ -44,6 +44,7 @@ autodoc_mock_imports = [
 # ------------------------------------------------------------------------------
 
 project = "HTTomo"
+author = "the Imaging Team"
 copyright = f"{date.today().year}, Diamond Light Source"
 
 # Specify a base language to help assistive technology
@@ -72,9 +73,8 @@ extensions = [
     "sphinx_copybutton",
     # use jupyter notebooks
     "nbsphinx",
-    #'IPython.sphinxext.ipython_console_highlighting',
-    "sphinx.ext.githubpages",
     # Generate .nojekyll file for git pages build
+    "sphinx.ext.githubpages",
 ]
 
 autosummary_generate = True
@@ -109,7 +109,3 @@ html_context = {
     "github_version": "main",
     "doc_path": "docs",
 }
-
-
-def setup(app):
-    app.add_css_file("css/general.css")

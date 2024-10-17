@@ -47,7 +47,7 @@ The pattern of any supported method can be found in :ref:`pl_library`.
 Library files
 -------------
 
-Here is the list of :ref:`pl_library` for backends where patterns and other fixed arguments for methods are specified. When HTTomo operates
+Here is the list of library files for backends where patterns and other fixed arguments for methods are specified. When HTTomo operates
 with a certain method it always refers to its library file in order get the specific requirements for that method.
 
 .. dropdown:: TomoPy's library file

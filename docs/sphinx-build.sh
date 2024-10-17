@@ -12,7 +12,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # show-inheritance displays a list of base classes below the class signature
 
 # Remove directory for api so that there are no obsolete files
-rm -rf $DIR/source/generated/
+rm -rf $DIR/source/developers/generated/
 rm -rf $DIR/build/
 
 # sphinx-build [options] <sourcedir> <outputdir> [filenames]
