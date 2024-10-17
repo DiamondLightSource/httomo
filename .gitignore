@@ -48,3 +48,5 @@ output_dir/
 temp.yaml
 cufile.log
 
+# Sphinx generated API docs
+docs/source/developers/generated/

@@ -79,7 +79,7 @@ extensions = [
 
 autosummary_generate = True
 numfig = True
-template_patterns = ["_templates"]
+templates_path = ["_templates"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
