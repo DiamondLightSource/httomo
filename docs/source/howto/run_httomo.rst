@@ -239,8 +239,6 @@ The :code:`run` command has 13 options/flags:
 - :code:`--syslog-port`
 - :code:`--frames-per-chunk`
 
-.. _httomo-saving:
-
 :code:`--output-folder-name`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -252,6 +250,8 @@ the :code:`--output-folder-name` flag may be used to achieve this.
 For example, if the :code:`OUT_DIR` path provided was :code:`/home/myuser`, and
 :code:`--output-folder-name=test-1` was given, then the absolute path of the output directory
 created by HTTomo would be :code:`/home/myuser/test-1/`.
+
+.. _httomo-saving:
 
 :code:`--save-all`
 ~~~~~~~~~~~~~~~~~~
