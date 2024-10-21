@@ -364,6 +364,11 @@ class StandardTomoLoader(DataSetSource):
 
 
 class StandardLoaderWrapper(LoaderInterface):
+    """
+    Wrapper around `StandardTomoLoader` to provide its functionality as a data source to the
+    runner, while also giving the runner an implementor of `LoaderInterface`.
+    """
+
     def __init__(
         self,
         comm: MPI.Comm,
