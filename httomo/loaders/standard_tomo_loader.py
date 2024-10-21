@@ -1,3 +1,8 @@
+"""
+Loader and wrapper class for loading standard tomography data collected at Diamond Light Source
+beamlines.
+"""
+
 import logging
 import weakref
 from pathlib import Path
@@ -364,6 +369,11 @@ class StandardTomoLoader(DataSetSource):
 
 
 class StandardLoaderWrapper(LoaderInterface):
+    """
+    Wrapper around `StandardTomoLoader` to provide its functionality as a data source to the
+    runner, while also giving the runner an implementor of `LoaderInterface`.
+    """
+
     def __init__(
         self,
         comm: MPI.Comm,

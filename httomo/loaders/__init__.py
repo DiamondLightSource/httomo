@@ -23,9 +23,19 @@ def make_loader(
     preview: PreviewConfig,
     comm: MPI.Comm,
 ) -> LoaderInterface:
-    """Produces a loader interface. Only StandardTomoWrapper is supported right now,
-    and this method has been added for backwards compatibility. Supporting other loaders
-    is a topic that still needs to be explored."""
+    """
+    Factory function for creating implementors of `LoaderInterface`.
+
+    Notes
+    -----
+    Currently, only `StandardLoaderWrapper` is supported (and thus only `StandardTomoLoader` is
+    supported). Supporting other loaders is a topic that still needs to be explored.
+
+    See Also
+    --------
+    standard_tomo_loader.StandardLoaderWrapper : The only supported loader-wrapper
+    standard_tomo_loader.StandardTomoLoader : The only supported loader
+    """
 
     if "standard_tomo" not in method_name:
         raise NotImplementedError(
