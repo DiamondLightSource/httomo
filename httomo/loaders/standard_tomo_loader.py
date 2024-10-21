@@ -1,3 +1,8 @@
+"""
+Loader and wrapper class for loading standard tomography data collected at Diamond Light Source
+beamlines.
+"""
+
 import logging
 import weakref
 from pathlib import Path
