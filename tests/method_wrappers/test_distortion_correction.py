@@ -17,3 +17,7 @@ def test_class_only_selected_for_methods_with_distortion_correction_in_name(
         )
         is expected_result
     )
+
+
+def test_requires_preview_is_true():
+    assert DistortionCorrectionWrapper.requires_preview() is True

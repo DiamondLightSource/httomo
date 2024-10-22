@@ -15,6 +15,14 @@ class DistortionCorrectionWrapper(GenericMethodWrapper):
     def should_select_this_class(cls, module_path: str, method_name: str) -> bool:
         return "distortion_correction" in method_name
 
+    @classmethod
+    def requires_preview(cls) -> bool:
+        """
+        Whether the wrapper class needs the preview information from the loader to execute the
+        methods it wraps or not.
+        """
+        return True
+
     def __init__(
         self,
         method_repository: MethodRepository,
