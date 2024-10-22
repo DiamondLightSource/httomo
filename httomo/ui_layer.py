@@ -10,6 +10,7 @@ from mpi4py.MPI import Comm
 from httomo.darks_flats import DarksFlatsFileConfig
 
 from httomo.methods_database.query import MethodDatabaseRepository
+from httomo.preview import PreviewConfig
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 
@@ -42,6 +43,7 @@ class UiLayer:
         self.tasks_file_path = tasks_file_path
         self.in_data_file = in_data_file_path
         self.comm = comm
+        self._preview_config: PreviewConfig | None = None
 
         root, ext = os.path.splitext(self.tasks_file_path)
         if ext.upper() in [".YAML", ".YML"]:
@@ -94,11 +96,15 @@ class UiLayer:
         method_id_map
             map of methods and ids
         """
+        assert (
+            self._preview_config is not None
+        ), "Preview config should have been stored prior to method wrapper creation"
         method = make_method_wrapper(
             method_repository=self.repo,
             module_path=task_conf["module_path"],
             method_name=task_conf["method"],
             comm=self.comm,
+            preview_config=self._preview_config,
             save_result=task_conf.get("save_result", None),
             output_mapping=task_conf.get("side_outputs", dict()),
             task_id=task_conf.get("id", f"task_{i + 1}"),
@@ -139,6 +145,7 @@ class UiLayer:
         with h5py.File(in_file, "r") as f:
             data_shape = f[data_path].shape
         preview = parse_preview(parameters.get("preview", None), data_shape)
+        self._preview_config = preview
 
         loader = make_loader(
             repo=self.repo,

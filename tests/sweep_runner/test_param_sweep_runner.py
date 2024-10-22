@@ -15,7 +15,12 @@ from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import NonSweepStage, Stages, SweepStage
-from tests.testing_utils import make_mock_repo, make_test_loader, make_test_method
+from tests.testing_utils import (
+    make_mock_preview_config,
+    make_mock_repo,
+    make_test_loader,
+    make_test_method,
+)
 
 
 def test_raises_error_if_no_sweep_detected(mocker: MockerFixture):
@@ -289,6 +294,7 @@ def test_execute_non_sweep_stage_method_params_updated_from_side_outputs(
         module_path="",
         method_name="method_1",
         comm=MPI.COMM_WORLD,
+        preview_config=make_mock_preview_config(mocker),
     )
 
     # Define sweep wrapper to to provide the runner the ability to distinguish between "before
@@ -348,6 +354,7 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
         module_path="mocked_module_path.corr",
         method_name="sweep_method",
         comm=MPI.COMM_WORLD,
+        preview_config=make_mock_preview_config(mocker),
         param_1=SWEEP_VALUES,
     )
 
@@ -423,6 +430,7 @@ def test_execute_modifies_block(mocker: MockerFixture):
         module_path="mocked_module_path.corr",
         method_name="sweep_method",
         comm=MPI.COMM_WORLD,
+        preview_config=make_mock_preview_config(mocker),
         param_1=SWEEP_VALUES,
     )
 
@@ -505,6 +513,7 @@ def test_execute_sweep_stage_method_params_updated_from_side_outputs(
         module_path="mocked_module_path.corr",
         method_name="sweep_method",
         comm=MPI.COMM_WORLD,
+        preview_config=make_mock_preview_config(mocker),
         param_1=SWEEP_VALUES,
     )
 
@@ -616,6 +625,7 @@ def test_execute_sweep_stage_two_procs_correct_sweep_val_distribution(
         module_path="mocked_module_path.corr",
         method_name="sweep_method",
         comm=method_wrapper_comm,
+        preview_config=make_mock_preview_config(mocker),
         param_1=SWEEP_VALUES,
     )
 
@@ -698,6 +708,7 @@ def test_execute_sweep_stage_two_procs_correct_middle_slices_in_block(
         module_path="mocked_module_path.corr",
         method_name="sweep_method",
         comm=method_wrapper_comm,
+        preview_config=make_mock_preview_config(mocker),
         param_1=SWEEP_VALUES,
     )
 

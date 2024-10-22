@@ -1,4 +1,5 @@
 from typing import List, Literal, Optional
+from httomo.preview import PreviewConfig
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
@@ -132,3 +133,7 @@ def make_mock_repo(
     )
     mocker.patch.object(mock_query, "padding", return_value=padding)
     return mock_repo
+
+
+def make_mock_preview_config(mocker: MockerFixture) -> PreviewConfig:
+    return mocker.create_autospec(PreviewConfig)

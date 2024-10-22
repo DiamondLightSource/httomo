@@ -4,7 +4,7 @@ from httomo.method_wrappers.images import ImagesWrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.utils import gpu_enabled, xp
-from ..testing_utils import make_mock_repo
+from ..testing_utils import make_mock_preview_config, make_mock_repo
 
 import pytest
 import numpy as np
@@ -29,6 +29,7 @@ def test_save_to_images(mocker: MockerFixture):
         "mocked_module_path.images",
         "save_to_images",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         axis=1,
         file_format="tif",
     )
@@ -62,6 +63,7 @@ def test_save_to_images_with_comm_rank_raises(mocker: MockerFixture):
             "mocked_module_path.images",
             "save_to_images",
             MPI.COMM_WORLD,
+            make_mock_preview_config(mocker),
             axis=1,
             file_format="tif",
         )
@@ -87,6 +89,7 @@ def test_images_leaves_gpudata(mocker: MockerFixture, dummy_block: DataSetBlock)
         "mocked_module_path.images",
         "save_to_images",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     with xp.cuda.Device(0):
         dummy_block.to_gpu()

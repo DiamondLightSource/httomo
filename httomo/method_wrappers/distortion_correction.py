@@ -18,10 +18,6 @@ class DistortionCorrectionWrapper(GenericMethodWrapper):
 
     @classmethod
     def requires_preview(cls) -> bool:
-        """
-        Whether the wrapper class needs the preview information from the loader to execute the
-        methods it wraps or not.
-        """
         return True
 
     def __init__(
