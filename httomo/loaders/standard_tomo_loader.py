@@ -313,8 +313,7 @@ class StandardTomoLoader(DataSetSource):
                 self._angles.stop_angle,
                 self._angles.angles_total,
             )
-
-        return self._h5file[self._angles.data_path][...]
+        return self._h5file[self._angles.data_path][self._data_indices]
 
     def finalize(self):
         self._h5file.close()

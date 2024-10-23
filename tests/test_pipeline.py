@@ -666,9 +666,9 @@ def test_run_diad_pipeline_gpu(
     assert "Path to data: /entry/imaging/data" in verbose_log_contents
     assert "Preview: (100:3101, 8:15, 0:26)" in verbose_log_contents
     assert "Data shape is (3001, 7, 26) of type uint16" in verbose_log_contents
-    assert "Global min -0.00915" in verbose_log_contents
-    assert "Global max 0.01134" in verbose_log_contents
-    assert "Global mean 0.00013" in verbose_log_contents
+    assert "Global min -0.01011" in verbose_log_contents
+    assert "Global max 0.01118" in verbose_log_contents
+    assert "Global mean 0.00010" in verbose_log_contents
 
 
 @pytest.mark.cupy
@@ -698,9 +698,9 @@ def test_run_pipeline_360deg_gpu2(
     assert "Loading data: tests/test_data/360scan/360scan.hdf" in verbose_log_contents
     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
     assert "Data shape is (3601, 3, 2560) of type uint16" in verbose_log_contents
-    assert "Global min -0.00275" in verbose_log_contents
-    assert "Global max 0.005299" in verbose_log_contents
-    assert "Global mean 0.0008" in verbose_log_contents
+    assert "Global min -0.000597" in verbose_log_contents
+    assert "Global max 0.004815" in verbose_log_contents
+    assert "Global mean 0.00089" in verbose_log_contents
 
 
 @pytest.mark.cupy
