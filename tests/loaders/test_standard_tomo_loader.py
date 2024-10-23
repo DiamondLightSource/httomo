@@ -632,7 +632,7 @@ def test_standard_tomo_loader_generates_block_with_angles() -> None:
 
     with h5py.File(IN_FILE_PATH, "r") as f:
         dataset: h5py.Dataset = f[ANGLES_PATH]
-        angles = np.deg2rad(dataset[...])
+        angles = np.deg2rad(dataset[:-(len(block.flats)+len(block.darks))])
 
     np.testing.assert_array_equal(block.angles, angles)
 
