@@ -1,3 +1,7 @@
+"""
+Slicing configuration types used by loaders to crop the input data.
+"""
+
 from typing import List, NamedTuple, Optional, Tuple
 
 import h5py
@@ -5,17 +9,38 @@ import numpy as np
 
 
 class PreviewDimConfig(NamedTuple):
+    """
+    Slicing configuration for a single dimension in the 3D input data, in the form of start,
+    stop, step.
+
+    Notes
+    -----
+
+    Currently, only unit step for all three dimensions is supported (ie, a step value of 1).
+    Thus, unit step is assumed for all three dimensions, and is not configurable in this type
+    yet.
+    """
+
     start: int
     stop: int
 
 
 class PreviewConfig(NamedTuple):
+    """
+    Slicing configuration for all three dimensions in the 3D input data.
+    """
+
     angles: PreviewDimConfig
     detector_y: PreviewDimConfig
     detector_x: PreviewDimConfig
 
 
 class Preview:
+    """
+    Performs bounds checking of the slicing configuration, and calculations of the cropped data
+    indices and global data shape.
+    """
+
     def __init__(
         self,
         preview_config: PreviewConfig,
