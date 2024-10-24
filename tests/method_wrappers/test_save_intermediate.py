@@ -13,7 +13,7 @@ import h5py
 from mpi4py import MPI
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.method_wrapper import MethodWrapper
-from ..testing_utils import make_mock_repo
+from ..testing_utils import make_mock_preview_config, make_mock_repo
 import httomo
 import numpy as np
 
@@ -67,6 +67,7 @@ def test_save_intermediate(
         "httomo.methods",
         "save_intermediate_data",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         loader=loader,
         out_dir=tmp_path,
         prev_method=prev_method,
@@ -116,6 +117,7 @@ def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Pat
         "httomo.methods",
         "save_intermediate_data",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         loader=loader,
         prev_method=prev_method,
     )
@@ -167,6 +169,7 @@ def test_save_intermediate_leaves_gpu_data(
         "httomo.methods",
         "save_intermediate_data",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         loader=loader,
         out_dir=tmp_path,
         prev_method=prev_method,
@@ -246,6 +249,7 @@ def test_writes_core_of_blocks_only(
         "httomo.methods",
         "save_intermediate_data",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         loader=loader,
         prev_method=prev_method,
     )

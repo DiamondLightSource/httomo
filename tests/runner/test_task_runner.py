@@ -31,7 +31,7 @@ from httomo.utils import (
     gpu_enabled,
 )
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
-from ..testing_utils import make_test_loader, make_test_method
+from ..testing_utils import make_mock_preview_config, make_test_loader, make_test_method
 
 
 def test_check_params_for_sweep_raises_exception(
@@ -609,6 +609,7 @@ def test_execute_section_with_padding_produces_correct_result(
         module_path=MODULE_PATH,
         method_name=METHOD_NAME,
         comm=COMM,
+        preview_config=make_mock_preview_config(mocker),
         kernel_size=KERNEL_SIZE,
     )
 

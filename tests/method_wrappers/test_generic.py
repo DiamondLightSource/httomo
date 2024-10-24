@@ -7,7 +7,7 @@ from httomo.runner.dataset import DataSetBlock
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.output_ref import OutputRef
 from httomo.utils import Pattern, gpu_enabled, xp
-from ..testing_utils import make_mock_repo, make_test_method
+from ..testing_utils import make_mock_preview_config, make_mock_repo, make_test_method
 
 import pytest
 from mpi4py import MPI
@@ -27,6 +27,7 @@ def test_generic_get_name_and_paths(mocker: MockerFixture):
         "testmodule.path",
         "fake_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     assert isinstance(wrp, GenericMethodWrapper)
     assert wrp.method_name == "fake_method"
@@ -50,6 +51,7 @@ def test_generic_set_task_id(mocker: MockerFixture):
         "testmodule.path",
         "fake_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         task_id="fake_method_id",
     )
 
@@ -72,6 +74,7 @@ def test_generic_execute_transfers_to_gpu(
         "module_path",
         "fake_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     res = wrp.execute(dummy_block)
 
@@ -98,6 +101,7 @@ def test_generic_excute_measures_gpu_times(
         "module_path",
         "fake_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     wrp.execute(dummy_block)
 
@@ -123,6 +127,7 @@ def test_generic_execute_calls_pre_post_process(
         "module_path",
         "fake_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     prep = mocker.patch.object(wrp, "_preprocess_data", return_value=dummy_block)
     post = mocker.patch.object(wrp, "_postprocess_data", return_value=dummy_block)
@@ -148,7 +153,11 @@ def test_generic_fails_with_wrong_returntype(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
     wrp = make_method_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     with pytest.raises(ValueError) as e:
         wrp.execute(dummy_block)
@@ -174,7 +183,11 @@ def test_generic_sets_gpuid(mocker: MockerFixture, dummy_block: DataSetBlock):
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
     wrp = make_method_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     gpu_id_getter_spy.assert_called_once()
 
@@ -198,6 +211,7 @@ def test_generic_fails_for_gpumethods_with_no_gpu(mocker: MockerFixture):
             "mocked_module_path",
             "fake_method",
             MPI.COMM_WORLD,
+            make_mock_preview_config(mocker),
         )
 
     assert "GPU is not available" in str(e)
@@ -215,7 +229,11 @@ def test_generic_passes_communicator_if_needed(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
     wrp = make_method_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
 
     wrp.execute(dummy_block)
@@ -237,6 +255,7 @@ def test_generic_transforms_auto_axis(mocker: MockerFixture, dummy_block: DataSe
         "mocked_module_path",
         "fake_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         axis="auto",
     )
 
@@ -255,7 +274,11 @@ def test_generic_allows_parameters_with_defaults(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
     wrp = make_method_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
 
     wrp.execute(dummy_block)
@@ -272,7 +295,11 @@ def test_generic_build_kwargs_parameter_not_given(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
     wrp = make_method_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     with pytest.raises(ValueError) as e:
         wrp.execute(dummy_block)
@@ -292,7 +319,11 @@ def test_generic_access_outputref_params(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
     wrp = make_method_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     m = make_test_method(mocker)
     mocker.patch.object(m, "get_side_output", return_value={"somepar": 42})
@@ -313,7 +344,11 @@ def test_generic_access_outputref_params_kwargs(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
     wrp = make_method_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     m = make_test_method(mocker)
     mocker.patch.object(m, "get_side_output", return_value={"somepar": 42})
@@ -334,7 +369,11 @@ def test_generic_different_data_parameter_name(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
     wrp = make_method_wrapper(
-        make_mock_repo(mocker), "mocked_module_path", "fake_method", MPI.COMM_WORLD
+        make_mock_repo(mocker),
+        "mocked_module_path",
+        "fake_method",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     dummy_block.data[:] = 42
     wrp.execute(dummy_block)
@@ -357,6 +396,7 @@ def test_generic_for_method_with_kwargs(
         "mocked_module_path",
         "fake_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         param=42.0,
         extra=123,
     )
@@ -380,6 +420,7 @@ def test_generic_sets_config_params_constructor(
         "mocked_module_path",
         "param_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         param=42,
     )
     wrp.execute(dummy_block)
@@ -403,6 +444,7 @@ def test_generic_sets_config_params_setter(
         "mocked_module_path",
         "param_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     wrp["param"] = 42
     wrp.execute(dummy_block)
@@ -426,6 +468,7 @@ def test_generic_sets_config_params_setter_not_in_arguments(
         "mocked_module_path",
         "param_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     with pytest.raises(ValueError):
         wrp["param_not_existing"] = 42
@@ -448,6 +491,7 @@ def test_generic_sets_config_params_append_dict(
         "mocked_module_path",
         "param_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     wrp.append_config_params({"param1": 42, "param2": 43})
     wrp.execute(dummy_block)
@@ -474,6 +518,7 @@ def test_generic_passes_darks_flats_to_normalize(
         "mocked_module_path",
         "normalize_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     dummy_block.data[:] = 1
     dummy_block.darks[:] = 2
@@ -520,6 +565,7 @@ def test_generic_method_queries(
         "mocked_module_path",
         "test_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
 
     assert wrp.pattern == Pattern.projection
@@ -566,6 +612,7 @@ def test_generic_calculate_max_slices_direct(
         "mocked_module_path",
         "test_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     shape_t = list(dummy_block.chunk_shape)
     shape_t.pop(0)
@@ -621,6 +668,7 @@ def test_generic_calculate_max_slices_module(
         "mocked_module_path",
         "test_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     shape_t = list(dummy_block.chunk_shape)
     shape_t.pop(0)
@@ -666,6 +714,7 @@ def test_generic_calculate_output_dims(mocker: MockerFixture):
         "mocked_module_path",
         "test_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     wrp["testparam"] = 32
 
@@ -697,6 +746,7 @@ def test_generic_calculate_output_dims_no_change(mocker: MockerFixture):
         "mocked_module_path",
         "test_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
 
     dims = wrp.calculate_output_dims((10, 10))
@@ -763,6 +813,7 @@ def test_generic_execute_uses_comm_passed_to_constructor(
         "mocked_module_path",
         "test_method",
         comm=passed_in_mock_comm,
+        preview_config=make_mock_preview_config(mocker),
     )
 
     # Run `execute()` method, which should trigger the dummy method function defined earlier,
@@ -800,6 +851,7 @@ def test_generic_calculate_padding_none_required(mocker: MockerFixture):
         "mocked_module_path",
         "test_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
 
     padding = wrp.calculate_padding()
@@ -835,6 +887,7 @@ def test_generic_calculate_padding(mocker: MockerFixture):
         "mocked_module_path",
         "test_method",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     wrp["param_affects_padding"] = PARAM_AFFECTS_PADDING
 

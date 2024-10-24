@@ -2,7 +2,7 @@ import pytest
 from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.stats_calc import StatsCalcWrapper
 from httomo.runner.dataset import DataSetBlock
-from ..testing_utils import make_mock_repo
+from ..testing_utils import make_mock_preview_config, make_mock_repo
 
 from mpi4py import MPI
 from pytest_mock import MockerFixture
@@ -23,6 +23,7 @@ def test_calculate_stats(mocker: MockerFixture, dummy_block: DataSetBlock):
         "mocked_module_path.calculate_stats",
         "calculate_stats",
         MPI.COMM_SELF,
+        make_mock_preview_config(mocker),
         output_mapping={"glob_stats": "glob_stats"},
     )
     assert isinstance(wrp, StatsCalcWrapper)
@@ -49,6 +50,7 @@ def test_calculate_stats_supports_blockwise(
         "mocked_module_path.calculate_stats",
         "calculate_stats",
         MPI.COMM_SELF,
+        make_mock_preview_config(mocker),
         output_mapping={"glob_stats": "glob_stats"},
     )
     assert isinstance(wrp, StatsCalcWrapper)
@@ -105,6 +107,7 @@ def test_calculate_stats_2_processes(mocker: MockerFixture, dummy_block: DataSet
         "mocked_module_path.calculate_stats",
         "calculate_stats",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         output_mapping={"glob_stats": "glob_stats"},
     )
     wrp.execute(dummy_block)
@@ -138,6 +141,7 @@ def test_calculate_stats_uses_gpu_if_available(
         "mocked_module_path.calculate_stats",
         "calculate_stats",
         MPI.COMM_SELF,
+        make_mock_preview_config(mocker),
         output_mapping={"glob_stats": "glob_stats"},
     )
 

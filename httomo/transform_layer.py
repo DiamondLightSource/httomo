@@ -2,6 +2,10 @@ import os
 from pathlib import Path
 from typing import Optional
 from httomo.method_wrappers import make_method_wrapper
+from httomo.method_wrappers.datareducer import DatareducerWrapper
+from httomo.method_wrappers.generic import GenericMethodWrapper
+from httomo.method_wrappers.images import ImagesWrapper
+from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.methods_database.query import MethodDatabaseRepository
 from httomo.runner.pipeline import Pipeline
 from mpi4py import MPI
@@ -40,7 +44,7 @@ class TransformLayer:
                 and "center" not in m.method_name
             ):
                 methods.append(
-                    make_method_wrapper(
+                    SaveIntermediateFilesWrapper(
                         self._repo,
                         "httomo.methods",
                         "save_intermediate_data",
@@ -59,7 +63,7 @@ class TransformLayer:
         loader = pipeline.loader
         methods = []
         methods.append(
-            make_method_wrapper(
+            DatareducerWrapper(
                 self._repo,
                 "httomolib.misc.morph",
                 "data_reducer",
@@ -83,7 +87,7 @@ class TransformLayer:
             methods.append(m)
             if m.sweep or "recon" in m.module_path and sweep_before:
                 methods.append(
-                    make_method_wrapper(
+                    GenericMethodWrapper(
                         self._repo,
                         "httomolibgpu.misc.rescale",
                         "rescale_to_int",
@@ -96,7 +100,7 @@ class TransformLayer:
                     )
                 )
                 methods.append(
-                    make_method_wrapper(
+                    ImagesWrapper(
                         self._repo,
                         "httomolib.misc.images",
                         "save_to_images",
