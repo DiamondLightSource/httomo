@@ -3,7 +3,7 @@ from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.dezinging import DezingingWrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
-from ..testing_utils import make_mock_repo
+from ..testing_utils import make_mock_preview_config, make_mock_repo
 
 
 import numpy as np
@@ -24,6 +24,7 @@ def test_dezinging(mocker: MockerFixture):
         "mocked_module_path.prep",
         "remove_outlier",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     assert isinstance(wrp, DezingingWrapper)
 

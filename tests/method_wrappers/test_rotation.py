@@ -6,7 +6,7 @@ from httomo.method_wrappers.rotation import RotationWrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.utils import Pattern, gpu_enabled, make_3d_shape_from_shape, xp
-from ..testing_utils import make_mock_repo
+from ..testing_utils import make_mock_preview_config, make_mock_repo
 
 
 import pytest
@@ -28,6 +28,7 @@ def test_rotation_fails_with_sinogram_method(mocker: MockerFixture):
             "mocked_module_path.rotation",
             "rotation_tester",
             MPI.COMM_WORLD,
+            make_mock_preview_config(mocker),
         )
 
 
@@ -97,6 +98,7 @@ def test_rotation_accumulates_blocks(mocker: MockerFixture, padding: Tuple[int, 
         "mocked_module_path.rotation",
         "rotation_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         output_mapping={"cor": "cor"},
     )
     assert isinstance(wrp, RotationWrapper)
@@ -167,6 +169,7 @@ def test_rotation_gathers_single_sino_slice(
         "mocked_module_path.rotation",
         "rotation_tester",
         comm,
+        make_mock_preview_config(mocker),
     )
     assert isinstance(wrp, RotationWrapper)
 
@@ -216,6 +219,7 @@ def test_rotation_gather_sino_slice(mocker: MockerFixture, rank: int):
         "mocked_module_path.rotation",
         "rotation_tester",
         comm,
+        make_mock_preview_config(mocker),
     )
     assert isinstance(wrp, RotationWrapper)
     if rank == 0:
@@ -348,6 +352,7 @@ def test_rotation_180(mocker: MockerFixture):
         "mocked_module_path.rotation",
         "rotation_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         output_mapping={"cor": "center"},
         ind=5,
     )
@@ -375,6 +380,7 @@ def test_rotation_pc_180(mocker: MockerFixture):
         "mocked_module_path.rotation",
         "find_center_pc",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         output_mapping={"cor": "center"},
     )
 
@@ -402,6 +408,7 @@ def test_rotation_360(mocker: MockerFixture):
         "mocked_module_path.rotation",
         "rotation_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
         output_mapping={
             "cor": "center",
             "overlap": "overlap",

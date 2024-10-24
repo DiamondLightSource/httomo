@@ -49,6 +49,14 @@ class GenericMethodWrapper(MethodWrapper):
         """
         return False  # pragma: no cover
 
+    @classmethod
+    def requires_preview(cls) -> bool:
+        """
+        Whether the wrapper class needs the preview information from the loader to execute the
+        methods it wraps or not.
+        """
+        return False
+
     def __init__(
         self,
         method_repository: MethodRepository,

@@ -4,7 +4,7 @@ from httomo.method_wrappers.reconstruction import ReconstructionWrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.utils import Pattern
-from ..testing_utils import make_mock_repo
+from ..testing_utils import make_mock_preview_config, make_mock_repo
 
 
 import numpy as np
@@ -31,6 +31,7 @@ def test_recon_handles_reconstruction_angle_reshape(mocker: MockerFixture):
         "mocked_module_path.algorithm",
         "recon_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     assert isinstance(wrp, ReconstructionWrapper)
 
@@ -64,6 +65,7 @@ def test_recon_handles_reconstruction_axisswap(mocker: MockerFixture):
         "mocked_module_path.algorithm",
         "recon_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     block = DataSetBlock(
         data=np.ones((13, 14, 15), dtype=np.float32),
@@ -89,6 +91,7 @@ def test_recon_changes_global_shape_if_size_changes(mocker: MockerFixture):
         "mocked_module_path.algorithm",
         "recon_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
     block = DataSetBlock(
         data=np.ones((13, 3, 15), dtype=np.float32),
@@ -117,6 +120,7 @@ def test_recon_gives_recon_algorithm(mocker: MockerFixture):
         "test.algorithm",
         "recon_tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
 
     assert wrp.recon_algorithm is None
@@ -137,6 +141,7 @@ def test_recon_gives_no_recon_algorithm_if_not_recon_method(mocker: MockerFixtur
         "test.something",
         "tester",
         MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
     )
 
     assert wrp.recon_algorithm is None
