@@ -239,16 +239,13 @@ def test_distortion_correction_memoryhook(
     distortion_coeffs_path = os.path.join(
         distortion_correction_path, "distortion-coeffs.txt"
     )
-    preview = {
-        "starts": [0, 0],
-        "stops": [data.shape[1], data.shape[2]],
-        "steps": [1, 1],
-    }
+    shift_xy = [0, 0]
+    step_xy = [1, 1]
 
     hook = MaxMemoryHook()
     with hook:
         data_corrected = distortion_correction_proj_discorpy(
-            cp.copy(data), distortion_coeffs_path, preview
+            cp.copy(data), distortion_coeffs_path, shift_xy, step_xy
         ).get()
 
     # make sure estimator function is within range (80% min, 100% max)
