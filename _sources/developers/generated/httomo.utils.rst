@@ -1,0 +1,33 @@
+﻿httomo.utils
+============
+
+
+
+
+.. currentmodule:: httomo.utils
+.. rubric:: Classes
+
+.. autosummary::
+   :toctree:
+
+   Pattern
+   catch_gputime
+   catchtime
+
+
+
+.. currentmodule:: httomo.utils
+.. rubric:: Functions
+
+.. autosummary::
+   :toctree:
+
+   get_data_in_data_out
+   log_exception
+   log_once
+   log_rank
+   make_3d_shape_from_array
+   make_3d_shape_from_shape
+
+
+.. automodule:: httomo.utils

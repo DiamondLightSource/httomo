@@ -1,0 +1,778 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>httomo.utils.get_data_in_data_out &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../_static/documentation_options.js?v=bed1ec08"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'developers/generated/httomo.utils.get_data_in_data_out';</script>
+    <link rel="icon" href="../../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="httomo.utils.log_exception" href="httomo.utils.log_exception.html" />
+    <link rel="prev" title="httomo.utils.catchtime" href="httomo.utils.catchtime.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+    <meta name="docbuild:last-update" content="Oct 24, 2024"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo_light.png" class="logo__image only-light" alt="HTTomo Documentation page - Home"/>
+    <img src="../../_static/logo_dark.png" class="logo__image only-dark pst-js-only" alt="HTTomo Documentation page - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../introduction/about.html">HTTomo concept</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../introduction/indepth/detailed_about.html">Detailed concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/sections.html">Sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/reslice.html">Re-slicing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/wrappers.html">Method Wrappers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/memory_estimators.html">Memory Estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/chunks.html">Chunks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/blocks.html">Blocks</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../howto/installation.html">Installation Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../howto/run_httomo.html">How to run HTTomo</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/how_to_run/at_diamond.html">Inside Diamond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/how_to_run/outside_diamond.html">Outside Diamond</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../howto/process_lists_guide.html">Process Lists Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../howto/process_lists/httomo_parameters.html">HTTomo-specific parameters</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../howto/process_lists/side_outputs/side_out.html">Side outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../howto/process_lists/save_results/save_results.html">Saving intermediate files</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/process_lists/process_list_configure.html">Configure efficient pipelines</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../howto/httomo_features.html">HTTomo Features</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/httomo_features/parameter_sweeping.html">Parameter Sweeping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/httomo_features/padding.html">Padding</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../howto/interpret_logger.html">Interpret Log File</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../backends/list.html">Supported libraries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../backends/templates.html">Methods YAML Templates</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Ready-to-use pipelines</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../pipelines/yaml.html">Full YAML pipelines</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../how_to_contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../memory_calculation.html">GPU memory calculations</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../api.html">API</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.base_block.html">httomo.base_block</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.base_block.BaseBlock.html">httomo.base_block.BaseBlock</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.block_interfaces.html">httomo.block_interfaces</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.block_interfaces.Block.html">httomo.block_interfaces.Block</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.block_interfaces.BlockData.html">httomo.block_interfaces.BlockData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.block_interfaces.BlockIndexing.html">httomo.block_interfaces.BlockIndexing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.block_interfaces.BlockTransfer.html">httomo.block_interfaces.BlockTransfer</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.cli_utils.html">httomo.cli_utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.cli_utils.is_sweep_pipeline.html">httomo.cli_utils.is_sweep_pipeline</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.darks_flats.html">httomo.darks_flats</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.darks_flats.DarksFlatsFileConfig.html">httomo.darks_flats.DarksFlatsFileConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.darks_flats.get_darks_flats.html">httomo.darks_flats.get_darks_flats</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.data.html">httomo.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.data.dataset_store.html">httomo.data.dataset_store</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.data.dataset_store.DataSetStoreReader.html">httomo.data.dataset_store.DataSetStoreReader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.data.dataset_store.DataSetStoreWriter.html">httomo.data.dataset_store.DataSetStoreWriter</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.data.hdf.html">httomo.data.hdf</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.data.mpiutil.html">httomo.data.mpiutil</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.data.mpiutil.alltoall.html">httomo.data.mpiutil.alltoall</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.data.padding.html">httomo.data.padding</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.data.padding.extrapolate_after.html">httomo.data.padding.extrapolate_after</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.data.padding.extrapolate_before.html">httomo.data.padding.extrapolate_before</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.data.param_sweep_store.html">httomo.data.param_sweep_store</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.data.param_sweep_store.ParamSweepReader.html">httomo.data.param_sweep_store.ParamSweepReader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.data.param_sweep_store.ParamSweepWriter.html">httomo.data.param_sweep_store.ParamSweepWriter</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="httomo.globals.html">httomo.globals</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.loaders.html">httomo.loaders</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.loaders.standard_tomo_loader.html">httomo.loaders.standard_tomo_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.loaders.standard_tomo_loader.StandardLoaderWrapper.html">httomo.loaders.standard_tomo_loader.StandardLoaderWrapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.loaders.standard_tomo_loader.StandardTomoLoader.html">httomo.loaders.standard_tomo_loader.StandardTomoLoader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.loaders.types.html">httomo.loaders.types</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.loaders.types.RawAngles.html">httomo.loaders.types.RawAngles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.loaders.types.UserDefinedAngles.html">httomo.loaders.types.UserDefinedAngles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.loaders.make_loader.html">httomo.loaders.make_loader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.logger.html">httomo.logger</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.logger.setup_logger.html">httomo.logger.setup_logger</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.methods.html">httomo.methods</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.methods.calculate_stats.html">httomo.methods.calculate_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.methods.save_intermediate_data.html">httomo.methods.save_intermediate_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.methods.setup_dataset.html">httomo.methods.setup_dataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.method_wrappers.html">httomo.method_wrappers</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.method_wrappers.datareducer.html">httomo.method_wrappers.datareducer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.method_wrappers.datareducer.DatareducerWrapper.html">httomo.method_wrappers.datareducer.DatareducerWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.method_wrappers.dezinging.html">httomo.method_wrappers.dezinging</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.method_wrappers.dezinging.DezingingWrapper.html">httomo.method_wrappers.dezinging.DezingingWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.method_wrappers.distortion_correction.html">httomo.method_wrappers.distortion_correction</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.method_wrappers.distortion_correction.DistortionCorrectionWrapper.html">httomo.method_wrappers.distortion_correction.DistortionCorrectionWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.method_wrappers.generic.html">httomo.method_wrappers.generic</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.method_wrappers.generic.GenericMethodWrapper.html">httomo.method_wrappers.generic.GenericMethodWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.method_wrappers.images.html">httomo.method_wrappers.images</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.method_wrappers.images.ImagesWrapper.html">httomo.method_wrappers.images.ImagesWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.method_wrappers.reconstruction.html">httomo.method_wrappers.reconstruction</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.method_wrappers.reconstruction.ReconstructionWrapper.html">httomo.method_wrappers.reconstruction.ReconstructionWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.method_wrappers.rotation.html">httomo.method_wrappers.rotation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.method_wrappers.rotation.RotationWrapper.html">httomo.method_wrappers.rotation.RotationWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.method_wrappers.save_intermediate.html">httomo.method_wrappers.save_intermediate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.method_wrappers.save_intermediate.SaveIntermediateFilesWrapper.html">httomo.method_wrappers.save_intermediate.SaveIntermediateFilesWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.method_wrappers.stats_calc.html">httomo.method_wrappers.stats_calc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.method_wrappers.stats_calc.StatsCalcWrapper.html">httomo.method_wrappers.stats_calc.StatsCalcWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.method_wrappers.make_method_wrapper.html">httomo.method_wrappers.make_method_wrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.monitors.html">httomo.monitors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.monitors.aggregate.html">httomo.monitors.aggregate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.monitors.aggregate.AggregateMonitoring.html">httomo.monitors.aggregate.AggregateMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.monitors.benchmark.html">httomo.monitors.benchmark</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.monitors.benchmark.BenchmarkMonitoring.html">httomo.monitors.benchmark.BenchmarkMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.monitors.summary.html">httomo.monitors.summary</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.monitors.summary.SummaryMonitor.html">httomo.monitors.summary.SummaryMonitor</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.monitors.make_monitors.html">httomo.monitors.make_monitors</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.preview.html">httomo.preview</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.preview.Preview.html">httomo.preview.Preview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.preview.PreviewConfig.html">httomo.preview.PreviewConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.preview.PreviewDimConfig.html">httomo.preview.PreviewDimConfig</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.runner.html">httomo.runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.auxiliary_data.html">httomo.runner.auxiliary_data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.auxiliary_data.AuxiliaryData.html">httomo.runner.auxiliary_data.AuxiliaryData</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.block_split.html">httomo.runner.block_split</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.block_split.BlockSplitter.html">httomo.runner.block_split.BlockSplitter</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.dataset.html">httomo.runner.dataset</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.dataset.DataSetBlock.html">httomo.runner.dataset.DataSetBlock</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.dataset_store_backing.html">httomo.runner.dataset_store_backing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.dataset_store_backing.DataSetStoreBacking.html">httomo.runner.dataset_store_backing.DataSetStoreBacking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.dataset_store_backing.calculate_section_chunk_bytes.html">httomo.runner.dataset_store_backing.calculate_section_chunk_bytes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.dataset_store_backing.calculate_section_chunk_shape.html">httomo.runner.dataset_store_backing.calculate_section_chunk_shape</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.dataset_store_backing.determine_store_backing.html">httomo.runner.dataset_store_backing.determine_store_backing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.dataset_store_interfaces.html">httomo.runner.dataset_store_interfaces</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.dataset_store_interfaces.DataSetSink.html">httomo.runner.dataset_store_interfaces.DataSetSink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.dataset_store_interfaces.DataSetSource.html">httomo.runner.dataset_store_interfaces.DataSetSource</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.dataset_store_interfaces.DummySink.html">httomo.runner.dataset_store_interfaces.DummySink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.dataset_store_interfaces.ReadableDataSetSink.html">httomo.runner.dataset_store_interfaces.ReadableDataSetSink</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.gpu_utils.html">httomo.runner.gpu_utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.gpu_utils.get_available_gpu_memory.html">httomo.runner.gpu_utils.get_available_gpu_memory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.gpu_utils.get_gpu_id.html">httomo.runner.gpu_utils.get_gpu_id</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.gpu_utils.gpumem_cleanup.html">httomo.runner.gpu_utils.gpumem_cleanup</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.loader.html">httomo.runner.loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.loader.LoaderInterface.html">httomo.runner.loader.LoaderInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.method_wrapper.html">httomo.runner.method_wrapper</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.method_wrapper.GpuTimeInfo.html">httomo.runner.method_wrapper.GpuTimeInfo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.method_wrapper.MethodWrapper.html">httomo.runner.method_wrapper.MethodWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.methods_repository_interface.html">httomo.runner.methods_repository_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.methods_repository_interface.GpuMemoryRequirement.html">httomo.runner.methods_repository_interface.GpuMemoryRequirement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.methods_repository_interface.MethodQuery.html">httomo.runner.methods_repository_interface.MethodQuery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.methods_repository_interface.MethodRepository.html">httomo.runner.methods_repository_interface.MethodRepository</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.monitoring_interface.html">httomo.runner.monitoring_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.monitoring_interface.MonitoringInterface.html">httomo.runner.monitoring_interface.MonitoringInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.output_ref.html">httomo.runner.output_ref</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.output_ref.OutputRef.html">httomo.runner.output_ref.OutputRef</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.pipeline.html">httomo.runner.pipeline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.pipeline.Pipeline.html">httomo.runner.pipeline.Pipeline</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.section.html">httomo.runner.section</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.section.Section.html">httomo.runner.section.Section</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.section.determine_section_padding.html">httomo.runner.section.determine_section_padding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.section.sectionize.html">httomo.runner.section.sectionize</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.runner.task_runner.html">httomo.runner.task_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.runner.task_runner.TaskRunner.html">httomo.runner.task_runner.TaskRunner</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.sweep_runner.html">httomo.sweep_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.sweep_runner.param_sweep_block.html">httomo.sweep_runner.param_sweep_block</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.sweep_runner.param_sweep_block.ParamSweepBlock.html">httomo.sweep_runner.param_sweep_block.ParamSweepBlock</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.sweep_runner.param_sweep_runner.html">httomo.sweep_runner.param_sweep_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html">httomo.sweep_runner.param_sweep_runner.ParamSweepRunner</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.sweep_runner.param_sweep_store_interfaces.html">httomo.sweep_runner.param_sweep_store_interfaces</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSink.html">httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSource.html">httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSource</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.sweep_runner.param_sweep_yaml_loader.html">httomo.sweep_runner.param_sweep_yaml_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.sweep_runner.param_sweep_yaml_loader.ParamSweepYamlLoader.html">httomo.sweep_runner.param_sweep_yaml_loader.ParamSweepYamlLoader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.sweep_runner.param_sweep_yaml_loader.get_param_sweep_yaml_loader.html">httomo.sweep_runner.param_sweep_yaml_loader.get_param_sweep_yaml_loader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.sweep_runner.side_output_manager.html">httomo.sweep_runner.side_output_manager</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.sweep_runner.side_output_manager.SideOutputManager.html">httomo.sweep_runner.side_output_manager.SideOutputManager</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="httomo.sweep_runner.stages.html">httomo.sweep_runner.stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="httomo.sweep_runner.stages.NonSweepStage.html">httomo.sweep_runner.stages.NonSweepStage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.sweep_runner.stages.Stages.html">httomo.sweep_runner.stages.Stages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httomo.sweep_runner.stages.SweepStage.html">httomo.sweep_runner.stages.SweepStage</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.transform_layer.html">httomo.transform_layer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.transform_layer.TransformLayer.html">httomo.transform_layer.TransformLayer</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.transform_loader_params.html">httomo.transform_loader_params</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.transform_loader_params.PreviewParam.html">httomo.transform_loader_params.PreviewParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.transform_loader_params.RawAnglesParam.html">httomo.transform_loader_params.RawAnglesParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.transform_loader_params.StartStopEntry.html">httomo.transform_loader_params.StartStopEntry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.transform_loader_params.UserDefinedAnglesParam.html">httomo.transform_loader_params.UserDefinedAnglesParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.transform_loader_params.UserDefinedAnglesParamInner.html">httomo.transform_loader_params.UserDefinedAnglesParamInner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.transform_loader_params.parse_angles.html">httomo.transform_loader_params.parse_angles</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.transform_loader_params.parse_preview.html">httomo.transform_loader_params.parse_preview</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="httomo.types.html">httomo.types</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.ui_layer.html">httomo.ui_layer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.ui_layer.UiLayer.html">httomo.ui_layer.UiLayer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.ui_layer.check_valid_ref_id.html">httomo.ui_layer.check_valid_ref_id</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.ui_layer.get_ref_split.html">httomo.ui_layer.get_ref_split</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.ui_layer.get_regex_pattern.html">httomo.ui_layer.get_regex_pattern</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.ui_layer.get_valid_ref_str.html">httomo.ui_layer.get_valid_ref_str</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.ui_layer.update_side_output_references.html">httomo.ui_layer.update_side_output_references</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.ui_layer.yaml_loader.html">httomo.ui_layer.yaml_loader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="httomo.utils.html">httomo.utils</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="httomo.utils.Pattern.html">httomo.utils.Pattern</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.utils.catch_gputime.html">httomo.utils.catch_gputime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.utils.catchtime.html">httomo.utils.catchtime</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">httomo.utils.get_data_in_data_out</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.utils.log_exception.html">httomo.utils.log_exception</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.utils.log_once.html">httomo.utils.log_once</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.utils.log_rank.html">httomo.utils.log_rank</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.utils.make_3d_shape_from_array.html">httomo.utils.make_3d_shape_from_array</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.utils.make_3d_shape_from_shape.html">httomo.utils.make_3d_shape_from_shape</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="httomo.yaml_checker.html">httomo.yaml_checker</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.Colour.html">httomo.yaml_checker.Colour</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.UniqueKeyLoader.html">httomo.yaml_checker.UniqueKeyLoader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_first_method_is_loader.html">httomo.yaml_checker.check_first_method_is_loader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_hdf5_paths_against_loader.html">httomo.yaml_checker.check_hdf5_paths_against_loader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_id_has_side_out.html">httomo.yaml_checker.check_id_has_side_out</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_keys.html">httomo.yaml_checker.check_keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_methods_exist_in_templates.html">httomo.yaml_checker.check_methods_exist_in_templates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_no_duplicated_keys.html">httomo.yaml_checker.check_no_duplicated_keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_no_imagesaver_after_sweep_method.html">httomo.yaml_checker.check_no_imagesaver_after_sweep_method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_no_required_parameter_values.html">httomo.yaml_checker.check_no_required_parameter_values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_parameter_names_are_known.html">httomo.yaml_checker.check_parameter_names_are_known</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_parameter_names_are_str.html">httomo.yaml_checker.check_parameter_names_are_str</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_ref_id_valid.html">httomo.yaml_checker.check_ref_id_valid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.check_side_out_matches_ref_arg.html">httomo.yaml_checker.check_side_out_matches_ref_arg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.sanity_check.html">httomo.yaml_checker.sanity_check</a></li>
+<li class="toctree-l3"><a class="reference internal" href="httomo.yaml_checker.validate_yaml_config.html">httomo.yaml_checker.validate_yaml_config</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/developers/generated/httomo.utils.get_data_in_data_out.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>httomo.utils.get_data_in_data_out</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#httomo.utils.get_data_in_data_out"><code class="docutils literal notranslate"><span class="pre">get_data_in_data_out()</span></code></a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="httomo-utils-get-data-in-data-out">
+<h1>httomo.utils.get_data_in_data_out<a class="headerlink" href="#httomo-utils-get-data-in-data-out" title="Link to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="httomo.utils.get_data_in_data_out">
+<span class="sig-prename descclassname"><span class="pre">httomo.utils.</span></span><span class="sig-name descname"><span class="pre">get_data_in_data_out</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_params_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span></span></span><a class="reference internal" href="../../_modules/httomo/utils.html#get_data_in_data_out"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#httomo.utils.get_data_in_data_out" title="Link to this definition">#</a></dt>
+<dd><p>Get the input and output datasets in a list</p>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="httomo.utils.catchtime.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">httomo.utils.catchtime</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="httomo.utils.log_exception.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">httomo.utils.log_exception</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#httomo.utils.get_data_in_data_out"><code class="docutils literal notranslate"><span class="pre">get_data_in_data_out()</span></code></a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By the Imaging Team
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Oct 24, 2024.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
