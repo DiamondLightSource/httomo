@@ -202,12 +202,11 @@ def test_paganin_filter_savu_memoryhook(slices, dim_x, dim_y, ensure_clean_memor
     kwargs["increment"] = 0.0
     hook = MaxMemoryHook()
     with hook:
-        data_filtered = paganin_filter_savu(cp.copy(data), **kwargs).get()
+        data_filtered = paganin_filter_savu(data, **kwargs).get()
 
-    # make sure estimator function is within range (80% min, 100% max)
-    max_mem = (
-        hook.max_mem
-    )  # the amount of memory in bytes needed for the method according to memoryhook
+    # The amount of bytes used by the method's processing according to the memory hook, plus
+    # the amount of bytes needed to hold the method's input in GPU memory
+    max_mem = hook.max_mem + data.nbytes
 
     # now we estimate how much of the total memory required for this data
     (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_paganin_filter_savu(
@@ -218,6 +217,8 @@ def test_paganin_filter_savu_memoryhook(slices, dim_x, dim_y, ensure_clean_memor
     max_mem_mb = round(max_mem / (1024**2), 2)
 
     # now we compare both memory estimations
+    #
+    # make sure estimator function is within range (80% min, 100% max)
     difference_mb = abs(estimated_memory_mb - max_mem_mb)
     percents_relative_maxmem = round((difference_mb / max_mem_mb) * 100)
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
