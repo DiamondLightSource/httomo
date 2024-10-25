@@ -1,8 +1,10 @@
-name: Upload HTTomo Package to PyPI when Release is Created
+name: Upload HTTomo Package to PyPI when `v` is pushed to any branch
 
+# Run the workflow whenever a tag beginning with `v` is pushed to any branch
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - v*
 
 jobs:
   pypi-publish:
