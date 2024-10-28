@@ -156,14 +156,14 @@ class UserDefinedAnglesParam(TypedDict):
 AnglesParam: TypeAlias = Union[RawAnglesParam, UserDefinedAnglesParam]
 
 
-def parse_angles(angles_data: dict) -> AnglesConfig:
+def parse_angles(angles_data: AnglesParam) -> AnglesConfig:
     """
     Convert python dict representing angles information generated from parsing the
     pipeline file, into an internal angles configuration type that loaders can use.
 
     Parameters
     ----------
-    angles_data : dict
+    angles_data : AnglesParam
         The python dict parsed from the pipeline file that represents the angles configuration
         in the loader.
 
