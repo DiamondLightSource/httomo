@@ -4,6 +4,7 @@
 
 .. autoclass:: {{ objname }}
    :members:
+   :undoc-members:
 
    {% block methods %}
    {% if methods %}
