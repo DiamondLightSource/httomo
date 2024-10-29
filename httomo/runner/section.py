@@ -1,3 +1,8 @@
+"""
+Class and associated functions relating to the grouping of sequences of methods in a pipeline
+into a section.
+"""
+
 import logging
 from typing import Iterator, List, Optional, Tuple
 
@@ -8,13 +13,14 @@ from httomo.runner.method_wrapper import MethodWrapper
 
 
 class Section:
-    """Represents on section of a pipeline that can be executed on the same platform,
-    and has the same dataset pattern.
+    """
+    Represents a sequence of methods in a pipeline.
 
-    A new section is added in with the following conditions:
-    - the pattern changed (sino->proj or vice versa)
-    - a side output of a previous method in the same section is referenced
-    - a more than one padding method is included"""
+    See Also
+    --------
+    sectionize : The rules for when a new section is introduced into a pipeline are described
+        and implemented in this function.
+    """
 
     def __init__(
         self,
@@ -41,10 +47,17 @@ class Section:
 
 
 def sectionize(pipeline: Pipeline) -> List[Section]:
-    """Separates the pipeline into sections,
-    where a new section is started whenever the pattern has changed
-    of when a side output from a previous method is referenced in the
-    method parameters."""
+    """
+    Groups the methods in a pipeline into sections.
+
+    Notes
+    -----
+
+    A new section is introduced into a pipeline under any of the following conditions:
+        - the pattern changed (sino -> proj or vice versa)
+        - a side output of a previous method is referenced
+        - more than one padding method is included
+    """
 
     sections: List[Section] = []
 
@@ -145,8 +158,16 @@ def _set_method_patterns(sections: List[Section]):
 
 
 def determine_section_padding(section: Section) -> Tuple[int, int]:
-    # NOTE: Assumes that only one method with padding will be in a section, which is
-    # consistent with the assumptions made by `sectionize()`
+    """
+    Determine the padding required for the input data to a section, based on the padding
+    requirements of the methods in the section.
+
+    Notes
+    -----
+
+    Assumes that only one method with padding will be in a section, which is consistent with
+    the assumptions made by `sectionize()`.
+    """
     for method in section.methods:
         if method.padding:
             return method.calculate_padding()
