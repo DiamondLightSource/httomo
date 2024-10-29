@@ -23,7 +23,7 @@ class ParamSweepRunner:
         comm: Comm,
         side_output_manager: SideOutputManager = SideOutputManager(),
     ) -> None:
-        self._sino_slices_threshold = 7
+        self._sino_slices_threshold = self._set_sino_slices()
         self._pipeline = pipeline
         self._side_output_manager = side_output_manager
         self._block: Optional[ParamSweepBlock] = None
@@ -50,6 +50,17 @@ class ParamSweepRunner:
         start = round((no_of_sweep_vals / nprocs) * rank)
         end = round((no_of_sweep_vals / nprocs) * (rank + 1))
         return start, end
+
+    def _set_sino_slice(self) -> int:
+        """
+        Estimate the amount of sinogram slices needed for the sweep preview. 
+        Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
+        the larger preview needs to be taken in that instance. So far this is the only method that might
+        require an extended preview crop as others, e.g., CoR estimation do not need it. Therefore we also
+        need to establish if Paganin filter is the part of the Pipeline.        
+        """
+        
+        return 7
 
     def _check_params_for_sweep(self):
         """
