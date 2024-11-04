@@ -15,6 +15,11 @@ from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import NonSweepStage, Stages, SweepStage
 from httomo.utils import catchtime, log_exception, log_once
 
+from httomo.preview import PreviewConfig, PreviewDimConfig
+from httomo.sweep_runner.paganin_kernel import _reciprocal_grid, _paganin_filter_factor
+from scipy.signal import peak_widths, find_peaks
+import numpy as np
+
 
 class ParamSweepRunner:
     def __init__(
@@ -23,8 +28,8 @@ class ParamSweepRunner:
         comm: Comm,
         side_output_manager: SideOutputManager = SideOutputManager(),
     ) -> None:
-        self._sino_slices_threshold = self._set_sino_slices()
         self._pipeline = pipeline
+        self._vertical_slices_preview = self._estimate_vert_slices_number()
         self._side_output_manager = side_output_manager
         self._block: Optional[ParamSweepBlock] = None
         self._check_params_for_sweep()
@@ -51,16 +56,48 @@ class ParamSweepRunner:
         end = round((no_of_sweep_vals / nprocs) * (rank + 1))
         return start, end
 
-    def _set_sino_slice(self) -> int:
+    def _estimate_vert_slices_number(self) -> int:
         """
-        Estimate the amount of sinogram slices needed for the sweep preview. 
-        Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
-        the larger preview needs to be taken in that instance. So far this is the only method that might
-        require an extended preview crop as others, e.g., CoR estimation do not need it. Therefore we also
-        need to establish if Paganin filter is the part of the Pipeline.        
+        Estimate the amount of vertical slices needed for the sweep preview.
         """
-        
-        return 7
+        vertical_slices_preview = 7  # the minimum amount of slices needed
+        # the vertical_slices_preview_max limit should be roughly estimated here based on how many
+        # projections in the data.
+        total_angles_from_preview = self._pipeline.loader.preview.angles[
+            1
+        ]  # when angles can be modified in the preview this won't be accurate
+        if total_angles_from_preview <= 1900:
+            vertical_slices_preview_max = 200  # the top limit for vertical slices
+        elif total_angles_from_preview > 1900 & total_angles_from_preview <= 3800:
+            vertical_slices_preview_max = 100
+        else:
+            vertical_slices_preview_max = 50
+
+        for method in self._pipeline._methods:
+            if "paganin" in method.method_name:
+                print("Estimating kernel size for Paganin filter")
+                # Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
+                # the larger preview needs to be taken in that instance. So far this is the only method that might
+                # require an extended preview crop as others, e.g., CoR estimation do not need it. Therefore we also
+                # need to establish if Paganin filter is the part of the Pipeline.
+
+                vertical_slices_preview = _paganin_kernel_estimator(
+                    method.config_params, peak_height=0.01
+                )
+                if vertical_slices_preview == 0:
+                    vertical_slices_preview = vertical_slices_preview_max
+
+        if vertical_slices_preview > vertical_slices_preview_max:
+            err_str = (
+                "Parameter sweep is limited to the amount of data it can extract for the preview, it is set to "
+                f"{vertical_slices_preview_max} vertical slices. The estimated amount of slices needed "
+                f"is {vertical_slices_preview}. "
+                f"Please modify the parameters of Paganin filter so that the kernel is not so wide. The wide kernel leads to data oversmoothing. "
+                f"In case if you still need to use those parameters, please run the full (non-sweep) pipeline instead."
+            )
+            raise ValueError(err_str)
+
+        return vertical_slices_preview
 
     def _check_params_for_sweep(self):
         """
@@ -135,6 +172,25 @@ class ParamSweepRunner:
             after_sweep=NonSweepStage(after_sweep),
         )
 
+    def modify_loader_preview(self):
+        """
+        Modifies loader's preview based on the method present in the pipeline.
+        In some cases we need to override users given preview, e.g., when Paganin filter is present.
+        """
+
+        # we call this only to find the global size of the data (not very efficient)
+        source = self._pipeline.loader.make_data_source(padding=(0, 0))
+
+        preview_new_start_stop = _preview_modifier(self, source._data.shape[1])
+
+        self._pipeline.loader.preview = PreviewConfig(
+            angles=self._pipeline.loader.preview.angles,
+            detector_y=PreviewDimConfig(
+                start=preview_new_start_stop[0], stop=preview_new_start_stop[1]
+            ),
+            detector_x=self._pipeline.loader.preview.detector_x,
+        )
+
     def prepare(self):
         """
         Load single block containing small number of sinogram slices in input data
@@ -142,15 +198,6 @@ class ParamSweepRunner:
         source = self._pipeline.loader.make_data_source(padding=(0, 0))
 
         SINO_SLICING_DIM = 1
-        no_of_middle_slices = source.global_shape[SINO_SLICING_DIM]
-        if no_of_middle_slices > self._sino_slices_threshold:
-            err_str = (
-                "Parameter sweep runs support input data containing "
-                f"<= {self._sino_slices_threshold} sinogram slices, input data "
-                f"contains {no_of_middle_slices} slices"
-            )
-            raise ValueError(err_str)
-
         log_once(f"Loading data with shape {source.global_shape}")
         splitter = BlockSplitter(source, source.global_shape[source.slicing_dim])
         dataset_block = splitter[0]
@@ -228,6 +275,7 @@ class ParamSweepRunner:
         """Load input data and execute all stages (before sweep, sweep, after sweep)"""
         with catchtime() as t:
             log_once(f"See the full log file at: {httomo.globals.run_out_dir}/user.log")
+            self.modify_loader_preview()
             self.prepare()
             self.execute_before_sweep()
             self.execute_sweep()
@@ -251,3 +299,54 @@ def _get_param_sweep_name_and_vals(d: Dict[str, Any]) -> Tuple[str, Tuple[Any, .
     assert param_name is not None
     assert sweep_vals is not None
     return param_name, sweep_vals
+
+
+def _preview_modifier(self, det_y_dim: int) -> List[int]:
+    """
+    Modifies the size of the user-defined preview (expand it or shrink it)
+    """
+    preview_given = self._pipeline.loader.preview
+
+    preview_new = [0, det_y_dim]
+    range_preview = preview_given.detector_y.stop - preview_given.detector_y.start
+
+    start_new = (
+        preview_given.detector_y.start
+        + range_preview // 2
+        - self._vertical_slices_preview // 2
+    )
+    stop_new = (
+        preview_given.detector_y.stop
+        - range_preview // 2
+        + self._vertical_slices_preview // 2
+    )
+    if start_new >= 0:
+        preview_new[0] = start_new
+    if stop_new < det_y_dim:
+        preview_new[1] = stop_new
+    return preview_new
+
+
+def _paganin_kernel_estimator(params_dict: dict, peak_height: float) -> int:
+    """
+    Using functions from Paganin filter to estimate the width of the kernel
+    """
+    extended_dim_size = 4096
+    padded_shape_dy = extended_dim_size  # we assume here the size of the padded projection to be pow(2,12)
+    padded_shape_dx = extended_dim_size
+    w2 = _reciprocal_grid(params_dict["pixel_size"], padded_shape_dy, padded_shape_dx)
+
+    kernels = np.zeros(len(params_dict["alpha"]), dtype=int)
+    for count, alpha_scalar in enumerate(params_dict["alpha"]):
+        phase_filter = _paganin_filter_factor(
+            params_dict["energy"], params_dict["dist"], alpha_scalar, w2
+        )
+
+        curve1D = np.abs(phase_filter[extended_dim_size // 2, :])
+        peaks, _ = find_peaks(curve1D)
+        full_size_kernel = int(
+            peak_widths(curve1D, peaks=peaks, rel_height=peak_height)[0]
+        )
+        kernels[count] = full_size_kernel
+
+    return np.max(kernels)
