@@ -141,7 +141,7 @@ class ParamSweepRunner:
 
         # before modifying preview here we need to check if the block fits the memory if Paganin method is present in the pipeline
         for method in self._pipeline._methods:
-            if "paganin" in method.method_name:
+            if "paganin" in method.method_name and method.sweep:
                 print("Estimating kernel size for Paganin filter")
                 # Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
                 # the larger preview needs to be taken in that case. So far this is the only method that
@@ -340,7 +340,7 @@ def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
     """
     Estimating the number of vertical slices than can fit the device to run Paganin method
     """
-    factor = 13  # works when ~4.5gb GPU memory available
+    factor = 10  # ad-hoc parameter as no real memory estimation is performed. Should be increased if OOM happens.
     available_memory = get_available_gpu_memory(10.0)
     available_memory_in_GB = round(available_memory / (1024**3), 2)
     tot_slices_fit = int(
