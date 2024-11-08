@@ -14,8 +14,9 @@ from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import NonSweepStage, Stages, SweepStage
 from httomo.utils import catchtime, log_exception, log_once
-
+from httomo.runner.gpu_utils import get_available_gpu_memory
 from httomo.preview import PreviewConfig, PreviewDimConfig
+from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.sweep_runner.paganin_kernel import _reciprocal_grid, _paganin_filter_factor
 from scipy.signal import peak_widths, find_peaks
 import numpy as np
@@ -29,7 +30,7 @@ class ParamSweepRunner:
         side_output_manager: SideOutputManager = SideOutputManager(),
     ) -> None:
         self._pipeline = pipeline
-        self._vertical_slices_preview = self._estimate_vert_slices_number()
+        self._vertical_slices_preview = 7  # self._estimate_vert_slices_number()
         self._side_output_manager = side_output_manager
         self._block: Optional[ParamSweepBlock] = None
         self._check_params_for_sweep()
@@ -55,49 +56,6 @@ class ParamSweepRunner:
         start = round((no_of_sweep_vals / nprocs) * rank)
         end = round((no_of_sweep_vals / nprocs) * (rank + 1))
         return start, end
-
-    def _estimate_vert_slices_number(self) -> int:
-        """
-        Estimate the amount of vertical slices needed for the sweep preview.
-        """
-        vertical_slices_preview = 7  # the minimum amount of slices needed
-        # the vertical_slices_preview_max limit should be roughly estimated here based on how many
-        # projections in the data.
-        total_angles_from_preview = self._pipeline.loader.preview.angles[
-            1
-        ]  # when angles can be modified in the preview this won't be accurate
-        if total_angles_from_preview <= 1900:
-            vertical_slices_preview_max = 200  # the top limit for vertical slices
-        elif total_angles_from_preview > 1900 & total_angles_from_preview <= 3800:
-            vertical_slices_preview_max = 100
-        else:
-            vertical_slices_preview_max = 50
-
-        for method in self._pipeline._methods:
-            if "paganin" in method.method_name:
-                print("Estimating kernel size for Paganin filter")
-                # Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
-                # the larger preview needs to be taken in that instance. So far this is the only method that might
-                # require an extended preview crop as others, e.g., CoR estimation do not need it. Therefore we also
-                # need to establish if Paganin filter is the part of the Pipeline.
-
-                vertical_slices_preview = _paganin_kernel_estimator(
-                    method.config_params, peak_height=0.01
-                )
-                if vertical_slices_preview == 0:
-                    vertical_slices_preview = vertical_slices_preview_max
-
-        if vertical_slices_preview > vertical_slices_preview_max:
-            err_str = (
-                "Parameter sweep is limited to the amount of data it can extract for the preview, it is set to "
-                f"{vertical_slices_preview_max} vertical slices. The estimated amount of slices needed "
-                f"is {vertical_slices_preview}. "
-                f"Please modify the parameters of Paganin filter so that the kernel is not so wide. The wide kernel leads to data oversmoothing. "
-                f"In case if you still need to use those parameters, please run the full (non-sweep) pipeline instead."
-            )
-            raise ValueError(err_str)
-
-        return vertical_slices_preview
 
     def _check_params_for_sweep(self):
         """
@@ -180,6 +138,27 @@ class ParamSweepRunner:
 
         # we call this only to find the global size of the data (not very efficient)
         source = self._pipeline.loader.make_data_source(padding=(0, 0))
+
+        # before modifying preview here we need to check if the block fits the memory if Paganin method is present in the pipeline
+        for method in self._pipeline._methods:
+            if "paganin" in method.method_name:
+                print("Estimating kernel size for Paganin filter")
+                # Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
+                # the larger preview needs to be taken in that case. So far this is the only method that
+                # requires an extended preview.
+
+                vertical_slices_preview_Paganin = _paganin_kernel_estimator(
+                    method.config_params,
+                    vert_min_limit=self._vertical_slices_preview,
+                    peak_height=0.01,
+                )
+                self._vertical_slices_preview = np.max(vertical_slices_preview_Paganin)
+
+                vertical_slices_preview_max = _slices_to_fit_memory_Paganin(source)
+
+                # we do not stop the run if the Paganin's kernel is too wide, but extend the preview to the maximum allowed size for the current card
+                if self._vertical_slices_preview > vertical_slices_preview_max:
+                    self._vertical_slices_preview = vertical_slices_preview_max
 
         preview_new_start_stop = _preview_modifier(self, source._data.shape[1])
 
@@ -327,7 +306,9 @@ def _preview_modifier(self, det_y_dim: int) -> List[int]:
     return preview_new
 
 
-def _paganin_kernel_estimator(params_dict: dict, peak_height: float) -> int:
+def _paganin_kernel_estimator(
+    params_dict: dict, vert_min_limit: int, peak_height: float
+) -> np.ndarray:
     """
     Using functions from Paganin filter to estimate the width of the kernel
     """
@@ -347,6 +328,23 @@ def _paganin_kernel_estimator(params_dict: dict, peak_height: float) -> int:
         full_size_kernel = int(
             peak_widths(curve1D, peaks=peaks, rel_height=peak_height)[0]
         )
-        kernels[count] = full_size_kernel
+        if full_size_kernel == 0:
+            kernels[count] = vert_min_limit
+        else:
+            kernels[count] = full_size_kernel
 
-    return np.max(kernels)
+    return kernels
+
+
+def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
+    """
+    Estimating the number of vertical slices than can fit the device to run Paganin method
+    """
+    factor = 13  # works when ~4.5gb GPU memory available
+    available_memory = get_available_gpu_memory(10.0)
+    available_memory_in_GB = round(available_memory / (1024**3), 2)
+    tot_slices_fit = int(
+        available_memory_in_GB
+        // (((source.aux_data.angles_length * source.global_shape[2]) * 4) / 1024**3)
+    )
+    return tot_slices_fit // factor
