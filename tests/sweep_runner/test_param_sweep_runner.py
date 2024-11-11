@@ -12,6 +12,7 @@ from httomo.method_wrappers.images import ImagesWrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.pipeline import Pipeline
+from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import NonSweepStage, Stages, SweepStage
@@ -99,36 +100,72 @@ def test_after_prepare_block_attr_contains_data(mocker: MockerFixture):
     np.testing.assert_array_equal(runner.block.data, data)
 
 
-# def tests_prepare_raises_error_if_too_many_sino_slices(mocker: MockerFixture):
-#     TOO_MANY_SINO_SLICES = 10
-#     GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, TOO_MANY_SINO_SLICES, 160)
-#     data = np.arange(np.prod(PREVIEWED_SLICES_SHAPE), dtype=np.uint16).reshape(
-#         PREVIEWED_SLICES_SHAPE
-#     )
-#     aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
-#     block = DataSetBlock(
-#         data=data,
-#         aux_data=aux_data,
-#         slicing_dim=0,
-#         global_shape=GLOBAL_SHAPE,
-#         chunk_start=0,
-#         chunk_shape=GLOBAL_SHAPE,
-#         block_start=0,
-#     )
-#     loader = make_test_loader(mocker, block=block)
-#     m1 = make_test_method(mocker)
-#     sweep_wrapper = make_test_method(mocker, param_1=(0,))
-#     pipeline = Pipeline(loader=loader, methods=[m1, sweep_wrapper])
-#     runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
+def tests_preview_modifier_paganin(mocker: MockerFixture):
+    SINO_SLICES = 100
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, SINO_SLICES, 160)
+    data = np.arange(np.prod(PREVIEWED_SLICES_SHAPE), dtype=np.uint16).reshape(
+        PREVIEWED_SLICES_SHAPE
+    )
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    preview = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=180),
+        detector_y=PreviewDimConfig(start=0, stop=100),
+        detector_x=PreviewDimConfig(start=0, stop=160),
+    )
+    loader = make_test_loader(mocker, preview=preview, block=block)
 
-#     with pytest.raises(ValueError) as e:
-#         runner.prepare()
+    class FakeModule:
+        def paganin(data: np.ndarray, alpha: float, pixel_size: float, energy: float, dist: float):  # type: ignore
+            return data * alpha
 
-#     err_str = (
-#         "Parameter sweep runs support input data containing <= 7 sinogram slices, "
-#         "input data contains 10 slices"
-#     )
-#     assert err_str in str(e)
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
+
+    # Create sweep method wrapper, passing the sweep values for the param to sweep over
+    NO_OF_SWEEPS = 2
+    SWEEP_VALUES = (0.1, 0.5)
+    paganin_params = {
+        "alpha": SWEEP_VALUES,
+        "pixel_size": 0.0001,
+        "energy": 53,
+        "dist": 50,
+    }
+    sweep_method_wrapper = make_method_wrapper(
+        method_repository=make_mock_repo(mocker),
+        module_path="mocked_module_path.corr",
+        method_name="paganin",
+        comm=MPI.COMM_WORLD,
+        preview_config=make_mock_preview_config(mocker),
+        save_result=None,
+        output_mapping={},
+        **paganin_params,
+    )
+
+    # Define pipeline, stages, runner objects, and execute the methods in the sweep stage
+    pipeline = Pipeline(loader=loader, methods=[sweep_method_wrapper])
+    runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
+    runner.modify_loader_preview()
+
+    EXPECTED_BLOCK_SHAPE = (
+        PREVIEWED_SLICES_SHAPE[0],
+        NO_OF_SWEEPS,
+        PREVIEWED_SLICES_SHAPE[2],
+    )
+    assert runner.block.data.shape == EXPECTED_BLOCK_SHAPE
+    expected_data = np.ones(EXPECTED_BLOCK_SHAPE, dtype=np.float32)
+    for sino_slice_idx, multiplier in enumerate(SWEEP_VALUES):
+        expected_data[:, sino_slice_idx, :] *= multiplier
+    np.testing.assert_array_equal(runner.block.data, expected_data)
 
 
 @pytest.mark.parametrize("non_sweep_stage", ["before", "after"])
@@ -344,6 +381,11 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
 
     mocker.patch(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
+
+    mocker.patch(
+        "httomo.sweep_runner.param_sweep_runner._preview_modifier",
+        return_value=[50, 50],
     )
 
     # Create sweep method wrapper, passing the sweep values for the param to sweep over

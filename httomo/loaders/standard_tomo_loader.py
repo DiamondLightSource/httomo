@@ -395,6 +395,7 @@ class StandardLoaderWrapper(LoaderInterface):
         self._detector_x: int = 0
         self._detector_y: int = 0
         self._angles_total: int = 0
+        self._preview = preview
         self.comm = comm
         self.in_file = in_file
         self.data_path = data_path
@@ -402,7 +403,6 @@ class StandardLoaderWrapper(LoaderInterface):
         self.darks = darks
         self.flats = flats
         self.angles = angles
-        self.preview = preview
 
     def make_data_source(self, padding: Tuple[int, int] = (0, 0)) -> DataSetSource:
         assert self.pattern in [Pattern.sinogram, Pattern.projection]
@@ -432,3 +432,7 @@ class StandardLoaderWrapper(LoaderInterface):
     @property
     def angles_total(self) -> int:
         return self._angles_total
+
+    @property
+    def preview(self) -> PreviewConfig:
+        return self.preview
