@@ -123,16 +123,6 @@ def test_uilayer_calls_correct_loader_yaml(mocker: MockerFixture, extension: str
     loader.assert_called_once_with(file)
 
 
-@pytest.mark.parametrize("extension", ["py", "PY", "Py"])
-def test_uilayer_calls_correct_loader_python(mocker: MockerFixture, extension: str):
-    comm = MPI.COMM_NULL
-    loader = mocker.patch("httomo.ui_layer._python_tasks_loader")
-    file = Path(f"test_pipeline.{extension}")
-    UiLayer(file, Path("doesnt_matter"), comm=comm)
-
-    loader.assert_called_once_with(file)
-
-
 def test_uilayer_fails_with_unsupported_extension(mocker: MockerFixture):
     comm = MPI.COMM_NULL
     file = Path(f"test_pipeline.dummy")
@@ -142,7 +132,7 @@ def test_uilayer_fails_with_unsupported_extension(mocker: MockerFixture):
     assert "extension .dummy" in str(e)
 
 
-@pytest.mark.parametrize("file", ["does_not_exist.py", "does_not_exist.yaml"])
+@pytest.mark.parametrize("file", ["does_not_exist.yaml"])
 def test_uilayer_fails_with_nonexistant_file(file: str):
     comm = MPI.COMM_NULL
     with pytest.raises(FileNotFoundError):

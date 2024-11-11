@@ -1,6 +1,6 @@
 import yaml
 from typing import Any, Dict, List, Optional, TypeAlias
-from importlib import import_module, util
+from importlib import import_module
 from pathlib import Path
 import os
 import re
@@ -49,9 +49,6 @@ class UiLayer:
         if ext.upper() in [".YAML", ".YML"]:
             # loading yaml file with tasks provided
             self.PipelineStageConfig = yaml_loader(self.tasks_file_path)
-        elif ext.upper() == ".PY":
-            # loading python file with tasks provided
-            self.PipelineStageConfig = _python_tasks_loader(self.tasks_file_path)
         else:
             # TODO option to relocate to yaml_checker
             raise ValueError(
@@ -291,13 +288,3 @@ def yaml_loader(
     with open(file_path, "r") as f:
         tasks_list = list(yaml.load_all(f, Loader=loader))
     return tasks_list[0]
-
-
-def _python_tasks_loader(file_path: Path) -> list:
-    module_spec = util.spec_from_file_location("methods_to_list", file_path)
-    assert module_spec is not None, "error reading module spec"
-    foo = util.module_from_spec(module_spec)
-    assert module_spec.loader is not None, "module spec has no loader"
-    module_spec.loader.exec_module(foo)
-    tasks_list = list(foo.methods_to_list())
-    return tasks_list
