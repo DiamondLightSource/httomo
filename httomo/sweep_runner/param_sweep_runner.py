@@ -30,7 +30,7 @@ class ParamSweepRunner:
         side_output_manager: SideOutputManager = SideOutputManager(),
     ) -> None:
         self._pipeline = pipeline
-        self._vertical_slices_preview = 7  # self._estimate_vert_slices_number()
+        self._vertical_slices_preview = 7
         self._side_output_manager = side_output_manager
         self._block: Optional[ParamSweepBlock] = None
         self._check_params_for_sweep()
@@ -147,7 +147,10 @@ class ParamSweepRunner:
                 # requires an extended preview.
 
                 vertical_slices_preview_Paganin = paganin_kernel_estimator(
-                    method.config_params,
+                    method.config_params["pixel_size"],
+                    method.config_params["alpha"],
+                    method.config_params["energy"],
+                    method.config_params["dist"],
                     vert_min_limit=self._vertical_slices_preview,
                     peak_height=0.01,
                 )

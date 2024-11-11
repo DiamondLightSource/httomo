@@ -7,7 +7,12 @@ PLANCK_CONSTANT = 6.58211928e-19  # [keV*s]
 
 
 def paganin_kernel_estimator(
-    params_dict: dict, vert_min_limit: int, peak_height: float
+    pixel_size: float,
+    alpha_tuple: tuple,
+    energy: float,
+    dist: float,
+    vert_min_limit: int,
+    peak_height: float,
 ) -> np.ndarray:
     """
     Using functions from Paganin filter to estimate the width of the kernel
@@ -15,13 +20,11 @@ def paganin_kernel_estimator(
     extended_dim_size = 4096
     padded_shape_dy = extended_dim_size  # we assume here the size of the padded projection to be pow(2,12)
     padded_shape_dx = extended_dim_size
-    w2 = _reciprocal_grid(params_dict["pixel_size"], padded_shape_dy, padded_shape_dx)
+    w2 = _reciprocal_grid(pixel_size, padded_shape_dy, padded_shape_dx)
 
-    kernels = np.zeros(len(params_dict["alpha"]), dtype=int)
-    for count, alpha_scalar in enumerate(params_dict["alpha"]):
-        phase_filter = _paganin_filter_factor(
-            params_dict["energy"], params_dict["dist"], alpha_scalar, w2
-        )
+    kernels = np.zeros(len(alpha_tuple), dtype=int)
+    for count, alpha_scalar in enumerate(alpha_tuple):
+        phase_filter = _paganin_filter_factor(energy, dist, alpha_scalar, w2)
 
         curve1D = np.abs(phase_filter[extended_dim_size // 2, :])
         peaks, _ = find_peaks(curve1D)
