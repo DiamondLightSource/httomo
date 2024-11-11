@@ -1,10 +1,39 @@
 import numpy as np
-import math
+from scipy.signal import peak_widths, find_peaks
 
 BOLTZMANN_CONSTANT = 1.3806488e-16  # [erg/k]
 SPEED_OF_LIGHT = 299792458e2  # [cm/s]
-PI = 3.14159265359
 PLANCK_CONSTANT = 6.58211928e-19  # [keV*s]
+
+
+def paganin_kernel_estimator(
+    params_dict: dict, vert_min_limit: int, peak_height: float
+) -> np.ndarray:
+    """
+    Using functions from Paganin filter to estimate the width of the kernel
+    """
+    extended_dim_size = 4096
+    padded_shape_dy = extended_dim_size  # we assume here the size of the padded projection to be pow(2,12)
+    padded_shape_dx = extended_dim_size
+    w2 = _reciprocal_grid(params_dict["pixel_size"], padded_shape_dy, padded_shape_dx)
+
+    kernels = np.zeros(len(params_dict["alpha"]), dtype=int)
+    for count, alpha_scalar in enumerate(params_dict["alpha"]):
+        phase_filter = _paganin_filter_factor(
+            params_dict["energy"], params_dict["dist"], alpha_scalar, w2
+        )
+
+        curve1D = np.abs(phase_filter[extended_dim_size // 2, :])
+        peaks, _ = find_peaks(curve1D)
+        full_size_kernel = int(
+            peak_widths(curve1D, peaks=peaks, rel_height=peak_height)[0]
+        )
+        if full_size_kernel == 0:
+            kernels[count] = vert_min_limit
+        else:
+            kernels[count] = full_size_kernel
+
+    return kernels
 
 
 def _calculate_pad_size(datashape: tuple) -> list:
@@ -33,17 +62,17 @@ def _shift_bit_length(x: int) -> int:
 
 
 def _wavelength(energy):
-    return 2 * PI * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
+    return 2 * np.pi * PLANCK_CONSTANT * SPEED_OF_LIGHT / energy
 
 
 def _paganin_filter_factor(energy, dist, alpha, w2):
-    return 1 / (1 + (dist * alpha * _wavelength(energy) * w2 / (4 * PI)))
+    return 1 / (1 + (dist * alpha * _wavelength(energy) * w2 / (4 * np.pi)))
 
 
 def _reciprocal_coord(pixel_size: float, num_grid: int) -> np.ndarray:
     n = num_grid - 1
     rc = np.arange(-n, num_grid, 2, dtype=np.float32)
-    rc *= 2 * math.pi / (n * pixel_size)
+    rc *= 2 * np.pi / (n * pixel_size)
     return rc
 
 

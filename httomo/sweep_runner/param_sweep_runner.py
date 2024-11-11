@@ -17,8 +17,8 @@ from httomo.utils import catchtime, log_exception, log_once
 from httomo.runner.gpu_utils import get_available_gpu_memory
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.dataset_store_interfaces import DataSetSource
-from httomo.sweep_runner.paganin_kernel import _reciprocal_grid, _paganin_filter_factor
-from scipy.signal import peak_widths, find_peaks
+from httomo.sweep_runner.paganin_kernel import paganin_kernel_estimator
+
 import numpy as np
 
 
@@ -142,12 +142,11 @@ class ParamSweepRunner:
         # before modifying preview here we need to check if the block fits the memory if Paganin method is present in the pipeline
         for method in self._pipeline._methods:
             if "paganin" in method.method_name and method.sweep:
-                print("Estimating kernel size for Paganin filter")
                 # Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
                 # the larger preview needs to be taken in that case. So far this is the only method that
                 # requires an extended preview.
 
-                vertical_slices_preview_Paganin = _paganin_kernel_estimator(
+                vertical_slices_preview_Paganin = paganin_kernel_estimator(
                     method.config_params,
                     vert_min_limit=self._vertical_slices_preview,
                     peak_height=0.01,
@@ -160,7 +159,11 @@ class ParamSweepRunner:
                 if self._vertical_slices_preview > vertical_slices_preview_max:
                     self._vertical_slices_preview = vertical_slices_preview_max
 
-        preview_new_start_stop = _preview_modifier(self, source._data.shape[1])
+        preview_new_start_stop = _preview_modifier(
+            self._pipeline.loader.preview,
+            source.raw_shape[1],
+            self._vertical_slices_preview,
+        )
 
         self._pipeline.loader.preview = PreviewConfig(
             angles=self._pipeline.loader.preview.angles,
@@ -280,60 +283,23 @@ def _get_param_sweep_name_and_vals(d: Dict[str, Any]) -> Tuple[str, Tuple[Any, .
     return param_name, sweep_vals
 
 
-def _preview_modifier(self, det_y_dim: int) -> List[int]:
+def _preview_modifier(
+    preview_old: PreviewConfig, det_y_dim_raw: int, vert_slices: int
+) -> List[int]:
     """
     Modifies the size of the user-defined preview (expand it or shrink it)
     """
-    preview_given = self._pipeline.loader.preview
 
-    preview_new = [0, det_y_dim]
-    range_preview = preview_given.detector_y.stop - preview_given.detector_y.start
+    preview_new = [0, det_y_dim_raw]
+    range_preview = preview_old.detector_y.stop - preview_old.detector_y.start
 
-    start_new = (
-        preview_given.detector_y.start
-        + range_preview // 2
-        - self._vertical_slices_preview // 2
-    )
-    stop_new = (
-        preview_given.detector_y.stop
-        - range_preview // 2
-        + self._vertical_slices_preview // 2
-    )
+    start_new = preview_old.detector_y.start + range_preview // 2 - vert_slices // 2
+    stop_new = preview_old.detector_y.stop - range_preview // 2 + vert_slices // 2
     if start_new >= 0:
         preview_new[0] = start_new
-    if stop_new < det_y_dim:
+    if stop_new < det_y_dim_raw:
         preview_new[1] = stop_new
     return preview_new
-
-
-def _paganin_kernel_estimator(
-    params_dict: dict, vert_min_limit: int, peak_height: float
-) -> np.ndarray:
-    """
-    Using functions from Paganin filter to estimate the width of the kernel
-    """
-    extended_dim_size = 4096
-    padded_shape_dy = extended_dim_size  # we assume here the size of the padded projection to be pow(2,12)
-    padded_shape_dx = extended_dim_size
-    w2 = _reciprocal_grid(params_dict["pixel_size"], padded_shape_dy, padded_shape_dx)
-
-    kernels = np.zeros(len(params_dict["alpha"]), dtype=int)
-    for count, alpha_scalar in enumerate(params_dict["alpha"]):
-        phase_filter = _paganin_filter_factor(
-            params_dict["energy"], params_dict["dist"], alpha_scalar, w2
-        )
-
-        curve1D = np.abs(phase_filter[extended_dim_size // 2, :])
-        peaks, _ = find_peaks(curve1D)
-        full_size_kernel = int(
-            peak_widths(curve1D, peaks=peaks, rel_height=peak_height)[0]
-        )
-        if full_size_kernel == 0:
-            kernels[count] = vert_min_limit
-        else:
-            kernels[count] = full_size_kernel
-
-    return kernels
 
 
 def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:

@@ -110,6 +110,10 @@ class StandardTomoLoader(DataSetSource):
         return self._global_shape
 
     @property
+    def raw_shape(self) -> Tuple[int, int, int]:
+        return self._data.shape
+
+    @property
     def global_index(self) -> Tuple[int, int, int]:
         return self._chunk_index
 
