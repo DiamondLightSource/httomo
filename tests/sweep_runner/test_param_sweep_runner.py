@@ -2,6 +2,7 @@ from unittest import mock
 
 import pytest
 from pytest_mock import MockerFixture
+from typing import Literal
 
 import numpy as np
 from mpi4py import MPI
@@ -22,6 +23,9 @@ from tests.testing_utils import (
     make_test_loader,
     make_test_method,
 )
+from httomo.runner.loader import LoaderInterface
+from httomo.utils import Pattern
+from httomo.runner.dataset_store_interfaces import DataSetSource
 
 
 def test_raises_error_if_no_sweep_detected(mocker: MockerFixture):
@@ -121,7 +125,6 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
         detector_y=PreviewDimConfig(start=0, stop=100),
         detector_x=PreviewDimConfig(start=0, stop=160),
     )
-    loader = make_test_loader(mocker, preview=preview, block=block)
 
     class FakeModule:
         def paganin(data: np.ndarray, alpha: float, pixel_size: float, energy: float, dist: float):  # type: ignore
@@ -130,6 +133,51 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
     mocker.patch(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
+
+    # Stuff take from `make_test_loader()`
+    loader: LoaderInterface = mocker.create_autospec(
+        LoaderInterface,
+        instance=True,
+        pattern=Pattern.all,
+        method_name="testloader",
+        reslice=False,
+        preview=preview,
+    )
+
+    def mock_make_data_source(padding) -> DataSetSource:
+        ret = mocker.create_autospec(
+            DataSetSource,
+            global_shape=block.global_shape,
+            dtype=block.data.dtype,
+            chunk_shape=block.chunk_shape,
+            chunk_index=block.chunk_index,
+            slicing_dim=1 if loader.pattern == Pattern.sinogram else 0,
+            aux_data=block.aux_data,
+            preview=preview,
+        )
+        slicing_dim: Literal[0, 1, 2] = 0
+        mocker.patch.object(
+            ret,
+            "read_block",
+            side_effect=lambda start, length: DataSetBlock(
+                data=block.data[start : start + length, :, :],
+                aux_data=block.aux_data,
+                global_shape=block.global_shape,
+                chunk_shape=block.chunk_shape,
+                slicing_dim=slicing_dim,
+                block_start=start,
+                chunk_start=block.chunk_index[slicing_dim],
+            ),
+        )
+        return ret
+
+    mocker.patch.object(
+        loader,
+        "make_data_source",
+        side_effect=mock_make_data_source,
+    )
+
+    type(loader).raw_shape = mock.PropertyMock(return_value=(180, 100, 160))
 
     # Create sweep method wrapper, passing the sweep values for the param to sweep over
     NO_OF_SWEEPS = 2

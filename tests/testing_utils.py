@@ -58,6 +58,7 @@ def make_test_loader(
     interface: LoaderInterface = mocker.create_autospec(
         LoaderInterface,
         instance=True,
+        preview=preview,
         pattern=pattern,
         method_name=method_name,
         reslice=False,
