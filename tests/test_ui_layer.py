@@ -12,12 +12,8 @@ from .testing_utils import make_test_method
 # TODO: add files with invalid syntax
 
 
-@pytest.mark.parametrize("version", ["python", "yaml"])
-def test_can_read_cpu1_python(python_cpu_pipeline1, yaml_cpu_pipeline1, version):
-    if version == "python":
-        pipline_stage_config = ui_layer._python_tasks_loader(python_cpu_pipeline1)
-    else:
-        pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline1)
+def test_can_read_cpu1(yaml_cpu_pipeline1):
+    pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline1)
 
     assert len(pipline_stage_config) == 7
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -37,12 +33,8 @@ def test_can_read_cpu1_python(python_cpu_pipeline1, yaml_cpu_pipeline1, version)
     assert pipline_stage_config[6]["module_path"] == "httomolib.misc.images"
 
 
-@pytest.mark.parametrize("version", ["python", "yaml"])
-def test_can_read_cpu2_python(python_cpu_pipeline2, yaml_cpu_pipeline2, version):
-    if version == "python":
-        pipline_stage_config = ui_layer._python_tasks_loader(python_cpu_pipeline2)
-    else:
-        pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline2)
+def test_can_read_cpu2(yaml_cpu_pipeline2):
+    pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline2)
 
     assert len(pipline_stage_config) == 10
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -72,12 +64,8 @@ def test_can_read_cpu2_python(python_cpu_pipeline2, yaml_cpu_pipeline2, version)
     assert pipline_stage_config[9]["module_path"] == "httomolib.misc.images"
 
 
-@pytest.mark.parametrize("version", ["python", "yaml"])
-def test_can_read_cpu3_python(python_cpu_pipeline3, yaml_cpu_pipeline3, version):
-    if version == "python":
-        pipline_stage_config = ui_layer._python_tasks_loader(python_cpu_pipeline3)
-    else:
-        pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline3)
+def test_can_read_cpu3(yaml_cpu_pipeline3):
+    pipline_stage_config = ui_layer.yaml_loader(yaml_cpu_pipeline3)
 
     assert len(pipline_stage_config) == 9
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -102,12 +90,8 @@ def test_can_read_cpu3_python(python_cpu_pipeline3, yaml_cpu_pipeline3, version)
     assert pipline_stage_config[8]["module_path"] == "httomolib.misc.images"
 
 
-@pytest.mark.parametrize("version", ["python", "yaml"])
-def test_can_read_gpu1_python(python_gpu_pipeline1, yaml_gpu_pipeline1, version):
-    if version == "python":
-        pipline_stage_config = ui_layer._python_tasks_loader(python_gpu_pipeline1)
-    else:
-        pipline_stage_config = ui_layer.yaml_loader(yaml_gpu_pipeline1)
+def test_can_read_gpu1(yaml_gpu_pipeline1):
+    pipline_stage_config = ui_layer.yaml_loader(yaml_gpu_pipeline1)
 
     assert len(pipline_stage_config) == 8
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -139,16 +123,6 @@ def test_uilayer_calls_correct_loader_yaml(mocker: MockerFixture, extension: str
     loader.assert_called_once_with(file)
 
 
-@pytest.mark.parametrize("extension", ["py", "PY", "Py"])
-def test_uilayer_calls_correct_loader_python(mocker: MockerFixture, extension: str):
-    comm = MPI.COMM_NULL
-    loader = mocker.patch("httomo.ui_layer._python_tasks_loader")
-    file = Path(f"test_pipeline.{extension}")
-    UiLayer(file, Path("doesnt_matter"), comm=comm)
-
-    loader.assert_called_once_with(file)
-
-
 def test_uilayer_fails_with_unsupported_extension(mocker: MockerFixture):
     comm = MPI.COMM_NULL
     file = Path(f"test_pipeline.dummy")
@@ -158,20 +132,16 @@ def test_uilayer_fails_with_unsupported_extension(mocker: MockerFixture):
     assert "extension .dummy" in str(e)
 
 
-@pytest.mark.parametrize("file", ["does_not_exist.py", "does_not_exist.yaml"])
+@pytest.mark.parametrize("file", ["does_not_exist.yaml"])
 def test_uilayer_fails_with_nonexistant_file(file: str):
     comm = MPI.COMM_NULL
     with pytest.raises(FileNotFoundError):
         UiLayer(Path(file), Path("doesnt_matter"), comm=comm)
 
 
-def test_pipeline_build_no_loader(python_cpu_pipeline1, standard_data):
+def test_pipeline_build_no_loader(yaml_cpu_pipeline1, standard_data):
     comm = MPI.COMM_NULL
-    LayerUI = UiLayer(
-        python_cpu_pipeline1,
-        standard_data,
-        comm=comm,
-    )
+    LayerUI = UiLayer(yaml_cpu_pipeline1, standard_data, comm=comm)
     del LayerUI.PipelineStageConfig[0]
     with pytest.raises(ValueError) as e:
         LayerUI.build_pipeline()
@@ -179,13 +149,9 @@ def test_pipeline_build_no_loader(python_cpu_pipeline1, standard_data):
     assert "no loader" in str(e)
 
 
-def test_pipeline_build_duplicate_id(python_cpu_pipeline1, standard_data):
+def test_pipeline_build_duplicate_id(yaml_cpu_pipeline1, standard_data):
     comm = MPI.COMM_NULL
-    LayerUI = UiLayer(
-        python_cpu_pipeline1,
-        standard_data,
-        comm=comm,
-    )
+    LayerUI = UiLayer(yaml_cpu_pipeline1, standard_data, comm=comm)
     LayerUI.PipelineStageConfig[1]["id"] = "testid"
     LayerUI.PipelineStageConfig[2]["id"] = "testid"
     with pytest.raises(ValueError) as e:
@@ -194,17 +160,10 @@ def test_pipeline_build_duplicate_id(python_cpu_pipeline1, standard_data):
     assert "duplicate id" in str(e)
 
 
-@pytest.mark.parametrize("version", ["python", "yaml"])
-def test_pipeline_build_cpu1(
-    standard_data, python_cpu_pipeline1, yaml_cpu_pipeline1, version: str
-):
+def test_pipeline_build_cpu1(standard_data, yaml_cpu_pipeline1):
     """Testing OutputRef."""
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(
-        python_cpu_pipeline1 if version == "python" else yaml_cpu_pipeline1,
-        standard_data,
-        comm=comm,
-    )
+    LayerUI = UiLayer(yaml_cpu_pipeline1, standard_data, comm=comm)
 
     pipeline = LayerUI.build_pipeline()
 
@@ -230,17 +189,10 @@ def test_pipeline_build_cpu1(
     assert ref.method.method_name == "find_center_vo"
 
 
-@pytest.mark.parametrize("version", ["python", "yaml"])
-def test_pipeline_build_cpu2(
-    standard_data, python_cpu_pipeline2, yaml_cpu_pipeline2, version: str
-):
+def test_pipeline_build_cpu2(standard_data, yaml_cpu_pipeline2):
     """Testing OutputRef."""
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(
-        python_cpu_pipeline2 if version == "python" else yaml_cpu_pipeline2,
-        standard_data,
-        comm=comm,
-    )
+    LayerUI = UiLayer(yaml_cpu_pipeline2, standard_data, comm=comm)
 
     pipeline = LayerUI.build_pipeline()
 
@@ -265,17 +217,10 @@ def test_pipeline_build_cpu2(
     assert ref.method.task_id == "centering"
 
 
-@pytest.mark.parametrize("version", ["python", "yaml"])
-def test_pipeline_build_cpu3(
-    standard_data, python_cpu_pipeline3, yaml_cpu_pipeline3, version: str
-):
+def test_pipeline_build_cpu3(standard_data, yaml_cpu_pipeline3):
     """Testing OutputRef."""
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(
-        python_cpu_pipeline3 if version == "python" else yaml_cpu_pipeline3,
-        standard_data,
-        comm=comm,
-    )
+    LayerUI = UiLayer(yaml_cpu_pipeline3, standard_data, comm=comm)
 
     pipeline = LayerUI.build_pipeline()
 
