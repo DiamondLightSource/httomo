@@ -45,15 +45,8 @@ class UiLayer:
         self.comm = comm
         self._preview_config: PreviewConfig | None = None
 
-        root, ext = os.path.splitext(self.tasks_file_path)
-        if ext.upper() in [".YAML", ".YML"]:
-            # loading yaml file with tasks provided
-            self.PipelineStageConfig = yaml_loader(self.tasks_file_path)
-        else:
-            # TODO option to relocate to yaml_checker
-            raise ValueError(
-                f"The extension {ext} of the file {root} with tasks is unknown."
-            )
+        # loading yaml file with tasks provided
+        self.PipelineStageConfig = yaml_loader(self.tasks_file_path)
 
     def build_pipeline(self) -> Pipeline:
         loader = self._setup_loader()
