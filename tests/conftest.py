@@ -232,26 +232,6 @@ def gpu_pipeline():
 
 
 @pytest.fixture
-def python_cpu_pipeline1():
-    return "tests/samples/python_templates/pipeline_cpu1.py"
-
-
-@pytest.fixture
-def python_cpu_pipeline2():
-    return "tests/samples/python_templates/pipeline_cpu2.py"
-
-
-@pytest.fixture
-def python_cpu_pipeline3():
-    return "tests/samples/python_templates/pipeline_cpu3.py"
-
-
-@pytest.fixture
-def python_gpu_pipeline1():
-    return "tests/samples/python_templates/pipeline_gpu1.py"
-
-
-@pytest.fixture
 def yaml_cpu_pipeline1():
     return "tests/samples/pipeline_template_examples/pipeline_cpu1.yaml"
 
