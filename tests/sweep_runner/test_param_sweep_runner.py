@@ -155,6 +155,7 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
             aux_data=block.aux_data,
             preview=preview,
         )
+        type(ret).raw_shape = mock.PropertyMock(return_value=GLOBAL_SHAPE)
         slicing_dim: Literal[0, 1, 2] = 0
         mocker.patch.object(
             ret,
@@ -176,8 +177,6 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
         "make_data_source",
         side_effect=mock_make_data_source,
     )
-
-    type(loader).raw_shape = mock.PropertyMock(return_value=(180, 100, 160))
 
     # Create sweep method wrapper, passing the sweep values for the param to sweep over
     NO_OF_SWEEPS = 2
