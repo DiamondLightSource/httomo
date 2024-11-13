@@ -435,4 +435,9 @@ class StandardLoaderWrapper(LoaderInterface):
 
     @property
     def preview(self) -> PreviewConfig:
-        return self.preview
+        return self._preview
+
+    @preview.setter
+    def preview(self, preview: PreviewConfig):
+        """In case of the sweep runner we need to re-set the private preview"""
+        self._preview = preview
