@@ -30,7 +30,7 @@ class ParamSweepRunner:
         side_output_manager: SideOutputManager = SideOutputManager(),
     ) -> None:
         self._pipeline = pipeline
-        self._vertical_slices_preview = 7
+        self._vertical_slices_preview = 5
         self._side_output_manager = side_output_manager
         self._block: Optional[ParamSweepBlock] = None
         self._check_params_for_sweep()
@@ -138,6 +138,15 @@ class ParamSweepRunner:
 
         # we call this only to find the global size of the data (not very efficient)
         source = self._pipeline.loader.make_data_source(padding=(0, 0))
+
+        if source.raw_shape[1] < self._vertical_slices_preview:
+            err_str = (
+                "The size of the raw data  "
+                f"{source.raw_shape[1]} is smaller than it is required by the sweep run - "
+                f"{self._vertical_slices_preview}. "
+                f"Please consider using a larger input dataset with the sweep run."
+            )
+            raise ValueError(err_str)
 
         # before modifying preview here we need to check if the block fits the memory if Paganin method is present in the pipeline
         for method in self._pipeline._methods:

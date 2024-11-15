@@ -80,7 +80,7 @@ def test_without_prepare_block_property_raises_error(mocker: MockerFixture):
 
 
 def test_after_prepare_block_attr_contains_data(mocker: MockerFixture):
-    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 10, 160)
     data = np.arange(np.prod(PREVIEWED_SLICES_SHAPE), dtype=np.uint16).reshape(
         PREVIEWED_SLICES_SHAPE
     )
@@ -121,9 +121,9 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
         block_start=0,
     )
     preview = PreviewConfig(
-        angles=PreviewDimConfig(start=0, stop=180),
-        detector_y=PreviewDimConfig(start=0, stop=100),
-        detector_x=PreviewDimConfig(start=0, stop=160),
+        angles=PreviewDimConfig(start=0, stop=PREVIEWED_SLICES_SHAPE[0]),
+        detector_y=PreviewDimConfig(start=0, stop=PREVIEWED_SLICES_SHAPE[1]),
+        detector_x=PreviewDimConfig(start=0, stop=PREVIEWED_SLICES_SHAPE[2]),
     )
 
     class FakeModule:
@@ -134,7 +134,6 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
 
-    # Stuff take from `make_test_loader()`
     loader: LoaderInterface = mocker.create_autospec(
         LoaderInterface,
         instance=True,
@@ -203,7 +202,8 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
     runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
     runner.modify_loader_preview()
 
-    assert runner._vertical_slices_preview == 21
+    expected_preview_config = PreviewDimConfig(start=40, stop=60)
+    assert loader.preview.detector_y == expected_preview_config
 
 
 @pytest.mark.parametrize("non_sweep_stage", ["before", "after"])
@@ -421,11 +421,6 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
 
-    mocker.patch(
-        "httomo.sweep_runner.param_sweep_runner._preview_modifier",
-        return_value=[50, 50],
-    )
-
     # Create sweep method wrapper, passing the sweep values for the param to sweep over
     NO_OF_SWEEPS = 4
     SWEEP_VALUES = (2, 3, 5, 7)
@@ -456,9 +451,87 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
     np.testing.assert_array_equal(runner.block.data, expected_data)
 
 
-def test_execute_modifies_block(mocker: MockerFixture):
+def tests_prepare_raises_error_if_too_few_sino_slices(mocker: MockerFixture):
+    TOO_FEW_SINO_SLICES = 3
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, TOO_FEW_SINO_SLICES, 160)
+    data = np.arange(np.prod(PREVIEWED_SLICES_SHAPE), dtype=np.uint16).reshape(
+        PREVIEWED_SLICES_SHAPE
+    )
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    preview = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=PREVIEWED_SLICES_SHAPE[0]),
+        detector_y=PreviewDimConfig(start=0, stop=PREVIEWED_SLICES_SHAPE[1]),
+        detector_x=PreviewDimConfig(start=0, stop=PREVIEWED_SLICES_SHAPE[2]),
+    )
+
+    # loader = make_test_loader(mocker, preview=preview, block=block)
+    loader: LoaderInterface = mocker.create_autospec(
+        LoaderInterface,
+        instance=True,
+        pattern=Pattern.all,
+        method_name="testloader",
+        reslice=False,
+        preview=preview,
+    )
+
+    def mock_make_data_source(padding) -> DataSetSource:
+        ret = mocker.create_autospec(
+            DataSetSource,
+            global_shape=block.global_shape,
+            dtype=block.data.dtype,
+            chunk_shape=block.chunk_shape,
+            chunk_index=block.chunk_index,
+            slicing_dim=1 if loader.pattern == Pattern.sinogram else 0,
+            aux_data=block.aux_data,
+            preview=preview,
+        )
+        type(ret).raw_shape = mock.PropertyMock(return_value=GLOBAL_SHAPE)
+        slicing_dim: Literal[0, 1, 2] = 0
+        mocker.patch.object(
+            ret,
+            "read_block",
+            side_effect=lambda start, length: DataSetBlock(
+                data=block.data[start : start + length, :, :],
+                aux_data=block.aux_data,
+                global_shape=block.global_shape,
+                chunk_shape=block.chunk_shape,
+                slicing_dim=slicing_dim,
+                block_start=start,
+                chunk_start=block.chunk_index[slicing_dim],
+            ),
+        )
+        return ret
+
+    mocker.patch.object(
+        loader,
+        "make_data_source",
+        side_effect=mock_make_data_source,
+    )
+
+    m1 = make_test_method(mocker)
+    sweep_wrapper = make_test_method(mocker, param_1=(0,))
+    pipeline = Pipeline(loader=loader, methods=[m1, sweep_wrapper])
+    runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
+
+    with pytest.raises(ValueError) as e:
+        runner.modify_loader_preview()
+
+    err_str = "The size of the raw data  3 is smaller than it is required by the sweep run - 5. Please consider using a larger input dataset with the sweep run."
+    assert err_str in str(e)
+
+
+def test_execute_modifies_block_extend_preview(mocker: MockerFixture):
     # Define dummy block for loader to provide
-    GLOBAL_SHAPE = (180, 3, 160)
+    GLOBAL_SHAPE = (180, 15, 160)
     data = np.ones(GLOBAL_SHAPE, dtype=np.float32)
     aux_data = AuxiliaryData(np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
     block = DataSetBlock(
@@ -502,12 +575,11 @@ def test_execute_modifies_block(mocker: MockerFixture):
     )
 
     preview = PreviewConfig(
-        angles=PreviewDimConfig(start=0, stop=180),
-        detector_y=PreviewDimConfig(start=50, stop=53),
-        detector_x=PreviewDimConfig(start=0, stop=160),
+        angles=PreviewDimConfig(start=0, stop=GLOBAL_SHAPE[0]),
+        detector_y=PreviewDimConfig(start=7, stop=10),
+        detector_x=PreviewDimConfig(start=0, stop=GLOBAL_SHAPE[2]),
     )
 
-    # Stuff take from `make_test_loader()`
     loader: LoaderInterface = mocker.create_autospec(
         LoaderInterface,
         instance=True,
@@ -588,7 +660,9 @@ def test_execute_modifies_block(mocker: MockerFixture):
         GLOBAL_SHAPE[2],
     )
     assert runner.block.data.shape == EXPECTED_BLOCK_SHAPE
-    assert runner._vertical_slices_preview == 7
+
+    expected_preview_config = PreviewDimConfig(start=6, stop=11)
+    assert loader.preview.detector_y == expected_preview_config
     BEFORE_SWEEP_MULT_FACTOR = AFTER_SWEEP_MULT_FACTOR = 2 * 3
     NON_SWEEP_STAGES_MULT_FACTOR = BEFORE_SWEEP_MULT_FACTOR * AFTER_SWEEP_MULT_FACTOR
     expected_data = np.ones(EXPECTED_BLOCK_SHAPE, dtype=np.float32)
