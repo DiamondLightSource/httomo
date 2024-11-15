@@ -40,3 +40,8 @@ class LoaderInterface(Protocol):
     def preview(self) -> PreviewConfig:
         """get preview of the loaded data"""
         ...  # pragma: no cover
+
+    @preview.setter
+    def preview(self, preview: PreviewConfig):
+        """Update preview of the loaded data"""
+        ...  # pragma: no cover
