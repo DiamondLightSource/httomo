@@ -178,7 +178,6 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
     )
 
     # Create sweep method wrapper, passing the sweep values for the param to sweep over
-    NO_OF_SWEEPS = 2
     SWEEP_VALUES = (10, 20)
     paganin_params = {
         "alpha": SWEEP_VALUES,
