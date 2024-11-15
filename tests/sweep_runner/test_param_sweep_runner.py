@@ -450,7 +450,9 @@ def test_execute_sweep_stage_modifies_block(mocker: MockerFixture):
     np.testing.assert_array_equal(runner.block.data, expected_data)
 
 
-def tests_prepare_raises_error_if_too_few_sino_slices(mocker: MockerFixture):
+def tests_modify_loader_preview_raises_error_if_too_few_sino_slices(
+    mocker: MockerFixture,
+):
     TOO_FEW_SINO_SLICES = 3
     GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, TOO_FEW_SINO_SLICES, 160)
     data = np.arange(np.prod(PREVIEWED_SLICES_SHAPE), dtype=np.uint16).reshape(
