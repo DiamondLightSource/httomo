@@ -148,9 +148,9 @@ class ParamSweepRunner:
             )
             raise ValueError(err_str)
 
-        # before modifying preview here we need to check if the block fits the memory if Paganin method is present in the pipeline
+        # before modifying preview here we need to check if the block fits the memory if Paganin method (TomoPy implementation) is present in the pipeline
         for method in self._pipeline._methods:
-            if "paganin" in method.method_name and method.sweep:
+            if "paganin_filter_tomopy" in method.method_name and method.sweep:
                 # Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
                 # the larger preview needs to be taken in that case. So far this is the only method that
                 # requires an extended preview.

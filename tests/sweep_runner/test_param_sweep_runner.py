@@ -104,7 +104,7 @@ def test_after_prepare_block_attr_contains_data(mocker: MockerFixture):
     np.testing.assert_array_equal(runner.block.data, data)
 
 
-def tests_preview_modifier_paganin(mocker: MockerFixture):
+def tests_preview_modifier_paganin_tomopy(mocker: MockerFixture):
     SINO_SLICES = 100
     GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, SINO_SLICES, 160)
     data = np.arange(np.prod(PREVIEWED_SLICES_SHAPE), dtype=np.uint16).reshape(
@@ -127,7 +127,7 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
     )
 
     class FakeModule:
-        def paganin(data: np.ndarray, alpha: float, pixel_size: float, energy: float, dist: float):  # type: ignore
+        def paganin_filter_tomopy(data: np.ndarray, alpha: float, pixel_size: float, energy: float, dist: float):  # type: ignore
             return data * alpha
 
     mocker.patch(
@@ -188,7 +188,7 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
     sweep_method_wrapper = make_method_wrapper(
         method_repository=make_mock_repo(mocker),
         module_path="mocked_module_path.corr",
-        method_name="paganin",
+        method_name="paganin_filter_tomopy",
         comm=MPI.COMM_WORLD,
         preview_config=make_mock_preview_config(mocker),
         save_result=None,
