@@ -87,19 +87,6 @@ class TransformLayer:
             methods.append(m)
             if m.sweep or "recon" in m.module_path and sweep_before:
                 methods.append(
-                    GenericMethodWrapper(
-                        self._repo,
-                        "httomolibgpu.misc.rescale",
-                        "rescale_to_int",
-                        comm=self._comm,
-                        save_result=False,
-                        task_id=f"rescale_sweep_{m.task_id}",
-                        perc_range_min=5.0,
-                        perc_range_max=95.0,
-                        bits=8,
-                    )
-                )
-                methods.append(
                     ImagesWrapper(
                         self._repo,
                         "httomolib.misc.images",

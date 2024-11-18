@@ -179,19 +179,14 @@ def test_insert_image_save_after_sweep(mocker: MockerFixture, tmp_path: Path):
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.insert_save_images_after_sweep(pipeline)
 
-    assert len(pipeline) == 5
-    assert pipeline[3].method_name == "rescale_to_int"
-    assert pipeline[3].task_id == "rescale_sweep_t3"
-    assert pipeline[3].config_params["perc_range_min"] == 0.0
-    assert pipeline[3].config_params["perc_range_max"] == 100.0
-    assert pipeline[3].config_params["bits"] == 8
-    assert pipeline[4].method_name == "save_to_images"
-    assert pipeline[4].task_id == "saveimage_sweep_t3"
+    assert len(pipeline) == 4
+    assert pipeline[3].method_name == "save_to_images"
+    assert pipeline[3].task_id == "saveimage_sweep_t3"
     assert (
-        pipeline[4].config_params["subfolder_name"]
+        pipeline[3].config_params["subfolder_name"]
         == "images_sweep_paganin_filter_tomopy"
     )
-    assert pipeline[4].config_params["axis"] == 1
+    assert pipeline[3].config_params["axis"] == 1
 
 
 def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
@@ -238,25 +233,15 @@ def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.insert_save_images_after_sweep(pipeline)
 
-    assert len(pipeline) == 8
-    assert pipeline[3].method_name == "rescale_to_int"
-    assert pipeline[3].task_id == "rescale_sweep_t3"
-    assert pipeline[3].config_params["perc_range_min"] == 0.0
-    assert pipeline[3].config_params["perc_range_max"] == 100.0
-    assert pipeline[3].config_params["bits"] == 8
-    assert pipeline[4].method_name == "save_to_images"
-    assert pipeline[4].task_id == "saveimage_sweep_t3"
+    assert len(pipeline) == 6
+    assert pipeline[3].method_name == "save_to_images"
+    assert pipeline[3].task_id == "saveimage_sweep_t3"
     assert (
-        pipeline[4].config_params["subfolder_name"]
+        pipeline[3].config_params["subfolder_name"]
         == "images_sweep_paganin_filter_tomopy"
     )
 
-    assert pipeline[6].method_name == "rescale_to_int"
-    assert pipeline[6].task_id == "rescale_sweep_t4"
-    assert pipeline[6].config_params["perc_range_min"] == 0.0
-    assert pipeline[6].config_params["perc_range_max"] == 100.0
-    assert pipeline[6].config_params["bits"] == 8
-    assert pipeline[7].method_name == "save_to_images"
-    assert pipeline[7].task_id == "saveimage_sweep_t4"
-    assert pipeline[7].config_params["subfolder_name"] == "images_sweep_FBP"
-    assert pipeline[7].config_params["axis"] == 1
+    assert pipeline[5].method_name == "save_to_images"
+    assert pipeline[5].task_id == "saveimage_sweep_t4"
+    assert pipeline[5].config_params["subfolder_name"] == "images_sweep_FBP"
+    assert pipeline[5].config_params["axis"] == 1
