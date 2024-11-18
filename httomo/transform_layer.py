@@ -94,8 +94,8 @@ class TransformLayer:
                         comm=self._comm,
                         save_result=False,
                         task_id=f"rescale_sweep_{m.task_id}",
-                        perc_range_min=0.0,
-                        perc_range_max=100.0,
+                        perc_range_min=5.0,
+                        perc_range_max=95.0,
                         bits=8,
                     )
                 )

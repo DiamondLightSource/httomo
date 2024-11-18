@@ -50,6 +50,7 @@ def make_test_method(
 
 def make_test_loader(
     mocker: MockerFixture,
+    preview: Optional[PreviewConfig] = None,
     block: Optional[DataSetBlock] = None,
     pattern: Pattern = Pattern.all,
     method_name="testloader",
@@ -57,6 +58,7 @@ def make_test_loader(
     interface: LoaderInterface = mocker.create_autospec(
         LoaderInterface,
         instance=True,
+        preview=preview,
         pattern=pattern,
         method_name=method_name,
         reslice=False,
@@ -69,6 +71,7 @@ def make_test_loader(
         def mock_make_data_source(padding) -> DataSetSource:
             ret = mocker.create_autospec(
                 DataSetSource,
+                preview=preview,
                 global_shape=block.global_shape,
                 dtype=block.data.dtype,
                 chunk_shape=block.chunk_shape,

@@ -14,6 +14,12 @@ from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import NonSweepStage, Stages, SweepStage
 from httomo.utils import catchtime, log_exception, log_once
+from httomo.runner.gpu_utils import get_available_gpu_memory
+from httomo.preview import PreviewConfig, PreviewDimConfig
+from httomo.runner.dataset_store_interfaces import DataSetSource
+from httomo.sweep_runner.paganin_kernel import paganin_kernel_estimator
+
+import numpy as np
 
 
 class ParamSweepRunner:
@@ -23,8 +29,8 @@ class ParamSweepRunner:
         comm: Comm,
         side_output_manager: SideOutputManager = SideOutputManager(),
     ) -> None:
-        self._sino_slices_threshold = 7
         self._pipeline = pipeline
+        self._vertical_slices_preview = 5
         self._side_output_manager = side_output_manager
         self._block: Optional[ParamSweepBlock] = None
         self._check_params_for_sweep()
@@ -124,6 +130,61 @@ class ParamSweepRunner:
             after_sweep=NonSweepStage(after_sweep),
         )
 
+    def modify_loader_preview(self):
+        """
+        Modifies loader's preview based on the method present in the pipeline.
+        In some cases we need to override users given preview, e.g., when Paganin filter is present.
+        """
+
+        # we call this only to find the global size of the data (not very efficient)
+        source = self._pipeline.loader.make_data_source(padding=(0, 0))
+
+        if source.raw_shape[1] < self._vertical_slices_preview:
+            err_str = (
+                "The size of the raw data  "
+                f"{source.raw_shape[1]} is smaller than it is required by the sweep run - "
+                f"{self._vertical_slices_preview}. "
+                f"Please consider using a larger input dataset with the sweep run."
+            )
+            raise ValueError(err_str)
+
+        # before modifying preview here we need to check if the block fits the memory if Paganin method (TomoPy implementation) is present in the pipeline
+        for method in self._pipeline._methods:
+            if "paganin_filter_tomopy" in method.method_name and method.sweep:
+                # Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
+                # the larger preview needs to be taken in that case. So far this is the only method that
+                # requires an extended preview.
+
+                vertical_slices_preview_Paganin = paganin_kernel_estimator(
+                    method.config_params["pixel_size"],
+                    method.config_params["alpha"],
+                    method.config_params["energy"],
+                    method.config_params["dist"],
+                    vert_min_limit=self._vertical_slices_preview,
+                    peak_height=0.01,
+                )
+                self._vertical_slices_preview = np.max(vertical_slices_preview_Paganin)
+
+                vertical_slices_preview_max = _slices_to_fit_memory_Paganin(source)
+
+                # we do not stop the run if the Paganin's kernel is too wide, but extend the preview to the maximum allowed size for the current card
+                if self._vertical_slices_preview > vertical_slices_preview_max:
+                    self._vertical_slices_preview = vertical_slices_preview_max
+
+        preview_new_start_stop = _preview_modifier(
+            self._pipeline.loader.preview,
+            source.raw_shape[1],
+            self._vertical_slices_preview,
+        )
+
+        self._pipeline.loader.preview = PreviewConfig(
+            angles=self._pipeline.loader.preview.angles,
+            detector_y=PreviewDimConfig(
+                start=preview_new_start_stop[0], stop=preview_new_start_stop[1]
+            ),
+            detector_x=self._pipeline.loader.preview.detector_x,
+        )
+
     def prepare(self):
         """
         Load single block containing small number of sinogram slices in input data
@@ -131,15 +192,6 @@ class ParamSweepRunner:
         source = self._pipeline.loader.make_data_source(padding=(0, 0))
 
         SINO_SLICING_DIM = 1
-        no_of_middle_slices = source.global_shape[SINO_SLICING_DIM]
-        if no_of_middle_slices > self._sino_slices_threshold:
-            err_str = (
-                "Parameter sweep runs support input data containing "
-                f"<= {self._sino_slices_threshold} sinogram slices, input data "
-                f"contains {no_of_middle_slices} slices"
-            )
-            raise ValueError(err_str)
-
         log_once(f"Loading data with shape {source.global_shape}")
         splitter = BlockSplitter(source, source.global_shape[source.slicing_dim])
         dataset_block = splitter[0]
@@ -217,6 +269,7 @@ class ParamSweepRunner:
         """Load input data and execute all stages (before sweep, sweep, after sweep)"""
         with catchtime() as t:
             log_once(f"See the full log file at: {httomo.globals.run_out_dir}/user.log")
+            self.modify_loader_preview()
             self.prepare()
             self.execute_before_sweep()
             self.execute_sweep()
@@ -240,3 +293,36 @@ def _get_param_sweep_name_and_vals(d: Dict[str, Any]) -> Tuple[str, Tuple[Any, .
     assert param_name is not None
     assert sweep_vals is not None
     return param_name, sweep_vals
+
+
+def _preview_modifier(
+    preview_old: PreviewConfig, det_y_dim_raw: int, vert_slices: int
+) -> List[int]:
+    """
+    Modifies the size of the user-defined preview (expand it or shrink it)
+    """
+
+    preview_new = [0, det_y_dim_raw]
+    range_preview = preview_old.detector_y.stop - preview_old.detector_y.start
+
+    start_new = preview_old.detector_y.start + range_preview // 2 - vert_slices // 2
+    stop_new = preview_old.detector_y.stop - range_preview // 2 + vert_slices // 2
+    if start_new >= 0:
+        preview_new[0] = start_new
+    if stop_new < det_y_dim_raw:
+        preview_new[1] = stop_new
+    return preview_new
+
+
+def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
+    """
+    Estimating the number of vertical slices than can fit the device to run Paganin method
+    """
+    factor = 10  # ad-hoc parameter as no real memory estimation is performed. Should be increased if OOM happens.
+    available_memory = get_available_gpu_memory(10.0)
+    available_memory_in_GB = round(available_memory / (1024**3), 2)
+    tot_slices_fit = int(
+        available_memory_in_GB
+        // (((source.aux_data.angles_length * source.global_shape[2]) * 4) / 1024**3)
+    )
+    return tot_slices_fit // factor
