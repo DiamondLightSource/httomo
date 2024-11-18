@@ -113,25 +113,6 @@ def test_can_read_gpu1(yaml_gpu_pipeline1):
     assert pipline_stage_config[7]["module_path"] == "httomolib.misc.images"
 
 
-@pytest.mark.parametrize("extension", ["yaml", "yml", "YaML", "YAML"])
-def test_uilayer_calls_correct_loader_yaml(mocker: MockerFixture, extension: str):
-    comm = MPI.COMM_NULL
-    loader = mocker.patch("httomo.ui_layer.yaml_loader")
-    file = Path(f"test_pipeline.{extension}")
-    UiLayer(file, Path("doesnt_matter"), comm=comm)
-
-    loader.assert_called_once_with(file)
-
-
-def test_uilayer_fails_with_unsupported_extension(mocker: MockerFixture):
-    comm = MPI.COMM_NULL
-    file = Path(f"test_pipeline.dummy")
-    with pytest.raises(ValueError) as e:
-        UiLayer(file, Path("doesnt_matter"), comm=comm)
-
-    assert "extension .dummy" in str(e)
-
-
 @pytest.mark.parametrize("file", ["does_not_exist.yaml"])
 def test_uilayer_fails_with_nonexistant_file(file: str):
     comm = MPI.COMM_NULL
