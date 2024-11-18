@@ -60,6 +60,11 @@ class DataSetSource(Protocol):
         ...  # pragma: no cover
 
     @property
+    def raw_shape(self) -> Tuple[int, int, int]:
+        """Returns raw data shape"""
+        ...  # pragma: no cover
+
+    @property
     def chunk_shape(self) -> Tuple[int, int, int]:
         """Returns the shape of a chunk, i.e. the data processed in the current
         MPI process (whether it fits in memory or not)"""

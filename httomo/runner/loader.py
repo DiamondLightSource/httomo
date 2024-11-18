@@ -2,6 +2,7 @@ from typing import Protocol, Tuple
 
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.utils import Pattern
+from httomo.preview import PreviewConfig
 
 
 class LoaderInterface(Protocol):
@@ -33,4 +34,14 @@ class LoaderInterface(Protocol):
     @property
     def angles_total(self) -> int:
         """angles dimension of the loaded data"""
+        ...  # pragma: no cover
+
+    @property
+    def preview(self) -> PreviewConfig:
+        """get preview of the loaded data"""
+        ...  # pragma: no cover
+
+    @preview.setter
+    def preview(self, preview: PreviewConfig):
+        """Update preview of the loaded data"""
         ...  # pragma: no cover

@@ -68,7 +68,7 @@ def test_can_load_datasets(mocker: MockerFixture, tmp_path: PathLike):
 def test_can_determine_max_slices_no_gpu_estimator(
     mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):
-    loader = make_test_loader(mocker, dummy_block)
+    loader = make_test_loader(mocker, block=dummy_block)
     method = make_test_method(mocker, gpu=True, memory_gpu=None)
     p = Pipeline(loader=loader, methods=[method])
     t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
@@ -97,7 +97,7 @@ def test_can_determine_max_slices_with_gpu_estimator(
     tmp_path: PathLike,
     dummy_block: DataSetBlock,
 ):
-    loader = make_test_loader(mocker, dummy_block)
+    loader = make_test_loader(mocker, block=dummy_block)
     methods: List[MethodWrapper] = []
     calc_dims_mocks = []
     calc_max_slices_mocks = []
@@ -146,7 +146,7 @@ def test_can_determine_max_slices_with_gpu_estimator_and_cpu_limit(
     dummy_block: DataSetBlock,
 ):
     mocker.patch("httomo.runner.task_runner.get_available_gpu_memory", return_value=1e7)
-    loader = make_test_loader(mocker, dummy_block)
+    loader = make_test_loader(mocker, block=dummy_block)
     methods: List[MethodWrapper] = []
     calc_dims_mocks = []
     calc_max_slices_mocks = []
@@ -191,7 +191,7 @@ def test_can_determine_max_slices_with_gpu_estimator_and_cpu_limit(
 def test_can_determine_max_slices_with_cpu(
     mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):
-    loader = make_test_loader(mocker, dummy_block)
+    loader = make_test_loader(mocker, block=dummy_block)
     methods = []
     for _ in range(3):
         method = make_test_method(mocker, gpu=False)
@@ -211,7 +211,7 @@ def test_can_determine_max_slices_with_cpu_large(
     data = np.ones((500, 10, 10), dtype=np.float32)
     aux = AuxiliaryData(angles=np.ones(500, dtype=np.float32))
     block = DataSetBlock(data, aux)
-    loader = make_test_loader(mocker, block)
+    loader = make_test_loader(mocker, block=block)
     methods = []
     for _ in range(3):
         method = make_test_method(mocker, gpu=False)
@@ -337,7 +337,7 @@ def test_execute_section_calls_blockwise_execute_and_monitors(
     mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: PathLike
 ):
     original_value = dummy_block.data[0, 0, 0]  # it has all the same number
-    loader = make_test_loader(mocker, dummy_block)
+    loader = make_test_loader(mocker, block=dummy_block)
     method = make_test_method(mocker, method_name="m1")
     p = Pipeline(loader=loader, methods=[method])
     s = sectionize(p)
@@ -380,7 +380,7 @@ def test_execute_section_calls_blockwise_execute_and_monitors(
 def test_execute_section_for_block(
     mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):
-    loader = make_test_loader(mocker, dummy_block)
+    loader = make_test_loader(mocker, block=dummy_block)
     method1 = make_test_method(mocker, method_name="m1")
     method2 = make_test_method(mocker, method_name="m2")
     p = Pipeline(loader=loader, methods=[method1, method2])
@@ -397,7 +397,7 @@ def test_execute_section_for_block(
 def test_does_reslice_when_needed_and_reports_time(
     mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: PathLike
 ):
-    loader = make_test_loader(mocker, dummy_block)
+    loader = make_test_loader(mocker, block=dummy_block)
     method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
     mocker.patch.object(method1, "execute", return_value=dummy_block)
     method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
@@ -433,7 +433,7 @@ def test_warns_with_multiple_reslices(
     dummy_block: DataSetBlock,
     tmp_path: PathLike,
 ):
-    loader = make_test_loader(mocker, dummy_block, pattern=Pattern.projection)
+    loader = make_test_loader(mocker, block=dummy_block, pattern=Pattern.projection)
     method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
     method2 = make_test_method(mocker, method_name="m2", pattern=Pattern.sinogram)
     method3 = make_test_method(mocker, method_name="m3", pattern=Pattern.projection)
@@ -459,7 +459,7 @@ def test_warns_with_multiple_stores_from_side_outputs(
     # Mock pipeline contains all projection methods, so no reslices occur. However, each method
     # requires side output from previous method, which causes data to be written to store after
     # each method
-    loader = make_test_loader(mocker, dummy_block, pattern=Pattern.projection)
+    loader = make_test_loader(mocker, block=dummy_block, pattern=Pattern.projection)
     method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
     method2 = make_test_method(
         mocker,
