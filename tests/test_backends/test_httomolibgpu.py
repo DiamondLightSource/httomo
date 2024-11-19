@@ -29,8 +29,8 @@ from httomolibgpu.prep.stripe import (
     remove_stripe_based_sorting,
     remove_stripe_ti,
     remove_all_stripe,
+    raven_filter,
 )
-from httomolibgpu.prep.stripe import remove_stripe_based_sorting, remove_stripe_ti
 from httomolibgpu.misc.corr import remove_outlier
 from httomolibgpu.recon.algorithm import FBP, SIRT, CGLS
 from httomolibgpu.misc.rescale import rescale_to_int
@@ -341,6 +341,41 @@ def test_remove_stripe_ti_memoryhook(slices, ensure_clean_memory):
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
     assert percents_relative_maxmem <= 20
+
+
+@pytest.mark.cupy
+@pytest.mark.parametrize("projections", [180, 360, 720, 1080, 1440])
+def test_raven_filter_memoryhook(projections, ensure_clean_memory):
+    vert_det = 10 
+    horiz_det = 2560
+    data = cp.random.random_sample((projections, vert_det, horiz_det), dtype=np.float32)
+    kwargs = {}
+    kwargs["pad_x"] = 20
+    kwargs["pad_y"] = 20
+    hook = MaxMemoryHook()
+    with hook:
+        data_filtered = raven_filter(cp.copy(data), **kwargs).get()
+
+    # make sure estimator function is within range (80% min, 100% max)
+    max_mem = (
+        hook.max_mem
+    )  # the amount of memory in bytes needed for the method according to memoryhook
+
+    # now we estimate how much of the total memory required for this data
+    (estimated_memory_bytes, subtract_bytes) = _calc_memory_bytes_raven_filter(
+        (projections, horiz_det), dtype=np.float32(), **kwargs
+    )
+    estimated_memory_mb = round(vert_det * estimated_memory_bytes / (1024**2), 2)
+    max_mem -= subtract_bytes
+    max_mem_mb = round(max_mem / (1024**2), 2)
+
+    # now we compare both memory estimations
+    difference_mb = abs(estimated_memory_mb - max_mem_mb)
+    percents_relative_maxmem = round((difference_mb / max_mem_mb) * 100)
+    # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
+    # the resulting percent value should not deviate from max_mem on more than 20%
+    assert estimated_memory_mb >= max_mem_mb
+    assert percents_relative_maxmem <= 25
 
 
 @pytest.mark.cupy

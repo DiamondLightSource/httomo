@@ -24,10 +24,14 @@ import math
 from typing import Tuple
 import numpy as np
 
+from httomo.cufft import CufftType, cufft_estimate_2d
+
+
 
 __all__ = [
     "_calc_memory_bytes_remove_stripe_ti",
     "_calc_memory_bytes_remove_all_stripe",
+    "_calc_memory_bytes_raven_filter",
 ]
 
 
@@ -66,3 +70,46 @@ def _calc_memory_bytes_remove_all_stripe(
     tot_memory_bytes = int(input_size + output_size)
 
     return (tot_memory_bytes, methods_memory_allocations)
+
+
+def _calc_memory_bytes_raven_filter(
+    non_slice_dims_shape: Tuple[int, int],
+    dtype: np.dtype,
+    **kwargs,
+) -> Tuple[int, int]:
+
+    pad_x = kwargs["pad_x"]
+    pad_y = kwargs["pad_y"]    
+
+    input_size = np.prod(non_slice_dims_shape) * dtype.itemsize
+    output_size = np.prod(non_slice_dims_shape) * dtype.itemsize
+
+    # Padded input
+    padded_non_slice_dims_shape = (
+        non_slice_dims_shape[0] + 2 * pad_y,
+        non_slice_dims_shape[1] + 2 * pad_x,
+    )
+
+    in_slice_size_pad = (
+        (padded_non_slice_dims_shape[0])
+        * (padded_non_slice_dims_shape[1])
+        * dtype.itemsize
+    )
+    out_slice_size_pad = in_slice_size_pad
+    
+    complex_slice_fft_data = in_slice_size_pad / dtype.itemsize * np.complex64().nbytes
+    complex_slice_fft_data_shifted = complex_slice_fft_data
+    data_out_ifft_complex = complex_slice_fft_data
+    
+    
+    # Plan size for 2D FFT
+    fftplan_slice = cufft_estimate_2d(
+        nx=padded_non_slice_dims_shape[1],
+        ny=padded_non_slice_dims_shape[0],
+        fft_type=CufftType.CUFFT_C2C,
+    )
+    
+    
+    tot_memory_bytes = int(input_size + output_size + in_slice_size_pad + out_slice_size_pad + complex_slice_fft_data + complex_slice_fft_data_shifted + data_out_ifft_complex + 2*fftplan_slice)
+
+    return (tot_memory_bytes, 0)
