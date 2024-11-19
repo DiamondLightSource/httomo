@@ -346,7 +346,7 @@ def test_remove_stripe_ti_memoryhook(slices, ensure_clean_memory):
 @pytest.mark.cupy
 @pytest.mark.parametrize("projections", [180, 360, 720, 1080, 1440])
 def test_raven_filter_memoryhook(projections, ensure_clean_memory):
-    vert_det = 10 
+    vert_det = 10
     horiz_det = 2560
     data = cp.random.random_sample((projections, vert_det, horiz_det), dtype=np.float32)
     kwargs = {}
