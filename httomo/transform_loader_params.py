@@ -12,7 +12,9 @@ from httomo.loaders.types import (
     UserDefinedAngles,
 )
 from httomo.preview import PreviewConfig, PreviewDimConfig
-
+from httomo.utils import (
+    log_once,
+)
 
 class StartStopEntry(TypedDict):
     """
@@ -20,7 +22,9 @@ class StartStopEntry(TypedDict):
     """
 
     start: Optional[int]
+    start_offset: Optional[int]
     stop: Optional[int]
+    stop_offset: Optional[int]
 
 
 PreviewParamEntry: TypeAlias = Union[Literal["mid"], StartStopEntry]
@@ -87,8 +91,16 @@ def parse_preview(
         else:
             val = par.get("start", None)
             start = 0 if val is None else val
+            val = par.get("start_offset", None)
+            start_offset = 0 if val is None else val
+            start = _offset_preview_setter(start, start_offset, length, key_type='start')
             val = par.get("stop", None)
             stop = length if val is None else val
+            val = par.get("stop_offset", None)
+            stop_offset = 0 if val is None else val
+            stop = _offset_preview_setter(stop, stop_offset, length, key_type='stop')
+        if stop <= start:
+            raise ValueError( f"Stop value {stop} is smaller or equal compared to the start value {start}. Please check your preview values.")
 
         return PreviewDimConfig(start=start, stop=stop)
 
@@ -97,6 +109,25 @@ def parse_preview(
         detector_y=conv_param(param_value["detector_y"], data_shape[1]),
         detector_x=conv_param(param_value["detector_x"], data_shape[2]),
     )
+
+def _offset_preview_setter(start_or_stop_index: int, start_or_stop_offset: int, length: int, key_type: str) -> int:
+    """
+    This sets new indices for start or stop if the offset is provided. The function also checks the data range and prints our of range in the logger.  
+    """
+    log_message = f"PREVIEW WARNING: The {key_type} value with {key_type} offset equals to {start_or_stop_index + start_or_stop_offset} while the data range [{0}-{length}]. The preview will be extended automatically."
+    if start_or_stop_offset > 0:
+        if start_or_stop_index + start_or_stop_offset > length:            
+            start_or_stop_index = length
+            log_once(log_message)
+        else:
+            start_or_stop_index += start_or_stop_offset
+    if start_or_stop_offset < 0:
+        if start_or_stop_index + start_or_stop_offset < 0:
+            log_once(log_message)
+            start_or_stop_index = 0
+        else:
+            start_or_stop_index += start_or_stop_offset
+    return start_or_stop_index
 
 
 def _get_middle_slice_indices(dim_len: int) -> tuple[int, int]:

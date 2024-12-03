@@ -148,7 +148,15 @@ The :code:`mid` value
 =====================
 
 The :code:`detector_y` and :code:`detector_x` dimension fields also support the
-value :code:`mid` in addition to the :code:`start` and/or :code:`stop` fields.
+value :code:`mid` in addition to the :code:`start` and/or :code:`stop` fields. For instance,
+one can extract the the middle slice of :code:`detector_y` with:
+
+.. code-block:: yaml
+
+    preview:
+      detector_y:
+        mid
+
 Specifying :code:`mid` for either of these dimensions will result in the middle
 three slices of that dimension being selected.
 
