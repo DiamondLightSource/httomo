@@ -6,6 +6,7 @@ import h5py
 import numpy as np
 
 from httomo.preview import Preview, PreviewConfig, PreviewDimConfig
+from httomo.transform_loader_params import PreviewParam, parse_preview
 
 
 @pytest.mark.parametrize(
@@ -199,3 +200,66 @@ def test_preview_global_shape(
         image_key=image_key,
     )
     assert preview.global_shape == previewed_shape
+
+
+def test_preview_offset(
+    standard_data_path: str,
+    standard_image_key_path: str,
+):
+    IN_FILE_PATH = Path(__file__).parent / "test_data/tomo_standard.nxs"
+    f = h5py.File(IN_FILE_PATH, "r")
+    dataset = f[standard_data_path]
+    image_key = f[standard_image_key_path]
+
+    param_value = PreviewParam(
+        angles=None,
+        detector_y={"start": 20, "start_offset": -21, "stop": 120, "stop_offset": 21},
+        detector_x={
+            "start": 0,
+            "start_offset": 10,
+            "stop": dataset.shape[2],
+            "stop_offset": -10,
+        },
+    )
+    preview_config = parse_preview(param_value=param_value, data_shape=dataset.shape)
+
+    preview = Preview(
+        preview_config=preview_config,
+        dataset=dataset,
+        image_key=image_key,
+    )
+    assert preview.global_shape == (180, dataset.shape[1], 140)
+
+
+def test_preview_keywords(
+    standard_data_path: str,
+    standard_image_key_path: str,
+):
+    IN_FILE_PATH = Path(__file__).parent / "test_data/tomo_standard.nxs"
+    f = h5py.File(IN_FILE_PATH, "r")
+    dataset = f[standard_data_path]
+    image_key = f[standard_image_key_path]
+
+    param_value = PreviewParam(
+        angles=None,
+        detector_y={
+            "start": "begin",
+            "start_offset": 10,
+            "stop": "end",
+            "stop_offset": -10,
+        },
+        detector_x={
+            "start": "mid",
+            "start_offset": -50,
+            "stop": "mid",
+            "stop_offset": 50,
+        },
+    )
+    preview_config = parse_preview(param_value=param_value, data_shape=dataset.shape)
+
+    preview = Preview(
+        preview_config=preview_config,
+        dataset=dataset,
+        image_key=image_key,
+    )
+    assert preview.global_shape == (180, 108, 100)

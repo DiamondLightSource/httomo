@@ -1,0 +1,34 @@
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    data_path: entry1/tomo_entry/data/data
+    image_key_path: entry1/tomo_entry/instrument/detector/image_key
+    rotation_angles:
+      data_path: /entry1/tomo_entry/data/rotation_angle
+    preview:
+      detector_x:
+        start: mid
+        start_offset : -50
+        stop: mid
+        stop_offset : 50
+      detector_y:
+        start: begin
+        start_offset : 32
+        stop: end
+        stop_offset : -32
+- method: normalize
+  module_path: tomopy.prep.normalize
+  parameters:
+    cutoff: null
+    averaging: mean
+- method: minus_log
+  module_path: tomopy.prep.normalize
+  parameters: {}
+- method: recon
+  module_path: tomopy.recon.algorithm
+  parameters:
+    center: 50.5
+    sinogram_order: false
+    algorithm: 'gridrec'
+    init_recon: null
+  save_result: false
