@@ -211,6 +211,12 @@ def test_preview_offset(
     dataset = f[standard_data_path]
     image_key = f[standard_image_key_path]
 
+    preview_config_expected = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=dataset.shape[0]),
+        detector_y=PreviewDimConfig(start=0, stop=dataset.shape[1]),
+        detector_x=PreviewDimConfig(start=10, stop=dataset.shape[2] - 10),
+    )
+
     param_value = PreviewParam(
         angles=None,
         detector_y={"start": 20, "start_offset": -21, "stop": 120, "stop_offset": 21},
@@ -223,11 +229,14 @@ def test_preview_offset(
     )
     preview_config = parse_preview(param_value=param_value, data_shape=dataset.shape)
 
+    assert preview_config == preview_config_expected
+
     preview = Preview(
         preview_config=preview_config,
         dataset=dataset,
         image_key=image_key,
     )
+
     assert preview.global_shape == (180, dataset.shape[1], 140)
 
 
@@ -239,6 +248,14 @@ def test_preview_keywords(
     f = h5py.File(IN_FILE_PATH, "r")
     dataset = f[standard_data_path]
     image_key = f[standard_image_key_path]
+
+    preview_config_expected = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=dataset.shape[0]),
+        detector_y=PreviewDimConfig(start=10, stop=dataset.shape[1] - 10),
+        detector_x=PreviewDimConfig(
+            start=dataset.shape[2] // 2 - 50 - 1, stop=dataset.shape[2] // 2 + 50 - 1
+        ),
+    )
 
     param_value = PreviewParam(
         angles=None,
@@ -256,6 +273,8 @@ def test_preview_keywords(
         },
     )
     preview_config = parse_preview(param_value=param_value, data_shape=dataset.shape)
+
+    assert preview_config == preview_config_expected
 
     preview = Preview(
         preview_config=preview_config,
