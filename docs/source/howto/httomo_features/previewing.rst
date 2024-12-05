@@ -144,11 +144,52 @@ One can combine vertical and horizontal cropping with:
         start: 100
         stop: 2000
 
-The :code:`mid` value
-=====================
+Using :code:`begin`, :code:`mid` and :code:`end` keywords with offsets
+======================================================================
+
+The :code:`begin, mid, end` keywords can be used in setting up :code:`start, stop` preview parameters. The main purpose of those keywords is 
+to help a user to set the preview without using actual data indices. It can be a convenient and a quick way to set the preview without any prior 
+knowledge about the input data sizes. 
+To unlock the full potential of this feature, we recommend using the :code:`begin, mid, end` keywords together with the *offset* parameters.
+The preview parameters :code:`start_offset` and :code:`stop_offset` can be used 
+to compliment :code:`start, stop` preview parameters respectively. 
+
+Here is an example how the keywords and offsets can be used in the loader's preview:
+
+.. code-block:: yaml
+
+    preview:
+      detector_x:
+        start: begin
+        start_offset : 100
+        stop: end
+        stop_offset : -100
+      detector_y:
+        start: mid
+        start_offset : -50
+        stop: mid
+        stop_offset : 50
+
+In the example above, we crop both of data dimensions :code:`detector_x` and :code:`detector_y`. With :code:`detector_x`, the data is cropped with +100 pixels offset from the first index (:code:`begin`) and -100 pixels offset from the last index :code:`end`.
+In Python this would be an equivalent to perform the following slicing of that dimension :code:`[100:-100]`. And with :code:`detector_y` dimension, we slice by taking 
+a 100 pixels wide chunk centered around the middle (:code:`mid`) index of that dimension.
+
+.. note:: The :code:`begin` parameter defines the first index of the chosen dimension, :code:`mid` defines the middle index, and :code:`end` defines the last index.
+
+
+The sole use of :code:`mid` value
+=================================
 
 The :code:`detector_y` and :code:`detector_x` dimension fields also support the
-value :code:`mid` in addition to the :code:`start` and/or :code:`stop` fields.
+value :code:`mid` in addition to the :code:`start` and/or :code:`stop` fields. For instance,
+one can extract the the middle slice of :code:`detector_y` with:
+
+.. code-block:: yaml
+
+    preview:
+      detector_y:
+        mid
+
 Specifying :code:`mid` for either of these dimensions will result in the middle
 three slices of that dimension being selected.
 

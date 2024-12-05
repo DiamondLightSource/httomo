@@ -252,6 +252,11 @@ def yaml_cpu_pipeline4():
 
 
 @pytest.fixture
+def yaml_cpu_pipeline5():
+    return "tests/samples/pipeline_template_examples/pipeline_cpu5.yaml"
+
+
+@pytest.fixture
 def yaml_gpu_pipeline1():
     return "tests/samples/pipeline_template_examples/pipeline_gpu1.yaml"
 

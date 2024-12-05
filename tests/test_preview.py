@@ -6,6 +6,11 @@ import h5py
 import numpy as np
 
 from httomo.preview import Preview, PreviewConfig, PreviewDimConfig
+from httomo.transform_loader_params import (
+    PreviewParam,
+    parse_preview,
+    _keywords_converter,
+)
 
 
 @pytest.mark.parametrize(
@@ -199,3 +204,109 @@ def test_preview_global_shape(
         image_key=image_key,
     )
     assert preview.global_shape == previewed_shape
+
+
+def test_preview_offset():
+    data_shape = (220, 128, 160)
+
+    preview_config_expected = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=data_shape[0]),
+        detector_y=PreviewDimConfig(start=0, stop=data_shape[1]),
+        detector_x=PreviewDimConfig(start=10, stop=data_shape[2] - 10),
+    )
+
+    param_value = PreviewParam(
+        angles=None,
+        detector_y={"start": 20, "start_offset": -21, "stop": 120, "stop_offset": 21},
+        detector_x={
+            "start": 0,
+            "start_offset": 10,
+            "stop": data_shape[2],
+            "stop_offset": -10,
+        },
+    )
+    preview_config = parse_preview(param_value=param_value, data_shape=data_shape)
+
+    assert preview_config == preview_config_expected
+
+
+def test_preview_keywords():
+    data_shape = (220, 128, 160)
+
+    preview_config_expected = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=data_shape[0]),
+        detector_y=PreviewDimConfig(start=10, stop=data_shape[1] - 10),
+        detector_x=PreviewDimConfig(
+            start=data_shape[2] // 2 - 50 - 1, stop=data_shape[2] // 2 + 50 - 1
+        ),
+    )
+
+    param_value = PreviewParam(
+        angles=None,
+        detector_y={
+            "start": "begin",
+            "start_offset": 10,
+            "stop": "end",
+            "stop_offset": -10,
+        },
+        detector_x={
+            "start": "mid",
+            "start_offset": -50,
+            "stop": "mid",
+            "stop_offset": 50,
+        },
+    )
+    preview_config = parse_preview(param_value=param_value, data_shape=data_shape)
+
+    assert preview_config == preview_config_expected
+
+
+def test_parse_preview_raises_error_if_stop_smaller_start():
+    param_value = PreviewParam(
+        angles=None,
+        detector_y={
+            "start": "begin",
+            "start_offset": 10,
+            "stop": "begin",
+            "stop_offset": 5,
+        },
+        detector_x={
+            "start": "mid",
+            "start_offset": -50,
+            "stop": "mid",
+            "stop_offset": 50,
+        },
+    )
+
+    with pytest.raises(ValueError) as e:
+        _ = parse_preview(param_value=param_value, data_shape=(220, 128, 160))
+
+    assert (
+        "Stop value 5 is smaller or equal compared to the start value 10. Please check your preview values."
+        in str(e)
+    )
+
+
+@pytest.mark.parametrize(
+    "input",
+    ["begin", "mid", "end", None, 10, "bla"],
+)
+def test_keywords_converter(input):
+    if input == "begin":
+        assert _keywords_converter(input, length=100, key_type="start") == 0
+    elif input == "mid":
+        assert _keywords_converter(input, length=100, key_type="start") == 49
+    elif input == "end":
+        assert _keywords_converter(input, length=100, key_type="start") == 100
+    elif input == None:
+        assert _keywords_converter(input, length=100, key_type="start") == 0
+        assert _keywords_converter(input, length=100, key_type="stop") == 100
+    elif input == 10:
+        assert _keywords_converter(input, length=100, key_type="start") == 10
+    else:
+        with pytest.raises(ValueError) as e:
+            _ = _keywords_converter(input, length=100, key_type="start")
+            assert (
+                "The given keyword: bla is not recognised. The recognised keywords are: begin, mid, end."
+                in str(e)
+            )
