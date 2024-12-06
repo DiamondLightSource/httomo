@@ -7,6 +7,8 @@ from loguru import logger
 from mpi4py import MPI
 import numpy as np
 
+from httomo_backends.methods_database.query import Pattern
+
 gpu_enabled = False
 try:
     import cupy as xp
@@ -177,16 +179,6 @@ def _parse_preview(
             preview_str += ", "
 
     return preview_str
-
-
-class Pattern(Enum):
-    """Enum for the different slicing-orientations/"patterns" that tomographic
-    data can have.
-    """
-
-    projection = 0
-    sinogram = 1
-    all = 2
 
 
 def _get_slicing_dim(pattern: Pattern) -> Literal[1, 2]:
