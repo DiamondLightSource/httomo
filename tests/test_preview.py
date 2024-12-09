@@ -9,7 +9,6 @@ from httomo.preview import Preview, PreviewConfig, PreviewDimConfig
 from httomo.transform_loader_params import (
     PreviewParam,
     parse_preview,
-    _keywords_converter,
 )
 
 
@@ -230,7 +229,7 @@ def test_preview_offset():
     assert preview_config == preview_config_expected
 
 
-def test_preview_keywords():
+def test_preview_keywords_offset():
     data_shape = (220, 128, 160)
 
     preview_config_expected = PreviewConfig(
@@ -292,20 +291,73 @@ def test_parse_preview_raises_error_if_stop_smaller_start():
     ["begin", "mid", "end", None, 10, "bla"],
 )
 def test_keywords_converter(input):
+    data_shape1 = (220, 128, 160)
     if input == "begin":
-        assert _keywords_converter(input, length=100, key_type="start") == 0
+        param_value = PreviewParam(
+            angles=None,
+            detector_y={
+                "start": input,
+                "stop": 10,
+            },
+            detector_x=None,
+        )
+        preview_config = parse_preview(param_value=param_value, data_shape=data_shape1)
+        assert preview_config.detector_y.start == 0
     elif input == "mid":
-        assert _keywords_converter(input, length=100, key_type="start") == 49
+        param_value = PreviewParam(
+            angles=None,
+            detector_y={
+                "start": input,
+                "stop": "end",
+            },
+            detector_x=None,
+        )
+        preview_config = parse_preview(param_value=param_value, data_shape=data_shape1)
+        assert preview_config.detector_y.start == data_shape1[1] // 2 - 1
     elif input == "end":
-        assert _keywords_converter(input, length=100, key_type="start") == 100
+        param_value = PreviewParam(
+            angles=None,
+            detector_y={
+                "start": 0,
+                "stop": input,
+            },
+            detector_x=None,
+        )
+        preview_config = parse_preview(param_value=param_value, data_shape=data_shape1)
+        assert preview_config.detector_y.stop == data_shape1[1]
     elif input == None:
-        assert _keywords_converter(input, length=100, key_type="start") == 0
-        assert _keywords_converter(input, length=100, key_type="stop") == 100
+        param_value = PreviewParam(
+            angles=None,
+            detector_y=None,
+            detector_x=None,
+        )
+        preview_config = parse_preview(param_value=param_value, data_shape=data_shape1)
+        assert preview_config.detector_y.start == 0
+        assert preview_config.detector_y.stop == data_shape1[1]
     elif input == 10:
-        assert _keywords_converter(input, length=100, key_type="start") == 10
+        param_value = PreviewParam(
+            angles=None,
+            detector_y={
+                "start": 0,
+                "stop": input,
+            },
+            detector_x=None,
+        )
+        preview_config = parse_preview(param_value=param_value, data_shape=data_shape1)
+        assert preview_config.detector_y.stop == 10
     else:
+        param_value = PreviewParam(
+            angles=None,
+            detector_y={
+                "start": 0,
+                "stop": input,
+            },
+            detector_x=None,
+        )
         with pytest.raises(ValueError) as e:
-            _ = _keywords_converter(input, length=100, key_type="start")
+            _ = preview_config = parse_preview(
+                param_value=param_value, data_shape=data_shape1
+            )
             assert (
                 "The given keyword: bla is not recognised. The recognised keywords are: begin, mid, end."
                 in str(e)
