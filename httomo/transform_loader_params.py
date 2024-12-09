@@ -12,6 +12,9 @@ from httomo.loaders.types import (
     UserDefinedAngles,
 )
 from httomo.preview import PreviewConfig, PreviewDimConfig
+from httomo.utils import (
+    log_once,
+)
 
 
 class StartStopEntry(TypedDict):
@@ -19,8 +22,10 @@ class StartStopEntry(TypedDict):
     Configuration for a single dimension's previewing in terms of start/stop values.
     """
 
-    start: Optional[int]
-    stop: Optional[int]
+    start: Union[int, str]
+    start_offset: Optional[int]
+    stop: Union[int, str]
+    stop_offset: Optional[int]
 
 
 PreviewParamEntry: TypeAlias = Union[Literal["mid"], StartStopEntry]
@@ -86,9 +91,21 @@ def parse_preview(
             start, stop = _get_middle_slice_indices(length)
         else:
             val = par.get("start", None)
-            start = 0 if val is None else val
+            start = _keywords_converter(val, length, key_type="start")
+            val = par.get("start_offset", None)
+            start_offset = 0 if val is None else val
+            start = _offset_preview_setter(
+                start, start_offset, length, key_type="start"
+            )
             val = par.get("stop", None)
-            stop = length if val is None else val
+            stop = _keywords_converter(val, length, key_type="stop")
+            val = par.get("stop_offset", None)
+            stop_offset = 0 if val is None else val
+            stop = _offset_preview_setter(stop, stop_offset, length, key_type="stop")
+        if stop <= start:
+            raise ValueError(
+                f"Stop value {stop} is smaller or equal compared to the start value {start}. Please check your preview values."
+            )
 
         return PreviewDimConfig(start=start, stop=stop)
 
@@ -97,6 +114,54 @@ def parse_preview(
         detector_y=conv_param(param_value["detector_y"], data_shape[1]),
         detector_x=conv_param(param_value["detector_x"], data_shape[2]),
     )
+
+
+def _keywords_converter(val: Union[int, None, str], length: int, key_type: str) -> int:
+    """
+    Takes the value to assign an index to it. Looks into keywords (begin, mid, end) if they are used.
+    """
+    if isinstance(val, str):
+        if val == "begin":
+            return 0
+        elif val == "mid":
+            start, stop = _get_middle_slice_indices(length)
+            return int(stop + start) // 2
+        elif val == "end":
+            return length
+        else:
+            raise ValueError(
+                f"The given keyword: {val} is not recognised. The recognised keywords are: begin, mid, end."
+            )
+    else:
+        if val is None:
+            if key_type == "start":
+                return 0
+            else:
+                return length
+        else:
+            return val
+
+
+def _offset_preview_setter(
+    start_or_stop_index: int, start_or_stop_offset: int, length: int, key_type: str
+) -> int:
+    """
+    This sets new indices for start or stop if the offset is provided. The function also checks the data range and prints our of range in the logger.
+    """
+    log_message = f"PREVIEW WARNING: The {key_type} value with {key_type} offset equals to {start_or_stop_index + start_or_stop_offset} while the data range [{0}-{length}]. The preview will be extended automatically."
+    if start_or_stop_offset > 0:
+        if start_or_stop_index + start_or_stop_offset > length:
+            start_or_stop_index = length
+            log_once(log_message)
+        else:
+            start_or_stop_index += start_or_stop_offset
+    if start_or_stop_offset < 0:
+        if start_or_stop_index + start_or_stop_offset < 0:
+            log_once(log_message)
+            start_or_stop_index = 0
+        else:
+            start_or_stop_index += start_or_stop_offset
+    return start_or_stop_index
 
 
 def _get_middle_slice_indices(dim_len: int) -> tuple[int, int]:
