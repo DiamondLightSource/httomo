@@ -7,8 +7,10 @@ import numpy as np
 import yaml
 from httomo.runner.methods_repository_interface import GpuMemoryRequirement, MethodQuery
 
-from httomo.utils import Pattern, log_exception
+from httomo.utils import log_exception
 from httomo.runner.methods_repository_interface import MethodRepository
+
+from httomo_backends.methods_database.query import Pattern
 
 YAML_DIR = Path(__file__).parent / "packages/"
 

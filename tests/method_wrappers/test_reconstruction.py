@@ -3,9 +3,9 @@ from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.reconstruction import ReconstructionWrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
-from httomo.utils import Pattern
 from ..testing_utils import make_mock_preview_config, make_mock_repo
 
+from httomo_backends.methods_database.query import Pattern
 
 import numpy as np
 from mpi4py import MPI
