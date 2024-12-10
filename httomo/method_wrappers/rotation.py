@@ -2,7 +2,9 @@ from httomo.block_interfaces import T, Block
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.method_wrapper import MethodParameterDictType
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import Pattern, catchtime, log_once, xp
+from httomo.utils import catchtime, log_once, xp
+
+from httomo_backends.methods_database.query import Pattern
 
 
 import numpy as np
