@@ -19,7 +19,6 @@ from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_backing import DataSetStoreBacking
-from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
@@ -32,6 +31,8 @@ from httomo.utils import (
 )
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from ..testing_utils import make_mock_preview_config, make_test_loader, make_test_method
+
+from httomo_backends.methods_database.query import GpuMemoryRequirement
 
 
 def test_check_params_for_sweep_raises_exception(

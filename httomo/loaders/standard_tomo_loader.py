@@ -21,7 +21,9 @@ from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
 from httomo.types import generic_array
-from httomo.utils import Pattern, log_once, make_3d_shape_from_shape
+from httomo.utils import log_once, make_3d_shape_from_shape
+
+from httomo_backends.methods_database.query import Pattern
 
 
 class StandardTomoLoader(DataSetSource):
