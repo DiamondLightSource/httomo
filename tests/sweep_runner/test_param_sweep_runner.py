@@ -24,8 +24,9 @@ from tests.testing_utils import (
     make_test_method,
 )
 from httomo.runner.loader import LoaderInterface
-from httomo.utils import Pattern
 from httomo.runner.dataset_store_interfaces import DataSetSource
+
+from httomo_backends.methods_database.query import Pattern
 
 
 def test_raises_error_if_no_sweep_detected(mocker: MockerFixture):

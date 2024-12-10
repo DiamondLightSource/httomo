@@ -2,7 +2,7 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Literal, Optional, Protocol, Tuple, Union
 
-from httomo.utils import Pattern
+from httomo_backends.methods_database.query import Pattern
 
 
 @dataclass(frozen=True)

@@ -1,6 +1,7 @@
 from httomo.runner.loader import LoaderInterface
-from httomo.utils import Pattern
 from httomo.runner.method_wrapper import MethodWrapper
+
+from httomo_backends.methods_database.query import Pattern
 
 from typing import Iterator, List
 

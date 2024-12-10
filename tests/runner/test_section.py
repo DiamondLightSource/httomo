@@ -4,8 +4,9 @@ from pytest_mock import MockerFixture
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import determine_section_padding, sectionize, Section
-from httomo.utils import Pattern
 from ..testing_utils import make_test_loader, make_test_method
+
+from httomo_backends.methods_database.query import Pattern
 
 # For reference, we break into new platform sections if and only if:
 # - the pattern was changed (reslice)
