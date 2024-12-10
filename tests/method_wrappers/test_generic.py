@@ -4,12 +4,11 @@ import numpy as np
 from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.dataset import DataSetBlock
-from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.output_ref import OutputRef
 from httomo.utils import gpu_enabled, xp
 from ..testing_utils import make_mock_preview_config, make_mock_repo, make_test_method
 
-from httomo_backends.methods_database.query import Pattern
+from httomo_backends.methods_database.query import GpuMemoryRequirement, Pattern
 
 import pytest
 from mpi4py import MPI

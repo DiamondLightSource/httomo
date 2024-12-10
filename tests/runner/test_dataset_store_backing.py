@@ -11,13 +11,12 @@ from httomo.runner.dataset_store_backing import (
     calculate_section_chunk_bytes,
     determine_store_backing,
 )
-from httomo.runner.methods_repository_interface import GpuMemoryRequirement
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import sectionize
 from httomo.utils import make_3d_shape_from_shape
 from tests.testing_utils import make_test_loader, make_test_method
 
-from httomo_backends.methods_database.query import Pattern
+from httomo_backends.methods_database.query import GpuMemoryRequirement, Pattern
 
 
 @pytest.mark.parametrize(
