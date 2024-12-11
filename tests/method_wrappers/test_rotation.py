@@ -5,9 +5,10 @@ from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.rotation import RotationWrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
-from httomo.utils import Pattern, gpu_enabled, make_3d_shape_from_shape, xp
+from httomo.utils import gpu_enabled, make_3d_shape_from_shape, xp
 from ..testing_utils import make_mock_preview_config, make_mock_repo
 
+from httomo_backends.methods_database.query import Pattern
 
 import pytest
 from mpi4py import MPI
