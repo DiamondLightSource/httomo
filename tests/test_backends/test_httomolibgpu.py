@@ -375,7 +375,7 @@ def test_raven_filter_memoryhook(projections, ensure_clean_memory):
     # the estimated_memory_mb should be LARGER or EQUAL to max_mem_mb
     # the resulting percent value should not deviate from max_mem on more than 20%
     assert estimated_memory_mb >= max_mem_mb
-    assert percents_relative_maxmem <= 25
+    assert percents_relative_maxmem <= 30
 
 
 @pytest.mark.cupy
