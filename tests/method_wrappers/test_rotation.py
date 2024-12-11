@@ -83,7 +83,7 @@ def test_rotation_accumulates_blocks(mocker: MockerFixture, padding: Tuple[int, 
     )
 
     class FakeModule:
-        def rotation_tester(data, ind=None):
+        def rotation_tester(data, ind=None, average_radius=None):
             assert data.ndim == 2  # for 1 slice only
             np.testing.assert_array_equal(
                 data, global_data[:, (GLOBAL_SHAPE[1] - 1) // 2, :]
@@ -145,10 +145,11 @@ def test_rotation_gathers_single_sino_slice(
     )
 
     class FakeModule:
-        def rotation_tester(data, ind=None):
+        def rotation_tester(data, ind=None, average_radius=None):
             assert rank == 0  # for rank 1, it shouldn't be called
             assert data.ndim == 2  # for 1 slice only
             assert ind == 0
+            assert average_radius == 0
             if ind_par == "mid" or ind_par is None:
                 xp.testing.assert_array_equal(
                     global_data[:, (GLOBAL_SHAPE[1] - 1) // 2, :],
@@ -341,7 +342,7 @@ def test_rotation_normalize_sino_different_darks_flats_gpu():
 
 def test_rotation_180(mocker: MockerFixture):
     class FakeModule:
-        def rotation_tester(data, ind):
+        def rotation_tester(data, ind, average_radius):
             return 42.0  # center of rotation
 
     mocker.patch(
@@ -355,6 +356,7 @@ def test_rotation_180(mocker: MockerFixture):
         make_mock_preview_config(mocker),
         output_mapping={"cor": "center"},
         ind=5,
+        average_radius=0,
     )
 
     block = DataSetBlock(
@@ -365,6 +367,38 @@ def test_rotation_180(mocker: MockerFixture):
 
     assert wrp.get_side_output() == {"center": 42.0}
     assert new_block == block  # note: not a deep comparison
+
+
+def test_rotation_180_raise_average_radius(mocker: MockerFixture):
+    class FakeModule:
+        def rotation_tester(data, ind, average_radius):
+            return 42.0  # center of rotation
+
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, pattern=Pattern.projection),
+        "mocked_module_path.rotation",
+        "rotation_tester",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
+        output_mapping={"cor": "center"},
+        ind=5,
+        average_radius=6,
+    )
+
+    block = DataSetBlock(
+        data=np.ones((10, 10, 10), dtype=np.float32),
+        aux_data=AuxiliaryData(angles=np.ones(10, dtype=np.float32)),
+    )
+
+    with pytest.raises(ValueError) as e:
+        _ = wrp.execute(block)
+    assert (
+        "The given average_radius = 6 in the centering method is larger than the half size of the block = 5."
+        in str(e)
+    )
 
 
 def test_rotation_pc_180(mocker: MockerFixture):
@@ -396,7 +430,7 @@ def test_rotation_pc_180(mocker: MockerFixture):
 
 def test_rotation_360(mocker: MockerFixture):
     class FakeModule:
-        def rotation_tester(data, ind):
+        def rotation_tester(data, ind, average_radius):
             # cor, overlap, side, overlap_position - from find_center_360
             return 42.0, 3.0, 1, 10.0
 
@@ -415,6 +449,7 @@ def test_rotation_360(mocker: MockerFixture):
             "overlap_position": "pos",
         },
         ind=5,
+        average_radius=0,
     )
     block = DataSetBlock(
         data=np.ones((10, 10, 10), dtype=np.float32),
