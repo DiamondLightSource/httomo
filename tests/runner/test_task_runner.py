@@ -32,10 +32,7 @@ from httomo.utils import (
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from ..testing_utils import make_mock_preview_config, make_test_loader, make_test_method
 
-from httomo_backends.methods_database.query import (
-    GpuMemoryRequirement,
-    MethodDatabaseRepository,
-)
+from httomo_backends.methods_database.query import GpuMemoryRequirement
 
 
 def test_check_params_for_sweep_raises_exception(
@@ -525,8 +522,9 @@ def test_execute_section_with_padding_produces_correct_result(
         detector_y=PreviewDimConfig(start=0, stop=DATA_SHAPE[1]),
         detector_x=PreviewDimConfig(start=0, stop=DATA_SHAPE[2]),
     )
+    mock_repo = mocker.MagicMock()
     loader_wrapper = make_loader(
-        repo=MethodDatabaseRepository(),
+        repo=mock_repo,
         module_path="httomo.data.hdf.loaders",
         method_name="standard_tomo",
         in_file=IN_FILE_PATH,
@@ -580,7 +578,6 @@ def test_execute_section_with_padding_produces_correct_result(
     mocker.patch(
         "httomo.method_wrappers.generic.import_module", return_value=FakeMethodsModule
     )
-    mock_repo = mocker.MagicMock()
     method_query = mocker.create_autospec(MethodQuery)
     mocker.patch.object(target=method_query, attribute="padding", return_value=True)
     mocker.patch.object(
