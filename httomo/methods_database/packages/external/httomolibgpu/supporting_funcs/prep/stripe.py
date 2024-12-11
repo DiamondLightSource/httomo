@@ -115,7 +115,7 @@ def _calc_memory_bytes_raven_filter(
         + complex_slice_fft_data
         + complex_slice_fft_data_shifted
         + data_out_ifft_complex
-        + 2 * fftplan_slice
+        + 2.1 * fftplan_slice
     )
 
     return (tot_memory_bytes, 0)

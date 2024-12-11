@@ -243,6 +243,29 @@ def test_run_pipeline_cpu4_yaml(
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
 
 
+def test_run_pipeline_cpu5_yaml(
+    get_files: Callable, cmd, standard_data, yaml_cpu_pipeline5, output_folder
+):
+    cmd.pop(4)  #: don't save all
+    cmd.insert(6, standard_data)
+    cmd.insert(7, yaml_cpu_pipeline5)
+    cmd.insert(8, output_folder)
+    subprocess.check_output(cmd)
+
+    # recurse through output_dir and check that all files are there
+    files = get_files("output_dir/")
+    assert len(files) == 3
+
+    # explore the debug log and the previewed data
+    log_files = list(filter(lambda x: ".log" in x, files))
+    assert len(log_files) == 2
+    verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    verbose_log_contents = _get_log_contents(verbose_log_file[0])
+
+    assert "Preview: (0:180, 32:96, 29:129)" in verbose_log_contents
+    assert "Data shape is (180, 64, 100) of type uint16" in verbose_log_contents
+
+
 @pytest.mark.cupy
 def test_run_pipeline_gpu1_yaml(
     get_files: Callable, cmd, standard_data, yaml_gpu_pipeline1, output_folder
