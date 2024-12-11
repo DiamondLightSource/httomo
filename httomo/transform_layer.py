@@ -6,10 +6,11 @@ from httomo.method_wrappers.datareducer import DatareducerWrapper
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.method_wrappers.images import ImagesWrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
-from httomo.methods_database.query import MethodDatabaseRepository
 from httomo.runner.pipeline import Pipeline
 from mpi4py import MPI
 import httomo
+
+from httomo_backends.methods_database.query import MethodDatabaseRepository
 
 
 class TransformLayer:
