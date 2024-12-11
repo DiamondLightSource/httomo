@@ -146,8 +146,10 @@ class RotationWrapper(GenericMethodWrapper):
         else:
             assert "ind" in args
             slice_for_cor = args["ind"]
-            assert "average_radius" in args
-            average_radius = args["average_radius"]
+            if "average_radius" not in args:
+                average_radius = 0
+            else:
+                average_radius = args["average_radius"]
             # append to internal sinogram, until we have the last block
             if self.sino is None:
                 self.sino = np.empty(
