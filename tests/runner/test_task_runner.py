@@ -14,7 +14,6 @@ from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.loaders import make_loader
 from httomo.loaders.types import RawAngles
 from httomo.method_wrappers import make_method_wrapper
-from httomo.methods_database.query import MethodDatabaseRepository, MethodsDatabaseQuery
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
@@ -32,7 +31,11 @@ from httomo.utils import (
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from ..testing_utils import make_mock_preview_config, make_test_loader, make_test_method
 
-from httomo_backends.methods_database.query import GpuMemoryRequirement
+from httomo_backends.methods_database.query import (
+    GpuMemoryRequirement,
+    MethodsDatabaseQuery,
+    MethodDatabaseRepository,
+)
 
 
 def test_check_params_for_sweep_raises_exception(
