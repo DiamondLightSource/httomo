@@ -27,7 +27,7 @@ jobs:
       - name: Create conda environment
         uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: conda/environment.yml
+          environment-file: conda/cuda-on-host.yml
           environment-name: httomo
           post-cleanup: 'all'
           init-shell: bash
@@ -36,8 +36,8 @@ jobs:
         run: |
           micromamba activate httomo
           pip install --upgrade --force-reinstall pillow
-          pip install httomolibgpu tomobar httomo-backends
-          pip install .         
+          pip install --no-deps httomolibgpu
+          pip install .[ci]
           micromamba list
                 
       - name: Run HTTomo tests

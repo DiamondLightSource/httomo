@@ -1,0 +1,7 @@
+name: httomo
+channels:
+  - conda-forge
+dependencies:
+  - h5py=*=*mpi_openmpi*
+  - mpi4py
+  - tomopy=1.15
