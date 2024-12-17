@@ -12,7 +12,7 @@ jobs:
   iris-gpu:
     runs-on: iris-gpu
     container:
-      image: nvidia/cuda:11.6.2-devel-ubi8
+      image: nvidia/cuda:12.6.3-devel-ubi8
       env:
         NVIDIA_VISIBLE_DEVICES: ${{ env.NVIDIA_VISIBLE_DEVICES }}
 
