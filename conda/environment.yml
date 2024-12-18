@@ -6,7 +6,6 @@ dependencies:
   - click
   - numpy
   - cupy=12.3.0
-  - cudatoolkit>=11.2
   - graypy
   - h5py=*=*mpi_openmpi*
   - hdf5plugin
