@@ -249,8 +249,10 @@ def set_global_constants(
     syslog_port: int,
     output_folder_name: Optional[Path],
 ) -> None:
-    if compress_intermediate:
-        frames_per_chunk = 1
+    if compress_intermediate and frames_per_chunk == 0:
+        # 0 means write contiguously but compression must have chunk
+        # storage, so decide automatically in this case
+        frames_per_chunk = -1
     httomo.globals.INTERMEDIATE_FORMAT = intermediate_format
     httomo.globals.COMPRESS_INTERMEDIATE = compress_intermediate
     httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
