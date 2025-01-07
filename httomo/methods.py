@@ -16,6 +16,10 @@ __all__ = ["calculate_stats", "save_intermediate_data"]
 # save a copy of the original guess_chunk if it needs to be restored
 ORIGINAL_GUESS_CHUNK = h5py._hl.filters.guess_chunk
 
+# the bandwidth that saturates the file system (single process)
+# this was estimated after performing some benchmarks
+SATURATION_BW = 512 * 2**20
+
 
 def calculate_stats(
     data: np.ndarray,
@@ -80,6 +84,22 @@ def setup_dataset(
 ) -> h5py.Dataset:
 
     if filetype == "hdf5":
+        if frames_per_chunk == -1:
+            # decide the number of frames in a chunk by maximising the
+            # number of frames around the saturation bandwidth of the
+            # file system
+            DIMS = [0, 1, 2]
+            non_slicing_dims = list(set(DIMS) - set([slicing_dim]))
+            # starting value
+            sz_per_chunk = data.dtype.itemsize
+            for dim in non_slicing_dims:
+                sz_per_chunk *= global_shape[dim]
+
+            # the bandwidth is not divided by the number of MPI ranks to
+            # provide a consistent chunk size for different number of
+            # MPI ranks
+            frames_per_chunk = SATURATION_BW // sz_per_chunk
+
         if frames_per_chunk > data.shape[slicing_dim]:
             warn_message = (
                 f"frames_per_chunk={frames_per_chunk} exceeds number of elements in "
