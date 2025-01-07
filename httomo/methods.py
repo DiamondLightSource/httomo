@@ -134,6 +134,17 @@ def setup_dataset(
         else:
             dcpl = None
 
+        # adjust the raw data chunk cache options of the dataset
+        # according to the chunk size
+        num_chunks = np.prod(np.asarray(global_shape) / np.asarray(chunk_shape)).astype(
+            int
+        )
+        rdcc_opts = {
+            "rdcc_nbytes": data.dtype.itemsize * np.prod(chunk_shape),
+            "rdcc_w0": 1,
+            "rdcc_nslots": _get_rdcc_nslots(num_chunks),
+        }
+
         # only create if not already present - otherwise return existing dataset
         dataset = file.require_dataset(
             path,
@@ -143,6 +154,7 @@ def setup_dataset(
             chunks=None,  # set in dcpl
             **compression,
             dcpl=dcpl,
+            **rdcc_opts,
         )
     return dataset
 
@@ -214,3 +226,26 @@ def _dcpl_fill_never(
     dcpl.set_fill_time(h5py.h5d.FILL_TIME_NEVER)
 
     return dcpl
+
+
+def _get_rdcc_nslots(
+    num_chunks: int,
+) -> int:
+    """Estimate the value of rdcc_nslots."""
+    # ideally this is a prime number and about 100 times the number
+    # of chunks for maximum performance
+    if 0 <= num_chunks < 500:
+        return 50021
+    elif 500 <= num_chunks < 1000:
+        return 100003
+    elif 1000 <= num_chunks < 1500:
+        return 150001
+    elif 1500 <= num_chunks < 2000:
+        return 200003
+    elif 2000 <= num_chunks < 2500:
+        return 250007
+    elif 2500 <= num_chunks < 3000:
+        return 300007
+    else:
+        # +1 to try my luck in getting a prime!
+        return num_chunks * 100 + 1
