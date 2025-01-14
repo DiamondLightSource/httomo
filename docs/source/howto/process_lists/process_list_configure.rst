@@ -47,20 +47,14 @@ The pattern of any supported method can be found in :ref:`pl_library`.
 Library files
 -------------
 
-Here is the list of library files for backends where patterns and other fixed arguments for methods are specified. When HTTomo operates
-with a certain method it always refers to its library file in order get the specific requirements for that method.
+In order for HTTomo to execute a method it requires certain information about the method, such
+as its pattern, and (if it's a GPU method) the amount of GPU memory required per-slice. HTTomo
+uses a package called :code:`httomo-backends` to get this information.
 
-.. dropdown:: TomoPy's library file
-
-    .. literalinclude:: ../../../../httomo/methods_database/packages/external/tomopy/tomopy.yaml
-
-.. dropdown:: Httomolibgpu's library file
-
-    .. literalinclude:: ../../../../httomo/methods_database/packages/external/httomolibgpu/httomolibgpu.yaml
-
-.. dropdown:: Httomolib's library file
-
-    .. literalinclude:: ../../../../httomo/methods_database/packages/external/httomolib/httomolib.yaml
+See the `httomo-backends
+<https://diamondlightsource.github.io/httomo-backends/backends/method_info.html>`_
+documentation for more details on how it provides the required information through "library
+files" and "supporting functions".
 
 .. _pl_grouping:
 
