@@ -14,12 +14,11 @@ from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.loaders import make_loader
 from httomo.loaders.types import RawAngles
 from httomo.method_wrappers import make_method_wrapper
-from httomo.methods_database.query import MethodDatabaseRepository, MethodsDatabaseQuery
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_backing import DataSetStoreBacking
-from httomo.runner.methods_repository_interface import GpuMemoryRequirement
+from httomo.runner.methods_repository_interface import MethodQuery
 from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
@@ -32,6 +31,8 @@ from httomo.utils import (
 )
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from ..testing_utils import make_mock_preview_config, make_test_loader, make_test_method
+
+from httomo_backends.methods_database.query import GpuMemoryRequirement
 
 
 def test_check_params_for_sweep_raises_exception(
@@ -521,8 +522,9 @@ def test_execute_section_with_padding_produces_correct_result(
         detector_y=PreviewDimConfig(start=0, stop=DATA_SHAPE[1]),
         detector_x=PreviewDimConfig(start=0, stop=DATA_SHAPE[2]),
     )
+    mock_repo = mocker.MagicMock()
     loader_wrapper = make_loader(
-        repo=MethodDatabaseRepository(),
+        repo=mock_repo,
         module_path="httomo.data.hdf.loaders",
         method_name="standard_tomo",
         in_file=IN_FILE_PATH,
@@ -569,11 +571,6 @@ def test_execute_section_with_padding_produces_correct_result(
                         out[i, j, k] = neighbourhood.sum()
             return out
 
-    # Define padding calculator for dummy 3D method
-    class FakeSupportingFunctionsModule:
-        def _calc_padding_method_using_padding_slices(**kwargs) -> Tuple[int, int]:
-            return (kwargs["kernel_size"] // 2, kwargs["kernel_size"] // 2)
-
     # Create method wrapper
     KERNEL_SIZE = 3
     MODULE_PATH = "module_path"
@@ -581,12 +578,12 @@ def test_execute_section_with_padding_produces_correct_result(
     mocker.patch(
         "httomo.method_wrappers.generic.import_module", return_value=FakeMethodsModule
     )
-    mock_repo = mocker.MagicMock()
-    method_query = MethodsDatabaseQuery(MODULE_PATH, METHOD_NAME)
+    method_query = mocker.create_autospec(MethodQuery)
     mocker.patch.object(target=method_query, attribute="padding", return_value=True)
-    mocker.patch(
-        "httomo.methods_database.query.import_module",
-        return_value=FakeSupportingFunctionsModule,
+    mocker.patch.object(
+        target=method_query,
+        attribute="calculate_padding",
+        return_value=(KERNEL_SIZE // 2, KERNEL_SIZE // 2),
     )
     mocker.patch.object(
         target=method_query, attribute="get_pattern", return_value=Pattern.projection
@@ -602,6 +599,9 @@ def test_execute_section_with_padding_produces_correct_result(
     )
     mocker.patch.object(
         target=method_query, attribute="save_result_default", return_value=False
+    )
+    mocker.patch.object(
+        target=method_query, attribute="swap_dims_on_output", return_value=False
     )
     mocker.patch.object(target=mock_repo, attribute="query", return_value=method_query)
     wrapper = make_method_wrapper(

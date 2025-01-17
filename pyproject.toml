@@ -9,15 +9,6 @@ include-package-data = true
 where = ["."]
 include = ["httomo*"]
 
-[tool.setuptools.package-data]
-httomo = [
-    "methods_database/packages/*.yaml",
-    "methods_database/packages/external/*.yaml",
-    "methods_database/packages/external/httomolibgpu/*.yaml",
-    "methods_database/packages/external/httomolib/*.yaml",
-    "methods_database/packages/external/tomopy/*.yaml",
-]
-
 [tool.setuptools-git-versioning]
 enabled = true
 template = "{tag}"
@@ -49,7 +40,6 @@ dependencies = [
     "click",
     "numpy",
     "httomolib",
-    "httomo-backends",
     "loguru",
     "typing-extensions",
     "tqdm",

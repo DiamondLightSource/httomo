@@ -1,8 +1,9 @@
 from typing import Protocol, Tuple
 
 from httomo.runner.dataset_store_interfaces import DataSetSource
-from httomo.utils import Pattern
 from httomo.preview import PreviewConfig
+
+from httomo_backends.methods_database.query import Pattern
 
 
 class LoaderInterface(Protocol):

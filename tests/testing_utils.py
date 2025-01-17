@@ -8,7 +8,8 @@ from httomo.runner.methods_repository_interface import (
     GpuMemoryRequirement,
     MethodRepository,
 )
-from httomo.utils import Pattern
+
+from httomo_backends.methods_database.query import Pattern
 
 from pytest_mock import MockerFixture
 
