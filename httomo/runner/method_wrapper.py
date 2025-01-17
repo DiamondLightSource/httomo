@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from httomo.block_interfaces import T
-from httomo.runner.methods_repository_interface import GpuMemoryRequirement
-from httomo.utils import Pattern, xp
+from httomo.utils import xp
+
+from httomo_backends.methods_database.query import GpuMemoryRequirement, Pattern
 
 import numpy as np
 from mpi4py import MPI

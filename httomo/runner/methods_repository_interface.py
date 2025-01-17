@@ -2,13 +2,7 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Literal, Optional, Protocol, Tuple, Union
 
-from httomo.utils import Pattern
-
-
-@dataclass(frozen=True)
-class GpuMemoryRequirement:
-    multiplier: Optional[float] = 1.0
-    method: Literal["direct", "module"] = "direct"
+from httomo_backends.methods_database.query import GpuMemoryRequirement, Pattern
 
 
 class MethodQuery(Protocol):

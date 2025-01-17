@@ -5,7 +5,7 @@ from httomo.runner.method_wrapper import MethodParameterDictType
 
 from typing import Any, Dict, Optional
 
-from httomo.utils import Pattern
+from httomo_backends.methods_database.query import Pattern
 
 
 class ReconstructionWrapper(GenericMethodWrapper):

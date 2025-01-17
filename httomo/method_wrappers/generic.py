@@ -394,7 +394,7 @@ class GenericMethodWrapper(MethodWrapper):
         """Calculate the dimensions of the output for this method"""
         if self.output_dims_change:
             return self._query.calculate_output_dims(
-                non_slice_dims_shape, **self.config_params
+                non_slice_dims_shape, **self._unwrap_output_ref_values()
             )
 
         return non_slice_dims_shape
@@ -402,7 +402,7 @@ class GenericMethodWrapper(MethodWrapper):
     def calculate_padding(self) -> Tuple[int, int]:
         """Calculate the padding required by the method"""
         if self.padding:
-            return self._query.calculate_padding(**self.config_params)
+            return self._query.calculate_padding(**self._unwrap_output_ref_values())
         return (0, 0)
 
     def calculate_max_slices(
@@ -449,7 +449,7 @@ class GenericMethodWrapper(MethodWrapper):
                 memory_bytes_method,
                 subtract_bytes,
             ) = self._query.calculate_memory_bytes(
-                non_slice_dims_shape, data_dtype, **self.config_params
+                non_slice_dims_shape, data_dtype, **self._unwrap_output_ref_values()
             )
 
         if memory_bytes_method == 0:
@@ -458,3 +458,22 @@ class GenericMethodWrapper(MethodWrapper):
         return (
             available_memory - subtract_bytes
         ) // memory_bytes_method, available_memory
+
+    def _unwrap_output_ref_values(self) -> Dict[str, Any]:
+        """
+        Iterate through params in `self.config_params` and, for any value of type `OutputRef`,
+        extract the value inside the `OutputRef`.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A dict containing all parameters in `self.config_params`, but with any `OutputRef`
+            values replaced with the value inside the `OutputRef`.
+        """
+        params = dict()
+        for name, value in self.config_params.items():
+            if isinstance(value, OutputRef):
+                params[name] = value.value
+                continue
+            params[name] = value
+        return params

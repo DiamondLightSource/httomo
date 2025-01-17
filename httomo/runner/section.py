@@ -8,8 +8,10 @@ from typing import Iterator, List, Optional, Tuple
 
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
-from httomo.utils import Pattern, log_once
+from httomo.utils import log_once
 from httomo.runner.method_wrapper import MethodWrapper
+
+from httomo_backends.methods_database.query import Pattern
 
 
 class Section:

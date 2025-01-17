@@ -9,7 +9,6 @@ import h5py
 from mpi4py.MPI import Comm
 from httomo.darks_flats import DarksFlatsFileConfig
 
-from httomo.methods_database.query import MethodDatabaseRepository
 from httomo.preview import PreviewConfig
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
@@ -21,6 +20,7 @@ from httomo.runner.output_ref import OutputRef
 from httomo.sweep_runner.param_sweep_yaml_loader import get_param_sweep_yaml_loader
 from httomo.transform_loader_params import parse_angles, parse_preview
 
+from httomo_backends.methods_database.query import MethodDatabaseRepository
 
 MethodConfig: TypeAlias = Dict[str, Any]
 PipelineConfig: TypeAlias = List[MethodConfig]
