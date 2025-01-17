@@ -36,7 +36,7 @@ jobs:
         run: |
           micromamba activate httomo
           pip install --upgrade --force-reinstall pillow
-          pip install httomolibgpu tomobar
+          pip install httomolibgpu tomobar ccpi-regularisation-cupy
           pip install --no-deps httomo-backends
           pip install .         
           micromamba list
