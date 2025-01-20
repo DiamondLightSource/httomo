@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 from unittest.mock import MagicMock
 import numpy as np
 from httomo.method_wrappers import make_method_wrapper
@@ -451,14 +451,20 @@ def test_rotation_180_average_within_range(mocker: MockerFixture):
     wrp.execute(block)
 
 
-def test_rotation_180_average_0slices(mocker: MockerFixture):
-    IND = 3
-    AVERAGE_RADIUS = 0
+@pytest.mark.parametrize(
+    "params",
+    [{"ind": 3, "average_radius": 0}, {"ind": 3}],
+    ids=[
+        "explicitly-sets-0",
+        "wrapper-implicitly-sets-0",
+    ],
+)
+def test_rotation_180_average_0slices(mocker: MockerFixture, params: Dict[str, Any]):
     original_array = np.zeros((7, 7, 7), dtype=np.float32)
     original_array[:, 2, :] = 1.2
     original_array[:, 3, :] = 2.5
     original_array[:, 4, :] = 13.7
-    expected_data = original_array[:, IND, :]
+    expected_data = original_array[:, params["ind"], :]
 
     class FakeModule:
         def rotation_tester(data, ind, average_radius):
@@ -475,8 +481,7 @@ def test_rotation_180_average_0slices(mocker: MockerFixture):
         MPI.COMM_WORLD,
         make_mock_preview_config(mocker),
         output_mapping={"cor": "center"},
-        ind=IND,
-        average_radius=AVERAGE_RADIUS,
+        **params,
     )
 
     block = DataSetBlock(
