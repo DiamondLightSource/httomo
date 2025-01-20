@@ -370,7 +370,11 @@ def test_rotation_180(mocker: MockerFixture):
     assert new_block == block  # note: not a deep comparison
 
 
-def test_rotation_180_raise_average_radius(mocker: MockerFixture):
+@pytest.mark.parametrize(
+    "radius",
+    [5, 6],
+)
+def test_rotation_180_raise_average_radius(mocker: MockerFixture, radius):
     class FakeModule:
         def rotation_tester(data, ind, average_radius):
             return 42.0  # center of rotation
@@ -386,20 +390,109 @@ def test_rotation_180_raise_average_radius(mocker: MockerFixture):
         make_mock_preview_config(mocker),
         output_mapping={"cor": "center"},
         ind=5,
-        average_radius=6,
+        average_radius=radius,
     )
 
     block = DataSetBlock(
         data=np.ones((10, 10, 10), dtype=np.float32),
         aux_data=AuxiliaryData(angles=np.ones(10, dtype=np.float32)),
     )
+    if radius == 5:
+        with pytest.raises(ValueError) as e:
+            _ = wrp.execute(block)
+        assert (
+            "The given average_radius = 5 in the centering method is larger or equal than the half size of the block = 5."
+            in str(e)
+        )
+    if radius == 6:
+        with pytest.raises(ValueError) as e:
+            _ = wrp.execute(block)
+        assert (
+            "The given average_radius = 6 in the centering method is larger or equal than the half size of the block = 5."
+            in str(e)
+        )
 
-    with pytest.raises(ValueError) as e:
-        _ = wrp.execute(block)
-    assert (
-        "The given average_radius = 6 in the centering method is larger than the half size of the block = 5."
-        in str(e)
+
+def test_rotation_180_average_within_range(mocker: MockerFixture):
+    class FakeModule:
+        def rotation_tester(data, ind, average_radius):
+            midindex = 3
+            original_array = np.zeros((7, 7, 7), dtype=np.float32)
+            original_array[:, 2, :] = 1.2
+            original_array[:, 3, :] = 2.5
+            original_array[:, 4, :] = 13.7
+
+            expected_data = np.mean(
+                original_array[
+                    :, midindex - average_radius : midindex + average_radius + 1, :
+                ],
+                axis=1,
+            )
+
+            np.testing.assert_array_equal(data, expected_data[:, np.newaxis, :])
+            return 100
+
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
     )
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, pattern=Pattern.projection),
+        "mocked_module_path.rotation",
+        "rotation_tester",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
+        output_mapping={"cor": "center"},
+        ind=3,
+        average_radius=1,
+    )
+    original_array = np.zeros((7, 7, 7), dtype=np.float32)
+    original_array[:, 2, :] = 1.2
+    original_array[:, 3, :] = 2.5
+    original_array[:, 4, :] = 13.7
+
+    block = DataSetBlock(
+        data=original_array.copy(),
+        aux_data=AuxiliaryData(angles=np.ones(7, dtype=np.float32)),
+    )
+    wrp.execute(block)
+
+
+def test_rotation_180_average_0slices(mocker: MockerFixture):
+    class FakeModule:
+        def rotation_tester(data, ind, average_radius):
+            midindex = 3
+            original_array = np.zeros((7, 7, 7), dtype=np.float32)
+            original_array[:, 2, :] = 1.2
+            original_array[:, 3, :] = 2.5
+            original_array[:, 4, :] = 13.7
+            expected_data = original_array[:, midindex, :]
+
+            np.testing.assert_array_equal(data, expected_data[:, np.newaxis, :])
+            return 100
+
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, pattern=Pattern.projection),
+        "mocked_module_path.rotation",
+        "rotation_tester",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
+        output_mapping={"cor": "center"},
+        ind=3,
+        average_radius=0,
+    )
+    original_array = np.zeros((7, 7, 7), dtype=np.float32)
+    original_array[:, 2, :] = 1.2
+    original_array[:, 3, :] = 2.5
+    original_array[:, 4, :] = 13.7
+
+    block = DataSetBlock(
+        data=original_array.copy(),
+        aux_data=AuxiliaryData(angles=np.ones(7, dtype=np.float32)),
+    )
+    wrp.execute(block)
 
 
 def test_rotation_pc_180(mocker: MockerFixture):

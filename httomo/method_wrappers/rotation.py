@@ -168,21 +168,22 @@ class RotationWrapper(GenericMethodWrapper):
             if average_radius == 0:
                 data = block.data[core_angles_start:core_angles_stop, slice_for_cor, :]
             else:
-                if 2 * average_radius <= block.data.shape[1]:
+                if 2 * average_radius < block.data.shape[1]:
                     # averaging few sinograms to improve SNR and centering method accuracy
                     data = xp.mean(
                         block.data[
                             core_angles_start:core_angles_stop,
                             slice_for_cor
                             - average_radius : slice_for_cor
-                            + average_radius,
+                            + average_radius
+                            + 1,
                             :,
                         ],
-                        1,
+                        axis=1,
                     )
                 else:
                     raise ValueError(
-                        f"The given average_radius = {average_radius} in the centering method is larger than the half size of the block = {block.data.shape[1]//2}. Please make it smaller or 0."
+                        f"The given average_radius = {average_radius} in the centering method is larger or equal than the half size of the block = {block.data.shape[1]//2}. Please make it smaller or 0."
                     )
 
             if block.is_gpu:
