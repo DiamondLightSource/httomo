@@ -76,6 +76,8 @@ class RotationWrapper(GenericMethodWrapper):
             dict_params["ind"] == "mid" or dict_params["ind"] is None
         ):
             updated_params = {**dict_params, "ind": (dataset.shape[1] - 1) // 2}
+        if "average_radius" not in dict_params:
+            updated_params.update({"average_radius": 0})
         return super()._build_kwargs(updated_params, dataset)
 
     def _gather_sino_slice(self, global_shape: Tuple[int, int, int]):
@@ -146,6 +148,10 @@ class RotationWrapper(GenericMethodWrapper):
         else:
             assert "ind" in args
             slice_for_cor = args["ind"]
+            if "average_radius" not in args:
+                average_radius = 0
+            else:
+                average_radius = args["average_radius"]
             # append to internal sinogram, until we have the last block
             if self.sino is None:
                 self.sino = np.empty(
@@ -159,8 +165,26 @@ class RotationWrapper(GenericMethodWrapper):
             if block.is_padded:
                 core_angles_start = block.padding[0]
                 core_angles_stop = core_angles_start + block.shape_unpadded[0]
-
-            data = block.data[core_angles_start:core_angles_stop, slice_for_cor, :]
+            if average_radius == 0:
+                data = block.data[core_angles_start:core_angles_stop, slice_for_cor, :]
+            else:
+                if 2 * average_radius < block.data.shape[1]:
+                    # averaging few sinograms to improve SNR and centering method accuracy
+                    data = xp.mean(
+                        block.data[
+                            core_angles_start:core_angles_stop,
+                            slice_for_cor
+                            - average_radius : slice_for_cor
+                            + average_radius
+                            + 1,
+                            :,
+                        ],
+                        axis=1,
+                    )
+                else:
+                    raise ValueError(
+                        f"The given average_radius = {average_radius} in the centering method is larger or equal than the half size of the block = {block.data.shape[1]//2}. Please make it smaller or 0."
+                    )
 
             if block.is_gpu:
                 with catchtime() as t:
