@@ -30,6 +30,6 @@
   module_path: httomolibgpu.recon.algorithm
   parameters:
     center: 80
-    filter_freq_cutoff: 1.1
+    filter_freq_cutoff: 0.35
     recon_size: null
     recon_mask_radius: null

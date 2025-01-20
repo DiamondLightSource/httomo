@@ -1,3 +1,5 @@
+# Standard tomography loader for NeXus files
+#-----------------------------------------------#
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
   parameters:
@@ -6,60 +8,79 @@
     rotation_angles:
         data_path: /entry/imaging_sum/gts_theta_value
     preview:
-      detector_y:
+      detector_x: # horizontal data previewing/cropping
+        start: 
+        stop:     
+      detector_y: # vertical data previewing/cropping
         start: 8
         stop: 15
+# Center of Rotation method for automatic centering. Required for reconstruction.
+#-----------------------------------------------#
 - method: find_center_vo
   module_path: httomolibgpu.recon.rotation
-  parameters:
-    ind: mid
+  parameters: # see online documentation for parameters 
+    ind: mid  # specify the vertical index (slice) for calculation. mid - middle
     smin: -50
     smax: 50
     srad: 6
     step: 0.25
     ratio: 0.5
     drop: 20
-  id: centering
-  side_outputs:
+  id: centering  # method's id for future referencing (see reconstruction)
+  side_outputs:  # method's side outputs include scalars and/or some auxiliary data output 
     cor: centre_of_rotation
+# Remove dezingers (outliers) in the data
+#-----------------------------------------------#   
 - method: remove_outlier
   module_path: httomolibgpu.misc.corr
   parameters:
-    dif: 0.1
+    dif: 0.1 # this might require optimisation
     kernel_size: 3
+# Normalisation of projection data with collected flats/darks.
+#-----------------------------------------------#    
 - method: normalize
   module_path: httomolibgpu.prep.normalize
   parameters:
     cutoff: 10.0
-    minus_log: true
+    minus_log: true # set to false if Paganin method is used
     nonnegativity: false
     remove_nans: false
+# Remove stripes in the data that can lead to ring artefacts in reconstruction
+#-----------------------------------------------#       
 - method: remove_stripe_based_sorting
   module_path: httomolibgpu.prep.stripe
   parameters:
     size: 11
     dim: 1
+# Reconstruction method
+#-----------------------------------------------#  
 - method: FBP
   module_path: httomolibgpu.recon.algorithm
   parameters:
-    center: ${{centering.side_outputs.centre_of_rotation}}
-    filter_freq_cutoff: 0.6
+    center: ${{centering.side_outputs.centre_of_rotation}} # the reference to the found CoR. Manually found integer can be also used. 
+    filter_freq_cutoff: 0.35
     recon_size: null
-    recon_mask_radius: null
-  save_result: true
+    recon_mask_radius: 0.95
+  save_result: true # set to false if hdf5 is not needed
+# Calculate global statistics on the reconstructed volume (min/max needed specifically)
+#-----------------------------------------------#
 - method: calculate_stats
   module_path: httomo.methods
   parameters: {}
   id: statistics
   side_outputs:
     glob_stats: glob_stats
+# Rescaling the data into 8-bit unsigned integer for saving into tiffs
+#-----------------------------------------------#        
 - method: rescale_to_int
   module_path: httomolibgpu.misc.rescale
   parameters:
-    perc_range_min: 0.0
-    perc_range_max: 100.0
+    perc_range_min: 5.0
+    perc_range_max: 95.0
     bits: 8
-    glob_stats: ${{statistics.side_outputs.glob_stats}}
+    glob_stats: ${{statistics.side_outputs.glob_stats}} # referring to min/max values of statistics
+# Saving the rescaled data into tiffs
+#-----------------------------------------------#       
 - method: save_to_images
   module_path: httomolib.misc.images
   parameters:

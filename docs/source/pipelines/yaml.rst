@@ -3,13 +3,15 @@
 Full YAML pipelines
 ==============================
 
-This is a collection of ready to be used pipeline templates aka process lists.
+This is a collection of ready to be used pipeline templates aka process lists for HTTomo.
 See more on :ref:`explanation_process_list` and how to :ref:`howto_process_list`.
 
 .. _tutorials_pl_templates_cpu:
 
 CPU Pipeline templates
 ----------------------------
+
+CPU-pipelines mostly use TomoPy methods that are executed on the CPU and expected to be slower.
 
 .. dropdown:: Basic TomoPy's (CPU-only) pipeline for the classical 180-degrees scan
 
@@ -21,7 +23,7 @@ CPU Pipeline templates
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu2.yaml
         :language: yaml
 
-.. dropdown:: This pipeline shows how "calculate_stats" module extracts global statistics in order to be passed to "save_to_images" function which uses it to rescale data for saving images
+.. dropdown:: This pipeline shows how "calculate_stats" module extracts global statistics in order to rescale data for saving 8-bit images
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu3.yaml
         :language: yaml
@@ -31,6 +33,8 @@ CPU Pipeline templates
 GPU Pipeline templates
 ----------------------------
 
+It is recommended to use GPU-based pipelines and methods from the httomolib and httomolibgpu libraries. Those libraries are supported directly by HTTomo development team. 
+
 .. dropdown:: Basic GPU pipeline which uses functions from the httomolibgpu library.
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_gpu1.yaml
@@ -39,20 +43,22 @@ GPU Pipeline templates
 
 .. _tutorials_pl_templates_dls:
 
-DLS Specific templates
+DLS-specific templates
 ----------------------------
 
-.. dropdown:: GPU-based pipeline using httomolibgpu methods for DIAD (k11) data. Global statistics and referencing is used.
+Those pipelines will use the methods from the httomolib and httomolibgpu libraries. 
+
+.. dropdown:: An example of a typical DIAD (k11) beamline piepeline.
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml
         :language: yaml
 
-.. dropdown:: GPU-driven pipeline for the 360-degrees data which estimates the CoR value and the overlap. The 180-degrees sinogram is obtained by stitching using the overlap value. The pipeline shows the extensive use of side_outputs and refrencing.
+.. dropdown:: Pipeline for 360-degrees data with automatic CoR finding and stitching to 180-degrees data.
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml
         :language: yaml
 
-.. dropdown:: More advanced GPU pipeline for the 360-degrees data. Here we preview the section and then reconstruct it iteratively, the result then downsampled before saving smaller images.
+.. dropdown:: Pipeline for 360-degrees data with automatic CoR finding and stitching to 180-degrees data. Iterative reconstruction
 
     .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_360deg_iterative_gpu3.yaml
         :language: yaml

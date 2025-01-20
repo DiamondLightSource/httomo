@@ -31,6 +31,6 @@
       start: 60
       stop: 120
       step: 10
-    filter_freq_cutoff: 1.1
+    filter_freq_cutoff: 0.35
     recon_size: null
     recon_mask_radius: null
