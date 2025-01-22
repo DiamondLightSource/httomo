@@ -48,6 +48,20 @@ def yaml_pipelines_generator(path_to_pipelines: str, path_to_httomobackends: str
         returns zero if the processing is successful
     """
 
+    # open YAML file to inspect
+    with open(path_to_pipelines, "r") as stream:
+        try:
+            pipeline_file_content = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+    
+    # a loop over pipelines in the file
+    pipelines_no = len(pipeline_file_content)
+    for i in range(pipelines_no):
+       pipeline = pipeline_file_content[i]
+       pipeline_name = pipeline['pipeline_name']
+       print(pipeline_name)
+
     return 0
 
 

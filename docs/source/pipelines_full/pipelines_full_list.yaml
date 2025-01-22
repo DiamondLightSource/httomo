@@ -1,41 +1,57 @@
 - pipeline_name: diad_pipeline1
-  methods:
+  method:
     name: standard_tomo
-      module_path: httomo.data.hdf.loaders
+    module_path: httomo.data.hdf.loaders
+  method:
     name: find_center_vo
-      module_path: httomolibgpu.recon.rotation
+    module_path: httomolibgpu.recon.rotation
+  method:
     name: remove_outlier
-      module_path: httomolibgpu.misc.corr
+    module_path: httomolibgpu.misc.corr
+  method:
     name: normalize
-      module_path: httomolibgpu.prep.normalize
+    module_path: httomolibgpu.prep.normalize
+  method:
     name: remove_all_stripe
-      module_path: httomolibgpu.prep.stripe
+    module_path: httomolibgpu.prep.stripe
+  method:
     name: FBP
-      module_path: httomolibgpu.recon.algorithm
+    module_path: httomolibgpu.recon.algorithm
+  method:
     name: calculate_stats
-      module_path: httomo.methods
+    module_path: httomo.methods
+  method:
     name: rescale_to_int
-      module_path: httomolibgpu.misc.rescale
+    module_path: httomolibgpu.misc.rescale
+  method:
     name: save_to_images
-      module_path: httomolib.misc.images
+    module_path: httomolib.misc.images
 # -----------------------------------------------#      
 - pipeline_name: diad_pipeline2
-  methods:
+  method:
     name: standard_tomo
-      module_path: httomo.data.hdf.loaders
+    module_path: httomo.data.hdf.loaders
+  method:
     name: find_center_vo
-      module_path: httomolibgpu.recon.rotation
+    module_path: httomolibgpu.recon.rotation
+  method:
     name: remove_outlier
-      module_path: httomolibgpu.misc.corr
+    module_path: httomolibgpu.misc.corr
+  method:
     name: normalize
-      module_path: httomolibgpu.prep.normalize
+    module_path: httomolibgpu.prep.normalize
+  method:
     name: remove_stripe_based_sorting
-      module_path: httomolibgpu.prep.stripe
+    module_path: httomolibgpu.prep.stripe
+  method:
     name: FBP
-      module_path: httomolibgpu.recon.algorithm
+    module_path: httomolibgpu.recon.algorithm
+  method:
     name: calculate_stats
-      module_path: httomo.methods
+    module_path: httomo.methods
+  method:
     name: rescale_to_int
-      module_path: httomolibgpu.misc.rescale
+    module_path: httomolibgpu.misc.rescale
+  method:
     name: save_to_images
-      module_path: httomolib.misc.images
+    module_path: httomolib.misc.images
