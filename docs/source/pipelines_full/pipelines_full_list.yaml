@@ -1,0 +1,41 @@
+- pipeline_name: diad_pipeline1
+  methods:
+    name: standard_tomo
+      module_path: httomo.data.hdf.loaders
+    name: find_center_vo
+      module_path: httomolibgpu.recon.rotation
+    name: remove_outlier
+      module_path: httomolibgpu.misc.corr
+    name: normalize
+      module_path: httomolibgpu.prep.normalize
+    name: remove_all_stripe
+      module_path: httomolibgpu.prep.stripe
+    name: FBP
+      module_path: httomolibgpu.recon.algorithm
+    name: calculate_stats
+      module_path: httomo.methods
+    name: rescale_to_int
+      module_path: httomolibgpu.misc.rescale
+    name: save_to_images
+      module_path: httomolib.misc.images
+# -----------------------------------------------#      
+- pipeline_name: diad_pipeline2
+  methods:
+    name: standard_tomo
+      module_path: httomo.data.hdf.loaders
+    name: find_center_vo
+      module_path: httomolibgpu.recon.rotation
+    name: remove_outlier
+      module_path: httomolibgpu.misc.corr
+    name: normalize
+      module_path: httomolibgpu.prep.normalize
+    name: remove_stripe_based_sorting
+      module_path: httomolibgpu.prep.stripe
+    name: FBP
+      module_path: httomolibgpu.recon.algorithm
+    name: calculate_stats
+      module_path: httomo.methods
+    name: rescale_to_int
+      module_path: httomolibgpu.misc.rescale
+    name: save_to_images
+      module_path: httomolib.misc.images
