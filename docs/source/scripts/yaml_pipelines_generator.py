@@ -27,20 +27,14 @@ Please run the generator as:
 """
 import argparse
 import os
-from typing import Any, List, Dict
-import yaml
 import ruamel.yaml
+import httomo_backends
 
 CS = ruamel.yaml.comments.CommentedSeq  # defaults to block style
 
 
-def FS(x):  # flow style list
-    res = CS(x)
-    res.fa.set_flow_style()
-    return res
-
-
-import httomo_backends
+def __represent_none(self, data):
+    return self.represent_scalar("tag:yaml.org,2002:null", "null")
 
 
 def yaml_pipelines_generator(
@@ -57,12 +51,14 @@ def yaml_pipelines_generator(
         returns zero if the processing is successful
     """
 
+    yaml = ruamel.yaml.YAML(typ="rt")
+
     # open YAML file to inspect
-    with open(path_to_pipelines, "r") as stream:
+    with open(path_to_pipelines, "r") as file:
         try:
-            pipeline_file_content = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
+            pipeline_file_content = yaml.load(file)
+        except OSError as e:
+            print("loading yaml file with methods failed", e)
 
     with open(path_to_output_file, "w") as f:
         # a loop over methods in the high-level pipeline file
@@ -86,9 +82,9 @@ def yaml_pipelines_generator(
             )
             with open(full_path_to_yamls, "r") as stream:
                 try:
-                    yaml_template_method = yaml.safe_load(stream)
-                except yaml.YAMLError as exc:
-                    print(exc)
+                    yaml_template_method = yaml.load(stream)
+                except OSError as e:
+                    print("loading yaml template failed", e)
 
             if "loaders" in module_name:
                 # should be the first method in the list
@@ -124,18 +120,25 @@ def yaml_pipelines_generator(
             elif "algorithm" in module_name:
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
-                    "Reconstruction method. Use reference to the center if the method is used above or set to an  ",
+                    "Reconstruction method. Use a reference to the center or set to an integer.",
                     indent=0,
                 )
-                # pipeline_full.yaml_add_eol_comment(
-                #     "End-of-line comment",
-                #     "center",
-                #     column=10,
-                # )
             elif "calculate_stats" in method_name:
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
                     "Calculate global statistics on the reconstructed volume (min/max needed specifically for data rescaling) ",
+                    indent=0,
+                )
+            elif "rescale_to_int" in method_name:
+                pipeline_full.yaml_set_comment_before_after_key(
+                    i,
+                    "Rescaling the data using min/max obtained from calculate_stats",
+                    indent=0,
+                )
+            elif "images" in module_name:
+                pipeline_full.yaml_set_comment_before_after_key(
+                    i,
+                    "Saving data into images",
                     indent=0,
                 )
             else:
@@ -146,11 +149,17 @@ def yaml_pipelines_generator(
                 )
             pipeline_full += yaml_template_method
 
+        # tried inline comments here, doesn't work for some reason
+        # pipeline_full[5]["parameters"].yaml_add_eol_comment(
+        #     key="center",
+        #     comment="Some inline comment",
+        # )
+        yaml.representer.add_representer(type(None), __represent_none)
         ruamel.yaml.dump(
             pipeline_full,
             f,
             Dumper=ruamel.yaml.RoundTripDumper,
-            default_flow_style=False,
+            default_flow_style=None,
             width=50,
             indent=0,
         )
