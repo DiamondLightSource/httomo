@@ -51,7 +51,7 @@ def yaml_pipelines_generator(
         returns zero if the processing is successful
     """
 
-    yaml = ruamel.yaml.YAML(typ="rt")
+    yaml = ruamel.yaml.YAML(typ="rt", pure=True)
 
     # open YAML file to inspect
     with open(path_to_pipelines, "r") as file:
@@ -61,7 +61,7 @@ def yaml_pipelines_generator(
             print("loading yaml file with methods failed", e)
 
     with open(path_to_output_file, "w") as f:
-        # a loop over methods in the high-level pipeline file
+        # a loop over methods in the high-level pipeline file (directive)
         methods_no = len(pipeline_file_content)
         pipeline_full = CS()
         for i in range(methods_no):
@@ -90,56 +90,101 @@ def yaml_pipelines_generator(
                 # should be the first method in the list
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
-                    "Standard tomography loader for NeXus files",
+                    "--- Standard tomography loader for NeXus files. ---",
                     indent=0,
                 )
+                pipeline_full += yaml_template_method
             elif "rotation" in module_name:
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
-                    "Center of Rotation method for automatic center finding. Required for reconstruction",
+                    "--- Center of Rotation auto-finding. Required for reconstruction bellow. ---",
                     indent=0,
+                )
+                pipeline_full += yaml_template_method
+                pipeline_full[i]["parameters"].yaml_add_eol_comment(
+                    key="ind",
+                    comment="A vertical slice (sinogram) index to calculate CoR, `mid` can be used for middle",
+                )
+                pipeline_full[i]["parameters"].yaml_add_eol_comment(
+                    key="cor_initialisation_value",
+                    comment="Use if an approximate CoR is known",
+                )
+                pipeline_full[i]["parameters"].yaml_add_eol_comment(
+                    key="average_radius",
+                    comment="Average several sinograms to improve SNR, one can try 3-5 range",
+                )
+                pipeline_full[i]["side_outputs"].yaml_add_eol_comment(
+                    key="cor",
+                    comment="A side output of the method, here a CoR scalar value",
                 )
             elif "corr" in module_name and "remove_outlier" in method_name:
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
-                    "Removing dead pixels in the data, aka zingers. Only required if there are sharp streaks in the reconstruction.",
+                    "--- Removing dead pixels in the data, aka zingers. Use if sharp streaks are present in reconstruction. ---",
                     indent=0,
+                )
+                pipeline_full += yaml_template_method
+                pipeline_full[i]["parameters"].yaml_add_eol_comment(
+                    key="dif",
+                    comment="A difference between the outlier value and the median value of neighbouring pixels.",
                 )
             elif "normalize" in module_name:
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
-                    "Normalisation of projection data using collected flats/darks and taking negative log (not needed with Paganin). ",
+                    "--- Normalisation of projection data using collected flats/darks images. --- ",
                     indent=0,
+                )
+                pipeline_full += yaml_template_method
+                pipeline_full[i]["parameters"].yaml_add_eol_comment(
+                    key="minus_log",
+                    comment="If Paganin method is used bellow, set it to false.",
                 )
             elif "stripe" in module_name:
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
-                    "Method to remove stripe artefacts in the data that lead to ring artefacts in the reconstruction. ",
+                    "--- Method to remove stripe artefacts in the data that lead to ring artefacts in the reconstruction. --- ",
                     indent=0,
                 )
+                pipeline_full += yaml_template_method
             elif "algorithm" in module_name:
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
-                    "Reconstruction method. Use a reference to the center or set to an integer.",
+                    "--- Reconstruction method. ---",
                     indent=0,
+                )
+                pipeline_full += yaml_template_method
+                pipeline_full[i]["parameters"].yaml_add_eol_comment(
+                    key="center",
+                    comment="Reference to center of rotation side output OR an integer.",
+                )
+                pipeline_full[i]["parameters"].yaml_add_eol_comment(
+                    key="recon_mask_radius",
+                    comment="Zero pixels outside the mask-circle radius.",
                 )
             elif "calculate_stats" in method_name:
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
-                    "Calculate global statistics on the reconstructed volume (min/max needed specifically for data rescaling) ",
+                    "--- Calculate global statistics on the reconstructed volume, required for data rescaling. ---",
                     indent=0,
                 )
+                pipeline_full += yaml_template_method
             elif "rescale_to_int" in method_name:
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
-                    "Rescaling the data using min/max obtained from calculate_stats",
+                    "--- Rescaling the data using min/max obtained from `calculate_stats`. ---",
                     indent=0,
                 )
+                pipeline_full += yaml_template_method
             elif "images" in module_name:
                 pipeline_full.yaml_set_comment_before_after_key(
                     i,
-                    "Saving data into images",
+                    "--- Saving data into images. ---",
                     indent=0,
+                )
+                pipeline_full += yaml_template_method
+                pipeline_full[i]["parameters"].yaml_add_eol_comment(
+                    key="file_format",
+                    comment="`tif` or `jpeg` can be used.",
                 )
             else:
                 pipeline_full.yaml_set_comment_before_after_key(
@@ -147,22 +192,10 @@ def yaml_pipelines_generator(
                     "--------------------------------------------------------#",
                     indent=0,
                 )
-            pipeline_full += yaml_template_method
+                pipeline_full += yaml_template_method
 
-        # tried inline comments here, doesn't work for some reason
-        # pipeline_full[5]["parameters"].yaml_add_eol_comment(
-        #     key="center",
-        #     comment="Some inline comment",
-        # )
         yaml.representer.add_representer(type(None), __represent_none)
-        ruamel.yaml.dump(
-            pipeline_full,
-            f,
-            Dumper=ruamel.yaml.RoundTripDumper,
-            default_flow_style=None,
-            width=50,
-            indent=0,
-        )
+        yaml.dump(pipeline_full, f)
 
     return 0
 

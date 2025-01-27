@@ -17,5 +17,5 @@ dependencies:
   - loguru
   - graypy
   - tqdm
-  - ruamel.yaml
+  - ruamel.yaml>=0.18 
   - pip
