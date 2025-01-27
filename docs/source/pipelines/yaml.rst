@@ -37,7 +37,7 @@ It is recommended to use GPU-based pipelines and methods from the httomolib and 
 
 .. dropdown:: Basic GPU pipeline which uses functions from the httomolibgpu library.
 
-    .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_gpu1.yaml
+    .. literalinclude:: ../pipelines_full/gpu_pipeline1.yaml
         :language: yaml
 
 
