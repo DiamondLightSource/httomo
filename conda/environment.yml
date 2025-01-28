@@ -1,6 +1,7 @@
 name: httomo
 channels:
   - conda-forge
+  - httomo
 dependencies:
   - astra-toolbox
   - click
@@ -23,4 +24,5 @@ dependencies:
   - pytest-cov
   - pytest-mock
   - tomopy=1.15
+  - ccpi-regulariser
 
