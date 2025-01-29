@@ -1,0 +1,46 @@
+name: HTTomo framework tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  iris-gpu:
+    runs-on: iris-gpu
+    container:
+      image: nvidia/cuda:12.6.3-devel-ubi8
+      env:
+        NVIDIA_VISIBLE_DEVICES: ${{ env.NVIDIA_VISIBLE_DEVICES }}
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Create conda environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: conda/environment.yml
+          environment-name: httomo
+          post-cleanup: 'all'
+          init-shell: bash
+          
+      - name: Install httomo libraries and httomo
+        run: |
+          micromamba activate httomo
+          pip install --upgrade --force-reinstall pillow
+          pip install httomolibgpu tomobar
+          pip install --no-deps httomo-backends
+          pip install .         
+          micromamba list
+                
+      - name: Run HTTomo tests
+        run: |
+          pytest tests/

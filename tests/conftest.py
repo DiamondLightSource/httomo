@@ -24,6 +24,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
     config.addinivalue_line("markers", "perf: mark test as performance test")
     config.addinivalue_line("markers", "cupy: needs cupy to run")
+    config.addinivalue_line("markers", "pipesmall: mark tests to run full pipelines on small data")
     config.addinivalue_line(
         "markers", "preview: mark test to run with `httomo preview`"
     )
@@ -36,7 +37,9 @@ def pytest_addoption(parser):
         default=False,
         help="run performance tests only",
     )
-
+    parser.addoption(
+        "--pipeline_small", action="store_true", default=False, help="run full pipelines on small data"
+    )    
 
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--performance"):
@@ -51,7 +54,18 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "perf" in item.keywords:
                 item.add_marker(skip_perf)
-
+    if config.getoption("--pipeline_small"):
+        skip_other = pytest.mark.skip(reason="not a pipeline small data test")
+        for item in items:
+            if "pipesmall" not in item.keywords:
+                item.add_marker(skip_other)
+    else:
+        skip_perf = pytest.mark.skip(
+            reason="pipeline small data test - use '--pipeline_small' to run"
+        )
+        for item in items:
+            if "pipesmall" in item.keywords:
+                item.add_marker(skip_perf)
 
 @pytest.fixture
 def output_folder():
@@ -223,7 +237,7 @@ def standard_loader():
 
 @pytest.fixture
 def sample_pipelines():
-    return "tests/samples/pipeline_template_examples/"
+    return "docs/source/pipelines_full/"
 
 
 @pytest.fixture
@@ -233,32 +247,11 @@ def gpu_pipeline():
 
 @pytest.fixture
 def yaml_cpu_pipeline1():
-    return "tests/samples/pipeline_template_examples/pipeline_cpu1.yaml"
-
-
-@pytest.fixture
-def yaml_cpu_pipeline2():
-    return "tests/samples/pipeline_template_examples/pipeline_cpu2.yaml"
-
-
-@pytest.fixture
-def yaml_cpu_pipeline3():
-    return "tests/samples/pipeline_template_examples/pipeline_cpu3.yaml"
-
-
-@pytest.fixture
-def yaml_cpu_pipeline4():
-    return "tests/samples/pipeline_template_examples/pipeline_cpu4.yaml"
-
-
-@pytest.fixture
-def yaml_cpu_pipeline5():
-    return "tests/samples/pipeline_template_examples/pipeline_cpu5.yaml"
-
+    return "docs/source/pipelines_full/cpu_pipeline1.yaml"
 
 @pytest.fixture
 def yaml_gpu_pipeline1():
-    return "tests/samples/pipeline_template_examples/pipeline_gpu1.yaml"
+    return "docs/source/pipelines_full/gpu_pipeline1.yaml"
 
 
 @pytest.fixture
@@ -294,6 +287,21 @@ def merge_yamls(load_yaml: Callable):
             yaml.dump(data, file_descriptor)
 
     return _merge_yamls
+
+
+# @pytest.fixture
+# def change_value_piepeline_yaml(load_yaml: Callable):
+#     def _merge_yamls(*yamls) -> None:
+#         """Merge multiple yaml files into one"""
+#         data: List = []
+#         for y in yamls:
+#             curr_yaml_list = load_yaml(y)
+#             for x in curr_yaml_list:
+#                 data.append(x)
+#         with open("temp.yaml", "w") as file_descriptor:
+#             yaml.dump(data, file_descriptor)
+
+#     return new_pipeline_yaml
 
 
 @pytest.fixture

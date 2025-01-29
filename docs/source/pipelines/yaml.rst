@@ -3,50 +3,47 @@
 Full YAML pipelines
 ==============================
 
-This is a collection of ready to be used pipeline templates aka process lists for HTTomo.
+This is a collection of ready to be used full pipelines or process lists for HTTomo.
 See more on :ref:`explanation_process_list` and how to :ref:`howto_process_list`.
 
-.. _tutorials_pl_templates_cpu:
+HTTomo mainly targets GPU computations, therefore the use of :ref:`tutorials_pl_templates_gpu` is 
+preferable. However, when the GPU device is not available or a GPU method is not implemented, the use of 
+:ref:`tutorials_pl_templates_cpu` is possible. 
 
-CPU Pipeline templates
-----------------------------
-
-CPU-pipelines mostly use TomoPy methods that are executed on the CPU and expected to be slower.
-
-.. dropdown:: Basic TomoPy's (CPU-only) pipeline for the classical 180-degrees scan
-
-    .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu1.yaml
-        :language: yaml
-
-.. dropdown:: TomoPy's pipeline where :ref:`previewing` is demonstrated
-
-    .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu2.yaml
-        :language: yaml
-
-.. dropdown:: This pipeline shows how "calculate_stats" module extracts global statistics in order to rescale data for saving 8-bit images
-
-    .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_cpu3.yaml
-        :language: yaml
+.. note:: The combination of both GPU and CPU methods is possible. If one expects to achieve the faster performance, please use the GPU methods provided, where possible.
 
 .. _tutorials_pl_templates_gpu:
 
 GPU Pipeline templates
-----------------------------
+-----------------------
 
-It is recommended to use GPU-based pipelines and methods from the httomolib and httomolibgpu libraries. Those libraries are supported directly by HTTomo development team. 
+The GPU-pipelines consist of methods from httomolibgpu (GPU) and httomolib (CPU) backend :ref:`backends_list`. Those libraries are supported directly by the HTTomo development team.
 
-.. dropdown:: Basic GPU pipeline which uses functions from the httomolibgpu library.
+.. dropdown:: Basic GPU pipeline which uses functions from the httomolib/gpu libraries.
 
     .. literalinclude:: ../pipelines_full/gpu_pipeline1.yaml
+        :language: yaml
+
+
+.. _tutorials_pl_templates_cpu:
+
+CPU Pipeline templates
+-----------------------
+
+The CPU-pipelines mostly use TomoPy methods. They are executed solely on the CPU and therefore expected to be slower than the GPU pipelines.
+
+.. dropdown:: Basic pipeline using TomoPy.
+
+    .. literalinclude:: ../pipelines_full/cpu_pipeline1.yaml
         :language: yaml
 
 
 .. _tutorials_pl_templates_dls:
 
 DLS-specific templates
-----------------------------
+----------------------
 
-Those pipelines will use the methods from the httomolib and httomolibgpu libraries. 
+Those pipelines are specific to Diamond Light Source processing strategies and can differ for different tomographic beamlines. 
 
 .. dropdown:: An example of a typical DIAD (k11) beamline piepeline.
 
@@ -66,7 +63,7 @@ Those pipelines will use the methods from the httomolib and httomolibgpu librari
 .. _tutorials_pl_templates_sweeps:
 
 Parameter Sweeps templates
-----------------------------
+--------------------------
 
 These templates demonstrate how to perform a sweep across multiple values of a
 single parameter (see :ref:`parameter_sweeping` for more details).
