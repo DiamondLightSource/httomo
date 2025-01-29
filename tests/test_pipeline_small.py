@@ -108,7 +108,7 @@ def test_run_pipeline_cpu1_yaml(
     cmd.insert(6, standard_data)
     cmd.insert(7, yaml_cpu_pipeline1)
     cmd.insert(8, output_folder)
-    
+
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
@@ -132,7 +132,6 @@ def test_run_pipeline_cpu1_yaml(
     assert "Path to data: /entry1/tomo_entry/data/data" in verbose_log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in verbose_log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
-
 
 
 @pytest.mark.pipesmall
@@ -171,13 +170,14 @@ def test_run_pipeline_gpu1_yaml(
     assert f"{user_log_file[0]}" in verbose_log_contents
     assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
     assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
-    assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
+    assert "Path to data: /entry1/tomo_entry/data/data" in verbose_log_contents
     assert "Preview: (0:180, 0:128, 0:160)" in verbose_log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
     assert "The amount of the available GPU memory is" in verbose_log_contents
     assert (
         "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
     )
+
 
 @pytest.mark.pipesmall
 def test_tomo_standard_testing_pipeline_output_with_save_all(
@@ -212,7 +212,6 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
                 assert f["data"].dtype == np.float32
                 assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6, rtol=1e-6)
                 assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6, rtol=1e-6)
-
 
 
 # def test_i12_testing_pipeline_output(
@@ -325,7 +324,6 @@ def test_tomo_standard_testing_pipeline_output_with_save_all(
 #     assert "Running save_task_4 (pattern=sinogram): save_intermediate_data..." in log_contents
 #     assert "The center of rotation for sinogram is 95.5" in log_contents
 #     assert "Running save_task_5 (pattern=sinogram): save_intermediate_data..." in log_contents
-
 
 
 # to add

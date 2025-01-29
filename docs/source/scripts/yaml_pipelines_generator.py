@@ -124,11 +124,9 @@ def yaml_pipelines_generator(
                     indent=0,
                 )
                 pipeline_full += yaml_template_method
-                try:
-                    # fix for a default parameter (REAUIRED) in TomoPy's algorithm
+                if pipeline_full[i]["parameters"]["dif"] == "REQUIRED":
+                    # fix for the absent parameter in TomoPy's algorithm
                     pipeline_full[i]["parameters"]["dif"] = 0.1
-                except:
-                    pass                
                 pipeline_full[i]["parameters"].yaml_add_eol_comment(
                     key="dif",
                     comment="A difference between the outlier value and the median value of neighbouring pixels.",
@@ -166,10 +164,9 @@ def yaml_pipelines_generator(
                     key="recon_mask_radius",
                     comment="Zero pixels outside the mask-circle radius.",
                 )
-                try:
+                if "algorithm" in pipeline_full[i]["parameters"]:
                     # fix for a default parameter (None) in TomoPy's algorithm
                     pipeline_full[i]["parameters"]["algorithm"] = "gridrec"
-                except:
                     pipeline_full[i]["parameters"].yaml_add_eol_comment(
                         key="algorithm",
                         comment="Select the required algorithm, e.g. `gridrec`",

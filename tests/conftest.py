@@ -24,7 +24,9 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "mpi: mark test to run in an MPI environment")
     config.addinivalue_line("markers", "perf: mark test as performance test")
     config.addinivalue_line("markers", "cupy: needs cupy to run")
-    config.addinivalue_line("markers", "pipesmall: mark tests to run full pipelines on small data")
+    config.addinivalue_line(
+        "markers", "pipesmall: mark tests to run full pipelines on small data"
+    )
     config.addinivalue_line(
         "markers", "preview: mark test to run with `httomo preview`"
     )
@@ -38,8 +40,12 @@ def pytest_addoption(parser):
         help="run performance tests only",
     )
     parser.addoption(
-        "--pipeline_small", action="store_true", default=False, help="run full pipelines on small data"
-    )    
+        "--pipeline_small",
+        action="store_true",
+        default=False,
+        help="run full pipelines on small data",
+    )
+
 
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--performance"):
@@ -66,6 +72,7 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "pipesmall" in item.keywords:
                 item.add_marker(skip_perf)
+
 
 @pytest.fixture
 def output_folder():
@@ -237,7 +244,7 @@ def standard_loader():
 
 @pytest.fixture
 def sample_pipelines():
-    return "docs/source/pipelines_full/"
+    return "tests/samples/pipeline_template_examples/"
 
 
 @pytest.fixture
@@ -248,6 +255,7 @@ def gpu_pipeline():
 @pytest.fixture
 def yaml_cpu_pipeline1():
     return "docs/source/pipelines_full/cpu_pipeline1.yaml"
+
 
 @pytest.fixture
 def yaml_gpu_pipeline1():

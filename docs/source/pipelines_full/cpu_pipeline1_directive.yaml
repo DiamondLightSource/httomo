@@ -1,13 +1,13 @@
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
-- method: find_center_vo
-  module_path: tomopy.recon.rotation
 - method: remove_outlier
   module_path: tomopy.misc.corr
 - method: normalize
   module_path: tomopy.prep.normalize
 - method: minus_log
   module_path: tomopy.prep.normalize
+- method: find_center_vo
+  module_path: tomopy.recon.rotation  
 - method: recon
   module_path: tomopy.recon.algorithm
 - method: calculate_stats
