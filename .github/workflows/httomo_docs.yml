@@ -33,6 +33,7 @@ jobs:
 
         - name: Install httomo-backends
           run: |
+            pip install . --no-deps
             pip install --no-deps httomo-backends
 
         - name: Generate full yaml pipelines using pipeline directives

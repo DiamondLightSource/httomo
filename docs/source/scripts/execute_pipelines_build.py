@@ -34,7 +34,7 @@ from httomo_backends.scripts.yaml_pipelines_generator import yaml_pipelines_gene
 path_to_httomobackends = os.path.dirname(httomo_backends.__file__)
 path_to_httomo = os.path.dirname(httomo.__file__)
 
-path_to_httomo_pipelines = path_to_httomo + "/../" + "docs/source/pipelines_full/"
+path_to_httomo_pipelines = path_to_httomo + "docs/source/pipelines_full/"
 pipelines_folder = path_to_httomobackends + "/pipelines_full/"
 
 # loop over all pipeline directive files and running the generator
