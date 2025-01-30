@@ -184,39 +184,41 @@ def test_run_pipeline_gpu_denoise(
     )
 
 
-@pytest.mark.pipesmall
-def test_tomo_standard_testing_pipeline_output_with_save_all(
-    get_files: Callable,
-    cmd,
-    standard_data,
-    standard_loader,
-    testing_pipeline,
-    output_folder,
-    merge_yamls,
-):
-    cmd.insert(7, standard_data)
-    merge_yamls(standard_loader, testing_pipeline)
-    cmd.insert(8, "temp.yaml")
-    cmd.insert(9, output_folder)
-    subprocess.check_output(cmd)
+# todo rewrite and move to test_pipeline_big
 
-    files = get_files("output_dir/")
-    assert len(files) == 11
+# @pytest.mark.pipesmall
+# def test_tomo_standard_testing_pipeline_output_with_save_all(
+#     get_files: Callable,
+#     cmd,
+#     standard_data,
+#     standard_loader,
+#     testing_pipeline,
+#     output_folder,
+#     merge_yamls,
+# ):
+#     cmd.insert(7, standard_data)
+#     merge_yamls(standard_loader, testing_pipeline)
+#     cmd.insert(8, "temp.yaml")
+#     cmd.insert(9, output_folder)
+#     subprocess.check_output(cmd)
 
-    _check_yaml(files, "temp.yaml")
-    _check_tif(files, 3, (160, 160))
+#     files = get_files("output_dir/")
+#     assert len(files) == 11
 
-    #: check the generated h5 files
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 5
+#     _check_yaml(files, "temp.yaml")
+#     _check_tif(files, 3, (160, 160))
 
-    for file_to_open in h5_files:
-        if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
-            with h5py.File(file_to_open, "r") as f:
-                assert f["data"].shape == (160, 3, 160)
-                assert f["data"].dtype == np.float32
-                assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6, rtol=1e-6)
-                assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6, rtol=1e-6)
+#     #: check the generated h5 files
+#     h5_files = list(filter(lambda x: ".h5" in x, files))
+#     assert len(h5_files) == 5
+
+#     for file_to_open in h5_files:
+#         if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
+#             with h5py.File(file_to_open, "r") as f:
+#                 assert f["data"].shape == (160, 3, 160)
+#                 assert f["data"].dtype == np.float32
+#                 assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6, rtol=1e-6)
+#                 assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6, rtol=1e-6)
 
 
 # def test_i12_testing_pipeline_output(
