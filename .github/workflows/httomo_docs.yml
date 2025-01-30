@@ -37,8 +37,7 @@ jobs:
 
         - name: Generate full yaml pipelines using pipeline directives
           run: |
-            python ./docs/source/scripts/yaml_pipelines_generator.py -i ./docs/source/pipelines_full/gpu_pipeline1_directive.yaml -o ./docs/source/pipelines_full/gpu_pipeline1.yaml
-            python ./docs/source/scripts/yaml_pipelines_generator.py -i ./docs/source/pipelines_full/cpu_pipeline1_directive.yaml -o ./docs/source/pipelines_full/cpu_pipeline1.yaml
+            python ./docs/source/scripts/execute_pipelines_build.py
 
         - name: Build docs
           run: sphinx-build -a -E -b html ./docs/source/ ./docs/build/
