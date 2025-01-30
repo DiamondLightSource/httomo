@@ -44,7 +44,7 @@ jobs:
       - name: Generate full yaml pipelines using pipeline directives
         run: |
           pip install "ruamel.yaml>0.18.0"
-          python ./docs/source/scripts/execute_pipelines_build.py
+          python ./docs/source/scripts/execute_pipelines_build.py -o ./docs/source/pipelines_full/
 
       - name: Run HTTomo framework tests
         run: |

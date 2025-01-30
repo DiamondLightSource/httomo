@@ -31,14 +31,13 @@ jobs:
             activate-environment: httomo-docs
             environment-file: ./docs/source/doc-conda-requirements.yml
 
-        - name: Install httomo and httomo-backends
+        - name: Install httomo-backends
           run: |
-            pip install . --no-deps
             pip install --no-deps httomo-backends
 
         - name: Generate full yaml pipelines using pipeline directives
           run: |
-            python ./docs/source/scripts/execute_pipelines_build.py
+            python ./docs/source/scripts/execute_pipelines_build.py -o ./docs/source/pipelines_full/
 
         - name: Build docs
           run: sphinx-build -a -E -b html ./docs/source/ ./docs/build/

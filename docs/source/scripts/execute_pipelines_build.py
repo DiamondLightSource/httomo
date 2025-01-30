@@ -21,26 +21,41 @@
 # ---------------------------------------------------------------------------
 """Executing full-pipeline generation for HTTomo using YAML templates from httomo-backends
 and yaml_pipelines_generator script available also in httomo-backends.
-The built pipelines are placed in HTTomo documentation (docs/source/pipelines_full/) to be
-used by tests and documentation build.
 """
 
+import argparse
 import os
 import glob
 import httomo_backends
-import httomo
 from httomo_backends.scripts.yaml_pipelines_generator import yaml_pipelines_generator
 
-path_to_httomobackends = os.path.dirname(httomo_backends.__file__)
-path_to_httomo = os.path.dirname(httomo.__file__)
 
-path_to_httomo_pipelines = path_to_httomo + "/docs/source/pipelines_full/"
-pipelines_folder = path_to_httomobackends + "/pipelines_full/"
-
-# loop over all pipeline directive files and running the generator
-for filepath in glob.iglob(pipelines_folder + "*.yaml"):
-    basename = os.path.basename(filepath)
-    outputfile_name = os.path.normpath(basename.replace(r"_directive", r""))
-    yaml_pipelines_generator(
-        filepath, path_to_httomobackends, path_to_httomo_pipelines + outputfile_name
+def get_args():
+    parser = argparse.ArgumentParser(
+        description="Script that generates YAML pipelines for HTTomo "
+        "using YAML templates from httomo-backends."
     )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        default="./",
+        help="Full path to the output pipelines folder.",
+    )
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    path_to_httomobackends = os.path.dirname(httomo_backends.__file__)
+    args = get_args()
+    path_to_httomo_pipelines = args.output
+    pipelines_folder = path_to_httomobackends + "/pipelines_full/"
+    # loop over all pipeline directive files and running the generator
+    for filepath in glob.iglob(pipelines_folder + "*.yaml"):
+        basename = os.path.basename(filepath)
+        outputfile_name = os.path.normpath(basename.replace(r"_directive", r""))
+        yaml_pipelines_generator(
+            filepath, path_to_httomobackends, path_to_httomo_pipelines + outputfile_name
+        )
+        message_str = f"{outputfile_name} has been generated."
+        print(message_str)
