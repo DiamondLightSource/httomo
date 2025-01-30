@@ -1,6 +1,6 @@
 import re
 import subprocess
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Union
 
 import h5py
 import numpy as np
@@ -8,6 +8,7 @@ import pytest
 from numpy.testing import assert_allclose
 from PIL import Image
 from plumbum import local
+from .conftest import _change_value_parameters_method_pipeline
 
 PATTERN = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
 
@@ -46,67 +47,12 @@ def _check_tif(files: List, number: int, shape: Tuple):
 
 
 @pytest.mark.pipesmall
-def test_tomo_standard_testing_pipeline_output(
-    get_files: Callable,
-    cmd,
-    standard_data,
-    standard_loader,
-    testing_pipeline,
-    output_folder,
-    merge_yamls,
+def test_run_pipeline_cpu_gridrec(
+    get_files: Callable, cmd, standard_data, cpu_pipeline_gridrec, output_folder
 ):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
-    merge_yamls(standard_loader, testing_pipeline)
-    cmd.insert(7, "temp.yaml")
-    cmd.insert(8, output_folder)
-    subprocess.check_output(cmd)
-
-    # recurse through output_dir and check that all files are there
-    files = get_files("output_dir/")
-    assert len(files) == 7
-
-    _check_yaml(files, "temp.yaml")
-    _check_tif(files, 3, (160, 160))
-
-    #: check the generated h5 files
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 1
-
-    for file_to_open in h5_files:
-        if "tomopy-recon-tomo-gridrec.h5" in file_to_open:
-            with h5py.File(file_to_open, "r") as f:
-                assert f["data"].shape == (160, 3, 160)
-                assert f["data"].dtype == np.float32
-                assert_allclose(np.mean(f["data"]), 0.0015362317, atol=1e-6, rtol=1e-6)
-                assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6, rtol=1e-6)
-
-    #: some basic testing of the generated user.log file, because running the whole pipeline again
-    #: will slow down the execution of the test suite.
-    #: It will be worth moving the unit tests for the logger to a separate file
-    #: once we generate different log files for each MPI process and we can compare them.
-    verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
-    user_log_file = list(filter(lambda x: "user.log" in x, files))
-    assert len(verbose_log_file) == 1
-    assert len(user_log_file) == 1
-
-    verbose_log_contents = _get_log_contents(verbose_log_file[0])
-
-    assert f"{user_log_file[0]}" in verbose_log_contents
-    assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
-    assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
-    assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
-    assert "Preview: (0:180, 57:60, 0:160)" in verbose_log_contents
-    assert "Data shape is (180, 3, 160) of type uint16" in verbose_log_contents
-
-
-@pytest.mark.pipesmall
-def test_run_pipeline_cpu1_yaml(
-    get_files: Callable, cmd, standard_data, yaml_cpu_pipeline1, output_folder
-):
-    cmd.pop(4)  #: don't save all
-    cmd.insert(6, standard_data)
-    cmd.insert(7, yaml_cpu_pipeline1)
+    cmd.insert(7, cpu_pipeline_gridrec)
     cmd.insert(8, output_folder)
 
     subprocess.check_output(cmd)
@@ -135,12 +81,12 @@ def test_run_pipeline_cpu1_yaml(
 
 
 @pytest.mark.pipesmall
-def test_run_pipeline_gpu1_yaml(
-    get_files: Callable, cmd, standard_data, yaml_gpu_pipeline1, output_folder
+def test_run_pipeline_gpu_FBP(
+    get_files: Callable, cmd, standard_data, gpu_pipelineFBP, output_folder
 ):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
-    cmd.insert(7, yaml_gpu_pipeline1)
+    cmd.insert(7, gpu_pipelineFBP)
     cmd.insert(8, output_folder)
     subprocess.check_output(cmd)
 
@@ -159,7 +105,66 @@ def test_run_pipeline_gpu1_yaml(
             with h5py.File(file_to_open, "r") as f:
                 assert f["data"].shape == (160, 128, 160)
                 assert f["data"].dtype == np.float32
-                assert_allclose(np.sum(f["data"]), 2615.7332, atol=1e-6, rtol=1e-6)
+
+    verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
+    user_log_file = list(filter(lambda x: "user.log" in x, files))
+    assert len(verbose_log_file) == 1
+    assert len(user_log_file) == 1
+    verbose_log_contents = _get_log_contents(verbose_log_file[0])
+
+    assert f"{user_log_file[0]}" in verbose_log_contents
+    assert "The full dataset shape is (220, 128, 160)" in verbose_log_contents
+    assert "Loading data: tests/test_data/tomo_standard.nxs" in verbose_log_contents
+    assert "Path to data: /entry1/tomo_entry/data/data" in verbose_log_contents
+    assert "Preview: (0:180, 0:128, 0:160)" in verbose_log_contents
+    assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
+    assert "The amount of the available GPU memory is" in verbose_log_contents
+    assert (
+        "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
+    )
+
+
+@pytest.mark.pipesmall
+def test_run_pipeline_gpu_denoise(
+    get_files: Callable,
+    cmd,
+    standard_data,
+    gpu_pipelineFBP_denoising,
+    output_folder,
+):
+    _change_value_parameters_method_pipeline(
+        gpu_pipelineFBP_denoising,
+        method=[
+            "find_center_vo",
+            "find_center_vo",
+            "find_center_vo",
+            "total_variation_PD",
+        ],
+        key=["cor_initialisation_value", "smin", "smax", "iterations"],
+        value=[80.0, -20, 20, 200],
+    )
+
+    cmd.pop(4)  #: don't save all
+    cmd.insert(6, standard_data)
+    cmd.insert(7, gpu_pipelineFBP_denoising)
+    cmd.insert(8, output_folder)
+    subprocess.check_output(cmd)
+
+    # recurse through output_dir and check that all files are there
+    files = get_files("output_dir/")
+    assert len(files) == 132
+
+    _check_tif(files, 128, (160, 160))
+
+    #: check the generated h5 files
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    for file_to_open in h5_files:
+        if "httomolibgpu-FBP-tomo.h5" in file_to_open:
+            with h5py.File(file_to_open, "r") as f:
+                assert f["data"].shape == (160, 128, 160)
+                assert f["data"].dtype == np.float32
 
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     user_log_file = list(filter(lambda x: "user.log" in x, files))

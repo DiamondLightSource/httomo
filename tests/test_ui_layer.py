@@ -55,7 +55,7 @@ def test_can_read_gpu1(yaml_gpu_pipeline1):
     assert pipline_stage_config[5]["method"] == "FBP"
     assert pipline_stage_config[5]["module_path"] == "httomolibgpu.recon.algorithm"
     assert pipline_stage_config[6]["method"] == "calculate_stats"
-    assert pipline_stage_config[6]["module_path"] == "httomo.methods"    
+    assert pipline_stage_config[6]["module_path"] == "httomo.methods"
     assert pipline_stage_config[7]["method"] == "rescale_to_int"
     assert pipline_stage_config[7]["module_path"] == "httomolibgpu.misc.rescale"
     assert pipline_stage_config[8]["method"] == "save_to_images"
@@ -97,81 +97,28 @@ def test_pipeline_build_cpu1(standard_data, yaml_cpu_pipeline1):
 
     pipeline = LayerUI.build_pipeline()
 
-    assert len(pipeline) == 6
-    methods = [
-        "normalize",
-        "minus_log",
-        "find_center_vo",
-        "recon",
-        "rescale_to_int",
-        "save_to_images",
-    ]
-    for i in range(5):
-        assert pipeline[i].method_name == methods[i]
-        if i != 2:
-            assert pipeline[i].task_id == f"task_{i+1}"
-        else:
-            assert pipeline[i].task_id == "centering"
-
-    ref = pipeline[3]["center"]
-    assert isinstance(ref, OutputRef)
-    assert ref.mapped_output_name == "centre_of_rotation"
-    assert ref.method.method_name == "find_center_vo"
-
-
-def test_pipeline_build_cpu2(standard_data, yaml_cpu_pipeline2):
-    """Testing OutputRef."""
-    comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(yaml_cpu_pipeline2, standard_data, comm=comm)
-
-    pipeline = LayerUI.build_pipeline()
-
-    assert len(pipeline) == 9
-    methods = [
-        "find_center_vo",
-        "remove_outlier",
-        "normalize",
-        "minus_log",
-        "remove_stripe_fw",
-        "recon",
-        "median_filter",
-        "rescale_to_int",
-        "save_to_images",
-    ]
-    for i in range(8):
-        assert pipeline[i].method_name == methods[i]
-    ref = pipeline[5]["center"]
-    assert isinstance(ref, OutputRef)
-    assert ref.mapped_output_name == "centre_of_rotation"
-    assert ref.method.method_name == "find_center_vo"
-    assert ref.method.task_id == "centering"
-
-
-def test_pipeline_build_cpu3(standard_data, yaml_cpu_pipeline3):
-    """Testing OutputRef."""
-    comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(yaml_cpu_pipeline3, standard_data, comm=comm)
-
-    pipeline = LayerUI.build_pipeline()
-
     assert len(pipeline) == 8
     methods = [
-        "find_center_vo",
         "remove_outlier",
         "normalize",
         "minus_log",
+        "find_center_vo",
         "recon",
         "calculate_stats",
         "rescale_to_int",
         "save_to_images",
     ]
-    for i in range(8):
+    for i in range(5):
         assert pipeline[i].method_name == methods[i]
-    ref = pipeline[6]["glob_stats"]
+        if i != 3:
+            assert pipeline[i].task_id == f"task_{i+1}"
+        else:
+            assert pipeline[i].task_id == "centering"
+
+    ref = pipeline[4]["center"]
     assert isinstance(ref, OutputRef)
-    assert ref.mapped_output_name == "glob_stats"
-    assert ref.method.method_name == "calculate_stats"
-    assert ref.method.task_id == "statistics"
+    assert ref.mapped_output_name == "centre_of_rotation"
+    assert ref.method.method_name == "find_center_vo"
 
 
 @pytest.mark.parametrize(

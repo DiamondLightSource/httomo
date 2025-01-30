@@ -19,11 +19,15 @@ GPU Pipeline templates
 
 The GPU-pipelines consist of methods from httomolibgpu (GPU) and httomolib (CPU) backend :ref:`backends_list`. Those libraries are supported directly by the HTTomo development team.
 
-.. dropdown:: Basic GPU pipeline which uses functions from the httomolib/gpu libraries.
+.. dropdown:: GPU pipeline with auto-centering and FBP reconstruction method.
 
-    .. literalinclude:: ../pipelines_full/gpu_pipeline1.yaml
+    .. literalinclude:: ../pipelines_full/gpu_pipelineFBP.yaml
         :language: yaml
 
+.. dropdown:: GPU pipeline as above and Total Variation denoising on the result of FBP reconstruction.
+
+    .. literalinclude:: ../pipelines_full/gpu_pipelineFBP_denoising.yaml
+        :language: yaml
 
 .. _tutorials_pl_templates_cpu:
 
@@ -32,9 +36,9 @@ CPU Pipeline templates
 
 The CPU-pipelines mostly use TomoPy methods. They are executed solely on the CPU and therefore expected to be slower than the GPU pipelines.
 
-.. dropdown:: Basic pipeline using TomoPy.
+.. dropdown:: CPU pipeline using auto-centering and gridrec reconstruction method on CPU.
 
-    .. literalinclude:: ../pipelines_full/cpu_pipeline1.yaml
+    .. literalinclude:: ../pipelines_full/cpu_pipeline_gridrec.yaml
         :language: yaml
 
 
@@ -43,11 +47,11 @@ The CPU-pipelines mostly use TomoPy methods. They are executed solely on the CPU
 DLS-specific templates
 ----------------------
 
-Those pipelines are specific to Diamond Light Source processing strategies and can differ for different tomographic beamlines. 
+Those pipelines are specific to Diamond Light Source processing strategies and can vary between different tomographic beamlines. 
 
-.. dropdown:: An example of a typical DIAD (k11) beamline piepeline.
+.. dropdown:: An example of DIAD-k11 beamline pipeline with auto-centering and FBP reconstruction on GPU.
 
-    .. literalinclude:: ../../../tests/samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml
+    .. literalinclude:: ../pipelines_full/gpu_diad_FBP.yaml
         :language: yaml
 
 .. dropdown:: Pipeline for 360-degrees data with automatic CoR finding and stitching to 180-degrees data.

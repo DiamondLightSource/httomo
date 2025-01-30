@@ -196,11 +196,6 @@ def standard_image_key_path():
 
 
 @pytest.fixture
-def testing_pipeline():
-    return "tests/samples/pipeline_template_examples/testing/testing_pipeline.yaml"
-
-
-@pytest.fixture
 def diad_data():
     return "tests/test_data/k11_diad/k11-18014.nxs"
 
@@ -253,13 +248,18 @@ def gpu_pipeline():
 
 
 @pytest.fixture
-def yaml_cpu_pipeline1():
-    return "docs/source/pipelines_full/cpu_pipeline1.yaml"
+def cpu_pipeline_gridrec():
+    return "docs/source/pipelines_full/cpu_pipeline_gridrec.yaml"
 
 
 @pytest.fixture
-def yaml_gpu_pipeline1():
-    return "docs/source/pipelines_full/gpu_pipeline1.yaml"
+def gpu_pipelineFBP():
+    return "docs/source/pipelines_full/gpu_pipelineFBP.yaml"
+
+
+@pytest.fixture
+def gpu_pipelineFBP_denoising():
+    return "docs/source/pipelines_full/gpu_pipelineFBP_denoising.yaml"
 
 
 @pytest.fixture
@@ -295,21 +295,6 @@ def merge_yamls(load_yaml: Callable):
             yaml.dump(data, file_descriptor)
 
     return _merge_yamls
-
-
-# @pytest.fixture
-# def change_value_piepeline_yaml(load_yaml: Callable):
-#     def _merge_yamls(*yamls) -> None:
-#         """Merge multiple yaml files into one"""
-#         data: List = []
-#         for y in yamls:
-#             curr_yaml_list = load_yaml(y)
-#             for x in curr_yaml_list:
-#                 data.append(x)
-#         with open("temp.yaml", "w") as file_descriptor:
-#             yaml.dump(data, file_descriptor)
-
-#     return new_pipeline_yaml
 
 
 @pytest.fixture
@@ -376,3 +361,29 @@ def load_yaml():
         return conf[0]
 
     return _load_yaml
+
+
+def _change_value_parameters_method_pipeline(
+    yaml_path: str,
+    method: list,
+    key: list,
+    value: list,
+):
+    # changes methods parameters in the given pipeline and re-save the pipeline
+    with open(yaml_path, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml.FullLoader))
+    opened_yaml = conf[0]
+    methods_no = len(opened_yaml)
+    methods_no_correct = len(method)
+    for i in range(methods_no):
+        method_content = opened_yaml[i]
+        method_name = method_content["method"]
+        for j in range(methods_no_correct):
+            if method[j] == method_name:
+                # change something in parameters here
+                opened_yaml[i]["parameters"][key[j]] = value[j]
+
+    with open(yaml_path, "w") as file_descriptor:
+        yaml.dump(opened_yaml, file_descriptor)
+
+    return 0
