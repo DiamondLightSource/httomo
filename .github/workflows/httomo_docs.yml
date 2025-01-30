@@ -31,7 +31,7 @@ jobs:
             activate-environment: httomo-docs
             environment-file: ./docs/source/doc-conda-requirements.yml
 
-        - name: Install httomo-backends
+        - name: Install httomo and httomo-backends
           run: |
             pip install . --no-deps
             pip install --no-deps httomo-backends
