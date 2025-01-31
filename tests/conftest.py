@@ -264,30 +264,32 @@ def gpu_pipeline_diad_FBP():
 # ---------------------END------------------------#
 
 ###########Raw projection data (big)##################
+# Note that raw_data folder should exist with the datasets
+# listed bellow
 
 
 @pytest.fixture
 def diad_k11_38727():
     # 4k projections, 45gb dataset
-    return "tests/test_data/_RAW_DATA_/diad/k11-38727.nxs"
+    return "tests/test_data/raw_data/diad/k11-38727.nxs"
 
 
 @pytest.fixture
 def diad_k11_38729():
     # 2k projections, 22gb dataset
-    return "tests/test_data/_RAW_DATA_/diad/k11-38729.nxs"
+    return "tests/test_data/raw_data/diad/k11-38729.nxs"
 
 
 @pytest.fixture
 def diad_k11_38730():
     # 1k projections, 11gb dataset
-    return "tests/test_data/_RAW_DATA_/diad/k11-38730.nxs"
+    return "tests/test_data/raw_data/diad/k11-38730.nxs"
 
 
 @pytest.fixture
 def diad_k11_38731():
     # 0.5k projections, 6gb dataset
-    return "tests/test_data/_RAW_DATA_/diad/k11-38731.nxs"
+    return "tests/test_data/raw_data/diad/k11-38731.nxs"
 
 
 # ---------------------END------------------------#
