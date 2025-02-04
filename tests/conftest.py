@@ -292,6 +292,12 @@ def diad_k11_38731():
     return "tests/test_data/raw_data/diad/k11-38731.nxs"
 
 
+@pytest.fixture
+def gpu_diad_FBP_k11_38731_npz():
+    # 10 slices numpy array
+    return "tests/test_data/raw_data/diad/gpu_diad_FBP_k11-38731.npz"
+
+
 # ---------------------END------------------------#
 
 
