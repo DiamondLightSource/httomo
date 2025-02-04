@@ -31,7 +31,9 @@ import h5py
 import numpy as np
 
 
-def create_numpy_from_hdf5(path_to_hdf5: str, path_to_output_file: str, proj_num: int) -> int:
+def create_numpy_from_hdf5(
+    path_to_hdf5: str, path_to_output_file: str, proj_num: int
+) -> int:
     """
     Args:
         path_to_hdf5: A path to the hdf5 file from which data needs to be extracted.
@@ -47,7 +49,7 @@ def create_numpy_from_hdf5(path_to_hdf5: str, path_to_output_file: str, proj_num
     dety, detx = np.shape(proj1)
 
     slices = 10
-    projdata_selection = np.empty((slices, dety, detx))
+    projdata_selection = np.zeros((slices, dety, detx))
     step = proj_num // (slices + 2)
     index_prog = step
     for i in range(slices):
@@ -85,7 +87,7 @@ def get_args():
         type=int,
         default=None,
         help="The total number of projections in the dataset",
-    )    
+    )
     return parser.parse_args()
 
 
