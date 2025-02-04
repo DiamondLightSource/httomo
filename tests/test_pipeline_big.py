@@ -42,7 +42,8 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
     # load the pre-saved numpy array for comparison bellow
     projdata_gt = gpu_diad_FBP_k11_38731_npz["projdata"]
     (slices, dety, detx) = np.shape(projdata_gt)
-    step = detx // (slices + 2)
+    projections_number = 500
+    step = projections_number // (slices + 2)
 
     # store for the result
     projdata_result = np.empty((slices, dety, detx))

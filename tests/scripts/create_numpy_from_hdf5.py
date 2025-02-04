@@ -23,7 +23,7 @@
 (should be already installed in your environment).
 
 Please run the generator as:
-    python -m create_numpy_from_hdf5 -i /path/to/file.hdf5 -o /path/to/output/file.npz
+    python -m create_numpy_from_hdf5 -i /path/to/file.hdf5 -o /path/to/output/file.npz -p 500
 """
 import argparse
 import os
@@ -31,11 +31,12 @@ import h5py
 import numpy as np
 
 
-def create_numpy_from_hdf5(path_to_hdf5: str, path_to_output_file: str) -> int:
+def create_numpy_from_hdf5(path_to_hdf5: str, path_to_output_file: str, proj_num: int) -> int:
     """
     Args:
         path_to_hdf5: A path to the hdf5 file from which data needs to be extracted.
         path_to_output_file: Output path to the saved dataset as numpy array.
+        proj_num: the total number of projection in the data.
 
     Returns:
         returns zero if the extraction of data is successful
@@ -47,7 +48,7 @@ def create_numpy_from_hdf5(path_to_hdf5: str, path_to_output_file: str) -> int:
 
     slices = 10
     projdata_selection = np.empty((slices, dety, detx))
-    step = detx // (slices + 2)
+    step = proj_num // (slices + 2)
     index_prog = step
     for i in range(slices):
         projdata_selection[i, :, :] = h5f[path_to_data][index_prog, :, :]
@@ -78,6 +79,13 @@ def get_args():
         default=None,
         help="Output path to the saved dataset as numpy array.",
     )
+    parser.add_argument(
+        "-p",
+        "--projections",
+        type=int,
+        default=None,
+        help="The total number of projections in the dataset",
+    )    
     return parser.parse_args()
 
 
@@ -85,7 +93,8 @@ if __name__ == "__main__":
     args = get_args()
     path_to_hdf5 = args.input
     path_to_output_file = args.output
-    return_val = create_numpy_from_hdf5(path_to_hdf5, path_to_output_file)
+    proj_num = args.projections
+    return_val = create_numpy_from_hdf5(path_to_hdf5, path_to_output_file, proj_num)
     if return_val == 0:
         message_str = (
             f"Numpy file {path_to_output_file} has been created from {path_to_hdf5}."
