@@ -29,7 +29,7 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
     cmd.insert(9, "--max-memory")
     cmd.insert(10, "40G")
     cmd.insert(11, "--reslice-dir")
-    cmd.insert(12, "/scratch/daniil")
+    cmd.insert(12, "/scratch/jenkins_agent/workspace/imaging_httomo_full_pipelines/")
 
     subprocess.check_output(cmd)
 
