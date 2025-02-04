@@ -16,7 +16,7 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
     get_files: Callable,
     cmd,
     diad_k11_38731,
-    gpu_pipeline_diad_FBP,
+    gpu_pipeline_diad_FBP_noimagesaving,
     gpu_diad_FBP_k11_38731_npz,
     output_folder,
 ):
@@ -24,9 +24,12 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
 
     cmd.pop(4)  #: don't save all
     cmd.insert(5, diad_k11_38731)
-    cmd.insert(6, "--max-slices 50G")
-    cmd.insert(7, gpu_pipeline_diad_FBP)
+    cmd.insert(7, gpu_pipeline_diad_FBP_noimagesaving)
     cmd.insert(8, output_folder)
+    cmd.insert(9, "--max-memory")
+    cmd.insert(10, "40G")
+    cmd.insert(11, "--reslice-dir")
+    cmd.insert(12, "/scratch/daniil")
 
     subprocess.check_output(cmd)
 

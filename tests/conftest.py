@@ -257,6 +257,11 @@ def gpu_pipelineFBP_denoising():
 
 
 @pytest.fixture
+def gpu_pipeline_diad_FBP_noimagesaving():
+    return "docs/source/pipelines_full/gpu_diad_FBP_noimagesaving.yaml"
+
+
+@pytest.fixture
 def gpu_pipeline_diad_FBP():
     return "docs/source/pipelines_full/gpu_diad_FBP.yaml"
 
