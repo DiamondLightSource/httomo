@@ -181,7 +181,8 @@ The :code:`run` command
                                       running on
       --frames-per-chunk INTEGER RANGE
                                       Number of frames per-chunk in intermediate
-                                      data (0 = write as contiguous)  [x>=0]
+                                      data (0 = write as contiguous, -1 = decide
+                                      automatically)  [x>=-1]
       --help                          Show this message and exit.
 
 Arguments
@@ -438,4 +439,12 @@ TODO
 :code:`--frames-per-chunk`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+This flag sets the number of frames in a chunk for the intermediate file.
+
+- -1 (the default), it will be decided automatically;
+- 0, continguous storage will be used (no chunk storage);
+- >= 1, the number of frames in a chunk.
+
+For most cases the default -1 should be sufficient as the actual number of
+frames in a chunk is optimised by considering the saturation bandwidth of the
+filesystem.
