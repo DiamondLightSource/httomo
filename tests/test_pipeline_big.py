@@ -58,6 +58,9 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
                         :, index_prog, :
                     ]
                     index_prog += step
-
-    res_norm = np.linalg.norm((data_gt.flatten() - data_result.flatten())).astype("float32")
+    
+    residual_im = data_gt - data_result
+    
+    np.savez("/dls/staging/dls/k11/data/2024/mg37376-1/tmp/residual.npz", data=residual_im)
+    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-6
