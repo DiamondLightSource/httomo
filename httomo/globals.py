@@ -7,7 +7,9 @@ gpu_id: int = -1
 MAX_CPU_SLICES: int = (
     64  # A some random number which will be overwritten by --max-cpu_slices flag during runtime
 )
-FRAMES_PER_CHUNK: int = 1  # if given as 0, then write contiguous (no chunking); if given as -1, decide automatically
+FRAMES_PER_CHUNK: int = (
+    -1
+)  # if given as 0, then write contiguous (no chunking); if given as -1, decide automatically
 INTERMEDIATE_FORMAT: str = "hdf5"
 COMPRESS_INTERMEDIATE: bool = False
 SYSLOG_SERVER = "localhost"

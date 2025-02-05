@@ -138,9 +138,11 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
 @click.option(
     "--frames-per-chunk",
     type=click.IntRange(-1),
-    default=1,
-    help=("Number of frames per-chunk in intermediate data "
-          "(0 = write as contiguous, -1 = decide automatically)"),
+    default=-1,
+    help=(
+        "Number of frames per-chunk in intermediate data "
+        "(0 = write as contiguous, -1 = decide automatically)"
+    ),
 )
 def run(
     in_data_file: Path,
