@@ -23,7 +23,7 @@
 (should be already installed in your environment).
 
 Please run the generator as:
-    python -m create_numpy_from_hdf5 -i /path/to/file.hdf5 -o /path/to/output/file.npz -p 500
+    python -m create_numpy_from_hdf5 -i /path/to/file.hdf5 -o /path/to/output/file.npz
 """
 import argparse
 import os
@@ -32,32 +32,34 @@ import numpy as np
 
 
 def create_numpy_from_hdf5(
-    path_to_hdf5: str, path_to_output_file: str, proj_num: int
+    path_to_hdf5: str, path_to_output_file: str
 ) -> int:
     """
     Args:
         path_to_hdf5: A path to the hdf5 file from which data needs to be extracted.
         path_to_output_file: Output path to the saved dataset as numpy array.
-        proj_num: the total number of projection in the data.
 
     Returns:
         returns zero if the extraction of data is successful
     """
     h5f = h5py.File(path_to_hdf5, "r")
     path_to_data = "data/"
-    proj1 = h5f[path_to_data][0, :, :]  # get the first projection
-    dety, detx = np.shape(proj1)
+    slice_axis0 = h5f[path_to_data][0, :, :]
+    slice_axis1 = h5f[path_to_data][:, 0, :]
+    size_axisY, size_axisZ = np.shape(slice_axis0)
+    size_axisX, _ = np.shape(slice_axis1)
 
     slices = 10
-    projdata_selection = np.zeros((slices, dety, detx), dtype=np.float32)
-    step = proj_num // (slices + 2)
+    # we will be iterating over axis Y
+    data_selection = np.zeros((slices, size_axisX, size_axisZ), dtype=np.float32)
+    step = size_axisY // (slices + 2)
     index_prog = step
     for i in range(slices):
-        projdata_selection[i, :, :] = h5f[path_to_data][index_prog, :, :]
+        data_selection[i, :, :] = h5f[path_to_data][:, index_prog, :]
         index_prog += step
     h5f.close()
 
-    np.savez(path_to_output_file, projdata=projdata_selection)
+    np.savez(path_to_output_file, data=data_selection, axis_slice=size_axisY)
 
     return 0
 
@@ -81,13 +83,6 @@ def get_args():
         default=None,
         help="Output path to the saved dataset as numpy array.",
     )
-    parser.add_argument(
-        "-p",
-        "--projections",
-        type=int,
-        default=None,
-        help="The total number of projections in the dataset",
-    )
     return parser.parse_args()
 
 
@@ -95,8 +90,7 @@ if __name__ == "__main__":
     args = get_args()
     path_to_hdf5 = args.input
     path_to_output_file = args.output
-    proj_num = args.projections
-    return_val = create_numpy_from_hdf5(path_to_hdf5, path_to_output_file, proj_num)
+    return_val = create_numpy_from_hdf5(path_to_hdf5, path_to_output_file)
     if return_val == 0:
         message_str = (
             f"Numpy file {path_to_output_file} has been created from {path_to_hdf5}."

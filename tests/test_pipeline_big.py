@@ -40,13 +40,13 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
     assert len(h5_files) == 1
 
     # load the pre-saved numpy array for comparison bellow
-    projdata_gt = gpu_diad_FBP_k11_38731_npz["projdata"]
-    (slices, dety, detx) = np.shape(projdata_gt)
-    projections_number = 500
-    step = projections_number // (slices + 2)
+    data_gt = gpu_diad_FBP_k11_38731_npz["data"]
+    axis_slice = gpu_diad_FBP_k11_38731_npz["axis_slice"]
+    (slices, sizeX, sizeY) = np.shape(data_gt)
 
+    step = axis_slice // (slices + 2)
     # store for the result
-    projdata_result = np.zeros((slices, dety, detx), dtype=np.float32)
+    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
     path_to_data = "data/"
     for file_to_open in h5_files:
@@ -54,10 +54,10 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
             with h5py.File(file_to_open, "r") as f:
                 index_prog = step
                 for i in range(slices):
-                    projdata_result[i, :, :] = file_to_open[path_to_data][
-                        index_prog, :, :
+                    data_result[i, :, :] = file_to_open[path_to_data][
+                        :, index_prog, :
                     ]
                     index_prog += step
 
-    res_norm = np.linalg.norm((projdata_gt - projdata_result)).astype("float32")
+    res_norm = np.linalg.norm((data_gt.flatten() - data_result.flatten())).astype("float32")
     assert res_norm < 1e-6
