@@ -136,14 +136,21 @@ def setup_dataset(
 
         # adjust the raw data chunk cache options of the dataset
         # according to the chunk size
-        num_chunks = np.prod(np.asarray(global_shape) / np.asarray(chunk_shape)).astype(
-            int
-        )
-        rdcc_opts = {
-            "rdcc_nbytes": data.dtype.itemsize * np.prod(chunk_shape),
-            "rdcc_w0": 1,
-            "rdcc_nslots": _get_rdcc_nslots(num_chunks),
-        }
+        if chunk_shape is not None:
+            num_chunks = np.prod(
+                np.asarray(global_shape) / np.asarray(chunk_shape)
+            ).astype(int)
+            rdcc_opts = {
+                "rdcc_nbytes": data.dtype.itemsize * np.prod(chunk_shape),
+                "rdcc_w0": 1,
+                "rdcc_nslots": _get_rdcc_nslots(num_chunks),
+            }
+        else:
+            rdcc_opts = {
+                "rdcc_nbytes": None,
+                "rdcc_w0": None,
+                "rdcc_nslots": None,
+            }
 
         # only create if not already present - otherwise return existing dataset
         dataset = file.require_dataset(
