@@ -49,7 +49,7 @@ def create_numpy_from_hdf5(
     dety, detx = np.shape(proj1)
 
     slices = 10
-    projdata_selection = np.zeros((slices, dety, detx))
+    projdata_selection = np.zeros((slices, dety, detx), dtype=np.float32)
     step = proj_num // (slices + 2)
     index_prog = step
     for i in range(slices):

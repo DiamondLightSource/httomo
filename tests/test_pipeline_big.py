@@ -46,7 +46,7 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
     step = projections_number // (slices + 2)
 
     # store for the result
-    projdata_result = np.zeros((slices, dety, detx))
+    projdata_result = np.zeros((slices, dety, detx), dtype=np.float32)
 
     path_to_data = "data/"
     for file_to_open in h5_files:
