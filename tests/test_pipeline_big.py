@@ -50,7 +50,7 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
 
     path_to_data = "data/"
     for file_to_open in h5_files:
-        if "httomolibgpu-FBP-tomo.h5" in file_to_open:
+        if "httomolibgpu-FBP" in file_to_open:
             with h5py.File(file_to_open, "r") as f:
                 index_prog = step
                 for i in range(slices):
@@ -58,9 +58,9 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
                         :, index_prog, :
                     ]
                     index_prog += step
-    
+        else:
+            raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
+
     residual_im = data_gt - data_result
-    
-    np.savez("/scratch/raw_data/residual.npz", data=residual_im)
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-6
