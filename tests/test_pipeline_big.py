@@ -51,13 +51,12 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
     path_to_data = "data/"
     for file_to_open in h5_files:
         if "httomolibgpu-FBP" in file_to_open:
-            with h5py.File(file_to_open, "r") as f:
-                index_prog = step
-                for i in range(slices):
-                    data_result[i, :, :] = file_to_open[path_to_data][
-                        :, index_prog, :
-                    ]
-                    index_prog += step
+            h5f = h5py.File(file_to_open, "r")
+            index_prog = step
+            for i in range(slices):
+                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
+                index_prog += step
+            h5f.close()
         else:
             raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
 
