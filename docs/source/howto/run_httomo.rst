@@ -442,7 +442,7 @@ TODO
 This flag sets the number of frames in a chunk for the intermediate file.
 
 - -1 (the default), it will be decided automatically;
-- 0, continguous storage will be used (no chunk storage);
+- 0, contiguous storage will be used (no chunk storage);
 - >= 1, the number of frames in a chunk.
 
 For most cases the default -1 should be sufficient as the actual number of
