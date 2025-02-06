@@ -16,8 +16,11 @@ __all__ = ["calculate_stats", "save_intermediate_data"]
 # save a copy of the original guess_chunk if it needs to be restored
 ORIGINAL_GUESS_CHUNK = h5py._hl.filters.guess_chunk
 
-# the bandwidth that saturates the file system (single process)
-# this was estimated after performing some benchmarks
+# The bandwidth that saturates the file system (single process).
+# This was estimated using a heuristic approach after performing some
+# benchmarks on GPFS03 at DLS using a graph of bandwidth vs message
+# size. For more detail, see
+# https://github.com/DiamondLightSource/httomo/pull/537
 SATURATION_BW = 512 * 2**20
 
 
