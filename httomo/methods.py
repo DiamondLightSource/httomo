@@ -84,12 +84,13 @@ def setup_dataset(
 ) -> h5py.Dataset:
 
     if filetype == "hdf5":
+        DIMS = [0, 1, 2]
+        non_slicing_dims = list(set(DIMS) - set([slicing_dim]))
+
         if frames_per_chunk == -1:
             # decide the number of frames in a chunk by maximising the
             # number of frames around the saturation bandwidth of the
             # file system
-            DIMS = [0, 1, 2]
-            non_slicing_dims = list(set(DIMS) - set([slicing_dim]))
             # starting value
             sz_per_chunk = data.dtype.itemsize
             for dim in non_slicing_dims:
@@ -111,8 +112,6 @@ def setup_dataset(
         if frames_per_chunk > 0:
             chunk_shape = [0, 0, 0]
             chunk_shape[slicing_dim] = frames_per_chunk
-            DIMS = [0, 1, 2]
-            non_slicing_dims = list(set(DIMS) - set([slicing_dim]))
             for dim in non_slicing_dims:
                 chunk_shape[dim] = global_shape[dim]
             chunk_shape = tuple(chunk_shape)
