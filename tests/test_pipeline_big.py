@@ -10,6 +10,8 @@ from PIL import Image
 from plumbum import local
 from .conftest import _change_value_parameters_method_pipeline
 
+# NOTE: those tests have path integrated that are compatible with running jobs in Jenkins at DLS infrastructure.
+
 
 @pytest.mark.pipebig
 def test_pipeline_gpu_FBP_diad_k11_38731(
@@ -29,7 +31,7 @@ def test_pipeline_gpu_FBP_diad_k11_38731(
     cmd.insert(9, "--max-memory")
     cmd.insert(10, "40G")
     cmd.insert(11, "--reslice-dir")
-    cmd.insert(12, "/scratch/jenkins_agent/workspace/imaging_httomo_full_pipelines/")
+    cmd.insert(12, "/scratch/jenkins_agent/workspace/")
 
     subprocess.check_output(cmd)
 
