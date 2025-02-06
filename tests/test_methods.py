@@ -271,7 +271,7 @@ def test_save_intermediate_data_frames_per_chunk(
     if frames_per_chunk > 0:
         assert chunk_shape == tuple(expected_chunk_shape)
     elif frames_per_chunk == -1:
-        # when this is -1, it is decided autmatically and because of the
+        # when this is -1, it is decided automatically and because of the
         # very small frame size, this exceeds the value of the slicing
         # dimension, and the fallback is 1
         assert chunk_shape == (1, *expected_chunk_shape[1:])
