@@ -25,10 +25,10 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "perf: mark test as performance test")
     config.addinivalue_line("markers", "cupy: needs cupy to run")
     config.addinivalue_line(
-        "markers", "pipesmall: mark tests to run full pipelines on small data"
+        "markers", "small_data: mark tests to run full pipelines on small data"
     )
     config.addinivalue_line(
-        "markers", "pipebig: mark tests to run full pipelines on raw big data"
+        "markers", "full_data: mark tests to run full pipelines on raw big data"
     )
     config.addinivalue_line(
         "markers", "preview: mark test to run with `httomo preview`"
@@ -43,13 +43,13 @@ def pytest_addoption(parser):
         help="run performance tests only",
     )
     parser.addoption(
-        "--pipeline_small",
+        "--small_data",
         action="store_true",
         default=False,
         help="run full pipelines on small data",
     )
     parser.addoption(
-        "--pipeline_big",
+        "--full_data",
         action="store_true",
         default=False,
         help="run full pipelines on raw (big) data",
@@ -69,29 +69,29 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "perf" in item.keywords:
                 item.add_marker(skip_perf)
-    if config.getoption("--pipeline_small"):
+    if config.getoption("--small_data"):
         skip_other = pytest.mark.skip(reason="not a pipeline small data test")
         for item in items:
-            if "pipesmall" not in item.keywords:
+            if "small_data" not in item.keywords:
                 item.add_marker(skip_other)
     else:
         skip_perf = pytest.mark.skip(
-            reason="pipeline small data test - use '--pipeline_small' to run"
+            reason="pipeline small data test - use '--small_data' to run"
         )
         for item in items:
-            if "pipesmall" in item.keywords:
+            if "small_data" in item.keywords:
                 item.add_marker(skip_perf)
-    if config.getoption("--pipeline_big"):
+    if config.getoption("--full_data"):
         skip_other = pytest.mark.skip(reason="not a pipeline raw big data test")
         for item in items:
-            if "pipebig" not in item.keywords:
+            if "full_data" not in item.keywords:
                 item.add_marker(skip_other)
     else:
         skip_perf = pytest.mark.skip(
-            reason="pipeline raw big data test - use '--pipeline_big' to run"
+            reason="pipeline raw big data test - use '--full_data' to run"
         )
         for item in items:
-            if "pipebig" in item.keywords:
+            if "full_data" in item.keywords:
                 item.add_marker(skip_perf)
 
 
@@ -301,6 +301,12 @@ def diad_k11_38731():
 def gpu_diad_FBP_k11_38731_npz():
     # 10 slices numpy array
     return np.load("tests/test_data/raw_data/diad/gpu_diad_FBP_k11-38731.npz")
+
+
+@pytest.fixture
+def gpu_diad_FBP_k11_38730_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/diad/gpu_diad_FBP_k11-38730.npz")
 
 
 # ---------------------END------------------------#

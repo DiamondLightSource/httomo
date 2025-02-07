@@ -46,7 +46,7 @@ def _check_tif(files: List, number: int, shape: Tuple):
     assert imarray.shape == shape
 
 
-@pytest.mark.pipesmall
+@pytest.mark.small_data
 def test_run_pipeline_cpu_gridrec(
     get_files: Callable, cmd, standard_data, cpu_pipeline_gridrec, output_folder
 ):
@@ -80,7 +80,7 @@ def test_run_pipeline_cpu_gridrec(
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
 
 
-@pytest.mark.pipesmall
+@pytest.mark.small_data
 def test_run_pipeline_gpu_FBP(
     get_files: Callable, cmd, standard_data, gpu_pipelineFBP, output_folder
 ):
@@ -101,10 +101,13 @@ def test_run_pipeline_gpu_FBP(
     assert len(h5_files) == 1
 
     for file_to_open in h5_files:
-        if "httomolibgpu-FBP-tomo.h5" in file_to_open:
-            with h5py.File(file_to_open, "r") as f:
-                assert f["data"].shape == (160, 128, 160)
-                assert f["data"].dtype == np.float32
+        if "httomolibgpu-FBP" in file_to_open:
+            h5f = h5py.File(file_to_open, "r")
+            assert h5f["data"].shape == (160, 128, 160)
+            assert h5f["data"].dtype == np.float32
+            h5f.close()
+        else:
+            raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
 
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     user_log_file = list(filter(lambda x: "user.log" in x, files))
@@ -124,7 +127,7 @@ def test_run_pipeline_gpu_FBP(
     )
 
 
-@pytest.mark.pipesmall
+@pytest.mark.small_data
 def test_run_pipeline_gpu_denoise(
     get_files: Callable,
     cmd,
@@ -161,10 +164,13 @@ def test_run_pipeline_gpu_denoise(
     assert len(h5_files) == 1
 
     for file_to_open in h5_files:
-        if "httomolibgpu-FBP-tomo.h5" in file_to_open:
-            with h5py.File(file_to_open, "r") as f:
-                assert f["data"].shape == (160, 128, 160)
-                assert f["data"].dtype == np.float32
+        if "httomolibgpu-FBP" in file_to_open:
+            h5f = h5py.File(file_to_open, "r")
+            assert h5f["data"].shape == (160, 128, 160)
+            assert h5f["data"].dtype == np.float32
+            h5f.close()
+        else:
+            raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
 
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     user_log_file = list(filter(lambda x: "user.log" in x, files))
@@ -186,7 +192,7 @@ def test_run_pipeline_gpu_denoise(
 
 # todo rewrite and move to test_pipeline_big
 
-# @pytest.mark.pipesmall
+# @pytest.mark.small_data
 # def test_tomo_standard_testing_pipeline_output_with_save_all(
 #     get_files: Callable,
 #     cmd,
@@ -395,7 +401,7 @@ def test_run_pipeline_gpu_denoise(
 #     assert "Data shape is (3601, 3, 2560) of type uint16" in verbose_log_contents
 
 
-@pytest.mark.pipesmall
+@pytest.mark.small_data
 def test_run_gpu_pipeline_sweep_cor(
     get_files: Callable, cmd, standard_data, yaml_gpu_pipeline_sweep_cor, output_folder
 ):
@@ -423,7 +429,7 @@ def test_run_gpu_pipeline_sweep_cor(
     assert "Values executed in this process: 6" in verbose_log_contents
 
 
-@pytest.mark.pipesmall
+@pytest.mark.small_data
 def test_run_gpu_pipeline_sweep_paganin(
     get_files: Callable,
     cmd,
