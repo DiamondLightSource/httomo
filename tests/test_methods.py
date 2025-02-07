@@ -218,7 +218,7 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
         np.testing.assert_array_equal(file["data_dims"]["detector_x_y"], [10, 20])
 
 
-@pytest.mark.parametrize("frames_per_chunk", [0, 1, 5, 1000])
+@pytest.mark.parametrize("frames_per_chunk", [-1, 0, 1, 5, 1000])
 def test_save_intermediate_data_frames_per_chunk(
     tmp_path: Path,
     frames_per_chunk: int,
@@ -268,8 +268,13 @@ def test_save_intermediate_data_frames_per_chunk(
     with h5py.File(tmp_path / FILE_NAME, "r") as f:
         chunk_shape = f[DATA_PATH].chunks
 
-    if frames_per_chunk != 0:
+    if frames_per_chunk > 0:
         assert chunk_shape == tuple(expected_chunk_shape)
+    elif frames_per_chunk == -1:
+        # when this is -1, it is decided automatically and because of the
+        # very small frame size, this exceeds the value of the slicing
+        # dimension, and the fallback is 1
+        assert chunk_shape == (1, *expected_chunk_shape[1:])
     else:
         assert chunk_shape is None
 
