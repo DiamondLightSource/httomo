@@ -137,9 +137,12 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
 )
 @click.option(
     "--frames-per-chunk",
-    type=click.IntRange(0),
-    default=1,
-    help="Number of frames per-chunk in intermediate data (0 = write as contiguous)",
+    type=click.IntRange(-1),
+    default=-1,
+    help=(
+        "Number of frames per-chunk in intermediate data "
+        "(0 = write as contiguous, -1 = decide automatically)"
+    ),
 )
 def run(
     in_data_file: Path,
@@ -248,8 +251,10 @@ def set_global_constants(
     syslog_port: int,
     output_folder_name: Optional[Path],
 ) -> None:
-    if compress_intermediate:
-        frames_per_chunk = 1
+    if compress_intermediate and frames_per_chunk == 0:
+        # 0 means write contiguously but compression must have chunk
+        # storage, so decide automatically in this case
+        frames_per_chunk = -1
     httomo.globals.INTERMEDIATE_FORMAT = intermediate_format
     httomo.globals.COMPRESS_INTERMEDIATE = compress_intermediate
     httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
