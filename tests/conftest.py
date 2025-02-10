@@ -266,6 +266,11 @@ def gpu_pipeline_diad_FBP():
     return "docs/source/pipelines_full/gpu_diad_FBP.yaml"
 
 
+@pytest.fixture
+def gpu_pipeline_360_distortioncorr_FBP():
+    return "docs/source/pipelines_full/gpu_360_distortioncorr_FBP.yaml"
+
+
 # ---------------------END------------------------#
 
 ###########Raw projection data (big)##################
@@ -295,6 +300,18 @@ def diad_k11_38730():
 def diad_k11_38731():
     # 0.5k projections, 6gb dataset
     return "tests/test_data/raw_data/diad/k11-38731.nxs"
+
+
+@pytest.fixture
+def i13_177906():
+    # 2.5k projections, 27gb dataset
+    return "tests/test_data/raw_data/i13/177906.nxs"
+
+
+@pytest.fixture
+def i13_180622():
+    # 6k projections, 65gb dataset, 360 degrees scan
+    return "tests/test_data/raw_data/i13/360/180622.nxs"
 
 
 @pytest.fixture

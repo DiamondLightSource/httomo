@@ -54,14 +54,9 @@ Those pipelines are specific to Diamond Light Source processing strategies and c
     .. literalinclude:: ../pipelines_full/gpu_diad_FBP.yaml
         :language: yaml
 
-.. dropdown:: Pipeline for 360-degrees data with automatic CoR finding and stitching to 180-degrees data.
+.. dropdown:: Pipeline for 360-degrees data with automatic CoR/overlap finding and stitching to 180-degrees data.
 
-    .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml
-        :language: yaml
-
-.. dropdown:: Pipeline for 360-degrees data with automatic CoR finding and stitching to 180-degrees data. Iterative reconstruction
-
-    .. literalinclude:: ../../../tests/samples/pipeline_template_examples/pipeline_360deg_iterative_gpu3.yaml
+    .. literalinclude:: ../pipelines_full/gpu_360_distortioncorr_FBP.yaml
         :language: yaml
 
 .. _tutorials_pl_templates_sweeps:
