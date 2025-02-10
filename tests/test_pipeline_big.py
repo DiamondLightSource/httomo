@@ -178,7 +178,7 @@ def test_pipeline_gpu_FBP_denoising_i13_177906(
     # assert res_norm < 1e-6
 
 
-# @pytest.mark.full_data
+@pytest.mark.full_data
 def test_pipeline_gpu_pipeline_360_distortioncorr_FBP_i13_180622(
     get_files: Callable,
     cmd,

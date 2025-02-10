@@ -48,4 +48,4 @@ jobs:
 
       - name: Run HTTomo pipelines tests (small data)
         run: |
-          pytest tests/test_pipeline_small.py --pipeline_small
+          pytest tests/test_pipeline_small.py --small_data
