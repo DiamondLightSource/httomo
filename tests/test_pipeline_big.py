@@ -158,7 +158,8 @@ def test_pipeline_gpu_FBP_denoising_i13_177906(
     step = axis_slice // (slices + 2)
     # store for the result
     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-    # # TODO enable this
+
+    # TODO re-enable this
 
     # path_to_data = "data/"
     # for file_to_open in h5_files:
@@ -236,6 +237,7 @@ def test_pipeline_gpu_pipeline_360_distortioncorr_FBP_i13_180622(
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 1
 
+    # TODO re-enable this
     # # load the pre-saved numpy array for comparison bellow
     # data_gt = gpu_diad_FBP_k11_38731_npz["data"]
     # axis_slice = gpu_diad_FBP_k11_38731_npz["axis_slice"]
