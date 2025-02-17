@@ -50,8 +50,9 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_disk(
     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
     path_to_data = "data/"
+    h5_file_name = "httomolibgpu-FBP"
     for file_to_open in h5_files:
-        if "httomolibgpu-FBP" in file_to_open:
+        if h5_file_name in file_to_open:
             h5f = h5py.File(file_to_open, "r")
             index_prog = step
             for i in range(slices):
@@ -59,7 +60,8 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_disk(
                 index_prog += step
             h5f.close()
         else:
-            raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
+            message_str = f"File name with {h5_file_name} string cannot be found."
+            raise FileNotFoundError(message_str)
 
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
@@ -98,8 +100,9 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_memory(
     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
     path_to_data = "data/"
+    h5_file_name = "httomolibgpu-FBP"
     for file_to_open in h5_files:
-        if "httomolibgpu-FBP" in file_to_open:
+        if h5_file_name in file_to_open:
             h5f = h5py.File(file_to_open, "r")
             index_prog = step
             for i in range(slices):
@@ -107,7 +110,8 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_memory(
                 index_prog += step
             h5f.close()
         else:
-            raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
+            message_str = f"File name with {h5_file_name} string cannot be found."
+            raise FileNotFoundError(message_str)
 
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
@@ -152,8 +156,9 @@ def test_pipeline_gpu_FBP_diad_k11_38730_in_disk(
     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
     path_to_data = "data/"
+    h5_file_name = "httomolibgpu-FBP"
     for file_to_open in h5_files:
-        if "httomolibgpu-FBP" in file_to_open:
+        if h5_file_name in file_to_open:
             h5f = h5py.File(file_to_open, "r")
             index_prog = step
             for i in range(slices):
@@ -161,7 +166,8 @@ def test_pipeline_gpu_FBP_diad_k11_38730_in_disk(
                 index_prog += step
             h5f.close()
         else:
-            raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
+            message_str = f"File name with {h5_file_name} string cannot be found."
+            raise FileNotFoundError(message_str)
 
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
@@ -200,8 +206,9 @@ def test_pipeline_gpu_FBP_diad_k11_38730_in_memory(
     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
     path_to_data = "data/"
+    h5_file_name = "httomolibgpu-FBP"
     for file_to_open in h5_files:
-        if "httomolibgpu-FBP" in file_to_open:
+        if h5_file_name in file_to_open:
             h5f = h5py.File(file_to_open, "r")
             index_prog = step
             for i in range(slices):
@@ -209,21 +216,21 @@ def test_pipeline_gpu_FBP_diad_k11_38730_in_memory(
                 index_prog += step
             h5f.close()
         else:
-            raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
+            message_str = f"File name with {h5_file_name} string cannot be found."
+            raise FileNotFoundError(message_str)
 
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-6
 
 
-# TODO one needs to add the test of the result of the denoising method here
 @pytest.mark.full_data
 def test_pipeline_gpu_FBP_denoising_i13_177906_in_memory(
     get_files: Callable,
     cmd,
     i13_177906,
     gpu_pipelineFBP_denoising,
-    gpu_diad_FBP_k11_38731_npz,  # TODO change this
+    gpu_FBP_TVdenoising_i13_177906_npz,
     output_folder,
 ):
     # do not save the result of FBP
@@ -273,31 +280,31 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_in_memory(
     assert len(h5_files) == 1
 
     # load the pre-saved numpy array for comparison bellow
-    data_gt = gpu_diad_FBP_k11_38731_npz["data"]  # TODO change this
-    axis_slice = gpu_diad_FBP_k11_38731_npz["axis_slice"]  # TODO change this
+    data_gt = gpu_FBP_TVdenoising_i13_177906_npz["data"]
+    axis_slice = gpu_FBP_TVdenoising_i13_177906_npz["axis_slice"]
     (slices, sizeX, sizeY) = np.shape(data_gt)
 
     step = axis_slice // (slices + 2)
     # store for the result
     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
-    # TODO re-enable this
+    path_to_data = "data/"
+    h5_file_name = "total_variation_PD"
+    for file_to_open in h5_files:
+        if h5_file_name in file_to_open:
+            h5f = h5py.File(file_to_open, "r")
+            index_prog = step
+            for i in range(slices):
+                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
+                index_prog += step
+            h5f.close()
+        else:
+            message_str = f"File name with {h5_file_name} string cannot be found."
+            raise FileNotFoundError(message_str)
 
-    # path_to_data = "data/"
-    # for file_to_open in h5_files:
-    #     if "httomolibgpu-FBP" in file_to_open:
-    #         h5f = h5py.File(file_to_open, "r")
-    #         index_prog = step
-    #         for i in range(slices):
-    #             data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-    #             index_prog += step
-    #         h5f.close()
-    #     else:
-    #         raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
-
-    # residual_im = data_gt - data_result
-    # res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
-    # assert res_norm < 1e-6
+    residual_im = data_gt - data_result
+    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    assert res_norm < 1e-6
 
 
 @pytest.mark.full_data
