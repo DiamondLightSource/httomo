@@ -32,6 +32,6 @@ jobs:
           $CONDA/bin/conda env create --name httomo --file conda/environment-cpu.yml
           $CONDA/bin/conda list
                
-      - name: Run HTTomo framework tests
+      - name: Run HTTomo framework tests (CPU)
         run: |
-          pytest tests/
+          $CONDA/bin/conda run -n httomo pytest
