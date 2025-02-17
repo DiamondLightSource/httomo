@@ -33,10 +33,9 @@ jobs:
 
       - name: install httomo-backends
         run: |
-          $CONDA/bin/conda activate httomo
           $CONDA/bin/python -m pip install --no-deps httomo-backends
           $CONDA/bin/conda list
           
       - name: Run HTTomo framework tests (CPU)
         run: |
-          $CONDA/bin/conda run -n httomo pytest
+          $CONDA/bin/conda run -n httomo pytest tests/
