@@ -6,7 +6,6 @@ import h5py
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from PIL import Image
 from plumbum import local
 from .conftest import _change_value_parameters_method_pipeline
 

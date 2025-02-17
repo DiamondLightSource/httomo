@@ -2,6 +2,8 @@ name: httomo
 channels:
   - conda-forge
 dependencies:
+  - scipy
+  - pillow
   - click
   - numpy
   - graypy
