@@ -1,0 +1,37 @@
+name: HTTomo framework tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  tests-cpu:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      # setup Python 3.11
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # install dependencies with conda
+      - name: Install CPU-only dependencies with conda
+        run: |      
+          $CONDA/bin/conda env create --name httomo --file conda/environment-cpu.yml
+          $CONDA/bin/conda list
+               
+      - name: Run HTTomo framework tests
+        run: |
+          pytest tests/

@@ -31,9 +31,7 @@ import h5py
 import numpy as np
 
 
-def create_numpy_from_hdf5(
-    path_to_hdf5: str, path_to_output_file: str
-) -> int:
+def create_numpy_from_hdf5(path_to_hdf5: str, path_to_output_file: str) -> int:
     """
     Args:
         path_to_hdf5: A path to the hdf5 file from which data needs to be extracted.
