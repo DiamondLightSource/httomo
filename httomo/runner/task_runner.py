@@ -121,7 +121,7 @@ class TaskRunner:
             unit="block",
             ascii=True,
         )
-        for idx, (block, _) in enumerate(zip(splitter, progress)):
+        for idx, block in enumerate(progress):
             end_source = time.perf_counter_ns()
             if self.monitor is not None:
                 self.monitor.report_source_block(
