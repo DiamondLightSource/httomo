@@ -233,7 +233,7 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_in_memory(
             "FBP",
         ],
         key=[
-            None,
+            "recon_size",
         ],
         value=[
             None,
