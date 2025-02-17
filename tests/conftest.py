@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 from shutil import rmtree
-from typing import Any, Callable, Dict, List, TypeAlias
+from typing import Any, Callable, Dict, List, TypeAlias, Union
 import numpy as np
 
 import pytest
@@ -468,6 +468,7 @@ def _change_value_parameters_method_pipeline(
     method: list,
     key: list,
     value: list,
+    save_result: Union[None, bool] = None,
 ):
     # changes methods parameters in the given pipeline and re-save the pipeline
     with open(yaml_path, "r") as f:
@@ -482,6 +483,9 @@ def _change_value_parameters_method_pipeline(
             if method[j] == method_name:
                 # change something in parameters here
                 opened_yaml[i]["parameters"][key[j]] = value[j]
+                if save_result is not None:
+                    # add save_result to the list of keys
+                    opened_yaml[i]["save_result"] = save_result
 
     with open(yaml_path, "w") as file_descriptor:
         yaml.dump(opened_yaml, file_descriptor)
