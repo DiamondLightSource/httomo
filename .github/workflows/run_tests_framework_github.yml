@@ -28,10 +28,11 @@ jobs:
           post-cleanup: 'all'
           init-shell: bash
 
-      - name: install httomo-backends
+      - name: install httomo and httomo-backends
         run: |
           micromamba activate httomo
           pip install --no-deps httomo-backends
+          pip install .
           micromamba list
           
       - name: Run HTTomo framework tests (CPU)
