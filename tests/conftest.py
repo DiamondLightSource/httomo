@@ -494,6 +494,6 @@ def _change_value_parameters_method_pipeline(
                     opened_yaml[i]["save_result"] = save_result
 
     with open(yaml_path, "w") as file_descriptor:
-        yaml.dump(opened_yaml, file_descriptor)
+        yaml.dump(opened_yaml, file_descriptor, default_flow_style=False, sort_keys=False)
 
     return 0

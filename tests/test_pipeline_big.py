@@ -313,7 +313,6 @@ def test_pipeline_gpu_360_distortioncorr_FBP_i13_180622_in_disk(
     cmd,
     i13_180622,
     gpu_pipeline_360_distortioncorr_FBP,
-    gpu_diad_FBP_k11_38731_npz,  # TODO change this
     output_folder,
 ):
     # NOTE that the intermediate file with file-based processing will be saved to /tmp
@@ -321,6 +320,7 @@ def test_pipeline_gpu_360_distortioncorr_FBP_i13_180622_in_disk(
     _change_value_parameters_method_pipeline(
         gpu_pipeline_360_distortioncorr_FBP,
         method=[
+            "normalize",
             "distortion_correction_proj_discorpy",
             "find_center_360",
             "find_center_360",
@@ -331,6 +331,7 @@ def test_pipeline_gpu_360_distortioncorr_FBP_i13_180622_in_disk(
             "FBP",
         ],
         key=[
+            "minus_log",
             "metadata_path",
             "ind",
             "win_width",
@@ -341,8 +342,9 @@ def test_pipeline_gpu_360_distortioncorr_FBP_i13_180622_in_disk(
             "center",
         ],
         value=[
+            False,
             "/data/tomography/raw_data/distortion_dummy_coeffs_pos4.txt",
-            "mid",
+            400,
             50,
             0,
             True,
