@@ -326,11 +326,13 @@ def test_pipeline_gpu_360_distortioncorr_FBP_i13_180622_in_disk(
             "find_center_360",
             "find_center_360",
             "find_center_360",
+            "find_center_360",
             "sino_360_to_180",
             "FBP",
         ],
         key=[
             "metadata_path",
+            "ind",
             "win_width",
             "side",
             "norm",
@@ -340,6 +342,7 @@ def test_pipeline_gpu_360_distortioncorr_FBP_i13_180622_in_disk(
         ],
         value=[
             "/data/tomography/raw_data/distortion_dummy_coeffs_pos4.txt",
+            "mid",
             50,
             0,
             True,
