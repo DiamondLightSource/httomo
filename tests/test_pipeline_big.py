@@ -308,20 +308,19 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_in_memory(
 
 
 @pytest.mark.full_data
-def test_pipeline_gpu_360_distortioncorr_FBP_i13_180622_in_disk(
+def test_pipeline_gpu_360_paganin_FBP_i13_180622_in_disk(
     get_files: Callable,
     cmd,
     i13_180622,
-    gpu_pipeline_360_distortioncorr_FBP,
+    gpu_pipeline_360_paganin_FBP,
     output_folder,
 ):
     # NOTE that the intermediate file with file-based processing will be saved to /tmp
 
     _change_value_parameters_method_pipeline(
-        gpu_pipeline_360_distortioncorr_FBP,
+        gpu_pipeline_360_paganin_FBP,
         method=[
             "normalize",
-            "distortion_correction_proj_discorpy",
             "find_center_360",
             "find_center_360",
             "find_center_360",
@@ -332,7 +331,6 @@ def test_pipeline_gpu_360_distortioncorr_FBP_i13_180622_in_disk(
         ],
         key=[
             "minus_log",
-            "metadata_path",
             "ind",
             "win_width",
             "side",
@@ -343,7 +341,6 @@ def test_pipeline_gpu_360_distortioncorr_FBP_i13_180622_in_disk(
         ],
         value=[
             False,
-            "/data/tomography/raw_data/distortion_dummy_coeffs_pos4.txt",
             400,
             50,
             0,
@@ -356,7 +353,7 @@ def test_pipeline_gpu_360_distortioncorr_FBP_i13_180622_in_disk(
 
     cmd.pop(4)  #: don't save all
     cmd.insert(5, i13_180622)
-    cmd.insert(7, gpu_pipeline_360_distortioncorr_FBP)
+    cmd.insert(7, gpu_pipeline_360_paganin_FBP)
     cmd.insert(8, output_folder)
     cmd.insert(9, "--max-memory")
     cmd.insert(10, "40G")
