@@ -308,7 +308,7 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_in_memory(
 
 
 @pytest.mark.full_data
-def test_pipeline_gpu_360_paganin_FBP_i13_180622_in_disk(
+def test_pipeline_gpu_360_paganin_FBP_i13_180622_preview(
     get_files: Callable,
     cmd,
     i13_180622,
@@ -320,6 +320,7 @@ def test_pipeline_gpu_360_paganin_FBP_i13_180622_in_disk(
     _change_value_parameters_method_pipeline(
         gpu_pipeline_360_paganin_FBP,
         method=[
+            "standard_tomo",
             "normalize",
             "find_center_360",
             "find_center_360",
@@ -330,6 +331,7 @@ def test_pipeline_gpu_360_paganin_FBP_i13_180622_in_disk(
             "FBP",
         ],
         key=[
+            "preview",
             "minus_log",
             "ind",
             "win_width",
@@ -340,8 +342,9 @@ def test_pipeline_gpu_360_paganin_FBP_i13_180622_in_disk(
             "center",
         ],
         value=[
+            {"detector_y": {"start": 300, "stop": 600}},
             False,
-            400,
+            "mid",
             50,
             0,
             True,
