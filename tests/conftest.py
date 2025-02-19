@@ -268,7 +268,7 @@ def gpu_pipeline_diad_FBP():
 
 @pytest.fixture
 def gpu_pipeline_360_paganin_FBP():
-    return "docs/source/pipelines_full/gpu_360_paganin_FBP_directive.yaml"
+    return "docs/source/pipelines_full/gpu_360_paganin_FBP.yaml"
 
 
 # ---------------------END------------------------#
