@@ -1,12 +1,13 @@
 """
-Types that represent python dicts for angles and preview configuration which are generated from
-parsing a pipeline file into python, and functions to transform these python dicts to internal
-types that loaders can use.
+Types that represent python dicts for angles, preview, and darks/flats configuration, which are
+generated from parsing a pipeline file into python, and functions to transform these python
+dicts to internal types that loaders can use.
 """
 
 from pathlib import Path
-from typing import Literal, Optional, TypeAlias, TypedDict, Union
+from typing import Literal, NotRequired, Optional, TypeAlias, TypedDict, Union
 
+from httomo.darks_flats import DarksFlatsFileConfig
 from httomo.loaders.types import (
     AnglesConfig,
     DataConfig,
@@ -263,3 +264,29 @@ def parse_data(in_file: str, data_path: str) -> DataConfig:
     into an internal data configuration type that loaders can use.
     """
     return DataConfig(in_file=Path(in_file), data_path=data_path)
+
+
+class DarksFlatsParam(TypedDict):
+    """
+    Darks/flats configuration dict.
+    """
+
+    file: NotRequired[str]
+    data_path: NotRequired[str]
+
+
+def parse_darks_flats(
+    data_config: DataConfig, image_key_path: Optional[str], config: DarksFlatsParam
+) -> DarksFlatsFileConfig:
+    """
+    Convert python dict representing darks/flats information generated from parsing the
+    pipeline file, into an internal darks/flats configuration type that loaders can use.
+    """
+    in_file = config.get("file", data_config.in_file)
+    if isinstance(in_file, str):
+        in_file = Path(in_file)
+    data_path = config.get("data_path", data_config.data_path)
+    image_key_path = config.get("image_key_path", image_key_path)
+    return DarksFlatsFileConfig(
+        file=in_file, data_path=data_path, image_key_path=image_key_path
+    )

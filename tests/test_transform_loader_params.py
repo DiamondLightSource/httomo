@@ -1,7 +1,9 @@
 from pathlib import Path
+from typing import Optional
 
 import pytest
 
+from httomo.darks_flats import DarksFlatsFileConfig
 from httomo.loaders.types import (
     AnglesConfig,
     DataConfig,
@@ -10,8 +12,10 @@ from httomo.loaders.types import (
 )
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.transform_loader_params import (
+    DarksFlatsParam,
     PreviewParam,
     parse_angles,
+    parse_darks_flats,
     parse_data,
     parse_preview,
 )
@@ -424,3 +428,38 @@ def test_parse_data():
         in_file=Path(INPUT_FILE),
         data_path=DATA_PATH,
     )
+
+
+@pytest.mark.parametrize(
+    "data_config, image_key_path, config, expected_output",
+    [
+        (
+            DataConfig(Path("/some/path/to/data.nxs"), "/entry1/tomo_entry/data/data"),
+            "/entry1/tomo_entry/data/image_key",
+            {},
+            DarksFlatsFileConfig(
+                file=Path("/some/path/to/data.nxs"),
+                data_path="/entry1/tomo_entry/data/data",
+                image_key_path="/entry1/tomo_entry/data/image_key",
+            ),
+        ),
+        (
+            DataConfig(Path("/some/path/to/data.nxs"), "/entry1/tomo_entry/data/data"),
+            None,
+            {"file": "/some/other/path/to/data.h5", "data_path": "/data"},
+            DarksFlatsFileConfig(
+                file=Path("/some/other/path/to/data.h5"),
+                data_path="/data",
+                image_key_path=None,
+            ),
+        ),
+    ],
+    ids=["darks/flats-in-input-file", "darks/flats-in-separate-file"],
+)
+def test_parse_darks_flats_(
+    data_config: DataConfig,
+    image_key_path: Optional[str],
+    config: DarksFlatsParam,
+    expected_output: DarksFlatsFileConfig,
+):
+    assert parse_darks_flats(data_config, image_key_path, config) == expected_output
