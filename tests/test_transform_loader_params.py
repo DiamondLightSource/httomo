@@ -1,7 +1,10 @@
+from pathlib import Path
+
 import pytest
 
 from httomo.loaders.types import (
     AnglesConfig,
+    DataConfig,
     RawAngles,
     UserDefinedAngles,
 )
@@ -9,6 +12,7 @@ from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.transform_loader_params import (
     PreviewParam,
     parse_angles,
+    parse_data,
     parse_preview,
 )
 
@@ -411,3 +415,12 @@ def test_keywords_converter(input):
                 "The given keyword: bla is not recognised. The recognised keywords are: begin, mid, end."
                 in str(e)
             )
+
+
+def test_parse_data():
+    INPUT_FILE = "/some/path/to/data.nxs"
+    DATA_PATH = "/entry1/tomo_entry/data/data"
+    assert parse_data(INPUT_FILE, DATA_PATH) == DataConfig(
+        in_file=Path(INPUT_FILE),
+        data_path=DATA_PATH,
+    )

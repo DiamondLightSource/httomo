@@ -4,10 +4,12 @@ parsing a pipeline file into python, and functions to transform these python dic
 types that loaders can use.
 """
 
+from pathlib import Path
 from typing import Literal, Optional, TypeAlias, TypedDict, Union
 
 from httomo.loaders.types import (
     AnglesConfig,
+    DataConfig,
     RawAngles,
     UserDefinedAngles,
 )
@@ -253,3 +255,11 @@ def parse_angles(angles_data: AnglesParam) -> AnglesConfig:
         )
 
     raise ValueError(f"Unknown rotation_angles param value for loader: {angles_data}")
+
+
+def parse_data(in_file: str, data_path: str) -> DataConfig:
+    """
+    Convert python dict representing data information generated from parsing the pipeline file,
+    into an internal data configuration type that loaders can use.
+    """
+    return DataConfig(in_file=Path(in_file), data_path=data_path)
