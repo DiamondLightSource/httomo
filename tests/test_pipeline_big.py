@@ -320,7 +320,7 @@ def test_pipeline_gpu_360_paganin_FBP_i13_179623_preview(
         method=[
             "standard_tomo",
             "normalize",
-            "FBP",
+            "find_center_360",
         ],
         key=[
             "preview",
