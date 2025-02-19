@@ -321,16 +321,19 @@ def test_pipeline_gpu_360_paganin_FBP_i13_179623_preview(
             "standard_tomo",
             "normalize",
             "find_center_360",
+            "sino_360_to_180",
         ],
         key=[
             "preview",
             "minus_log",
             "ind",
+            "rotation",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1200}},
             False,
             "mid",
+            "right",
         ],
     )
 
