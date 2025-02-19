@@ -1,4 +1,4 @@
-name: HTTomo tests
+name: HTTomo framework tests
 
 on:
   pull_request:
@@ -38,9 +38,14 @@ jobs:
           pip install --upgrade --force-reinstall pillow
           pip install httomolibgpu tomobar
           pip install --no-deps httomo-backends
-          pip install .         
+          pip install .
           micromamba list
                 
-      - name: Run HTTomo tests
+      - name: Generate full yaml pipelines using pipeline directives
+        run: |
+          pip install "ruamel.yaml>0.18.0"
+          python ./docs/source/scripts/execute_pipelines_build.py -o ./docs/source/pipelines_full/
+
+      - name: Run HTTomo framework tests
         run: |
           pytest tests/
