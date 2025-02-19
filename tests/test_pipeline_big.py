@@ -225,7 +225,7 @@ def test_pipeline_gpu_FBP_diad_k11_38730_in_memory(
 
 
 @pytest.mark.full_data
-def test_pipeline_gpu_FBP_denoising_i13_177906_in_memory(
+def test_pipeline_gpu_FBP_denoising_i13_177906_preview(
     get_files: Callable,
     cmd,
     i13_177906,
@@ -233,6 +233,20 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_in_memory(
     gpu_FBP_TVdenoising_i13_177906_npz,
     output_folder,
 ):
+
+    _change_value_parameters_method_pipeline(
+        gpu_pipelineFBP_denoising,
+        method=[
+            "standard_tomo",
+        ],
+        key=[
+            "preview",
+        ],
+        value=[
+            {"detector_y": {"start": 900, "stop": 1200}},
+        ],
+    )
+
     # do not save the result of FBP
     _change_value_parameters_method_pipeline(
         gpu_pipelineFBP_denoising,
@@ -313,6 +327,7 @@ def test_pipeline_gpu_360_paganin_FBP_i13_179623_preview(
     cmd,
     i13_179623,
     gpu_pipeline_360_paganin_FBP,
+    gpu_FBP_paganin_i13_179623_npz,
     output_folder,
 ):
     _change_value_parameters_method_pipeline(
@@ -322,18 +337,24 @@ def test_pipeline_gpu_360_paganin_FBP_i13_179623_preview(
             "normalize",
             "find_center_360",
             "sino_360_to_180",
+            "paganin_filter_tomopy",
+            "paganin_filter_tomopy",
         ],
         key=[
             "preview",
             "minus_log",
             "ind",
             "rotation",
+            "energy",
+            "alpha",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1200}},
             False,
             "mid",
             "right",
+            15.0,
+            0.1,
         ],
     )
 
@@ -350,31 +371,32 @@ def test_pipeline_gpu_360_paganin_FBP_i13_179623_preview(
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 1
 
-    # TODO re-enable this
-    # # load the pre-saved numpy array for comparison bellow
-    # data_gt = gpu_diad_FBP_k11_38731_npz["data"]
-    # axis_slice = gpu_diad_FBP_k11_38731_npz["axis_slice"]
-    # (slices, sizeX, sizeY) = np.shape(data_gt)
+    # load the pre-saved numpy array for comparison bellow
+    data_gt = gpu_FBP_paganin_i13_179623_npz["data"]
+    axis_slice = gpu_FBP_paganin_i13_179623_npz["axis_slice"]
+    (slices, sizeX, sizeY) = np.shape(data_gt)
 
-    # step = axis_slice // (slices + 2)
-    # # store for the result
-    # data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
+    step = axis_slice // (slices + 2)
+    # store for the result
+    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
-    # path_to_data = "data/"
-    # for file_to_open in h5_files:
-    #     if "httomolibgpu-FBP" in file_to_open:
-    #         h5f = h5py.File(file_to_open, "r")
-    #         index_prog = step
-    #         for i in range(slices):
-    #             data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-    #             index_prog += step
-    #         h5f.close()
-    #     else:
-    #         raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
+    path_to_data = "data/"
+    h5_file_name = "httomolibgpu-FBP"
+    for file_to_open in h5_files:
+        if h5_file_name in file_to_open:
+            h5f = h5py.File(file_to_open, "r")
+            index_prog = step
+            for i in range(slices):
+                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
+                index_prog += step
+            h5f.close()
+        else:
+            message_str = f"File name with {h5_file_name} string cannot be found."
+            raise FileNotFoundError(message_str)
 
-    # residual_im = data_gt - data_result
-    # res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
-    # assert res_norm < 1e-6
+    residual_im = data_gt - data_result
+    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    assert res_norm < 1e-6
 
 
 # This is data from Christina Reinhard. Stitching is problematic with it
