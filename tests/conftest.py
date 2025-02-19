@@ -309,9 +309,15 @@ def i13_177906():
 
 
 @pytest.fixture
-def i13_180622():
+def i13_179623():
     # 6k projections, 65gb dataset, 360 degrees scan
-    return "tests/test_data/raw_data/i13/360/180622.nxs"
+    return "tests/test_data/raw_data/i13/360/179623.nxs"
+
+
+# @pytest.fixture
+# def i13_180622():
+#     # 6k projections, 65gb dataset, 360 degrees scan
+#     return "tests/test_data/raw_data/i13/360/180622.nxs"
 
 
 @pytest.fixture
