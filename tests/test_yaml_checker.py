@@ -147,18 +147,18 @@ def test_check_side_out_matches_ref_arg(
     assert check_side_out_matches_ref_arg(conf) == expected
 
 
+# In order for this test to pass you'd need to generate the pipelines first
+@pytest.mark.small_data
 @pytest.mark.parametrize(
     "yaml_file, expected",
     [
-        ("pipeline_cpu1.yaml", True),
-        ("pipeline_cpu2.yaml", True),
-        ("pipeline_gpu1.yaml", True),
+        ("../../../docs/source/pipelines_full/cpu_pipeline_gridrec.yaml", True),
+        ("../../../docs/source/pipelines_full/gpu_pipelineFBP.yaml", True),
         ("testing/sweep_manual.yaml", True),
     ],
     ids=[
-        "cpu1_pipeline",
-        "cpu2_pipeline",
-        "gpu1_pipeline",
+        "pipeline_cpu1",
+        "pipeline_gpu1",
         "sweep_manual",
     ],
 )

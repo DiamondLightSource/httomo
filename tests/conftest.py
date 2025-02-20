@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 from shutil import rmtree
-from typing import Any, Callable, Dict, List, TypeAlias
+from typing import Any, Callable, Dict, List, TypeAlias, Union
 import numpy as np
 
 import pytest
@@ -25,6 +25,12 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "perf: mark test as performance test")
     config.addinivalue_line("markers", "cupy: needs cupy to run")
     config.addinivalue_line(
+        "markers", "small_data: mark tests to run full pipelines on small data"
+    )
+    config.addinivalue_line(
+        "markers", "full_data: mark tests to run full pipelines on raw big data"
+    )
+    config.addinivalue_line(
         "markers", "preview: mark test to run with `httomo preview`"
     )
 
@@ -35,6 +41,18 @@ def pytest_addoption(parser):
         action="store_true",
         default=False,
         help="run performance tests only",
+    )
+    parser.addoption(
+        "--small_data",
+        action="store_true",
+        default=False,
+        help="run full pipelines on small data",
+    )
+    parser.addoption(
+        "--full_data",
+        action="store_true",
+        default=False,
+        help="run full pipelines on raw (big) data",
     )
 
 
@@ -50,6 +68,30 @@ def pytest_collection_modifyitems(config, items):
         )
         for item in items:
             if "perf" in item.keywords:
+                item.add_marker(skip_perf)
+    if config.getoption("--small_data"):
+        skip_other = pytest.mark.skip(reason="not a pipeline small data test")
+        for item in items:
+            if "small_data" not in item.keywords:
+                item.add_marker(skip_other)
+    else:
+        skip_perf = pytest.mark.skip(
+            reason="pipeline small data test - use '--small_data' to run"
+        )
+        for item in items:
+            if "small_data" in item.keywords:
+                item.add_marker(skip_perf)
+    if config.getoption("--full_data"):
+        skip_other = pytest.mark.skip(reason="not a pipeline raw big data test")
+        for item in items:
+            if "full_data" not in item.keywords:
+                item.add_marker(skip_other)
+    else:
+        skip_perf = pytest.mark.skip(
+            reason="pipeline raw big data test - use '--full_data' to run"
+        )
+        for item in items:
+            if "full_data" in item.keywords:
                 item.add_marker(skip_perf)
 
 
@@ -174,21 +216,138 @@ def standard_image_key_path():
     return "/entry1/tomo_entry/instrument/detector/image_key"
 
 
-@pytest.fixture
-def testing_pipeline():
-    return "tests/samples/pipeline_template_examples/testing/testing_pipeline.yaml"
-
-
+# TODO: depricate when loader is generalised (big data tests instead)
 @pytest.fixture
 def diad_data():
     return "tests/test_data/k11_diad/k11-18014.nxs"
 
 
+# TODO: depricate when loader is generalised
 @pytest.fixture
 def diad_loader():
     return "tests/samples/loader_configs/diad.yaml"
 
 
+@pytest.fixture
+def standard_loader():
+    return "tests/samples/loader_configs/standard_tomo.yaml"
+
+
+@pytest.fixture
+def sample_pipelines():
+    return "tests/samples/pipeline_template_examples/"
+
+
+#####################Auto-generated pipelines##################
+
+
+@pytest.fixture
+def cpu_pipeline_gridrec():
+    return "docs/source/pipelines_full/cpu_pipeline_gridrec.yaml"
+
+
+@pytest.fixture
+def gpu_pipelineFBP():
+    return "docs/source/pipelines_full/gpu_pipelineFBP.yaml"
+
+
+@pytest.fixture
+def gpu_pipelineFBP_denoising():
+    return "docs/source/pipelines_full/gpu_pipelineFBP_denoising.yaml"
+
+
+@pytest.fixture
+def gpu_pipeline_diad_FBP_noimagesaving():
+    return "docs/source/pipelines_full/gpu_diad_FBP_noimagesaving.yaml"
+
+
+@pytest.fixture
+def gpu_pipeline_diad_FBP():
+    return "docs/source/pipelines_full/gpu_diad_FBP.yaml"
+
+
+@pytest.fixture
+def gpu_pipeline_360_paganin_FBP():
+    return "docs/source/pipelines_full/gpu_360_paganin_FBP.yaml"
+
+
+# ---------------------END------------------------#
+
+###########Raw projection data (large)##################
+
+# The fixtures bellow exist for the testing of HTTomo with raw projection data at Diamond.
+# Jenkins CI at Diamond will provide an access to this test data. Otherwise
+# this test data is not available to the user and the relevant tests that are marked as `full_data`
+# will be ignored.
+
+
+@pytest.fixture
+def diad_k11_38727():
+    # 4k projections, 45gb dataset
+    return "tests/test_data/raw_data/diad/k11-38727.nxs"
+
+
+@pytest.fixture
+def diad_k11_38729():
+    # 2k projections, 22gb dataset
+    return "tests/test_data/raw_data/diad/k11-38729.nxs"
+
+
+@pytest.fixture
+def diad_k11_38730():
+    # 1k projections, 11gb dataset
+    return "tests/test_data/raw_data/diad/k11-38730.nxs"
+
+
+@pytest.fixture
+def diad_k11_38731():
+    # 0.5k projections, 6gb dataset
+    return "tests/test_data/raw_data/diad/k11-38731.nxs"
+
+
+@pytest.fixture
+def i13_177906():
+    # 2.5k projections, 27gb dataset
+    return "tests/test_data/raw_data/i13/177906.nxs"
+
+
+@pytest.fixture
+def i13_179623():
+    # 6k projections, 65gb dataset, 360 degrees scan
+    return "tests/test_data/raw_data/i13/360/179623.nxs"
+
+
+############## --Ground Truth references-- #################
+
+
+@pytest.fixture
+def gpu_diad_FBP_k11_38731_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/diad/gpu_diad_FBP_k11-38731.npz")
+
+
+@pytest.fixture
+def gpu_diad_FBP_k11_38730_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/diad/gpu_diad_FBP_k11-38730.npz")
+
+
+@pytest.fixture
+def gpu_FBP_TVdenoising_i13_177906_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/i13/gpu_FBP_TVdenoising_i13_177906.npz")
+
+
+@pytest.fixture
+def gpu_FBP_paganin_i13_179623_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/i13/360/gpu_FBP_paganin_i13_179623.npz")
+
+
+# ---------------------END------------------------#
+
+
+# TODO: deprecate when loader is generalised
 @pytest.fixture
 def diad_pipeline_gpu():
     return "tests/samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
@@ -199,6 +358,7 @@ def i12_data():
     return "tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
 
 
+# TODO: move to big pipeline tests
 @pytest.fixture
 def pipeline360():
     return "samples/pipeline_template_examples/DLS/02_i12_360scan_pipeline.yaml"
@@ -216,56 +376,7 @@ def i12_loader_ignore_darks_flats():
     return "tests/samples/pipeline_template_examples/DLS/04_i12_ignore_darks_flats.yaml"
 
 
-@pytest.fixture
-def standard_loader():
-    return "tests/samples/loader_configs/standard_tomo.yaml"
-
-
-@pytest.fixture
-def sample_pipelines():
-    return "tests/samples/pipeline_template_examples/"
-
-
-@pytest.fixture
-def gpu_pipeline():
-    return "tests/samples/pipeline_template_examples/03_basic_gpu_pipeline_tomo_standard.yaml"
-
-
-@pytest.fixture
-def yaml_cpu_pipeline1():
-    return "tests/samples/pipeline_template_examples/pipeline_cpu1.yaml"
-
-
-@pytest.fixture
-def yaml_cpu_pipeline2():
-    return "tests/samples/pipeline_template_examples/pipeline_cpu2.yaml"
-
-
-@pytest.fixture
-def yaml_cpu_pipeline3():
-    return "tests/samples/pipeline_template_examples/pipeline_cpu3.yaml"
-
-
-@pytest.fixture
-def yaml_cpu_pipeline4():
-    return "tests/samples/pipeline_template_examples/pipeline_cpu4.yaml"
-
-
-@pytest.fixture
-def yaml_cpu_pipeline5():
-    return "tests/samples/pipeline_template_examples/pipeline_cpu5.yaml"
-
-
-@pytest.fixture
-def yaml_gpu_pipeline1():
-    return "tests/samples/pipeline_template_examples/pipeline_gpu1.yaml"
-
-
-@pytest.fixture
-def yaml_gpu_pipeline360_2():
-    return "tests/samples/pipeline_template_examples/pipeline_360deg_gpu2.yaml"
-
-
+###########Sweep pipelines (not autogenerated currently)###############
 @pytest.fixture
 def yaml_gpu_pipeline_sweep_cor():
     return "tests/samples/pipeline_template_examples/parameter-sweep-cor.yaml"
@@ -274,6 +385,9 @@ def yaml_gpu_pipeline_sweep_cor():
 @pytest.fixture
 def yaml_gpu_pipeline_sweep_paganin():
     return "tests/samples/pipeline_template_examples/parameter-sweep-paganin.yaml"
+
+
+# ---------------------END------------------------#
 
 
 @pytest.fixture(scope="session")
@@ -360,3 +474,33 @@ def load_yaml():
         return conf[0]
 
     return _load_yaml
+
+
+def change_value_parameters_method_pipeline(
+    yaml_path: str,
+    method: list,
+    key: list,
+    value: list,
+    save_result: Union[None, bool] = None,
+):
+    # changes methods parameters in the given pipeline and re-save the pipeline
+    with open(yaml_path, "r") as f:
+        conf = list(yaml.load_all(f, Loader=yaml.FullLoader))
+    opened_yaml = conf[0]
+    methods_no = len(opened_yaml)
+    methods_no_correct = len(method)
+    for i in range(methods_no):
+        method_content = opened_yaml[i]
+        method_name = method_content["method"]
+        for j in range(methods_no_correct):
+            if method[j] == method_name:
+                # change something in parameters here
+                opened_yaml[i]["parameters"][key[j]] = value[j]
+                if save_result is not None:
+                    # add save_result to the list of keys
+                    opened_yaml[i]["save_result"] = save_result
+
+    with open(yaml_path, "w") as file_descriptor:
+        yaml.dump(
+            opened_yaml, file_descriptor, default_flow_style=False, sort_keys=False
+        )
