@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from plumbum import local
-from .conftest import _change_value_parameters_method_pipeline
+from .conftest import change_value_parameters_method_pipeline
 
 # NOTE: those tests have path integrated that are compatible with running jobs in Jenkins at DLS infrastructure.
 
@@ -234,7 +234,7 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_preview(
     output_folder,
 ):
 
-    _change_value_parameters_method_pipeline(
+    change_value_parameters_method_pipeline(
         gpu_pipelineFBP_denoising,
         method=[
             "standard_tomo",
@@ -248,7 +248,7 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_preview(
     )
 
     # do not save the result of FBP
-    _change_value_parameters_method_pipeline(
+    change_value_parameters_method_pipeline(
         gpu_pipelineFBP_denoising,
         method=[
             "FBP",
@@ -263,7 +263,7 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_preview(
     )
 
     # save the result of denoising instead
-    _change_value_parameters_method_pipeline(
+    change_value_parameters_method_pipeline(
         gpu_pipelineFBP_denoising,
         method=[
             "total_variation_PD",
@@ -330,7 +330,7 @@ def test_pipeline_gpu_360_paganin_FBP_i13_179623_preview(
     gpu_FBP_paganin_i13_179623_npz,
     output_folder,
 ):
-    _change_value_parameters_method_pipeline(
+    change_value_parameters_method_pipeline(
         gpu_pipeline_360_paganin_FBP,
         method=[
             "standard_tomo",

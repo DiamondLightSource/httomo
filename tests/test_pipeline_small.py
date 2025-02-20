@@ -8,7 +8,7 @@ import pytest
 from numpy.testing import assert_allclose
 from PIL import Image
 from plumbum import local
-from .conftest import _change_value_parameters_method_pipeline
+from .conftest import change_value_parameters_method_pipeline
 
 PATTERN = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
 
@@ -135,7 +135,7 @@ def test_run_pipeline_gpu_denoise(
     gpu_pipelineFBP_denoising,
     output_folder,
 ):
-    _change_value_parameters_method_pipeline(
+    change_value_parameters_method_pipeline(
         gpu_pipelineFBP_denoising,
         method=[
             "find_center_vo",

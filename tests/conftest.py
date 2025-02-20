@@ -476,7 +476,7 @@ def load_yaml():
     return _load_yaml
 
 
-def _change_value_parameters_method_pipeline(
+def change_value_parameters_method_pipeline(
     yaml_path: str,
     method: list,
     key: list,
