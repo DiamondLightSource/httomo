@@ -1,0 +1,40 @@
+name: HTTomo framework tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  tests-cpu:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Create conda environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: conda/environment-cpu.yml
+          environment-name: httomo
+          post-cleanup: 'all'
+          init-shell: bash
+
+      - name: install httomo and httomo-backends
+        run: |
+          micromamba activate httomo
+          pip install --no-deps httomo-backends
+          pip install .
+          micromamba list
+          
+      - name: Run HTTomo framework tests (CPU)
+        run: |
+          pytest tests/
