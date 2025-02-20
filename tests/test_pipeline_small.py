@@ -190,8 +190,7 @@ def test_run_pipeline_gpu_denoise(
     )
 
 
-# todo rewrite and move to test_pipeline_big
-
+# TODO: rewrite and move to test_pipeline_big
 # @pytest.mark.small_data
 # def test_tomo_standard_testing_pipeline_output_with_save_all(
 #     get_files: Callable,
@@ -227,6 +226,7 @@ def test_run_pipeline_gpu_denoise(
 #                 assert_allclose(np.sum(f["data"]), 117.9826, atol=1e-6, rtol=1e-6)
 
 
+# TODO: we will be testing this in test_pipeline_big
 # def test_i12_testing_pipeline_output(
 #     get_files: Callable,
 #     cmd,
@@ -293,8 +293,8 @@ def test_run_pipeline_gpu_denoise(
 #     assert "Preview: (0:724, 0:10, 0:192)" in verbose_log_contents
 
 
-# TODO: Add back in when ignoring darks/flats is added to the new loader
-#
+# TODO: Will be added to big-data tests when the sample data with separate darks and flats will be available.
+# @pytest.mark.small_data
 # def test_i12_testing_ignore_darks_flats_pipeline_output(
 #     get_files: Callable,
 #     cmd,
@@ -309,21 +309,21 @@ def test_run_pipeline_gpu_denoise(
 #     cmd.insert(8, "temp.yaml")
 #     cmd.insert(9, output_folder)
 #     subprocess.check_output(cmd)
-#
+
 #     files = get_files("output_dir/")
 #     assert len(files) == 16
-#
+
 #     _check_yaml(files, "temp.yaml")
-#
+
 #     log_files = list(filter(lambda x: ".log" in x, files))
 #     assert len(log_files) == 1
-#
+
 #     tif_files = list(filter(lambda x: ".tif" in x, files))
 #     assert len(tif_files) == 10
-#
+
 #     h5_files = list(filter(lambda x: ".h5" in x, files))
 #     assert len(h5_files) == 4
-#
+
 #     log_contents = _get_log_contents(log_files[0])
 #     assert "The full dataset shape is (724, 10, 192)" in log_contents
 #     assert (
@@ -332,73 +332,23 @@ def test_run_pipeline_gpu_denoise(
 #     )
 #     assert "Path to data: /1-TempPlugin-tomo/data" in log_contents
 #     assert "Preview: (0:724, 0:10, 0:192)" in log_contents
-#     assert "Running save_task_1 (pattern=projection): save_intermediate_data..." in log_contents
-#     assert "Running save_task_2 (pattern=projection): save_intermediate_data..." in log_contents
-#     assert "Running save_task_4 (pattern=sinogram): save_intermediate_data..." in log_contents
-#     assert "The center of rotation for sinogram is 95.5" in log_contents
-#     assert "Running save_task_5 (pattern=sinogram): save_intermediate_data..." in log_contents
-
-
-# to add
-# @pytest.mark.pipesmall
-# def test_run_diad_pipeline_gpu(
-#     get_files: Callable, cmd, diad_data, diad_pipeline_gpu, output_folder
-# ):
-#     cmd.pop(4)  #: don't save all
-#     cmd.insert(6, diad_data)
-#     cmd.insert(7, diad_pipeline_gpu)
-#     cmd.insert(8, output_folder)
-#     subprocess.check_output(cmd)
-
-#     # recurse through output_dir and check that all files are there
-#     files = get_files("output_dir/")
-#     assert len(files) == 11
-
-#     #: check the generated h5 files
-#     h5_files = list(filter(lambda x: ".h5" in x, files))
-#     assert len(h5_files) == 1
-
-#     log_files = list(filter(lambda x: ".log" in x, files))
-#     assert len(log_files) == 2
-#     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
-#     verbose_log_contents = _get_log_contents(verbose_log_file[0])
-
-#     assert "The full dataset shape is (3201, 22, 26)" in verbose_log_contents
 #     assert (
-#         "Loading data: tests/test_data/k11_diad/k11-18014.nxs" in verbose_log_contents
+#         "Running save_task_1 (pattern=projection): save_intermediate_data..."
+#         in log_contents
 #     )
-#     assert "Path to data: /entry/imaging/data" in verbose_log_contents
-#     assert "Preview: (100:3101, 8:15, 0:26)" in verbose_log_contents
-#     assert "Data shape is (3001, 7, 26) of type uint16" in verbose_log_contents
-
-# TO ADD
-# @pytest.mark.pipesmall
-# def test_run_pipeline_360deg_gpu2(
-#     get_files: Callable, cmd, data360, yaml_gpu_pipeline360_2, output_folder
-# ):
-#     cmd.pop(4)  #: don't save all
-#     cmd.insert(6, data360)
-#     cmd.insert(7, yaml_gpu_pipeline360_2)
-#     cmd.insert(8, output_folder)
-#     subprocess.check_output(cmd)
-
-#     # recurse through output_dir and check that all files are there
-#     files = get_files("output_dir/")
-#     assert len(files) == 7
-
-#     #: check the generated h5 files
-#     h5_files = list(filter(lambda x: ".h5" in x, files))
-#     assert len(h5_files) == 1
-
-#     log_files = list(filter(lambda x: ".log" in x, files))
-#     assert len(log_files) == 2
-#     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
-#     verbose_log_contents = _get_log_contents(verbose_log_file[0])
-
-#     assert "The full dataset shape is (3751, 3, 2560)" in verbose_log_contents
-#     assert "Loading data: tests/test_data/360scan/360scan.hdf" in verbose_log_contents
-#     assert "Path to data: entry1/tomo_entry/data/data" in verbose_log_contents
-#     assert "Data shape is (3601, 3, 2560) of type uint16" in verbose_log_contents
+#     assert (
+#         "Running save_task_2 (pattern=projection): save_intermediate_data..."
+#         in log_contents
+#     )
+#     assert (
+#         "Running save_task_4 (pattern=sinogram): save_intermediate_data..."
+#         in log_contents
+#     )
+#     assert "The center of rotation for sinogram is 95.5" in log_contents
+#     assert (
+#         "Running save_task_5 (pattern=sinogram): save_intermediate_data..."
+#         in log_contents
+#     )
 
 
 @pytest.mark.small_data

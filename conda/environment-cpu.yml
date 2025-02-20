@@ -1,24 +1,20 @@
 name: httomo
 channels:
   - conda-forge
+  - httomo
 dependencies:
-  - scipy
-  - pillow
-  - click
-  - numpy
-  - graypy
-  - h5py=*=*mpi_openmpi*
-  - hdf5plugin
-  - loguru
-  - mpi4py
-  - pyyaml
-  - nvtx
-  - python
-  - plumbum
-  - tqdm
-  - typing_extensions
-  - ipython
-  - pytest
-  - pytest-xdist
-  - pytest-cov
-  - pytest-mock
+  - conda-forge::tomopy==1.15
+  - httomo::httomolib==2.1
+  - conda-forge::click>=8.1.3
+  - conda-forge::mpi4py>=3.1
+  - conda-forge::h5py=*=*mpi_openmpi*
+  - conda-forge::pyyaml
+  - conda-forge::numpy<=1.25
+  - conda-forge::python
+  - conda-forge::numexpr>=2.8.4
+  - conda-forge::ipython
+  - conda-forge::loguru
+  - conda-forge::graypy
+  - conda-forge::plumbum
+  - conda-forge::tqdm
+  - conda-forge::typing_extensions

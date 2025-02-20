@@ -147,22 +147,23 @@ def test_check_side_out_matches_ref_arg(
     assert check_side_out_matches_ref_arg(conf) == expected
 
 
-# Commentting out this test for now as we auto-generate pipelines during the docs build
-# @pytest.mark.parametrize(
-#     "yaml_file, expected",
-#     [
-#         ("cpu_pipeline1.yaml", True),
-#         ("gpu_pipeline1.yaml", True),
-#         ("testing/sweep_manual.yaml", True),
-#     ],
-#     ids=[
-#         "cpu1_pipeline",
-#         "gpu1_pipeline",
-#         "sweep_manual",
-#     ],
-# )
-# def test_validate_yaml_config(
-#     sample_pipelines: str, yaml_file: str, standard_data: str, expected: bool
-# ):
-#     yaml_file = sample_pipelines + yaml_file
-#     assert validate_yaml_config(yaml_file, standard_data) == expected
+# In order for this test to pass you'd need to generate the pipelines first
+@pytest.mark.small_data
+@pytest.mark.parametrize(
+    "yaml_file, expected",
+    [
+        ("../../../docs/source/pipelines_full/cpu_pipeline_gridrec.yaml", True),
+        ("../../../docs/source/pipelines_full/gpu_pipelineFBP.yaml", True),
+        ("testing/sweep_manual.yaml", True),
+    ],
+    ids=[
+        "pipeline_cpu1",
+        "pipeline_gpu1",
+        "sweep_manual",
+    ],
+)
+def test_validate_yaml_config(
+    sample_pipelines: str, yaml_file: str, standard_data: str, expected: bool
+):
+    yaml_file = sample_pipelines + yaml_file
+    assert validate_yaml_config(yaml_file, standard_data) == expected
