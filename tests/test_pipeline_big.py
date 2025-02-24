@@ -417,7 +417,7 @@ def test_pipeline_gpu_360_paganin_FBP_i13_179623_preview(
 ########################################################################
 
 
-# @pytest.mark.full_data
+@pytest.mark.full_data
 def test_pipeline_gpu_360_distortion_FBP_i13_179623_preview(
     get_files: Callable,
     cmd,
