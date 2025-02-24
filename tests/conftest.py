@@ -271,6 +271,11 @@ def gpu_pipeline_360_paganin_FBP():
     return "docs/source/pipelines_full/gpu_360_paganin_FBP.yaml"
 
 
+@pytest.fixture
+def gpu_pipeline_360_distortion_FBP():
+    return "docs/source/pipelines_full/gpu_360_distortion_FBP.yaml"
+
+
 # ---------------------END------------------------#
 
 ###########Raw projection data (large)##################

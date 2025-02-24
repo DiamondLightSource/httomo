@@ -54,9 +54,14 @@ Those pipelines are specific to Diamond Light Source processing strategies and c
     .. literalinclude:: ../pipelines_full/gpu_diad_FBP.yaml
         :language: yaml
 
-.. dropdown:: Pipeline for 360-degrees data with automatic CoR/overlap finding and stitching to 180-degrees data.
+.. dropdown:: Pipeline for 360-degrees data with automatic CoR/overlap finding and stitching to 180-degrees data. Paganin filter is applied to the data.
 
     .. literalinclude:: ../pipelines_full/gpu_360_paganin_FBP.yaml
+        :language: yaml
+
+.. dropdown:: Using distortion correction module as a part of pipeline with 360-degrees data. 
+
+    .. literalinclude:: ../pipelines_full/gpu_360_distortion_FBP.yaml
         :language: yaml
 
 .. _tutorials_pl_templates_sweeps:
