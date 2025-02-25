@@ -348,10 +348,12 @@ def gpu_FBP_paganin_i13_179623_npz():
     # 10 slices numpy array
     return np.load("tests/test_data/raw_data/i13/360/gpu_FBP_paganin_i13_179623.npz")
 
+
 @pytest.fixture
 def gpu_FBP_distortion_i13_179623_npz():
     # 10 slices numpy array
     return np.load("tests/test_data/raw_data/i13/360/gpu_FBP_distortion_i13_179623.npz")
+
 
 # ---------------------END------------------------#
 
