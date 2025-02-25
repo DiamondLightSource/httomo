@@ -271,6 +271,11 @@ def gpu_pipeline_360_paganin_FBP():
     return "docs/source/pipelines_full/gpu_360_paganin_FBP.yaml"
 
 
+@pytest.fixture
+def gpu_pipeline_360_distortion_FBP():
+    return "docs/source/pipelines_full/gpu_360_distortion_FBP.yaml"
+
+
 # ---------------------END------------------------#
 
 ###########Raw projection data (large)##################
@@ -342,6 +347,12 @@ def gpu_FBP_TVdenoising_i13_177906_npz():
 def gpu_FBP_paganin_i13_179623_npz():
     # 10 slices numpy array
     return np.load("tests/test_data/raw_data/i13/360/gpu_FBP_paganin_i13_179623.npz")
+
+
+@pytest.fixture
+def gpu_FBP_distortion_i13_179623_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/i13/360/gpu_FBP_distortion_i13_179623.npz")
 
 
 # ---------------------END------------------------#
