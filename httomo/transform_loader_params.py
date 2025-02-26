@@ -7,6 +7,8 @@ dicts to internal types that loaders can use.
 from pathlib import Path
 from typing import Literal, NotRequired, Optional, TypeAlias, TypedDict, Union
 
+import h5py
+
 from httomo.darks_flats import DarksFlatsFileConfig
 from httomo.loaders.types import (
     AnglesConfig,
@@ -290,3 +292,37 @@ def parse_darks_flats(
     return DarksFlatsFileConfig(
         file=in_file, data_path=data_path, image_key_path=image_key_path
     )
+
+
+def find_tomo_entry(input_file: Path) -> str:
+    """
+    Find group within the NeXuS file which adheres to the NXtomo application definition.
+
+    Notes
+    -----
+
+    See the NXtomo application definition for more information:
+    https://manual.nexusformat.org/classes/applications/NXtomo.html
+    """
+    with h5py.File(input_file, "r") as f:
+        tomo_entry_group = _recurse_input_file(f["/"])
+        if tomo_entry_group is not None:
+            assert (
+                tomo_entry_group.name is not None
+            ), "Blank group name for NXtomo entry"
+            return tomo_entry_group.name
+        else:
+            raise ValueError(f"No NXtomo entry detected in {input_file}")
+
+
+def _recurse_input_file(group: h5py.Group) -> Optional[h5py.Group]:
+    entries = group.keys()
+    if "definition" in entries:
+        return group
+
+    for entry in entries:
+        child_entry = group[entry]
+        if isinstance(child_entry, h5py.Group):
+            ret = _recurse_input_file(child_entry)
+            if isinstance(ret, h5py.Group):
+                return ret

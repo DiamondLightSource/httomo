@@ -14,6 +14,7 @@ from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.transform_loader_params import (
     DarksFlatsParam,
     PreviewParam,
+    find_tomo_entry,
     parse_angles,
     parse_darks_flats,
     parse_data,
@@ -463,3 +464,14 @@ def test_parse_darks_flats_(
     expected_output: DarksFlatsFileConfig,
 ):
     assert parse_darks_flats(data_config, image_key_path, config) == expected_output
+
+
+def test_find_tomo_entry_raises_error_if_group_doesnt_exist():
+    data_path = (
+        Path(__file__).parent
+        / "test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
+    )
+    with pytest.raises(ValueError) as e:
+        find_tomo_entry(data_path)
+
+    assert f"No NXtomo entry detected in {data_path}" in str(e)
