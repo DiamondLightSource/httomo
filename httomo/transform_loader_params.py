@@ -5,7 +5,17 @@ dicts to internal types that loaders can use.
 """
 
 from pathlib import Path
-from typing import Literal, NotRequired, Optional, TypeAlias, TypedDict, Union
+from typing import (
+    Any,
+    Dict,
+    Literal,
+    NotRequired,
+    Optional,
+    Tuple,
+    TypeAlias,
+    TypedDict,
+    Union,
+)
 
 import h5py
 
@@ -326,3 +336,28 @@ def _recurse_input_file(group: h5py.Group) -> Optional[h5py.Group]:
             ret = _recurse_input_file(child_entry)
             if isinstance(ret, h5py.Group):
                 return ret
+
+
+def parse_config(
+    input_file: Path, config: Dict[str, Any]
+) -> Tuple[DataConfig, str, AnglesConfig, DarksFlatsFileConfig, DarksFlatsFileConfig]:
+    """
+    Convert python dict representing loader parameters generated from parsing the pipeline
+    file, into internal configuration types which provide all information that a loader needs.
+    """
+    data_config = DataConfig(in_file=input_file, data_path=config["data_path"])
+    image_key_path = config.get("image_key_path", None)
+    angles_config = parse_angles(config["rotation_angles"])
+    darks_config = parse_darks_flats(
+        data_config, image_key_path, config.get("darks", dict())
+    )
+    flats_config = parse_darks_flats(
+        data_config, image_key_path, config.get("flats", dict())
+    )
+    return (
+        data_config,
+        image_key_path,
+        angles_config,
+        darks_config,
+        flats_config,
+    )

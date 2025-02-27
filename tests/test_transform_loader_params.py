@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import pytest
 
@@ -16,6 +16,7 @@ from httomo.transform_loader_params import (
     PreviewParam,
     find_tomo_entry,
     parse_angles,
+    parse_config,
     parse_darks_flats,
     parse_data,
     parse_preview,
@@ -475,3 +476,129 @@ def test_find_tomo_entry_raises_error_if_group_doesnt_exist():
         find_tomo_entry(data_path)
 
     assert f"No NXtomo entry detected in {data_path}" in str(e)
+
+
+@pytest.mark.parametrize(
+    "input_file, config, expected_data_config, expected_image_key_path,  expected_angles_config, expected_darks_config, expected_flats_config",
+    [
+        (
+            Path(__file__).parent / "test_data/tomo_standard.nxs",
+            {
+                "data_path": "/entry1/tomo_entry/data/data",
+                "image_key_path": "/entry1/tomo_entry/instrument/detector/image_key",
+                "rotation_angles": {
+                    "data_path": "/entry1/tomo_entry/data/rotation_angle"
+                },
+            },
+            DataConfig(
+                in_file=Path(__file__).parent / "test_data/tomo_standard.nxs",
+                data_path="/entry1/tomo_entry/data/data",
+            ),
+            "/entry1/tomo_entry/instrument/detector/image_key",
+            RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle"),
+            DarksFlatsFileConfig(
+                file=Path(__file__).parent / "test_data/tomo_standard.nxs",
+                data_path="/entry1/tomo_entry/data/data",
+                image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
+            ),
+            DarksFlatsFileConfig(
+                file=Path(__file__).parent / "test_data/tomo_standard.nxs",
+                data_path="/entry1/tomo_entry/data/data",
+                image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
+            ),
+        ),
+        (
+            Path(__file__).parent / "test_data/k11_diad/k11-18014.nxs",
+            {
+                "data_path": "/entry/imaging/data",
+                "image_key_path": "/entry/instrument/imaging/image_key",
+                "rotation_angles": {"data_path": "/entry/imaging_sum/gts_theta_value"},
+            },
+            DataConfig(
+                in_file=Path(__file__).parent / "test_data/k11_diad/k11-18014.nxs",
+                data_path="/entry/imaging/data",
+            ),
+            "/entry/instrument/imaging/image_key",
+            RawAngles(data_path="/entry/imaging_sum/gts_theta_value"),
+            DarksFlatsFileConfig(
+                file=Path(__file__).parent / "test_data/k11_diad/k11-18014.nxs",
+                data_path="/entry/imaging/data",
+                image_key_path="/entry/instrument/imaging/image_key",
+            ),
+            DarksFlatsFileConfig(
+                file=Path(__file__).parent / "test_data/k11_diad/k11-18014.nxs",
+                data_path="/entry/imaging/data",
+                image_key_path="/entry/instrument/imaging/image_key",
+            ),
+        ),
+        (
+            Path(__file__).parent
+            / "test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs",
+            {
+                "data_path": "/1-TempPlugin-tomo/data",
+                "rotation_angles": {
+                    "user_defined": {
+                        "start_angle": 0,
+                        "stop_angle": 180,
+                        "angles_total": 724,
+                    }
+                },
+                "darks": {
+                    "file": str(
+                        Path(__file__).parent
+                        / "test_data/i12/separate_flats_darks/dark_field.h5"
+                    ),
+                    "data_path": "/1-NoProcessPlugin-tomo/data",
+                },
+                "flats": {
+                    "file": str(
+                        Path(__file__).parent
+                        / "test_data/i12/separate_flats_darks/flat_field.h5"
+                    ),
+                    "data_path": "/1-NoProcessPlugin-tomo/data",
+                },
+            },
+            DataConfig(
+                in_file=Path(__file__).parent
+                / "test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs",
+                data_path="/1-TempPlugin-tomo/data",
+            ),
+            None,
+            UserDefinedAngles(start_angle=0, stop_angle=180, angles_total=724),
+            DarksFlatsFileConfig(
+                file=Path(__file__).parent
+                / "test_data/i12/separate_flats_darks/dark_field.h5",
+                data_path="/1-NoProcessPlugin-tomo/data",
+                image_key_path=None,
+            ),
+            DarksFlatsFileConfig(
+                file=Path(__file__).parent
+                / "test_data/i12/separate_flats_darks/flat_field.h5",
+                data_path="/1-NoProcessPlugin-tomo/data",
+                image_key_path=None,
+            ),
+        ),
+    ],
+    ids=[
+        "test-data-manual",
+        "diad-manual",
+        "i12-manual-separate-darks-flats",
+    ],
+)
+def test_parse_loader_config(
+    input_file: Path,
+    config: Dict[str, Any],
+    expected_data_config: DataConfig,
+    expected_image_key_path: Optional[str],
+    expected_angles_config: AnglesConfig,
+    expected_darks_config: DarksFlatsFileConfig,
+    expected_flats_config: DarksFlatsFileConfig,
+):
+    (data_config, image_key_path, angles_config, darks_config, flats_config) = (
+        parse_config(input_file, config)
+    )
+    assert data_config == expected_data_config
+    assert image_key_path == expected_image_key_path
+    assert angles_config == expected_angles_config
+    assert darks_config == expected_darks_config
+    assert flats_config == expected_flats_config
