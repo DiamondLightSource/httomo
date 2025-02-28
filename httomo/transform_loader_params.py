@@ -9,7 +9,6 @@ from typing import (
     Any,
     Dict,
     Literal,
-    NotRequired,
     Optional,
     Tuple,
     TypeAlias,
@@ -283,22 +282,23 @@ class DarksFlatsParam(TypedDict):
     Darks/flats configuration dict.
     """
 
-    file: NotRequired[str]
-    data_path: NotRequired[str]
+    file: str
+    data_path: str
 
 
 def parse_darks_flats(
-    data_config: DataConfig, image_key_path: Optional[str], config: DarksFlatsParam
+    data_config: DataConfig,
+    image_key_path: Optional[str],
+    config: Optional[DarksFlatsParam],
 ) -> DarksFlatsFileConfig:
     """
     Convert python dict representing darks/flats information generated from parsing the
     pipeline file, into an internal darks/flats configuration type that loaders can use.
     """
-    in_file = config.get("file", data_config.in_file)
+    in_file = config["file"] if config is not None else data_config.in_file
     if isinstance(in_file, str):
         in_file = Path(in_file)
-    data_path = config.get("data_path", data_config.data_path)
-    image_key_path = config.get("image_key_path", image_key_path)
+    data_path = config["data_path"] if config is not None else data_config.data_path
     return DarksFlatsFileConfig(
         file=in_file, data_path=data_path, image_key_path=image_key_path
     )
@@ -381,10 +381,10 @@ def parse_config(
 
     data_config = DataConfig(in_file=input_file, data_path=str(data_path))
     darks_config = parse_darks_flats(
-        data_config, image_key_path, config.get("darks", dict())
+        data_config, image_key_path, config.get("darks", None)
     )
     flats_config = parse_darks_flats(
-        data_config, image_key_path, config.get("flats", dict())
+        data_config, image_key_path, config.get("flats", None)
     )
     return (
         data_config,

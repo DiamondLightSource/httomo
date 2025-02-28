@@ -438,7 +438,7 @@ def test_parse_data():
         (
             DataConfig(Path("/some/path/to/data.nxs"), "/entry1/tomo_entry/data/data"),
             "/entry1/tomo_entry/data/image_key",
-            {},
+            None,
             DarksFlatsFileConfig(
                 file=Path("/some/path/to/data.nxs"),
                 data_path="/entry1/tomo_entry/data/data",
@@ -461,7 +461,7 @@ def test_parse_data():
 def test_parse_darks_flats_(
     data_config: DataConfig,
     image_key_path: Optional[str],
-    config: DarksFlatsParam,
+    config: Optional[DarksFlatsParam],
     expected_output: DarksFlatsFileConfig,
 ):
     assert parse_darks_flats(data_config, image_key_path, config) == expected_output
