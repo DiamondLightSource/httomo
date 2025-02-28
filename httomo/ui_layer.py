@@ -17,12 +17,7 @@ from httomo.loaders import make_loader
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.output_ref import OutputRef
 from httomo.sweep_runner.param_sweep_yaml_loader import get_param_sweep_yaml_loader
-from httomo.transform_loader_params import (
-    parse_angles,
-    parse_darks_flats,
-    parse_data,
-    parse_preview,
-)
+from httomo.transform_loader_params import parse_config, parse_preview
 
 from httomo_backends.methods_database.query import MethodDatabaseRepository
 
@@ -116,21 +111,9 @@ class UiLayer:
             # TODO option to relocate to yaml_checker
             raise ValueError("Got pipeline with no loader (must be first method)")
         parameters = task_conf.get("parameters", dict())
-        parameters["in_file"] = self.in_data_file
-
-        # the following will raise KeyError if not present
-        data_config = parse_data(parameters["in_file"], parameters["data_path"])
-        # these will have defaults if not given
-        image_key_path = parameters.get("image_key_path", None)
-
-        darks_config = parse_darks_flats(
-            data_config, image_key_path, parameters.get("darks", dict())
+        (data_config, image_key_path, angles, darks_config, flats_config) = (
+            parse_config(self.in_data_file, parameters)
         )
-        flats_config = parse_darks_flats(
-            data_config, image_key_path, parameters.get("flats", dict())
-        )
-
-        angles = parse_angles(parameters["rotation_angles"])
 
         with h5py.File(data_config.in_file, "r") as f:
             data_shape = f[data_config.data_path].shape
