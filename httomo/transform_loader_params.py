@@ -340,14 +340,46 @@ def _recurse_input_file(group: h5py.Group) -> Optional[h5py.Group]:
 
 def parse_config(
     input_file: Path, config: Dict[str, Any]
-) -> Tuple[DataConfig, str, AnglesConfig, DarksFlatsFileConfig, DarksFlatsFileConfig]:
+) -> Tuple[
+    DataConfig, Optional[str], AnglesConfig, DarksFlatsFileConfig, DarksFlatsFileConfig
+]:
     """
     Convert python dict representing loader parameters generated from parsing the pipeline
     file, into internal configuration types which provide all information that a loader needs.
     """
-    data_config = DataConfig(in_file=input_file, data_path=config["data_path"])
-    image_key_path = config.get("image_key_path", None)
-    angles_config = parse_angles(config["rotation_angles"])
+    DATA_PATH = "data/data"
+    ANGLES_PATH = "data/rotation_angle"
+    IMAGE_KEY_PATH = "instrument/detector/image_key"
+
+    is_data_path_auto = config["data_path"] == "auto"
+    is_angles_auto = config["rotation_angles"] == "auto"
+    is_image_key_path_path_auto = config.get("image_key_path", None) == "auto"
+
+    tomo_entry_path: Optional[Path]
+    if is_data_path_auto or is_image_key_path_path_auto or is_angles_auto:
+        tomo_entry_path = Path(find_tomo_entry(input_file))
+    else:
+        tomo_entry_path = None
+
+    if is_data_path_auto:
+        assert tomo_entry_path is not None
+        data_path = tomo_entry_path / DATA_PATH
+    else:
+        data_path = Path(config["data_path"])
+
+    if is_image_key_path_path_auto:
+        assert tomo_entry_path is not None
+        image_key_path = str(Path(tomo_entry_path / IMAGE_KEY_PATH))
+    else:
+        image_key_path = config.get("image_key_path", None)
+
+    if is_angles_auto:
+        assert tomo_entry_path is not None
+        angles_config = RawAngles(data_path=str(tomo_entry_path / ANGLES_PATH))
+    else:
+        angles_config = parse_angles(config["rotation_angles"])
+
+    data_config = DataConfig(in_file=input_file, data_path=str(data_path))
     darks_config = parse_darks_flats(
         data_config, image_key_path, config.get("darks", dict())
     )
