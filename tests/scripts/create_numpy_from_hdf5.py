@@ -19,7 +19,7 @@
 # Created Date: 22/January/2025
 # version ='0.1'
 # ---------------------------------------------------------------------------
-"""Script that generates YAML pipeline for HTTomo using YAML templates from httomo-backends 
+"""Script that generates YAML pipeline for HTTomo using YAML templates from httomo-backends
 (should be already installed in your environment).
 
 Please run the generator as:

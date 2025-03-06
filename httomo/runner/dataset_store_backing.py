@@ -68,7 +68,7 @@ def _reduce_decorator_factory(
     """
 
     def reduce_decorator(
-        func: Callable[P, DataSetStoreBacking]
+        func: Callable[P, DataSetStoreBacking],
     ) -> Callable[P, DataSetStoreBacking]:
         """
         Decorator for store-backing calculator function.

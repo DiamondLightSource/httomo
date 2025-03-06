@@ -167,7 +167,7 @@ def test_partial_block_for_chunked_data(
 
 @pytest.mark.parametrize("slicing_dim", [0, 1, 2])
 def test_partial_block_for_chunked_data_with_padding_center(
-    slicing_dim: Literal[0, 1, 2]
+    slicing_dim: Literal[0, 1, 2],
 ):
     # sizes and shapes
     global_shape_t = [10, 10, 10]
