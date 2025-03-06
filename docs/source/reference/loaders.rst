@@ -148,3 +148,29 @@ The data being loaded with the loader can be cropped/previewed prior to being
 passed along to the first method. The loader has the :code:`preview` parameter
 for configuring the cropping/previewing. Please see :ref:`previewing` for more
 details on previewing.
+
+Automatic `NXtomo` Discovery
+============================
+
+If the input file has a valid `NXtomo` entry (see the `NXtomo application
+definition <https://manual.nexusformat.org/classes/applications/NXtomo.html>`_
+for more details) then the loader can be configured to automatically discover
+it, without needing to explicitly specify values like the dataset path.
+
+This configuration is done by providing the :code:`auto` value to the following
+parameters:
+
+- :code:`data_path`
+- :code:`image_key_path`
+- :code:`rotation_angles`
+
+For example:
+
+.. code-block:: yaml
+
+    - method: standard_tomo
+      module_path: httomo.data.hdf.loaders
+      parameters:
+        data_path: auto
+        image_key_path: auto
+        rotation_angles: auto

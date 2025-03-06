@@ -1,13 +1,27 @@
 """
-Types that represent python dicts for angles and preview configuration which are generated from
-parsing a pipeline file into python, and functions to transform these python dicts to internal
-types that loaders can use.
+Types that represent python dicts for angles, preview, and darks/flats configuration, which are
+generated from parsing a pipeline file into python, and functions to transform these python
+dicts to internal types that loaders can use.
 """
 
-from typing import Literal, Optional, TypeAlias, TypedDict, Union
+from pathlib import Path
+from typing import (
+    Any,
+    Dict,
+    Literal,
+    Optional,
+    Tuple,
+    TypeAlias,
+    TypedDict,
+    Union,
+)
 
+import h5py
+
+from httomo.darks_flats import DarksFlatsFileConfig
 from httomo.loaders.types import (
     AnglesConfig,
+    DataConfig,
     RawAngles,
     UserDefinedAngles,
 )
@@ -253,3 +267,129 @@ def parse_angles(angles_data: AnglesParam) -> AnglesConfig:
         )
 
     raise ValueError(f"Unknown rotation_angles param value for loader: {angles_data}")
+
+
+def parse_data(in_file: str, data_path: str) -> DataConfig:
+    """
+    Convert python dict representing data information generated from parsing the pipeline file,
+    into an internal data configuration type that loaders can use.
+    """
+    return DataConfig(in_file=Path(in_file), data_path=data_path)
+
+
+class DarksFlatsParam(TypedDict):
+    """
+    Darks/flats configuration dict.
+    """
+
+    file: str
+    data_path: str
+
+
+def parse_darks_flats(
+    data_config: DataConfig,
+    image_key_path: Optional[str],
+    config: Optional[DarksFlatsParam],
+) -> DarksFlatsFileConfig:
+    """
+    Convert python dict representing darks/flats information generated from parsing the
+    pipeline file, into an internal darks/flats configuration type that loaders can use.
+    """
+    in_file = config["file"] if config is not None else data_config.in_file
+    if isinstance(in_file, str):
+        in_file = Path(in_file)
+    data_path = config["data_path"] if config is not None else data_config.data_path
+    return DarksFlatsFileConfig(
+        file=in_file, data_path=data_path, image_key_path=image_key_path
+    )
+
+
+def find_tomo_entry(input_file: Path) -> str:
+    """
+    Find group within the NeXuS file which adheres to the NXtomo application definition.
+
+    Notes
+    -----
+
+    See the NXtomo application definition for more information:
+    https://manual.nexusformat.org/classes/applications/NXtomo.html
+    """
+    with h5py.File(input_file, "r") as f:
+        tomo_entry_group = _recurse_input_file(f["/"])
+        if tomo_entry_group is not None:
+            assert (
+                tomo_entry_group.name is not None
+            ), "Blank group name for NXtomo entry"
+            return tomo_entry_group.name
+        else:
+            raise ValueError(f"No NXtomo entry detected in {input_file}")
+
+
+def _recurse_input_file(group: h5py.Group) -> Optional[h5py.Group]:
+    entries = group.keys()
+    if "definition" in entries:
+        return group
+
+    for entry in entries:
+        child_entry = group[entry]
+        if isinstance(child_entry, h5py.Group):
+            ret = _recurse_input_file(child_entry)
+            if isinstance(ret, h5py.Group):
+                return ret
+
+
+def parse_config(
+    input_file: Path, config: Dict[str, Any]
+) -> Tuple[
+    DataConfig, Optional[str], AnglesConfig, DarksFlatsFileConfig, DarksFlatsFileConfig
+]:
+    """
+    Convert python dict representing loader parameters generated from parsing the pipeline
+    file, into internal configuration types which provide all information that a loader needs.
+    """
+    DATA_PATH = "data/data"
+    ANGLES_PATH = "data/rotation_angle"
+    IMAGE_KEY_PATH = "instrument/detector/image_key"
+
+    is_data_path_auto = config["data_path"] == "auto"
+    is_angles_auto = config["rotation_angles"] == "auto"
+    is_image_key_path_path_auto = config.get("image_key_path", None) == "auto"
+
+    tomo_entry_path: Optional[Path]
+    if is_data_path_auto or is_image_key_path_path_auto or is_angles_auto:
+        tomo_entry_path = Path(find_tomo_entry(input_file))
+    else:
+        tomo_entry_path = None
+
+    if is_data_path_auto:
+        assert tomo_entry_path is not None
+        data_path = tomo_entry_path / DATA_PATH
+    else:
+        data_path = Path(config["data_path"])
+
+    if is_image_key_path_path_auto:
+        assert tomo_entry_path is not None
+        image_key_path = str(Path(tomo_entry_path / IMAGE_KEY_PATH))
+    else:
+        image_key_path = config.get("image_key_path", None)
+
+    if is_angles_auto:
+        assert tomo_entry_path is not None
+        angles_config = RawAngles(data_path=str(tomo_entry_path / ANGLES_PATH))
+    else:
+        angles_config = parse_angles(config["rotation_angles"])
+
+    data_config = DataConfig(in_file=input_file, data_path=str(data_path))
+    darks_config = parse_darks_flats(
+        data_config, image_key_path, config.get("darks", None)
+    )
+    flats_config = parse_darks_flats(
+        data_config, image_key_path, config.get("flats", None)
+    )
+    return (
+        data_config,
+        image_key_path,
+        angles_config,
+        darks_config,
+        flats_config,
+    )
