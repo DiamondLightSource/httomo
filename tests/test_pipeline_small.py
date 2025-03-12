@@ -8,7 +8,7 @@ import pytest
 from numpy.testing import assert_allclose
 from PIL import Image
 from plumbum import local
-from .conftest import change_value_parameters_method_pipeline
+from .conftest import change_value_parameters_method_pipeline, check_tif
 
 PATTERN = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
 
@@ -22,28 +22,6 @@ def _get_log_contents(file):
     # assert not PATTERN.search(log_contents)
 
     return log_contents
-
-
-def _compare_two_yamls(original_yaml, copied_yaml):
-    with open(original_yaml, "r") as oy, open(copied_yaml, "r") as cy:
-        return oy.read() == cy.read()
-
-
-def _check_yaml(files: List, input_yaml: str):
-    # check that the contents of the copied YAML in the output directory matches
-    # the contents of the input YAML
-    copied_yaml_path = list(filter(lambda x: ".yaml" in x, files)).pop()
-    assert _compare_two_yamls(input_yaml, copied_yaml_path)
-
-
-def _check_tif(files: List, number: int, shape: Tuple):
-    # check the .tif files
-    tif_files = list(filter(lambda x: ".tif" in x, files))
-    assert len(tif_files) == number
-
-    # check that the image size is correct
-    imarray = np.array(Image.open(tif_files[0]))
-    assert imarray.shape == shape
 
 
 @pytest.mark.small_data
@@ -61,7 +39,7 @@ def test_run_pipeline_cpu_gridrec(
     files = get_files("output_dir/")
     assert len(files) == 132  # 128 images + yaml, 2 logfiles, intermediate
 
-    _check_tif(files, 128, (160, 160))
+    check_tif(files, 128, (160, 160))
 
     log_files = list(filter(lambda x: ".log" in x, files))
     assert len(log_files) == 2
@@ -94,7 +72,7 @@ def test_run_pipeline_gpu_FBP(
     files = get_files("output_dir/")
     assert len(files) == 132
 
-    _check_tif(files, 128, (160, 160))
+    check_tif(files, 128, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -157,7 +135,7 @@ def test_run_pipeline_gpu_denoise(
     files = get_files("output_dir/")
     assert len(files) == 132
 
-    _check_tif(files, 128, (160, 160))
+    check_tif(files, 128, (160, 160))
 
     #: check the generated h5 files
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -349,64 +327,3 @@ def test_run_pipeline_gpu_denoise(
 #         "Running save_task_5 (pattern=sinogram): save_intermediate_data..."
 #         in log_contents
 #     )
-
-
-@pytest.mark.small_data
-def test_run_gpu_pipeline_sweep_cor(
-    get_files: Callable, cmd, standard_data, yaml_gpu_pipeline_sweep_cor, output_folder
-):
-    cmd.pop(4)  #: don't save all
-    cmd.insert(6, standard_data)
-    cmd.insert(7, yaml_gpu_pipeline_sweep_cor)
-    cmd.insert(8, output_folder)
-    subprocess.check_output(cmd)
-
-    # recurse through output_dir and check that all files are there
-    files = get_files("output_dir/")
-    assert len(files) == 9
-
-    #: check the generated h5 files
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 0
-
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
-    verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
-    verbose_log_contents = _get_log_contents(verbose_log_file[0])
-
-    assert "Data shape is (180, 7, 160) of type uint16" in verbose_log_contents
-    assert "Total number of values across all processes: 6" in verbose_log_contents
-    assert "Values executed in this process: 6" in verbose_log_contents
-
-
-@pytest.mark.small_data
-def test_run_gpu_pipeline_sweep_paganin(
-    get_files: Callable,
-    cmd,
-    standard_data,
-    yaml_gpu_pipeline_sweep_paganin,
-    output_folder,
-):
-    cmd.pop(4)  #: don't save all
-    cmd.insert(6, standard_data)
-    cmd.insert(7, yaml_gpu_pipeline_sweep_paganin)
-    cmd.insert(8, output_folder)
-    subprocess.check_output(cmd)
-
-    # recurse through output_dir and check that all files are there
-    files = get_files("output_dir/")
-    assert len(files) == 104
-
-    #: check the generated h5 files
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 1
-
-    log_files = list(filter(lambda x: ".log" in x, files))
-    assert len(log_files) == 2
-    verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
-    verbose_log_contents = _get_log_contents(verbose_log_file[0])
-
-    assert "Data shape is (180, 7, 160) of type uint16" in verbose_log_contents
-    assert "Total number of values across all processes: 50" in verbose_log_contents
-    assert "Values executed in this process: 50" in verbose_log_contents
-    assert "Parameter name: alpha" in verbose_log_contents

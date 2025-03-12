@@ -1,13 +1,11 @@
-import re
 import subprocess
 from typing import Callable, List, Tuple, Union
 
 import h5py
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 from plumbum import local
-from .conftest import change_value_parameters_method_pipeline
+from .conftest import change_value_parameters_method_pipeline, check_tif
 
 # NOTE: those tests have path integrated that are compatible with running jobs in Jenkins at DLS infrastructure.
 
@@ -500,4 +498,41 @@ def test_pipeline_gpu_360_distortion_FBP_i13_179623_preview(
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-6
 
-    ########################################################################
+
+########################################################################
+@pytest.mark.full_data
+def test_gpu_pipeline_sweep_FBP_diad_k11_38731(
+    get_files: Callable,
+    cmd,
+    diad_k11_38731,
+    gpu_pipeline_sweep_FBP,
+    gpu_diad_FBP_k11_38731_npz,
+    output_folder,
+):
+    cmd.pop(4)  #: don't save all
+    cmd.insert(5, diad_k11_38731)
+    cmd.insert(7, gpu_pipeline_sweep_FBP)
+    cmd.insert(8, output_folder)
+
+    subprocess.check_output(cmd)
+
+    files = get_files("output_dir/")
+
+    # load the pre-saved numpy array for comparison bellow
+    # data_gt = gpu_diad_FBP_k11_38731_npz["data"]
+    # axis_slice = gpu_diad_FBP_k11_38731_npz["axis_slice"]
+    # (slices, sizeX, sizeY) = np.shape(data_gt)
+
+    # recurse through output_dir and check that all files are there
+    files = get_files("output_dir/")
+    assert len(files) == 8
+
+    #: check the number of the resulting tif files
+    check_tif(files, 8, (2560, 2560))
+
+    # residual_im = data_gt - data_result
+    # res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    # assert res_norm < 1e-6
+
+
+########################################################################

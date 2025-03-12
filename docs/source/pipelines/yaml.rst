@@ -69,19 +69,12 @@ Those pipelines are specific to Diamond Light Source processing strategies and c
 Parameter Sweeps templates
 --------------------------
 
-These templates demonstrate how to perform a sweep across multiple values of a
+Here we demonstrate how to perform a sweep across multiple values of a
 single parameter (see :ref:`parameter_sweeping` for more details).
 
-.. dropdown:: Parameter sweep over 6 CoR values (`center` param) in recon
-   method, and saving the result as tiffs. Note that there is need to add image saving plugin in this case. It is also preferable to keep `preview` small. 
+.. dropdown:: Parameter sweep over several CoR values (`center` param) in reconstruction method, and saving the result as tiffs. Note that there is need to add image saving plugin in this case. It is also preferable to keep the `preview` small and when it is not defined the central slice will be used. 
 
-   .. literalinclude:: ../../../tests/samples/pipeline_template_examples/parameter-sweep-cor.yaml
+   .. literalinclude:: ../pipelines_full/gpu_pipeline_sweep_FBP.yaml
        :language: yaml
        :emphasize-lines: 30-33
-       
-.. dropdown:: Parameter sweep over 50 (`alpha` param) values of Paganin filter
-   method, and saving the result as tiffs for both Paganin filter and the reconstruction module.
-          
-   .. literalinclude:: ../../../tests/samples/pipeline_template_examples/parameter-sweep-paganin.yaml
-       :language: yaml
-       :emphasize-lines: 25-28       
+            
