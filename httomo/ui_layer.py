@@ -7,7 +7,6 @@ import re
 
 import h5py
 from mpi4py.MPI import Comm
-from httomo.darks_flats import DarksFlatsFileConfig
 
 from httomo.preview import PreviewConfig
 from httomo.runner.method_wrapper import MethodWrapper
@@ -18,7 +17,7 @@ from httomo.loaders import make_loader
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.output_ref import OutputRef
 from httomo.sweep_runner.param_sweep_yaml_loader import get_param_sweep_yaml_loader
-from httomo.transform_loader_params import parse_angles, parse_preview
+from httomo.transform_loader_params import parse_config, parse_preview
 
 from httomo_backends.methods_database.query import MethodDatabaseRepository
 
@@ -112,28 +111,12 @@ class UiLayer:
             # TODO option to relocate to yaml_checker
             raise ValueError("Got pipeline with no loader (must be first method)")
         parameters = task_conf.get("parameters", dict())
-        parameters["in_file"] = self.in_data_file
+        (data_config, image_key_path, angles, darks_config, flats_config) = (
+            parse_config(self.in_data_file, parameters)
+        )
 
-        # the following will raise KeyError if not present
-        in_file = parameters["in_file"]
-        data_path = parameters["data_path"]
-        # these will have defaults if not given
-        image_key_path = parameters.get("image_key_path", None)
-
-        darks: dict = parameters.get("darks", dict())
-        darks_file = darks.get("file", in_file)
-        darks_path = darks.get("data_path", data_path)
-        darks_image_key = darks.get("image_key_path", image_key_path)
-
-        flats: dict = parameters.get("flats", dict())
-        flats_file = flats.get("file", in_file)
-        flats_path = flats.get("data_path", data_path)
-        flats_image_key = flats.get("image_key_path", image_key_path)
-
-        angles = parse_angles(parameters["rotation_angles"])
-
-        with h5py.File(in_file, "r") as f:
-            data_shape = f[data_path].shape
+        with h5py.File(data_config.in_file, "r") as f:
+            data_shape = f[data_config.data_path].shape
         preview = parse_preview(parameters.get("preview", None), data_shape)
         self._preview_config = preview
 
@@ -141,16 +124,12 @@ class UiLayer:
             repo=self.repo,
             module_path=task_conf["module_path"],
             method_name=task_conf["method"],
-            in_file=Path(in_file),
-            data_path=data_path,
+            in_file=data_config.in_file,
+            data_path=data_config.data_path,
             image_key_path=image_key_path,
             angles=angles,
-            darks=DarksFlatsFileConfig(
-                file=darks_file, data_path=darks_path, image_key_path=darks_image_key
-            ),
-            flats=DarksFlatsFileConfig(
-                file=flats_file, data_path=flats_path, image_key_path=flats_image_key
-            ),
+            darks=darks_config,
+            flats=flats_config,
             preview=preview,
             comm=self.comm,
         )

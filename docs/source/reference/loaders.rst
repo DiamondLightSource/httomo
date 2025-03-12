@@ -33,15 +33,47 @@ serves as a good starting point:
 .. note:: The input data being loaded is assumed to be in hdf5/NeXuS file format,
    in accordance with the data typically collected at a DLS beamline.
 
+Automatic `NXtomo` Discovery
+++++++++++++++++++++++++++++
+
+If the input file has a valid `NXtomo` entry (see the `NXtomo application
+definition <https://manual.nexusformat.org/classes/applications/NXtomo.html>`_
+for more details) then the loader can be configured to automatically discover
+it, without needing to explicitly specify values like the dataset path.
+
+This configuration is done by providing the :code:`auto` value to the following
+parameters:
+
+- :code:`data_path`
+- :code:`image_key_path`
+- :code:`rotation_angles`
+
+For example:
+
+.. code-block:: yaml
+
+    - method: standard_tomo
+      module_path: httomo.data.hdf.loaders
+      parameters:
+        data_path: auto
+        image_key_path: auto
+        rotation_angles: auto
+
+.. note:: Automatic :code:`NXtomo` discovery (and therefore the :code:`auto` value) is not
+   supported when the darks/flats are separate from the projection data.
+
+Manually Providing Dataset Paths
+++++++++++++++++++++++++++++++++
+
 :code:`data_path`
-+++++++++++++++++
+~~~~~~~~~~~~~~~~~
 
 The :code:`data_path` parameter is the path to the dataset in the input hdf5/NeXuS
 file containing the image data (usually, projections + darks + flats are in the
 same dataset).
 
 :code:`image_key_path`
-++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~
 
 The :code:`image_key_path` parameter is the path to the dataset in the input
 hdf5/NeXuS file containing the so called "image key".
@@ -51,7 +83,7 @@ hdf5/NeXuS file containing the so called "image key".
    indicate a projection (0), flat field image (1), or dark-field image (2).
 
 :code:`rotation_angles`
-+++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Typically, the rotation angle values are stored in a dataset within the input
 hdf5/NeXuS file. This dataset is usually what is provided to serve as the
