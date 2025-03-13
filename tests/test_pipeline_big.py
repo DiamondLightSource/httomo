@@ -1,13 +1,11 @@
-import re
 import subprocess
 from typing import Callable, List, Tuple, Union
 
 import h5py
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 from plumbum import local
-from .conftest import change_value_parameters_method_pipeline
+from .conftest import change_value_parameters_method_pipeline, check_tif, compare_tif
 
 # NOTE: those tests have path integrated that are compatible with running jobs in Jenkins at DLS infrastructure.
 
@@ -500,4 +498,34 @@ def test_pipeline_gpu_360_distortion_FBP_i13_179623_preview(
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-6
 
-    ########################################################################
+
+########################################################################
+@pytest.mark.full_data
+def test_gpu_pipeline_sweep_FBP_i13_177906(
+    get_files: Callable,
+    cmd,
+    i13_177906,
+    gpu_pipeline_sweep_FBP,
+    gpu_pipeline_sweep_FBP_i13_177906_tiffs,
+    output_folder,
+):
+    cmd.pop(4)  #: don't save all
+    cmd.insert(5, i13_177906)
+    cmd.insert(7, gpu_pipeline_sweep_FBP)
+    cmd.insert(8, output_folder)
+
+    subprocess.check_output(cmd)
+
+    files = get_files("output_dir/")
+    files_references = get_files(gpu_pipeline_sweep_FBP_i13_177906_tiffs)
+
+    # recurse through output_dir and check that all files are there
+    files = get_files("output_dir/")
+    assert len(files) == 12
+
+    #: check the number of the resulting tif files
+    check_tif(files, 8, (2560, 2560))
+    compare_tif(files, files_references)
+
+
+########################################################################
