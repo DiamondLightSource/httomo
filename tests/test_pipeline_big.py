@@ -501,16 +501,15 @@ def test_pipeline_gpu_360_distortion_FBP_i13_179623_preview(
 
 ########################################################################
 @pytest.mark.full_data
-def test_gpu_pipeline_sweep_FBP_diad_k11_38731(
+def test_gpu_pipeline_sweep_FBP_i13_177906(
     get_files: Callable,
     cmd,
-    diad_k11_38731,
+    i13_177906,
     gpu_pipeline_sweep_FBP,
-    gpu_diad_FBP_k11_38731_npz,
     output_folder,
 ):
     cmd.pop(4)  #: don't save all
-    cmd.insert(5, diad_k11_38731)
+    cmd.insert(5, i13_177906)
     cmd.insert(7, gpu_pipeline_sweep_FBP)
     cmd.insert(8, output_folder)
 
