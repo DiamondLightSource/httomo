@@ -447,9 +447,11 @@ def compare_tif(files_list_to_compare: list, file_path_to_references: list):
     tif_files_references = list(filter(lambda x: ".tif" in x, file_path_to_references))
 
     for index in range(len(tif_files)):
-        assert np.array(Image.open(tif_files[index])) == np.array(
+        res_images = np.array(Image.open(tif_files[index])) - np.array(
             Image.open(tif_files_references[index])
         )
+        res_norm = np.linalg.norm(res_images.flatten())
+        assert res_norm < 1e-6
 
 
 def change_value_parameters_method_pipeline(
