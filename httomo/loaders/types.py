@@ -1,7 +1,8 @@
 """
-Types that configure where the rotation angle values a loader uses should come from.
+Loader configuration types.
 """
 
+from pathlib import Path
 from typing import NamedTuple, TypeAlias, Union
 
 
@@ -25,3 +26,12 @@ class UserDefinedAngles(NamedTuple):
 
 
 AnglesConfig: TypeAlias = Union[RawAngles, UserDefinedAngles]
+
+
+class DataConfig(NamedTuple):
+    """
+    Input data configuration.
+    """
+
+    in_file: Path
+    data_path: str
