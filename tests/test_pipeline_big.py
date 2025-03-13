@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 import pytest
 from plumbum import local
-from .conftest import change_value_parameters_method_pipeline, check_tif
+from .conftest import change_value_parameters_method_pipeline, check_tif, compare_tif
 
 # NOTE: those tests have path integrated that are compatible with running jobs in Jenkins at DLS infrastructure.
 
@@ -506,6 +506,7 @@ def test_gpu_pipeline_sweep_FBP_i13_177906(
     cmd,
     i13_177906,
     gpu_pipeline_sweep_FBP,
+    gpu_pipeline_sweep_FBP_i13_177906_tiffs,
     output_folder,
 ):
     cmd.pop(4)  #: don't save all
@@ -516,22 +517,15 @@ def test_gpu_pipeline_sweep_FBP_i13_177906(
     subprocess.check_output(cmd)
 
     files = get_files("output_dir/")
-
-    # load the pre-saved numpy array for comparison bellow
-    # data_gt = gpu_diad_FBP_k11_38731_npz["data"]
-    # axis_slice = gpu_diad_FBP_k11_38731_npz["axis_slice"]
-    # (slices, sizeX, sizeY) = np.shape(data_gt)
+    files_references = get_files(gpu_pipeline_sweep_FBP_i13_177906_tiffs)
 
     # recurse through output_dir and check that all files are there
     files = get_files("output_dir/")
-    assert len(files) == 8
+    assert len(files) == 12
 
     #: check the number of the resulting tif files
     check_tif(files, 8, (2560, 2560))
-
-    # residual_im = data_gt - data_result
-    # res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
-    # assert res_norm < 1e-6
+    compare_tif(files, files_references)
 
 
 ########################################################################

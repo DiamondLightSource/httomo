@@ -305,6 +305,12 @@ def gpu_FBP_distortion_i13_179623_npz():
     return np.load("tests/test_data/raw_data/i13/360/gpu_FBP_distortion_i13_179623.npz")
 
 
+@pytest.fixture
+def gpu_pipeline_sweep_FBP_i13_177906_tiffs():
+    # several tiff files
+    return "tests/test_data/raw_data/i13/177906_sweep_tiffs/"
+
+
 # ---------------------END------------------------#
 
 
@@ -434,6 +440,16 @@ def check_tif(files: List, number: int, shape: Tuple):
     # check that the image size is correct
     imarray = np.array(Image.open(tif_files[0]))
     assert imarray.shape == shape
+
+
+def compare_tif(files_list_to_compare: list, file_path_to_references: list):
+    tif_files = list(filter(lambda x: ".tif" in x, files_list_to_compare))
+    tif_files_references = list(filter(lambda x: ".tif" in x, file_path_to_references))
+
+    for index in range(len(tif_files)):
+        assert np.array(Image.open(tif_files[index])) == np.array(
+            Image.open(tif_files_references[index])
+        )
 
 
 def change_value_parameters_method_pipeline(
