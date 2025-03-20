@@ -36,7 +36,7 @@ def test_run_pipeline_cpu_gridrec(
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
     assert len(files) == 132  # 128 images + yaml, 2 logfiles, intermediate
 
     check_tif(files, 128, (160, 160))
@@ -69,7 +69,7 @@ def test_run_pipeline_gpu_FBP(
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
     assert len(files) == 132
 
     check_tif(files, 128, (160, 160))
@@ -132,7 +132,7 @@ def test_run_pipeline_gpu_denoise(
     subprocess.check_output(cmd)
 
     # recurse through output_dir and check that all files are there
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
     assert len(files) == 132
 
     check_tif(files, 128, (160, 160))

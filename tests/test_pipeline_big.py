@@ -32,7 +32,7 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_disk(
 
     subprocess.check_output(cmd)
 
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
 
     #: check the generated reconstruction (hdf5 file)
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -85,7 +85,7 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_memory(
 
     subprocess.check_output(cmd)
 
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
 
     #: check the generated reconstruction (hdf5 file)
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -144,7 +144,7 @@ def test_pipeline_gpu_FBP_diad_k11_38730_in_disk(
 
     subprocess.check_output(cmd)
 
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
 
     #: check the generated reconstruction (hdf5 file)
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -197,7 +197,7 @@ def test_pipeline_gpu_FBP_diad_k11_38730_in_memory(
 
     subprocess.check_output(cmd)
 
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
 
     #: check the generated reconstruction (hdf5 file)
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -297,7 +297,7 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_preview(
 
     subprocess.check_output(cmd)
 
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
 
     #: check the generated reconstruction (hdf5 file)
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -378,7 +378,7 @@ def test_pipeline_gpu_360_paganin_FBP_i13_179623_preview(
 
     subprocess.check_output(cmd)
 
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
 
     #: check the generated reconstruction (hdf5 file)
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -465,7 +465,7 @@ def test_pipeline_gpu_360_distortion_FBP_i13_179623_preview(
 
     subprocess.check_output(cmd)
 
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
 
     #: check the generated reconstruction (hdf5 file)
     h5_files = list(filter(lambda x: ".h5" in x, files))
@@ -516,11 +516,11 @@ def test_gpu_pipeline_sweep_FBP_i13_177906(
 
     subprocess.check_output(cmd)
 
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
     files_references = get_files(gpu_pipeline_sweep_FBP_i13_177906_tiffs)
 
     # recurse through output_dir and check that all files are there
-    files = get_files("output_dir/")
+    files = get_files(output_folder)
     assert len(files) == 12
 
     #: check the number of the resulting tif files

@@ -3,7 +3,6 @@
 import os
 import sys
 from pathlib import Path
-from shutil import rmtree
 from typing import Any, Callable, Dict, List, TypeAlias, Union, Tuple
 import numpy as np
 from PIL import Image
@@ -97,16 +96,10 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture
-def output_folder():
-    if not os.path.exists("output_dir"):
-        os.mkdir("output_dir/")
-    else:
-        for path in Path("output_dir").iterdir():
-            if path.is_file():
-                path.unlink()
-            elif path.is_dir():
-                rmtree(path)
-    return str(Path("output_dir").resolve())
+def output_folder(tmp_path):
+    tmp_dir = tmp_path / "output_dir"
+    tmp_dir.mkdir()
+    return str(Path(tmp_dir).resolve())
 
 
 @pytest.fixture
