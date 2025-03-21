@@ -1,5 +1,3 @@
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -41,17 +39,12 @@ def test_cli_check_pass_data_file(standard_loader, standard_data):
 
 
 @pytest.mark.cupy
-def test_cli_pass_gpu_id(cmd, standard_data, standard_loader, output_folder):
-    cmd.insert(4, standard_data)
-    cmd.insert(5, standard_loader)
-    cmd.insert(6, output_folder)
-    cmd.insert(7, "--gpu-id")
-    cmd.insert(8, "100")
-
-    result = subprocess.run(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+def test_cli_pass_gpu_id(standard_data, standard_loader, output_folder):
+    runner = CliRunner()
+    result = runner.invoke(
+        main, ["run", standard_data, standard_loader, output_folder, "--gpu-id", "100"]
     )
-    assert "GPU Device not available for access." in result.stderr
+    assert "GPU Device not available for access." in str(result.exception)
 
 
 @pytest.mark.parametrize(
