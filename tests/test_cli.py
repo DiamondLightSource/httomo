@@ -18,13 +18,9 @@ def test_cli_version_shows_version():
 
 
 def test_cli_help_shows_help():
-    cmd = [sys.executable, "-m", "httomo", "--help"]
-    assert (
-        subprocess.check_output(cmd)
-        .decode()
-        .strip()
-        .startswith("Usage: python -m httomo")
-    )
+    runner = CliRunner()
+    result = runner.invoke(main, ["--help"])
+    assert result.stdout.strip().startswith("Usage: ")
 
 
 def test_cli_noargs_raises_error():
