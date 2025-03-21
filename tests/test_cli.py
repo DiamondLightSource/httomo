@@ -1,59 +1,50 @@
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
+from click.testing import CliRunner
 
 import httomo
 from httomo import __version__
-from httomo.cli import set_global_constants, transform_limit_str_to_bytes
+from httomo.cli import set_global_constants, transform_limit_str_to_bytes, main
 
 
 def test_cli_version_shows_version():
-    cmd = [sys.executable, "-m", "httomo", "--version"]
-    assert __version__ == subprocess.check_output(cmd).decode().strip()
+    runner = CliRunner()
+    result = runner.invoke(main, ["--version"])
+    assert __version__ == result.stdout.strip()
 
 
 def test_cli_help_shows_help():
-    cmd = [sys.executable, "-m", "httomo", "--help"]
-    assert (
-        subprocess.check_output(cmd)
-        .decode()
-        .strip()
-        .startswith("Usage: python -m httomo")
-    )
+    runner = CliRunner()
+    result = runner.invoke(main, ["--help"])
+    assert result.stdout.strip().startswith("Usage: ")
 
 
-def test_cli_noargs_raises_error():
-    cmd = [sys.executable, "-m", "httomo"]
-    try:
-        subprocess.check_output(cmd)
-    except subprocess.CalledProcessError as e:
-        assert e.returncode == 2
+def test_cli_noargs_shows_help():
+    runner = CliRunner()
+    result = runner.invoke(main)
+    assert result.exit_code == 0
+    assert result.stdout.strip().startswith("Usage: ")
 
 
 def test_cli_check_pass_data_file(standard_loader, standard_data):
-    cmd = [sys.executable, "-m", "httomo", "check", standard_loader, standard_data]
+    runner = CliRunner()
+    result = runner.invoke(main, ["check", standard_loader, standard_data])
     check_data_str = (
         "Checking that the paths to the data and keys in the YAML_CONFIG file "
         "match the paths and keys in the input file (IN_DATA)..."
     )
-    assert check_data_str in subprocess.check_output(cmd).decode().strip()
+    assert check_data_str in result.stdout
 
 
 @pytest.mark.cupy
-def test_cli_pass_gpu_id(cmd, standard_data, standard_loader, output_folder):
-    cmd.insert(4, standard_data)
-    cmd.insert(5, standard_loader)
-    cmd.insert(6, output_folder)
-    cmd.insert(7, "--gpu-id")
-    cmd.insert(8, "100")
-
-    result = subprocess.run(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+def test_cli_pass_gpu_id(standard_data, standard_loader, output_folder):
+    runner = CliRunner()
+    result = runner.invoke(
+        main, ["run", standard_data, standard_loader, output_folder, "--gpu-id", "100"]
     )
-    assert "GPU Device not available for access." in result.stderr
+    assert "GPU Device not available for access." in str(result.exception)
 
 
 @pytest.mark.parametrize(
