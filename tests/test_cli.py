@@ -31,12 +31,13 @@ def test_cli_noargs_shows_help():
 
 
 def test_cli_check_pass_data_file(standard_loader, standard_data):
-    cmd = [sys.executable, "-m", "httomo", "check", standard_loader, standard_data]
+    runner = CliRunner()
+    result = runner.invoke(main, ["check", standard_loader, standard_data])
     check_data_str = (
         "Checking that the paths to the data and keys in the YAML_CONFIG file "
         "match the paths and keys in the input file (IN_DATA)..."
     )
-    assert check_data_str in subprocess.check_output(cmd).decode().strip()
+    assert check_data_str in result.stdout
 
 
 @pytest.mark.cupy
