@@ -23,12 +23,11 @@ def test_cli_help_shows_help():
     assert result.stdout.strip().startswith("Usage: ")
 
 
-def test_cli_noargs_raises_error():
-    cmd = [sys.executable, "-m", "httomo"]
-    try:
-        subprocess.check_output(cmd)
-    except subprocess.CalledProcessError as e:
-        assert e.returncode == 2
+def test_cli_noargs_shows_help():
+    runner = CliRunner()
+    result = runner.invoke(main)
+    assert result.exit_code == 0
+    assert result.stdout.strip().startswith("Usage: ")
 
 
 def test_cli_check_pass_data_file(standard_loader, standard_data):
