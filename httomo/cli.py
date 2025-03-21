@@ -144,6 +144,12 @@ def check(yaml_config: Path, in_data_file: Optional[Path] = None):
         "(0 = write as contiguous, -1 = decide automatically)"
     ),
 )
+@click.option(
+    "--recon-filename-stem",
+    type=click.STRING,
+    default=None,
+    help="Name of output recon file without file extension (assumes `.h5`)",
+)
 def run(
     in_data_file: Path,
     yaml_config: Path,
@@ -161,6 +167,7 @@ def run(
     syslog_host: str,
     syslog_port: int,
     frames_per_chunk: int,
+    recon_filename_stem: Optional[str],
 ):
     """Run a pipeline defined in YAML on input data."""
     set_global_constants(
@@ -172,6 +179,7 @@ def run(
         syslog_host,
         syslog_port,
         output_folder_name,
+        recon_filename_stem,
     )
 
     does_contain_sweep = is_sweep_pipeline(yaml_config)
@@ -250,6 +258,7 @@ def set_global_constants(
     syslog_host: str,
     syslog_port: int,
     output_folder_name: Optional[Path],
+    recon_filename_stem: Optional[str],
 ) -> None:
     if compress_intermediate and frames_per_chunk == 0:
         # 0 means write contiguously but compression must have chunk
@@ -260,6 +269,7 @@ def set_global_constants(
     httomo.globals.FRAMES_PER_CHUNK = frames_per_chunk
     httomo.globals.SYSLOG_SERVER = syslog_host
     httomo.globals.SYSLOG_PORT = syslog_port
+    httomo.globals.RECON_FILENAME_STEM = recon_filename_stem
 
     if output_folder_name is None:
         httomo.globals.run_out_dir = out_dir.joinpath(
