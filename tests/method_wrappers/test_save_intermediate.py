@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Tuple
+from typing import Callable, List, Optional, Tuple
 from unittest import mock
 import pytest
 from pytest_mock import MockerFixture
@@ -278,3 +278,68 @@ def test_writes_core_of_blocks_only(
     # Execute the padded block with the intermediate wrapper and let the assertions in the
     # dummy method function run the appropriate checks
     wrp.execute(block)
+
+
+@pytest.mark.parametrize(
+    "recon_algorithm",
+    [None, "gridrec"],
+    ids=["specify-recon-algorithm", "dont-specify-recon-algorithm"],
+)
+def test_recon_method_output_filename(
+    get_files: Callable,
+    mocker: MockerFixture,
+    tmp_path: Path,
+    recon_algorithm: Optional[str],
+):
+    loader: LoaderInterface = mocker.create_autospec(
+        LoaderInterface, instance=True, detector_x=10, detector_y=20
+    )
+
+    class FakeModule:
+        def save_intermediate_data(
+            data,
+            global_shape: Tuple[int, int, int],
+            global_index: Tuple[int, int, int],
+            slicing_dim: int,
+            file: h5py.File,
+            frames_per_chunk: int,
+            path: str,
+            detector_x: int,
+            detector_y: int,
+            angles: np.ndarray,
+        ):
+            pass
+
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
+    TASK_ID = "task1"
+    PACKAGE_NAME = "testpackage"
+    METHOD_NAME = "testreconmethod"
+    expected_filename = f"{TASK_ID}-{PACKAGE_NAME}-{METHOD_NAME}"
+    if recon_algorithm is not None:
+        expected_filename += f"-{recon_algorithm}"
+    expected_filename += ".h5"
+    prev_method = mocker.create_autospec(
+        MethodWrapper,
+        instance=True,
+        task_id=TASK_ID,
+        package_name=PACKAGE_NAME,
+        method_name=METHOD_NAME,
+        recon_algorithm=recon_algorithm,
+    )
+    mocker.patch.object(httomo.globals, "run_out_dir", tmp_path)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, implementation="cpu"),
+        "httomo.methods",
+        "save_intermediate_data",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
+        loader=loader,
+        prev_method=prev_method,
+    )
+
+    assert isinstance(wrp, SaveIntermediateFilesWrapper)
+    files = get_files(tmp_path)
+    assert len(files) == 1
+    assert Path(files[0]).name == expected_filename
