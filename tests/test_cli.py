@@ -4,15 +4,17 @@ from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
+from click.testing import CliRunner
 
 import httomo
 from httomo import __version__
-from httomo.cli import set_global_constants, transform_limit_str_to_bytes
+from httomo.cli import set_global_constants, transform_limit_str_to_bytes, main
 
 
 def test_cli_version_shows_version():
-    cmd = [sys.executable, "-m", "httomo", "--version"]
-    assert __version__ == subprocess.check_output(cmd).decode().strip()
+    runner = CliRunner()
+    result = runner.invoke(main, ["--version"])
+    assert __version__ == result.stdout.strip()
 
 
 def test_cli_help_shows_help():
