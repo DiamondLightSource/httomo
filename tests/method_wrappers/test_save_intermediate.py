@@ -280,6 +280,7 @@ def test_writes_core_of_blocks_only(
     wrp.execute(block)
 
 
+@pytest.mark.parametrize("recon_filename_stem_global_var", [None, "some-recon"])
 @pytest.mark.parametrize(
     "recon_algorithm",
     [None, "gridrec"],
@@ -289,8 +290,10 @@ def test_recon_method_output_filename(
     get_files: Callable,
     mocker: MockerFixture,
     tmp_path: Path,
+    recon_filename_stem_global_var: Optional[str],
     recon_algorithm: Optional[str],
 ):
+    httomo.globals.RECON_FILENAME_STEM = recon_filename_stem_global_var
     loader: LoaderInterface = mocker.create_autospec(
         LoaderInterface, instance=True, detector_x=10, detector_y=20
     )
@@ -316,9 +319,13 @@ def test_recon_method_output_filename(
     TASK_ID = "task1"
     PACKAGE_NAME = "testpackage"
     METHOD_NAME = "testreconmethod"
-    expected_filename = f"{TASK_ID}-{PACKAGE_NAME}-{METHOD_NAME}"
-    if recon_algorithm is not None:
-        expected_filename += f"-{recon_algorithm}"
+    MODULE_PATH = f"{PACKAGE_NAME}.algorithm"
+    if recon_filename_stem_global_var is None and recon_algorithm is None:
+        expected_filename = f"{TASK_ID}-{PACKAGE_NAME}-{METHOD_NAME}"
+    if recon_filename_stem_global_var is None and recon_algorithm is not None:
+        expected_filename = f"{TASK_ID}-{PACKAGE_NAME}-{METHOD_NAME}-{recon_algorithm}"
+    if recon_filename_stem_global_var is not None:
+        expected_filename = recon_filename_stem_global_var
     expected_filename += ".h5"
     prev_method = mocker.create_autospec(
         MethodWrapper,
@@ -326,6 +333,7 @@ def test_recon_method_output_filename(
         task_id=TASK_ID,
         package_name=PACKAGE_NAME,
         method_name=METHOD_NAME,
+        module_path=MODULE_PATH,
         recon_algorithm=recon_algorithm,
     )
     mocker.patch.object(httomo.globals, "run_out_dir", tmp_path)
@@ -345,9 +353,14 @@ def test_recon_method_output_filename(
     assert Path(files[0]).name == expected_filename
 
 
+@pytest.mark.parametrize("recon_filename_stem_global_var", [None, "some-recon"])
 def test_non_recon_method_output_filename(
-    get_files: Callable, mocker: MockerFixture, tmp_path: Path
+    get_files: Callable,
+    mocker: MockerFixture,
+    tmp_path: Path,
+    recon_filename_stem_global_var: Optional[str],
 ):
+    httomo.globals.RECON_FILENAME_STEM = recon_filename_stem_global_var
     loader: LoaderInterface = mocker.create_autospec(
         LoaderInterface, instance=True, detector_x=10, detector_y=20
     )
@@ -373,6 +386,7 @@ def test_non_recon_method_output_filename(
     TASK_ID = "task1"
     PACKAGE_NAME = "testpackage"
     METHOD_NAME = "testmethod"
+    MODULE_PATH = f"{PACKAGE_NAME}.notalgorithm"
     EXPECTED_FILENAME = f"{TASK_ID}-{PACKAGE_NAME}-{METHOD_NAME}.h5"
     prev_method = mocker.create_autospec(
         MethodWrapper,
@@ -380,6 +394,7 @@ def test_non_recon_method_output_filename(
         task_id=TASK_ID,
         package_name=PACKAGE_NAME,
         method_name=METHOD_NAME,
+        module_path=MODULE_PATH,
         recon_algorithm=None,
     )
     mocker.patch.object(httomo.globals, "run_out_dir", tmp_path)
