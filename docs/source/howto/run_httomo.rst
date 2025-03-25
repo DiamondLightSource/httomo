@@ -183,6 +183,8 @@ The :code:`run` command
                                       Number of frames per-chunk in intermediate
                                       data (0 = write as contiguous, -1 = decide
                                       automatically)  [x>=-1]
+      --recon-filename-stem TEXT      Name of output recon file without file
+                                      extension (assumes `.h5`)
       --help                          Show this message and exit.
 
 Arguments
@@ -224,7 +226,7 @@ directory created by HTTomo would be
 Options/flags
 #############
 
-The :code:`run` command has 13 options/flags:
+The :code:`run` command has 14 options/flags:
 
 - :code:`--output-folder-name`
 - :code:`--save-all`
@@ -239,6 +241,7 @@ The :code:`run` command has 13 options/flags:
 - :code:`--syslog-host`
 - :code:`--syslog-port`
 - :code:`--frames-per-chunk`
+- :code:`--recon-filename-stem`
 
 :code:`--output-folder-name`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -448,3 +451,23 @@ This flag sets the number of frames in a chunk for the intermediate file.
 For most cases the default -1 should be sufficient as the actual number of
 frames in a chunk is optimised by considering the saturation bandwidth of the
 filesystem.
+
+:code:`--recon-filename-stem`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, if the output of a method is saved to a file, the filename is of
+the form :code:`task_{N}-{PACKAGE_NAME}-{METHOD_NAME}.h5`, where:
+
+- :code:`N` is the index of the method in the pipeline (zero-indexing)
+- :code:`PACKAGE_NAME` is the name of the package that the method comes from
+- :code:`METHOD_NAME` is the name of the method
+
+For the output of a reconstruction method specifically, if a filename different
+to the above format is desired, this can be provided using the
+:code:`--recon-filename-stem` flag. The files created will always be hdf5
+files, so the file extension should always be :code:`h5`. Therefore, only the
+"stem" of the desired filename needs to be provided (the part of the filename
+before the file extension).
+
+For example, if the desired reconstruction filename is :code:`my-recon.h5`,
+then the flag should be used as :code:`--recon-filename-stem=my-recon`.
