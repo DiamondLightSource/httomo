@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Optional
 
 run_out_dir: os.PathLike = Path(".")
 gpu_id: int = -1
@@ -14,3 +15,4 @@ INTERMEDIATE_FORMAT: str = "hdf5"
 COMPRESS_INTERMEDIATE: bool = False
 SYSLOG_SERVER = "localhost"
 SYSLOG_PORT = 514
+RECON_FILENAME_STEM: Optional[str] = None

@@ -47,8 +47,11 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         assert prev_method is not None
 
         filename = f"{prev_method.task_id}-{prev_method.package_name}-{prev_method.method_name}"
-        if prev_method.recon_algorithm is not None:
+        is_saving_recon = prev_method.module_path.endswith(".algorithm")
+        if is_saving_recon and prev_method.recon_algorithm is not None:
             filename += f"-{prev_method.recon_algorithm}"
+        if is_saving_recon and httomo.globals.RECON_FILENAME_STEM is not None:
+            filename = httomo.globals.RECON_FILENAME_STEM
 
         if out_dir is None:
             out_dir = httomo.globals.run_out_dir

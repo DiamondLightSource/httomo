@@ -84,5 +84,37 @@ def test_output_folder_name_correctly_sets_run_out_dir_global_constant(output_fo
         syslog_host="localhost",
         syslog_port=514,
         output_folder_name=Path(dir_name),
+        recon_filename_stem=None,
     )
     assert httomo.globals.run_out_dir == custom_output_dir
+
+
+@pytest.mark.parametrize(
+    "use_recon_filename_stem_flag",
+    [True, False],
+)
+def test_cli_recon_filename_stem_flag(
+    standard_data, standard_loader, output_folder, use_recon_filename_stem_flag: bool
+):
+    runner = CliRunner()
+    if use_recon_filename_stem_flag:
+        filename_stem = "my-file"
+        runner.invoke(
+            main,
+            [
+                "run",
+                standard_data,
+                standard_loader,
+                output_folder,
+                "--recon-filename-stem",
+                filename_stem,
+            ],
+        )
+        assert httomo.globals.RECON_FILENAME_STEM is not None
+        assert httomo.globals.RECON_FILENAME_STEM == filename_stem
+    else:
+        runner.invoke(
+            main,
+            ["run", standard_data, standard_loader, output_folder],
+        )
+        assert httomo.globals.RECON_FILENAME_STEM is None
