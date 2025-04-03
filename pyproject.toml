@@ -54,7 +54,7 @@ httomo = "httomo.cli:main"
 repository = "https://github.com/DiamondLightSource/HTTomo"
 
 [project.optional-dependencies]
-cpu = ["tomopy" ]
+cpu = ["httomolib" ]
 gpu = ["httomolibgpu"]
 dev-cpu = [
   "pytest",
@@ -66,7 +66,6 @@ dev-cpu = [
   "pydocstyle",
   "toml",
   "httomolib[dev]",
-  "tomopy",
   "plumbum",
   "mypy",
   "types-PyYAML",
