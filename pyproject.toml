@@ -39,9 +39,11 @@ dynamic = ["version"]
 dependencies = [
     "click",
     "numpy",
-    "httomolib",
+    "hdf5plugin",
+    "httomo-backends",
     "loguru",
     "typing-extensions",
+    "pyyaml",
     "tqdm",
     "graypy"
 ]
@@ -83,12 +85,12 @@ dev-gpu = [
   "toml",
   "httomolib[dev]",
   "httomolibgpu[dev]",
-  "tomopy",
   "plumbum",
   "typing_extensions",
   "mypy",
   "types-PyYAML",
-  "pre-commit"
+  "pre-commit",
+  "ccpi-regularisation-cupy",
 ]
 
 [tool.mypy]
