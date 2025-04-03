@@ -42,7 +42,6 @@ dependencies = [
     "hdf5plugin",
     "httomo-backends",
     "loguru",
-    "typing-extensions",
     "pyyaml",
     "tqdm",
     "graypy"
@@ -69,7 +68,6 @@ dev-cpu = [
   "httomolib[dev]",
   "tomopy",
   "plumbum",
-  "typing_extensions",
   "mypy",
   "types-PyYAML",
   "pre-commit"
@@ -86,7 +84,6 @@ dev-gpu = [
   "httomolib[dev]",
   "httomolibgpu[dev]",
   "plumbum",
-  "typing_extensions",
   "mypy",
   "types-PyYAML",
   "pre-commit",
