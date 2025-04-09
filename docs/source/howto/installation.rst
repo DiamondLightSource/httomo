@@ -1,6 +1,12 @@
 Installation Guide
 ******************
 
+HTTomo is available on PyPI, so it can be installed into either a virtual environment or a
+conda environment.
+
+However, there are certain constraints under which a virtual environment can be used, due to
+the dependence on an MPI implementation, and whether the user requires using :code:`tomopy`
+methods in pipelines.
 
 Install HTTomo as a PyPi package
 =========================================================
@@ -8,16 +14,6 @@ Install HTTomo as a PyPi package
 
    $ pip install httomo # this will install the CPU-only version
    $ pip install httomo httomolibgpu # this will install the GPU backend
-
-Install HTTomo as a pre-built conda Python package
-==================================================
-
-This installation is preferable as it should take care all of dependencies including :ref:`backends_list` by getting them from the dedicated anaconda channel.
-
-.. code-block:: console
-
-   $ conda env create --name httomo # create a fresh conda environment
-   $ conda install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge
 
 Install as a Python module
 ===========================
@@ -38,9 +34,3 @@ Setup HTTomo development environment:
 .. code-block:: console
 
    $ pip install -e .[dev] # development mode
-
-Build HTTomo as a conda Python package
-======================================================
-.. code-block:: console
-
-   $ conda build conda/recipe/ -c conda-forge -c https://conda.anaconda.org/httomo/ --no-test
