@@ -284,6 +284,7 @@ class DarksFlatsParam(TypedDict):
 
     file: str
     data_path: str
+    image_key_path: Optional[str]
 
 
 def parse_darks_flats(
@@ -299,6 +300,12 @@ def parse_darks_flats(
     if isinstance(in_file, str):
         in_file = Path(in_file)
     data_path = config["data_path"] if config is not None else data_config.data_path
+    # dealing with the situation when image_key_path is not provided for flats and darks
+    if config is not None:
+        if "image_key_path" in config:
+            image_key_path = config["image_key_path"]
+        else:
+            image_key_path = None
     return DarksFlatsFileConfig(
         file=in_file, data_path=data_path, image_key_path=image_key_path
     )
