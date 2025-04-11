@@ -484,6 +484,43 @@ def test_standard_tomo_loader_read_block_two_procs(
     np.testing.assert_array_equal(block.data, projs)
 
 
+def test_standard_tomo_loader_read_flats_darks_other_data(
+    standard_data_path: str,
+    standard_image_key_path: str,
+):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+    IN_FILE2_PATH = (
+        Path(__file__).parent.parent / "test_data/tomo_standard_mod_flatsdarks.nxs"
+    )
+    DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
+        file=IN_FILE2_PATH,
+        data_path=standard_data_path,
+        image_key_path=standard_image_key_path,
+    )
+    ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
+    SLICING_DIM: SlicingDimType = 0
+    COMM = MPI.COMM_WORLD
+
+    PREVIEW_CONFIG = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=180),
+        detector_y=PreviewDimConfig(start=0, stop=128),
+        detector_x=PreviewDimConfig(start=0, stop=160),
+    )
+    loader = StandardTomoLoader(
+        in_file=IN_FILE_PATH,
+        data_path=DARKS_FLATS_CONFIG.data_path,
+        image_key_path=DARKS_FLATS_CONFIG.image_key_path,
+        darks=DARKS_FLATS_CONFIG,
+        flats=DARKS_FLATS_CONFIG,
+        angles=ANGLES_CONFIG,
+        preview_config=PREVIEW_CONFIG,
+        slicing_dim=SLICING_DIM,
+        comm=COMM,
+    )
+    assert loader.flats.sum() == 599897507
+    assert loader.darks.sum() == 409600
+
+
 def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc() -> None:
     IN_FILE_PATH = Path(__file__).parent.parent / "test_data/k11_diad/k11-18014.nxs"
     DATA_PATH = "/entry/imaging/data"
