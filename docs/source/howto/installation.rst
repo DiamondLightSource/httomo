@@ -1,46 +1,47 @@
 Installation Guide
 ******************
 
+HTTomo is available on PyPI, so it can be installed into either a virtual environment or a
+conda environment.
 
-Install HTTomo as a PyPi package
-=========================================================
-.. code-block:: console
+However, there are certain constraints under which a virtual environment can be used, due to
+the dependence on an MPI implementation, the hdf5 library, CUDA libraries, and whether the user
+requires using :code:`tomopy` methods in pipelines.
 
-   $ pip install httomo # this will install the CPU-only version
-   $ pip install httomo httomolibgpu # this will install the GPU backend
+Virtual environment
+===================
 
-Install HTTomo as a pre-built conda Python package
-==================================================
+A virtual environment can be used if the following conditions are met:
 
-This installation is preferable as it should take care all of dependencies including :ref:`backends_list` by getting them from the dedicated anaconda channel.
-
-.. code-block:: console
-
-   $ conda env create --name httomo # create a fresh conda environment
-   $ conda install "httomo/linux-64::httomo * py310_openmpi_regular*" -c conda-forge
-
-Install as a Python module
-===========================
-
-If installation above for some reason is not working for you, then the best way to install HTTomo is to create conda environment first and then
-`pip install` HTTomo into it. You will need to `git clone` HTTomo repository to your disk first.  Use `environment.yml` file to install
-the GPU-supported HTTomo. For CPU-only version, please use `environment-cpu.yml` instead.
+- an MPI implementation is installed on the system (ie, OpenMPI)
+- the hdf5 library is installed on the system
+- CUDA libraries or CUDA toolkit are installed on the system
+- methods from :code:`tomopy` are not required to be used in pipelines
 
 .. code-block:: console
 
-   $ git clone git@github.com:DiamondLightSource/HTTomo.git # clone the repo
-   $ conda env create --name httomo --file conda/environment.yml # install dependencies for GPU version
-   $ conda activate httomo # activate environment
-   $ pip install . # Install the module
+   $ python -m venv httomo
+   $ source httomo/bin/activate
+   $ MPICC=$(type -p mpicc) pip install mpi4py==3.1.6
+   $ pip install cython numpy pkgconfig setuptools # build dependencies of h5py
+   $ CC=$(type -p mpicc) HDF5_MPI="ON" HDF5_DIR=/path/to/parallel-hdf5 pip install --no-build-isolation --no-binary=h5py h5py
+   $ pip install cupy-cuda12x # install cupy-cuda11x if CUDA library/CUDA toolkit version is 11.x
+   $ pip install aiofiles astra-toolbox ccpi-regularisation-cupy click graypy hdf5plugin loguru nvtx pillow pyyaml scikit-image scipy tomobar tqdm
+   $ pip install --no-deps httomo httomolib httomolibgpu httomo-backends
+
+Conda environment
+=================
+
+.. code-block:: console
+
+   $ conda env create --name httomo
+   $ conda activate httomo
+   $ conda install -c conda-forge cupy==12.3.0 openmpi==4.1.6 h5py[build=*openmpi*]
+   $ conda install -c conda-forge tomopy==1.15 # optional
+   $ pip install httomo httomolib httomolibgpu
 
 Setup HTTomo development environment:
 ======================================================
 .. code-block:: console
 
    $ pip install -e .[dev] # development mode
-
-Build HTTomo as a conda Python package
-======================================================
-.. code-block:: console
-
-   $ conda build conda/recipe/ -c conda-forge -c https://conda.anaconda.org/httomo/ --no-test
