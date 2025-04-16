@@ -38,10 +38,13 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
     "click",
+    "cupy",
     "numpy",
-    "httomolib",
+    "hdf5plugin",
+    "httomo-backends",
     "loguru",
-    "typing-extensions",
+    "mpi4py",
+    "pyyaml",
     "tqdm",
     "graypy"
 ]
@@ -53,7 +56,7 @@ httomo = "httomo.cli:main"
 repository = "https://github.com/DiamondLightSource/HTTomo"
 
 [project.optional-dependencies]
-cpu = ["tomopy" ]
+cpu = ["httomolib" ]
 gpu = ["httomolibgpu"]
 dev-cpu = [
   "pytest",
@@ -63,11 +66,8 @@ dev-cpu = [
   "flake8",
   "pyproject-flake8",
   "pydocstyle",
-  "toml",
   "httomolib[dev]",
-  "tomopy",
   "plumbum",
-  "typing_extensions",
   "mypy",
   "types-PyYAML",
   "pre-commit"
@@ -80,15 +80,13 @@ dev-gpu = [
   "flake8",
   "pyproject-flake8",
   "pydocstyle",
-  "toml",
   "httomolib[dev]",
   "httomolibgpu[dev]",
-  "tomopy",
   "plumbum",
-  "typing_extensions",
   "mypy",
   "types-PyYAML",
-  "pre-commit"
+  "pre-commit",
+  "ccpi-regularisation-cupy",
 ]
 
 [tool.mypy]
