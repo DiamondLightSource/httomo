@@ -101,43 +101,50 @@ angles dataset in the input hdf5/NeXus file doesn't exist, or cannot be used.
 To configure the loader to handle such cases, please refer to
 :ref:`user_defined_angles`.
 
-Data with Separate Darks and/or Flats
-=====================================
-
-It can sometimes be the case that darks and flats are written to separate
-hdf5/NeXuS files, rather than written to the same hdf5/NeXus file as the
-projections.
-
-Omitting the image key
-++++++++++++++++++++++
-
-In such cases, there is no image key dataset in the hdf5/NeXus file containing the
-projections (because there are only projections in the dataset, rather than
-projections + darks + flats, so there's no need to have an image key). Due to this,
-one difference to the previously shown configuration to handle this case is that
-the :code:`image_key_path` parameter is omitted.
 
 Loading the separate darks and flats
+====================================
+
+It can be the case that darks and flats are written to separate
+hdf5/NeXuS files. HTTomo currently supports two options: 
+
+Files that do not contain image keys
 ++++++++++++++++++++++++++++++++++++
 
-Additionally, there is a need to specify:
-
-- the path to the hdf5/NeXuS file containing the darks/flats
-- the dataset within the given hdf5/NeXus file that contains the darks/flats data
-
-In order to specify this information for both darks and flats, there is the
-:code:`darks` and :code:`flats` parameters, see the following as an example:
-
-.. literalinclude:: ../../../tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml
-   :language: yaml
-   :emphasize-lines: 10-15
-
-Both parameters have two fields that needs to be specified:
+These are the files without the image keys that contain only flats or darks in two separate files.
+Here one needs to add :code:`darks` and :code:`flats` parameters to the loader parameters with the following fields: 
 
 - :code:`file`, the path to the hdf5/NeXus file containing the darks/flats
 - :code:`data_path`, the dataset within the hdf5/NeXus file that contains the
   darks/flats
 
+as shown in the following code example:
+
+.. literalinclude:: ../../../tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml
+   :language: yaml
+   :emphasize-lines: 10-15
+
+Files with image keys
++++++++++++++++++++++
+
+This can be the case when the new scan is performed, which contains the required image keys. Therefore the keys
+in the older scan should be ignored. In this instance, we need to provide a parameter :code:`image_key_path` in addition to 
+:code:`file` and :code:`data_path` fields.
+
+.. code-block:: yaml
+
+    - method: standard_tomo
+      module_path: httomo.data.hdf.loaders
+      parameters:
+        darks:
+          file: path/to/new/file.nxs
+          data_path: /entry1/tomo_entry/data/data
+          image_key_path: /entry1/tomo_entry/instrument/detector/image_key
+        flats:
+          file: path/to/new/file.nxs
+          data_path: /entry1/tomo_entry/data/data
+          image_key_path: /entry1/tomo_entry/instrument/detector/image_key          
+        
 .. _user_defined_angles:
 
 Providing/Overriding Angles Data

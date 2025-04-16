@@ -284,6 +284,7 @@ class DarksFlatsParam(TypedDict):
 
     file: str
     data_path: str
+    image_key_path: Optional[str]
 
 
 def parse_darks_flats(
@@ -299,6 +300,7 @@ def parse_darks_flats(
     if isinstance(in_file, str):
         in_file = Path(in_file)
     data_path = config["data_path"] if config is not None else data_config.data_path
+    image_key_path = config["image_key_path"] if config is not None else image_key_path
     return DarksFlatsFileConfig(
         file=in_file, data_path=data_path, image_key_path=image_key_path
     )
@@ -380,12 +382,16 @@ def parse_config(
         angles_config = parse_angles(config["rotation_angles"])
 
     data_config = DataConfig(in_file=input_file, data_path=str(data_path))
-    darks_config = parse_darks_flats(
-        data_config, image_key_path, config.get("darks", None)
-    )
-    flats_config = parse_darks_flats(
-        data_config, image_key_path, config.get("flats", None)
-    )
+
+    darks_value = config.get("darks", None)
+    if darks_value is not None and "image_key_path" not in darks_value:
+        darks_value["image_key_path"] = None
+    darks_config = parse_darks_flats(data_config, image_key_path, darks_value)
+    flats_value = config.get("flats", None)
+    if flats_value is not None and "image_key_path" not in flats_value:
+        flats_value["image_key_path"] = None
+    flats_config = parse_darks_flats(data_config, image_key_path, flats_value)
+
     return (
         data_config,
         image_key_path,
