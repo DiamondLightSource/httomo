@@ -4,16 +4,22 @@ from httomo.runner.dataset_store_interfaces import DataSetSource
 
 
 class BlockSplitter:
-    """Produces blocks from a DataSetSource according to the given max slices
-    per block. It provides an iterator interface, so that it can be used as::
+    """
+    Produces blocks from a `DataSetSource` according to the given max slices per block.
+
+    Notes
+    -----
+    A slice of the data is stored in the `DataSetBlock` that is returned, no copy is made.
+
+    Examples
+    --------
+    Provides an iterator interface, so it can be used as::
 
          splitter = BlockSplitter(source, max_slices)
          for block in splitter:
              process_block(block)
 
-    Where a block is a DataSet instance.
-
-    Note that a slice of the data is returned and no copy is made.
+    where `block` is a `DataSetBlock` instance.
     """
 
     def __init__(self, source: DataSetSource, max_slices: int):
