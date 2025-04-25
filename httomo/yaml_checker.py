@@ -148,8 +148,9 @@ def check_hdf5_paths_against_loader(conf: PipelineConfig, in_file_path: str) -> 
             _print_with_colour(
                 f"NXtomo discovered: {tomo_entry_path}", colour=Colour.GREEN
             )
-        except:
-            pass
+        except ValueError as e:
+            _print_with_colour(str(e))
+            return False
 
     non_auto_params = set(POSSIBLE_AUTO_PARAMS) - set(auto_pairs.keys())
     if len(non_auto_params) == 0:

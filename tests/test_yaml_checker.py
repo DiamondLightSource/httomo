@@ -60,6 +60,14 @@ def test_hdf5_paths_loader_with_all_auto_params(
     assert check_hdf5_paths_against_loader(conf, standard_data)
 
 
+def test_hdf5_paths_rejects_if_auto_but_no_nxtomo(
+    i12_data: str, sample_pipelines: str, load_yaml: Callable
+):
+    filepath = sample_pipelines + "testing/loader_with_all_auto_params.yaml"
+    conf = load_yaml(filepath)
+    assert not check_hdf5_paths_against_loader(conf, i12_data)
+
+
 def test_check_methods_exist_in_templates(sample_pipelines: str, load_yaml: Callable):
     incorrect_method_pipeline = sample_pipelines + "testing/incorrect_method.yaml"
     conf = load_yaml(incorrect_method_pipeline)
