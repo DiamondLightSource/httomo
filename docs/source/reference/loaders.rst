@@ -106,7 +106,7 @@ Loading the separate darks and flats
 ====================================
 
 It can be the case that darks and flats are written to separate
-hdf5/NeXuS files. HTTomo currently supports two options: 
+hdf5/NeXuS files. HTTomo currently supports two options, detailed in the two subsections below.
 
 Files that do not contain image keys
 ++++++++++++++++++++++++++++++++++++
