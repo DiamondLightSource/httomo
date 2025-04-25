@@ -44,8 +44,8 @@ class DarksFlatsFileConfig(NamedTuple):
     Therefore, an image key is not needed to distinguish between projection, dark-field, or
     flat-field images. For this case, the `image_key_path` should be given as `None`.
 
-    3. Dark-field and flat-field images are stored in separate files with image keys. This can be a new
-    dataset or two different dataset. In that case, the `image_key_path` parameter should be provided
+    3. Dark-field and flat-field images are stored in separate files with own unique or identical image keys.
+    This can be a new dataset or two different dataset. Therefore, the image_key_path parameter should be provided
     for both flats and darks.
     """
 
