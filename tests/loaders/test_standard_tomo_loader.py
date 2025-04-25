@@ -517,8 +517,10 @@ def test_standard_tomo_loader_read_flats_darks_other_data(
         slicing_dim=SLICING_DIM,
         comm=COMM,
     )
-    assert loader.flats.sum() == 599897507
-    assert loader.darks.sum() == 409600
+    IN_FILE2_FLATS_SUM = 599897507
+    IN_FILE2_DARKS_SUM = 409600
+    assert loader.flats.sum() == IN_FILE2_FLATS_SUM
+    assert loader.darks.sum() == IN_FILE2_DARKS_SUM
 
 
 def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc() -> None:
