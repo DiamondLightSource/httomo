@@ -15,6 +15,7 @@ from httomo.sweep_runner.param_sweep_yaml_loader import (
     ParamSweepYamlLoader,
     get_param_sweep_yaml_loader,
 )
+from httomo.transform_loader_params import find_tomo_entry
 from httomo.ui_layer import (
     get_regex_pattern,
     get_ref_split,
@@ -138,6 +139,23 @@ def check_hdf5_paths_against_loader(conf: PipelineConfig, in_file_path: str) -> 
         colour=Colour.GREEN,
     )
     params = conf[0]["parameters"]
+    POSSIBLE_AUTO_PARAMS = ["data_path", "image_key_path", "rotation_angles"]
+    possible_auto_param_pairs = {name: params[name] for name in POSSIBLE_AUTO_PARAMS}
+    auto_pairs = {k: v for k, v in possible_auto_param_pairs.items() if v == "auto"}
+    if len(auto_pairs.keys()) > 0:
+        try:
+            tomo_entry_path = find_tomo_entry(Path(in_file_path))
+            _print_with_colour(
+                f"NXtomo discovered: {tomo_entry_path}", colour=Colour.GREEN
+            )
+        except:
+            pass
+
+    non_auto_params = set(POSSIBLE_AUTO_PARAMS) - set(auto_pairs.keys())
+    if len(non_auto_params) == 0:
+        _print_with_colour("Loader paths check successful!!\n", colour=Colour.GREEN)
+        return True
+
     _path_keys = [key for key in params if "_path" in key]
     for key in _path_keys:
         if params[key].strip("/") not in hdf5_members:
