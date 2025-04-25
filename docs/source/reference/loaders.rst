@@ -132,6 +132,8 @@ in the older scan should be ignored. In this instance, we need to provide a para
 :code:`file` and :code:`data_path` fields.
 
 .. code-block:: yaml
+   :emphasize-lines:7,11
+
 
     - method: standard_tomo
       module_path: httomo.data.hdf.loaders
