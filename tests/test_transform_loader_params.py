@@ -477,7 +477,7 @@ def test_parse_data():
     ids=[
         "darks/flats-in-input-file",
         "darks/flats-in-separate-file",
-        "darks/flats-in-separate-file-with-keys",
+        "darks/flats-in-separate-file-with-image-key",
     ],
 )
 def test_parse_darks_flats_(
