@@ -127,7 +127,7 @@ as shown in the following code example:
 Files with image keys
 +++++++++++++++++++++
 
-This can be the case when the new scan is performed, which contains the required image keys. Therefore the keys
+This can be the case when a new scan is performed, which contains the required image keys. Therefore the keys
 in the older scan should be ignored. In this instance, we need to provide a parameter :code:`image_key_path` in addition to 
 :code:`file` and :code:`data_path` fields.
 
