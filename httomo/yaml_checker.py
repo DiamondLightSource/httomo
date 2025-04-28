@@ -157,8 +157,10 @@ def check_hdf5_paths_against_loader(conf: PipelineConfig, in_file_path: str) -> 
         _print_with_colour("Loader paths check successful!!\n", colour=Colour.GREEN)
         return True
 
-    _path_keys = [key for key in params if "_path" in key]
-    for key in _path_keys:
+    non_auto_path_keys = [
+        key for key in params if "_path" in key and key in non_auto_params
+    ]
+    for key in non_auto_path_keys:
         if params[key].strip("/") not in hdf5_members:
             _print_with_colour(
                 f"'{params[key]}' is not a valid path to a dataset in YAML_CONFIG. "
