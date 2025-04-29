@@ -118,5 +118,21 @@ And you provide that, together with the standard tomo data, it will raise an err
     Checking that the paths to the data and keys in the YAML_CONFIG file match the paths and keys in the input file (IN_DATA)...
     'entry1/tomo_entry/instrument/detect/image_key' is not a valid path to a dataset in YAML_CONFIG. Please recheck the yaml file.
 
+If the :code:`auto` value is used for any of the loader parameters that support it (see
+:ref:`nxtomo_discovery` for more details), and an input data file is given, the YAML checker
+will check if an :code:`NXtomo` entry can be found in the given input data. If no
+:code:`NXtomo` entry can be found, the YAML check will fail with a message reporting this:
+
+.. code-block:: console
+
+    Checking that the YAML_CONFIG is properly indented and has valid mappings and tags...
+    Sanity check of the YAML_CONFIG was successfully done...
+
+    Checking that the first method in the pipeline is a loader...
+    Loader check successful!!
+
+    Checking that the paths to the data and keys in the YAML_CONFIG file match the paths and keys in the input file (IN_DATA)...
+    No NXtomo entry detected in tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs
+
 We have many other checks and are constantly improving the YAML checker to make it more robust, verbose, and user-friendly.
 This is a user-interface so suggestions are always welcome.

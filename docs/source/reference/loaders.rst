@@ -33,6 +33,8 @@ serves as a good starting point:
 .. note:: The input data being loaded is assumed to be in hdf5/NeXuS file format,
    in accordance with the data typically collected at a DLS beamline.
 
+.. _nxtomo_discovery:
+
 Automatic `NXtomo` Discovery
 ++++++++++++++++++++++++++++
 
