@@ -288,6 +288,7 @@ def test_writes_core_of_blocks_only(
 )
 def test_recon_method_output_filename(
     get_files: Callable,
+    dummy_block: DataSetBlock,
     mocker: MockerFixture,
     tmp_path: Path,
     recon_filename_stem_global_var: Optional[str],
@@ -346,8 +347,9 @@ def test_recon_method_output_filename(
         loader=loader,
         prev_method=prev_method,
     )
-
     assert isinstance(wrp, SaveIntermediateFilesWrapper)
+
+    wrp.execute(dummy_block)
     files = get_files(tmp_path)
     assert len(files) == 1
     assert Path(files[0]).name == expected_filename
@@ -356,6 +358,7 @@ def test_recon_method_output_filename(
 @pytest.mark.parametrize("recon_filename_stem_global_var", [None, "some-recon"])
 def test_non_recon_method_output_filename(
     get_files: Callable,
+    dummy_block: DataSetBlock,
     mocker: MockerFixture,
     tmp_path: Path,
     recon_filename_stem_global_var: Optional[str],
@@ -407,8 +410,9 @@ def test_non_recon_method_output_filename(
         loader=loader,
         prev_method=prev_method,
     )
-
     assert isinstance(wrp, SaveIntermediateFilesWrapper)
+
+    wrp.execute(dummy_block)
     files = get_files(tmp_path)
     assert len(files) == 1
     assert Path(files[0]).name == EXPECTED_FILENAME
