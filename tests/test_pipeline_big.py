@@ -19,8 +19,26 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_disk(
     gpu_diad_FBP_k11_38731_npz,
     output_folder,
 ):
-    # NOTE that the intermediate file with file-based processing will be saved to /tmp
+    change_value_parameters_method_pipeline(
+        gpu_pipeline_diad_FBP_noimagesaving,
+        method=[
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+        ],
+        key=[
+            "data_path",
+            "image_key_path",
+            "rotation_angles",
+        ],
+        value=[
+            "/entry/imaging/data",
+            "/entry/instrument/imaging/image_key",
+            {"data_path": {"/entry/imaging_sum/gts_cs_theta"}},
+        ],
+    )
 
+    # NOTE that the intermediate file with file-based processing will be saved to /tmp
     cmd.pop(4)  #: don't save all
     cmd.insert(5, diad_k11_38731)
     cmd.insert(7, gpu_pipeline_diad_FBP_noimagesaving)
