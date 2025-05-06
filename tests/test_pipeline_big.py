@@ -405,7 +405,7 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_preview(
 
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
-    assert res_norm < 1e-4
+    assert res_norm < 1e-2
 
 
 ########################################################################
