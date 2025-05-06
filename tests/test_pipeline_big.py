@@ -34,7 +34,7 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_disk(
         value=[
             "/entry/imaging/data",
             "/entry/instrument/imaging/image_key",
-            {"data_path": {"/entry/imaging_sum/gts_cs_theta"}},
+            "/entry/imaging_sum/gts_cs_theta",
         ],
     )
 
@@ -96,6 +96,7 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_memory(
     gpu_diad_FBP_k11_38731_npz,
     output_folder,
 ):
+    
     cmd.pop(4)  #: don't save all
     cmd.insert(5, diad_k11_38731)
     cmd.insert(7, gpu_pipeline_diad_FBP_noimagesaving)
