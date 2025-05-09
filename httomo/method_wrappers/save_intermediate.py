@@ -2,7 +2,7 @@ import os
 import pathlib
 from typing import Any, Dict, Optional, Union
 import weakref
-from mpi4py.MPI import Comm
+from mpi4py.MPI import Comm, MIN
 import httomo
 from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
@@ -78,6 +78,14 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             )
         self._gpu_time_info.device2host += t.elapsed
 
+        MIN_BLOCK_LEN_PARAM = "minimum_block_length"
+        if self.comm.size > 1:
+            minimum_block_length = self.comm.reduce(
+                self.config_params[MIN_BLOCK_LEN_PARAM], MIN
+            )
+            minimum_block_length = self.comm.bcast(minimum_block_length)
+            self.append_config_params({MIN_BLOCK_LEN_PARAM: minimum_block_length})
+
         self._method(
             data,
             global_shape=block.global_shape,
@@ -85,6 +93,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             slicing_dim=block.slicing_dim,
             file=self._file,
             frames_per_chunk=httomo.globals.FRAMES_PER_CHUNK,
+            minimum_block_length=self.config_params[MIN_BLOCK_LEN_PARAM],
             path="/data",
             detector_x=self._loader.detector_x,
             detector_y=self._loader.detector_y,
