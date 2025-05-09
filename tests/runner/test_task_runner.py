@@ -9,11 +9,13 @@ import numpy as np
 from mpi4py import MPI
 from pytest_mock import MockerFixture
 
+import httomo.globals
 from httomo.darks_flats import DarksFlatsFileConfig
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.loaders import make_loader
 from httomo.loaders.types import RawAngles
 from httomo.method_wrappers import make_method_wrapper
+from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
@@ -686,4 +688,50 @@ def test_execute_section_with_padding_produces_correct_result(
     np.testing.assert_array_equal(
         runner_result.data_unpadded,
         expected_output[padding[0] : PREVIEW_CONFIG.angles.stop + padding[1], :, :],
+    )
+
+
+def test_passes_minimum_block_length_to_intermediate_data_wrapper(
+    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: PathLike
+):
+    loader = make_test_loader(mocker, block=dummy_block)
+    method = make_test_method(mocker, method_name="m1", save_result=True)
+    method_spy = mocker.patch.object(method, "append_config_params")
+    mocker.patch.object(httomo.globals, "run_out_dir", tmp_path)
+    saver = mocker.create_autospec(
+        SaveIntermediateFilesWrapper,
+        instance=True,
+        gpu=False,
+        pattern=Pattern.projection,
+        module_path="httomo.methods",
+        method_name="save_intermediate_data",
+        memory_gpu=None,
+        save_result=False,
+        task_id=None,
+        padding=False,
+        sweep=False,
+    )
+    saver_spy = mocker.patch.object(saver, "append_config_params")
+    p = Pipeline(loader=loader, methods=[method, saver])
+    s = sectionize(p)
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
+
+    # Patch the store backing calculator function to assume being backed by RAM
+    mocker.patch(
+        "httomo.runner.task_runner.determine_store_backing",
+        return_value=DataSetStoreBacking.RAM,
+    )
+
+    t._prepare()
+
+    # Avoid max slices calculation and manually choose it instead
+    mocker.patch.object(t, "determine_max_slices")
+    s[0].max_slices = dummy_block.chunk_shape[0]
+
+    # Execute section, check that only the intermediate data wrapper in the section was given
+    # the minimum block length value as a parameter
+    t._execute_section(s[0])
+    method_spy.assert_not_called()
+    saver_spy.assert_called_once_with(
+        {"minimum_block_length": dummy_block.chunk_shape[0]}
     )
