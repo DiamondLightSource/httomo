@@ -54,6 +54,7 @@ def save_intermediate_data(
     slicing_dim: int,
     file: h5py.File,
     frames_per_chunk: int,
+    minimum_block_length: int,
     path: str,
     detector_x: int,
     detector_y: int,
@@ -70,6 +71,7 @@ def save_intermediate_data(
             slicing_dim,
             frames_per_chunk,
             global_shape,
+            minimum_block_length,
             filetype="hdf5",
         )
 
@@ -83,6 +85,7 @@ def setup_dataset(
     slicing_dim: int,
     frames_per_chunk: int,
     global_shape: Tuple[int, int, int],
+    minimum_block_length: int,
     filetype: str,
 ) -> h5py.Dataset:
 
@@ -112,6 +115,17 @@ def setup_dataset(
             )
             log_once(warn_message, logging.DEBUG)
             frames_per_chunk = 1
+
+        if frames_per_chunk > minimum_block_length:
+            warn_message = (
+                f"frames_per_chunk={frames_per_chunk} exceeds length of smallest block "
+                f"within section ({minimum_block_length}), in slicing_dim={slicing_dim} "
+                f"of data with shape {data.shape}. Falling back to {minimum_block_length} "
+                "frames per chunk"
+            )
+            log_once(warn_message, logging.DEBUG)
+            frames_per_chunk = minimum_block_length
+
         if frames_per_chunk > 0:
             chunk_shape = [0, 0, 0]
             chunk_shape[slicing_dim] = frames_per_chunk

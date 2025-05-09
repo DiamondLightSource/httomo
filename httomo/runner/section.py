@@ -174,3 +174,13 @@ def determine_section_padding(section: Section) -> Tuple[int, int]:
         if method.padding:
             return method.calculate_padding()
     return (0, 0)
+
+
+def determine_minimum_block_length(
+    chunk_slicing_dim_length: int, max_slices: int
+) -> int:
+    """
+    Determine length of smallest block within chunk along slicing dimension, given max slices.
+    """
+    remainder = chunk_slicing_dim_length % max_slices
+    return max_slices if remainder == 0 else remainder

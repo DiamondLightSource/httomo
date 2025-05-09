@@ -3,7 +3,12 @@ import pytest
 from pytest_mock import MockerFixture
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.section import determine_section_padding, sectionize, Section
+from httomo.runner.section import (
+    determine_minimum_block_length,
+    determine_section_padding,
+    sectionize,
+    Section,
+)
 from ..testing_utils import make_test_loader, make_test_method
 
 from httomo_backends.methods_database.query import Pattern
@@ -373,3 +378,18 @@ def test_determine_section_padding_one_padding_method_and_other_methods_in_secti
 
     section_padding = determine_section_padding(sections[0])
     assert section_padding == PADDING
+
+
+@pytest.mark.parametrize(
+    "chunk_size_slicing_dim_length, max_slices",
+    [(2560, 640), (2560, 400), (2560, 220), (2560, 100)],
+)
+def test_determine_minimum_block_length(
+    chunk_size_slicing_dim_length: int, max_slices: int
+):
+    remainder = chunk_size_slicing_dim_length % max_slices
+    expected_minimum_block_length = max_slices if remainder == 0 else remainder
+    assert (
+        determine_minimum_block_length(chunk_size_slicing_dim_length, max_slices)
+        == expected_minimum_block_length
+    )
