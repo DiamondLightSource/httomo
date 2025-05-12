@@ -107,6 +107,7 @@ def test_save_intermediate_data(tmp_path: Path):
             b2.slicing_dim,
             file,
             frames_per_chunk=0,
+            minimum_block_length=GLOBAL_SHAPE[0],
             path="/data",
             detector_x=10,
             detector_y=20,
@@ -119,6 +120,7 @@ def test_save_intermediate_data(tmp_path: Path):
             b1.slicing_dim,
             file,
             frames_per_chunk=0,
+            minimum_block_length=GLOBAL_SHAPE[0],
             path="/data",
             detector_x=10,
             detector_y=20,
@@ -186,6 +188,7 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
             b2.slicing_dim,
             file,
             frames_per_chunk=0,
+            minimum_block_length=GLOBAL_SHAPE[0],
             path="/data",
             detector_x=10,
             detector_y=20,
@@ -198,6 +201,7 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
             b1.slicing_dim,
             file,
             frames_per_chunk=0,
+            minimum_block_length=GLOBAL_SHAPE[0],
             path="/data",
             detector_x=10,
             detector_y=20,
@@ -248,6 +252,7 @@ def test_save_intermediate_data_frames_per_chunk(
             slicing_dim=block.slicing_dim,
             file=f,
             frames_per_chunk=frames_per_chunk,
+            minimum_block_length=GLOBAL_SHAPE[0],
             path=DATA_PATH,
             detector_x=block.global_shape[2],
             detector_y=block.global_shape[1],
@@ -324,6 +329,7 @@ def test_save_intermediate_data_chunked_compressed(
                 slicing_dim=block.slicing_dim,
                 file=f,
                 frames_per_chunk=frames_per_chunk,
+                minimum_block_length=GLOBAL_SHAPE[0],
                 path=DATA_PATH,
                 detector_x=block.global_shape[2],
                 detector_y=block.global_shape[1],
@@ -393,6 +399,7 @@ def test_save_intermediate_data_frames_per_chunk_mpi(
             slicing_dim=block.slicing_dim,
             file=f,
             frames_per_chunk=frames_per_chunk,
+            minimum_block_length=GLOBAL_SHAPE[0],
             path=DATA_PATH,
             detector_x=block.global_shape[2],
             detector_y=block.global_shape[1],
@@ -417,3 +424,60 @@ def test_save_intermediate_data_frames_per_chunk_mpi(
         assert chunk_shape == tuple(expected_chunk_shape)
     else:
         assert chunk_shape is None
+
+
+def test_save_intermediate_data_frames_per_chunk_uses_minimum_block_size(
+    tmp_path: Path,
+):
+    COMM = MPI.COMM_WORLD
+    FILE_NAME = "test_file.h5"
+    DATA_PATH = "/data"
+    GLOBAL_SHAPE = (180, 120, 160)
+    DTYPE = np.float32
+    SLICING_DIM = 0
+    FRAMES_PER_CHUNK = -1
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    aux_data = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=global_data,
+        aux_data=aux_data,
+        slicing_dim=SLICING_DIM,
+        block_start=0,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        global_shape=GLOBAL_SHAPE,
+    )
+
+    # Note: the value of `SATURATION_BW_PATCH` has been chosen such that the automatic
+    # calculation of the frames per chunk by the `save_intermediate_data` method would return
+    # 20 frames per chunk.
+    #
+    # This is larger than the `MINIMUM_BLOCK_LENGTH` value, and the desired behaviour is for
+    # the frames per chunk value to default to the minimum block length if the automatic frames
+    # per chunk calculation returns a value larger than the minimum block length.
+    SATURATION_BW_PATCH = (
+        np.prod((GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])) * DTYPE().itemsize * 20
+    )
+    MINIMUM_BLOCK_LENGTH = 10
+    with mock.patch("httomo.methods.SATURATION_BW", SATURATION_BW_PATCH):
+        with h5py.File(tmp_path / FILE_NAME, "w", driver="mpio", comm=COMM) as f:
+            save_intermediate_data(
+                data=block.data,
+                global_shape=block.global_shape,
+                global_index=block.global_index,
+                slicing_dim=block.slicing_dim,
+                file=f,
+                frames_per_chunk=FRAMES_PER_CHUNK,
+                minimum_block_length=MINIMUM_BLOCK_LENGTH,
+                path=DATA_PATH,
+                detector_x=block.global_shape[2],
+                detector_y=block.global_shape[1],
+                angles=block.angles,
+            )
+
+    with h5py.File(tmp_path / FILE_NAME, "r") as f:
+        chunk_shape = f[DATA_PATH].chunks
+
+    assert chunk_shape[SLICING_DIM] == MINIMUM_BLOCK_LENGTH

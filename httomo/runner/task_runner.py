@@ -9,6 +9,7 @@ from mpi4py import MPI
 
 import httomo.globals
 from httomo.data.dataset_store import DataSetStoreWriter
+from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.dataset_store_backing import determine_store_backing
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.block_split import BlockSplitter
@@ -22,7 +23,12 @@ from httomo.runner.dataset_store_interfaces import (
 from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.pipeline import Pipeline
-from httomo.runner.section import Section, determine_section_padding, sectionize
+from httomo.runner.section import (
+    Section,
+    determine_minimum_block_length,
+    determine_section_padding,
+    sectionize,
+)
 from httomo.utils import (
     Pattern,
     _get_slicing_dim,
@@ -108,6 +114,8 @@ class TaskRunner:
             f"Maximum amount of slices is {section.max_slices} for section {section_index}",
             level=logging.DEBUG,
         )
+
+        self._pass_min_block_length_to_intermediate_data_wrapper(section)
 
         splitter = BlockSplitter(self.source, section.max_slices)
         start_source = time.perf_counter_ns()
@@ -367,3 +375,12 @@ class TaskRunner:
             non_slice_dims_shape = output_dims
 
         section.max_slices = min(max_slices_methods)
+
+    def _pass_min_block_length_to_intermediate_data_wrapper(self, section: Section):
+        assert self.source is not None
+        for method in section.methods:
+            if isinstance(method, SaveIntermediateFilesWrapper):
+                min_block_len = determine_minimum_block_length(
+                    self.source.chunk_shape[self.source.slicing_dim], section.max_slices
+                )
+                method.append_config_params({"minimum_block_length": min_block_len})
