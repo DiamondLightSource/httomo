@@ -35,6 +35,7 @@ def test_save_intermediate(
             slicing_dim: int,
             file: h5py.File,
             frames_per_chunk: int,
+            minimum_block_length: int,
             path: str,
             detector_x: int,
             detector_y: int,
@@ -46,6 +47,7 @@ def test_save_intermediate(
             assert global_shape == dummy_block.shape
             assert slicing_dim == 0
             assert frames_per_chunk == FRAMES_PER_CHUNK
+            assert minimum_block_length == dummy_block.shape[0]
             assert Path(file.filename).name == "task1-testpackage-testmethod-XXX.h5"
             assert detector_x == 10
             assert detector_y == 20
@@ -71,6 +73,7 @@ def test_save_intermediate(
         loader=loader,
         out_dir=tmp_path,
         prev_method=prev_method,
+        minimum_block_length=dummy_block.shape[0],
     )
     assert isinstance(wrp, SaveIntermediateFilesWrapper)
     with mock.patch("httomo.globals.FRAMES_PER_CHUNK", FRAMES_PER_CHUNK):
@@ -93,6 +96,7 @@ def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Pat
             slicing_dim: int,
             file: h5py.File,
             frames_per_chunk: int,
+            minimum_block_length: int,
             path: str,
             detector_x: int,
             detector_y: int,
@@ -120,6 +124,7 @@ def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Pat
         make_mock_preview_config(mocker),
         loader=loader,
         prev_method=prev_method,
+        minimum_block_length=10,
     )
     assert isinstance(wrp, SaveIntermediateFilesWrapper)
     assert wrp._file.filename.startswith(str(tmp_path))
@@ -145,6 +150,7 @@ def test_save_intermediate_leaves_gpu_data(
             slicing_dim: int,
             file: h5py.File,
             frames_per_chunk: int,
+            minimum_block_length: int,
             path: str,
             detector_x: int,
             detector_y: int,
@@ -173,6 +179,7 @@ def test_save_intermediate_leaves_gpu_data(
         loader=loader,
         out_dir=tmp_path,
         prev_method=prev_method,
+        minimum_block_length=dummy_block.shape[0],
     )
 
     if gpu is True:
@@ -230,6 +237,7 @@ def test_writes_core_of_blocks_only(
             slicing_dim: int,
             file: h5py.File,
             frames_per_chunk: int,
+            minimum_block_length: int,
             path: str,
             detector_x: int,
             detector_y: int,
@@ -252,6 +260,7 @@ def test_writes_core_of_blocks_only(
         make_mock_preview_config(mocker),
         loader=loader,
         prev_method=prev_method,
+        minimum_block_length=GLOBAL_SHAPE[0],
     )
 
     # Create block from the global/chunk data
@@ -307,6 +316,7 @@ def test_recon_method_output_filename(
             slicing_dim: int,
             file: h5py.File,
             frames_per_chunk: int,
+            minimum_block_length: int,
             path: str,
             detector_x: int,
             detector_y: int,
@@ -346,6 +356,7 @@ def test_recon_method_output_filename(
         make_mock_preview_config(mocker),
         loader=loader,
         prev_method=prev_method,
+        minimum_block_length=dummy_block.shape[0],
     )
     assert isinstance(wrp, SaveIntermediateFilesWrapper)
 
@@ -376,6 +387,7 @@ def test_non_recon_method_output_filename(
             slicing_dim: int,
             file: h5py.File,
             frames_per_chunk: int,
+            minimum_block_length: int,
             path: str,
             detector_x: int,
             detector_y: int,
@@ -409,6 +421,7 @@ def test_non_recon_method_output_filename(
         make_mock_preview_config(mocker),
         loader=loader,
         prev_method=prev_method,
+        minimum_block_length=dummy_block.shape[0],
     )
     assert isinstance(wrp, SaveIntermediateFilesWrapper)
 
@@ -416,3 +429,90 @@ def test_non_recon_method_output_filename(
     files = get_files(tmp_path)
     assert len(files) == 1
     assert Path(files[0]).name == EXPECTED_FILENAME
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+def test_passes_smallest_minimum_block_length_to_underlying_method_in_all_processes_mpi(
+    mocker: MockerFixture, tmp_path: Path
+):
+    COMM = MPI.COMM_WORLD
+    tmp_path = COMM.bcast(tmp_path)
+    RANK_0_MINIMUM_BLOCK_LENGTH = 10
+    RANK_1_MINIMUM_BLOCK_LENGTH = 9
+    MINIMUM_BLOCK_LENGTH = RANK_1_MINIMUM_BLOCK_LENGTH
+    loader: LoaderInterface = mocker.create_autospec(
+        LoaderInterface, instance=True, detector_x=10, detector_y=20
+    )
+
+    class FakeModule:
+        def save_intermediate_data(
+            data,
+            global_shape: Tuple[int, int, int],
+            global_index: Tuple[int, int, int],
+            slicing_dim: int,
+            file: h5py.File,
+            frames_per_chunk: int,
+            minimum_block_length: int,
+            path: str,
+            detector_x: int,
+            detector_y: int,
+            angles: np.ndarray,
+        ):
+            assert minimum_block_length == MINIMUM_BLOCK_LENGTH
+
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
+    prev_method = mocker.create_autospec(
+        MethodWrapper,
+        instance=True,
+        task_id="task1",
+        package_name="testpackage",
+        method_name="testmethod",
+        recon_algorithm=None,
+    )
+    mocker.patch.object(httomo.globals, "run_out_dir", tmp_path)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, implementation="cpu"),
+        "httomo.methods",
+        "save_intermediate_data",
+        COMM,
+        make_mock_preview_config(mocker),
+        loader=loader,
+        prev_method=prev_method,
+    )
+
+    if COMM.rank == 0:
+        wrp.append_config_params({"minimum_block_length": RANK_0_MINIMUM_BLOCK_LENGTH})
+    else:
+        wrp.append_config_params({"minimum_block_length": RANK_1_MINIMUM_BLOCK_LENGTH})
+
+    GLOBAL_SHAPE = (180, 120, 160)
+    CHUNK_SHAPE = (GLOBAL_SHAPE[0] // 2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
+    global_data = np.arange(np.prod(GLOBAL_SHAPE), dtype=np.float32).reshape(
+        GLOBAL_SHAPE
+    )
+    aux_data = AuxiliaryData(angles=np.ones(GLOBAL_SHAPE[0], dtype=np.float32))
+    if COMM.rank == 0:
+        block = DataSetBlock(
+            data=global_data[: GLOBAL_SHAPE[0] // 2],
+            aux_data=aux_data,
+            block_start=0,
+            chunk_start=0 if COMM.rank == 0 else CHUNK_SHAPE[0],
+            global_shape=GLOBAL_SHAPE,
+            chunk_shape=CHUNK_SHAPE,
+        )
+    else:
+        block = DataSetBlock(
+            data=global_data[GLOBAL_SHAPE[0] // 2 :],
+            aux_data=aux_data,
+            block_start=0,
+            chunk_start=0 if COMM.rank == 0 else CHUNK_SHAPE[0],
+            global_shape=GLOBAL_SHAPE,
+            chunk_shape=CHUNK_SHAPE,
+        )
+
+    wrp.execute(block)
