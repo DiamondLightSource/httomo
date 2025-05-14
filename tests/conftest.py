@@ -279,6 +279,11 @@ def gpu_diad_FBP_k11_38730_npz():
     # 10 slices numpy array
     return np.load("tests/test_data/raw_data/diad/gpu_diad_FBP_k11-38730.npz")
 
+@pytest.fixture
+def gpu_FBP3d_i13_177906_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/i13/gpu_FBP3d_i13_177906.npz")
+
 
 @pytest.fixture
 def gpu_FBP_TVdenoising_i13_177906_npz():
