@@ -95,7 +95,7 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_memory(
     gpu_pipeline_diad_FBP_noimagesaving,
     gpu_diad_FBP_k11_38731_npz,
     output_folder,
-):    
+):
 
     change_value_parameters_method_pipeline(
         gpu_pipeline_diad_FBP_noimagesaving,
@@ -139,8 +139,9 @@ def test_pipeline_gpu_FBP_diad_k11_38731_in_memory(
     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
     path_to_data = "data/"
-    h5_file_name = "httomolibgpu-FBP"
+    h5_file_name = "FBP3d_tomobar"
     for file_to_open in h5_files:
+        print(file_to_open)
         if h5_file_name in file_to_open:
             h5f = h5py.File(file_to_open, "r")
             index_prog = step
@@ -169,7 +170,7 @@ def test_pipeline_gpu_FBP_diad_k11_38730_in_disk(
     gpu_diad_FBP_k11_38730_npz,
     output_folder,
 ):
-    
+
     change_value_parameters_method_pipeline(
         gpu_pipeline_diad_FBP_noimagesaving,
         method=[
@@ -247,7 +248,7 @@ def test_pipeline_gpu_FBP_diad_k11_38730_in_memory(
     gpu_diad_FBP_k11_38730_npz,
     output_folder,
 ):
-    
+
     change_value_parameters_method_pipeline(
         gpu_pipeline_diad_FBP_noimagesaving,
         method=[
@@ -410,6 +411,7 @@ def test_pipeline_gpu_FBP_denoising_i13_177906_preview(
     residual_im = data_gt_tv - data_result
     res_norm_tv_res = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm_tv_res < 1e-5
+
 
 ########################################################################
 
