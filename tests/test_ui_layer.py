@@ -13,7 +13,7 @@ from .testing_utils import make_test_method
 
 
 def test_can_read_cpu_pipeline(cpu_pipeline_gridrec: str):
-    pipline_stage_config = ui_layer.yaml_loader(cpu_pipeline_gridrec)
+    pipline_stage_config = ui_layer.yaml_loader(Path(cpu_pipeline_gridrec))
 
     assert len(pipline_stage_config) == 9
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -38,7 +38,7 @@ def test_can_read_cpu_pipeline(cpu_pipeline_gridrec: str):
 
 
 def test_can_read_gpu_pipeline(gpu_pipelineFBP: str):
-    pipline_stage_config = ui_layer.yaml_loader(gpu_pipelineFBP)
+    pipline_stage_config = ui_layer.yaml_loader(Path(gpu_pipelineFBP))
 
     assert len(pipline_stage_config) == 9
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -71,7 +71,7 @@ def test_uilayer_fails_with_nonexistant_file(file: str):
 
 def test_pipeline_build_no_loader(cpu_pipeline_gridrec: str, standard_data: str):
     comm = MPI.COMM_NULL
-    LayerUI = UiLayer(cpu_pipeline_gridrec, standard_data, comm=comm)
+    LayerUI = UiLayer(Path(cpu_pipeline_gridrec), Path(standard_data), comm=comm)
     del LayerUI.PipelineStageConfig[0]
     with pytest.raises(ValueError) as e:
         LayerUI.build_pipeline()
@@ -81,7 +81,7 @@ def test_pipeline_build_no_loader(cpu_pipeline_gridrec: str, standard_data: str)
 
 def test_pipeline_build_duplicate_id(cpu_pipeline_gridrec: str, standard_data: str):
     comm = MPI.COMM_NULL
-    LayerUI = UiLayer(cpu_pipeline_gridrec, standard_data, comm=comm)
+    LayerUI = UiLayer(Path(cpu_pipeline_gridrec), Path(standard_data), comm=comm)
     LayerUI.PipelineStageConfig[1]["id"] = "testid"
     LayerUI.PipelineStageConfig[2]["id"] = "testid"
     with pytest.raises(ValueError) as e:
@@ -93,7 +93,7 @@ def test_pipeline_build_duplicate_id(cpu_pipeline_gridrec: str, standard_data: s
 def test_pipeline_build_cpu_pipeline(standard_data: str, cpu_pipeline_gridrec: str):
     """Testing OutputRef."""
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(cpu_pipeline_gridrec, standard_data, comm=comm)
+    LayerUI = UiLayer(Path(cpu_pipeline_gridrec), Path(standard_data), comm=comm)
 
     pipeline = LayerUI.build_pipeline()
 
