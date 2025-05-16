@@ -58,7 +58,9 @@ class UiLayer:
         self._preview_config: PreviewConfig | None = None
 
         if pipeline_format == PipelineFormat.Yaml:
-            self.PipelineStageConfig = yaml_loader(self.input_pipeline)
+            if isinstance(input_pipeline, str):
+                raise ValueError("YAML pipelines provided as a string is not supported")
+            self.PipelineStageConfig = yaml_loader(input_pipeline)
         else:
             self.PipelineStageConfig = ParamSweepJsonLoader(input_pipeline).load()
 
