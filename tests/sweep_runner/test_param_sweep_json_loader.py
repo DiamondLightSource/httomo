@@ -61,3 +61,32 @@ def test_param_value_with_start_stop_step_and_other_keys_unaffected_by_range_swe
         "step": 5,
         "another": 0,
     }
+
+
+def test_load_manual_sweep():
+    PARAM_NAME = "parameter_1"
+    JSON_STRING = """
+[
+    {
+        "method": "standard_tomo",
+        "module_path": "httomo.data.hdf.loaders",
+        "parameters": {}
+    },
+    {
+        "method": "some_method",
+        "module_path": "some.module.path",
+        "parameters": {
+            "parameter_1": [
+                1,
+                5,
+                12,
+                13,
+                14
+            ]
+        }
+    }
+]
+"""
+    data = ParamSweepJsonLoader(JSON_STRING).load()
+    assert isinstance(data[1]["parameters"][PARAM_NAME], tuple)
+    assert data[1]["parameters"][PARAM_NAME] == (1, 5, 12, 13, 14)
