@@ -25,6 +25,11 @@ class ParamSweepJsonLoader:
             )
             data[res[1] + 1]["parameters"][res[0]] = sweep_vals
 
+        res = self._find_manual_sweep_param(data[1:])
+        if res is not None:
+            sweep_vals = data[res[1] + 1]["parameters"][res[0]]
+            data[res[1] + 1]["parameters"][res[0]] = tuple(sweep_vals)
+
         return data
 
     def _find_range_sweep_param(
@@ -39,3 +44,11 @@ class ParamSweepJsonLoader:
                     )
                     if has_keys_for_sweep and len(keys) == 3:
                         return name, idx
+
+    def _find_manual_sweep_param(
+        self, methods: List[Dict[str, Any]]
+    ) -> Optional[Tuple[str, int]]:
+        for idx, method in enumerate(methods):
+            for name, value in method["parameters"].items():
+                if isinstance(value, list):
+                    return name, idx
