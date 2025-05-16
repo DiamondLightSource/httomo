@@ -226,6 +226,17 @@ def test_raise_error_if_pipeline_is_yaml_string(standard_data: str):
     assert "YAML pipelines provided as a string is not supported" in str(e)
 
 
+def test_raise_error_if_pipeline_is_json_file(standard_data: str):
+    with pytest.raises(ValueError) as e:
+        UiLayer(
+            input_pipeline=Path("/some/path/to/pipeline.json"),
+            in_data_file_path=Path(standard_data),
+            comm=MPI.COMM_WORLD,
+            pipeline_format=PipelineFormat.Json,
+        )
+    assert "JSON pipelines provided as a filepath is not supported" in str(e)
+
+
 @pytest.mark.parametrize(
     "refvalue",
     [
