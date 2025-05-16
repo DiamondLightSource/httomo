@@ -137,7 +137,7 @@ def test_build_pipeline_with_param_sweeps(
 ):
     pipeline_file_path = Path(__file__).parent / pipeline_file
     ui_layer = UiLayer(
-        tasks_file_path=pipeline_file_path,
+        input_pipeline=pipeline_file_path,
         in_data_file_path=standard_data,
         comm=MPI.COMM_WORLD,
     )

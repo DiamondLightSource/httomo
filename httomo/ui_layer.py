@@ -33,19 +33,19 @@ class UiLayer:
 
     def __init__(
         self,
-        tasks_file_path: Path,
+        input_pipeline: Path,
         in_data_file_path: Path,
         comm: Comm,
         repo=MethodDatabaseRepository(),
     ):
         self.repo = repo
-        self.tasks_file_path = tasks_file_path
+        self.input_pipeline = input_pipeline
         self.in_data_file = in_data_file_path
         self.comm = comm
         self._preview_config: PreviewConfig | None = None
 
         # loading yaml file with tasks provided
-        self.PipelineStageConfig = yaml_loader(self.tasks_file_path)
+        self.PipelineStageConfig = yaml_loader(self.input_pipeline)
 
     def build_pipeline(self) -> Pipeline:
         loader = self._setup_loader()
