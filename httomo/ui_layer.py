@@ -1,5 +1,6 @@
 import yaml
-from typing import Any, Dict, List, Optional, TypeAlias
+from enum import Enum, auto
+from typing import Any, Dict, List, Optional, TypeAlias, Union
 from importlib import import_module
 from pathlib import Path
 import os
@@ -16,6 +17,7 @@ from httomo.method_wrappers import make_method_wrapper
 from httomo.loaders import make_loader
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.output_ref import OutputRef
+from httomo.sweep_runner.param_sweep_json_loader import ParamSweepJsonLoader
 from httomo.sweep_runner.param_sweep_yaml_loader import get_param_sweep_yaml_loader
 from httomo.transform_loader_params import parse_config, parse_preview
 
@@ -23,6 +25,15 @@ from httomo_backends.methods_database.query import MethodDatabaseRepository
 
 MethodConfig: TypeAlias = Dict[str, Any]
 PipelineConfig: TypeAlias = List[MethodConfig]
+
+
+class PipelineFormat(Enum):
+    """
+    Supported formats for input pipeline.
+    """
+
+    Yaml = auto()
+    Json = auto()
 
 
 class UiLayer:
@@ -33,19 +44,23 @@ class UiLayer:
 
     def __init__(
         self,
-        input_pipeline: Path,
+        input_pipeline: Union[Path, str],
         in_data_file_path: Path,
         comm: Comm,
         repo=MethodDatabaseRepository(),
+        pipeline_format: PipelineFormat = PipelineFormat.Yaml,
     ):
         self.repo = repo
         self.input_pipeline = input_pipeline
         self.in_data_file = in_data_file_path
         self.comm = comm
+        self.pipeline_format = pipeline_format
         self._preview_config: PreviewConfig | None = None
 
-        # loading yaml file with tasks provided
-        self.PipelineStageConfig = yaml_loader(self.input_pipeline)
+        if pipeline_format == PipelineFormat.Yaml:
+            self.PipelineStageConfig = yaml_loader(self.input_pipeline)
+        else:
+            self.PipelineStageConfig = ParamSweepJsonLoader(input_pipeline).load()
 
     def build_pipeline(self) -> Pipeline:
         loader = self._setup_loader()
