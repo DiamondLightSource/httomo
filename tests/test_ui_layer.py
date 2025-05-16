@@ -215,6 +215,17 @@ def test_build_pipeline_with_param_sweeps(
     assert sweep_method_wrapper.config_params[SWEEP_PARAM_NAME] == expected_sweep_vals
 
 
+def test_raise_error_if_pipeline_is_yaml_string(standard_data: str):
+    with pytest.raises(ValueError) as e:
+        UiLayer(
+            input_pipeline="",
+            in_data_file_path=Path(standard_data),
+            comm=MPI.COMM_WORLD,
+            pipeline_format=PipelineFormat.Yaml,
+        )
+    assert "YAML pipelines provided as a string is not supported" in str(e)
+
+
 @pytest.mark.parametrize(
     "refvalue",
     [
