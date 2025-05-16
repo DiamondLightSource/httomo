@@ -62,6 +62,10 @@ class UiLayer:
                 raise ValueError("YAML pipelines provided as a string is not supported")
             self.PipelineStageConfig = yaml_loader(input_pipeline)
         else:
+            if isinstance(input_pipeline, Path):
+                raise ValueError(
+                    "JSON pipelines provided as a filepath is not supported"
+                )
             self.PipelineStageConfig = ParamSweepJsonLoader(input_pipeline).load()
 
     def build_pipeline(self) -> Pipeline:
