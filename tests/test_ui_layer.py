@@ -3,7 +3,7 @@ from typing import Any, Tuple
 from mpi4py import MPI
 from pytest_mock import MockerFixture
 from httomo.runner.output_ref import OutputRef
-from httomo.ui_layer import UiLayer
+from httomo.ui_layer import PipelineFormat, UiLayer
 from httomo import ui_layer
 import pytest
 
@@ -119,6 +119,73 @@ def test_pipeline_build_cpu_pipeline(standard_data: str, tomopy_gridrec: str):
     assert isinstance(ref, OutputRef)
     assert ref.mapped_output_name == "centre_of_rotation"
     assert ref.method.method_name == "find_center_vo"
+
+
+def test_build_pipeline_from_json(standard_data: str):
+    json_string = """
+[
+    {
+        "method": "standard_tomo",
+        "module_path": "httomo.data.hdf.loaders",
+        "parameters": {
+            "data_path": "entry1/tomo_entry/data/data",
+            "image_key_path": "entry1/tomo_entry/instrument/detector/image_key",
+            "rotation_angles": {
+                "data_path": "/entry1/tomo_entry/data/rotation_angle"
+            }
+        }
+    },
+    {
+        "method": "find_center_vo",
+        "module_path": "httomolibgpu.recon.rotation",
+        "parameters": {
+            "ind": "mid",
+            "smin": -50,
+            "smax": 50,
+            "srad": 6.0,
+            "step": 0.25,
+            "ratio": 0.5,
+            "drop": 20
+        },
+        "id": "centering",
+        "side_outputs": {
+            "cor": "centre_of_rotation"
+        }
+    },
+    {
+        "method": "normalize",
+        "module_path": "httomolibgpu.prep.normalize",
+        "parameters": {
+            "cutoff": 10.0,
+            "minus_log": true,
+            "nonnegativity": false,
+            "remove_nans": false
+        }
+    },
+    {
+        "method": "FBP3d_tomobar",
+        "module_path": "httomolibgpu.recon.algorithm",
+        "parameters": {
+            "center": "${{centering.side_outputs.centre_of_rotation}}",
+            "filter_freq_cutoff": 0.6,
+            "recon_size": null,
+            "recon_mask_radius": null
+        },
+        "save_result": true
+    }
+]
+"""
+    pipeline = UiLayer(
+        input_pipeline=json_string,
+        in_data_file_path=Path(standard_data),
+        comm=MPI.COMM_WORLD,
+        pipeline_format=PipelineFormat.Json,
+    ).build_pipeline()
+    RECON_METHOD_IDX = 2
+    ref_to_centering = pipeline[RECON_METHOD_IDX]["center"]
+    assert isinstance(ref_to_centering, OutputRef)
+    assert ref_to_centering.mapped_output_name == "centre_of_rotation"
+    assert ref_to_centering.method.method_name == "find_center_vo"
 
 
 @pytest.mark.parametrize(
