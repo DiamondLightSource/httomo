@@ -378,10 +378,10 @@ def test_pipe_FBP3d_tomobar_i12_119647_preview(
 
 
 @pytest.mark.full_data
-def test_pipe_FBP2d_astra_i12_119621_preview(
+def test_pipe_FBP2d_astra_i12_119647_preview(
     get_files: Callable,
     cmd,
-    i12_119621,
+    i12_119647,
     FBP2d_astra,
     output_folder,
 ):
@@ -400,7 +400,7 @@ def test_pipe_FBP2d_astra_i12_119621_preview(
     )
 
     cmd.pop(4)  #: don't save all
-    cmd.insert(5, i12_119621)
+    cmd.insert(5, i12_119647)
     cmd.insert(7, FBP2d_astra)
     cmd.insert(8, output_folder)
 
