@@ -311,65 +311,146 @@ from .conftest import change_value_parameters_method_pipeline, check_tif, compar
 # ########################################################################
 
 
+# @pytest.mark.full_data
+# def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
+#     get_files: Callable,
+#     cmd,
+#     i13_177906,
+#     FBP3d_tomobar_denoising,
+#     FBP3d_tomobar_TVdenoising_i13_177906,
+#     output_folder,
+# ):
+
+#     change_value_parameters_method_pipeline(
+#         FBP3d_tomobar_denoising,
+#         method=[
+#             "standard_tomo",
+#         ],
+#         key=[
+#             "preview",
+#         ],
+#         value=[
+#             {"detector_y": {"start": 900, "stop": 1200}},
+#         ],
+#     )
+
+#     # do not save the result of FBP3d_tomobar
+#     change_value_parameters_method_pipeline(
+#         FBP3d_tomobar_denoising,
+#         method=[
+#             "FBP3d_tomobar",
+#         ],
+#         key=[
+#             "recon_size",
+#         ],
+#         value=[
+#             None,
+#         ],
+#         save_result=False,
+#     )
+
+#     # save the result of denoising instead
+#     change_value_parameters_method_pipeline(
+#         FBP3d_tomobar_denoising,
+#         method=[
+#             "total_variation_PD",
+#             "total_variation_PD",
+#         ],
+#         key=[
+#             "regularisation_parameter",
+#             "iterations",
+#         ],
+#         value=[
+#             1.0e-04,
+#             25,
+#         ],
+#         save_result=True,
+#     )
+
+#     cmd.pop(4)  #: don't save all
+#     cmd.insert(5, i13_177906)
+#     cmd.insert(7, FBP3d_tomobar_denoising)
+#     cmd.insert(8, output_folder)
+
+#     subprocess.check_output(cmd)
+
+#     files = get_files(output_folder)
+
+#     #: check the generated reconstruction (hdf5 file)
+#     h5_files = list(filter(lambda x: ".h5" in x, files))
+#     assert len(h5_files) == 1
+
+#     # load the pre-saved numpy array for comparison bellow
+#     data_gt_tv = FBP3d_tomobar_TVdenoising_i13_177906["data"]
+#     axis_slice = FBP3d_tomobar_TVdenoising_i13_177906["axis_slice"]
+#     (slices, sizeX, sizeY) = np.shape(data_gt_tv)
+
+#     step = axis_slice // (slices + 2)
+#     # store for the result
+#     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
+
+#     path_to_data = "data/"
+#     h5_file_name = "total_variation_PD"
+#     for file_to_open in h5_files:
+#         if h5_file_name in file_to_open:
+#             h5f = h5py.File(file_to_open, "r")
+#             index_prog = step
+#             for i in range(slices):
+#                 data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
+#                 index_prog += step
+#             h5f.close()
+#         else:
+#             message_str = f"File name with {h5_file_name} string cannot be found."
+#             raise FileNotFoundError(message_str)
+
+#     residual_im = data_gt_tv - data_result
+#     res_norm_tv_res = np.linalg.norm(residual_im.flatten()).astype("float32")
+#     assert res_norm_tv_res < 1e-5
+
+
+# ########################################################################
+
+
 @pytest.mark.full_data
-def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
+def test_pipe_360deg_paganin_FBP3d_tomobar_i13_179623_preview(
     get_files: Callable,
     cmd,
-    i13_177906,
-    FBP3d_tomobar_denoising,
-    FBP3d_tomobar_TVdenoising_i13_177906,
+    i13_179623,
+    deg360_paganin_FBP3d_tomobar,
+    FBP3d_tomobar_paganin_i13_179623,
     output_folder,
 ):
-
     change_value_parameters_method_pipeline(
-        FBP3d_tomobar_denoising,
+        deg360_paganin_FBP3d_tomobar,
         method=[
             "standard_tomo",
+            "normalize",
+            "find_center_360",
+            "sino_360_to_180",
+            "paganin_filter_tomopy",
+            "paganin_filter_tomopy",
         ],
         key=[
             "preview",
+            "minus_log",
+            "ind",
+            "rotation",
+            "energy",
+            "alpha",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1200}},
+            False,
+            "mid",
+            "right",
+            15.0,
+            0.1,
         ],
-    )
-
-    # do not save the result of FBP3d_tomobar
-    change_value_parameters_method_pipeline(
-        FBP3d_tomobar_denoising,
-        method=[
-            "FBP3d_tomobar",
-        ],
-        key=[
-            "recon_size",
-        ],
-        value=[
-            None,
-        ],
-        save_result=False,
-    )
-
-    # save the result of denoising instead
-    change_value_parameters_method_pipeline(
-        FBP3d_tomobar_denoising,
-        method=[
-            "total_variation_PD",
-            "total_variation_PD",
-        ],
-        key=[
-            "regularisation_parameter",
-            "iterations",
-        ],
-        value=[
-            1.0e-04,
-            25,
-        ],
-        save_result=True,
     )
 
     cmd.pop(4)  #: don't save all
-    cmd.insert(5, i13_177906)
-    cmd.insert(7, FBP3d_tomobar_denoising)
+    cmd.insert(5, i13_179623)
+    cmd.insert(7, deg360_paganin_FBP3d_tomobar)
     cmd.insert(8, output_folder)
 
     subprocess.check_output(cmd)
@@ -381,16 +462,16 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
     assert len(h5_files) == 1
 
     # load the pre-saved numpy array for comparison bellow
-    data_gt_tv = FBP3d_tomobar_TVdenoising_i13_177906["data"]
-    axis_slice = FBP3d_tomobar_TVdenoising_i13_177906["axis_slice"]
-    (slices, sizeX, sizeY) = np.shape(data_gt_tv)
+    data_gt = FBP3d_tomobar_paganin_i13_179623["data"]
+    axis_slice = FBP3d_tomobar_paganin_i13_179623["axis_slice"]
+    (slices, sizeX, sizeY) = np.shape(data_gt)
 
     step = axis_slice // (slices + 2)
     # store for the result
     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
     path_to_data = "data/"
-    h5_file_name = "total_variation_PD"
+    h5_file_name = "FBP3d_tomobar"
     for file_to_open in h5_files:
         if h5_file_name in file_to_open:
             h5f = h5py.File(file_to_open, "r")
@@ -403,177 +484,96 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
             message_str = f"File name with {h5_file_name} string cannot be found."
             raise FileNotFoundError(message_str)
 
-    residual_im = data_gt_tv - data_result
-    res_norm_tv_res = np.linalg.norm(residual_im.flatten()).astype("float32")
-    assert res_norm_tv_res < 1e-5
+    residual_im = data_gt - data_result
+    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    assert res_norm < 1e-6
 
 
 # ########################################################################
 
 
-# @pytest.mark.full_data
-# def test_pipeline_gpu_360_paganin_FBP_i13_179623_preview(
-#     get_files: Callable,
-#     cmd,
-#     i13_179623,
-#     gpu_pipeline_360_paganin_FBP,
-#     gpu_FBP_paganin_i13_179623_npz,
-#     output_folder,
-# ):
-#     change_value_parameters_method_pipeline(
-#         gpu_pipeline_360_paganin_FBP,
-#         method=[
-#             "standard_tomo",
-#             "normalize",
-#             "find_center_360",
-#             "sino_360_to_180",
-#             "paganin_filter_tomopy",
-#             "paganin_filter_tomopy",
-#         ],
-#         key=[
-#             "preview",
-#             "minus_log",
-#             "ind",
-#             "rotation",
-#             "energy",
-#             "alpha",
-#         ],
-#         value=[
-#             {"detector_y": {"start": 900, "stop": 1200}},
-#             False,
-#             "mid",
-#             "right",
-#             15.0,
-#             0.1,
-#         ],
-#     )
+@pytest.mark.full_data
+def test_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
+    get_files: Callable,
+    cmd,
+    i13_179623,
+    deg360_distortion_FBP3d_tomobar,
+    FBP3d_tomobar_distortion_i13_179623,
+    output_folder,
+):
+    change_value_parameters_method_pipeline(
+        deg360_distortion_FBP3d_tomobar,
+        method=[
+            "standard_tomo",
+            "normalize",
+            "find_center_360",
+            "find_center_360",
+            "find_center_360",
+            "sino_360_to_180",
+            "distortion_correction_proj_discorpy",
+            "FBP",
+        ],
+        key=[
+            "preview",
+            "minus_log",
+            "ind",
+            "use_overlap",
+            "norm",
+            "rotation",
+            "metadata_path",
+            "neglog",
+        ],
+        value=[
+            {"detector_y": {"start": 900, "stop": 1200}},
+            False,
+            "mid",
+            True,
+            True,
+            "right",
+            "/data/tomography/raw_data/i13/360/179623_coeff.txt",
+            True,
+        ],
+    )
 
-#     cmd.pop(4)  #: don't save all
-#     cmd.insert(5, i13_179623)
-#     cmd.insert(7, gpu_pipeline_360_paganin_FBP)
-#     cmd.insert(8, output_folder)
+    cmd.pop(4)  #: don't save all
+    cmd.insert(5, i13_179623)
+    cmd.insert(7, deg360_distortion_FBP3d_tomobar)
+    cmd.insert(8, output_folder)
 
-#     subprocess.check_output(cmd)
+    subprocess.check_output(cmd)
 
-#     files = get_files(output_folder)
+    files = get_files(output_folder)
 
-#     #: check the generated reconstruction (hdf5 file)
-#     h5_files = list(filter(lambda x: ".h5" in x, files))
-#     assert len(h5_files) == 1
+    #: check the generated reconstruction (hdf5 file)
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
 
-#     # load the pre-saved numpy array for comparison bellow
-#     data_gt = gpu_FBP_paganin_i13_179623_npz["data"]
-#     axis_slice = gpu_FBP_paganin_i13_179623_npz["axis_slice"]
-#     (slices, sizeX, sizeY) = np.shape(data_gt)
+    # load the pre-saved numpy array for comparison bellow
+    data_gt = FBP3d_tomobar_distortion_i13_179623["data"]
+    axis_slice = FBP3d_tomobar_distortion_i13_179623["axis_slice"]
+    (slices, sizeX, sizeY) = np.shape(data_gt)
 
-#     step = axis_slice // (slices + 2)
-#     # store for the result
-#     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
+    step = axis_slice // (slices + 2)
+    # store for the result
+    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
-#     path_to_data = "data/"
-#     h5_file_name = "httomolibgpu-FBP"
-#     for file_to_open in h5_files:
-#         if h5_file_name in file_to_open:
-#             h5f = h5py.File(file_to_open, "r")
-#             index_prog = step
-#             for i in range(slices):
-#                 data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-#                 index_prog += step
-#             h5f.close()
-#         else:
-#             message_str = f"File name with {h5_file_name} string cannot be found."
-#             raise FileNotFoundError(message_str)
+    path_to_data = "data/"
+    h5_file_name = "FBP3d_tomobar"
+    for file_to_open in h5_files:
+        if h5_file_name in file_to_open:
+            h5f = h5py.File(file_to_open, "r")
+            index_prog = step
+            for i in range(slices):
+                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
+                index_prog += step
+            h5f.close()
+        else:
+            message_str = f"File name with {h5_file_name} string cannot be found."
+            raise FileNotFoundError(message_str)
 
-#     residual_im = data_gt - data_result
-#     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
-#     assert res_norm < 1e-6
-
-
-# ########################################################################
-
-
-# @pytest.mark.full_data
-# def test_pipeline_gpu_360_distortion_FBP_i13_179623_preview(
-#     get_files: Callable,
-#     cmd,
-#     i13_179623,
-#     gpu_pipeline_360_distortion_FBP,
-#     gpu_FBP_distortion_i13_179623_npz,
-#     output_folder,
-# ):
-#     change_value_parameters_method_pipeline(
-#         gpu_pipeline_360_distortion_FBP,
-#         method=[
-#             "standard_tomo",
-#             "normalize",
-#             "find_center_360",
-#             "find_center_360",
-#             "find_center_360",
-#             "sino_360_to_180",
-#             "distortion_correction_proj_discorpy",
-#             "FBP",
-#         ],
-#         key=[
-#             "preview",
-#             "minus_log",
-#             "ind",
-#             "use_overlap",
-#             "norm",
-#             "rotation",
-#             "metadata_path",
-#             "neglog",
-#         ],
-#         value=[
-#             {"detector_y": {"start": 900, "stop": 1200}},
-#             False,
-#             "mid",
-#             True,
-#             True,
-#             "right",
-#             "/data/tomography/raw_data/i13/360/179623_coeff.txt",
-#             True,
-#         ],
-#     )
-
-#     cmd.pop(4)  #: don't save all
-#     cmd.insert(5, i13_179623)
-#     cmd.insert(7, gpu_pipeline_360_distortion_FBP)
-#     cmd.insert(8, output_folder)
-
-#     subprocess.check_output(cmd)
-
-#     files = get_files(output_folder)
-
-#     #: check the generated reconstruction (hdf5 file)
-#     h5_files = list(filter(lambda x: ".h5" in x, files))
-#     assert len(h5_files) == 1
-
-#     # load the pre-saved numpy array for comparison bellow
-#     data_gt = gpu_FBP_distortion_i13_179623_npz["data"]
-#     axis_slice = gpu_FBP_distortion_i13_179623_npz["axis_slice"]
-#     (slices, sizeX, sizeY) = np.shape(data_gt)
-
-#     step = axis_slice // (slices + 2)
-#     # store for the result
-#     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-#     path_to_data = "data/"
-#     h5_file_name = "httomolibgpu-FBP"
-#     for file_to_open in h5_files:
-#         if h5_file_name in file_to_open:
-#             h5f = h5py.File(file_to_open, "r")
-#             index_prog = step
-#             for i in range(slices):
-#                 data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-#                 index_prog += step
-#             h5f.close()
-#         else:
-#             message_str = f"File name with {h5_file_name} string cannot be found."
-#             raise FileNotFoundError(message_str)
-
-#     residual_im = data_gt - data_result
-#     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
-#     assert res_norm < 1e-6
+    residual_im = data_gt - data_result
+    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    assert res_norm < 1e-6
 
 
 # ########################################################################

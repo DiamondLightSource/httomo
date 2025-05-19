@@ -172,8 +172,8 @@ def FBP3d_tomobar_noimagesaving():
 
 
 # @pytest.fixture
-# def cpu_pipeline_gridrec():
-#     return "docs/source/pipelines_full/cpu_pipeline_gridrec.yaml"
+# def tomopy_gridrec_directive():
+#     return "docs/source/pipelines_full/tomopy_gridrec_directive.yaml"
 
 
 # @pytest.fixture
@@ -191,14 +191,14 @@ def FBP3d_tomobar_denoising():
 #     return "docs/source/pipelines_full/gpu_diad_FBP.yaml"
 
 
-# @pytest.fixture
-# def gpu_pipeline_360_paganin_FBP():
-#     return "docs/source/pipelines_full/gpu_360_paganin_FBP.yaml"
+@pytest.fixture
+def deg360_paganin_FBP3d_tomobar():
+    return "docs/source/pipelines_full/deg360_paganin_FBP3d_tomobar.yaml"
 
 
-# @pytest.fixture
-# def gpu_pipeline_360_distortion_FBP():
-#     return "docs/source/pipelines_full/gpu_360_distortion_FBP.yaml"
+@pytest.fixture
+def deg360_distortion_FBP3d_tomobar():
+    return "docs/source/pipelines_full/deg360_distortion_FBP3d_tomobar.yaml"
 
 
 ########### Sweep pipelines ###############
@@ -282,16 +282,20 @@ def FBP3d_tomobar_TVdenoising_i13_177906():
     )
 
 
-# @pytest.fixture
-# def gpu_FBP_paganin_i13_179623_npz():
-#     # 10 slices numpy array
-#     return np.load("tests/test_data/raw_data/i13/360/gpu_FBP_paganin_i13_179623.npz")
+@pytest.fixture
+def FBP3d_tomobar_paganin_i13_179623():
+    # 10 slices numpy array
+    return np.load(
+        "tests/test_data/raw_data/i13/360/FBP3d_tomobar_paganin_i13_179623.npz"
+    )
 
 
-# @pytest.fixture
-# def gpu_FBP_distortion_i13_179623_npz():
-#     # 10 slices numpy array
-#     return np.load("tests/test_data/raw_data/i13/360/gpu_FBP_distortion_i13_179623.npz")
+@pytest.fixture
+def FBP3d_tomobar_distortion_i13_179623():
+    # 10 slices numpy array
+    return np.load(
+        "tests/test_data/raw_data/i13/360/FBP3d_tomobar_distortion_i13_179623.npz"
+    )
 
 
 # @pytest.fixture
