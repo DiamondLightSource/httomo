@@ -262,10 +262,10 @@ def FBP3d_tomobar_k11_38731_npz():
     return np.load("tests/test_data/raw_data/diad/FBP3d_tomobar_k11-38731.npz")
 
 
-# @pytest.fixture
-# def gpu_diad_FBP_k11_38730_npz():
-#     # 10 slices numpy array
-#     return np.load("tests/test_data/raw_data/diad/gpu_diad_FBP_k11-38730.npz")
+@pytest.fixture
+def FBP3d_tomobar_k11_38730_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/diad/FBP3d_tomobar_k11-38730.npz")
 
 
 # @pytest.fixture
