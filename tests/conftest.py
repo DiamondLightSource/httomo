@@ -202,9 +202,9 @@ def deg360_distortion_FBP3d_tomobar():
 
 
 ########### Sweep pipelines ###############
-# @pytest.fixture
-# def gpu_pipeline_sweep_FBP():
-#     return "docs/source/pipelines_full/gpu_pipeline_sweep_FBP.yaml"
+@pytest.fixture
+def sweep_center_FBP3d_tomobar():
+    return "docs/source/pipelines_full/sweep_center_FBP3d_tomobar.yaml"
 
 
 # ---------------------END------------------------#
@@ -298,10 +298,10 @@ def FBP3d_tomobar_distortion_i13_179623():
     )
 
 
-# @pytest.fixture
-# def gpu_pipeline_sweep_FBP_i13_177906_tiffs():
-#     # several tiff files
-#     return "tests/test_data/raw_data/i13/177906_sweep_tiffs/"
+@pytest.fixture
+def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
+    # several tiff files
+    return "tests/test_data/raw_data/i13/177906_sweep_tiffs/"
 
 
 # ---------------------END------------------------#
