@@ -309,7 +309,30 @@ from .conftest import change_value_parameters_method_pipeline, check_tif, compar
 
 
 # ########################################################################
+# @pytest.mark.full_data
+# def test_pipe_FBP3d_tomobar_i12_119621_preview(
+#     get_files: Callable,
+#     cmd,
+#     i13_177906,
+#     FBP3d_tomobar_denoising,
+#     FBP3d_tomobar_TVdenoising_i13_177906,
+#     output_folder,
+# ):
 
+#     change_value_parameters_method_pipeline(
+#         FBP3d_tomobar_denoising,
+#         method=[
+#             "standard_tomo",
+#         ],
+#         key=[
+#             "preview",
+#         ],
+#         value=[
+#             {"detector_y": {"start": 900, "stop": 1200}},
+#         ],
+#     )
+
+# ########################################################################
 
 # @pytest.mark.full_data
 # def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
@@ -438,7 +461,7 @@ def test_pipe_360deg_paganin_FBP3d_tomobar_i13_179623_preview(
             "alpha",
         ],
         value=[
-            {"detector_y": {"start": 900, "stop": 1150}},
+            {"detector_y": {"start": 900, "stop": 1200}},
             False,
             "mid",
             "right",
