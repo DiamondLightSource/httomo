@@ -254,9 +254,9 @@ def i13_179623():
 
 
 @pytest.fixture
-def i12_119621():
-    # 1.8k projections, 20gb dataset, 120 degrees scan
-    return "tests/test_data/raw_data/i12/119621.nxs"
+def i12_119647():
+    # 1.8k projections, 20gb dataset, 180 degrees scan
+    return "tests/test_data/raw_data/i12/119647.nxs"
 
 
 ############## --Ground Truth references-- #################
@@ -272,6 +272,18 @@ def FBP3d_tomobar_k11_38731_npz():
 def FBP3d_tomobar_k11_38730_npz():
     # 10 slices numpy array
     return np.load("tests/test_data/raw_data/diad/FBP3d_tomobar_k11-38730.npz")
+
+
+@pytest.fixture
+def FBP3d_tomobar_i12_119647_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/i12/FBP3d_tomobar_i12_119647.npz")
+
+
+# @pytest.fixture
+# def FBP2d_astra_i12_119647_npz():
+#     # 10 slices numpy array
+#     return np.load("tests/test_data/raw_data/i12/FBP2d_astra_i12_119647.npz")
 
 
 # @pytest.fixture
