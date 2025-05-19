@@ -280,10 +280,10 @@ def FBP3d_tomobar_i12_119647_npz():
     return np.load("tests/test_data/raw_data/i12/FBP3d_tomobar_i12_119647.npz")
 
 
-# @pytest.fixture
-# def FBP2d_astra_i12_119647_npz():
-#     # 10 slices numpy array
-#     return np.load("tests/test_data/raw_data/i12/FBP2d_astra_i12_119647.npz")
+@pytest.fixture
+def FBP2d_astra_i12_119647_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/i12/FBP2d_astra_i12_119647.npz")
 
 
 # @pytest.fixture
