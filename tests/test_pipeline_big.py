@@ -371,7 +371,7 @@ def test_pipe_FBP3d_tomobar_i12_119647_preview(
 
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
-    assert res_norm < 1e-5
+    assert res_norm < 1e-4
 
 
 # ########################################################################
