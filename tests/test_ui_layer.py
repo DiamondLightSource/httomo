@@ -12,8 +12,8 @@ from .testing_utils import make_test_method
 # TODO: add files with invalid syntax
 
 
-def test_can_read_cpu_pipeline(cpu_pipeline_gridrec: str):
-    pipline_stage_config = ui_layer.yaml_loader(Path(cpu_pipeline_gridrec))
+def test_can_read_cpu_pipeline(tomopy_gridrec: str):
+    pipline_stage_config = ui_layer.yaml_loader(Path(tomopy_gridrec))
 
     assert len(pipline_stage_config) == 9
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -37,8 +37,8 @@ def test_can_read_cpu_pipeline(cpu_pipeline_gridrec: str):
     assert pipline_stage_config[8]["module_path"] == "httomolib.misc.images"
 
 
-def test_can_read_gpu_pipeline(gpu_pipelineFBP: str):
-    pipline_stage_config = ui_layer.yaml_loader(Path(gpu_pipelineFBP))
+def test_can_read_gpu_pipeline(FBP3d_tomobar: str):
+    pipline_stage_config = ui_layer.yaml_loader(Path(FBP3d_tomobar))
 
     assert len(pipline_stage_config) == 9
     assert pipline_stage_config[0]["method"] == "standard_tomo"
@@ -52,7 +52,7 @@ def test_can_read_gpu_pipeline(gpu_pipelineFBP: str):
     assert pipline_stage_config[3]["module_path"] == "httomolibgpu.prep.normalize"
     assert pipline_stage_config[4]["method"] == "remove_all_stripe"
     assert pipline_stage_config[4]["module_path"] == "httomolibgpu.prep.stripe"
-    assert pipline_stage_config[5]["method"] == "FBP"
+    assert pipline_stage_config[5]["method"] == "FBP3d_tomobar"
     assert pipline_stage_config[5]["module_path"] == "httomolibgpu.recon.algorithm"
     assert pipline_stage_config[6]["method"] == "calculate_stats"
     assert pipline_stage_config[6]["module_path"] == "httomo.methods"
@@ -69,9 +69,9 @@ def test_uilayer_fails_with_nonexistant_file(file: str):
         UiLayer(Path(file), Path("doesnt_matter"), comm=comm)
 
 
-def test_pipeline_build_no_loader(cpu_pipeline_gridrec: str, standard_data: str):
+def test_pipeline_build_no_loader(tomopy_gridrec: str, standard_data: str):
     comm = MPI.COMM_NULL
-    LayerUI = UiLayer(Path(cpu_pipeline_gridrec), Path(standard_data), comm=comm)
+    LayerUI = UiLayer(Path(tomopy_gridrec), Path(standard_data), comm=comm)
     del LayerUI.PipelineStageConfig[0]
     with pytest.raises(ValueError) as e:
         LayerUI.build_pipeline()
@@ -79,9 +79,9 @@ def test_pipeline_build_no_loader(cpu_pipeline_gridrec: str, standard_data: str)
     assert "no loader" in str(e)
 
 
-def test_pipeline_build_duplicate_id(cpu_pipeline_gridrec: str, standard_data: str):
+def test_pipeline_build_duplicate_id(tomopy_gridrec: str, standard_data: str):
     comm = MPI.COMM_NULL
-    LayerUI = UiLayer(Path(cpu_pipeline_gridrec), Path(standard_data), comm=comm)
+    LayerUI = UiLayer(Path(tomopy_gridrec), Path(standard_data), comm=comm)
     LayerUI.PipelineStageConfig[1]["id"] = "testid"
     LayerUI.PipelineStageConfig[2]["id"] = "testid"
     with pytest.raises(ValueError) as e:
@@ -90,10 +90,10 @@ def test_pipeline_build_duplicate_id(cpu_pipeline_gridrec: str, standard_data: s
     assert "duplicate id" in str(e)
 
 
-def test_pipeline_build_cpu_pipeline(standard_data: str, cpu_pipeline_gridrec: str):
+def test_pipeline_build_cpu_pipeline(standard_data: str, tomopy_gridrec: str):
     """Testing OutputRef."""
     comm = MPI.COMM_WORLD
-    LayerUI = UiLayer(Path(cpu_pipeline_gridrec), Path(standard_data), comm=comm)
+    LayerUI = UiLayer(Path(tomopy_gridrec), Path(standard_data), comm=comm)
 
     pipeline = LayerUI.build_pipeline()
 
