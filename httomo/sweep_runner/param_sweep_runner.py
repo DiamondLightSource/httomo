@@ -7,6 +7,7 @@ from mpi4py.MPI import Comm
 import httomo
 from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
 from httomo.method_wrappers.images import ImagesWrapper
+from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.block_split import BlockSplitter
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
@@ -202,8 +203,17 @@ class ParamSweepRunner:
         )
         self._block = sweep_block
 
+    def _pass_min_block_length_to_intermediate_data_wrapper(self, stage: NonSweepStage):
+        assert self._block is not None
+        for method in stage.methods:
+            if isinstance(method, SaveIntermediateFilesWrapper):
+                method.append_config_params(
+                    {"minimum_block_length": self._block.shape[self._block.slicing_dim]}
+                )
+
     def _execute_non_sweep_stage(self, stage: NonSweepStage):
         assert self._block is not None
+        self._pass_min_block_length_to_intermediate_data_wrapper(stage)
         for method in stage.methods:
             log_once(f"Running {method.method_name} ({method.package_name})")
             self._side_output_manager.update_params(method)
