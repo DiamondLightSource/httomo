@@ -10,10 +10,12 @@ from mpi4py import MPI
 from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.method_wrappers.images import ImagesWrapper
+from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.pipeline import Pipeline
 from httomo.preview import PreviewConfig, PreviewDimConfig
+from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import NonSweepStage, Stages, SweepStage
@@ -1016,3 +1018,78 @@ def test_execute_sweep_stage_two_procs_image_wrapper_gets_correct_offset(
     )
     before_sweep_wrapper_setitem_spy.assert_not_called()
     sweep_wrapper_setitem_spy.assert_not_called()
+
+
+def test_passes_minimum_block_length_to_intermediate_wrapper(mocker: MockerFixture):
+    # Define dummy block for loader to provide
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, 3, 160)
+    data = np.ones(PREVIEWED_SLICES_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    loader = make_test_loader(mocker, block=block)
+
+    # The output of the different method wrappers doesn't matter for this test, so mock method
+    # wrappers which return some predetermined instance of `ParamSweepBlock` is sufficient
+    sweep_block = ParamSweepBlock(data=data, aux_data=aux_data, slicing_dim=0)
+
+    # Define mock method wrapper whose output is intended to be saved
+    method_wrapper = make_test_method(mocker=mocker, save_result=True)
+    method_wrapper_spy = mocker.patch.object(method_wrapper, "append_config_params")
+    mocker.patch.object(
+        target=method_wrapper, attribute="execute", side_effect=[sweep_block]
+    )
+
+    # Define intermediate saver wrapper which is placed after the method whose output should be
+    # saved
+    saver_wrapper = mocker.create_autospec(
+        SaveIntermediateFilesWrapper,
+        instance=True,
+        gpu=False,
+        pattern=Pattern.projection,
+        module_path="httomo.methods",
+        method_name="save_intermediate_data",
+        memory_gpu=None,
+        save_result=False,
+        task_id=None,
+        padding=False,
+        sweep=False,
+    )
+    mocker.patch.object(
+        target=saver_wrapper, attribute="execute", side_effect=[sweep_block]
+    )
+    saver_wrapper_spy = mocker.patch.object(saver_wrapper, "append_config_params")
+
+    # Define method wrapper for method which has a parameter sweep defined
+    SWEEP_VALUES = (0,)
+    sweep_wrapper = make_test_method(mocker, param_1=SWEEP_VALUES)
+    mocker.patch.object(
+        target=sweep_wrapper, attribute="execute", side_effect=[sweep_block]
+    )
+    sweep_wrapper_spy = mocker.patch.object(sweep_wrapper, "append_config_params")
+
+    pipeline = Pipeline(
+        loader=loader, methods=[method_wrapper, saver_wrapper, sweep_wrapper]
+    )
+    runner = ParamSweepRunner(pipeline=pipeline, comm=MPI.COMM_WORLD)
+    runner.prepare()
+
+    # The method wrapper before the saver wrapper shouldn't have `append_config_params()`
+    # called at all, whereas the saver wrapper should have `append_config_params()` called once
+    # with the expected `minimum_block_length` value
+    runner.execute_before_sweep()
+    method_wrapper_spy.assert_not_called()
+    saver_wrapper_spy.assert_called_once_with({"minimum_block_length": GLOBAL_SHAPE[1]})
+
+    # The `append_config_params()` method should only be called on the sweep method wrapper for
+    # the parameter on which the sweep is being done on, not for the `minimum_block_length`
+    # parameter
+    runner.execute_sweep()
+    sweep_wrapper_spy.assert_has_calls([mock.call({"param_1": SWEEP_VALUES[0]})])
