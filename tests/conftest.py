@@ -172,8 +172,8 @@ def FBP3d_tomobar_noimagesaving():
 
 
 @pytest.fixture
-def tomopy_gridrec_directive():
-    return "docs/source/pipelines_full/tomopy_gridrec_directive.yaml"
+def tomopy_gridrec():
+    return "docs/source/pipelines_full/tomopy_gridrec.yaml"
 
 
 @pytest.fixture
