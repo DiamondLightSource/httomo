@@ -182,6 +182,11 @@ def FBP3d_tomobar():
 
 
 @pytest.fixture
+def LPRec3d_tomobar():
+    return "docs/source/pipelines_full/LPRec3d_tomobar.yaml"
+
+
+@pytest.fixture
 def FBP2d_astra():
     return "docs/source/pipelines_full/FBP2d_astra.yaml"
 
