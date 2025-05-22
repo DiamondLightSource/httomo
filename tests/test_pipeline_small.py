@@ -25,12 +25,12 @@ def _get_log_contents(file):
 
 
 @pytest.mark.small_data
-def test_run_pipeline_cpu_gridrec(
-    get_files: Callable, cmd, standard_data, cpu_pipeline_gridrec, output_folder
+def test_run_pipeline_tomopy_gridrec(
+    get_files: Callable, cmd, standard_data, tomopy_gridrec, output_folder
 ):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
-    cmd.insert(7, cpu_pipeline_gridrec)
+    cmd.insert(7, tomopy_gridrec)
     cmd.insert(8, output_folder)
 
     subprocess.check_output(cmd)
@@ -59,12 +59,12 @@ def test_run_pipeline_cpu_gridrec(
 
 
 @pytest.mark.small_data
-def test_run_pipeline_gpu_FBP(
-    get_files: Callable, cmd, standard_data, gpu_pipelineFBP, output_folder
+def test_run_pipeline_FBP3d_tomobar(
+    get_files: Callable, cmd, standard_data, FBP3d_tomobar, output_folder
 ):
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
-    cmd.insert(7, gpu_pipelineFBP)
+    cmd.insert(7, FBP3d_tomobar)
     cmd.insert(8, output_folder)
     subprocess.check_output(cmd)
 
@@ -79,13 +79,13 @@ def test_run_pipeline_gpu_FBP(
     assert len(h5_files) == 1
 
     for file_to_open in h5_files:
-        if "httomolibgpu-FBP" in file_to_open:
+        if "FBP3d_tomobar" in file_to_open:
             h5f = h5py.File(file_to_open, "r")
             assert h5f["data"].shape == (160, 128, 160)
             assert h5f["data"].dtype == np.float32
             h5f.close()
         else:
-            raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
+            raise FileNotFoundError("File with FBP3d_tomobar string cannot be found")
 
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     user_log_file = list(filter(lambda x: "user.log" in x, files))
@@ -106,15 +106,15 @@ def test_run_pipeline_gpu_FBP(
 
 
 @pytest.mark.small_data
-def test_run_pipeline_gpu_denoise(
+def test_run_pipeline_FBP3d_tomobar_denoising(
     get_files: Callable,
     cmd,
     standard_data,
-    gpu_pipelineFBP_denoising,
+    FBP3d_tomobar_denoising,
     output_folder,
 ):
     change_value_parameters_method_pipeline(
-        gpu_pipelineFBP_denoising,
+        FBP3d_tomobar_denoising,
         method=[
             "find_center_vo",
             "find_center_vo",
@@ -127,7 +127,7 @@ def test_run_pipeline_gpu_denoise(
 
     cmd.pop(4)  #: don't save all
     cmd.insert(6, standard_data)
-    cmd.insert(7, gpu_pipelineFBP_denoising)
+    cmd.insert(7, FBP3d_tomobar_denoising)
     cmd.insert(8, output_folder)
     subprocess.check_output(cmd)
 
@@ -142,13 +142,13 @@ def test_run_pipeline_gpu_denoise(
     assert len(h5_files) == 1
 
     for file_to_open in h5_files:
-        if "httomolibgpu-FBP" in file_to_open:
+        if "FBP3d_tomobar" in file_to_open:
             h5f = h5py.File(file_to_open, "r")
             assert h5f["data"].shape == (160, 128, 160)
             assert h5f["data"].dtype == np.float32
             h5f.close()
         else:
-            raise FileNotFoundError("File with httomolibgpu-FBP string cannot be found")
+            raise FileNotFoundError("File with FBP3d_tomobar string cannot be found")
 
     verbose_log_file = list(filter(lambda x: "debug.log" in x, files))
     user_log_file = list(filter(lambda x: "user.log" in x, files))
