@@ -47,7 +47,7 @@ The CPU-pipelines mostly use TomoPy methods. They are executed solely on the CPU
 DLS-specific templates
 ----------------------
 
-Those pipelines bellow can be specific to Diamond Light Source processing strategies and can vary between different tomographic beamlines. 
+These pipelines are specific to Diamond Light Source processing strategies and can vary between different tomographic beamlines. 
 
 .. dropdown:: Pipeline for 360-degrees data with automatic CoR/overlap finding and stitching to 180-degrees data. Paganin filter is applied to the data.
 
