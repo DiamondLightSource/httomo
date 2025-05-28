@@ -3,7 +3,7 @@ from typing import Any, Tuple
 from mpi4py import MPI
 from pytest_mock import MockerFixture
 from httomo.runner.output_ref import OutputRef
-from httomo.ui_layer import UiLayer
+from httomo.ui_layer import PipelineFormat, UiLayer
 from httomo import ui_layer
 import pytest
 
@@ -121,6 +121,73 @@ def test_pipeline_build_cpu_pipeline(standard_data: str, tomopy_gridrec: str):
     assert ref.method.method_name == "find_center_vo"
 
 
+def test_build_pipeline_from_json(standard_data: str):
+    json_string = """
+[
+    {
+        "method": "standard_tomo",
+        "module_path": "httomo.data.hdf.loaders",
+        "parameters": {
+            "data_path": "entry1/tomo_entry/data/data",
+            "image_key_path": "entry1/tomo_entry/instrument/detector/image_key",
+            "rotation_angles": {
+                "data_path": "/entry1/tomo_entry/data/rotation_angle"
+            }
+        }
+    },
+    {
+        "method": "find_center_vo",
+        "module_path": "httomolibgpu.recon.rotation",
+        "parameters": {
+            "ind": "mid",
+            "smin": -50,
+            "smax": 50,
+            "srad": 6.0,
+            "step": 0.25,
+            "ratio": 0.5,
+            "drop": 20
+        },
+        "id": "centering",
+        "side_outputs": {
+            "cor": "centre_of_rotation"
+        }
+    },
+    {
+        "method": "normalize",
+        "module_path": "httomolibgpu.prep.normalize",
+        "parameters": {
+            "cutoff": 10.0,
+            "minus_log": true,
+            "nonnegativity": false,
+            "remove_nans": false
+        }
+    },
+    {
+        "method": "FBP3d_tomobar",
+        "module_path": "httomolibgpu.recon.algorithm",
+        "parameters": {
+            "center": "${{centering.side_outputs.centre_of_rotation}}",
+            "filter_freq_cutoff": 0.6,
+            "recon_size": null,
+            "recon_mask_radius": null
+        },
+        "save_result": true
+    }
+]
+"""
+    pipeline = UiLayer(
+        input_pipeline=json_string,
+        in_data_file_path=Path(standard_data),
+        comm=MPI.COMM_WORLD,
+        pipeline_format=PipelineFormat.Json,
+    ).build_pipeline()
+    RECON_METHOD_IDX = 2
+    ref_to_centering = pipeline[RECON_METHOD_IDX]["center"]
+    assert isinstance(ref_to_centering, OutputRef)
+    assert ref_to_centering.mapped_output_name == "centre_of_rotation"
+    assert ref_to_centering.method.method_name == "find_center_vo"
+
+
 @pytest.mark.parametrize(
     "pipeline_file, expected_sweep_vals",
     [
@@ -137,7 +204,7 @@ def test_build_pipeline_with_param_sweeps(
 ):
     pipeline_file_path = Path(__file__).parent / pipeline_file
     ui_layer = UiLayer(
-        tasks_file_path=pipeline_file_path,
+        input_pipeline=pipeline_file_path,
         in_data_file_path=standard_data,
         comm=MPI.COMM_WORLD,
     )
@@ -146,6 +213,28 @@ def test_build_pipeline_with_param_sweeps(
     SWEEP_PARAM_NAME = "size"
     assert SWEEP_PARAM_NAME in sweep_method_wrapper.config_params.keys()
     assert sweep_method_wrapper.config_params[SWEEP_PARAM_NAME] == expected_sweep_vals
+
+
+def test_raise_error_if_pipeline_is_yaml_string(standard_data: str):
+    with pytest.raises(ValueError) as e:
+        UiLayer(
+            input_pipeline="",
+            in_data_file_path=Path(standard_data),
+            comm=MPI.COMM_WORLD,
+            pipeline_format=PipelineFormat.Yaml,
+        )
+    assert "YAML pipelines provided as a string is not supported" in str(e)
+
+
+def test_raise_error_if_pipeline_is_json_file(standard_data: str):
+    with pytest.raises(ValueError) as e:
+        UiLayer(
+            input_pipeline=Path("/some/path/to/pipeline.json"),
+            in_data_file_path=Path(standard_data),
+            comm=MPI.COMM_WORLD,
+            pipeline_format=PipelineFormat.Json,
+        )
+    assert "JSON pipelines provided as a filepath is not supported" in str(e)
 
 
 @pytest.mark.parametrize(
