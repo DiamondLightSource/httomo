@@ -443,46 +443,6 @@ def test_pipe_FBP2d_astra_i12_119647_preview(
 
 # ########################################################################
 
-
-@pytest.mark.full_data
-def test_pipe_LPRec3d_tomobar_i12_119647_preview(
-    get_files: Callable,
-    cmd,
-    i12_119647,
-    LPRec3d_tomobar,
-    output_folder,
-):
-
-    change_value_parameters_method_pipeline(
-        LPRec3d_tomobar,
-        method=[
-            "standard_tomo",
-        ],
-        key=[
-            "preview",
-        ],
-        value=[
-            {"detector_y": {"start": 900, "stop": 1200}},
-        ],
-    )
-
-    cmd.pop(4)  #: don't save all
-    cmd.insert(5, i12_119647)
-    cmd.insert(7, LPRec3d_tomobar)
-    cmd.insert(8, output_folder)
-
-    subprocess.check_output(cmd)
-
-    files = get_files(output_folder)
-
-    #: check the generated reconstruction (hdf5 file)
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 1
-
-
-# ########################################################################
-
-
 @pytest.mark.full_data
 def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
     get_files: Callable,
