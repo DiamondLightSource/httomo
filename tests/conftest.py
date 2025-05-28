@@ -153,18 +153,6 @@ def standard_image_key_path():
     return "/entry1/tomo_entry/instrument/detector/image_key"
 
 
-# TODO: depricate when loader is generalised (big data tests instead)
-@pytest.fixture
-def diad_data():
-    return "tests/test_data/k11_diad/k11-18014.nxs"
-
-
-# TODO: depricate when loader is generalised
-@pytest.fixture
-def diad_loader():
-    return "tests/samples/loader_configs/diad.yaml"
-
-
 @pytest.fixture
 def standard_loader():
     return "tests/samples/loader_configs/standard_tomo.yaml"
@@ -179,44 +167,44 @@ def sample_pipelines():
 
 
 @pytest.fixture
-def cpu_pipeline_gridrec():
-    return "docs/source/pipelines_full/cpu_pipeline_gridrec.yaml"
+def FBP3d_tomobar_noimagesaving():
+    return "docs/source/pipelines_full/FBP3d_tomobar_noimagesaving.yaml"
 
 
 @pytest.fixture
-def gpu_pipelineFBP():
-    return "docs/source/pipelines_full/gpu_pipelineFBP.yaml"
+def tomopy_gridrec():
+    return "docs/source/pipelines_full/tomopy_gridrec.yaml"
 
 
 @pytest.fixture
-def gpu_pipelineFBP_denoising():
-    return "docs/source/pipelines_full/gpu_pipelineFBP_denoising.yaml"
+def FBP3d_tomobar():
+    return "docs/source/pipelines_full/FBP3d_tomobar.yaml"
 
 
 @pytest.fixture
-def gpu_pipeline_diad_FBP_noimagesaving():
-    return "docs/source/pipelines_full/gpu_diad_FBP_noimagesaving.yaml"
+def FBP2d_astra():
+    return "docs/source/pipelines_full/FBP2d_astra.yaml"
 
 
 @pytest.fixture
-def gpu_pipeline_diad_FBP():
-    return "docs/source/pipelines_full/gpu_diad_FBP.yaml"
+def FBP3d_tomobar_denoising():
+    return "docs/source/pipelines_full/FBP3d_tomobar_denoising.yaml"
 
 
 @pytest.fixture
-def gpu_pipeline_360_paganin_FBP():
-    return "docs/source/pipelines_full/gpu_360_paganin_FBP.yaml"
+def deg360_paganin_FBP3d_tomobar():
+    return "docs/source/pipelines_full/deg360_paganin_FBP3d_tomobar.yaml"
 
 
 @pytest.fixture
-def gpu_pipeline_360_distortion_FBP():
-    return "docs/source/pipelines_full/gpu_360_distortion_FBP.yaml"
+def deg360_distortion_FBP3d_tomobar():
+    return "docs/source/pipelines_full/deg360_distortion_FBP3d_tomobar.yaml"
 
 
 ########### Sweep pipelines ###############
 @pytest.fixture
-def gpu_pipeline_sweep_FBP():
-    return "docs/source/pipelines_full/gpu_pipeline_sweep_FBP.yaml"
+def sweep_center_FBP3d_tomobar():
+    return "docs/source/pipelines_full/sweep_center_FBP3d_tomobar.yaml"
 
 
 # ---------------------END------------------------#
@@ -265,41 +253,65 @@ def i13_179623():
     return "tests/test_data/raw_data/i13/360/179623.nxs"
 
 
+@pytest.fixture
+def i12_119647():
+    # 1.8k projections, 20gb dataset, 180 degrees scan
+    return "tests/test_data/raw_data/i12/119647.nxs"
+
+
 ############## --Ground Truth references-- #################
 
 
 @pytest.fixture
-def gpu_diad_FBP_k11_38731_npz():
+def FBP3d_tomobar_k11_38731_npz():
     # 10 slices numpy array
-    return np.load("tests/test_data/raw_data/diad/gpu_diad_FBP_k11-38731.npz")
+    return np.load("tests/test_data/raw_data/diad/FBP3d_tomobar_k11-38731.npz")
 
 
 @pytest.fixture
-def gpu_diad_FBP_k11_38730_npz():
+def FBP3d_tomobar_k11_38730_npz():
     # 10 slices numpy array
-    return np.load("tests/test_data/raw_data/diad/gpu_diad_FBP_k11-38730.npz")
+    return np.load("tests/test_data/raw_data/diad/FBP3d_tomobar_k11-38730.npz")
 
 
 @pytest.fixture
-def gpu_FBP_TVdenoising_i13_177906_npz():
+def FBP3d_tomobar_i12_119647_npz():
     # 10 slices numpy array
-    return np.load("tests/test_data/raw_data/i13/gpu_FBP_TVdenoising_i13_177906.npz")
+    return np.load("tests/test_data/raw_data/i12/FBP3d_tomobar_i12_119647.npz")
 
 
 @pytest.fixture
-def gpu_FBP_paganin_i13_179623_npz():
+def FBP2d_astra_i12_119647_npz():
     # 10 slices numpy array
-    return np.load("tests/test_data/raw_data/i13/360/gpu_FBP_paganin_i13_179623.npz")
+    return np.load("tests/test_data/raw_data/i12/FBP2d_astra_i12_119647.npz")
 
 
 @pytest.fixture
-def gpu_FBP_distortion_i13_179623_npz():
+def FBP3d_tomobar_TVdenoising_i13_177906_npz():
     # 10 slices numpy array
-    return np.load("tests/test_data/raw_data/i13/360/gpu_FBP_distortion_i13_179623.npz")
+    return np.load(
+        "tests/test_data/raw_data/i13/FBP3d_tomobar_TVdenoising_i13_177906.npz"
+    )
 
 
 @pytest.fixture
-def gpu_pipeline_sweep_FBP_i13_177906_tiffs():
+def FBP3d_tomobar_paganin_i13_179623_npz():
+    # 10 slices numpy array
+    return np.load(
+        "tests/test_data/raw_data/i13/360/FBP3d_tomobar_paganin_i13_179623.npz"
+    )
+
+
+@pytest.fixture
+def FBP3d_tomobar_distortion_i13_179623_npz():
+    # 10 slices numpy array
+    return np.load(
+        "tests/test_data/raw_data/i13/360/FBP3d_tomobar_distortion_i13_179623.npz"
+    )
+
+
+@pytest.fixture
+def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
     # several tiff files
     return "tests/test_data/raw_data/i13/177906_sweep_tiffs/"
 
