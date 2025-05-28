@@ -290,13 +290,6 @@ def FBP2d_astra_i12_119647_npz():
     # 10 slices numpy array
     return np.load("tests/test_data/raw_data/i12/FBP2d_astra_i12_119647.npz")
 
-
-# @pytest.fixture
-# def gpu_FBP3d_i13_177906_npz():
-#     # 10 slices numpy array
-#     return np.load("tests/test_data/raw_data/i13/gpu_FBP3d_i13_177906.npz")
-
-
 @pytest.fixture
 def FBP3d_tomobar_TVdenoising_i13_177906_npz():
     # 10 slices numpy array
