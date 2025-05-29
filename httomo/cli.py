@@ -4,7 +4,7 @@ from pathlib import Path, PurePath
 from shutil import copy
 import sys
 import tempfile
-from typing import List, Optional, TextIO, Union,Any
+from typing import List, Optional, TextIO, Union, Any
 
 import click
 from mpi4py import MPI
@@ -19,17 +19,19 @@ from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.transform_layer import TransformLayer
 from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
-from httomo.ui_layer import UiLayer,PipelineFormat
+from httomo.ui_layer import UiLayer, PipelineFormat
 
 from . import __version__
+
 
 class PipelineFilePathOrString(click.ParamType):
     """
     Parameter that is either a pipeline filepath or a string containing pipeline data in an
     external format (for example, YAML or JSON).
     """
+
     name = "pipeline_filepath_or_string"
-    
+
     def __init__(self, types) -> None:
         self.types = types
 
@@ -46,7 +48,6 @@ class PipelineFilePathOrString(click.ParamType):
         self.fail(
             f"Value '{value}' didn't match any of the accepted types: {self.types}"
         )
-
 
 
 @click.group
@@ -78,9 +79,10 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     # Handle file path case
     if isinstance(pipeline, Path):
         return validate_yaml_config(pipeline, in_data)
-    else: # Handle the string(JSON) case
+    else:  # Handle the string(JSON) case
         raise ValueError("Checking Pipeline in string format is not supported yet.")
-        
+
+
 @main.command()
 @click.argument(
     "in_data_file", type=click.Path(exists=True, dir_okay=False, path_type=Path)
@@ -186,9 +188,9 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
 )
 @click.option(
     "--pipeline-format",
-    type=click.Choice(["Yaml", "Json"],case_sensitive=False),
+    type=click.Choice(["Yaml", "Json"], case_sensitive=False),
     default="Yaml",
-    help="Format of the pipeline input (YAML or JSON)"
+    help="Format of the pipeline input (YAML or JSON)",
 )
 def run(
     in_data_file: Path,
@@ -231,11 +233,13 @@ def run(
         initialise_output_directory(pipeline)
 
     setup_logger(Path(httomo.globals.run_out_dir))
-    
+
     # Convert string to enum
-    format_enum = PipelineFormat.Json if pipeline_format == "Json" else PipelineFormat.Yaml
+    format_enum = (
+        PipelineFormat.Json if pipeline_format == "Json" else PipelineFormat.Yaml
+    )
     pipeline = generate_pipeline(
-        in_data_file, pipeline, save_all, method_wrapper_comm,format_enum
+        in_data_file, pipeline, save_all, method_wrapper_comm, format_enum
     )
 
     if not does_contain_sweep:
@@ -328,7 +332,7 @@ def set_global_constants(
 
 def initialise_output_directory(pipeline: Union[Path, str]) -> None:
     Path.mkdir(httomo.globals.run_out_dir, exist_ok=True)
-    
+
     # If pipeline is a file path, copy it to output directory
     if isinstance(pipeline, Path):
         copy(pipeline, httomo.globals.run_out_dir)
@@ -337,11 +341,21 @@ def initialise_output_directory(pipeline: Union[Path, str]) -> None:
         with open(httomo.globals.run_out_dir / "pipeline.json", "w") as f:
             f.write(pipeline)
 
+
 def generate_pipeline(
-    in_data_file: Path, pipeline: Union[Path,str], save_all: bool, method_wrapper_comm: MPI.Comm,pipeline_format:PipelineFormat
+    in_data_file: Path,
+    pipeline: Union[Path, str],
+    save_all: bool,
+    method_wrapper_comm: MPI.Comm,
+    pipeline_format: PipelineFormat,
 ) -> Pipeline:
     # instantiate UiLayer class for pipeline build
-    init_UiLayer = UiLayer(pipeline, in_data_file, comm=method_wrapper_comm,pipeline_format=pipeline_format)
+    init_UiLayer = UiLayer(
+        pipeline,
+        in_data_file,
+        comm=method_wrapper_comm,
+        pipeline_format=pipeline_format,
+    )
     pipeline = init_UiLayer.build_pipeline()
 
     # perform transformations on pipeline
