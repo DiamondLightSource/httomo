@@ -52,8 +52,8 @@ def test_cli_help_shows_help():
 def test_cli_noargs_shows_help():
     runner = CliRunner()
     result = runner.invoke(main)
-    assert result.exit_code == 0  # Changed from 2 to 0 based on your CLI behavior
-    assert "httomo: Software for High Throughput Tomography" in result.stdout
+    assert result.exit_code == 2
+    assert result.stderr.strip().startswith("Usage: ")
 
 
 def test_cli_check_pass_data_file(standard_loader, standard_data):
