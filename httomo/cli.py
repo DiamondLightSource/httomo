@@ -79,7 +79,7 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     if isinstance(pipeline, Path):
         return validate_yaml_config(pipeline, in_data)
     else: # Handle the string(JSON) case
-        pass
+        raise ValueError("Checking Pipeline in string format is not supported yet.")
         
 @main.command()
 @click.argument(
