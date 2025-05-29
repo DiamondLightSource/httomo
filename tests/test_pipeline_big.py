@@ -450,6 +450,7 @@ def test_pipe_LPRec3d_tomobar_i12_119647_preview(
     cmd,
     i12_119647,
     LPRec3d_tomobar,
+    LPRec3d_tomobar_i12_119647_npz,
     output_folder,
 ):
 
@@ -478,6 +479,33 @@ def test_pipe_LPRec3d_tomobar_i12_119647_preview(
     #: check the generated reconstruction (hdf5 file)
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 1
+    
+    # load the pre-saved numpy array for comparison bellow
+    data_gt = LPRec3d_tomobar_i12_119647_npz["data"]
+    axis_slice = LPRec3d_tomobar_i12_119647_npz["axis_slice"]
+    (slices, sizeX, sizeY) = np.shape(data_gt)
+
+    step = axis_slice // (slices + 2)
+    # store for the result
+    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
+
+    path_to_data = "data/"
+    h5_file_name = "LPRec3d_tomobar"
+    for file_to_open in h5_files:
+        if h5_file_name in file_to_open:
+            h5f = h5py.File(file_to_open, "r")
+            index_prog = step
+            for i in range(slices):
+                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
+                index_prog += step
+            h5f.close()
+        else:
+            message_str = f"File name with {h5_file_name} string cannot be found."
+            raise FileNotFoundError(message_str)
+
+    residual_im = data_gt - data_result
+    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    assert res_norm < 1e-6
 
 
 # ########################################################################

@@ -313,6 +313,13 @@ def FBP3d_tomobar_distortion_i13_179623_npz():
         "tests/test_data/raw_data/i13/360/FBP3d_tomobar_distortion_i13_179623.npz"
     )
 
+@pytest.fixture
+def LPRec3d_tomobar_i12_119647_npz():
+    # 10 slices numpy array
+    return np.load(
+        "tests/test_data/raw_data/i12/LPRec3d_tomobar_i12_119647.npz"
+    )
+
 
 @pytest.fixture
 def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
