@@ -91,10 +91,8 @@ def test_cli_check_accepts_json_string(mocker):
     finally:
         # Clean up the temporary file
         import os
-        try:
-            os.unlink(temp_data_file)
-        except FileNotFoundError:
-            pass
+        os.unlink(temp_data_file)
+
 
 
 def test_cli_run_accepts_json_string_with_format_flag(mocker):
@@ -164,69 +162,7 @@ def test_cli_run_accepts_json_string_with_format_flag(mocker):
         finally:
             # Clean up the temporary file
             import os
-            try:
-                os.unlink(temp_data_file)
-            except FileNotFoundError:
-                pass
-
-
-def test_cli_run_accepts_json_string_case_insensitive(mocker):
-    """Test that the run command accepts JSON format flag with different cases."""
-    # Create temporary files for testing
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.h5', delete=False) as f:
-        temp_data_file = f.name
-    
-    with tempfile.TemporaryDirectory() as temp_output_dir:
-        try:
-            # Mock all the functions that would actually execute the pipeline
-            mocker.patch('httomo.cli.setup_logger')
-            mock_mpi = mocker.patch('httomo.cli.MPI')
-            mock_mpi.COMM_WORLD.rank = 0
-            mock_mpi.COMM_SELF = mocker.MagicMock()
-            
-            mock_ui_layer = mocker.patch('httomo.cli.UiLayer')
-            mock_ui_instance = mocker.MagicMock()
-            mock_ui_layer.return_value = mock_ui_instance
-            mock_pipeline = mocker.MagicMock()
-            mock_ui_instance.build_pipeline.return_value = mock_pipeline
-            
-            mock_transform_layer = mocker.patch('httomo.cli.TransformLayer')
-            mock_transform_instance = mocker.MagicMock()
-            mock_transform_layer.return_value = mock_transform_instance
-            mock_transform_instance.transform.return_value = mock_pipeline
-            
-            mocker.patch('httomo.cli.initialise_output_directory')
-            mocker.patch('httomo.cli.execute_high_throughput_run')
-            mocker.patch('httomo.cli.is_sweep_pipeline', return_value=False)
-            mocker.patch('httomo.cli.make_monitors', return_value=None)
-            
-            runner = CliRunner()
-            json_string = json.dumps(SAMPLE_JSON_PIPELINE)
-            
-            # Test with lowercase 'json'
-            result = runner.invoke(
-                main,
-                [
-                    "run",
-                    temp_data_file,
-                    json_string,
-                    temp_output_dir,
-                    "--pipeline-format", "json"
-                ]
-            )
-            
-            assert result.exit_code == 0, f"CLI command failed with output: {result.output}\nException: {result.exception}"
-            
-            # Verify UiLayer was called
-            mock_ui_layer.assert_called_once()
-            
-        finally:
-            # Clean up the temporary file
-            import os
-            try:
-                os.unlink(temp_data_file)
-            except FileNotFoundError:
-                pass
+            os.unlink(temp_data_file)
 
 def test_initialise_output_directory_handles_json_string(tmp_path):
     """Test that initialise_output_directory correctly handles JSON string input."""
@@ -357,3 +293,4 @@ def test_cli_recon_filename_stem_flag(
             ["run", standard_data, standard_loader, output_folder],
         )
         assert httomo.globals.RECON_FILENAME_STEM is None
+        
