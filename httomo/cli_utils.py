@@ -6,7 +6,7 @@ MANUAL_SWEEP_TAG = "!Sweep"
 RANGE_SWEEP_TAG = "!SweepRange"
 
 
-def is_sweep_pipeline(pipeline: Union[Path, str, List, Dict]) -> bool:
+def is_sweep_pipeline(pipeline: Union[Path, str]) -> bool:
     """
     Determine if the given pipeline contains a parameter sweep.
     
