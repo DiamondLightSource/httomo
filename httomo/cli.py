@@ -201,7 +201,7 @@ def run(
     max_cpu_slices: int,
     max_memory: str,
     monitor: List[str],
-    pipeline_format: PipelineFormat,
+    pipeline_format: str,
     monitor_output: TextIO,
     intermediate_format: str,
     compress_intermediate: bool,
