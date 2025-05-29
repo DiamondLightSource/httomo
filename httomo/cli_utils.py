@@ -81,9 +81,5 @@ def _contains_sweep_parameter(params: Dict[str, Any]) -> bool:
         if isinstance(value, list) and not isinstance(value, str) and len(value) > 1:
             return True
         
-        # Recursively check nested dictionaries
-        if isinstance(value, dict):
-            if _contains_sweep_parameter(value):
-                return True
-    
     return False
+
