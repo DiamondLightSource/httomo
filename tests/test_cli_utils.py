@@ -20,7 +20,7 @@ def test_is_sweep_pipeline_file(pipeline_file: Path, expected_is_sweep_pipeline:
 
 def test_is_sweep_pipeline_dict_with_range():
     """Test is_sweep_pipeline with a JSON string containing a sweep range"""
-    pipeline_dict = '''[
+    pipeline_dict = """[
         {
             "method": "normalize",
             "module_path": "httomolibgpu.prep.normalize",
@@ -33,13 +33,13 @@ def test_is_sweep_pipeline_dict_with_range():
                 "minus_log": true
             }
         }
-    ]'''
+    ]"""
     assert is_sweep_pipeline(pipeline_dict) is True
 
 
 def test_is_sweep_pipeline_dict_with_list():
     """Test is_sweep_pipeline with a JSON string containing a sweep list"""
-    pipeline_dict = '''[
+    pipeline_dict = """[
         {
             "method": "normalize",
             "module_path": "httomolibgpu.prep.normalize",
@@ -48,8 +48,5 @@ def test_is_sweep_pipeline_dict_with_list():
                 "minus_log": true
             }
         }
-    ]'''
+    ]"""
     assert is_sweep_pipeline(pipeline_dict) is True
-
-
-
