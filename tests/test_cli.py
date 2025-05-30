@@ -91,8 +91,9 @@ def test_cli_check_accepts_json_string(mocker):
         os.unlink(temp_data_file)
 
 
-def test_cli_run_accepts_json_string_with_format_flag(mocker):
-    """Test that the run command accepts JSON string input with --pipeline-format=Json."""
+@pytest.mark.parametrize("pipeline_format", ["Json", "json"])
+def test_cli_run_accepts_json_string_with_format_flag(mocker, pipeline_format: str):
+    """Test that the run command accepts JSON string input with --pipeline-format"""
     # Create temporary files for testing
     with tempfile.NamedTemporaryFile(mode="w", suffix=".h5", delete=False) as f:
         temp_data_file = f.name
@@ -132,7 +133,7 @@ def test_cli_run_accepts_json_string_with_format_flag(mocker):
                     json_string,  # PIPELINE comes second
                     temp_output_dir,  # OUT_DIR comes third
                     "--pipeline-format",
-                    "Json",
+                    pipeline_format,
                 ],
             )
 
