@@ -212,7 +212,7 @@ def run(
     frames_per_chunk: int,
     recon_filename_stem: Optional[str],
 ):
-    """Run a pipeline defined in YAML on input data."""
+    """Run a pipeline on input data."""
     set_global_constants(
         out_dir,
         intermediate_format,
