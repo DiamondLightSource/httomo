@@ -16,8 +16,8 @@ RUN micromamba clean -y --all --force-pkgs-dirs
 COPY . .
 RUN micromamba run python -m pip install --no-deps .
 
-FROM mambaorg/micromamba:cuda12.8.1-ubuntu22.04 AS deploy
+FROM nvidia/cuda:12.8.1-base-ubuntu22.04 AS deploy
 
 COPY --from=build /opt/conda /opt/conda
 
-ENTRYPOINT ["micromamba", "run", "python", "-m", "httomo", "run"]
+ENTRYPOINT ["/opt/conda/bin/python", "-m", "httomo", "run"]
