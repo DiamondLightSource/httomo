@@ -113,6 +113,9 @@ The :code:`check` command
     Options:
       --help  Show this message and exit.
 
+.. note:: While HTTomo does support running pipelines in both YAML and JSON format, currently
+   the check functionality is only supported for YAML pipelines.
+
 Arguments
 #########
 
@@ -150,9 +153,9 @@ The :code:`run` command
 .. code-block:: console
 
     $ python -m httomo run --help
-    Usage: python -m httomo run [OPTIONS] IN_DATA_FILE YAML_CONFIG OUT_DIR
+    Usage: python -m httomo run [OPTIONS] IN_DATA_FILE PIPELINE OUT_DIR
 
-      Run a pipeline defined in YAML on input data.
+      Run a pipeline on input data.
 
     Options:
       --output-folder-name DIRECTORY  Define the name of the output folder created
@@ -185,6 +188,7 @@ The :code:`run` command
                                       automatically)  [x>=-1]
       --recon-filename-stem TEXT      Name of output recon file without file
                                       extension (assumes `.h5`)
+      --pipeline-format [yaml|json]   Format of the pipeline input (YAML or JSON)
       --help                          Show this message and exit.
 
 Arguments
@@ -193,7 +197,7 @@ Arguments
 For :code:`run`, there are three *required* arguments:
 
 - :code:`IN_FILE`
-- :code:`YAML_CONFIG`
+- :code:`PIPELINE`
 - :code:`OUT_DIR`
 
 and zero *optional* arguments.
@@ -203,11 +207,14 @@ and zero *optional* arguments.
 
 This is the filepath to the HDF5 input data that you are intending to process.
 
-:code:`YAML_CONFIG` (required)
+:code:`PIPELINE` (required)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is the filepath to the YAML process list file that contains the desired
-processing pipeline.
+Most commonly, this is the filepath to the YAML process list file that contains
+the desired processing pipeline.
+
+HTTomo also supports pipelines in JSON format provided as a string. See
+:ref:`pipeline-format` for specifying the pipeline format.
 
 :code:`OUT_DIR` (required)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -226,7 +233,7 @@ directory created by HTTomo would be
 Options/flags
 #############
 
-The :code:`run` command has 14 options/flags:
+The :code:`run` command has 15 options/flags:
 
 - :code:`--output-folder-name`
 - :code:`--save-all`
@@ -242,6 +249,7 @@ The :code:`run` command has 14 options/flags:
 - :code:`--syslog-port`
 - :code:`--frames-per-chunk`
 - :code:`--recon-filename-stem`
+- :code:`--pipeline-format`
 
 :code:`--output-folder-name`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -471,3 +479,19 @@ before the file extension).
 
 For example, if the desired reconstruction filename is :code:`my-recon.h5`,
 then the flag should be used as :code:`--recon-filename-stem=my-recon`.
+
+.. _pipeline-format:
+
+:code:`--pipeline-format`
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+HTTomo supports running pipelines defined in YAML and JSON format. The format
+of a given pipeline can be specified with this flag by providing a string
+stating either YAML or JSON, where the string is case-insensitive.
+
+The default setting is YAML, so this flag can be omitted if one wishes to run a
+YAML pipeline.
+
+.. note:: HTTomo currently only accepts YAML pipelines as files and JSON
+   pipelines as strings. Ie, both YAML pipelines provided as strings and JSON
+   pipelines provided as files are not currently supported.

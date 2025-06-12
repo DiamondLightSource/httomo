@@ -1,9 +1,5 @@
 FROM mambaorg/micromamba:2.0.8-debian12-slim AS build
 
-USER root
-
-RUN apt update && apt install -y git && apt clean
-
 RUN micromamba install -y python=3.11 blas[build=mkl] 'numpy<2' scipy scikit-image tqdm pyyaml pillow click cuda-version=12.8
 RUN micromamba install -y openmpi=4.1.6 mpi
 RUN micromamba install -y h5py[build=*openmpi*] hdf5plugin
@@ -20,8 +16,8 @@ RUN micromamba clean -y --all --force-pkgs-dirs
 COPY . .
 RUN micromamba run python -m pip install --no-deps .
 
-FROM mambaorg/micromamba:cuda12.8.1-ubuntu22.04 AS deploy
+FROM nvidia/cuda:12.8.1-base-ubuntu22.04 AS deploy
 
 COPY --from=build /opt/conda /opt/conda
 
-ENTRYPOINT ["micromamba", "run", "python", "-m", "httomo", "run"]
+ENTRYPOINT ["/opt/conda/bin/python", "-m", "httomo", "run"]
