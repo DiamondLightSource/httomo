@@ -477,7 +477,7 @@ def test_pipe_LPRec3d_tomobar_i12_119647_preview(
     #: check the generated reconstruction (hdf5 file)
     h5_files = list(filter(lambda x: ".h5" in x, files))
     assert len(h5_files) == 1
-    
+
     # load the pre-saved numpy array for comparison bellow
     data_gt = LPRec3d_tomobar_i12_119647_npz["data"]
     axis_slice = LPRec3d_tomobar_i12_119647_npz["axis_slice"]
@@ -501,12 +501,18 @@ def test_pipe_LPRec3d_tomobar_i12_119647_preview(
             message_str = f"File name with {h5_file_name} string cannot be found."
             raise FileNotFoundError(message_str)
 
+    np.savez(
+        "/dls/i13/data/2024/cm37258-5/processing/reconstruction/179623/temp/result.npz",
+        data=data_result,
+    )
+
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-6
 
 
 # ########################################################################
+
 
 @pytest.mark.full_data
 def test_pipe_FBP2d_astra_i12_119647_preview(
