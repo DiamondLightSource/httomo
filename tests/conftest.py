@@ -200,6 +200,7 @@ def FBP3d_tomobar_denoising():
 def deg360_paganin_FBP3d_tomobar():
     return "docs/source/pipelines_full/deg360_paganin_FBP3d_tomobar.yaml"
 
+
 @pytest.fixture
 def deg360_distortion_FBP3d_tomobar():
     return "docs/source/pipelines_full/deg360_distortion_FBP3d_tomobar.yaml"
@@ -305,6 +306,7 @@ def FBP3d_tomobar_paganin_i13_179623_npz():
         "tests/test_data/raw_data/i13/360/FBP3d_tomobar_paganin_i13_179623.npz"
     )
 
+
 @pytest.fixture
 def FBP3d_tomobar_distortion_i13_179623_npz():
     # 10 slices numpy array
@@ -312,17 +314,11 @@ def FBP3d_tomobar_distortion_i13_179623_npz():
         "tests/test_data/raw_data/i13/360/FBP3d_tomobar_distortion_i13_179623.npz"
     )
 
+
 @pytest.fixture
 def LPRec3d_tomobar_i12_119647_npz():
     # 10 slices numpy array
-    return np.load(
-        "tests/test_data/raw_data/i12/LPRec3d_tomobar_i12_119647.npz"
-    )
-def FBP3d_tomobar_distortion_i13_179623_npz():
-    # 10 slices numpy array
-    return np.load(
-        "tests/test_data/raw_data/i13/360/FBP3d_tomobar_distortion_i13_179623.npz"
-    )
+    return np.load("tests/test_data/raw_data/i12/LPRec3d_tomobar_i12_119647.npz")
 
 
 @pytest.fixture
