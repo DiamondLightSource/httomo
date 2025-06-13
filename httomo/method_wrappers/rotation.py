@@ -219,7 +219,11 @@ class RotationWrapper(GenericMethodWrapper):
         if self.comm.size > 1:
             res = self.comm.bcast(res, root=0)
 
-        cor_str = f"    --->The center of rotation is {res}"
+        if np.size(res) > 1:
+            cor_str = f"    --->The center of rotation, overlap, side and overlap position are {res}"
+        else:
+            cor_str = f"    --->The center of rotation is {res}"
+
         log_once(cor_str)
         return self._process_return_type(res, block)
 
