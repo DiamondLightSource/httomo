@@ -435,7 +435,6 @@ def test_pipe_LPRec3d_tomobar_i12_119647_preview(
         else:
             message_str = f"File name with {h5_file_name} string cannot be found."
             raise FileNotFoundError(message_str)
-    
 
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
