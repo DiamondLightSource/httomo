@@ -219,7 +219,11 @@ class RotationWrapper(GenericMethodWrapper):
         if self.comm.size > 1:
             res = self.comm.bcast(res, root=0)
 
-        cor_str = f"    --->The center of rotation is {res}"
+        if np.size(res) > 1:
+            cor_str = f"    --->The center of rotation, overlap, side and overlap position are {res}"
+        else:
+            cor_str = f"    --->The center of rotation is {res}"
+
         log_once(cor_str)
         return self._process_return_type(res, block)
 
@@ -256,9 +260,9 @@ class RotationWrapper(GenericMethodWrapper):
     def _process_return_type(self, ret: Any, input_block: T) -> T:
         if type(ret) == tuple:
             # cor, overlap, side, overlap_position - from find_center_360
-            self._side_output["cor"] = float(ret[0])
-            self._side_output["overlap"] = float(ret[1])
-            self._side_output["side"] = int(ret[2]) if ret[2] is not None else None
+            self._side_output["cor"] = float(ret[0])  # float
+            self._side_output["overlap"] = float(ret[1])  # float
+            self._side_output["side"] = str(ret[2])  # str left or right
             self._side_output["overlap_position"] = float(ret[3])  # float
         else:
             self._side_output["cor"] = float(ret)
