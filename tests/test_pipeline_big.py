@@ -513,7 +513,7 @@ def test_pipe_FBP2d_astra_i12_119647_preview(
 # ########################################################################
 
 @pytest.mark.full_data
-@pytest_parallel.mark.parallel(2)
+@pytest.mark.mpi
 def test_parallel_pipe_FBP2d_astra_i12_119647_preview(
     get_files: Callable,
     cmd,
@@ -521,7 +521,6 @@ def test_parallel_pipe_FBP2d_astra_i12_119647_preview(
     FBP2d_astra,
     FBP2d_astra_i12_119647_npz,
     output_folder,
-    comm,
 ):
 
     change_value_parameters_method_pipeline(
