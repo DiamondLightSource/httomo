@@ -511,6 +511,7 @@ def test_pipe_FBP2d_astra_i12_119647_preview(
 # ########################################################################
 
 @pytest.mark.full_data
+@pytest.mark.mpi
 def test_parallel_pipe_FBP2d_astra_i12_119647_preview(
     get_files: Callable,
     cmd,
