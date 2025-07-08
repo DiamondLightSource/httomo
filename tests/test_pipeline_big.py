@@ -1,8 +1,6 @@
 import subprocess
 from typing import Callable, List, Tuple, Union
 
-import pytest_parallel
-
 import h5py
 import numpy as np
 import pytest
