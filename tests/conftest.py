@@ -112,6 +112,16 @@ def cmd():
         "--save-all",
     ]
 
+@pytest.fixture
+def cmd2():
+    return [
+        'mpirun -v -np 2 ' + sys.executable,
+        "-m",
+        "httomo",
+        "run",
+        "--save-all",
+    ]
+
 
 @pytest.fixture
 def standard_data():
