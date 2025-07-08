@@ -513,7 +513,7 @@ def test_pipe_FBP2d_astra_i12_119647_preview(
 @pytest.mark.full_data
 def test_parallel_pipe_FBP2d_astra_i12_119647_preview(
     get_files: Callable,
-    cmd2,
+    cmd,
     i12_119647,
     FBP2d_astra,
     FBP2d_astra_i12_119647_npz,
@@ -533,12 +533,12 @@ def test_parallel_pipe_FBP2d_astra_i12_119647_preview(
         ],
     )
 
-    cmd2.pop(4)  #: don't save all
-    cmd2.insert(5, i12_119647)
-    cmd2.insert(7, FBP2d_astra)
-    cmd2.insert(8, output_folder)
+    cmd.pop(4)  #: don't save all
+    cmd.insert(5, i12_119647)
+    cmd.insert(7, FBP2d_astra)
+    cmd.insert(8, output_folder)
 
-    subprocess.check_output(cmd2)
+    subprocess.check_output(cmd)
 
     files = get_files(output_folder)
 
