@@ -113,10 +113,10 @@ def cmd():
     ]
 
 @pytest.fixture
-def cmd2():
-    syspath = os.path.dirname(os.path.realpath(__file__))
+def cmd2():    
     return [
-        'mpirun -v -N 2 ' + str(sys.executable) + " -m mpi4py " + syspath,
+        "mpirun -v -N 2",
+        str(sys.executable),
         "-m",
         "httomo",
         "run",
