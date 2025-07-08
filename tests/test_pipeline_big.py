@@ -509,6 +509,12 @@ def test_pipe_FBP2d_astra_i12_119647_preview(
 
 
 # ########################################################################
+@pytest.mark.full_data
+@pytest.mark.mpi(min_size=2)
+def test_size():
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
+    assert comm.size >= 2
 
 @pytest.mark.full_data
 @pytest.mark.mpi
