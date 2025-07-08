@@ -521,6 +521,7 @@ def test_parallel_pipe_FBP2d_astra_i12_119647_preview(
     FBP2d_astra,
     FBP2d_astra_i12_119647_npz,
     output_folder,
+    comm,
 ):
 
     change_value_parameters_method_pipeline(
