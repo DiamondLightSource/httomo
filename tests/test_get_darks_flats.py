@@ -121,11 +121,13 @@ def test_get_darks_flats_different_file(preview_config: PreviewConfig):
         file=Path(__file__).parent / "test_data/i12/separate_flats_darks/dark_field.h5",
         data_path="/1-NoProcessPlugin-tomo/data",
         image_key_path=None,
+        ignore=False,
     )
     FLATS_CONFIG = DarksFlatsFileConfig(
         file=Path(__file__).parent / "test_data/i12/separate_flats_darks/flat_field.h5",
         data_path="/1-NoProcessPlugin-tomo/data",
         image_key_path=None,
+        ignore=False,
     )
 
     loaded_darks, loaded_flats = get_darks_flats(
