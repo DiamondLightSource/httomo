@@ -285,12 +285,14 @@ class DarksFlatsParam(TypedDict):
     file: str
     data_path: str
     image_key_path: Optional[str]
+    ignore: bool
 
 
 def parse_darks_flats(
     data_config: DataConfig,
     image_key_path: Optional[str],
     config: Optional[DarksFlatsParam],
+    ignore: bool,
 ) -> DarksFlatsFileConfig:
     """
     Convert python dict representing darks/flats information generated from parsing the
@@ -302,7 +304,7 @@ def parse_darks_flats(
     data_path = config["data_path"] if config is not None else data_config.data_path
     image_key_path = config["image_key_path"] if config is not None else image_key_path
     return DarksFlatsFileConfig(
-        file=in_file, data_path=data_path, image_key_path=image_key_path
+        file=in_file, data_path=data_path, image_key_path=image_key_path, ignore=ignore
     )
 
 
@@ -384,13 +386,25 @@ def parse_config(
     data_config = DataConfig(in_file=input_file, data_path=str(data_path))
 
     darks_value = config.get("darks", None)
+    ignore_darks = False
+    if darks_value == "ignore":
+        ignore_darks = True  # ignore darks in the data
+        darks_value = None
     if darks_value is not None and "image_key_path" not in darks_value:
         darks_value["image_key_path"] = None
-    darks_config = parse_darks_flats(data_config, image_key_path, darks_value)
+    darks_config = parse_darks_flats(
+        data_config, image_key_path, darks_value, ignore=ignore_darks
+    )
     flats_value = config.get("flats", None)
+    ignore_flats = False
+    if flats_value == "ignore":
+        ignore_flats = True  # ignore flats in the data
+        flats_value = None
     if flats_value is not None and "image_key_path" not in flats_value:
         flats_value["image_key_path"] = None
-    flats_config = parse_darks_flats(data_config, image_key_path, flats_value)
+    flats_config = parse_darks_flats(
+        data_config, image_key_path, flats_value, ignore=ignore_flats
+    )
 
     return (
         data_config,

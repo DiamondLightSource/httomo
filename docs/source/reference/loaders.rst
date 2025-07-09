@@ -104,11 +104,10 @@ To configure the loader to handle such cases, please refer to
 :ref:`user_defined_angles`.
 
 
-Loading the separate darks and flats
-====================================
+Dealing with darks and flats
+============================
 
-It can be the case that darks and flats are written to separate
-hdf5/NeXuS files. HTTomo currently supports two options, detailed in the two subsections below.
+HTTomo currently supports several options to deal with the flats and darks images.
 
 Files that do not contain image keys
 ++++++++++++++++++++++++++++++++++++
@@ -150,6 +149,29 @@ in the older scan should be ignored. In this instance, we need to provide a para
           image_key_path: /entry1/tomo_entry/instrument/detector/image_key          
         
 .. _user_defined_angles:
+
+Data without darks/flats
+++++++++++++++++++++++++
+
+It is also possible to process the data that does not contain darks or flats, i.e., the pipeline runs without given darks or flats.
+Nothing specific should be done about it in the loader.  
+
+Ignore darks/flats
+++++++++++++++++++
+
+This is the case when darks or flats still present in the dataset, but one needs to ignore either of them or one of them. This can be done by providing  
+the keyword :code:`ignore` into the loader, like in the example bellow where both flats and darks are ignored:
+
+.. code-block:: yaml
+   :emphasize-lines:7,8
+
+
+    - method: standard_tomo
+      module_path: httomo.data.hdf.loaders
+      parameters:
+        darks: ignore
+        flats: ignore
+
 
 Providing/Overriding Angles Data
 ================================

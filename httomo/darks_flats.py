@@ -20,8 +20,8 @@ class DarksFlatsFileConfig(NamedTuple):
     Notes
     -----
 
-    There are currently three supported configurations for where dark-field or flat-field images
-    can be loaded from:
+    There are currently FIVE supported configurations for where dark-field or flat-field images
+    can be loaded OR ignored:
 
     1. Dark-field and flat-field images are stored in the same file as the projection images,
     and in the same dataset in that file.
@@ -47,11 +47,18 @@ class DarksFlatsFileConfig(NamedTuple):
     3. Dark-field and flat-field images are stored in separate files with own unique or identical image keys.
     This can be a new dataset or two different dataset. Therefore, the image_key_path parameter should be provided
     for both flats and darks.
+
+    4. Dark-field or flat-field images are not available in the dataset, yet some processing of data is still required
+    (e.g., the case of applying distortion correction only).
+
+    5. Dark-field or flat-field images are available in the dataset but they need to be ignored, for instance to proceed
+    with the other types of data correction or reconstruction avoiding normalisation to d/f.
     """
 
     file: Path
     data_path: str
     image_key_path: Optional[str]
+    ignore: bool
 
 
 def get_darks_flats(
@@ -79,21 +86,47 @@ def get_darks_flats(
         Index zero contains the dark-field images and index one contains the flat-field images.
     """
 
-    def get_together() -> Tuple[np.ndarray, np.ndarray]:
+    def get_together_or_dummy() -> Tuple[np.ndarray, np.ndarray]:
         with h5py.File(darks_config.file, "r") as f:
             darks_indices = np.where(f[darks_config.image_key_path][:] == 2)[0]
             flats_indices = np.where(f[flats_config.image_key_path][:] == 1)[0]
             dataset: h5py.Dataset = f[darks_config.data_path]
-            darks = dataset[
-                darks_indices,
-                preview_config.detector_y.start : preview_config.detector_y.stop,
-                preview_config.detector_x.start : preview_config.detector_x.stop,
-            ]
-            flats = dataset[
-                flats_indices,
-                preview_config.detector_y.start : preview_config.detector_y.stop,
-                preview_config.detector_x.start : preview_config.detector_x.stop,
-            ]
+            if len(darks_indices) == 0 or darks_config.ignore:
+                # there are no darks in the data file OR we need to ignore them, so we generate a dummy array
+                darks = np.zeros(
+                    (
+                        1,
+                        preview_config.detector_y.stop
+                        - preview_config.detector_y.start,
+                        preview_config.detector_x.stop
+                        - preview_config.detector_x.start,
+                    ),
+                    dtype=dataset.dtype,
+                )
+            else:
+                darks = dataset[
+                    darks_indices,
+                    preview_config.detector_y.start : preview_config.detector_y.stop,
+                    preview_config.detector_x.start : preview_config.detector_x.stop,
+                ]
+            if len(flats_indices) == 0 or flats_config.ignore:
+                # there are no flats in the data file and we generate a dummy array
+                flats = np.ones(
+                    (
+                        1,
+                        preview_config.detector_y.stop
+                        - preview_config.detector_y.start,
+                        preview_config.detector_x.stop
+                        - preview_config.detector_x.start,
+                    ),
+                    dtype=dataset.dtype,
+                )
+            else:
+                flats = dataset[
+                    flats_indices,
+                    preview_config.detector_y.start : preview_config.detector_y.stop,
+                    preview_config.detector_x.start : preview_config.detector_x.stop,
+                ]
         return darks, flats
 
     def get_separate(config: DarksFlatsFileConfig):
@@ -107,6 +140,6 @@ def get_darks_flats(
     if darks_config.file != flats_config.file:
         darks = get_separate(darks_config)
         flats = get_separate(flats_config)
-        return darks, flats
+        return darks, flats  # type: ignore
 
-    return get_together()
+    return get_together_or_dummy()
