@@ -433,12 +433,13 @@ def test_parse_data():
 
 
 @pytest.mark.parametrize(
-    "data_config, image_key_path, config, expected_output",
+    "data_config, image_key_path, config, ignore, expected_output",
     [
         (
             DataConfig(Path("/some/path/to/data.nxs"), "/entry1/tomo_entry/data/data"),
             "/entry1/tomo_entry/data/image_key",
             None,
+            False,  # ignore param
             DarksFlatsFileConfig(
                 file=Path("/some/path/to/data.nxs"),
                 data_path="/entry1/tomo_entry/data/data",
@@ -454,6 +455,7 @@ def test_parse_data():
                 "data_path": "/data",
                 "image_key_path": None,
             },
+            False,  # ignore param
             DarksFlatsFileConfig(
                 file=Path("/some/other/path/to/data.h5"),
                 data_path="/data",
@@ -469,6 +471,7 @@ def test_parse_data():
                 "data_path": "/data",
                 "image_key_path": "/path/to/keys/data_two",
             },
+            False,  # ignore param
             DarksFlatsFileConfig(
                 file=Path("/some/path/to/data2.nxs"),
                 data_path="/data",
@@ -476,21 +479,39 @@ def test_parse_data():
                 ignore=False,
             ),
         ),
+        (
+            DataConfig(Path("/some/path/to/data.nxs"), "/entry1/tomo_entry/data/data"),
+            "/path/to/keys/data_one",
+            {
+                "file": "/some/path/to/data2.nxs",
+                "data_path": "/data",
+                "image_key_path": "/path/to/keys/data_two",
+            },
+            True,  # ignore param
+            DarksFlatsFileConfig(
+                file=Path("/some/path/to/data2.nxs"),
+                data_path="/data",
+                image_key_path="/path/to/keys/data_two",
+                ignore=True,
+            ),
+        ),
     ],
     ids=[
         "darks/flats-in-input-file",
         "darks/flats-in-separate-file",
         "darks/flats-in-separate-file-with-image-key",
+        "darks/flats-ignore",
     ],
 )
 def test_parse_darks_flats_(
     data_config: DataConfig,
     image_key_path: Optional[str],
     config: Optional[DarksFlatsParam],
+    ignore: bool,
     expected_output: DarksFlatsFileConfig,
 ):
     assert (
-        parse_darks_flats(data_config, image_key_path, config, ignore=False)
+        parse_darks_flats(data_config, image_key_path, config, ignore)
         == expected_output
     )
 
