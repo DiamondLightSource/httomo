@@ -287,21 +287,19 @@ def test_run_pipeline_FBP3d_tomobar_denoising(
 #     cmd.insert(8, "temp.yaml")
 #     cmd.insert(9, output_folder)
 #     subprocess.check_output(cmd)
-
+#
 #     files = get_files("output_dir/")
 #     assert len(files) == 16
-
-#     _check_yaml(files, "temp.yaml")
-
+#
 #     log_files = list(filter(lambda x: ".log" in x, files))
 #     assert len(log_files) == 1
-
+#
 #     tif_files = list(filter(lambda x: ".tif" in x, files))
 #     assert len(tif_files) == 10
-
+#
 #     h5_files = list(filter(lambda x: ".h5" in x, files))
 #     assert len(h5_files) == 4
-
+#
 #     log_contents = _get_log_contents(log_files[0])
 #     assert "The full dataset shape is (724, 10, 192)" in log_contents
 #     assert (

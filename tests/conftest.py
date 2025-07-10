@@ -118,15 +118,9 @@ def standard_data():
     return "tests/test_data/tomo_standard.nxs"
 
 
-@pytest.fixture
-def data360():
-    return "tests/test_data/360scan/360scan.hdf"
-
-
 @pytest.fixture(scope="session")
 def test_data_path():
     return os.path.join(CUR_DIR, "test_data")
-
 
 @pytest.fixture
 def ensure_clean_memory():
@@ -329,38 +323,14 @@ def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
 
 # ---------------------END------------------------#
 
-
 # TODO: deprecate when loader is generalised
-@pytest.fixture
-def diad_pipeline_gpu():
-    return "tests/samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
-
 
 @pytest.fixture
 def i12_data():
     return "tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
 
 
-# TODO: move to big pipeline tests
-@pytest.fixture
-def pipeline360():
-    return "samples/pipeline_template_examples/DLS/02_i12_360scan_pipeline.yaml"
-
-
-@pytest.fixture
-def i12_loader():
-    return (
-        "tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
-    )
-
-
-@pytest.fixture
-def i12_loader_ignore_darks_flats():
-    return "tests/samples/pipeline_template_examples/DLS/04_i12_ignore_darks_flats.yaml"
-
-
 # ---------------------END------------------------#
-
 
 @pytest.fixture(scope="session")
 def distortion_correction_path(test_data_path):
@@ -390,6 +360,16 @@ def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
         image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
         ignore=False,
     )
+
+@pytest.fixture
+def standard_data_ignore_darks_flats_config() -> DarksFlatsFileConfig:
+    return DarksFlatsFileConfig(
+        file=Path(__file__).parent / "test_data/tomo_standard.nxs",
+        data_path="/entry1/tomo_entry/data/data",
+        image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
+        ignore=True,
+    )
+
 
 
 @pytest.fixture
