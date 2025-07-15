@@ -120,7 +120,6 @@ def cmd2():
         "-m",
         "httomo",
         "run",
-        "--save-all",
     ]
 
 

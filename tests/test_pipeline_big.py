@@ -509,18 +509,11 @@ def test_pipe_FBP2d_astra_i12_119647_preview(
 
 
 # ########################################################################
-@pytest.mark.full_data
-@pytest.mark.mpi(min_size=2)
-def test_size():
-    from mpi4py import MPI
-    comm = MPI.COMM_WORLD
-    assert comm.size >= 2
 
 @pytest.mark.full_data
-@pytest.mark.mpi
 def test_parallel_pipe_FBP2d_astra_i12_119647_preview(
     get_files: Callable,
-    cmd,
+    cmd2,
     i12_119647,
     FBP2d_astra,
     FBP2d_astra_i12_119647_npz,
@@ -540,13 +533,12 @@ def test_parallel_pipe_FBP2d_astra_i12_119647_preview(
         ],
     )
 
-    cmd.pop(4)  #: don't save all
-    cmd.insert(5, i12_119647)
-    cmd.insert(7, FBP2d_astra)
-    cmd.insert(8, output_folder)
+    cmd2.insert(6, i12_119647)
+    cmd2.insert(7, FBP2d_astra)
+    cmd2.insert(8, output_folder)
 
 
-    subprocess.check_output(cmd)
+    subprocess.check_output(cmd2)
 
     files = get_files(output_folder)
 
