@@ -267,7 +267,7 @@ def test_parallel_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
 # ########################################################################
 
 
-@pytest.mark.full_data
+@pytest.mark.full_data_parallel
 def test_parallel_pipe_LPRec3d_tomobar_i12_119647_preview(
     get_files: Callable,
     cmd_mpirun,
