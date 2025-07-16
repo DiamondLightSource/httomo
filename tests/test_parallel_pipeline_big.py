@@ -49,9 +49,9 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_disk(
     cmd_mpirun.insert(10, FBP3d_tomobar_noimagesaving)
     cmd_mpirun.insert(11, output_folder)
     cmd_mpirun.insert(12, "--max-memory")
-    cmd_mpirun.insert(13, "40G")
+    cmd_mpirun.insert(13, "10G")
     cmd_mpirun.insert(14, "--reslice-dir")
-    cmd_mpirun.insert(15, "/scratch/jenkins_agent/workspace/")
+    cmd_mpirun.insert(15, "/data/tomography/temp")
 
 
     process = Popen(cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
