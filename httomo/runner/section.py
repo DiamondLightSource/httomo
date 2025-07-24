@@ -113,6 +113,7 @@ def sectionize(pipeline: Pipeline) -> List[Section]:
     _backpropagate_section_patterns(pipeline, sections)
     _finalize_patterns(pipeline, sections)
     _set_method_patterns(sections)
+    _enable_agnostic_methods(sections)
 
     return sections
 
@@ -157,6 +158,26 @@ def _set_method_patterns(sections: List[Section]):
     for s in sections:
         for m in s:
             m.pattern = s.pattern
+
+
+def _enable_agnostic_methods(sections: List[Section]):
+    for j, s in enumerate(sections):
+        tot_methods_sect = len(s.methods)
+        if tot_methods_sect == 0:
+            return
+        else:
+            if j == 0:
+                m_prev_arch = s[0].implementation
+            for i, m in enumerate(s):
+                m_curr_arch = m.implementation
+                m_next_arch = m_curr_arch
+                if i < tot_methods_sect - 1:
+                    m_next_arch = s[i + 1].implementation
+                if m_prev_arch == "cpu" and m_next_arch == "cpu":
+                    m._implementation = "cpu"
+                # calculate_stats doesn't transfer the data from GPU to CPU, as this is not a library method
+                if m.method_name != "calculate_stats":
+                    m_prev_arch = m_curr_arch
 
 
 def determine_section_padding(section: Section) -> Tuple[int, int]:

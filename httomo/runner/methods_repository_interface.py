@@ -22,7 +22,7 @@ class MethodQuery(Protocol):
         """Check if output dimensions change"""
         ...  # pragma: no cover
 
-    def get_implementation(self) -> Literal["cpu", "gpu", "gpu_cupy"]:
+    def get_implementation(self) -> Literal["gpu", "cpu", "gpu_cupy"]:
         """Check for implementation of the method"""
         ...  # pragma: no cover
 
