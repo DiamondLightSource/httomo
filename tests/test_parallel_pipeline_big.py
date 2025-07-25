@@ -509,3 +509,51 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
 
 
 # ########################################################################
+
+
+@pytest.mark.full_data_parallel
+def test_parallel_pipe_FBP3d_tomobar_k11_38729_in_memory(
+    get_files: Callable,
+    cmd_mpirun,
+    diad_k11_38729,
+    FBP3d_tomobar,
+    FBP3d_tomobar_k11_38731_npz,
+    output_folder,
+):
+
+    change_value_parameters_method_pipeline(
+        FBP3d_tomobar,
+        method=[
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+        ],
+        key=[
+            "data_path",
+            "image_key_path",
+            "rotation_angles",
+        ],
+        value=[
+            "/entry/imaging/data",
+            "/entry/instrument/imaging/image_key",
+            {"data_path": "/entry/imaging_sum/gts_cs_theta"},
+        ],
+    )
+
+    cmd_mpirun.insert(9, diad_k11_38729)
+    cmd_mpirun.insert(10, FBP3d_tomobar)
+    cmd_mpirun.insert(11, output_folder)
+
+    process = Popen(
+        cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE
+    )
+    output, error = process.communicate()
+    print(output)
+
+    files = get_files(output_folder)
+
+    #: check the generated reconstruction (hdf5 file)
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    check_tif(files, 2160, (2560, 2560))
