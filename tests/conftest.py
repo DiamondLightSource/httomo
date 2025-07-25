@@ -122,6 +122,7 @@ def standard_data():
 def test_data_path():
     return os.path.join(CUR_DIR, "test_data")
 
+
 @pytest.fixture
 def ensure_clean_memory():
     import cupy as cp
@@ -325,12 +326,14 @@ def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
 
 # TODO: deprecate when loader is generalised
 
+
 @pytest.fixture
 def i12_data():
     return "tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
 
 
 # ---------------------END------------------------#
+
 
 @pytest.fixture(scope="session")
 def distortion_correction_path(test_data_path):
@@ -361,6 +364,7 @@ def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
         ignore=False,
     )
 
+
 @pytest.fixture
 def standard_data_ignore_darks_flats_config() -> DarksFlatsFileConfig:
     return DarksFlatsFileConfig(
@@ -369,7 +373,6 @@ def standard_data_ignore_darks_flats_config() -> DarksFlatsFileConfig:
         image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
         ignore=True,
     )
-
 
 
 @pytest.fixture

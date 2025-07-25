@@ -69,12 +69,13 @@ def test_ignore_darks_same_file_same_dataset(
             preview_config.detector_x.start : preview_config.detector_x.stop,
         ]
 
-    darks = np.zeros((
+    darks = np.zeros(
+        (
             1,
             preview_config.detector_y.stop - preview_config.detector_y.start,
             preview_config.detector_x.stop - preview_config.detector_x.start,
-             ),
-            dtype=flats.dtype,
+        ),
+        dtype=flats.dtype,
     )
 
     np.testing.assert_array_equal(loaded_flats, flats)
@@ -130,25 +131,27 @@ def test_ignore_darks_and_flats_same_file_same_dataset(
         preview_config,
     )
 
-    flats = np.ones((
+    flats = np.ones(
+        (
             1,
             preview_config.detector_y.stop - preview_config.detector_y.start,
             preview_config.detector_x.stop - preview_config.detector_x.start,
-             ),
-            dtype=np.uint16,
+        ),
+        dtype=np.uint16,
     )
 
-
-    darks = np.zeros((
+    darks = np.zeros(
+        (
             1,
             preview_config.detector_y.stop - preview_config.detector_y.start,
             preview_config.detector_x.stop - preview_config.detector_x.start,
-             ),
-            dtype=np.uint16,
+        ),
+        dtype=np.uint16,
     )
 
     np.testing.assert_array_equal(loaded_flats, flats)
     np.testing.assert_array_equal(loaded_darks, darks)
+
 
 @pytest.mark.parametrize(
     "preview_config",

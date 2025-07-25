@@ -154,13 +154,13 @@ Data without darks/flats
 ++++++++++++++++++++++++
 
 It is also possible to process the data that does not contain darks or flats, i.e., the pipeline runs without given darks or flats.
-Nothing specific should be done about it in the loader.  
+Nothing specific should be done about it in the loader, it will be handled automatically without any extra configuration needed.   
 
 Ignore darks/flats
 ++++++++++++++++++
 
-This is the case when darks or flats still present in the dataset, but one needs to ignore either of them or one of them. This can be done by providing  
-the keyword :code:`ignore` into the loader, like in the example bellow where both flats and darks are ignored:
+This is the case when darks or flats still present in the dataset, but one needs to ignore either of them or both of them. This can be done by providing  
+the keyword :code:`ignore` into the loader, like in the example below where both flats and darks are ignored:
 
 .. code-block:: yaml
    :emphasize-lines:7,8

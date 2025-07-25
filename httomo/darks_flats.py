@@ -20,8 +20,8 @@ class DarksFlatsFileConfig(NamedTuple):
     Notes
     -----
 
-    There are currently FIVE supported configurations for where dark-field or flat-field images
-    can be loaded OR ignored:
+    There are currently **five** supported configurations for where dark-field or flat-field images
+    can be loaded **or** ignored:
 
     1. Dark-field and flat-field images are stored in the same file as the projection images,
     and in the same dataset in that file.
@@ -58,7 +58,7 @@ class DarksFlatsFileConfig(NamedTuple):
     file: Path
     data_path: str
     image_key_path: Optional[str]
-    ignore: bool
+    ignore: bool = False
 
 
 def get_darks_flats(
