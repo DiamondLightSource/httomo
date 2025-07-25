@@ -284,6 +284,7 @@ def test_pipe_FBP2d_astra_i12_119647_preview(
 
 # ########################################################################
 
+
 @pytest.mark.full_data
 def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
     get_files: Callable,
@@ -457,6 +458,7 @@ def test_pipe_360deg_paganin_FBP3d_tomobar_i13_179623_preview(
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-4
+
 
 # ########################################################################
 @pytest.mark.full_data

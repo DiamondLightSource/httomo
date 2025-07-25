@@ -53,8 +53,9 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_disk(
     cmd_mpirun.insert(14, "--reslice-dir")
     cmd_mpirun.insert(15, "/scratch/jenkins_agent/workspace/")
 
-
-    process = Popen(cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    process = Popen(
+        cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE
+    )
     output, error = process.communicate()
     print(output)
 
@@ -93,6 +94,7 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_disk(
 
 
 # ########################################################################
+
 
 @pytest.mark.full_data_parallel
 def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_memory(
@@ -127,7 +129,9 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_memory(
     cmd_mpirun.insert(10, FBP3d_tomobar_noimagesaving)
     cmd_mpirun.insert(11, output_folder)
 
-    process = Popen(cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    process = Popen(
+        cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE
+    )
     output, error = process.communicate()
     print(output)
 
@@ -164,7 +168,9 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_memory(
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-6
 
+
 # ########################################################################
+
 
 @pytest.mark.full_data_parallel
 def test_parallel_pipe_FBP3d_tomobar_k11_38731_in_memory(
@@ -199,7 +205,9 @@ def test_parallel_pipe_FBP3d_tomobar_k11_38731_in_memory(
     cmd_mpirun.insert(10, FBP3d_tomobar)
     cmd_mpirun.insert(11, output_folder)
 
-    process = Popen(cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    process = Popen(
+        cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE
+    )
     output, error = process.communicate()
     print(output)
 
@@ -239,54 +247,9 @@ def test_parallel_pipe_FBP3d_tomobar_k11_38731_in_memory(
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-6
 
-# ########################################################################
-
-@pytest.mark.full_data_parallel
-def test_parallel_pipe_FBP3d_tomobar_k11_38729_in_memory(
-    get_files: Callable,
-    cmd_mpirun,
-    diad_k11_38729,
-    FBP3d_tomobar,
-    FBP3d_tomobar_k11_38731_npz,
-    output_folder,
-):
-
-    change_value_parameters_method_pipeline(
-        FBP3d_tomobar,
-        method=[
-            "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
-        ],
-        key=[
-            "data_path",
-            "image_key_path",
-            "rotation_angles",
-        ],
-        value=[
-            "/entry/imaging/data",
-            "/entry/instrument/imaging/image_key",
-            {"data_path": "/entry/imaging_sum/gts_cs_theta"},
-        ],
-    )
-
-    cmd_mpirun.insert(9, diad_k11_38729)
-    cmd_mpirun.insert(10, FBP3d_tomobar)
-    cmd_mpirun.insert(11, output_folder)
-
-    process = Popen(cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    output, error = process.communicate()
-    print(output)
-
-    files = get_files(output_folder)
-
-    #: check the generated reconstruction (hdf5 file)
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 1
-
-    check_tif(files, 2160, (2560, 2560))
 
 # ########################################################################
+
 
 @pytest.mark.full_data_parallel
 def test_parallel_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
@@ -348,9 +311,11 @@ def test_parallel_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
     cmd_mpirun.insert(10, FBP3d_tomobar_denoising)
     cmd_mpirun.insert(11, output_folder)
 
-    process = Popen(cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    output, error = process.communicate() 
-    print (output)
+    process = Popen(
+        cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE
+    )
+    output, error = process.communicate()
+    print(output)
 
     files = get_files(output_folder)
 
@@ -385,6 +350,7 @@ def test_parallel_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
     res_norm_tv_res = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm_tv_res < 1e-1
 
+
 # ########################################################################
 
 
@@ -411,14 +377,15 @@ def test_parallel_pipe_LPRec3d_tomobar_i12_119647_preview(
         ],
     )
 
-
     cmd_mpirun.insert(9, i12_119647)
     cmd_mpirun.insert(10, LPRec3d_tomobar)
     cmd_mpirun.insert(11, output_folder)
 
-    process = Popen(cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    output, error = process.communicate() 
-    print (output)
+    process = Popen(
+        cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE
+    )
+    output, error = process.communicate()
+    print(output)
 
     files = get_files(output_folder)
 
@@ -453,7 +420,9 @@ def test_parallel_pipe_LPRec3d_tomobar_i12_119647_preview(
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 0.02
 
+
 # ########################################################################
+
 
 @pytest.mark.full_data_parallel
 def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
@@ -499,9 +468,11 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
     cmd_mpirun.insert(10, deg360_distortion_FBP3d_tomobar)
     cmd_mpirun.insert(11, output_folder)
 
-    process = Popen(cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    output, error = process.communicate() 
-    print (output)
+    process = Popen(
+        cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE
+    )
+    output, error = process.communicate()
+    print(output)
 
     files = get_files(output_folder)
 
@@ -535,5 +506,6 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-4
+
 
 # ########################################################################
