@@ -31,6 +31,10 @@ def pytest_configure(config):
         "markers", "full_data: mark tests to run full pipelines on raw big data"
     )
     config.addinivalue_line(
+        "markers",
+        "full_data_parallel: mark tests to run full pipelines on raw big data in parallel",
+    )
+    config.addinivalue_line(
         "markers", "preview: mark test to run with `httomo preview`"
     )
 
@@ -53,6 +57,12 @@ def pytest_addoption(parser):
         action="store_true",
         default=False,
         help="run full pipelines on raw (big) data",
+    )
+    parser.addoption(
+        "--full_data_parallel",
+        action="store_true",
+        default=False,
+        help="run full pipelines on raw (big) data in parallel on two processes",
     )
 
 
@@ -93,6 +103,20 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "full_data" in item.keywords:
                 item.add_marker(skip_perf)
+    if config.getoption("--full_data_parallel"):
+        skip_other = pytest.mark.skip(
+            reason="not a pipeline raw big data test in parallel"
+        )
+        for item in items:
+            if "full_data_parallel" not in item.keywords:
+                item.add_marker(skip_other)
+    else:
+        skip_perf = pytest.mark.skip(
+            reason="pipeline raw big data test in parallel - use '--full_data_parallel' to run"
+        )
+        for item in items:
+            if "full_data_parallel" in item.keywords:
+                item.add_marker(skip_perf)
 
 
 @pytest.fixture
@@ -110,6 +134,19 @@ def cmd():
         "httomo",
         "run",
         "--save-all",
+    ]
+
+
+@pytest.fixture
+def cmd_mpirun():
+    return [
+        "mpirun",
+        "-n",
+        "2",
+        str(sys.executable),
+        "-m",
+        "httomo",
+        "run",
     ]
 
 
