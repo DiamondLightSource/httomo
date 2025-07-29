@@ -129,14 +129,15 @@ class TransformLayer:
         methods = []
         for m in pipeline:
             methods.append(m)
-            if m.method_name == "calculate_stats":
-                methods.append(
-                    GenericMethodWrapper(
-                        self._repo,
-                        "httomolibgpu.misc.rescale",
-                        "rescale_to_int",
-                        comm=self._comm,
-                        save_result=False,
+            if m.sweep:            
+                if m.method_name == "calculate_stats":
+                    methods.append(
+                        GenericMethodWrapper(
+                            self._repo,
+                            "httomolibgpu.misc.rescale",
+                            "rescale_to_int",
+                            comm=self._comm,
+                            save_result=False,
+                        )
                     )
-                )
         return Pipeline(pipeline.loader, methods)

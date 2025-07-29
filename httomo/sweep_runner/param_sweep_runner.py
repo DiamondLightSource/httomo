@@ -7,8 +7,10 @@ from mpi4py.MPI import Comm
 import httomo
 from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
 from httomo.method_wrappers.images import ImagesWrapper
+from httomo.method_wrappers.stats_calc import StatsCalcWrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.block_split import BlockSplitter
+from httomo.runner.output_ref import OutputRef
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
@@ -43,6 +45,7 @@ class ParamSweepRunner:
             self._start_sweep_idx : self._stop_sweep_idx
         ]
         self._set_image_saver_params()
+        self._set_rescale_to_int_params()
 
     @property
     def block(self) -> ParamSweepBlock:
@@ -93,6 +96,15 @@ class ParamSweepRunner:
                 if isinstance(method, ImagesWrapper):
                     method["offset"] = self._start_sweep_idx
                     method["watermark_vals"] = self._sweep_values
+
+    def _set_rescale_to_int_params(self) -> None:
+        """
+        """
+        non_sweep_stages = [self._stages.before_sweep, self._stages.after_sweep]
+        for non_sweep_stage in non_sweep_stages:
+            for method in non_sweep_stage.methods:
+                if method.method_name == "rescale_to_int":
+                    method["glob_stats"] = OutputRef(mapped_output_name=StatsCalcWrapper, method='glob_stats')
 
     def determine_stages(self) -> Stages:
         """
