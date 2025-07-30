@@ -13,6 +13,12 @@ import httomo
 
 from httomo_backends.methods_database.query import MethodDatabaseRepository
 
+def _check_if_pipeline_has_a_sweep(pipeline: Pipeline) -> bool:
+        pipeline_is_sweep = False            
+        for m in pipeline:
+            if m.sweep:
+                pipeline_is_sweep = True
+        return pipeline_is_sweep
 
 class TransformLayer:
     def __init__(
@@ -28,6 +34,7 @@ class TransformLayer:
         self._out_dir = out_dir if out_dir is not None else httomo.globals.run_out_dir
 
     def transform(self, pipeline: Pipeline) -> Pipeline:
+        pipeline_is_sweep = _check_if_pipeline_has_a_sweep(pipeline)
         pipeline = self.insert_save_methods(pipeline)
         pipeline = self.insert_data_reducer(pipeline)
         pipeline = self.insert_save_images_after_sweep(
@@ -129,7 +136,7 @@ class TransformLayer:
         methods = []
         for m in pipeline:
             methods.append(m)
-            if m.sweep:            
+            if m.sweep:
                 if m.method_name == "calculate_stats":
                     methods.append(
                         GenericMethodWrapper(
