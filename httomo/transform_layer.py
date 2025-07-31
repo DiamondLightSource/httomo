@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Optional
 from httomo.method_wrappers import make_method_wrapper
+from httomo.runner.output_ref import OutputRef
 from httomo.method_wrappers.datareducer import DatareducerWrapper
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.method_wrappers.images import ImagesWrapper
@@ -124,6 +125,7 @@ class TransformLayer:
                         "calculate_stats",
                         comm=self._comm,
                         save_result=False,
+                        output_mapping={"glob_stats": "glob_stats"},
                     )
                 )
         return Pipeline(pipeline.loader, methods)
@@ -141,6 +143,16 @@ class TransformLayer:
                         "rescale_to_int",
                         comm=self._comm,
                         save_result=False,
+                        glob_stats=OutputRef(
+                            mapped_output_name="glob_stats",
+                            method=StatsCalcWrapper(
+                                self._repo,
+                                module_path="httomo.methods",
+                                method_name="calculate_stats",
+                                comm=self._comm,
+                                save_result=False,
+                            ),
+                        ),
                     )
                 )
         return Pipeline(pipeline.loader, methods)

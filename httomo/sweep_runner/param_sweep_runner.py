@@ -22,6 +22,7 @@ from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.sweep_runner.paganin_kernel import paganin_kernel_estimator
 
+
 import numpy as np
 
 
@@ -45,7 +46,7 @@ class ParamSweepRunner:
             self._start_sweep_idx : self._stop_sweep_idx
         ]
         self._set_image_saver_params()
-        self._set_rescale_to_int_params()
+        # self._set_rescale_to_int_params()
 
     @property
     def block(self) -> ParamSweepBlock:
@@ -97,22 +98,22 @@ class ParamSweepRunner:
                     method["offset"] = self._start_sweep_idx
                     method["watermark_vals"] = self._sweep_values
 
-    def _set_rescale_to_int_params(self) -> None:
-        """ """
-        non_sweep_stages = [self._stages.before_sweep, self._stages.after_sweep]
-        for non_sweep_stage in non_sweep_stages:
-            for method in non_sweep_stage.methods:
-                if method.method_name == "rescale_to_int":
-                    method["glob_stats"] = OutputRef(
-                        mapped_output_name="glob_stats",
-                        method=StatsCalcWrapper(
-                            method_repository=httomo,
-                            module_path=httomo.methods,
-                            method_name="calculate_stats",
-                            comm=Comm,
-                            save_result=False,
-                        ),
-                    )
+    # def _set_rescale_to_int_params(self) -> None:
+    #     """ """
+    #     non_sweep_stages = [self._stages.before_sweep, self._stages.after_sweep]
+    #     for non_sweep_stage in non_sweep_stages:
+    #         for method in non_sweep_stage.methods:
+    #             if method.method_name == "rescale_to_int":
+    #                 method["glob_stats"] = OutputRef(
+    #                     mapped_output_name="glob_stats",
+    #                     method=StatsCalcWrapper(
+    #                         method_repository=MethodRepository,
+    #                         module_path="httomo.methods",
+    #                         method_name="calculate_stats",
+    #                         comm=Comm,
+    #                         save_result=False,
+    #                     ),
+    #                 )
 
     def determine_stages(self) -> Stages:
         """
