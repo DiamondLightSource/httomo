@@ -98,13 +98,21 @@ class ParamSweepRunner:
                     method["watermark_vals"] = self._sweep_values
 
     def _set_rescale_to_int_params(self) -> None:
-        """
-        """
+        """ """
         non_sweep_stages = [self._stages.before_sweep, self._stages.after_sweep]
         for non_sweep_stage in non_sweep_stages:
             for method in non_sweep_stage.methods:
                 if method.method_name == "rescale_to_int":
-                    method["glob_stats"] = OutputRef(mapped_output_name=StatsCalcWrapper, method='glob_stats')
+                    method["glob_stats"] = OutputRef(
+                        mapped_output_name="glob_stats",
+                        method=StatsCalcWrapper(
+                            method_repository=httomo,
+                            module_path=httomo.methods,
+                            method_name="calculate_stats",
+                            comm=Comm,
+                            save_result=False,
+                        ),
+                    )
 
     def determine_stages(self) -> Stages:
         """
