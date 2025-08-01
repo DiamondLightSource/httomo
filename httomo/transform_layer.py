@@ -123,7 +123,7 @@ class TransformLayer:
                         self._repo,
                         "httomo.methods",
                         "calculate_stats",
-                        comm=self._comm,
+                        comm=MPI.COMM_WORLD,
                         save_result=False,
                         output_mapping={"glob_stats": "glob_stats"},
                     )
@@ -149,7 +149,7 @@ class TransformLayer:
                                 self._repo,
                                 module_path="httomo.methods",
                                 method_name="calculate_stats",
-                                comm=self._comm,
+                                comm=MPI.COMM_WORLD,
                                 save_result=False,
                             ),
                         ),
