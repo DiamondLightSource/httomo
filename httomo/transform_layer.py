@@ -37,13 +37,13 @@ class TransformLayer:
         self._out_dir = out_dir if out_dir is not None else httomo.globals.run_out_dir
 
     def transform(self, pipeline: Pipeline) -> Pipeline:
-        pipeline = self.insert_save_methods(pipeline)
         pipeline = self.insert_data_reducer(pipeline)
         pipeline_is_sweep = _check_if_pipeline_has_a_sweep(pipeline)
         if pipeline_is_sweep:
             pipeline = self.insert_save_images_after_sweep(pipeline)
             pipeline = self.insert_globstats_after_sweep(pipeline)
             pipeline = self.insert_rescaletoint_after_stats_sweep(pipeline)
+        pipeline = self.insert_save_methods(pipeline)
         return pipeline
 
     def insert_save_methods(self, pipeline: Pipeline) -> Pipeline:
