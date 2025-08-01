@@ -430,7 +430,7 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
 
 
 # ########################################################################
-@pytest.mark.full_data
+@pytest.mark.full_data_parallel
 def test_parallel_pipe_sweep_FBP3d_tomobar_i13_177906(
     get_files: Callable,
     cmd_mpirun,
