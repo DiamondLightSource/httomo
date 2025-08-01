@@ -61,7 +61,7 @@ class TransformLayer:
                         self._repo,
                         "httomo.methods",
                         "save_intermediate_data",
-                        comm=self._comm,
+                        comm=MPI.COMM_WORLD,
                         save_result=False,
                         loader=loader,
                         prev_method=m,
