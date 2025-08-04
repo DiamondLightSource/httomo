@@ -371,6 +371,14 @@ class StandardTomoLoader(DataSetSource):
             f"Data shape is {self._global_shape} of type {self._data.dtype}",
             level=logging.DEBUG,
         )
+        log_once(
+            f"Darks shape is {self._aux_data.darks_shape} of type {self._aux_data.darks_dtype}",
+            level=logging.DEBUG,
+        )
+        log_once(
+            f"Flats shape is {self._aux_data.flats_shape} of type {self._aux_data.flats_dtype}",
+            level=logging.DEBUG,
+        )
 
 
 class StandardLoaderWrapper(LoaderInterface):

@@ -176,8 +176,8 @@ def test_check_side_out_matches_ref_arg(
 @pytest.mark.parametrize(
     "yaml_file, expected",
     [
-        ("../../../docs/source/pipelines_full/cpu_pipeline_gridrec.yaml", True),
-        ("../../../docs/source/pipelines_full/gpu_pipelineFBP.yaml", True),
+        ("../../../docs/source/pipelines_full/tomopy_gridrec.yaml", True),
+        ("../../../docs/source/pipelines_full/FBP3d_tomobar.yaml", True),
         ("testing/sweep_manual.yaml", True),
     ],
     ids=[
