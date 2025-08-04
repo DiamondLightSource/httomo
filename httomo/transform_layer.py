@@ -147,13 +147,7 @@ class TransformLayer:
                         save_result=False,
                         glob_stats=OutputRef(
                             mapped_output_name="glob_stats",
-                            method=StatsCalcWrapper(
-                                self._repo,
-                                module_path="httomo.methods",
-                                method_name="calculate_stats",
-                                comm=MPI.COMM_WORLD,
-                                save_result=False,
-                            ),
+                            method=m,
                         ),
                     )
                 )
