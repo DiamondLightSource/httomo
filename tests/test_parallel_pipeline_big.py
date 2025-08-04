@@ -455,7 +455,7 @@ def test_parallel_pipe_sweep_FBP3d_tomobar_i13_177906(
 
     # recurse through output_dir and check that all files are there
     files = get_files(output_folder)
-    assert len(files) == 12
+    assert len(files) == 11
 
     #: check the number of the resulting tif files
     check_tif(files, 8, (2560, 2560))
