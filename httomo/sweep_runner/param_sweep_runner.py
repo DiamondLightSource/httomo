@@ -20,7 +20,6 @@ from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.sweep_runner.paganin_kernel import paganin_kernel_estimator
 
-
 import numpy as np
 
 
