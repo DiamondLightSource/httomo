@@ -7,10 +7,8 @@ from mpi4py.MPI import Comm
 import httomo
 from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
 from httomo.method_wrappers.images import ImagesWrapper
-from httomo.method_wrappers.stats_calc import StatsCalcWrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.block_split import BlockSplitter
-from httomo.runner.output_ref import OutputRef
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
