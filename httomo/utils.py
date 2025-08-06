@@ -1,6 +1,8 @@
+import sys
 import logging
 from enum import Enum
 from time import perf_counter_ns
+from traceback import format_tb
 from typing import Any, Callable, Dict, List, Literal, Tuple
 
 from loguru import logger
@@ -288,3 +290,10 @@ def make_3d_shape_from_array(array: np.ndarray) -> Tuple[int, int, int]:
     with the right typing type (required to make mypy type checks work)
     """
     return make_3d_shape_from_shape(list(array.shape))
+
+
+def mpi_abort_excepthook(type, value, traceback):
+    log_rank(f" {type.__name__}: {value}", MPI.COMM_WORLD)
+    log_rank("\n".join(format_tb(traceback)), MPI.COMM_WORLD)
+    MPI.COMM_WORLD.Abort()
+    sys.__excepthook__(type, value, traceback)
