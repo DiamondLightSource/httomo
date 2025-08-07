@@ -2,15 +2,25 @@ import os
 from pathlib import Path
 from typing import Optional
 from httomo.method_wrappers import make_method_wrapper
+from httomo.runner.output_ref import OutputRef
 from httomo.method_wrappers.datareducer import DatareducerWrapper
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.method_wrappers.images import ImagesWrapper
+from httomo.method_wrappers.stats_calc import StatsCalcWrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.pipeline import Pipeline
 from mpi4py import MPI
 import httomo
 
 from httomo_backends.methods_database.query import MethodDatabaseRepository
+
+
+def _check_if_pipeline_has_a_sweep(pipeline: Pipeline) -> bool:
+    pipeline_is_sweep = False
+    for m in pipeline:
+        if m.sweep:
+            pipeline_is_sweep = True
+    return pipeline_is_sweep
 
 
 class TransformLayer:
@@ -29,9 +39,13 @@ class TransformLayer:
     def transform(self, pipeline: Pipeline) -> Pipeline:
         pipeline = self.insert_save_methods(pipeline)
         pipeline = self.insert_data_reducer(pipeline)
-        pipeline = self.insert_save_images_after_sweep(
-            pipeline
-        )  # will be applied to sweep methods only
+        pipeline_is_sweep = _check_if_pipeline_has_a_sweep(pipeline)
+
+        if pipeline_is_sweep:
+            pipeline = self.insert_save_images_after_sweep(pipeline)
+            pipeline = self.insert_globstats_after_sweep(pipeline)
+            pipeline = self.insert_rescaletoint_after_stats_sweep(pipeline)
+
         return pipeline
 
     def insert_save_methods(self, pipeline: Pipeline) -> Pipeline:
@@ -78,9 +92,7 @@ class TransformLayer:
         return Pipeline(loader, methods)
 
     def insert_save_images_after_sweep(self, pipeline: Pipeline) -> Pipeline:
-        """For sweep methods we add image saving method after, and also a rescaling method to
-        rescale the data passed to the image saver. In addition we also add saving the results
-        of the reconstruction, if the module is present"""
+        """For sweep methods we add image saving method after the global statistics and rescaler methods."""
         loader = pipeline.loader
         methods = []
         sweep_before = False
@@ -101,3 +113,42 @@ class TransformLayer:
                 )
                 sweep_before = True
         return Pipeline(loader, methods)
+
+    def insert_globstats_after_sweep(self, pipeline: Pipeline) -> Pipeline:
+        """Global statistics method is inserted to perform data rescaling before image saving"""
+        methods = []
+        for m in pipeline:
+            methods.append(m)
+            if m.sweep:
+                methods.append(
+                    StatsCalcWrapper(
+                        self._repo,
+                        "httomo.methods",
+                        "calculate_stats",
+                        comm=MPI.COMM_WORLD,
+                        save_result=False,
+                        output_mapping={"glob_stats": "glob_stats"},
+                    )
+                )
+        return Pipeline(pipeline.loader, methods)
+
+    def insert_rescaletoint_after_stats_sweep(self, pipeline: Pipeline) -> Pipeline:
+        """Data rescaler goes after global statistics method. Note that currently the intermediate data will be also saved as rescaled."""
+        methods = []
+        for m in pipeline:
+            methods.append(m)
+            if m.method_name == "calculate_stats":
+                methods.append(
+                    GenericMethodWrapper(
+                        self._repo,
+                        "httomolibgpu.misc.rescale",
+                        "rescale_to_int",
+                        comm=self._comm,
+                        save_result=False,
+                        glob_stats=OutputRef(
+                            mapped_output_name="glob_stats",
+                            method=m,
+                        ),
+                    )
+                )
+        return Pipeline(pipeline.loader, methods)

@@ -356,7 +356,7 @@ def LPRec3d_tomobar_i12_119647_npz():
 @pytest.fixture
 def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
     # several tiff files
-    return "tests/test_data/raw_data/i13/177906_sweep_tiffs/"
+    return "tests/test_data/raw_data/i13/177906_sweep_tiffs_corr/"
 
 
 # ---------------------END------------------------#
@@ -480,8 +480,10 @@ def check_tif(files: List, number: int, shape: Tuple):
 
 
 def compare_tif(files_list_to_compare: list, file_path_to_references: list):
-    tif_files = list(filter(lambda x: ".tif" in x, files_list_to_compare))
-    tif_files_references = list(filter(lambda x: ".tif" in x, file_path_to_references))
+    tif_files = sorted(list(filter(lambda x: ".tif" in x, files_list_to_compare)))
+    tif_files_references = sorted(
+        list(filter(lambda x: ".tif" in x, file_path_to_references))
+    )
 
     for index in range(len(tif_files)):
         res_images = np.array(Image.open(tif_files[index])) - np.array(
