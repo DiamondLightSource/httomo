@@ -190,6 +190,7 @@ class RotationWrapper(GenericMethodWrapper):
                 with catchtime() as t:
                     data = xp.asnumpy(data)
                 self._gpu_time_info.device2host += t.elapsed
+
             self.sino[
                 block.chunk_index_unpadded[0] : block.chunk_index_unpadded[0]
                 + block.shape_unpadded[0],
@@ -203,16 +204,20 @@ class RotationWrapper(GenericMethodWrapper):
 
             # now calculate the center of rotation on rank 0
             if self.comm.rank == 0:
+                if self.cupyrun:
+                    with catchtime() as t:
+                        sino_slice = xp.asarray(sino_slice)
+                    self._gpu_time_info.host2device += t.elapsed
                 sino_slice = self.normalize_sino(
                     sino_slice,
                     block.flats[:, slice_for_cor, :],
                     block.darks[:, slice_for_cor, :],
                 )
-                if self.cupyrun:
-                    with catchtime() as t:
-                        sino_slice = xp.asarray(sino_slice)
-                    self._gpu_time_info.host2device += t.elapsed
                 args["ind"] = 0
+                if not self.cupyrun:
+                    with catchtime() as t:
+                        sino_slice = xp.asnumpy(sino_slice)
+                    self._gpu_time_info.device2host += t.elapsed
                 args[self.parameters[0]] = sino_slice
                 res = self.method(**args)
         # and broadcast
@@ -228,34 +233,27 @@ class RotationWrapper(GenericMethodWrapper):
         return self._process_return_type(res, block)
 
     def normalize_sino(
-        self, sino: np.ndarray, flats: Optional[np.ndarray], darks: Optional[np.ndarray]
-    ) -> np.ndarray:
+        self, sino: xp.ndarray, flats: Optional[xp.ndarray], darks: Optional[xp.ndarray]
+    ) -> xp.ndarray:
+        """cpu/gpu agnostic function for normalising a sinogram slice, all input arrays should be either cupy or numpy."""
         flats1d = (
             1.0
             if (flats is None or flats.size == 0)
-            else flats.mean(0, dtype=np.float32)
+            else flats.mean(0, dtype=xp.float32)
         )
         darks1d = (
             0.0
             if (darks is None or darks.size == 0)
-            else darks.mean(0, dtype=np.float32)
+            else darks.mean(0, dtype=xp.float32)
         )
         denom = flats1d - darks1d
-        sino = sino.astype(np.float32)
-        if np.shape(denom) == tuple():
+        sino = sino.astype(xp.float32)
+        if xp.shape(denom) == tuple():
             sino -= darks1d  # denominator is always 1
-        elif getattr(denom, "device", None) is not None:
-            # GPU
-            denom[xp.where(denom == 0.0)] = 1.0
-            with catchtime() as t:
-                sino = xp.asarray(sino)
-            self._gpu_time_info.host2device += t.elapsed
-            sino -= darks1d / denom
         else:
-            # CPU
-            denom[np.where(denom == 0.0)] = 1.0
+            denom[xp.where(denom == 0.0)] = 1.0
             sino -= darks1d / denom
-        return sino[:, np.newaxis, :]
+        return sino[:, xp.newaxis, :]
 
     def _process_return_type(self, ret: Any, input_block: T) -> T:
         if type(ret) == tuple:
