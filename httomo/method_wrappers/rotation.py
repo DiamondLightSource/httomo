@@ -200,14 +200,14 @@ class RotationWrapper(GenericMethodWrapper):
             if not block.is_last_in_chunk:  # exit if we didn't process all blocks yet
                 return block
 
-            sino_slice = self._gather_sino_slice(block.global_shape)  
+            sino_slice = self._gather_sino_slice(block.global_shape)
 
             # now calculate the center of rotation on rank 0
             if self.comm.rank == 0:
                 if self.cupyrun:
                     with catchtime() as t:
                         sino_slice = xp.asarray(sino_slice)
-                    self._gpu_time_info.host2device += t.elapsed                      
+                    self._gpu_time_info.host2device += t.elapsed
                 sino_slice = self.normalize_sino(
                     sino_slice,
                     block.flats[:, slice_for_cor, :],
@@ -235,8 +235,7 @@ class RotationWrapper(GenericMethodWrapper):
     def normalize_sino(
         self, sino: xp.ndarray, flats: Optional[xp.ndarray], darks: Optional[xp.ndarray]
     ) -> xp.ndarray:
-        """cpu/gpu agnostic function for normalising a sinogram slice, all input arrays should be either cupy or numpy.
-        """        
+        """cpu/gpu agnostic function for normalising a sinogram slice, all input arrays should be either cupy or numpy."""
         flats1d = (
             1.0
             if (flats is None or flats.size == 0)
@@ -251,7 +250,7 @@ class RotationWrapper(GenericMethodWrapper):
         sino = sino.astype(xp.float32)
         if xp.shape(denom) == tuple():
             sino -= darks1d  # denominator is always 1
-        else:            
+        else:
             denom[xp.where(denom == 0.0)] = 1.0
             sino -= darks1d / denom
         return sino[:, xp.newaxis, :]
