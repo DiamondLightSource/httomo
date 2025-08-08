@@ -31,6 +31,10 @@ def pytest_configure(config):
         "markers", "full_data: mark tests to run full pipelines on raw big data"
     )
     config.addinivalue_line(
+        "markers",
+        "full_data_parallel: mark tests to run full pipelines on raw big data in parallel",
+    )
+    config.addinivalue_line(
         "markers", "preview: mark test to run with `httomo preview`"
     )
 
@@ -53,6 +57,12 @@ def pytest_addoption(parser):
         action="store_true",
         default=False,
         help="run full pipelines on raw (big) data",
+    )
+    parser.addoption(
+        "--full_data_parallel",
+        action="store_true",
+        default=False,
+        help="run full pipelines on raw (big) data in parallel on two processes",
     )
 
 
@@ -93,6 +103,20 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "full_data" in item.keywords:
                 item.add_marker(skip_perf)
+    if config.getoption("--full_data_parallel"):
+        skip_other = pytest.mark.skip(
+            reason="not a pipeline raw big data test in parallel"
+        )
+        for item in items:
+            if "full_data_parallel" not in item.keywords:
+                item.add_marker(skip_other)
+    else:
+        skip_perf = pytest.mark.skip(
+            reason="pipeline raw big data test in parallel - use '--full_data_parallel' to run"
+        )
+        for item in items:
+            if "full_data_parallel" in item.keywords:
+                item.add_marker(skip_perf)
 
 
 @pytest.fixture
@@ -114,13 +138,21 @@ def cmd():
 
 
 @pytest.fixture
-def standard_data():
-    return "tests/test_data/tomo_standard.nxs"
+def cmd_mpirun():
+    return [
+        "mpirun",
+        "-n",
+        "2",
+        str(sys.executable),
+        "-m",
+        "httomo",
+        "run",
+    ]
 
 
 @pytest.fixture
-def data360():
-    return "tests/test_data/360scan/360scan.hdf"
+def standard_data():
+    return "tests/test_data/tomo_standard.nxs"
 
 
 @pytest.fixture(scope="session")
@@ -324,39 +356,17 @@ def LPRec3d_tomobar_i12_119647_npz():
 @pytest.fixture
 def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
     # several tiff files
-    return "tests/test_data/raw_data/i13/177906_sweep_tiffs/"
+    return "tests/test_data/raw_data/i13/177906_sweep_tiffs_corr/"
 
 
 # ---------------------END------------------------#
 
-
 # TODO: deprecate when loader is generalised
-@pytest.fixture
-def diad_pipeline_gpu():
-    return "tests/samples/pipeline_template_examples/DLS/01_diad_pipeline_gpu.yaml"
 
 
 @pytest.fixture
 def i12_data():
     return "tests/test_data/i12/separate_flats_darks/i12_dynamic_start_stop180.nxs"
-
-
-# TODO: move to big pipeline tests
-@pytest.fixture
-def pipeline360():
-    return "samples/pipeline_template_examples/DLS/02_i12_360scan_pipeline.yaml"
-
-
-@pytest.fixture
-def i12_loader():
-    return (
-        "tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml"
-    )
-
-
-@pytest.fixture
-def i12_loader_ignore_darks_flats():
-    return "tests/samples/pipeline_template_examples/DLS/04_i12_ignore_darks_flats.yaml"
 
 
 # ---------------------END------------------------#
@@ -388,6 +398,17 @@ def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
         file=Path(__file__).parent / "test_data/tomo_standard.nxs",
         data_path="/entry1/tomo_entry/data/data",
         image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
+        ignore=False,
+    )
+
+
+@pytest.fixture
+def standard_data_ignore_darks_flats_config() -> DarksFlatsFileConfig:
+    return DarksFlatsFileConfig(
+        file=Path(__file__).parent / "test_data/tomo_standard.nxs",
+        data_path="/entry1/tomo_entry/data/data",
+        image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
+        ignore=True,
     )
 
 
@@ -459,8 +480,10 @@ def check_tif(files: List, number: int, shape: Tuple):
 
 
 def compare_tif(files_list_to_compare: list, file_path_to_references: list):
-    tif_files = list(filter(lambda x: ".tif" in x, files_list_to_compare))
-    tif_files_references = list(filter(lambda x: ".tif" in x, file_path_to_references))
+    tif_files = sorted(list(filter(lambda x: ".tif" in x, files_list_to_compare)))
+    tif_files_references = sorted(
+        list(filter(lambda x: ".tif" in x, file_path_to_references))
+    )
 
     for index in range(len(tif_files)):
         res_images = np.array(Image.open(tif_files[index])) - np.array(
