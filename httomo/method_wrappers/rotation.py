@@ -236,6 +236,10 @@ class RotationWrapper(GenericMethodWrapper):
         self, sino: xp.ndarray, flats: Optional[xp.ndarray], darks: Optional[xp.ndarray]
     ) -> xp.ndarray:
         """cpu/gpu agnostic function for normalising a sinogram slice, all input arrays should be either cupy or numpy."""
+        if getattr(sino, "device", None) is not None:
+            import cupy as xp
+        else:
+            import numpy as xp
         flats1d = (
             1.0
             if (flats is None or flats.size == 0)

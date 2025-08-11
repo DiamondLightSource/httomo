@@ -376,6 +376,8 @@ def parse_config(
         image_key_path = str(Path(tomo_entry_path / IMAGE_KEY_PATH))
     else:
         image_key_path = config.get("image_key_path", None)
+        if image_key_path == "None" or image_key_path == "null":
+            image_key_path = None
 
     if is_angles_auto:
         assert tomo_entry_path is not None
