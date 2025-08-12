@@ -88,9 +88,16 @@ def get_darks_flats(
 
     def get_together_or_dummy() -> Tuple[np.ndarray, np.ndarray]:
         with h5py.File(darks_config.file, "r") as f:
-            darks_indices = np.where(f[darks_config.image_key_path][:] == 2)[0]
-            flats_indices = np.where(f[flats_config.image_key_path][:] == 1)[0]
             dataset: h5py.Dataset = f[darks_config.data_path]
+            if darks_config.image_key_path is not None:
+                darks_indices = np.where(f[darks_config.image_key_path][:] == 2)[0]
+            else:
+                darks_indices = []
+            if flats_config.image_key_path is not None:
+                flats_indices = np.where(f[flats_config.image_key_path][:] == 1)[0]
+            else:
+                flats_indices = []
+
             if len(darks_indices) == 0 or darks_config.ignore:
                 # there are no darks in the data file OR we need to ignore them, so we generate a dummy array
                 darks = np.zeros(
