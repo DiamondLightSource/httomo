@@ -142,7 +142,7 @@ class TransformLayer:
                 methods.append(
                     GenericMethodWrapper(
                         self._repo,
-                        "httomolibgpu.misc.rescale",
+                        "httomolib.misc.rescale",
                         "rescale_to_int",
                         comm=self._comm,
                         save_result=False,

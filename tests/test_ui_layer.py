@@ -32,7 +32,7 @@ def test_can_read_cpu_pipeline(tomopy_gridrec: str):
     assert pipline_stage_config[6]["method"] == "calculate_stats"
     assert pipline_stage_config[6]["module_path"] == "httomo.methods"
     assert pipline_stage_config[7]["method"] == "rescale_to_int"
-    assert pipline_stage_config[7]["module_path"] == "httomolibgpu.misc.rescale"
+    assert pipline_stage_config[7]["module_path"] == "httomolib.misc.rescale"
     assert pipline_stage_config[8]["method"] == "save_to_images"
     assert pipline_stage_config[8]["module_path"] == "httomolib.misc.images"
 
@@ -57,7 +57,7 @@ def test_can_read_gpu_pipeline(FBP3d_tomobar: str):
     assert pipline_stage_config[6]["method"] == "calculate_stats"
     assert pipline_stage_config[6]["module_path"] == "httomo.methods"
     assert pipline_stage_config[7]["method"] == "rescale_to_int"
-    assert pipline_stage_config[7]["module_path"] == "httomolibgpu.misc.rescale"
+    assert pipline_stage_config[7]["module_path"] == "httomolib.misc.rescale"
     assert pipline_stage_config[8]["method"] == "save_to_images"
     assert pipline_stage_config[8]["module_path"] == "httomolib.misc.images"
 
