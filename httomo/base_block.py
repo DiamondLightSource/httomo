@@ -112,6 +112,7 @@ class BaseBlock(BlockData, BlockTransfer):
 
     def to_cpu(self):
         if not gpu_enabled or xp.get_array_module(self.data).__name__ == "numpy":
+            self._data = np.asarray(self.data, order="C")
             return
         self._data = xp.asnumpy(self.data, order="C")
 
