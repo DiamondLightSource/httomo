@@ -201,7 +201,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         self, unpadded_chunk_shape: Tuple[int, int, int], dtype: DTypeLike
     ) -> np.ndarray:
         """Convenience method to enable mocking easily"""
-        return np.empty(unpadded_chunk_shape, dtype)
+        return np.empty(unpadded_chunk_shape, dtype, order="C")
 
     def _create_h5_data(
         self,
