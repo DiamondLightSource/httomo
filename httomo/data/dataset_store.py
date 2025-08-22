@@ -437,7 +437,7 @@ class DataSetStoreReader(DataSetSource):
             recv_shape = list(self._data.shape)
             recv_shape[self._slicing_dim] = self._padding[0]
             receive_buf_from_left_neighbour = np.empty(
-                tuple(recv_shape), self._data.dtype, order="C"
+                tuple(recv_shape), self._data.dtype
             )
             self._comm.Recv(
                 [receive_buf_from_left_neighbour, mpi_dtype],
@@ -477,7 +477,7 @@ class DataSetStoreReader(DataSetSource):
             recv_shape = list(self._data.shape)
             recv_shape[self._slicing_dim] = self._padding[1]
             receive_buf_from_right_neighbour = np.empty(
-                tuple(recv_shape), dtype=self._data.dtype, order="C"
+                tuple(recv_shape), dtype=self._data.dtype
             )
             self._comm.Recv(
                 [receive_buf_from_right_neighbour, mpi_dtype],
