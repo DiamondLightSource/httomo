@@ -379,7 +379,7 @@ class DataSetStoreReader(DataSetSource):
         self, shape: List[int], dim: int, start_idx: List[int]
     ) -> np.ndarray:
         start_idx[dim] += self._global_index[dim]  # includes padding
-        block_data = np.empty(shape, dtype=self._data.dtype)
+        block_data = np.empty(shape, dtype=self._data.dtype, order="C")
         before_cut = 0
         after_cut = 0
         # check before boundary
@@ -437,7 +437,7 @@ class DataSetStoreReader(DataSetSource):
             recv_shape = list(self._data.shape)
             recv_shape[self._slicing_dim] = self._padding[0]
             receive_buf_from_left_neighbour = np.empty(
-                tuple(recv_shape), self._data.dtype
+                tuple(recv_shape), self._data.dtype, order="C"
             )
             self._comm.Recv(
                 [receive_buf_from_left_neighbour, mpi_dtype],
@@ -477,7 +477,7 @@ class DataSetStoreReader(DataSetSource):
             recv_shape = list(self._data.shape)
             recv_shape[self._slicing_dim] = self._padding[1]
             receive_buf_from_right_neighbour = np.empty(
-                tuple(recv_shape), dtype=self._data.dtype
+                tuple(recv_shape), dtype=self._data.dtype, order="C"
             )
             self._comm.Recv(
                 [receive_buf_from_right_neighbour, mpi_dtype],
@@ -494,7 +494,7 @@ class DataSetStoreReader(DataSetSource):
             )
 
     def _extend_data_for_padding(self, core_data: np.ndarray) -> np.ndarray:
-        padded_data = np.empty(self._chunk_shape, self._data.dtype)
+        padded_data = np.empty(self._chunk_shape, self._data.dtype, order="C")
         core_slices = [slice(None), slice(None), slice(None)]
         core_slices[self._slicing_dim] = slice(
             self._padding[0], self._chunk_shape[self._slicing_dim] - self._padding[1]
