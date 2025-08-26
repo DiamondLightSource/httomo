@@ -273,7 +273,8 @@ the output of a method to a file in the output directory unless one of the
 following conditions is satisfied:
 
 - the method is the last one in the processing pipeline
-- the :code:`save_result` parameter has been provided a value of :code:`True` in
+- the method is a reconstruction method
+- the :code:`save_result` parameter has been provided a value of :code:`true` in
   a method's YAML configuration (see :ref:`save-result-examples` for more info
   on the :code:`save_result` parameter)
 

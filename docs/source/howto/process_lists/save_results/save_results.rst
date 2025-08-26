@@ -3,20 +3,18 @@
 Saving intermediate files
 +++++++++++++++++++++++++
 
-As explained in :ref:`httomo-saving`, by default, HTTomo will *not* write the
-output of a method to a file unless under certain conditions (please see the
-link for a description of these file-saving conditions).
+HTTomo, by default, will *not* write the output of a method to a file unless under certain conditions (please see more in :ref:`httomo-saving`).
 
 HTTomo can be informed to write or not write the output of a method to a file
 with the :code:`save_result` parameter. Its value is a boolean, so either
-:code:`True` or :code:`False` are valid values for it.
+:code:`true` or :code:`false` are valid values for it.
 
 
 Example 1: save output of a specific method
 ###########################################
 
 Suppose we wanted to save the output of the normalisation function :code:`normalize`. Then we
-should add :code:`save_result: True` to the list of the function parameters, but NOT the method's parameters:
+should add :code:`save_result: true` to the list of the function parameters, but NOT the method's parameters:
 
 .. code-block:: yaml
   :emphasize-lines: 8
@@ -28,7 +26,7 @@ should add :code:`save_result: True` to the list of the function parameters, but
       minus_log: true
       nonnegativity: false
       remove_nans: false
-    save_result: True
+    save_result: true
 
 Example 2: using :code:`--save_all` and :code:`save_result` together
 ####################################################################
@@ -51,4 +49,4 @@ would like to save the output of all methods using :code:`--save_all`, *apart* f
       minus_log: true
       nonnegativity: false
       remove_nans: false
-    save_result: False
+    save_result: false
