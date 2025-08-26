@@ -30,6 +30,9 @@ from unittest import mock
 
 sys.path.insert(0, os.path.abspath("../.."))
 
+
+__version__ =  "3.0"
+
 # -- Mock imports -------------------------------------------------------------
 
 autodoc_mock_imports = [
