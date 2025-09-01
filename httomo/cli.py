@@ -17,6 +17,7 @@ from httomo.monitors import MONITORS_MAP, make_monitors
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.transform_layer import TransformLayer
+from httomo.utils import mpi_abort_excepthook
 from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
 from httomo.ui_layer import UiLayer, PipelineFormat
@@ -213,6 +214,8 @@ def run(
     recon_filename_stem: Optional[str],
 ):
     """Run a pipeline on input data."""
+    sys.excepthook = mpi_abort_excepthook
+
     set_global_constants(
         out_dir,
         intermediate_format,
@@ -254,6 +257,8 @@ def run(
         )
     else:
         execute_sweep_run(pipeline, global_comm)
+
+    sys.excepthook = sys.__excepthook__
 
 
 def _check_yaml(yaml_config: Path, in_data: Path):
