@@ -26,11 +26,8 @@ from httomo.ui_layer import UiLayer, PipelineFormat
 try:
     from . import __version__
 except:
-    __version__ = "0.0.1" # temporary version for sphinx build
+    __version__ = "0.0.1"  # temporary version for sphinx build
     pass
-
-
-
 
 
 class PipelineFilePathOrString(click.ParamType):
