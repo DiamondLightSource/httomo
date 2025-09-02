@@ -34,7 +34,7 @@ Conda environment
 
 .. code-block:: console
 
-   $ conda env create --name httomo
+   $ conda create --name httomo
    $ conda activate httomo
    $ conda install -c conda-forge cupy==12.3.0 openmpi==4.1.6 h5py[build=*openmpi*]
    $ conda install -c conda-forge tomopy==1.15 # optional

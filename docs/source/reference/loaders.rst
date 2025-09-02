@@ -133,7 +133,7 @@ in the older scan should be ignored. In this instance, we need to provide a para
 :code:`file` and :code:`data_path` fields.
 
 .. code-block:: yaml
-   :emphasize-lines:7,11
+   :emphasize-lines: 7,11
 
 
     - method: standard_tomo
@@ -163,7 +163,7 @@ This is the case when darks or flats still present in the dataset, but one needs
 the keyword :code:`ignore` into the loader, like in the example below where both flats and darks are ignored:
 
 .. code-block:: yaml
-   :emphasize-lines:7,8
+   :emphasize-lines: 4-5
 
 
     - method: standard_tomo
