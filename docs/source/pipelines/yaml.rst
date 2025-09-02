@@ -71,5 +71,5 @@ single parameter (see :ref:`parameter_sweeping` for more details).
 
    .. literalinclude:: ../pipelines_full/sweep_center_FBP3d_tomobar.yaml
        :language: yaml
-       :emphasize-lines: 30-33
+       :emphasize-lines: 33-36
             
