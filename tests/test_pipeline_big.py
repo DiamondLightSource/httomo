@@ -37,13 +37,13 @@ def test_pipe_FBP3d_tomobar_k11_38731_in_disk(
         ],
     )
 
-    # NOTE that the intermediate file with file-based processing will be saved to /tmp
+    # NOTE that the intermediate file with file-based processing will be saved to /scratch/jenkins_agent/workspace/
     cmd.pop(4)  #: don't save all
     cmd.insert(5, diad_k11_38731)
     cmd.insert(7, FBP3d_tomobar_noimagesaving)
     cmd.insert(8, output_folder)
     cmd.insert(9, "--max-memory")
-    cmd.insert(10, "40G")
+    cmd.insert(10, "5G")
     cmd.insert(11, "--reslice-dir")
     cmd.insert(12, "/scratch/jenkins_agent/workspace/")
 
@@ -336,7 +336,7 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
             100,
         ],
     )
-    
+
     # save the result of denoising instead
     change_value_parameters_method_pipeline(
         FBP3d_tomobar_denoising,

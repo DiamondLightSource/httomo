@@ -17,7 +17,7 @@ from .conftest import change_value_parameters_method_pipeline, check_tif, compar
 
 
 @pytest.mark.full_data_parallel
-def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_disk(
+def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_disk_preview(
     get_files: Callable,
     cmd_mpirun,
     diad_k11_38730,
@@ -32,24 +32,28 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_disk(
             "standard_tomo",
             "standard_tomo",
             "standard_tomo",
+            "standard_tomo",
         ],
         key=[
             "data_path",
             "image_key_path",
             "rotation_angles",
+            "preview",
         ],
         value=[
             "/entry/imaging/data",
             "/entry/instrument/imaging/image_key",
             {"data_path": "/entry/imaging_sum/gts_cs_theta"},
+            {"detector_y": {"start": 500, "stop": 1500}},
         ],
     )
 
+    # NOTE that the intermediate file with file-based processing will be saved to /scratch/jenkins_agent/workspace/
     cmd_mpirun.insert(9, diad_k11_38730)
     cmd_mpirun.insert(10, FBP3d_tomobar_noimagesaving)
     cmd_mpirun.insert(11, output_folder)
     cmd_mpirun.insert(12, "--max-memory")
-    cmd_mpirun.insert(13, "10G")
+    cmd_mpirun.insert(13, "5G")
     cmd_mpirun.insert(14, "--reslice-dir")
     cmd_mpirun.insert(15, "/scratch/jenkins_agent/workspace/")
 
@@ -97,7 +101,7 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_disk(
 
 
 @pytest.mark.full_data_parallel
-def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_memory(
+def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_memory_preview(
     get_files: Callable,
     cmd_mpirun,
     diad_k11_38730,
@@ -112,16 +116,19 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_memory(
             "standard_tomo",
             "standard_tomo",
             "standard_tomo",
+            "standard_tomo",
         ],
         key=[
             "data_path",
             "image_key_path",
             "rotation_angles",
+            "preview",
         ],
         value=[
             "/entry/imaging/data",
             "/entry/instrument/imaging/image_key",
             {"data_path": "/entry/imaging_sum/gts_cs_theta"},
+            {"detector_y": {"start": 500, "stop": 1500}},
         ],
     )
 
