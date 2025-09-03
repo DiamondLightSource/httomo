@@ -22,7 +22,12 @@ from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
 from httomo.ui_layer import UiLayer, PipelineFormat
 
-from . import __version__
+
+try:
+    from . import __version__
+except:
+    __version__ = "0.0.1"  # temporary version for sphinx build
+    pass
 
 
 class PipelineFilePathOrString(click.ParamType):
