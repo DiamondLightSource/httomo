@@ -323,6 +323,20 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
         save_result=False,
     )
 
+    # change detector_pad value
+    change_value_parameters_method_pipeline(
+        FBP3d_tomobar_denoising,
+        method=[
+            "FBP3d_tomobar",
+        ],
+        key=[
+            "detector_pad",
+        ],
+        value=[
+            100,
+        ],
+    )
+    
     # save the result of denoising instead
     change_value_parameters_method_pipeline(
         FBP3d_tomobar_denoising,
