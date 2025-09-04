@@ -192,18 +192,16 @@ def test_initialise_output_directory_handles_json_string(tmp_path):
     assert written_content == json_string
 
 
-def test_initialise_output_directory_handles_path_input(mocker, tmp_path):
+def test_initialise_output_directory_handles_path_input(
+    mocker, tmp_path, standard_loader: str
+):
     """Test that initialise_output_directory correctly handles Path input (existing behavior)."""
     from httomo.cli import initialise_output_directory
 
     # Set up the global output directory
     output_dir = tmp_path / "output"
     httomo.globals.run_out_dir = output_dir
-
-    # Mock copy to avoid actual file operations
-    mock_copy = mocker.patch("httomo.cli.copy")
-
-    pipeline_path = Path("some/pipeline.yaml")
+    pipeline_path = Path(__file__).parent.parent / standard_loader
 
     # Call the function with a Path
     initialise_output_directory(pipeline_path)
@@ -211,8 +209,8 @@ def test_initialise_output_directory_handles_path_input(mocker, tmp_path):
     # Verify directory was created
     assert output_dir.exists()
 
-    # Verify that copy was called for the file
-    mock_copy.assert_called_once_with(pipeline_path, output_dir)
+    # Verify that pipeline file was copied to output dir
+    assert (output_dir / pipeline_path.name).exists()
 
 
 @pytest.mark.cupy

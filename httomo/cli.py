@@ -1,7 +1,6 @@
 from contextlib import AbstractContextManager, nullcontext
 from datetime import datetime
 from pathlib import Path, PurePath
-from shutil import copy
 import sys
 import tempfile
 from typing import List, Optional, TextIO, Union, Any
@@ -345,7 +344,11 @@ def initialise_output_directory(pipeline: Union[Path, str]) -> None:
 
     # If pipeline is a file path, copy it to output directory
     if isinstance(pipeline, Path):
-        copy(pipeline, httomo.globals.run_out_dir)
+        with open(pipeline, "r") as input:
+            pipeline_contents = input.read()
+        with open(Path(httomo.globals.run_out_dir) / pipeline.name, "a") as output:
+            output.write(f"# Created with HTTomo version {__version__}\n")
+            output.write(pipeline_contents)
     # If pipeline is a JSON string, write it to a file in the output directory
     else:
         with open(httomo.globals.run_out_dir / "pipeline.json", "w") as f:
