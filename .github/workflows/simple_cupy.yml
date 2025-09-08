@@ -1,0 +1,34 @@
+name: Simple cupy script on IRIS
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  iris-gpu:
+    runs-on: iris-gpu
+    container:
+      image: nvidia/cuda:12.6.3-devel-ubi8
+      env:
+        NVIDIA_VISIBLE_DEVICES: ${{ env.NVIDIA_VISIBLE_DEVICES }}
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Create conda environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-name: simple-cupy
+          create-args: >-
+            cupy==12.3.0
+          post-cleanup: 'all'
+          init-shell: bash
+
+      - name: Run simple cupy script
+        run: python simple-cupy-script.py
