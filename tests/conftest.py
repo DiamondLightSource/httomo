@@ -244,6 +244,11 @@ def sweep_center_FBP3d_tomobar():
     return "docs/source/pipelines_full/sweep_center_FBP3d_tomobar.yaml"
 
 
+@pytest.fixture
+def sweep_paganin_FBP3d_tomobar():
+    return "docs/source/pipelines_full/sweep_paganin_FBP3d_tomobar.yaml"
+
+
 # ---------------------END------------------------#
 
 ###########Raw projection data (large)##################

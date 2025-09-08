@@ -506,3 +506,55 @@ def test_pipe_sweep_FBP3d_tomobar_i13_177906(
 
 
 # ########################################################################
+@pytest.mark.full_data
+def test_pipe_sweep_paganin_FBP3d_tomobar_i12_119647(
+    get_files: Callable,
+    cmd,
+    i12_119647,
+    sweep_paganin_FBP3d_tomobar,
+    pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs,
+    output_folder,
+):
+
+    change_value_parameters_method_pipeline(
+        sweep_paganin_FBP3d_tomobar,
+        method=[
+            "normalize",
+            "paganin_filter_tomopy",
+            "paganin_filter_tomopy",
+            "paganin_filter_tomopy",
+        ],
+        key=[
+            "minus_log",
+            "energy",
+            "dist",
+            "pixel_size",
+        ],
+        value=[
+            False,
+            120,
+            1000,
+            0.00324,
+        ],
+    )
+
+    cmd.pop(4)  #: don't save all
+    cmd.insert(5, i12_119647)
+    cmd.insert(7, sweep_paganin_FBP3d_tomobar)
+    cmd.insert(8, output_folder)
+
+    subprocess.check_output(cmd)
+
+    files = get_files(output_folder)
+    files_references = get_files(pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs)
+
+    # recurse through output_dir and check that all files are there
+    files = get_files(output_folder)
+    assert len(files) == 11
+
+    #: check the number of the resulting tif files
+    check_tif(files, 8, (2560, 2560))
+    compare_tif(files, files_references)
+
+
+# ########################################################################
