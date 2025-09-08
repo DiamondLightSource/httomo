@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 from httomo.method_wrappers import make_method_wrapper
 from httomo.runner.output_ref import OutputRef
 from httomo.method_wrappers.datareducer import DatareducerWrapper
@@ -15,12 +15,19 @@ import httomo
 from httomo_backends.methods_database.query import MethodDatabaseRepository
 
 
-def _check_if_pipeline_has_a_sweep(pipeline: Pipeline) -> bool:
+def _check_if_pipeline_has_a_sweep(pipeline: Pipeline) -> tuple:
     pipeline_is_sweep = False
-    for m in pipeline:
+    method_to_rescale = None
+    for i, m in enumerate(pipeline):
         if m.sweep:
             pipeline_is_sweep = True
-    return pipeline_is_sweep
+            if i == len(pipeline) - 1:
+                method_to_rescale = m.method_name
+        if i == len(pipeline) - 1:
+            if "recon" in m.module_path:
+                # reconstruction is the last method but not sweep, then we also rescale
+                method_to_rescale = m.method_name
+    return (pipeline_is_sweep, method_to_rescale)
 
 
 class TransformLayer:
@@ -38,11 +45,11 @@ class TransformLayer:
 
     def transform(self, pipeline: Pipeline) -> Pipeline:
         pipeline = self.insert_data_reducer(pipeline)
-        pipeline_is_sweep = _check_if_pipeline_has_a_sweep(pipeline)
+        pipeline_is_sweep, method_to_rescale = _check_if_pipeline_has_a_sweep(pipeline)
 
         if pipeline_is_sweep:
             pipeline = self.insert_save_images_after_sweep(pipeline)
-            pipeline = self.insert_globstats_after_sweep(pipeline)
+            pipeline = self.insert_globstats_after_sweep(pipeline, method_to_rescale)
             pipeline = self.insert_rescaletoint_after_stats_sweep(pipeline)
         else:
             pipeline = self.insert_save_methods(pipeline)
@@ -115,12 +122,15 @@ class TransformLayer:
                 sweep_before = True
         return Pipeline(loader, methods)
 
-    def insert_globstats_after_sweep(self, pipeline: Pipeline) -> Pipeline:
+    def insert_globstats_after_sweep(
+        self, pipeline: Pipeline, method_to_rescale: Union[str, None]
+    ) -> Pipeline:
         """Global statistics method is inserted to perform data rescaling before image saving"""
         methods = []
         for m in pipeline:
             methods.append(m)
-            if m.sweep:
+            # we need to make sure that we add global stats and rescale only once
+            if m.method_name == method_to_rescale:
                 methods.append(
                     StatsCalcWrapper(
                         self._repo,
