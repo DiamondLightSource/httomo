@@ -366,8 +366,12 @@ def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
 @pytest.fixture
 def pipeline_paganin_sweep_paganin_images_i12_119647_tiffs():
     # 3 tiff files from Paganin filter
-    return "tests/test_data/raw_data/i12/sweep/177906_sweep_tiffs_corr/"
+    return "tests/test_data/raw_data/i12/sweep/images_sweep_paganin_filter_tomopy8bit_tif/"
 
+@pytest.fixture
+def pipeline_paganin_sweep_recon_images_i12_119647_tiffs():
+    # 3 tiff files from reconstruction with paganin filter pipeline
+    return "tests/test_data/raw_data/i12/sweep/images_sweep_FBP3d_tomobar16bit_tif/"
 
 # ---------------------END------------------------#
 
