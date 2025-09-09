@@ -142,10 +142,13 @@ class TransformLayer:
                 methods.append(
                     GenericMethodWrapper(
                         self._repo,
-                        "httomolibgpu.misc.rescale",
+                        "httomolib.misc.rescale",
                         "rescale_to_int",
                         comm=self._comm,
                         save_result=False,
+                        perc_range_min=5.0,
+                        perc_range_max=95.0,
+                        bits=16,
                         glob_stats=OutputRef(
                             mapped_output_name="glob_stats",
                             method=m,
