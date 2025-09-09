@@ -512,31 +512,9 @@ def test_pipe_sweep_paganin_FBP3d_tomobar_i12_119647(
     cmd,
     i12_119647,
     sweep_paganin_FBP3d_tomobar,
-    pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs,
+    pipeline_paganin_sweep_paganin_images_i12_119647_tiffs,
     output_folder,
 ):
-
-    change_value_parameters_method_pipeline(
-        sweep_paganin_FBP3d_tomobar,
-        method=[
-            "normalize",
-            "paganin_filter_tomopy",
-            "paganin_filter_tomopy",
-            "paganin_filter_tomopy",
-        ],
-        key=[
-            "minus_log",
-            "energy",
-            "dist",
-            "pixel_size",
-        ],
-        value=[
-            False,
-            120,
-            1000,
-            0.00324,
-        ],
-    )
 
     cmd.pop(4)  #: don't save all
     cmd.insert(5, i12_119647)
