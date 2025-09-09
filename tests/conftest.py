@@ -360,8 +360,8 @@ def LPRec3d_tomobar_i12_119647_npz():
 
 @pytest.fixture
 def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
-    # several tiff files
-    return "tests/test_data/raw_data/i13/177906_sweep_tiffs_corr/"
+    # 8 tiff files of 16bit
+    return "tests/test_data/raw_data/i13/sweep/images_sweep_FBP3d_tomobar16bit_tif/"
 
 @pytest.fixture
 def pipeline_paganin_sweep_paganin_images_i12_119647_tiffs():
