@@ -398,7 +398,7 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
             "neglog",
         ],
         value=[
-            {"detector_y": {"start": 900, "stop": 1200}},
+            {"detector_y": {"start": 900, "stop": 1100}},
             False,
             "mid",
             True,
