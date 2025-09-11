@@ -15,7 +15,7 @@ import httomo
 from httomo_backends.methods_database.query import MethodDatabaseRepository
 
 
-def _check_if_pipeline_has_a_sweep(pipeline: Pipeline) -> tuple:
+def _check_if_pipeline_has_a_sweep(pipeline: Pipeline) -> tuple[bool, Optional[str]]:
     pipeline_is_sweep = False
     method_to_rescale = None
     for i, m in enumerate(pipeline):
