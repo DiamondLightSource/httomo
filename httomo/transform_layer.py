@@ -28,6 +28,7 @@ def _check_if_pipeline_has_a_sweep(pipeline: Pipeline) -> tuple[bool, Optional[s
             method_to_rescale = m.method_name
     return (pipeline_is_sweep, method_to_rescale)
 
+
 class TransformLayer:
     def __init__(
         self,
