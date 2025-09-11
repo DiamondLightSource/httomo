@@ -516,3 +516,94 @@ def test_passes_smallest_minimum_block_length_to_underlying_method_in_all_proces
         )
 
     wrp.execute(block)
+
+
+@pytest.mark.parametrize(
+    "block_start, is_mpi_reduce_call_expected",
+    [(0, True), (2, False)],
+    ids=["first-block", "not-first-block"],
+)
+def test_mpi_reduce_call_for_min_block_len(
+    mocker: MockerFixture,
+    tmp_path: Path,
+    block_start: int,
+    is_mpi_reduce_call_expected: bool,
+):
+    # Define mock communicator with size 2 to have the potential to trigger the MPI reduce call
+    mock_comm = mocker.create_autospec(MPI.Comm)
+    mock_comm.size = 2
+    reduce_spy = mocker.MagicMock()
+    mocker.patch.object(mock_comm, "reduce", reduce_spy)
+
+    # Patch h5py as there's no need to be creating an hdf5 file
+    mocker.patch(
+        "httomo.method_wrappers.save_intermediate.h5py.File", mocker.MagicMock()
+    )
+
+    # Create method wrapper
+    loader: LoaderInterface = mocker.create_autospec(
+        LoaderInterface, instance=True, detector_x=10, detector_y=20
+    )
+
+    class FakeModule:
+        def save_intermediate_data(
+            data,
+            global_shape: Tuple[int, int, int],
+            global_index: Tuple[int, int, int],
+            slicing_dim: int,
+            file: h5py.File,
+            frames_per_chunk: int,
+            minimum_block_length: int,
+            path: str,
+            detector_x: int,
+            detector_y: int,
+            angles: np.ndarray,
+        ):
+            pass
+
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
+    prev_method = mocker.create_autospec(
+        MethodWrapper,
+        instance=True,
+        task_id="task1",
+        package_name="testpackage",
+        method_name="testmethod",
+        recon_algorithm=None,
+    )
+    mocker.patch.object(httomo.globals, "run_out_dir", tmp_path)
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, implementation="cpu"),
+        "httomo.methods",
+        "save_intermediate_data",
+        mock_comm,
+        make_mock_preview_config(mocker),
+        loader=loader,
+        prev_method=prev_method,
+        minimum_block_length=100,
+    )
+
+    # Create block with a chunk index reflecting if it should be the first block in the chunk
+    # or not
+    GLOBAL_SHAPE = (180, 120, 160)
+    CHUNK_SHAPE = (GLOBAL_SHAPE[0] // 2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
+    BLOCK_LEN = 2
+    data = np.empty(GLOBAL_SHAPE, dtype=np.float32)
+    aux_data = AuxiliaryData(angles=np.empty(GLOBAL_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data[CHUNK_SHAPE[0] : CHUNK_SHAPE[0] + BLOCK_LEN, :, :],
+        aux_data=aux_data,
+        block_start=block_start,
+        chunk_start=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_shape=CHUNK_SHAPE,
+    )
+
+    # Execute wrapper and check if MPI reduce call is seen, asserting that it should or
+    # shouldn't be expected depending on the parametrisation of the test
+    wrp.execute(block)
+    if is_mpi_reduce_call_expected:
+        reduce_spy.assert_called_once()
+    else:
+        reduce_spy.assert_not_called()
