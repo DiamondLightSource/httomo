@@ -130,7 +130,7 @@ class TransformLayer:
         for m in pipeline:
             methods.append(m)
             # we need to make sure that we add global stats and rescale only once
-            if m.method_name == method_to_rescale:
+            if method_to_rescale is not None and m.method_name == method_to_rescale:
                 methods.append(
                     StatsCalcWrapper(
                         self._repo,
