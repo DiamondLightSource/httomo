@@ -1,6 +1,5 @@
 import os
-from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 from httomo.method_wrappers import make_method_wrapper
 from httomo.runner.output_ref import OutputRef
 from httomo.method_wrappers.datareducer import DatareducerWrapper
@@ -19,16 +18,15 @@ def _check_if_pipeline_has_a_sweep(pipeline: Pipeline) -> tuple[bool, Optional[s
     pipeline_is_sweep = False
     method_to_rescale = None
     for i, m in enumerate(pipeline):
+        is_last = i == len(pipeline) - 1
         if m.sweep:
             pipeline_is_sweep = True
-            if i == len(pipeline) - 1:
+            if is_last:
                 method_to_rescale = m.method_name
-        if i == len(pipeline) - 1:
-            if "recon" in m.module_path:
-                # reconstruction is the last method but not sweep, then we also rescale
-                method_to_rescale = m.method_name
+        if is_last and "recon" in m.module_path:
+            # reconstruction is the last method but not sweep, then we also rescale
+            method_to_rescale = m.method_name
     return (pipeline_is_sweep, method_to_rescale)
-
 
 class TransformLayer:
     def __init__(
@@ -123,7 +121,7 @@ class TransformLayer:
         return Pipeline(loader, methods)
 
     def insert_globstats_after_sweep(
-        self, pipeline: Pipeline, method_to_rescale: Union[str, None]
+        self, pipeline: Pipeline, method_to_rescale: Optional[str]
     ) -> Pipeline:
         """Global statistics method is inserted to perform data rescaling before image saving"""
         methods = []
