@@ -400,7 +400,7 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
         value=[
             {"detector_y": {"start": 900, "stop": 1100}},
             False,
-            "mid",
+            24,
             True,
             True,
             "/data/tomography/raw_data/i13/360/179623_coeff.txt",
