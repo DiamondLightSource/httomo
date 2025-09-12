@@ -386,7 +386,7 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
             "find_center_360",
             "find_center_360",
             "distortion_correction_proj_discorpy",
-            "FBP",
+            "FBP3d_tomobar",
         ],
         key=[
             "preview",
