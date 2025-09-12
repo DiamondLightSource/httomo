@@ -244,6 +244,11 @@ def sweep_center_FBP3d_tomobar():
     return "docs/source/pipelines_full/sweep_center_FBP3d_tomobar.yaml"
 
 
+@pytest.fixture
+def sweep_paganin_FBP3d_tomobar():
+    return "docs/source/pipelines_full/sweep_paganin_FBP3d_tomobar.yaml"
+
+
 # ---------------------END------------------------#
 
 ###########Raw projection data (large)##################
@@ -355,8 +360,22 @@ def LPRec3d_tomobar_i12_119647_npz():
 
 @pytest.fixture
 def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
-    # several tiff files
-    return "tests/test_data/raw_data/i13/177906_sweep_tiffs_corr/"
+    # 8 tiff files of 16bit
+    return "tests/test_data/raw_data/i13/sweep/images_sweep_FBP3d_tomobar16bit_tif/"
+
+
+@pytest.fixture
+def pipeline_paganin_sweep_paganin_images_i12_119647_tiffs():
+    # 3 tiff files from Paganin filter
+    return (
+        "tests/test_data/raw_data/i12/sweep/images_sweep_paganin_filter_tomopy8bit_tif/"
+    )
+
+
+@pytest.fixture
+def pipeline_paganin_sweep_recon_images_i12_119647_tiffs():
+    # 3 tiff files from reconstruction with paganin filter pipeline
+    return "tests/test_data/raw_data/i12/sweep/images_sweep_FBP3d_tomobar16bit_tif/"
 
 
 # ---------------------END------------------------#

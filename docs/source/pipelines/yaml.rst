@@ -67,9 +67,17 @@ Parameter Sweeps templates
 Here we demonstrate how to perform a sweep across multiple values of a
 single parameter (see :ref:`parameter_sweeping` for more details).
 
-.. dropdown:: Parameter sweep over several CoR values (`center` param) in the reconstruction method, and saving the result as tiffs. Note that there is need to add image saving plugin in this case. It is also preferable to keep the `preview` small and when it is not defined the central slice will be used. 
+.. note::  There is no need to add image saving plugin for sweep runs as it will be added automatically. It is also preferable to keep the `preview` small as the time of computation can be substantial.
+
+.. dropdown:: Parameter sweep over several CoR values (`center` parameter) in the reconstruction method, and saving the result as tiffs. 
 
    .. literalinclude:: ../pipelines_full/sweep_center_FBP3d_tomobar.yaml
        :language: yaml
-       :emphasize-lines: 30-33
+       :emphasize-lines: 33-36
+
+.. dropdown:: Parameter sweep over several values of the `alpha` parameter for Paganin filter. 
+
+   .. literalinclude:: ../pipelines_full/sweep_paganin_FBP3d_tomobar.yaml
+       :language: yaml
+       :emphasize-lines: 52-55       
             
