@@ -201,7 +201,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         self, unpadded_chunk_shape: Tuple[int, int, int], dtype: DTypeLike
     ) -> np.ndarray:
         """Convenience method to enable mocking easily"""
-        return np.empty(unpadded_chunk_shape, dtype, order="C")
+        return np.empty(unpadded_chunk_shape, dtype)
 
     def _create_h5_data(
         self,
@@ -379,7 +379,7 @@ class DataSetStoreReader(DataSetSource):
         self, shape: List[int], dim: int, start_idx: List[int]
     ) -> np.ndarray:
         start_idx[dim] += self._global_index[dim]  # includes padding
-        block_data = np.empty(shape, dtype=self._data.dtype, order="C")
+        block_data = np.empty(shape, dtype=self._data.dtype)
         before_cut = 0
         after_cut = 0
         # check before boundary
@@ -494,7 +494,7 @@ class DataSetStoreReader(DataSetSource):
             )
 
     def _extend_data_for_padding(self, core_data: np.ndarray) -> np.ndarray:
-        padded_data = np.empty(self._chunk_shape, self._data.dtype, order="C")
+        padded_data = np.empty(self._chunk_shape, self._data.dtype)
         core_slices = [slice(None), slice(None), slice(None)]
         core_slices[self._slicing_dim] = slice(
             self._padding[0], self._chunk_shape[self._slicing_dim] - self._padding[1]
