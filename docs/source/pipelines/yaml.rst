@@ -69,13 +69,13 @@ single parameter (see :ref:`parameter_sweeping` for more details).
 
 .. note::  There is no need to add image saving plugin for sweep runs as it will be added automatically. It is also preferable to keep the `preview` small as the time of computation can be substantial.
 
-.. dropdown:: Parameter sweep over several CoR values (`center` parameter) in the reconstruction method, and saving the result as tiffs. 
+.. dropdown:: Parameter sweep using the :code:`!SweepRange` tag to do a sweep over several CoR values of the :code:`center` parameter in the reconstruction method. 
 
    .. literalinclude:: ../pipelines_full/sweep_center_FBP3d_tomobar.yaml
        :language: yaml
-       :emphasize-lines: 33-36
+       :emphasize-lines: 34-37
 
-.. dropdown:: Parameter sweep over several values of the `alpha` parameter for Paganin filter. 
+.. dropdown:: Parameter sweep using the :code:`!Sweep` tag over several particular values (not a range) of the :code:`alpha` parameter for the Paganin filter. 
 
    .. literalinclude:: ../pipelines_full/sweep_paganin_FBP3d_tomobar.yaml
        :language: yaml
