@@ -1,0 +1,1470 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Full YAML pipelines &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=937cd9db"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'pipelines/yaml';</script>
+    <link rel="icon" href="../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="YAML Checker - Why use it?" href="../utilities/yaml_checker.html" />
+    <link rel="prev" title="Methods YAML Templates" href="../backends/templates.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="Sep 16, 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo_light.png" class="logo__image only-light" alt="HTTomo Documentation page - Home"/>
+    <script>document.write(`<img src="../_static/logo_dark.png" class="logo__image only-dark" alt="HTTomo Documentation page - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../introduction/about.html">HTTomo concept</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../introduction/indepth/detailed_about.html">Detailed concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/sections.html">Sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/reslice.html">Re-slicing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/wrappers.html">Method Wrappers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/memory_estimators.html">Memory Estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/chunks.html">Chunks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/blocks.html">Blocks</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../howto/installation.html">Installation Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/run_httomo.html">How to run HTTomo</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../howto/how_to_run/at_diamond.html">Inside Diamond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/how_to_run/outside_diamond.html">Outside Diamond</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/process_lists_guide.html">Process Lists Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../howto/process_lists/httomo_parameters.html">HTTomo-specific parameters</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../howto/process_lists/side_outputs/side_out.html">Side outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../howto/process_lists/save_results/save_results.html">Saving intermediate files</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/process_lists/process_list_configure.html">Configure efficient pipelines</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../howto/httomo_features.html">HTTomo Features</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/parameter_sweeping.html">Parameter Sweeping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../howto/httomo_features/padding.html">Padding</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto/interpret_logger.html">Interpret Log File</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../backends/list.html">Supported libraries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../backends/templates.html">Methods YAML Templates</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Ready-to-use pipelines</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Full YAML pipelines</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../developers/how_to_contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/memory_calculation.html">GPU memory calculations</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developers/api.html">API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.base_block.html">httomo.base_block</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.base_block.BaseBlock.html">httomo.base_block.BaseBlock</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.block_interfaces.html">httomo.block_interfaces</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.block_interfaces.Block.html">httomo.block_interfaces.Block</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.block_interfaces.BlockData.html">httomo.block_interfaces.BlockData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.block_interfaces.BlockIndexing.html">httomo.block_interfaces.BlockIndexing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.block_interfaces.BlockTransfer.html">httomo.block_interfaces.BlockTransfer</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.cli.html">httomo.cli</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.cli.PipelineFilePathOrString.html">httomo.cli.PipelineFilePathOrString</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.cli.execute_high_throughput_run.html">httomo.cli.execute_high_throughput_run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.cli.execute_sweep_run.html">httomo.cli.execute_sweep_run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.cli.generate_pipeline.html">httomo.cli.generate_pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.cli.initialise_output_directory.html">httomo.cli.initialise_output_directory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.cli.set_global_constants.html">httomo.cli.set_global_constants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.cli.transform_limit_str_to_bytes.html">httomo.cli.transform_limit_str_to_bytes</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.cli_utils.html">httomo.cli_utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.cli_utils.is_sweep_pipeline.html">httomo.cli_utils.is_sweep_pipeline</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.darks_flats.html">httomo.darks_flats</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.darks_flats.DarksFlatsFileConfig.html">httomo.darks_flats.DarksFlatsFileConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.darks_flats.get_darks_flats.html">httomo.darks_flats.get_darks_flats</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.data.html">httomo.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.data.dataset_store.html">httomo.data.dataset_store</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.data.dataset_store.DataSetStoreReader.html">httomo.data.dataset_store.DataSetStoreReader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.data.dataset_store.DataSetStoreWriter.html">httomo.data.dataset_store.DataSetStoreWriter</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.data.hdf.html">httomo.data.hdf</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.data.mpiutil.html">httomo.data.mpiutil</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.data.mpiutil.alltoall.html">httomo.data.mpiutil.alltoall</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.data.padding.html">httomo.data.padding</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.data.padding.extrapolate_after.html">httomo.data.padding.extrapolate_after</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.data.padding.extrapolate_before.html">httomo.data.padding.extrapolate_before</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.data.param_sweep_store.html">httomo.data.param_sweep_store</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.data.param_sweep_store.ParamSweepReader.html">httomo.data.param_sweep_store.ParamSweepReader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.data.param_sweep_store.ParamSweepWriter.html">httomo.data.param_sweep_store.ParamSweepWriter</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../developers/generated/httomo.globals.html">httomo.globals</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.loaders.html">httomo.loaders</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.loaders.standard_tomo_loader.html">httomo.loaders.standard_tomo_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.loaders.standard_tomo_loader.StandardLoaderWrapper.html">httomo.loaders.standard_tomo_loader.StandardLoaderWrapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.loaders.standard_tomo_loader.StandardTomoLoader.html">httomo.loaders.standard_tomo_loader.StandardTomoLoader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.loaders.types.html">httomo.loaders.types</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.loaders.types.DataConfig.html">httomo.loaders.types.DataConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.loaders.types.RawAngles.html">httomo.loaders.types.RawAngles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.loaders.types.UserDefinedAngles.html">httomo.loaders.types.UserDefinedAngles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.loaders.make_loader.html">httomo.loaders.make_loader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.logger.html">httomo.logger</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.logger.setup_logger.html">httomo.logger.setup_logger</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.methods.html">httomo.methods</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.methods.calculate_stats.html">httomo.methods.calculate_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.methods.save_intermediate_data.html">httomo.methods.save_intermediate_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.methods.setup_dataset.html">httomo.methods.setup_dataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.html">httomo.method_wrappers</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.datareducer.html">httomo.method_wrappers.datareducer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.datareducer.DatareducerWrapper.html">httomo.method_wrappers.datareducer.DatareducerWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.dezinging.html">httomo.method_wrappers.dezinging</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.dezinging.DezingingWrapper.html">httomo.method_wrappers.dezinging.DezingingWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.distortion_correction.html">httomo.method_wrappers.distortion_correction</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.distortion_correction.DistortionCorrectionWrapper.html">httomo.method_wrappers.distortion_correction.DistortionCorrectionWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.generic.html">httomo.method_wrappers.generic</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.generic.GenericMethodWrapper.html">httomo.method_wrappers.generic.GenericMethodWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.images.html">httomo.method_wrappers.images</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.images.ImagesWrapper.html">httomo.method_wrappers.images.ImagesWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.reconstruction.html">httomo.method_wrappers.reconstruction</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.reconstruction.ReconstructionWrapper.html">httomo.method_wrappers.reconstruction.ReconstructionWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.rotation.html">httomo.method_wrappers.rotation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.rotation.RotationWrapper.html">httomo.method_wrappers.rotation.RotationWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.save_intermediate.html">httomo.method_wrappers.save_intermediate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.save_intermediate.SaveIntermediateFilesWrapper.html">httomo.method_wrappers.save_intermediate.SaveIntermediateFilesWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.stats_calc.html">httomo.method_wrappers.stats_calc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.stats_calc.StatsCalcWrapper.html">httomo.method_wrappers.stats_calc.StatsCalcWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.method_wrappers.make_method_wrapper.html">httomo.method_wrappers.make_method_wrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.monitors.html">httomo.monitors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.monitors.aggregate.html">httomo.monitors.aggregate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.monitors.aggregate.AggregateMonitoring.html">httomo.monitors.aggregate.AggregateMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.monitors.benchmark.html">httomo.monitors.benchmark</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.monitors.benchmark.BenchmarkMonitoring.html">httomo.monitors.benchmark.BenchmarkMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.monitors.summary.html">httomo.monitors.summary</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.monitors.summary.SummaryMonitor.html">httomo.monitors.summary.SummaryMonitor</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.monitors.make_monitors.html">httomo.monitors.make_monitors</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.preview.html">httomo.preview</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.preview.Preview.html">httomo.preview.Preview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.preview.PreviewConfig.html">httomo.preview.PreviewConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.preview.PreviewDimConfig.html">httomo.preview.PreviewDimConfig</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.html">httomo.runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.auxiliary_data.html">httomo.runner.auxiliary_data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.auxiliary_data.AuxiliaryData.html">httomo.runner.auxiliary_data.AuxiliaryData</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.block_split.html">httomo.runner.block_split</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.block_split.BlockSplitter.html">httomo.runner.block_split.BlockSplitter</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.dataset.html">httomo.runner.dataset</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.dataset.DataSetBlock.html">httomo.runner.dataset.DataSetBlock</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.dataset_store_backing.html">httomo.runner.dataset_store_backing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.dataset_store_backing.DataSetStoreBacking.html">httomo.runner.dataset_store_backing.DataSetStoreBacking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.dataset_store_backing.calculate_section_chunk_bytes.html">httomo.runner.dataset_store_backing.calculate_section_chunk_bytes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.dataset_store_backing.calculate_section_chunk_shape.html">httomo.runner.dataset_store_backing.calculate_section_chunk_shape</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.dataset_store_backing.determine_store_backing.html">httomo.runner.dataset_store_backing.determine_store_backing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.dataset_store_interfaces.html">httomo.runner.dataset_store_interfaces</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.dataset_store_interfaces.DataSetSink.html">httomo.runner.dataset_store_interfaces.DataSetSink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.dataset_store_interfaces.DataSetSource.html">httomo.runner.dataset_store_interfaces.DataSetSource</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.dataset_store_interfaces.DummySink.html">httomo.runner.dataset_store_interfaces.DummySink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.dataset_store_interfaces.ReadableDataSetSink.html">httomo.runner.dataset_store_interfaces.ReadableDataSetSink</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.gpu_utils.html">httomo.runner.gpu_utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.gpu_utils.get_available_gpu_memory.html">httomo.runner.gpu_utils.get_available_gpu_memory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.gpu_utils.get_gpu_id.html">httomo.runner.gpu_utils.get_gpu_id</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.gpu_utils.gpumem_cleanup.html">httomo.runner.gpu_utils.gpumem_cleanup</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.loader.html">httomo.runner.loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.loader.LoaderInterface.html">httomo.runner.loader.LoaderInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.method_wrapper.html">httomo.runner.method_wrapper</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.method_wrapper.GpuTimeInfo.html">httomo.runner.method_wrapper.GpuTimeInfo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.method_wrapper.MethodWrapper.html">httomo.runner.method_wrapper.MethodWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.methods_repository_interface.html">httomo.runner.methods_repository_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.methods_repository_interface.MethodQuery.html">httomo.runner.methods_repository_interface.MethodQuery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.methods_repository_interface.MethodRepository.html">httomo.runner.methods_repository_interface.MethodRepository</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.monitoring_interface.html">httomo.runner.monitoring_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.monitoring_interface.MonitoringInterface.html">httomo.runner.monitoring_interface.MonitoringInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.output_ref.html">httomo.runner.output_ref</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.output_ref.OutputRef.html">httomo.runner.output_ref.OutputRef</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.pipeline.html">httomo.runner.pipeline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.pipeline.Pipeline.html">httomo.runner.pipeline.Pipeline</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.section.html">httomo.runner.section</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.section.Section.html">httomo.runner.section.Section</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.section.determine_minimum_block_length.html">httomo.runner.section.determine_minimum_block_length</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.section.determine_section_padding.html">httomo.runner.section.determine_section_padding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.section.sectionize.html">httomo.runner.section.sectionize</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.task_runner.html">httomo.runner.task_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.task_runner.TaskRunner.html">httomo.runner.task_runner.TaskRunner</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.html">httomo.sweep_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.paganin_kernel.html">httomo.sweep_runner.paganin_kernel</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.paganin_kernel.paganin_kernel_estimator.html">httomo.sweep_runner.paganin_kernel.paganin_kernel_estimator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_block.html">httomo.sweep_runner.param_sweep_block</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_block.ParamSweepBlock.html">httomo.sweep_runner.param_sweep_block.ParamSweepBlock</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_json_loader.html">httomo.sweep_runner.param_sweep_json_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_json_loader.ParamSweepJsonLoader.html">httomo.sweep_runner.param_sweep_json_loader.ParamSweepJsonLoader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_runner.html">httomo.sweep_runner.param_sweep_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html">httomo.sweep_runner.param_sweep_runner.ParamSweepRunner</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_store_interfaces.html">httomo.sweep_runner.param_sweep_store_interfaces</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSink.html">httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSource.html">httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSource</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_yaml_loader.html">httomo.sweep_runner.param_sweep_yaml_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_yaml_loader.ParamSweepYamlLoader.html">httomo.sweep_runner.param_sweep_yaml_loader.ParamSweepYamlLoader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_yaml_loader.get_param_sweep_yaml_loader.html">httomo.sweep_runner.param_sweep_yaml_loader.get_param_sweep_yaml_loader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.side_output_manager.html">httomo.sweep_runner.side_output_manager</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.side_output_manager.SideOutputManager.html">httomo.sweep_runner.side_output_manager.SideOutputManager</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.stages.html">httomo.sweep_runner.stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.stages.NonSweepStage.html">httomo.sweep_runner.stages.NonSweepStage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.stages.Stages.html">httomo.sweep_runner.stages.Stages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.stages.SweepStage.html">httomo.sweep_runner.stages.SweepStage</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.transform_layer.html">httomo.transform_layer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_layer.TransformLayer.html">httomo.transform_layer.TransformLayer</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.html">httomo.transform_loader_params</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.DarksFlatsParam.html">httomo.transform_loader_params.DarksFlatsParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.PreviewParam.html">httomo.transform_loader_params.PreviewParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.RawAnglesParam.html">httomo.transform_loader_params.RawAnglesParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.StartStopEntry.html">httomo.transform_loader_params.StartStopEntry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.UserDefinedAnglesParam.html">httomo.transform_loader_params.UserDefinedAnglesParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.UserDefinedAnglesParamInner.html">httomo.transform_loader_params.UserDefinedAnglesParamInner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.find_tomo_entry.html">httomo.transform_loader_params.find_tomo_entry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.parse_angles.html">httomo.transform_loader_params.parse_angles</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.parse_config.html">httomo.transform_loader_params.parse_config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.parse_darks_flats.html">httomo.transform_loader_params.parse_darks_flats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.parse_data.html">httomo.transform_loader_params.parse_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.transform_loader_params.parse_preview.html">httomo.transform_loader_params.parse_preview</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../developers/generated/httomo.types.html">httomo.types</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.ui_layer.html">httomo.ui_layer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.ui_layer.PipelineFormat.html">httomo.ui_layer.PipelineFormat</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.ui_layer.UiLayer.html">httomo.ui_layer.UiLayer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.ui_layer.check_valid_ref_id.html">httomo.ui_layer.check_valid_ref_id</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.ui_layer.get_ref_split.html">httomo.ui_layer.get_ref_split</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.ui_layer.get_regex_pattern.html">httomo.ui_layer.get_regex_pattern</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.ui_layer.get_valid_ref_str.html">httomo.ui_layer.get_valid_ref_str</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.ui_layer.update_side_output_references.html">httomo.ui_layer.update_side_output_references</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.ui_layer.yaml_loader.html">httomo.ui_layer.yaml_loader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.utils.html">httomo.utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.utils.catch_gputime.html">httomo.utils.catch_gputime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.utils.catchtime.html">httomo.utils.catchtime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.utils.get_data_in_data_out.html">httomo.utils.get_data_in_data_out</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.utils.log_exception.html">httomo.utils.log_exception</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.utils.log_once.html">httomo.utils.log_once</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.utils.log_rank.html">httomo.utils.log_rank</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.utils.make_3d_shape_from_array.html">httomo.utils.make_3d_shape_from_array</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.utils.make_3d_shape_from_shape.html">httomo.utils.make_3d_shape_from_shape</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.utils.mpi_abort_excepthook.html">httomo.utils.mpi_abort_excepthook</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.html">httomo.yaml_checker</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.Colour.html">httomo.yaml_checker.Colour</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.UniqueKeyLoader.html">httomo.yaml_checker.UniqueKeyLoader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_first_method_is_loader.html">httomo.yaml_checker.check_first_method_is_loader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_hdf5_paths_against_loader.html">httomo.yaml_checker.check_hdf5_paths_against_loader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_id_has_side_out.html">httomo.yaml_checker.check_id_has_side_out</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_keys.html">httomo.yaml_checker.check_keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_methods_exist_in_templates.html">httomo.yaml_checker.check_methods_exist_in_templates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_no_duplicated_keys.html">httomo.yaml_checker.check_no_duplicated_keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_no_imagesaver_after_sweep_method.html">httomo.yaml_checker.check_no_imagesaver_after_sweep_method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_no_required_parameter_values.html">httomo.yaml_checker.check_no_required_parameter_values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_parameter_names_are_known.html">httomo.yaml_checker.check_parameter_names_are_known</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_parameter_names_are_str.html">httomo.yaml_checker.check_parameter_names_are_str</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_ref_id_valid.html">httomo.yaml_checker.check_ref_id_valid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.check_side_out_matches_ref_arg.html">httomo.yaml_checker.check_side_out_matches_ref_arg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.sanity_check.html">httomo.yaml_checker.sanity_check</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.yaml_checker.validate_yaml_config.html">httomo.yaml_checker.validate_yaml_config</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/pipelines/yaml.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Full YAML pipelines</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-pipeline-templates">GPU Pipeline templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-pipeline-templates">CPU Pipeline templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dls-specific-templates">DLS-specific templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-sweeps-templates">Parameter Sweeps templates</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="full-yaml-pipelines">
+<span id="tutorials-pl-templates"></span><h1>Full YAML pipelines<a class="headerlink" href="#full-yaml-pipelines" title="Link to this heading">#</a></h1>
+<p>This is a collection of ready to be used full pipelines or process lists for HTTomo.
+See more on <a class="reference internal" href="../explanation/process_list.html#explanation-process-list"><span class="std std-ref">What is a process list?</span></a> and how to <a class="reference internal" href="../howto/process_lists/process_list_configure.html#howto-process-list"><span class="std std-ref">Configure efficient pipelines</span></a>.</p>
+<p>HTTomo mainly targets GPU computations, therefore the use of <a class="reference internal" href="#tutorials-pl-templates-gpu"><span class="std std-ref">GPU Pipeline templates</span></a> is
+preferable. However, when the GPU device is not available or a GPU method is not implemented, the use of
+<a class="reference internal" href="#tutorials-pl-templates-cpu"><span class="std std-ref">CPU Pipeline templates</span></a> is possible.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The combination of both GPU and CPU methods is possible. If one expects to achieve the faster performance, please use the GPU methods provided, where possible.</p>
+</div>
+<section id="gpu-pipeline-templates">
+<span id="tutorials-pl-templates-gpu"></span><h2>GPU Pipeline templates<a class="headerlink" href="#gpu-pipeline-templates" title="Link to this heading">#</a></h2>
+<p>The GPU-pipelines consist of methods from httomolibgpu (GPU) and httomolib (CPU) backend <a class="reference internal" href="../backends/list.html#backends-list"><span class="std std-ref">Supported libraries</span></a>. Those libraries are supported directly by the HTTomo development team.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">GPU pipeline with auto-centering and the <cite>FBP3d_tomobar</cite> reconstruction method.</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># This pipeline is supported by HTTomo ver. 2.5</span>
+<span class="c1"># --- Standard tomography loader for NeXus files. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">detector_x</span><span class="p">:</span><span class="w">   </span><span class="c1"># horizontal data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">      </span><span class="nt">detector_y</span><span class="p">:</span><span class="w">   </span><span class="c1"># vertical data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">darks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">flats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="c1"># --- Center of Rotation auto-finding. Required for reconstruction bellow. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">find_center_vo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.rotation</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># A vertical slice (sinogram) index to calculate CoR, `mid` can be used for middle</span>
+<span class="w">    </span><span class="nt">average_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Average several sinograms to improve SNR, one can try 3-5 range</span>
+<span class="w">    </span><span class="nt">cor_initialisation_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># Use if an approximate CoR is known</span>
+<span class="w">    </span><span class="nt">smin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-50</span>
+<span class="w">    </span><span class="nt">smax</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">    </span><span class="nt">srad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6.0</span>
+<span class="w">    </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">    </span><span class="nt">ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">    </span><span class="nt">drop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centering</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centre_of_rotation</span><span class="w">  </span><span class="c1"># An estimated CoR value provided as a side output</span>
+<span class="c1"># --- Removing unresponsive pixels in the data, aka zingers. Use if sharp streaks are present in the reconstruction. To be applied before normalisation. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remove_outlier</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.misc.corr</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">kernel_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w">  </span><span class="c1"># The size of the 3D neighbourhood surrounding the voxel. Odd integer.</span>
+<span class="w">    </span><span class="nt">dif</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w"> </span><span class="c1"># A difference between the outlier value and the median value of neighbouring pixels.</span>
+<span class="c1"># --- Normalisation of projection data using collected flats/darks images. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normalize</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">flats_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">darks_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+<span class="w">    </span><span class="nt">minus_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># If Paganin method is used bellow, set it to false.</span>
+<span class="w">    </span><span class="nt">nonnegativity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">remove_nans</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="c1"># --- Method to remove stripe artefacts in the data that lead to ring artefacts in the reconstruction. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remove_all_stripe</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.stripe</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">snr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.0</span>
+<span class="w">    </span><span class="nt">la_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">61</span>
+<span class="w">    </span><span class="nt">sm_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">21</span>
+<span class="w">    </span><span class="nt">dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="c1"># --- Reconstruction method. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FBP3d_tomobar</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.algorithm</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.centre_of_rotation}}</span><span class="w">  </span><span class="c1"># Reference to center of rotation side output above OR a float number.</span>
+<span class="w">    </span><span class="nt">detector_pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Horizontal detector padding to minimise circle/arc-type artifacts in the reconstruction</span>
+<span class="w">    </span><span class="nt">filter_freq_cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.35</span>
+<span class="w">    </span><span class="nt">recon_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">recon_mask_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.95</span><span class="w"> </span><span class="c1"># Zero pixels outside the mask-circle radius.</span>
+<span class="w">    </span><span class="nt">neglog</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Perform negative log here if it was previously switched off.</span>
+<span class="c1"># --- Calculate global statistics on the reconstructed volume, required for data rescaling. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calculate_stats</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.methods</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">statistics</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glob_stats</span>
+<span class="c1"># --- Rescaling the data using min/max obtained from `calculate_stats`. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rescale_to_int</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.rescale</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">perc_range_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">    </span><span class="nt">perc_range_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span>
+<span class="w">    </span><span class="nt">bits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{statistics.side_outputs.glob_stats}}</span>
+<span class="c1"># --- Saving data into images. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">save_to_images</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.images</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">subfolder_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">images</span>
+<span class="w">    </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">file_format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tif</span><span class="w">  </span><span class="c1"># `tif` or `jpeg` can be used.</span>
+<span class="w">    </span><span class="nt">asynchronous</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">GPU pipeline as above and Total Variation denoising on the result of the FBP reconstruction.</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># This pipeline is supported by HTTomo ver. 2.5</span>
+<span class="c1"># --- Standard tomography loader for NeXus files. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">detector_x</span><span class="p">:</span><span class="w">   </span><span class="c1"># horizontal data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">      </span><span class="nt">detector_y</span><span class="p">:</span><span class="w">   </span><span class="c1"># vertical data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">darks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">flats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="c1"># --- Center of Rotation auto-finding. Required for reconstruction bellow. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">find_center_vo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.rotation</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># A vertical slice (sinogram) index to calculate CoR, `mid` can be used for middle</span>
+<span class="w">    </span><span class="nt">average_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Average several sinograms to improve SNR, one can try 3-5 range</span>
+<span class="w">    </span><span class="nt">cor_initialisation_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># Use if an approximate CoR is known</span>
+<span class="w">    </span><span class="nt">smin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-50</span>
+<span class="w">    </span><span class="nt">smax</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">    </span><span class="nt">srad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6.0</span>
+<span class="w">    </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">    </span><span class="nt">ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">    </span><span class="nt">drop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centering</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centre_of_rotation</span><span class="w">  </span><span class="c1"># An estimated CoR value provided as a side output</span>
+<span class="c1"># --- Removing unresponsive pixels in the data, aka zingers. Use if sharp streaks are present in the reconstruction. To be applied before normalisation. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remove_outlier</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.misc.corr</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">kernel_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w">  </span><span class="c1"># The size of the 3D neighbourhood surrounding the voxel. Odd integer.</span>
+<span class="w">    </span><span class="nt">dif</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w"> </span><span class="c1"># A difference between the outlier value and the median value of neighbouring pixels.</span>
+<span class="c1"># --- Normalisation of projection data using collected flats/darks images. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normalize</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">flats_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">darks_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+<span class="w">    </span><span class="nt">minus_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># If Paganin method is used bellow, set it to false.</span>
+<span class="w">    </span><span class="nt">nonnegativity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">remove_nans</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="c1"># --- Method to remove stripe artefacts in the data that lead to ring artefacts in the reconstruction. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remove_all_stripe</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.stripe</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">snr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.0</span>
+<span class="w">    </span><span class="nt">la_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">61</span>
+<span class="w">    </span><span class="nt">sm_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">21</span>
+<span class="w">    </span><span class="nt">dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="c1"># --- Reconstruction method. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FBP3d_tomobar</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.algorithm</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.centre_of_rotation}}</span><span class="w">  </span><span class="c1"># Reference to center of rotation side output above OR a float number.</span>
+<span class="w">    </span><span class="nt">detector_pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Horizontal detector padding to minimise circle/arc-type artifacts in the reconstruction</span>
+<span class="w">    </span><span class="nt">filter_freq_cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.35</span>
+<span class="w">    </span><span class="nt">recon_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">recon_mask_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.95</span><span class="w"> </span><span class="c1"># Zero pixels outside the mask-circle radius.</span>
+<span class="w">    </span><span class="nt">neglog</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Perform negative log here if it was previously switched off.</span>
+<span class="c1"># --- Using denoising method to reduce noise. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">total_variation_PD</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.misc.denoise</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">regularisation_parameter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-05</span>
+<span class="w">    </span><span class="nt">iterations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<span class="w">    </span><span class="nt">isotropic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">nonnegativity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">lipschitz_const</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8.0</span>
+<span class="c1"># --- Calculate global statistics on the reconstructed volume, required for data rescaling. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calculate_stats</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.methods</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">statistics</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glob_stats</span>
+<span class="c1"># --- Rescaling the data using min/max obtained from `calculate_stats`. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rescale_to_int</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.rescale</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">perc_range_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">    </span><span class="nt">perc_range_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span>
+<span class="w">    </span><span class="nt">bits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{statistics.side_outputs.glob_stats}}</span>
+<span class="c1"># --- Saving data into images. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">save_to_images</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.images</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">subfolder_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">images</span>
+<span class="w">    </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">file_format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tif</span><span class="w">  </span><span class="c1"># `tif` or `jpeg` can be used.</span>
+<span class="w">    </span><span class="nt">asynchronous</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+</div>
+</details></section>
+<section id="cpu-pipeline-templates">
+<span id="tutorials-pl-templates-cpu"></span><h2>CPU Pipeline templates<a class="headerlink" href="#cpu-pipeline-templates" title="Link to this heading">#</a></h2>
+<p>The CPU-pipelines mostly use TomoPy methods. They are executed solely on the CPU and therefore expected to be slower than the GPU pipelines.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">CPU pipeline using auto-centering and the gridrec reconstruction method on the CPU (TomoPy).</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># This pipeline is supported by HTTomo ver. 2.5</span>
+<span class="c1"># --- Standard tomography loader for NeXus files. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">detector_x</span><span class="p">:</span><span class="w">   </span><span class="c1"># horizontal data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">      </span><span class="nt">detector_y</span><span class="p">:</span><span class="w">   </span><span class="c1"># vertical data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">darks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">flats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="c1"># --- Removing unresponsive pixels in the data, aka zingers. Use if sharp streaks are present in the reconstruction. To be applied before normalisation. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remove_outlier</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomopy.misc.corr</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dif</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span><span class="w">  </span><span class="c1"># A difference between the outlier value and the median value of neighbouring pixels.</span>
+<span class="w">    </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="c1"># --- Normalisation of projection data using collected flats/darks images. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normalize</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomopy.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">averaging</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mean</span>
+<span class="c1"># --- Normalisation of projection data using collected flats/darks images. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minus_log</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomopy.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="c1"># --- Center of Rotation auto-finding. Required for reconstruction bellow. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">find_center_vo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomopy.recon.rotation</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># A vertical slice (sinogram) index to calculate CoR, `mid` can be used for middle</span>
+<span class="w">    </span><span class="nt">smin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-50</span>
+<span class="w">    </span><span class="nt">smax</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">    </span><span class="nt">srad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+<span class="w">    </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.25</span>
+<span class="w">    </span><span class="nt">ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">    </span><span class="nt">drop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centering</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centre_of_rotation</span><span class="w">  </span><span class="c1"># An estimated CoR value provided as a side output</span>
+<span class="c1"># --- Reconstruction method. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">recon</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tomopy.recon.algorithm</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.centre_of_rotation}}</span><span class="w">  </span><span class="c1"># Reference to center of rotation side output above OR a float number.</span>
+<span class="w">    </span><span class="nt">sinogram_order</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gridrec</span><span class="w">  </span><span class="c1"># Select the required algorithm, e.g. `gridrec`</span>
+<span class="w">    </span><span class="nt">init_recon</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="c1"># --- Calculate global statistics on the reconstructed volume, required for data rescaling. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calculate_stats</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.methods</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">statistics</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glob_stats</span>
+<span class="c1"># --- Rescaling the data using min/max obtained from `calculate_stats`. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rescale_to_int</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.rescale</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">perc_range_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">    </span><span class="nt">perc_range_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span>
+<span class="w">    </span><span class="nt">bits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{statistics.side_outputs.glob_stats}}</span>
+<span class="c1"># --- Saving data into images. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">save_to_images</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.images</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">subfolder_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">images</span>
+<span class="w">    </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">file_format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tif</span><span class="w">  </span><span class="c1"># `tif` or `jpeg` can be used.</span>
+<span class="w">    </span><span class="nt">asynchronous</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+</div>
+</details></section>
+<section id="dls-specific-templates">
+<span id="tutorials-pl-templates-dls"></span><h2>DLS-specific templates<a class="headerlink" href="#dls-specific-templates" title="Link to this heading">#</a></h2>
+<p>These pipelines are specific to Diamond Light Source processing strategies and can vary between different tomographic beamlines.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Pipeline for 360-degrees data with automatic CoR/overlap finding and stitching to 180-degrees data. Paganin filter is applied to the data.</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># This pipeline is supported by HTTomo ver. 2.5</span>
+<span class="c1"># --- Standard tomography loader for NeXus files. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">detector_x</span><span class="p">:</span><span class="w">   </span><span class="c1"># horizontal data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">      </span><span class="nt">detector_y</span><span class="p">:</span><span class="w">   </span><span class="c1"># vertical data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">darks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">flats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="c1"># --- Center of Rotation auto-finding. Required for reconstruction bellow. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">find_center_360</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.rotation</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># A vertical slice (sinogram) index to calculate CoR, `mid` can be used for middle</span>
+<span class="w">    </span><span class="nt">win_width</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1"># &#39;None&#39; corresponds to fully automated determination, &#39;0&#39; to the left side, &#39;1&#39; to the right side.</span>
+<span class="w">    </span><span class="nt">denoise</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">norm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">use_overlap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centering</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centre_of_rotation</span><span class="w">  </span><span class="c1"># An estimated CoR value provided as a side output</span>
+<span class="w">    </span><span class="nt">overlap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">overlap</span><span class="w"> </span><span class="c1"># An overlap to use for converting 360 degrees scan to 180 degrees scan.</span>
+<span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">side</span>
+<span class="w">    </span><span class="nt">overlap_position</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">overlap_position</span>
+<span class="c1"># --- Normalisation of projection data using collected flats/darks images. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normalize</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">flats_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">darks_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+<span class="w">    </span><span class="nt">minus_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># If Paganin method is used bellow, set it to false.</span>
+<span class="w">    </span><span class="nt">nonnegativity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">remove_nans</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="c1"># --- Using the overlap provided, converting 360 degrees scan to 180 degrees scan. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sino_360_to_180</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.misc.morph</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">overlap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.overlap}}</span>
+<span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.side}}</span>
+<span class="c1"># --- Method to remove stripe artefacts in the data that lead to ring artefacts in the reconstruction. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remove_stripe_based_sorting</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.stripe</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">11</span>
+<span class="w">    </span><span class="nt">dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="c1"># --- Apply a phase contrast filter to improve image contrast. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">paganin_filter_tomopy</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.phase</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">pixel_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0001</span>
+<span class="w">    </span><span class="nt">dist</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50.0</span>
+<span class="w">    </span><span class="nt">energy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">53.0</span>
+<span class="w">    </span><span class="nt">alpha</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span><span class="w">  </span><span class="c1"># Controls the balance between the strength of the filter and the amount of noise reduction. Higher leads to less noise and more blur.</span>
+<span class="c1"># --- Reconstruction method. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FBP3d_tomobar</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.algorithm</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.centre_of_rotation}}</span><span class="w">  </span><span class="c1"># Reference to center of rotation side output above OR a float number.</span>
+<span class="w">    </span><span class="nt">detector_pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Horizontal detector padding to minimise circle/arc-type artifacts in the reconstruction</span>
+<span class="w">    </span><span class="nt">filter_freq_cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.35</span>
+<span class="w">    </span><span class="nt">recon_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">recon_mask_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.95</span><span class="w"> </span><span class="c1"># Zero pixels outside the mask-circle radius.</span>
+<span class="w">    </span><span class="nt">neglog</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Perform negative log here if it was previously switched off.</span>
+<span class="c1"># --- Calculate global statistics on the reconstructed volume, required for data rescaling. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calculate_stats</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.methods</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">statistics</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glob_stats</span>
+<span class="c1"># --- Rescaling the data using min/max obtained from `calculate_stats`. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rescale_to_int</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.rescale</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">perc_range_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">    </span><span class="nt">perc_range_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span>
+<span class="w">    </span><span class="nt">bits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{statistics.side_outputs.glob_stats}}</span>
+<span class="c1"># --- Saving data into images. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">save_to_images</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.images</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">subfolder_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">images</span>
+<span class="w">    </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">file_format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tif</span><span class="w">  </span><span class="c1"># `tif` or `jpeg` can be used.</span>
+<span class="w">    </span><span class="nt">asynchronous</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Using a distortion correction module as a part of the pipeline with the 360-degrees data.</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># This pipeline is supported by HTTomo ver. 2.5</span>
+<span class="c1"># --- Standard tomography loader for NeXus files. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">detector_x</span><span class="p">:</span><span class="w">   </span><span class="c1"># horizontal data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">      </span><span class="nt">detector_y</span><span class="p">:</span><span class="w">   </span><span class="c1"># vertical data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">darks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">flats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="c1"># --- Center of Rotation auto-finding. Required for reconstruction bellow. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">find_center_360</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.rotation</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># A vertical slice (sinogram) index to calculate CoR, `mid` can be used for middle</span>
+<span class="w">    </span><span class="nt">win_width</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1"># &#39;None&#39; corresponds to fully automated determination, &#39;0&#39; to the left side, &#39;1&#39; to the right side.</span>
+<span class="w">    </span><span class="nt">denoise</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">norm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">use_overlap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centering</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centre_of_rotation</span><span class="w">  </span><span class="c1"># An estimated CoR value provided as a side output</span>
+<span class="w">    </span><span class="nt">overlap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">overlap</span><span class="w"> </span><span class="c1"># An overlap to use for converting 360 degrees scan to 180 degrees scan.</span>
+<span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">side</span>
+<span class="w">    </span><span class="nt">overlap_position</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">overlap_position</span>
+<span class="c1"># --- Normalisation of projection data using collected flats/darks images. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normalize</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">flats_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">darks_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+<span class="w">    </span><span class="nt">minus_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># If Paganin method is used bellow, set it to false.</span>
+<span class="w">    </span><span class="nt">nonnegativity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">remove_nans</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="c1"># --- Applying optical distortion correction to projections. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">distortion_correction_proj_discorpy</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.alignment</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">metadata_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">REQUIRED</span><span class="w">  </span><span class="c1"># Provide an absolute path to the text file with distortion coefficients.</span>
+<span class="w">    </span><span class="nt">order</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">constant</span>
+<span class="c1"># --- Using the overlap provided, converting 360 degrees scan to 180 degrees scan. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sino_360_to_180</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.misc.morph</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">overlap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.overlap}}</span>
+<span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.side}}</span>
+<span class="c1"># --- Method to remove stripe artefacts in the data that lead to ring artefacts in the reconstruction. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remove_stripe_based_sorting</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.stripe</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">11</span>
+<span class="w">    </span><span class="nt">dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="c1"># --- Reconstruction method. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FBP3d_tomobar</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.algorithm</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.centre_of_rotation}}</span><span class="w">  </span><span class="c1"># Reference to center of rotation side output above OR a float number.</span>
+<span class="w">    </span><span class="nt">detector_pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Horizontal detector padding to minimise circle/arc-type artifacts in the reconstruction</span>
+<span class="w">    </span><span class="nt">filter_freq_cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.35</span>
+<span class="w">    </span><span class="nt">recon_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">recon_mask_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.95</span><span class="w"> </span><span class="c1"># Zero pixels outside the mask-circle radius.</span>
+<span class="w">    </span><span class="nt">neglog</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Perform negative log here if it was previously switched off.</span>
+<span class="c1"># --- Calculate global statistics on the reconstructed volume, required for data rescaling. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calculate_stats</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.methods</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">statistics</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glob_stats</span>
+<span class="c1"># --- Rescaling the data using min/max obtained from `calculate_stats`. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rescale_to_int</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.rescale</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">perc_range_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">    </span><span class="nt">perc_range_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span>
+<span class="w">    </span><span class="nt">bits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{statistics.side_outputs.glob_stats}}</span>
+<span class="c1"># --- Saving data into images. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">save_to_images</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.images</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">subfolder_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">images</span>
+<span class="w">    </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">file_format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tif</span><span class="w">  </span><span class="c1"># `tif` or `jpeg` can be used.</span>
+<span class="w">    </span><span class="nt">asynchronous</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+</div>
+</details></section>
+<section id="parameter-sweeps-templates">
+<span id="tutorials-pl-templates-sweeps"></span><h2>Parameter Sweeps templates<a class="headerlink" href="#parameter-sweeps-templates" title="Link to this heading">#</a></h2>
+<p>Here we demonstrate how to perform a sweep across multiple values of a
+single parameter (see <a class="reference internal" href="../howto/httomo_features/parameter_sweeping.html#parameter-sweeping"><span class="std std-ref">Parameter Sweeping</span></a> for more details).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>There is no need to add image saving plugin for sweep runs as it will be added automatically. It is also preferable to keep the <cite>preview</cite> small as the time of computation can be substantial.</p>
+</div>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Parameter sweep using the <code class="code docutils literal notranslate"><span class="pre">!SweepRange</span></code> tag to do a sweep over several CoR values of the <code class="code docutils literal notranslate"><span class="pre">center</span></code> parameter in the reconstruction method.</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># This pipeline is supported by HTTomo ver. 2.5</span>
+<span class="c1"># --- Standard tomography loader for NeXus files. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">detector_x</span><span class="p">:</span><span class="w">   </span><span class="c1"># horizontal data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">      </span><span class="nt">detector_y</span><span class="p">:</span><span class="w">   </span><span class="c1"># vertical data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">darks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">flats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="c1"># --- Normalisation of projection data using collected flats/darks images. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normalize</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">flats_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">darks_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+<span class="w">    </span><span class="nt">minus_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># If Paganin method is used bellow, set it to false.</span>
+<span class="w">    </span><span class="nt">nonnegativity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">remove_nans</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="c1"># --- Reconstruction method. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FBP3d_tomobar</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.algorithm</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="hll"><span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="kt">!SweepRange</span><span class="w">  </span><span class="c1"># Reference to center of rotation side output above OR a float number.</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1100</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1300</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">25</span>
+</span><span class="w">    </span><span class="nt">detector_pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Horizontal detector padding to minimise circle/arc-type artifacts in the reconstruction</span>
+<span class="w">    </span><span class="nt">filter_freq_cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.35</span>
+<span class="w">    </span><span class="nt">recon_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">recon_mask_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.95</span><span class="w"> </span><span class="c1"># Zero pixels outside the mask-circle radius.</span>
+<span class="w">    </span><span class="nt">neglog</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Perform negative log here if it was previously switched off.</span>
+</pre></div>
+</div>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Parameter sweep using the <code class="code docutils literal notranslate"><span class="pre">!Sweep</span></code> tag over several particular values (not a range) of the <code class="code docutils literal notranslate"><span class="pre">alpha</span></code> parameter for the Paganin filter.</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># This pipeline is supported by HTTomo ver. 2.5</span>
+<span class="c1"># --- Standard tomography loader for NeXus files. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">detector_x</span><span class="p">:</span><span class="w">   </span><span class="c1"># horizontal data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">      </span><span class="nt">detector_y</span><span class="p">:</span><span class="w">   </span><span class="c1"># vertical data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">darks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">flats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="c1"># --- Center of Rotation auto-finding. Required for reconstruction bellow. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">find_center_vo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.rotation</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># A vertical slice (sinogram) index to calculate CoR, `mid` can be used for middle</span>
+<span class="w">    </span><span class="nt">average_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Average several sinograms to improve SNR, one can try 3-5 range</span>
+<span class="w">    </span><span class="nt">cor_initialisation_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># Use if an approximate CoR is known</span>
+<span class="w">    </span><span class="nt">smin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-50</span>
+<span class="w">    </span><span class="nt">smax</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">    </span><span class="nt">srad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6.0</span>
+<span class="w">    </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">    </span><span class="nt">ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">    </span><span class="nt">drop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centering</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centre_of_rotation</span><span class="w">  </span><span class="c1"># An estimated CoR value provided as a side output</span>
+<span class="c1"># --- Normalisation of projection data using collected flats/darks images. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normalize</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">flats_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">darks_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+<span class="w">    </span><span class="nt">minus_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># If Paganin method is used bellow, set it to false.</span>
+<span class="w">    </span><span class="nt">nonnegativity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">remove_nans</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="c1"># --- Apply a phase contrast filter to improve image contrast. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">paganin_filter_tomopy</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.phase</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">pixel_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0001</span>
+<span class="w">    </span><span class="nt">dist</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50.0</span>
+<span class="w">    </span><span class="nt">energy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">53.0</span>
+<span class="hll"><span class="w">    </span><span class="nt">alpha</span><span class="p">:</span><span class="w"> </span><span class="kt">!Sweep</span><span class="w">  </span><span class="c1"># Controls the balance between the strength of the filter and the amount of noise reduction. Higher leads to less noise and more blur.</span>
+</span><span class="hll"><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span>
+</span><span class="hll"><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span>
+</span><span class="hll"><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0001</span>
+</span><span class="c1"># --- Reconstruction method. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FBP3d_tomobar</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.algorithm</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.centre_of_rotation}}</span><span class="w">  </span><span class="c1"># Reference to center of rotation side output above OR a float number.</span>
+<span class="w">    </span><span class="nt">detector_pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Horizontal detector padding to minimise circle/arc-type artifacts in the reconstruction</span>
+<span class="w">    </span><span class="nt">filter_freq_cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.35</span>
+<span class="w">    </span><span class="nt">recon_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">recon_mask_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.95</span><span class="w"> </span><span class="c1"># Zero pixels outside the mask-circle radius.</span>
+<span class="w">    </span><span class="nt">neglog</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Perform negative log here if it was previously switched off.</span>
+</pre></div>
+</div>
+</div>
+</details></section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../backends/templates.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Methods YAML Templates</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../utilities/yaml_checker.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">YAML Checker - Why use it?</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-pipeline-templates">GPU Pipeline templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-pipeline-templates">CPU Pipeline templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dls-specific-templates">DLS-specific templates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-sweeps-templates">Parameter Sweeps templates</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By the Imaging Team
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Sep 16, 2025.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
