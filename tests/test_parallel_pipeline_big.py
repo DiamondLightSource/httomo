@@ -451,6 +451,90 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-4
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+@pytest.mark.full_data_parallel
+def test_parallel_pipe_360deg_titar_center_pc_FBP3d_tomobar_i12_163888_preview(
+    get_files: Callable,
+    cmd_mpirun,
+    i12_163888,
+    deg360_distortion_FBP3d_tomobar,
+    FBP3d_tomobar_distortion_i13_179623_npz,
+    output_folder,
+):
+    change_value_parameters_method_pipeline(
+        deg360_distortion_FBP3d_tomobar,
+        method=[
+            "standard_tomo",
+            "normalize",
+            "find_center_360",
+            "find_center_360",
+            "find_center_360",
+            "distortion_correction_proj_discorpy",
+            "FBP3d_tomobar",
+        ],
+        key=[
+            "preview",
+            "minus_log",
+            "ind",
+            "use_overlap",
+            "norm",
+            "metadata_path",
+            "neglog",
+        ],
+        value=[
+            {"detector_y": {"start": 900, "stop": 1100}},
+            False,
+            24,
+            True,
+            True,
+            "/data/tomography/raw_data/i13/360/179623_coeff.txt",
+            True,
+        ],
+    )
+
+    cmd_mpirun.insert(9, i13_179623)
+    cmd_mpirun.insert(10, deg360_distortion_FBP3d_tomobar)
+    cmd_mpirun.insert(11, output_folder)
+
+    process = Popen(
+        cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE
+    )
+    output, error = process.communicate()
+    print(output)
+
+    files = get_files(output_folder)
+
+    #: check the generated reconstruction (hdf5 file)
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    # load the pre-saved numpy array for comparison bellow
+    data_gt = FBP3d_tomobar_distortion_i13_179623_npz["data"]
+    axis_slice = FBP3d_tomobar_distortion_i13_179623_npz["axis_slice"]
+    (slices, sizeX, sizeY) = np.shape(data_gt)
+
+    step = axis_slice // (slices + 2)
+    # store for the result
+    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
+
+    path_to_data = "data/"
+    h5_file_name = "FBP3d_tomobar"
+    for file_to_open in h5_files:
+        if h5_file_name in file_to_open:
+            h5f = h5py.File(file_to_open, "r")
+            index_prog = step
+            for i in range(slices):
+                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
+                index_prog += step
+            h5f.close()
+        else:
+            message_str = f"File name with {h5_file_name} string cannot be found."
+            raise FileNotFoundError(message_str)
+
+    residual_im = data_gt - data_result
+    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    assert res_norm < 1e-4
+
 
 # ########################################################################
 @pytest.mark.full_data_parallel

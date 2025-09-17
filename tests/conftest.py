@@ -301,6 +301,11 @@ def i12_119647():
     return "tests/test_data/raw_data/i12/119647.nxs"
 
 
+@pytest.fixture
+def i12_163888():
+    # 3.7k projections, 43gb dataset, 360 degrees scan
+    return "tests/test_data/raw_data/i12/360/163888.nxs"
+
 ############## --Ground Truth references-- #################
 
 
