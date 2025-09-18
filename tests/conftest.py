@@ -229,6 +229,10 @@ def FBP3d_tomobar_denoising():
 
 
 @pytest.fixture
+def titaren_center_pc_FBP3d_resample():
+    return "docs/source/pipelines_full/titaren_center_pc_FBP3d_resample.yaml"
+
+@pytest.fixture
 def deg360_paganin_FBP3d_tomobar():
     return "docs/source/pipelines_full/deg360_paganin_FBP3d_tomobar.yaml"
 

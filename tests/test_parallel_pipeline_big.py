@@ -453,47 +453,32 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 @pytest.mark.full_data_parallel
-def test_parallel_pipe_360deg_titar_center_pc_FBP3d_tomobar_i12_163888_preview(
+def test_parallel_pipe_titaren_center_pc_FBP3d_resample_i12_119647_preview(
     get_files: Callable,
     cmd_mpirun,
-    i12_163888,
-    deg360_distortion_FBP3d_tomobar,
+    i12_119647,
+    titaren_center_pc_FBP3d_resample,
     FBP3d_tomobar_distortion_i13_179623_npz,
     output_folder,
 ):
     change_value_parameters_method_pipeline(
-        deg360_distortion_FBP3d_tomobar,
+        titaren_center_pc_FBP3d_resample,
         method=[
             "standard_tomo",
-            "normalize",
-            "find_center_360",
-            "find_center_360",
-            "find_center_360",
-            "distortion_correction_proj_discorpy",
-            "FBP3d_tomobar",
+            "data_resampler",
         ],
         key=[
             "preview",
-            "minus_log",
-            "ind",
-            "use_overlap",
-            "norm",
-            "metadata_path",
-            "neglog",
+            "newshape",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1100}},
-            False,
-            24,
-            True,
-            True,
-            "/data/tomography/raw_data/i13/360/179623_coeff.txt",
-            True,
+            [512, 512],
         ],
     )
 
-    cmd_mpirun.insert(9, i13_179623)
-    cmd_mpirun.insert(10, deg360_distortion_FBP3d_tomobar)
+    cmd_mpirun.insert(9, i12_119647)
+    cmd_mpirun.insert(10, titaren_center_pc_FBP3d_resample)
     cmd_mpirun.insert(11, output_folder)
 
     process = Popen(
