@@ -466,14 +466,17 @@ def test_parallel_pipe_titaren_center_pc_FBP3d_resample_i12_119647_preview(
         method=[
             "standard_tomo",
             "data_resampler",
+            "remove_stripe_ti",
         ],
         key=[
             "preview",
             "newshape",
+            "beta",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1100}},
             [512, 512],
+            0.01,
         ],
     )
 
