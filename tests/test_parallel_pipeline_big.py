@@ -452,6 +452,59 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
     assert res_norm < 1e-4
 
 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+@pytest.mark.full_data_parallel
+def test_parallel_pipe_titaren_center_pc_FBP3d_resample_i12_119647_preview(
+    get_files: Callable,
+    cmd_mpirun,
+    i12_119647,
+    titaren_center_pc_FBP3d_resample,
+    pipeline_parallel_titaren_center_pc_FBP3d_resample_i12_119647_tiffs,
+    output_folder,
+):
+    change_value_parameters_method_pipeline(
+        titaren_center_pc_FBP3d_resample,
+        method=[
+            "standard_tomo",
+            "data_resampler",
+            "remove_stripe_ti",
+        ],
+        key=[
+            "preview",
+            "newshape",
+            "beta",
+        ],
+        value=[
+            {"detector_y": {"start": 900, "stop": 1100}},
+            [512, 512],
+            0.01,
+        ],
+    )
+
+    cmd_mpirun.insert(9, i12_119647)
+    cmd_mpirun.insert(10, titaren_center_pc_FBP3d_resample)
+    cmd_mpirun.insert(11, output_folder)
+
+    process = Popen(
+        cmd_mpirun, env=os.environ, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE
+    )
+    output, error = process.communicate()
+    print(output)
+
+    files = get_files(output_folder)
+    files_references = get_files(
+        pipeline_parallel_titaren_center_pc_FBP3d_resample_i12_119647_tiffs
+    )
+
+    # recurse through output_dir and check that all files are there
+    files = get_files(output_folder)
+    assert len(files) == 204
+
+    #: check the number of the resulting tif files
+    check_tif(files, 200, (512, 512))
+    compare_tif(files, files_references)
+
+
 # ########################################################################
 @pytest.mark.full_data_parallel
 def test_parallel_pipe_sweep_FBP3d_tomobar_i13_177906(

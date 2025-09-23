@@ -229,6 +229,11 @@ def FBP3d_tomobar_denoising():
 
 
 @pytest.fixture
+def titaren_center_pc_FBP3d_resample():
+    return "docs/source/pipelines_full/titaren_center_pc_FBP3d_resample.yaml"
+
+
+@pytest.fixture
 def deg360_paganin_FBP3d_tomobar():
     return "docs/source/pipelines_full/deg360_paganin_FBP3d_tomobar.yaml"
 
@@ -376,6 +381,12 @@ def pipeline_paganin_sweep_paganin_images_i12_119647_tiffs():
 def pipeline_paganin_sweep_recon_images_i12_119647_tiffs():
     # 3 tiff files from reconstruction with paganin filter pipeline
     return "tests/test_data/raw_data/i12/sweep/images_sweep_FBP3d_tomobar16bit_tif/"
+
+
+@pytest.fixture
+def pipeline_parallel_titaren_center_pc_FBP3d_resample_i12_119647_tiffs():
+    # 200 downsampled to 512 x 512 tiff files from reconstruction of i12_119647
+    return "tests/test_data/raw_data/i12/tiffs/images8bit_tif/"
 
 
 # ---------------------END------------------------#
