@@ -458,7 +458,7 @@ def test_parallel_pipe_titaren_center_pc_FBP3d_resample_i12_119647_preview(
     cmd_mpirun,
     i12_119647,
     titaren_center_pc_FBP3d_resample,
-    FBP3d_tomobar_distortion_i13_179623_npz,
+    pipeline_parallel_titaren_center_pc_FBP3d_resample_i12_119647_tiffs,
     output_folder,
 ):
     change_value_parameters_method_pipeline(
@@ -491,37 +491,15 @@ def test_parallel_pipe_titaren_center_pc_FBP3d_resample_i12_119647_preview(
     print(output)
 
     files = get_files(output_folder)
+    files_references = get_files(pipeline_parallel_titaren_center_pc_FBP3d_resample_i12_119647_tiffs)
 
-    #: check the generated reconstruction (hdf5 file)
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 1
+    # recurse through output_dir and check that all files are there
+    files = get_files(output_folder)
+    assert len(files) == 204
 
-    # load the pre-saved numpy array for comparison bellow
-    data_gt = FBP3d_tomobar_distortion_i13_179623_npz["data"]
-    axis_slice = FBP3d_tomobar_distortion_i13_179623_npz["axis_slice"]
-    (slices, sizeX, sizeY) = np.shape(data_gt)
-
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "FBP3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
-    assert res_norm < 1e-4
+    #: check the number of the resulting tif files
+    check_tif(files, 200, (512, 512))
+    compare_tif(files, files_references)
 
 
 # ########################################################################
