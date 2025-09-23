@@ -24,7 +24,7 @@ Those pipelines consist of methods from HTTomolibgpu (GPU) and HTTomolib (CPU) b
 
 .. dropdown:: Using :code:`find_center_pc` auto-centering, FBP reconstruction and downsampling the result before saving the images.
 
-    .. literalinclude:: ../pipelines_full/titaren_center_pc_FBP3d_resample_directive.yaml
+    .. literalinclude:: ../pipelines_full/titaren_center_pc_FBP3d_resample.yaml
         :language: yaml
 
 .. dropdown:: Using :code:`LPRec3d_tomobar` reconstruction, which is the fastest from all available reconstruction methods.
