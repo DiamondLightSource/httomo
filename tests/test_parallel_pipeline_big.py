@@ -451,7 +451,8 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-4
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 @pytest.mark.full_data_parallel
 def test_parallel_pipe_titaren_center_pc_FBP3d_resample_i12_119647_preview(
     get_files: Callable,
@@ -491,7 +492,9 @@ def test_parallel_pipe_titaren_center_pc_FBP3d_resample_i12_119647_preview(
     print(output)
 
     files = get_files(output_folder)
-    files_references = get_files(pipeline_parallel_titaren_center_pc_FBP3d_resample_i12_119647_tiffs)
+    files_references = get_files(
+        pipeline_parallel_titaren_center_pc_FBP3d_resample_i12_119647_tiffs
+    )
 
     # recurse through output_dir and check that all files are there
     files = get_files(output_folder)
