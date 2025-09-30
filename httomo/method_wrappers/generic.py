@@ -476,7 +476,12 @@ class GenericMethodWrapper(MethodWrapper):
         params = dict()
         for name, value in self.config_params.items():
             if isinstance(value, OutputRef):
-                params[name] = value.value
+                # at this point value.value doesn't exist
+                try:
+                    value_extracted = value.value
+                except:
+                    value_extracted = None
+                params[name] = value_extracted
                 continue
             params[name] = value
         return params
