@@ -8,7 +8,12 @@ from click.testing import CliRunner
 
 import httomo
 from httomo import __version__
-from httomo.cli import set_global_constants, transform_limit_str_to_bytes, main
+from httomo.cli import (
+    set_global_constants,
+    transform_limit_str_to_bytes,
+    main,
+    initialise_output_directory,
+)
 from httomo.ui_layer import PipelineFormat
 
 
@@ -196,8 +201,6 @@ def test_initialise_output_directory_handles_path_input(
     mocker, tmp_path, standard_loader: str
 ):
     """Test that initialise_output_directory correctly handles Path input (existing behavior)."""
-    from httomo.cli import initialise_output_directory
-
     # Set up the global output directory
     output_dir = tmp_path / "output"
     httomo.globals.run_out_dir = output_dir
@@ -211,6 +214,15 @@ def test_initialise_output_directory_handles_path_input(
 
     # Verify that pipeline file was copied to output dir
     assert (output_dir / pipeline_path.name).exists()
+
+
+def test_output_dir_created_if_doesnt_exist(tmp_path: Path, standard_loader: str):
+    output_dir_cli_arg = tmp_path / "out"
+    httomo.globals.run_out_dir = output_dir_cli_arg / "httomo-output-dir"
+    pipeline_path = Path(__file__).parent.parent / standard_loader
+    initialise_output_directory(pipeline_path)
+    assert output_dir_cli_arg.exists()
+    assert httomo.globals.run_out_dir.exists()
 
 
 @pytest.mark.cupy
