@@ -4,12 +4,108 @@ import numpy as np
 from mpi4py import MPI
 
 
-__all__ = ["alltoall"]
+__all__ = ["alltoall", "alltoall_ring"]
 
 
 # add this here so that we can mock it in the tests
 _mpi_max_elements = 2**31
 
+
+def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
+    """Distributes a list of contiguous numpy arrays from each rank to every other rank
+    using a ring communication pattern for reduced memory usage.
+
+    This implementation uses point-to-point communication in a ring pattern instead of
+    collective Alltoallv, trading some performance for significantly lower memory usage.
+    It only keeps one send/receive pair in memory at a time.
+
+    Parameters
+    ----------
+    arrays : List[np.ndarray]
+        List of 3D numpy arrays to be distributed. Length must be the full size of the given
+        communicator. arrays[i] will be sent to rank i.
+
+    comm : MPI.Comm
+        MPI communicator
+
+    Returns
+    -------
+    List[np.ndarray]
+        List of the numpy arrays received. Length is the full size of the given communicator.
+        ret[i] is the array received from rank i.
+    """
+
+    if len(arrays) != comm.size:
+        err_str = "list of arrays for MPI alltoall call must match communicator size"
+        raise ValueError(err_str)
+
+    assert all(type(a) == np.ndarray for a in arrays), "All arrays must be numpy arrays"
+    assert all(
+        a.dtype == arrays[0].dtype for a in arrays
+    ), "All arrays must be of the same type"
+    assert arrays[0].dtype in [
+        np.float32,
+        np.uint16,
+    ], "Only 16bit unsigned ints or single precision floats are implemented"
+    assert all(a.ndim == 3 for a in arrays), "Only 3D arrays are supported"
+
+    # no MPI or only one process
+    if comm.size == 1:
+        return arrays
+
+    rank = comm.rank
+    nprocs = comm.size
+    
+    shapes_send = [a.shape for a in arrays]
+    
+    # Exchange shape information first
+    shapes_rec = comm.alltoall(shapes_send)
+    
+    # Prepare output list
+    ret = [None] * nprocs
+    
+    # Use ring pattern: each process communicates with (rank + offset) % nprocs
+    for offset in range(nprocs):
+        partner = (rank + offset) % nprocs
+        
+        if partner == rank:
+            # Self-copy (no communication)
+            ret[rank] = arrays[rank].copy()
+        else:
+            send_array = arrays[partner]
+            if not send_array.flags.c_contiguous:
+                send_array = np.ascontiguousarray(send_array)
+
+            recv_array = np.empty(shapes_rec[partner], dtype=arrays[0].dtype)
+
+            # Chunk if array is too large
+            max_elements = _mpi_max_elements
+            if send_array.size > max_elements:
+                # Send in chunks
+                send_flat = send_array.ravel()
+                recv_flat = recv_array.ravel()
+                num_chunks = (send_array.size + max_elements - 1) // max_elements
+                
+                for chunk_idx in range(num_chunks):
+                    start = chunk_idx * max_elements
+                    end = min(start + max_elements, send_array.size)
+                    
+                    send_chunk = send_flat[start:end]
+                    recv_chunk = recv_flat[start:end]
+                    
+                    req_recv = comm.Irecv(recv_chunk, source=partner)
+                    req_send = comm.Isend(send_chunk, dest=partner)
+                    req_recv.Wait()
+                    req_send.Wait()
+            else:
+                req_recv = comm.Irecv(recv_array, source=partner)
+                req_send = comm.Isend(send_array, dest=partner)
+                req_recv.Wait()
+                req_send.Wait()
+
+            ret[partner] = recv_array
+    
+    return ret
 
 def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     """Distributes a list of contiguous numpy arrays from each rank to every other rank.

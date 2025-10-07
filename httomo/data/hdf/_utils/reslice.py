@@ -4,7 +4,7 @@ from typing import Tuple
 import numpy
 from mpi4py.MPI import Comm
 
-from httomo.data.mpiutil import alltoall
+from httomo.data.mpiutil import alltoall, alltoall_ring
 from httomo.data.hdf._utils import chunk
 from httomo.utils import log_once
 
@@ -68,7 +68,7 @@ def reslice(
     del data
     
     # All-to-all communication
-    received = alltoall(to_scatter, comm)
+    received = alltoall_ring(to_scatter, comm)
     
     # Free scatter list
     del to_scatter
