@@ -47,19 +47,34 @@ def reslice(
         )
         return data, next_slice_dim, 0
 
-    # Get shape of full/unsplit data, in order to set the chunk shape based on
-    # the dims of the full data rather than of the split data
     data_shape = chunk.get_data_shape(data, current_slice_dim - 1)
-
-    # build a list of what each process has to scatter to others
     nprocs = comm.size
+    rank = comm.rank
+    
+    # Calculate split indices
     length = data_shape[next_slice_dim - 1]
-    split_indices = [round((length / nprocs) * r) for r in range(1, nprocs)]
-    to_scatter = numpy.split(data, split_indices, axis=next_slice_dim - 1)
-
-    # all-to-all MPI call distributes every processes list to every other process,
-    # and we concatenate them again across the resliced dimension
-    new_data = numpy.concatenate(alltoall(to_scatter, comm), axis=current_slice_dim - 1)
-
-    start_idx = 0 if comm.rank == 0 else split_indices[comm.rank - 1]
+    split_indices = [round((length / nprocs) * r) for r in range(nprocs + 1)]
+    
+    # Prepare list for alltoall
+    to_scatter = []
+    for i in range(nprocs):
+        start = split_indices[i]
+        end = split_indices[i + 1]
+        # Use slicing instead of split to avoid intermediate array
+        sliced = numpy.take(data, range(start, end), axis=next_slice_dim - 1)
+        to_scatter.append(sliced)
+    
+    # Free original data if possible (Can we?)
+    del data
+    
+    # All-to-all communication
+    received = alltoall(to_scatter, comm)
+    
+    # Free scatter list
+    del to_scatter
+    
+    # Concatenate received chunks
+    new_data = numpy.concatenate(received, axis=current_slice_dim - 1)
+    
+    start_idx = split_indices[rank]
     return new_data, next_slice_dim, start_idx
