@@ -1,4 +1,5 @@
 from typing import List
+
 import logging
 
 import numpy as np
@@ -14,13 +15,16 @@ __all__ = ["alltoall", "alltoall_ring"]
 _mpi_max_elements = 2**31
 
 
-def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
+def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0) -> np.ndarray:
     """Distributes a list of contiguous numpy arrays from each rank to every other rank
     using a ring communication pattern for reduced memory usage.
 
     This implementation uses point-to-point communication in a ring pattern instead of
     collective Alltoallv, trading some performance for significantly lower memory usage.
     It only keeps one send/receive pair in memory at a time.
+
+    The received arrays are directly written into a pre-allocated concatenated output array,
+    eliminating the need for a separate concatenation step and reducing memory usage.
 
     Parameters
     ----------
@@ -31,17 +35,20 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     comm : MPI.Comm
         MPI communicator
 
+    concat_axis : int
+        The axis along which received arrays should be concatenated (default: 0)
+
     Returns
     -------
-    List[np.ndarray]
-        List of the numpy arrays received. Length is the full size of the given communicator.
-        ret[i] is the array received from rank i.
+    np.ndarray
+        A single concatenated array containing all received data along the specified axis.
+        The data from rank i is placed at the appropriate offset along concat_axis.
     """
     rank = comm.rank
     nprocs = comm.size
 
     log_once(
-        f"[Rank {rank}] alltoall_ring: Starting with {len(arrays)} arrays, comm.size={nprocs}",
+        f"[Rank {rank}] alltoall_ring: Starting with {len(arrays)} arrays, comm.size={nprocs}, concat_axis={concat_axis}",
         level=logging.DEBUG,
     )
 
@@ -62,10 +69,10 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     # no MPI or only one process
     if comm.size == 1:
         log_once(
-            f"[Rank {rank}] alltoall_ring: Single process, returning arrays as-is",
+            f"[Rank {rank}] alltoall_ring: Single process, returning first array as-is",
             level=logging.DEBUG,
         )
-        return arrays
+        return arrays[0]
 
     shapes_send = [a.shape for a in arrays]
 
@@ -89,8 +96,27 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
         level=logging.DEBUG,
     )
 
-    # Prepare output list
-    ret = [None] * nprocs
+    # Calculate output shape for concatenated array
+    output_shape = list(shapes_rec[0])
+    output_shape[concat_axis] = sum(s[concat_axis] for s in shapes_rec)
+
+    log_once(
+        f"[Rank {rank}] alltoall_ring: Pre-allocating concatenated output array with shape {tuple(output_shape)}",
+        level=logging.DEBUG,
+    )
+
+    # Pre-allocate the final concatenated output array
+    output_array = np.empty(output_shape, dtype=arrays[0].dtype)
+
+    # Calculate offsets for each rank's data in the output array
+    offsets = [0]
+    for i in range(nprocs - 1):
+        offsets.append(offsets[-1] + shapes_rec[i][concat_axis])
+
+    log_once(
+        f"[Rank {rank}] alltoall_ring: Offsets along axis {concat_axis}: {offsets}",
+        level=logging.DEBUG,
+    )
 
     # Use ring pattern: each process sends to (rank + offset) and receives from (rank - offset)
     for offset in range(nprocs):
@@ -102,15 +128,22 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
             level=logging.DEBUG,
         )
 
+        # Create slice for where to write received data
+        recv_slices = [slice(None)] * 3
+        recv_offset = offsets[recv_from]
+        recv_size = shapes_rec[recv_from][concat_axis]
+        recv_slices[concat_axis] = slice(recv_offset, recv_offset + recv_size)
+
         if send_to == rank:
             # Self-copy (no communication)
             log_once(
-                f"[Rank {rank}] alltoall_ring: Self-copy for rank {rank}, shape={arrays[rank].shape}",
+                f"[Rank {rank}] alltoall_ring: Self-copy for rank {rank}, shape={arrays[rank].shape}, "
+                f"writing to offset {recv_offset}:{recv_offset + recv_size}",
                 level=logging.DEBUG,
             )
-            ret[rank] = arrays[rank].copy()
+            output_array[tuple(recv_slices)] = arrays[rank]
         else:
-            # Note: We send arrays[send_to] TO send_to, and receive FROM recv_from into ret[recv_from]
+            # Note: We send arrays[send_to] TO send_to, and receive FROM recv_from
             send_array = arrays[send_to]
             if not send_array.flags.c_contiguous:
                 log_once(
@@ -119,11 +152,13 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
                 )
                 send_array = np.ascontiguousarray(send_array)
 
-            recv_array = np.empty(shapes_rec[recv_from], dtype=arrays[0].dtype)
+            # Get view into output array for receiving
+            recv_view = output_array[tuple(recv_slices)]
 
             log_once(
                 f"[Rank {rank}] alltoall_ring: Communicating send_to={send_to}, recv_from={recv_from}, "
-                f"send_size={send_array.size}, recv_size={recv_array.size}",
+                f"send_size={send_array.size}, recv_size={recv_view.size}, "
+                f"recv_offset={recv_offset}",
                 level=logging.DEBUG,
             )
 
@@ -137,7 +172,7 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
                     level=logging.DEBUG,
                 )
                 send_flat = send_array.ravel()
-                recv_flat = recv_array.ravel()
+                recv_flat = recv_view.ravel()
                 num_chunks = (send_array.size + max_elements - 1) // max_elements
 
                 log_once(
@@ -191,7 +226,7 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
                     f"[Rank {rank}] alltoall_ring: Posting Irecv from {recv_from}",
                     level=logging.DEBUG,
                 )
-                req_recv = comm.Irecv(recv_array, source=recv_from)
+                req_recv = comm.Irecv(recv_view, source=recv_from)
 
                 log_once(
                     f"[Rank {rank}] alltoall_ring: Posting Isend to {send_to}",
@@ -216,18 +251,17 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
                     level=logging.DEBUG,
                 )
 
-            ret[recv_from] = recv_array
             log_once(
-                f"[Rank {rank}] alltoall_ring: Stored received array from {recv_from}",
+                f"[Rank {rank}] alltoall_ring: Received data from {recv_from} written to output at offset {recv_offset}",
                 level=logging.DEBUG,
             )
 
     log_once(
-        f"[Rank {rank}] alltoall_ring: Ring communication completed successfully",
+        f"[Rank {rank}] alltoall_ring: Ring communication completed successfully, returning concatenated array",
         level=logging.DEBUG,
     )
 
-    return ret
+    return output_array
 
 def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     """Distributes a list of contiguous numpy arrays from each rank to every other rank.
