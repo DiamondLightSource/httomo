@@ -92,16 +92,17 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     # Prepare output list
     ret = [None] * nprocs
 
-    # Use ring pattern: each process communicates with (rank + offset) % nprocs
+    # Use ring pattern: each process sends to (rank + offset) and receives from (rank - offset)
     for offset in range(nprocs):
-        partner = (rank + offset) % nprocs
+        send_to = (rank + offset) % nprocs
+        recv_from = (rank - offset) % nprocs
 
         log_once(
-            f"[Rank {rank}] alltoall_ring: Ring iteration {offset}/{nprocs-1}, partner={partner}",
+            f"[Rank {rank}] alltoall_ring: Ring iteration {offset}/{nprocs-1}, send_to={send_to}, recv_from={recv_from}",
             level=logging.DEBUG,
         )
 
-        if partner == rank:
+        if send_to == rank:
             # Self-copy (no communication)
             log_once(
                 f"[Rank {rank}] alltoall_ring: Self-copy for rank {rank}, shape={arrays[rank].shape}",
@@ -109,18 +110,19 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
             )
             ret[rank] = arrays[rank].copy()
         else:
-            send_array = arrays[partner]
+            # Note: We send arrays[send_to] TO send_to, and receive FROM recv_from into ret[recv_from]
+            send_array = arrays[send_to]
             if not send_array.flags.c_contiguous:
                 log_once(
-                    f"[Rank {rank}] alltoall_ring: Converting non-contiguous array to contiguous for partner {partner}",
+                    f"[Rank {rank}] alltoall_ring: Converting non-contiguous array to contiguous for send_to {send_to}",
                     level=logging.DEBUG,
                 )
                 send_array = np.ascontiguousarray(send_array)
 
-            recv_array = np.empty(shapes_rec[partner], dtype=arrays[0].dtype)
+            recv_array = np.empty(shapes_rec[recv_from], dtype=arrays[0].dtype)
 
             log_once(
-                f"[Rank {rank}] alltoall_ring: Communicating with partner {partner}, "
+                f"[Rank {rank}] alltoall_ring: Communicating send_to={send_to}, recv_from={recv_from}, "
                 f"send_size={send_array.size}, recv_size={recv_array.size}",
                 level=logging.DEBUG,
             )
@@ -131,7 +133,7 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
                 # Send in chunks
                 log_once(
                     f"[Rank {rank}] alltoall_ring: Array too large ({send_array.size} > {max_elements}), "
-                    f"using chunked transfer with partner {partner}",
+                    f"using chunked transfer send_to={send_to}, recv_from={recv_from}",
                     level=logging.DEBUG,
                 )
                 send_flat = send_array.ravel()
@@ -139,7 +141,7 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
                 num_chunks = (send_array.size + max_elements - 1) // max_elements
 
                 log_once(
-                    f"[Rank {rank}] alltoall_ring: Splitting into {num_chunks} chunks for partner {partner}",
+                    f"[Rank {rank}] alltoall_ring: Splitting into {num_chunks} chunks send_to={send_to}, recv_from={recv_from}",
                     level=logging.DEBUG,
                 )
 
@@ -148,7 +150,7 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
                     end = min(start + max_elements, send_array.size)
 
                     log_once(
-                        f"[Rank {rank}] alltoall_ring: Chunk {chunk_idx}/{num_chunks-1} with partner {partner}, "
+                        f"[Rank {rank}] alltoall_ring: Chunk {chunk_idx}/{num_chunks-1} send_to={send_to}, recv_from={recv_from}, "
                         f"elements [{start}:{end}]",
                         level=logging.DEBUG,
                     )
@@ -157,66 +159,66 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
                     recv_chunk = recv_flat[start:end]
 
                     log_once(
-                        f"[Rank {rank}] alltoall_ring: Posting Irecv for chunk {chunk_idx} from partner {partner}",
+                        f"[Rank {rank}] alltoall_ring: Posting Irecv for chunk {chunk_idx} from {recv_from}",
                         level=logging.DEBUG,
                     )
-                    req_recv = comm.Irecv(recv_chunk, source=partner)
+                    req_recv = comm.Irecv(recv_chunk, source=recv_from)
 
                     log_once(
-                        f"[Rank {rank}] alltoall_ring: Posting Isend for chunk {chunk_idx} to partner {partner}",
+                        f"[Rank {rank}] alltoall_ring: Posting Isend for chunk {chunk_idx} to {send_to}",
                         level=logging.DEBUG,
                     )
-                    req_send = comm.Isend(send_chunk, dest=partner)
+                    req_send = comm.Isend(send_chunk, dest=send_to)
 
                     log_once(
-                        f"[Rank {rank}] alltoall_ring: Waiting for Irecv completion for chunk {chunk_idx} from partner {partner}",
+                        f"[Rank {rank}] alltoall_ring: Waiting for Irecv completion for chunk {chunk_idx} from {recv_from}",
                         level=logging.DEBUG,
                     )
                     req_recv.Wait()
 
                     log_once(
-                        f"[Rank {rank}] alltoall_ring: Waiting for Isend completion for chunk {chunk_idx} to partner {partner}",
+                        f"[Rank {rank}] alltoall_ring: Waiting for Isend completion for chunk {chunk_idx} to {send_to}",
                         level=logging.DEBUG,
                     )
                     req_send.Wait()
 
                     log_once(
-                        f"[Rank {rank}] alltoall_ring: Chunk {chunk_idx} transfer with partner {partner} complete",
+                        f"[Rank {rank}] alltoall_ring: Chunk {chunk_idx} transfer complete (send_to={send_to}, recv_from={recv_from})",
                         level=logging.DEBUG,
                     )
             else:
                 log_once(
-                    f"[Rank {rank}] alltoall_ring: Posting Irecv from partner {partner}",
+                    f"[Rank {rank}] alltoall_ring: Posting Irecv from {recv_from}",
                     level=logging.DEBUG,
                 )
-                req_recv = comm.Irecv(recv_array, source=partner)
+                req_recv = comm.Irecv(recv_array, source=recv_from)
 
                 log_once(
-                    f"[Rank {rank}] alltoall_ring: Posting Isend to partner {partner}",
+                    f"[Rank {rank}] alltoall_ring: Posting Isend to {send_to}",
                     level=logging.DEBUG,
                 )
-                req_send = comm.Isend(send_array, dest=partner)
+                req_send = comm.Isend(send_array, dest=send_to)
 
                 log_once(
-                    f"[Rank {rank}] alltoall_ring: Waiting for Irecv completion from partner {partner}",
+                    f"[Rank {rank}] alltoall_ring: Waiting for Irecv completion from {recv_from}",
                     level=logging.DEBUG,
                 )
                 req_recv.Wait()
 
                 log_once(
-                    f"[Rank {rank}] alltoall_ring: Waiting for Isend completion to partner {partner}",
+                    f"[Rank {rank}] alltoall_ring: Waiting for Isend completion to {send_to}",
                     level=logging.DEBUG,
                 )
                 req_send.Wait()
 
                 log_once(
-                    f"[Rank {rank}] alltoall_ring: Communication with partner {partner} complete",
+                    f"[Rank {rank}] alltoall_ring: Communication complete (send_to={send_to}, recv_from={recv_from})",
                     level=logging.DEBUG,
                 )
 
-            ret[partner] = recv_array
+            ret[recv_from] = recv_array
             log_once(
-                f"[Rank {rank}] alltoall_ring: Stored received array from partner {partner}",
+                f"[Rank {rank}] alltoall_ring: Stored received array from {recv_from}",
                 level=logging.DEBUG,
             )
 
