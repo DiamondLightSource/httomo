@@ -40,7 +40,6 @@ def reslice(
     )
 
     rank = comm.rank
-    mem_start = _get_memory_usage_mb()
 
     # No need to reclice anything if there is only one process
     if comm.size == 1:
@@ -59,14 +58,11 @@ def reslice(
 
     # Prepare list for alltoall
     to_scatter = []
-    total_scatter_size_mb = 0
     for i in range(nprocs):
         start = split_indices[i]
         end = split_indices[i + 1]
         # Use slicing instead of split to avoid intermediate array
         sliced = numpy.take(data, range(start, end), axis=next_slice_dim - 1)
-        slice_size_mb = _get_array_size_mb(sliced)
-        total_scatter_size_mb += slice_size_mb
         to_scatter.append(sliced)
 
     # Free original data if possible
