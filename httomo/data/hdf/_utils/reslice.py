@@ -4,7 +4,7 @@ from typing import Tuple
 import numpy
 from mpi4py.MPI import Comm
 
-from httomo.data.mpiutil import alltoall
+from httomo.data.mpiutil import alltoall, alltoall_ring
 from httomo.data.hdf._utils import chunk
 from httomo.utils import log_once
 
@@ -39,27 +39,42 @@ def reslice(
         level=logging.DEBUG,
     )
 
+    rank = comm.rank
+
     # No need to reclice anything if there is only one process
     if comm.size == 1:
         log_once(
-            "Reslicing not necessary, as there is only one process",
+            f"[Rank {rank}] reslice: Not necessary, as there is only one process",
             level=logging.DEBUG,
         )
         return data, next_slice_dim, 0
 
-    # Get shape of full/unsplit data, in order to set the chunk shape based on
-    # the dims of the full data rather than of the split data
     data_shape = chunk.get_data_shape(data, current_slice_dim - 1)
-
-    # build a list of what each process has to scatter to others
     nprocs = comm.size
+
+    # Calculate split indices
     length = data_shape[next_slice_dim - 1]
-    split_indices = [round((length / nprocs) * r) for r in range(1, nprocs)]
-    to_scatter = numpy.split(data, split_indices, axis=next_slice_dim - 1)
+    split_indices = [round((length / nprocs) * r) for r in range(nprocs + 1)]
 
-    # all-to-all MPI call distributes every processes list to every other process,
-    # and we concatenate them again across the resliced dimension
-    new_data = numpy.concatenate(alltoall(to_scatter, comm), axis=current_slice_dim - 1)
+    # Prepare list for alltoall
+    to_scatter = []
+    for i in range(nprocs):
+        start = split_indices[i]
+        end = split_indices[i + 1]
+        # Use slicing instead of split to avoid intermediate array
+        sliced = numpy.take(data, range(start, end), axis=next_slice_dim - 1)
+        to_scatter.append(sliced)
 
-    start_idx = 0 if comm.rank == 0 else split_indices[comm.rank - 1]
+    # Free original data if possible
+    del data
+
+    # All-to-all communication with direct concatenation
+    # The concat_axis is current_slice_dim - 1 because we're concatenating along the current slice dimension
+    concat_axis = current_slice_dim - 1
+    new_data = alltoall_ring(to_scatter, comm, concat_axis=concat_axis)
+
+    # Free scatter list
+    del to_scatter
+
+    start_idx = split_indices[rank]
     return new_data, next_slice_dim, start_idx

@@ -1,15 +1,147 @@
 from typing import List
 
+import logging
+
 import numpy as np
 from mpi4py import MPI
 
+from httomo.utils import log_once
 
-__all__ = ["alltoall"]
+
+__all__ = ["alltoall", "alltoall_ring"]
 
 
 # add this here so that we can mock it in the tests
 _mpi_max_elements = 2**31
 
+
+def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0) -> np.ndarray:
+    """Distributes a list of contiguous numpy arrays from each rank to every other rank
+    using a ring communication pattern for reduced memory usage.
+
+    This implementation uses point-to-point communication in a ring pattern instead of
+    collective Alltoallv, trading some performance for significantly lower memory usage.
+    It only keeps one send/receive pair in memory at a time.
+
+    The received arrays are directly written into a pre-allocated concatenated output array,
+    eliminating the need for a separate concatenation step and reducing memory usage.
+
+    Parameters
+    ----------
+    arrays : List[np.ndarray]
+        List of 3D numpy arrays to be distributed. Length must be the full size of the given
+        communicator. arrays[i] will be sent to rank i.
+
+    comm : MPI.Comm
+        MPI communicator
+
+    concat_axis : int
+        The axis along which received arrays should be concatenated (default: 0)
+
+    Returns
+    -------
+    np.ndarray
+        A single concatenated array containing all received data along the specified axis.
+        The data from rank i is placed at the appropriate offset along concat_axis.
+    """
+    rank = comm.rank
+    nprocs = comm.size
+
+    log_once(
+        f"[Rank {rank}] alltoall_ring: Starting with {len(arrays)} arrays, comm.size={nprocs}, concat_axis={concat_axis}",
+        level=logging.DEBUG,
+    )
+
+    if len(arrays) != comm.size:
+        err_str = "list of arrays for MPI alltoall call must match communicator size"
+        raise ValueError(err_str)
+
+    assert all(type(a) == np.ndarray for a in arrays), "All arrays must be numpy arrays"
+    assert all(
+        a.dtype == arrays[0].dtype for a in arrays
+    ), "All arrays must be of the same type"
+    assert arrays[0].dtype in [
+        np.float32,
+        np.uint16,
+    ], "Only 16bit unsigned ints or single precision floats are implemented"
+    assert all(a.ndim == 3 for a in arrays), "Only 3D arrays are supported"
+
+    # no MPI or only one process
+    if comm.size == 1:
+        log_once(
+            f"[Rank {rank}] alltoall_ring: Single process, returning first array as-is",
+            level=logging.DEBUG,
+        )
+        return arrays[0]
+
+    shapes_send = [a.shape for a in arrays]
+
+    # Exchange shape information first
+    shapes_rec = comm.alltoall(shapes_send)
+
+    # Calculate output shape for concatenated array
+    output_shape = list(shapes_rec[0])
+    output_shape[concat_axis] = sum(s[concat_axis] for s in shapes_rec)
+
+    # Pre-allocate the final concatenated output array
+    output_array = np.empty(output_shape, dtype=arrays[0].dtype)
+
+    # Calculate offsets for each rank's data in the output array
+    offsets = [0]
+    for i in range(nprocs - 1):
+        offsets.append(offsets[-1] + shapes_rec[i][concat_axis])
+
+    # Use ring pattern: each process sends to (rank + offset) and receives from (rank - offset)
+    for offset in range(nprocs):
+        send_to = (rank + offset) % nprocs
+        recv_from = (rank - offset) % nprocs
+
+        # Create slice for where to write received data
+        recv_slices = [slice(None)] * 3
+        recv_offset = offsets[recv_from]
+        recv_size = shapes_rec[recv_from][concat_axis]
+        recv_slices[concat_axis] = slice(recv_offset, recv_offset + recv_size)
+
+        if send_to == rank:
+            # Self-copy (no communication)
+            output_array[tuple(recv_slices)] = arrays[rank]
+        else:
+            # Note: We send arrays[send_to] TO send_to, and receive FROM recv_from
+            send_array = arrays[send_to]
+            if not send_array.flags.c_contiguous:
+                send_array = np.ascontiguousarray(send_array)
+
+            # Get view into output array for receiving
+            recv_view = output_array[tuple(recv_slices)]
+
+            # Chunk if array is too large
+            max_elements = _mpi_max_elements
+            if send_array.size > max_elements:
+                # Send in chunks
+                send_flat = send_array.ravel()
+                recv_flat = recv_view.ravel()
+                num_chunks = (send_array.size + max_elements - 1) // max_elements
+
+                for chunk_idx in range(num_chunks):
+                    start = chunk_idx * max_elements
+                    end = min(start + max_elements, send_array.size)
+
+                    send_chunk = send_flat[start:end]
+                    recv_chunk = recv_flat[start:end]
+
+                    req_recv = comm.Irecv(recv_chunk, source=recv_from)
+                    req_send = comm.Isend(send_chunk, dest=send_to)
+
+                    req_recv.Wait()
+                    req_send.Wait()
+            else:
+                req_recv = comm.Irecv(recv_view, source=recv_from)
+                req_send = comm.Isend(send_array, dest=send_to)
+
+                req_recv.Wait()
+                req_send.Wait()
+
+    return output_array
 
 def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     """Distributes a list of contiguous numpy arrays from each rank to every other rank.
@@ -39,6 +171,13 @@ def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     List[np.ndarray]
         List of the numpy arrays received. Length is the full size of the given communicator.
     """
+    rank = comm.rank
+    nprocs = comm.size
+
+    log_once(
+        f"[Rank {rank}] alltoall: Starting with {len(arrays)} arrays, comm.size={nprocs}",
+        level=logging.DEBUG,
+    )
 
     if len(arrays) != comm.size:
         err_str = "list of arrays for MPI alltoall call must match communicator size"
@@ -56,6 +195,10 @@ def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
 
     # no MPI or only one process
     if comm.size == 1:
+        log_once(
+            f"[Rank {rank}] alltoall: Single process, returning arrays as-is",
+            level=logging.DEBUG,
+        )
         return arrays
 
     sizes_send = [a.size for a in arrays]
@@ -71,6 +214,7 @@ def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     # let everyone know the shapes / sizes they are going to receive + create an output buffer
     shapes_rec = comm.alltoall(shapes_send)
     sizes_rec = [np.prod(sh) for sh in shapes_rec]
+
     fulloutput = np.empty((np.sum(sizes_rec),), dtype=arrays[0].dtype)
 
     # NOTE: The custom MPI data type is being used below even when the number of elements
@@ -93,6 +237,7 @@ def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
         if dim0equal
         else arrays[0].shape[1] if dim1equal else arrays[0].shape[2]
     )
+
     dtype1 = dtype.Create_contiguous(factor).Commit()
     # sanity check - this should always pass
     assert all(s % factor == 0 for s in sizes_send), "Size does not divide evenly"
