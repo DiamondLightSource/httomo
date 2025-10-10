@@ -140,7 +140,7 @@ class ReadableDataSetSink(DataSetSink):
 
     @abc.abstractmethod
     def make_reader(
-        self, new_slicing_dim: Optional[Literal[0, 1, 2]] = None
+        self, new_slicing_dim: Optional[Literal[0, 1, 2]] = None, padding: Optional[Tuple[int, int]] = None
     ) -> DataSetSource:
         """Method to make a source from this sink, which will read the data that was written,
         possibly in a new slicing dimension"""
