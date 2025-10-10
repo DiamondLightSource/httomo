@@ -10,7 +10,21 @@ HTTomo mainly targets GPU computations, therefore the use of :ref:`tutorials_pl_
 preferable. However, when the GPU device is not available or a GPU method is not implemented, the use of 
 :ref:`tutorials_pl_templates_cpu` is possible. 
 
+.. _full_pipelines_archived:
+
+Pipelines for released HTTomo versions
+--------------------------------------
+
+These are archived full YAML pipelines that can be used with already released and tagged version of HTTomo. They are built using the :ref:`archived_templates`.
+
+.. only:: builder_html
+
+   :download:`HTTomo version 2.5 full YAML pipelines <../templates_archive/httomo_ver2_5_full_yaml_pipelines.zip>`
+
 .. _tutorials_pl_templates_gpu:
+
+
+.. warning:: At DLS, the templates bellow should work with the :code:`httomo/latest` module, however, for production please use :ref:`full_pipelines_archived`. 
 
 Pipelines using HTTomo libraries
 --------------------------------

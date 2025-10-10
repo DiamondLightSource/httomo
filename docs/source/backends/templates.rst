@@ -4,20 +4,31 @@
 Methods YAML Templates
 ======================
 
-This section refers to YAML templates from the :ref:`backends_list`, which are distributed separately through `httomo-backends`.
-You will be redirected to the `httomo-backends` page where those templates can be either copy-pasted or
-downloaded in order to help you to construct your pipeline.
+This section refers to YAML templates from the :ref:`backends_list`, which are distributed separately through `HTTomo-backends <https://diamondlightsource.github.io/httomo-backends/>`_.
+Here you can find either fixed (achieved) templates that were previously released, or dynamically changing latest templates.
+If you installed HTTomo with a specific version associated with the release, please use the :ref:`archived_templates`. If you are a developer, or
+you need to access the latest developments, please use the :ref:`latest_templates`. 
+
+.. _archived_templates:
 
 Archived Templates
-==================
+===================
 
-These are stored YAML templates that can be used with already released and tagged version of HTTomo.
+These are archived YAML templates that can be used with already released and tagged version of HTTomo.
 
+.. only:: builder_html
+
+   :download:`HTTomo version 2.5 templates <../templates_archive/httomo_ver2_5_yaml_templates.zip>`
+
+.. _latest_templates:
 
 Latest Templates
 ================
 
-.. note:: The templates bellow reflect the current or the latest HTTomo developments. If you need to use the templates that are linked to a specific HTTOmo version that has been released, please download them as an archive above. 
+The templates bellow are generated for the current/latest HTTomo development. These templates can be updated frequently and 
+if you need to use templates that are linked to a specific released (tagged) HTTomo version, please see the archives above. 
+
+.. note:: At DLS, the templates bellow should work with the :code:`httomo/latest` module. 
 
 `HTTomolibgpu Modules <https://diamondlightsource.github.io/httomo-backends/backends/templates.html#httomolibgpu-modules>`_
 

@@ -37,6 +37,9 @@ sys.path.insert(0, os.path.abspath("../.."))
 autodoc_mock_imports = [
     "click",
     "mpi4py",
+    "numpy",
+    "loguru",
+    "tqdm",
     "cupy",
     "h5py",
     "hdf5plugin",
