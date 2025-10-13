@@ -4,7 +4,7 @@ from typing import Tuple
 import numpy
 from mpi4py.MPI import Comm
 
-from httomo.data.mpiutil import alltoall, alltoall_ring
+from httomo.data.mpiutil import alltoall_ring
 from httomo.data.hdf._utils import chunk
 from httomo.utils import log_once
 
@@ -41,10 +41,10 @@ def reslice(
 
     rank = comm.rank
 
-    # No need to reclice anything if there is only one process
+    # No need to reslice anything if there is only one process
     if comm.size == 1:
         log_once(
-            f"[Rank {rank}] reslice: Not necessary, as there is only one process",
+            "Reslicing not necessary, as there is only one process",
             level=logging.DEBUG,
         )
         return data, next_slice_dim, 0
@@ -56,7 +56,7 @@ def reslice(
     length = data_shape[next_slice_dim - 1]
     split_indices = [round((length / nprocs) * r) for r in range(nprocs + 1)]
 
-    # Prepare list for alltoall
+    # Prepare list for alltoall_ring
     to_scatter = []
     for i in range(nprocs):
         start = split_indices[i]
