@@ -98,7 +98,7 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0
         recv_from = (rank - offset) % nprocs
 
         # Create slice for where to write received data
-        recv_slices = [slice(None)] * 3
+        recv_slices = [slice(None)] * 3 # 3 is the number of dimension
         recv_offset = offsets[recv_from]
         recv_size = shapes_rec[recv_from][concat_axis]
         recv_slices[concat_axis] = slice(recv_offset, recv_offset + recv_size)
@@ -107,7 +107,7 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0
             # Self-copy (no communication)
             output_array[tuple(recv_slices)] = arrays[rank]
         else:
-            # Note: We send arrays[send_to] TO send_to, and receive FROM recv_from
+            # Send arrays[send_to] TO send_to, and receive FROM recv_from
             send_array = arrays[send_to]
             if not send_array.flags.c_contiguous:
                 send_array = np.ascontiguousarray(send_array)
