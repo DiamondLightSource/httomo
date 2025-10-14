@@ -4,6 +4,15 @@ from mpi4py import MPI
 from httomo.data.mpiutil import alltoall, alltoall_ring
 
 @pytest.mark.mpi
+def test_all_to_all():
+    """Original test for backward compatibility - tests the list-returning alltoall."""
+    comm = MPI.COMM_WORLD
+    data = [np.ones((5, 5, 5), dtype=np.uint16) * comm.rank for _ in range(comm.size)]
+    rec = alltoall(data, comm)
+    expected = [np.ones((5, 5, 5), dtype=np.uint16) * r for r in range(comm.size)]
+    np.testing.assert_array_equal(expected, rec)
+
+@pytest.mark.mpi
 def test_all_to_all_ring():
     """Test alltoall_ring returns a concatenated array instead of a list."""
     comm = MPI.COMM_WORLD
@@ -102,3 +111,32 @@ def test_all_to_all_ring_single_process():
     # Should return the first array as-is
     expected = np.ones((5, 5, 5), dtype=np.uint16) * 42
     np.testing.assert_array_equal(result, expected)
+
+@pytest.mark.mpi
+def test_alltoall_ring_vs_alltoall():
+    """Test that alltoall_ring produces equivalent results to alltoall + concatenate."""
+    comm = MPI.COMM_WORLD
+    
+    # Create test data
+    data = [np.ones((7, 6, 5), dtype=np.float32) * (comm.rank + 1) for _ in range(comm.size)]
+    
+    # Method 1: Use alltoall_ring with concat_axis=2
+    result_ring = alltoall_ring(data, comm, concat_axis=2)
+    
+    # Method 2: Use original alltoall + concatenate along axis 2
+    result_list = alltoall(data, comm)
+    result_concat = np.concatenate(result_list, axis=2)
+    
+    # They should be identical
+    np.testing.assert_array_equal(
+        result_ring, 
+        result_concat,
+        err_msg="alltoall_ring should produce the same result as alltoall + concatenate"
+    )
+    
+    # Verify shapes match
+    assert result_ring.shape == result_concat.shape
+    
+    # Expected shape: (7, 6, 5*comm.size)
+    expected_shape = (7, 6, 5 * comm.size)
+    assert result_ring.shape == expected_shape
