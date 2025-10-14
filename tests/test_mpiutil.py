@@ -70,19 +70,18 @@ def test_all_to_all_ring_unequal_sizes():
     """Test alltoall_ring with arrays of different sizes per rank along concat axis."""
     comm = MPI.COMM_WORLD
     
-    # Create arrays with varying sizes along the concat axis (axis 2)
-    # Each rank sends different sized chunks to other ranks
+    # Each rank creates arrays with varying sizes to send to each other rank
     data = []
     for target_rank in range(comm.size):
-        # Size varies: rank 0 sends size 5, rank 1 sends size 6, etc.
-        size = 5 + target_rank
+        # All ranks send the same size to a given target, but the size varies by sender
+        size = 5 + comm.rank
         arr = np.ones((4, 3, size), dtype=np.float32) * comm.rank
         data.append(arr)
     
     # Call alltoall_ring with concat_axis=2
     result = alltoall_ring(data, comm, concat_axis=2)
     
-    # Expected total size along axis 2: sum of all sizes
+    # Expected total size along axis 2: sum of sizes from all ranks
     expected_size_axis2 = sum(5 + r for r in range(comm.size))
     expected_shape = (4, 3, expected_size_axis2)
     assert result.shape == expected_shape, f"Expected shape {expected_shape}, got {result.shape}"

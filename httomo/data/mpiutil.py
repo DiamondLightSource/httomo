@@ -113,19 +113,30 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0
                 send_array = np.ascontiguousarray(send_array)
 
             # Get view into output array for receiving
+            # This view might not be contiguous, so we need to handle that
             recv_view = output_array[tuple(recv_slices)]
+
+            # Check if recv_view is contiguous, if not we need a temporary buffer
+            use_temp_buffer = not recv_view.flags.c_contiguous
+
+            if use_temp_buffer:
+                # Create a temporary contiguous buffer
+                temp_recv = np.empty(shapes_rec[recv_from], dtype=arrays[0].dtype)
+                actual_recv_buffer = temp_recv
+            else:
+                actual_recv_buffer = recv_view
 
             # Chunk if array is too large
             max_elements = _mpi_max_elements - 1
 
             # Use the LARGER of send/recv size to determine chunking
             # This ensures both sides agree on the number of chunks
-            transfer_size = max(send_array.size, recv_view.size)
+            transfer_size = max(send_array.size, actual_recv_buffer.size)
 
             if transfer_size > max_elements:
                 # Send in chunks
                 send_flat = send_array.ravel()
-                recv_flat = recv_view.ravel()
+                recv_flat = actual_recv_buffer.ravel()
 
                 # Calculate number of chunks based on the larger size
                 num_chunks = (transfer_size + max_elements - 1) // max_elements
@@ -136,8 +147,8 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0
                     send_end = min((chunk_idx + 1) * max_elements, send_array.size)
 
                     # Calculate chunk boundaries for receiver
-                    recv_start = min(chunk_idx * max_elements, recv_view.size)
-                    recv_end = min((chunk_idx + 1) * max_elements, recv_view.size)
+                    recv_start = min(chunk_idx * max_elements, actual_recv_buffer.size)
+                    recv_end = min((chunk_idx + 1) * max_elements, actual_recv_buffer.size)
 
                     send_chunk_size = send_end - send_start
                     recv_chunk_size = recv_end - recv_start
@@ -161,14 +172,17 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0
                     if req_send is not None:
                         req_send.Wait()
             else:
-                req_recv = comm.Irecv(recv_view, source=recv_from)
+                req_recv = comm.Irecv(actual_recv_buffer, source=recv_from)
                 req_send = comm.Isend(send_array, dest=send_to)
 
                 req_recv.Wait()
                 req_send.Wait()
 
-    return output_array
+            # If we used a temporary buffer, copy it to the actual output location
+            if use_temp_buffer:
+                output_array[tuple(recv_slices)] = temp_recv
 
+    return output_array
 
 def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     """Distributes a list of contiguous numpy arrays from each rank to every other rank.
