@@ -65,9 +65,6 @@ def reslice(
         sliced = numpy.take(data, range(start, end), axis=next_slice_dim - 1)
         to_scatter.append(sliced)
 
-    # Free original data if possible
-    del data
-
     # All-to-all communication with direct concatenation
     # The concat_axis is current_slice_dim - 1 because we're concatenating along the current slice dimension
     concat_axis = current_slice_dim - 1
