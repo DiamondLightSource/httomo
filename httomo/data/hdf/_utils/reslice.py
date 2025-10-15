@@ -8,7 +8,6 @@ from httomo.data.mpiutil import alltoall_ring
 from httomo.data.hdf._utils import chunk
 from httomo.utils import log_once
 
-
 def reslice(
     data: numpy.ndarray,
     current_slice_dim: int,
@@ -39,8 +38,6 @@ def reslice(
         level=logging.DEBUG,
     )
 
-    rank = comm.rank
-
     # No need to reslice anything if there is only one process
     if comm.size == 1:
         log_once(
@@ -49,29 +46,24 @@ def reslice(
         )
         return data, next_slice_dim, 0
 
+    # Get shape of full/unsplit data, in order to set the chunk shape based on
+    # the dims of the full data rather than of the split data
     data_shape = chunk.get_data_shape(data, current_slice_dim - 1)
+
     nprocs = comm.size
 
     # Calculate split indices
     length = data_shape[next_slice_dim - 1]
-    split_indices = [round((length / nprocs) * r) for r in range(nprocs + 1)]
+    split_indices = [round((length / nprocs) * r) for r in range(1, nprocs)]
 
     # Prepare list for alltoall_ring
-    to_scatter = []
-    for i in range(nprocs):
-        start = split_indices[i]
-        end = split_indices[i + 1]
-        # Use slicing instead of split to avoid intermediate array
-        sliced = numpy.take(data, range(start, end), axis=next_slice_dim - 1)
-        to_scatter.append(sliced)
+    to_scatter = numpy.split(data, split_indices, axis=next_slice_dim - 1)
 
     # All-to-all communication with direct concatenation
-    # The concat_axis is current_slice_dim - 1 because we're concatenating along the current slice dimension
-    concat_axis = current_slice_dim - 1
-    new_data = alltoall_ring(to_scatter, comm, concat_axis=concat_axis)
+    new_data = alltoall_ring(to_scatter, comm, concat_axis=current_slice_dim - 1)
 
     # Free scatter list
     del to_scatter
 
-    start_idx = split_indices[rank]
+    start_idx = 0 if comm.rank == 0 else split_indices[comm.rank - 1]
     return new_data, next_slice_dim, start_idx
