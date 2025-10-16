@@ -3,6 +3,7 @@ import pytest
 from mpi4py import MPI
 from httomo.data.mpiutil import alltoall, alltoall_ring
 
+
 @pytest.mark.mpi
 def test_all_to_all():
     """Original test for backward compatibility - tests the list-returning alltoall."""
@@ -12,12 +13,16 @@ def test_all_to_all():
     expected = [np.ones((5, 5, 5), dtype=np.uint16) * r for r in range(comm.size)]
     np.testing.assert_array_equal(expected, rec)
 
+
 @pytest.mark.mpi
-@pytest.mark.parametrize("concat_axis,expected_shape_fn", [
-    (0, lambda size: (5 * size, 5, 5)),
-    (1, lambda size: (5, 5 * size, 5)),
-    (2, lambda size: (5, 5, 5 * size)),
-])
+@pytest.mark.parametrize(
+    "concat_axis,expected_shape_fn",
+    [
+        (0, lambda size: (5 * size, 5, 5)),
+        (1, lambda size: (5, 5 * size, 5)),
+        (2, lambda size: (5, 5, 5 * size)),
+    ],
+)
 def test_all_to_all_ring(concat_axis, expected_shape_fn):
     """Test alltoall_ring returns a concatenated array along different axes."""
     comm = MPI.COMM_WORLD
@@ -30,7 +35,9 @@ def test_all_to_all_ring(concat_axis, expected_shape_fn):
 
     # Expected shape depends on concat_axis
     expected_shape = expected_shape_fn(comm.size)
-    assert result.shape == expected_shape, f"Expected shape {expected_shape}, got {result.shape}"
+    assert (
+        result.shape == expected_shape
+    ), f"Expected shape {expected_shape}, got {result.shape}"
 
     # Verify each section came from the correct rank
     for r in range(comm.size):
@@ -49,8 +56,9 @@ def test_all_to_all_ring(concat_axis, expected_shape_fn):
         np.testing.assert_array_equal(
             actual_slice,
             expected_slice,
-            err_msg=f"Data from rank {r} not found at expected position for concat_axis={concat_axis}"
+            err_msg=f"Data from rank {r} not found at expected position for concat_axis={concat_axis}",
         )
+
 
 @pytest.mark.mpi
 def test_all_to_all_ring_unequal_sizes():
@@ -73,7 +81,9 @@ def test_all_to_all_ring_unequal_sizes():
     # Rank 0 contributes 5, rank 1 contributes 6, etc.
     expected_size_axis0 = sum(5 + r for r in range(comm.size))
     expected_shape = (expected_size_axis0, 4, 3)
-    assert result.shape == expected_shape, f"Expected shape {expected_shape}, got {result.shape}"
+    assert (
+        result.shape == expected_shape
+    ), f"Expected shape {expected_shape}, got {result.shape}"
 
     # Verify each section
     offset = 0
@@ -81,11 +91,12 @@ def test_all_to_all_ring_unequal_sizes():
         size = 5 + r  # Size from rank r
         expected_slice = np.ones((size, 4, 3), dtype=np.float32) * r
         np.testing.assert_array_equal(
-            result[offset:offset + size, :, :],
+            result[offset : offset + size, :, :],
             expected_slice,
-            err_msg=f"Slice [{offset}:{offset + size}, :, :] should contain data from rank {r}"
+            err_msg=f"Slice [{offset}:{offset + size}, :, :] should contain data from rank {r}",
         )
         offset += size
+
 
 @pytest.mark.mpi
 def test_all_to_all_ring_single_process():
@@ -100,13 +111,16 @@ def test_all_to_all_ring_single_process():
     expected = np.ones((5, 5, 5), dtype=np.uint16) * 42
     np.testing.assert_array_equal(result, expected)
 
+
 @pytest.mark.mpi
 def test_alltoall_ring_vs_alltoall():
     """Test that alltoall_ring produces equivalent results to alltoall + concatenate."""
     comm = MPI.COMM_WORLD
 
     # Create test data
-    data = [np.ones((7, 6, 5), dtype=np.float32) * (comm.rank + 1) for _ in range(comm.size)]
+    data = [
+        np.ones((7, 6, 5), dtype=np.float32) * (comm.rank + 1) for _ in range(comm.size)
+    ]
 
     # Method 1: Use alltoall_ring with concat_axis=0
     result_ring = alltoall_ring(data, comm, concat_axis=0)
@@ -117,9 +131,9 @@ def test_alltoall_ring_vs_alltoall():
 
     # They should be identical
     np.testing.assert_array_equal(
-        result_ring, 
+        result_ring,
         result_concat,
-        err_msg="alltoall_ring should produce the same result as alltoall + concatenate"
+        err_msg="alltoall_ring should produce the same result as alltoall + concatenate",
     )
 
     # Verify shapes match

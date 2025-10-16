@@ -15,7 +15,9 @@ __all__ = ["alltoall", "alltoall_ring"]
 _mpi_max_elements = 2**31
 
 
-def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0) -> np.ndarray:
+def alltoall_ring(
+    arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0
+) -> np.ndarray:
     """Distributes a list of contiguous numpy arrays from each rank to every other rank
     using a ring communication pattern for reduced memory usage.
 
@@ -76,7 +78,6 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0
 
     shapes_send = [a.shape for a in arrays]
 
-
     # Exchange shape information first
     shapes_rec = comm.alltoall(shapes_send)
 
@@ -98,7 +99,7 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0
         recv_from = (rank - offset) % nprocs
 
         # Create slice for where to write received data
-        recv_slices = [slice(None)] * 3 # 3 is the number of dimension
+        recv_slices = [slice(None)] * 3  # 3 is the number of dimension
         recv_offset = offsets[recv_from]
         recv_size = shapes_rec[recv_from][concat_axis]
         recv_slices[concat_axis] = slice(recv_offset, recv_offset + recv_size)
@@ -148,7 +149,9 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0
 
                     # Calculate chunk boundaries for receiver
                     recv_start = min(chunk_idx * max_elements, actual_recv_buffer.size)
-                    recv_end = min((chunk_idx + 1) * max_elements, actual_recv_buffer.size)
+                    recv_end = min(
+                        (chunk_idx + 1) * max_elements, actual_recv_buffer.size
+                    )
 
                     send_chunk_size = send_end - send_start
                     recv_chunk_size = recv_end - recv_start
@@ -183,6 +186,7 @@ def alltoall_ring(arrays: List[np.ndarray], comm: MPI.Comm, concat_axis: int = 0
                 output_array[tuple(recv_slices)] = temp_recv
 
     return output_array
+
 
 def alltoall(arrays: List[np.ndarray], comm: MPI.Comm) -> List[np.ndarray]:
     """Distributes a list of contiguous numpy arrays from each rank to every other rank.

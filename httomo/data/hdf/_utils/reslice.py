@@ -8,6 +8,7 @@ from httomo.data.mpiutil import alltoall_ring
 from httomo.data.hdf._utils import chunk
 from httomo.utils import log_once
 
+
 def reslice(
     data: numpy.ndarray,
     current_slice_dim: int,
