@@ -58,7 +58,7 @@ def alltoall_ring(
         err_str = "list of arrays for MPI alltoall call must match communicator size"
         raise ValueError(err_str)
 
-    assert all(type(a) == np.ndarray for a in arrays), "All arrays must be numpy arrays"
+    assert all(type(a) is np.ndarray for a in arrays), "All arrays must be numpy arrays"
     assert all(
         a.dtype == arrays[0].dtype for a in arrays
     ), "All arrays must be of the same type"
