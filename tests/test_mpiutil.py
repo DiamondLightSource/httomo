@@ -67,7 +67,7 @@ def test_all_to_all_ring_unequal_sizes():
 
     # Each rank creates arrays with varying sizes to send to each other rank
     data = []
-    for target_rank in range(comm.size):
+    for _ in range(comm.size):
         # All ranks send the same size to a given target, but the size varies by sender
         # Rank 0 creates arrays of size 5, rank 1 creates arrays of size 6, etc.
         size = 5 + comm.rank  # Size based on current rank (sender)
