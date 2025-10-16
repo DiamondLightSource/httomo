@@ -71,7 +71,7 @@ def alltoall_ring(
     # no MPI or only one process
     if comm.size == 1:
         log_once(
-            f"alltoall_ring: Single process, returning first array as-is",
+            "alltoall_ring: Single process, returning first array as-is",
             level=logging.DEBUG,
         )
         return arrays[0]
