@@ -4,7 +4,7 @@ from typing import Tuple
 import numpy
 from mpi4py.MPI import Comm
 
-from httomo.data.mpiutil import alltoall
+from httomo.data.mpiutil import alltoall_ring
 from httomo.data.hdf._utils import chunk
 from httomo.utils import log_once
 
@@ -39,7 +39,7 @@ def reslice(
         level=logging.DEBUG,
     )
 
-    # No need to reclice anything if there is only one process
+    # No need to reslice anything if there is only one process
     if comm.size == 1:
         log_once(
             "Reslicing not necessary, as there is only one process",
@@ -51,15 +51,20 @@ def reslice(
     # the dims of the full data rather than of the split data
     data_shape = chunk.get_data_shape(data, current_slice_dim - 1)
 
-    # build a list of what each process has to scatter to others
     nprocs = comm.size
+
+    # Calculate split indices
     length = data_shape[next_slice_dim - 1]
     split_indices = [round((length / nprocs) * r) for r in range(1, nprocs)]
+
+    # Prepare list for alltoall_ring
     to_scatter = numpy.split(data, split_indices, axis=next_slice_dim - 1)
 
-    # all-to-all MPI call distributes every processes list to every other process,
-    # and we concatenate them again across the resliced dimension
-    new_data = numpy.concatenate(alltoall(to_scatter, comm), axis=current_slice_dim - 1)
+    # All-to-all communication with direct concatenation
+    new_data = alltoall_ring(to_scatter, comm, concat_axis=current_slice_dim - 1)
+
+    # Free scatter list
+    del to_scatter
 
     start_idx = 0 if comm.rank == 0 else split_indices[comm.rank - 1]
     return new_data, next_slice_dim, start_idx
