@@ -16,7 +16,7 @@ from httomo.monitors import MONITORS_MAP, make_monitors
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.transform_layer import TransformLayer
-from httomo.utils import mpi_abort_excepthook
+from httomo.utils import log_exception, mpi_abort_excepthook
 from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
 from httomo.ui_layer import UiLayer, PipelineFormat
@@ -100,7 +100,7 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
 )
 @click.argument(
     "out_dir",
-    type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
+    type=click.Path(file_okay=False, writable=True, path_type=Path),
 )
 @click.option(
     "--output-folder-name",
@@ -340,7 +340,11 @@ def set_global_constants(
 
 
 def initialise_output_directory(pipeline: Union[Path, str]) -> None:
-    Path.mkdir(httomo.globals.run_out_dir, exist_ok=True)
+    try:
+        Path.mkdir(httomo.globals.run_out_dir, parents=True, exist_ok=True)
+    except PermissionError as e:
+        log_exception(f"PermissionError when creating output directory: {e}")
+        sys.exit(1)
 
     # If pipeline is a file path, copy it to output directory
     if isinstance(pipeline, Path):

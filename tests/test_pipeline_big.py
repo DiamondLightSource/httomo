@@ -213,9 +213,7 @@ def test_pipe_LPRec3d_tomobar_i12_119647_preview(
 
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
-    assert (
-        res_norm < 1e-4
-    )
+    assert res_norm < 1e-4
 
 
 # ########################################################################
@@ -396,7 +394,9 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
 
     residual_im = data_gt_tv - data_result
     res_norm_tv_res = np.linalg.norm(residual_im.flatten()).astype("float32")
-    assert res_norm_tv_res < 1e-3 # todo increasing the tolerance for the test to pass, as
+    assert (
+        res_norm_tv_res < 1e-3
+    )  # todo increasing the tolerance for the test to pass, as
     # the padding is not working correctly
 
 
