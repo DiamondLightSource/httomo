@@ -288,18 +288,8 @@ class DataSetStoreReader(DataSetSource):
             self._slicing_dim = slicing_dim
 
         self._padding = (0, 0) if padding is None else padding
-        if self._padding != (0, 0):
-            # correct indices for padding
-            global_index_t = list(self._global_index)
-            global_index_t[self.slicing_dim] -= self._padding[0]
-            self._global_index = make_3d_shape_from_shape(global_index_t)
-
-            chunk_shape_t = list(self._chunk_shape)
-            chunk_shape_t[self.slicing_dim] += self._padding[0] + self._padding[1]
-            self._chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
-
-            if not source.is_file_based:
-                self._exchange_neighbourhoods()
+        if self._padding != (0, 0) and not source.is_file_based:
+            self._exchange_neighbourhoods()
 
         source.finalize()
 
