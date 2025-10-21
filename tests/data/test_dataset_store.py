@@ -693,10 +693,10 @@ def test_adapts_shapes_with_padding_and_reslicing(
     assert reader.global_shape == GLOBAL_SHAPE
     assert reader.chunk_shape == (
         GLOBAL_SHAPE[0],
-        GLOBAL_SHAPE[1] + padding[0] + padding[1],
+        GLOBAL_SHAPE[1],
         GLOBAL_SHAPE[2],
     )
-    assert reader.global_index == (0, -padding[0], 0)
+    assert reader.global_index == (0, 0, 0)
     assert reader.slicing_dim == 1
 
     assert block.shape == (
@@ -705,7 +705,7 @@ def test_adapts_shapes_with_padding_and_reslicing(
         GLOBAL_SHAPE[2],
     )
     assert block.padding == padding
-    assert block.chunk_shape == reader.chunk_shape
+    assert block.chunk_shape_unpadded == reader.chunk_shape
     assert block.chunk_index == (0, -padding[0], 0)
     assert block.global_index == (0, -padding[0], 0)
 
@@ -852,11 +852,6 @@ def test_can_write_and_read_padded_blocks_ram(mocker: MockerFixture):
     )
 
     reader = DataSetStoreReader(mock_source, slicing_dim=0, padding=padding)
-    padded_chunk_shape = (
-        chunk_shape[0] + padding[0] + padding[1],
-        chunk_shape[1],
-        chunk_shape[2],
-    )
 
     b1_size = chunk_shape[0] // 2
     b2_size = chunk_shape[0] - b1_size
@@ -864,8 +859,8 @@ def test_can_write_and_read_padded_blocks_ram(mocker: MockerFixture):
     rblock2 = reader.read_block(b1_size, b2_size)
 
     assert reader.global_shape == GLOBAL_SHAPE
-    assert reader.chunk_shape == padded_chunk_shape
-    assert reader.global_index == (chunk_start - padding[0], 0, 0)
+    assert reader.chunk_shape == chunk_shape
+    assert reader.global_index == (chunk_start, 0, 0)
     assert reader.slicing_dim == 0
 
     assert isinstance(rblock1.data, np.ndarray)
@@ -952,14 +947,14 @@ def test_adapts_shapes_with_padding_and_reslicing_mpi(
     assert reader.global_shape == GLOBAL_SHAPE
     assert reader.chunk_shape == (
         GLOBAL_SHAPE[0],
-        chunk_size + padding[0] + padding[1],
+        chunk_size,
         GLOBAL_SHAPE[2],
     )
     assert reader.slicing_dim == 1
     if comm.rank == 0:
-        assert reader.global_index == (0, -padding[0], 0)
+        assert reader.global_index == (0, 0, 0)
     else:
-        assert reader.global_index == (0, chunk_size - padding[0], 0)
+        assert reader.global_index == (0, chunk_size, 0)
 
     assert block1.shape == (
         GLOBAL_SHAPE[0],
@@ -967,9 +962,9 @@ def test_adapts_shapes_with_padding_and_reslicing_mpi(
         GLOBAL_SHAPE[2],
     )
     assert block1.padding == padding
-    assert block1.chunk_shape == reader.chunk_shape
+    assert block1.chunk_shape_unpadded == reader.chunk_shape
     assert block1.chunk_index == (0, -padding[0], 0)
-    assert block1.global_index == reader.global_index
+    assert block1.global_index_unpadded == reader.global_index
 
     assert block2.shape == (
         GLOBAL_SHAPE[0],
@@ -977,9 +972,9 @@ def test_adapts_shapes_with_padding_and_reslicing_mpi(
         GLOBAL_SHAPE[2],
     )
     assert block2.padding == padding
-    assert block2.chunk_shape == reader.chunk_shape
+    assert block2.chunk_shape_unpadded == reader.chunk_shape
     assert block2.chunk_index == (0, b1_size - padding[0], 0)
-    assert block2.global_index == (0, reader.global_index[1] + b1_size, 0)
+    assert block2.global_index_unpadded == (0, reader.global_index[1] + b1_size, 0)
 
     b1expected = np.empty(block1.shape, dtype=np.float32)
     b2expected = np.empty(block2.shape, dtype=np.float32)
