@@ -432,7 +432,7 @@ class DataSetStoreReader(DataSetSource):
                 tag=MPI_TAG,
             )
 
-        # receiver code from right neighbour
+        # receiver code from left neighbour
         if self._comm.rank > 0:
             recv_shape = list(self._data.shape)
             recv_shape[self._slicing_dim] = self._padding[0]
