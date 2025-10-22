@@ -625,18 +625,12 @@ def test_can_write_and_read_padded_blocks_filebased_center(
     )
 
     reader = DataSetStoreReader(mock_source, 0, padding=padding)
-    padded_chunk_shape = (
-        chunk_shape[0] + padding[0] + padding[1],
-        chunk_shape[1],
-        chunk_shape[2],
-    )
-
     rblock1 = reader.read_block(0, 2)
     rblock2 = reader.read_block(2, 2)
 
     assert reader.global_shape == GLOBAL_SHAPE
-    assert reader.chunk_shape == padded_chunk_shape
-    assert reader.global_index == (chunk_start - padding[0], 0, 0)
+    assert reader.chunk_shape == chunk_shape
+    assert reader.global_index == (chunk_start, 0, 0)
     assert reader.slicing_dim == 0
 
     assert isinstance(rblock1.data, np.ndarray)
@@ -747,19 +741,13 @@ def test_can_write_and_read_padded_blocks_filebased_boundaries(
     )
 
     reader = DataSetStoreReader(mock_source, 0, padding=padding)
-    padded_chunk_shape = (
-        chunk_shape[0] + padding[0] + padding[1],
-        chunk_shape[1],
-        chunk_shape[2],
-    )
-
     blck_size = chunk_shape[0] // 2
     rblock1 = reader.read_block(0, blck_size)
     rblock2 = reader.read_block(blck_size, blck_size)
 
     assert reader.global_shape == GLOBAL_SHAPE
-    assert reader.chunk_shape == padded_chunk_shape
-    assert reader.global_index == (chunk_start - padding[0], 0, 0)
+    assert reader.chunk_shape == chunk_shape
+    assert reader.global_index == (chunk_start, 0, 0)
     assert reader.slicing_dim == 0
 
     assert isinstance(rblock1.data, np.ndarray)

@@ -368,7 +368,7 @@ class DataSetStoreReader(DataSetSource):
     def _read_block_file(
         self, shape: List[int], dim: int, start_idx: List[int]
     ) -> np.ndarray:
-        start_idx[dim] += self._global_index[dim]  # includes padding
+        start_idx[dim] += self._global_index[dim] - self._padding[0]
         block_data = np.empty(shape, dtype=self._data.dtype)
         before_cut = 0
         after_cut = 0
