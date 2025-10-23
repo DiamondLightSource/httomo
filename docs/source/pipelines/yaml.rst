@@ -37,6 +37,11 @@ Those pipelines consist of methods from HTTomolibgpu (GPU) and HTTomolib (CPU) b
     .. literalinclude:: ../pipelines_full/FBP3d_tomobar_denoising.yaml
         :language: yaml
 
+.. dropdown:: Using advanced iterative reconstruction :code:`FISTA3d_tomobar` with Total Variation regularisation. Recommended for undersampled and/or noisy data.
+
+    .. literalinclude:: ../pipelines_full/FISTA3d_tomobar.yaml
+        :language: yaml
+
 .. _tutorials_pl_templates_cpu:
 
 Pipelines using TomoPy library
