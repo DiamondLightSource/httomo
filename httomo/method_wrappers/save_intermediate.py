@@ -79,7 +79,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         self._gpu_time_info.device2host += t.elapsed
 
         MIN_BLOCK_LEN_PARAM = "minimum_block_length"
-        if block.chunk_index[block.slicing_dim] == 0 and self.comm.size > 1:
+        if block.chunk_index_unpadded[block.slicing_dim] == 0 and self.comm.size > 1:
             minimum_block_length = self.comm.reduce(
                 self.config_params[MIN_BLOCK_LEN_PARAM], MIN
             )

@@ -184,7 +184,9 @@ class TaskRunner:
             # we have a store-based sink from the last section - use that to determine
             # the source for this one
             assert isinstance(self.sink, ReadableDataSetSink)
-            self.source = self.sink.make_reader(slicing_dim_section)
+            self.source = self.sink.make_reader(
+                slicing_dim_section, determine_section_padding(section)
+            )
 
         store_backing = determine_store_backing(
             comm=self.comm,

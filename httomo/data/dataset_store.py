@@ -288,18 +288,8 @@ class DataSetStoreReader(DataSetSource):
             self._slicing_dim = slicing_dim
 
         self._padding = (0, 0) if padding is None else padding
-        if self._padding != (0, 0):
-            # correct indices for padding
-            global_index_t = list(self._global_index)
-            global_index_t[self.slicing_dim] -= self._padding[0]
-            self._global_index = make_3d_shape_from_shape(global_index_t)
-
-            chunk_shape_t = list(self._chunk_shape)
-            chunk_shape_t[self.slicing_dim] += self._padding[0] + self._padding[1]
-            self._chunk_shape = make_3d_shape_from_shape(chunk_shape_t)
-
-            if not source.is_file_based:
-                self._exchange_neighbourhoods()
+        if self._padding != (0, 0) and not source.is_file_based:
+            self._exchange_neighbourhoods()
 
         source.finalize()
 
@@ -378,7 +368,7 @@ class DataSetStoreReader(DataSetSource):
     def _read_block_file(
         self, shape: List[int], dim: int, start_idx: List[int]
     ) -> np.ndarray:
-        start_idx[dim] += self._global_index[dim]  # includes padding
+        start_idx[dim] += self._global_index[dim] - self._padding[0]
         block_data = np.empty(shape, dtype=self._data.dtype)
         before_cut = 0
         after_cut = 0
@@ -432,7 +422,7 @@ class DataSetStoreReader(DataSetSource):
                 tag=MPI_TAG,
             )
 
-        # receiver code from right neighbour
+        # receiver code from left neighbour
         if self._comm.rank > 0:
             recv_shape = list(self._data.shape)
             recv_shape[self._slicing_dim] = self._padding[0]
@@ -486,18 +476,22 @@ class DataSetStoreReader(DataSetSource):
             )
             pad_slices = [slice(None), slice(None), slice(None)]
             pad_slices[self._slicing_dim] = slice(
-                self._chunk_shape[self._slicing_dim] - self._padding[1],
-                self._chunk_shape[self._slicing_dim],
+                self._chunk_shape[self._slicing_dim] + self._padding[0],
+                self._chunk_shape[self._slicing_dim]
+                + self._padding[0]
+                + self._padding[1],
             )
             self._data[pad_slices[0], pad_slices[1], pad_slices[2]] = (
                 receive_buf_from_right_neighbour
             )
 
     def _extend_data_for_padding(self, core_data: np.ndarray) -> np.ndarray:
-        padded_data = np.empty(self._chunk_shape, self._data.dtype)
+        padded_shape = list(self._chunk_shape)
+        padded_shape[self.slicing_dim] += self._padding[0] + self._padding[1]
+        padded_data = np.empty(padded_shape, self._data.dtype)
         core_slices = [slice(None), slice(None), slice(None)]
         core_slices[self._slicing_dim] = slice(
-            self._padding[0], self._chunk_shape[self._slicing_dim] - self._padding[1]
+            self._padding[0], self._chunk_shape[self._slicing_dim] + self._padding[0]
         )
         padded_data[core_slices[0], core_slices[1], core_slices[2]] = core_data
         return padded_data
@@ -552,14 +546,16 @@ class DataSetStoreReader(DataSetSource):
         else:
             block_data = self._read_block_ram(shape, dim, start_idx)
 
+        padded_chunk_shape = list(self._chunk_shape)
+        padded_chunk_shape[self.slicing_dim] += self._padding[0] + self._padding[1]
         return DataSetBlock(
             data=block_data,
             aux_data=self._aux_data,
             slicing_dim=self._slicing_dim,
             block_start=start - self._padding[0],
-            chunk_start=self._global_index[self._slicing_dim],
+            chunk_start=self._global_index[self._slicing_dim] - self._padding[0],
             global_shape=self._global_shape,
-            chunk_shape=self._chunk_shape,
+            chunk_shape=make_3d_shape_from_shape(padded_chunk_shape),
             padding=self._padding,
         )
 

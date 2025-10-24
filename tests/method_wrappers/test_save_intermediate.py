@@ -519,14 +519,20 @@ def test_passes_smallest_minimum_block_length_to_underlying_method_in_all_proces
 
 
 @pytest.mark.parametrize(
-    "block_start, is_mpi_reduce_call_expected",
-    [(0, True), (2, False)],
-    ids=["first-block", "not-first-block"],
+    "block_start, padding, is_mpi_reduce_call_expected",
+    [(0, (0, 0), True), (2, (0, 0), False), (0, (1, 1), True), (2, (1, 1), False)],
+    ids=[
+        "unpadded-first-block",
+        "unpadded-not-first-block",
+        "padded-first-block",
+        "padded-not-first-block",
+    ],
 )
 def test_mpi_reduce_call_for_min_block_len(
     mocker: MockerFixture,
     tmp_path: Path,
     block_start: int,
+    padding: Tuple[int, int],
     is_mpi_reduce_call_expected: bool,
 ):
     # Define mock communicator with size 2 to have the potential to trigger the MPI reduce call
@@ -587,17 +593,30 @@ def test_mpi_reduce_call_for_min_block_len(
     # Create block with a chunk index reflecting if it should be the first block in the chunk
     # or not
     GLOBAL_SHAPE = (180, 120, 160)
-    CHUNK_SHAPE = (GLOBAL_SHAPE[0] // 2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
+    CHUNK_SHAPE = (
+        GLOBAL_SHAPE[0] // 2 + padding[0] + padding[1],
+        GLOBAL_SHAPE[1],
+        GLOBAL_SHAPE[2],
+    )
     BLOCK_LEN = 2
     data = np.empty(GLOBAL_SHAPE, dtype=np.float32)
     aux_data = AuxiliaryData(angles=np.empty(GLOBAL_SHAPE[0], dtype=np.float32))
     block = DataSetBlock(
-        data=data[CHUNK_SHAPE[0] : CHUNK_SHAPE[0] + BLOCK_LEN, :, :],
+        data=data[
+            CHUNK_SHAPE[0]
+            - padding[0] : CHUNK_SHAPE[0]
+            - padding[0]
+            + BLOCK_LEN
+            + padding[1],
+            :,
+            :,
+        ],
         aux_data=aux_data,
-        block_start=block_start,
-        chunk_start=0,
+        block_start=block_start - padding[0],
+        chunk_start=-padding[0],
         global_shape=GLOBAL_SHAPE,
         chunk_shape=CHUNK_SHAPE,
+        padding=padding,
     )
 
     # Execute wrapper and check if MPI reduce call is seen, asserting that it should or

@@ -227,6 +227,9 @@ def FBP2d_astra():
 def FBP3d_tomobar_denoising():
     return "docs/source/pipelines_full/FBP3d_tomobar_denoising.yaml"
 
+@pytest.fixture
+def FISTA3d_tomobar():
+    return "docs/source/pipelines_full/FISTA3d_tomobar.yaml"
 
 @pytest.fixture
 def titaren_center_pc_FBP3d_resample():
