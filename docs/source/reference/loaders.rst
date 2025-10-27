@@ -113,7 +113,7 @@ Files that do not contain image keys
 ++++++++++++++++++++++++++++++++++++
 
 These are the files without the image keys that contain only flats or darks in two separate files.
-Here one needs to add :code:`darks` and :code:`flats` parameters to the loader parameters with the following fields (see the example bellow): 
+Here one needs to add :code:`darks` and :code:`flats` parameters to the loader parameters with the following fields (see the example below): 
 
 - :code:`file`, the path to the hdf5/NeXus file containing the darks/flats
 - :code:`data_path`, the dataset within the hdf5/NeXus file that contains the
