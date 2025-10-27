@@ -178,6 +178,7 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_memory_preview(
 
 # ########################################################################
 
+
 @pytest.mark.full_data_parallel
 def test_parallel_pipe_LPRec3d_tomobar_i12_119647_preview(
     get_files: Callable,
@@ -386,7 +387,9 @@ def test_parallel_pipe_titaren_center_pc_FBP3d_resample_i12_119647_preview(
     check_tif(files, 200, (512, 512))
     compare_tif(files, files_references)
 
+
 # ########################################################################
+
 
 @pytest.mark.full_data_parallel
 def test_parallel_pipe_FISTA3d_tomobar_k11_38731(
@@ -470,6 +473,7 @@ def test_parallel_pipe_FISTA3d_tomobar_k11_38731(
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-5
+
 
 # ########################################################################
 @pytest.mark.full_data_parallel

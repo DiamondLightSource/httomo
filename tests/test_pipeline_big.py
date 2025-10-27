@@ -392,9 +392,8 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
 
     residual_im = data_gt_tv - data_result
     res_norm_tv_res = np.linalg.norm(residual_im.flatten()).astype("float32")
-    assert (
-        res_norm_tv_res < 1e-5
-    )
+    assert res_norm_tv_res < 1e-5
+
 
 # ########################################################################
 
