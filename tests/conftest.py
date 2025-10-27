@@ -229,6 +229,11 @@ def FBP3d_tomobar_denoising():
 
 
 @pytest.fixture
+def FISTA3d_tomobar():
+    return "docs/source/pipelines_full/FISTA3d_tomobar.yaml"
+
+
+@pytest.fixture
 def titaren_center_pc_FBP3d_resample():
     return "docs/source/pipelines_full/titaren_center_pc_FBP3d_resample.yaml"
 
@@ -361,6 +366,12 @@ def FBP3d_tomobar_distortion_i13_179623_npz():
 def LPRec3d_tomobar_i12_119647_npz():
     # 10 slices numpy array
     return np.load("tests/test_data/raw_data/i12/LPRec3d_tomobar_i12_119647.npz")
+
+
+@pytest.fixture
+def FISTA3d_tomobar_k11_38731_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/diad/FISTA3d_tomobar_k11_38731.npz")
 
 
 @pytest.fixture
