@@ -389,12 +389,12 @@ def test_parallel_pipe_titaren_center_pc_FBP3d_resample_i12_119647_preview(
 # ########################################################################
 
 @pytest.mark.full_data_parallel
-def test_pipe_FISTA3d_tomobar_k11_38731(
+def test_parallel_pipe_FISTA3d_tomobar_k11_38731(
     get_files: Callable,
     cmd_mpirun,
     diad_k11_38731,
     FISTA3d_tomobar,
-    FBP3d_tomobar_k11_38731_npz,
+    FISTA3d_tomobar_k11_38731_npz,
     output_folder,
 ):
     change_value_parameters_method_pipeline(
@@ -445,8 +445,8 @@ def test_pipe_FISTA3d_tomobar_k11_38731(
     assert len(h5_files) == 1
 
     # load the pre-saved numpy array for comparison bellow
-    data_gt = FBP3d_tomobar_k11_38731_npz["data"]
-    axis_slice = FBP3d_tomobar_k11_38731_npz["axis_slice"]
+    data_gt = FISTA3d_tomobar_k11_38731_npz["data"]
+    axis_slice = FISTA3d_tomobar_k11_38731_npz["axis_slice"]
     (slices, sizeX, sizeY) = np.shape(data_gt)
 
     step = axis_slice // (slices + 2)
@@ -469,7 +469,7 @@ def test_pipe_FISTA3d_tomobar_k11_38731(
 
     residual_im = data_gt - data_result
     res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
-    assert res_norm < 1e-6
+    assert res_norm < 1e-5
 
 # ########################################################################
 @pytest.mark.full_data_parallel

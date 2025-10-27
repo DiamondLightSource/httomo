@@ -367,6 +367,12 @@ def LPRec3d_tomobar_i12_119647_npz():
 
 
 @pytest.fixture
+def FISTA3d_tomobar_k11_38731_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/diad/FISTA3d_tomobar_k11_38731.npz")
+
+
+@pytest.fixture
 def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
     # 8 tiff files of 16bit
     return "tests/test_data/raw_data/i13/sweep/images_sweep_FBP3d_tomobar16bit_tif/"
