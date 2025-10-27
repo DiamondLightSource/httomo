@@ -5,7 +5,7 @@ Methods YAML Templates
 ======================
 
 This section refers to YAML templates from the :ref:`backends_list`, which are distributed separately through `HTTomo-backends <https://diamondlightsource.github.io/httomo-backends/>`_.
-Here you can find either fixed (achieved) templates that were previously released, or dynamically changing latest templates.
+Here you can find either fixed (archived) templates that were previously released, or dynamically changing latest templates.
 If you installed HTTomo with a specific version associated with the release, please use the :ref:`archived_templates`. If you are a developer, or
 you need to access the latest developments, please use the :ref:`latest_templates`. 
 
