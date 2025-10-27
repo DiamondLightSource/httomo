@@ -25,7 +25,7 @@ These are archived YAML templates that can be used with already released and tag
 Latest Templates
 ================
 
-The templates bellow are generated for the current/latest HTTomo development. These templates can be updated frequently and 
+The templates below are generated for the current/latest HTTomo development. These templates can be updated frequently and 
 if you need to use templates that are linked to a specific released (tagged) HTTomo version, please see the archives above. 
 
 .. note:: At DLS, the templates bellow should work with the :code:`httomo/latest` module. 
