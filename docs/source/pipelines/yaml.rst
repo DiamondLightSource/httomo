@@ -24,7 +24,7 @@ These are archived full YAML pipelines that can be used with already released an
 .. _tutorials_pl_templates_gpu:
 
 
-.. warning:: At DLS, the templates bellow should work with the :code:`httomo/latest` module, however, for production please use :ref:`full_pipelines_archived`. 
+.. warning:: At DLS, the templates below should work with the :code:`httomo/latest` module, however, for production please use :ref:`full_pipelines_archived`. 
 
 Pipelines using HTTomo libraries
 --------------------------------
