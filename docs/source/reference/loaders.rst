@@ -113,17 +113,24 @@ Files that do not contain image keys
 ++++++++++++++++++++++++++++++++++++
 
 These are the files without the image keys that contain only flats or darks in two separate files.
-Here one needs to add :code:`darks` and :code:`flats` parameters to the loader parameters with the following fields: 
+Here one needs to add :code:`darks` and :code:`flats` parameters to the loader parameters with the following fields (see the example below): 
 
 - :code:`file`, the path to the hdf5/NeXus file containing the darks/flats
 - :code:`data_path`, the dataset within the hdf5/NeXus file that contains the
   darks/flats
 
-as shown in the following code example:
+.. code-block:: yaml
+   :emphasize-lines: 5,6,8,9
 
-.. literalinclude:: ../../../tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml
-   :language: yaml
-   :emphasize-lines: 10-15
+    - method: standard_tomo
+      module_path: httomo.data.hdf.loaders
+      parameters:
+        darks:
+          file: path/to/new/file.nxs
+          data_path: /entry1/tomo_entry/data/data
+        flats:
+          file: path/to/new/file.nxs
+          data_path: /entry1/tomo_entry/data/data
 
 Files with image keys
 +++++++++++++++++++++
@@ -146,7 +153,7 @@ in the older scan should be ignored. In this instance, we need to provide a para
         flats:
           file: path/to/new/file.nxs
           data_path: /entry1/tomo_entry/data/data
-          image_key_path: /entry1/tomo_entry/instrument/detector/image_key          
+          image_key_path: /entry1/tomo_entry/instrument/detector/image_key 
         
 .. _user_defined_angles:
 
@@ -191,9 +198,20 @@ The following is reusing the same example from the separate darks/flats example,
 but is now drawing attention to the :code:`rotation_angles` parameter:
 
 
-.. literalinclude:: ../../../tests/samples/pipeline_template_examples/DLS/03_i12_separate_darks_flats.yaml
-   :language: yaml
-   :emphasize-lines: 5-9
+.. code-block:: yaml
+   :emphasize-lines: 8-10
+
+
+    - method: standard_tomo
+      module_path: httomo.data.hdf.loaders
+      parameters:
+        data_path: /1-TempPlugin-tomo/data
+        image_key_path: /entry1/tomo_entry/instrument/detector/image_key
+        rotation_angles:
+          user_defined:
+            start_angle: 0
+            stop_angle: 180
+            angles_total: 724
 
 It can be seen that :code:`user_defined` has been specified instead of
 :code:`data_path`. Furthermore, there are then three fields provided:
