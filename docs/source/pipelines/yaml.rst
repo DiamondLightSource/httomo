@@ -21,6 +21,8 @@ These are archived full YAML pipelines that can be used with already released an
 
    :download:`HTTomo version 2.5 full YAML pipelines <../templates_archive/httomo_ver2_5_full_yaml_pipelines.zip>`
 
+   :download:`HTTomo version 2.6 full YAML pipelines <../templates_archive/httomo_ver2_6_full_yaml_pipelines.zip>`
+
 .. _tutorials_pl_templates_gpu:
 
 
