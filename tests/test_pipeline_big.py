@@ -531,12 +531,12 @@ def test_pipe_sweep_paganin_FBP3d_tomobar_i12_119647(
     path_to_files_paganin = os.path.join(
         output_folder,
         os.listdir(output_folder)[0],
-        "images_sweep_paganin_filter_tomopy8bit_tif",
+        "images_sweep_paganin_filter_tomopy32bit_tif",
     )
     path_to_files_recon = os.path.join(
         output_folder,
         os.listdir(output_folder)[0],
-        "images_sweep_FBP3d_tomobar16bit_tif",
+        "images_sweep_FBP3d_tomobar32bit_tif",
     )
 
     files_paganin = get_files(path_to_files_paganin)
