@@ -379,6 +379,11 @@ def pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs():
     # 8 tiff files of 32bit
     return "tests/test_data/raw_data/i13/sweep/images_sweep_FBP3d_tomobar32bit_tif/"
 
+@pytest.fixture
+def pipeline_parallel_sweep_FBP3d_tomobar_i13_177906_tiffs():
+    # 8 tiff files of 32bit (watermarking values might differ from the serial runs)
+    return "tests/test_data/raw_data/i13/sweep/parallel/images_sweep_FBP3d_tomobar32bit_tif/"
+
 
 @pytest.fixture
 def pipeline_paganin_sweep_paganin_images_i12_119647_tiffs():
