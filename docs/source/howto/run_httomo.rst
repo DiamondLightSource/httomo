@@ -496,3 +496,15 @@ YAML pipeline.
 .. note:: HTTomo currently only accepts YAML pipelines as files and JSON
    pipelines as strings. Ie, both YAML pipelines provided as strings and JSON
    pipelines provided as files are not currently supported.
+
+Developer options
++++++++++++++++++
+
+Benchmarking
+############
+
+One tool that can be used to colled CPU traces, along with CPU and memory usage statistics is `VizTracer`_. 
+
+.. _VizTracer: https://viztracer.readthedocs.io
+
+To enable CPU and memory usage statistic collection in the traces use the :code:`--no-standalone` option.
