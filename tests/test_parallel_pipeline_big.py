@@ -482,7 +482,7 @@ def test_parallel_pipe_sweep_FBP3d_tomobar_i13_177906(
     cmd_mpirun,
     i13_177906,
     sweep_center_FBP3d_tomobar,
-    pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs,
+    pipeline_parallel_sweep_FBP3d_tomobar_i13_177906_tiffs,
     output_folder,
 ):
 
@@ -497,7 +497,7 @@ def test_parallel_pipe_sweep_FBP3d_tomobar_i13_177906(
     print(output)
 
     files = get_files(output_folder)
-    files_references = get_files(pipeline_sweep_FBP3d_tomobar_i13_177906_tiffs)
+    files_references = get_files(pipeline_parallel_sweep_FBP3d_tomobar_i13_177906_tiffs)
 
     # recurse through output_dir and check that all files are there
     files = get_files(output_folder)
