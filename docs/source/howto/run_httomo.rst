@@ -496,3 +496,39 @@ YAML pipeline.
 .. note:: HTTomo currently only accepts YAML pipelines as files and JSON
    pipelines as strings. Ie, both YAML pipelines provided as strings and JSON
    pipelines provided as files are not currently supported.
+
+Developer options
++++++++++++++++++
+
+Tracing
+#######
+
+One tool that can be used to record CPU traces, along with CPU and memory usage statistics is `VizTracer`_. 
+
+.. _VizTracer: https://viztracer.readthedocs.io
+
+To enable CPU and memory usage statistic recording in the traces use the :code:`--no-standalone` option of httomo.
+
+VizTracer
+#########
+
+Recording a trace with viztracer:
+
+:code:`python -m viztracer --plugin "vizplugins --cpu_usage --memory_usage" --output_file output.json -m httomo run --no-standalone data.nxs pipeline.yaml output_directory`
+
+Recording a trace for multiple ranks:
+
+:code:`mpirun -n 4 bash -c 'python -m viztracer --plugin "vizplugins --cpu_usage --memory_usage" --output_file output_rank_${OMPI_COMM_WORLD_RANK}.json -m httomo run --no-standalone data.nxs pipeline.yaml output_directory'`
+
+A separate file is created for each rank.
+VizTracer can combine them into a single json file:
+
+:code:`viztracer --combine output_rank_*.json -o output.json`
+
+VizTracer's output json files can be viewed by vizviewer offline:
+
+:code:`vizviewer output.json`
+
+Or by using the online version of `Perfetto`_.
+
+.. _Perfetto: https://ui.perfetto.dev
