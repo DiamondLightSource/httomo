@@ -204,6 +204,46 @@ def _get_middle_slice_indices(dim_len: int) -> tuple[int, int]:
         return mid_slice_idx - 1, mid_slice_idx + 1
 
 
+class ContinuousScanSubsetParam(TypedDict):
+    """
+    Configuration for selecting a subset of the input dataset along the angular dimension.
+    """
+
+    start: int
+    stop: int
+
+
+def select_continuous_scan_subset(
+    preview_config: PreviewConfig,
+    continuous_scan_subset_config: ContinuousScanSubsetParam,
+) -> PreviewConfig:
+    """
+    Transform a `PreviewConfig` to select a subset of a dataset described by a
+    `ContinuousScanSubsetParam`.
+
+    Parameters
+    ----------
+    preview_config: PreviewConfig
+        The preview configuration without a continuous-scan subset selected.
+
+    continuous_scan_subset_config: ContinuousScanSubsetParam
+        The configuration for a specific subset within the input data.
+
+    Returns
+    -------
+    PreviewConfig
+        The preview configuration with the given continuous-scan subset selected.
+    """
+    return PreviewConfig(
+        angles=PreviewDimConfig(
+            start=continuous_scan_subset_config["start"],
+            stop=continuous_scan_subset_config["stop"],
+        ),
+        detector_y=preview_config.detector_y,
+        detector_x=preview_config.detector_x,
+    )
+
+
 class RawAnglesParam(TypedDict):
     """
     Angles configuration dict for when the rotation angle values are in a dataset within the

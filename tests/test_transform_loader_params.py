@@ -12,8 +12,10 @@ from httomo.loaders.types import (
 )
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.transform_loader_params import (
+    ContinuousScanSubsetParam,
     DarksFlatsParam,
     PreviewParam,
+    select_continuous_scan_subset,
     find_tomo_entry,
     parse_angles,
     parse_config,
@@ -680,3 +682,24 @@ def test_parse_loader_config(
     assert angles_config == expected_angles_config
     assert darks_config == expected_darks_config
     assert flats_config == expected_flats_config
+
+
+def test_select_continuous_scan_subset():
+    continuous_scan_subset_config = ContinuousScanSubsetParam(start=180, stop=360)
+    preview_config = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=1800),
+        detector_y=PreviewDimConfig(start=10, stop=110),
+        detector_x=PreviewDimConfig(start=5, stop=105),
+    )
+    expected_transformed_preview_config = PreviewConfig(
+        angles=PreviewDimConfig(
+            start=continuous_scan_subset_config["start"],
+            stop=continuous_scan_subset_config["stop"],
+        ),
+        detector_y=preview_config.detector_y,
+        detector_x=preview_config.detector_x,
+    )
+    assert (
+        select_continuous_scan_subset(preview_config, continuous_scan_subset_config)
+        == expected_transformed_preview_config
+    )
