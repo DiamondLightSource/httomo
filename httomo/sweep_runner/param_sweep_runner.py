@@ -149,18 +149,18 @@ class ParamSweepRunner:
             )
             raise ValueError(err_str)
 
-        # before modifying preview here we need to check if the block fits the memory if Paganin method (TomoPy implementation) is present in the pipeline
+        # before modifying preview here we need to check if the block fits the memory if Paganin method is present in the pipeline
         for method in self._pipeline._methods:
-            if "paganin_filter_tomopy" in method.method_name and method.sweep:
+            if "paganin_filter" in method.method_name and method.sweep:
                 # Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
                 # the larger preview needs to be taken in that case. So far this is the only method that
                 # requires an extended preview.
 
                 vertical_slices_preview_Paganin = paganin_kernel_estimator(
                     method.config_params["pixel_size"],
-                    method.config_params["alpha"],
+                    method.config_params["distance"],
                     method.config_params["energy"],
-                    method.config_params["dist"],
+                    method.config_params["ratio_delta_beta"],
                     vert_min_limit=self._vertical_slices_preview,
                     peak_height=0.01,
                 )
