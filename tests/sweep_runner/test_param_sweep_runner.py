@@ -109,7 +109,7 @@ def test_after_prepare_block_attr_contains_data(mocker: MockerFixture):
 
 def tests_preview_modifier_paganin(mocker: MockerFixture):
     SINO_SLICES = 100
-    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, SINO_SLICES, 160)
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (1800, SINO_SLICES, 160)
     data = np.arange(np.prod(PREVIEWED_SLICES_SHAPE), dtype=np.uint16).reshape(
         PREVIEWED_SLICES_SHAPE
     )
@@ -205,7 +205,7 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
     runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
     runner.modify_loader_preview()
 
-    expected_preview_config = PreviewDimConfig(start=40, stop=60)
+    expected_preview_config = PreviewDimConfig(start=0, stop=100)
     assert loader.preview.detector_y == expected_preview_config
 
 

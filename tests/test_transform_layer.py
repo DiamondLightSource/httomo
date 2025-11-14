@@ -340,13 +340,11 @@ def test_insert_paganin_is_last_sweep(mocker: MockerFixture, tmp_path: Path):
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.transform(pipeline)
 
-    assert len(pipeline) == 7
-    assert pipeline[4].method_name == "calculate_stats"
-    assert pipeline[5].method_name == "rescale_to_int"
-    assert pipeline[6].method_name == "save_to_images"
-    assert pipeline[6].task_id == "saveimage_sweep_t3"
+    assert len(pipeline) == 5
+    assert pipeline[4].method_name == "save_to_images"
+    assert pipeline[4].task_id == "saveimage_sweep_t3"
     assert (
-        pipeline[6].config_params["subfolder_name"]
+        pipeline[4].config_params["subfolder_name"]
         == "images_sweep_paganin_filter"
     )
 
@@ -388,9 +386,7 @@ def test_insert_denoise_last_after_FBP_sweep(mocker: MockerFixture, tmp_path: Pa
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.transform(pipeline)
 
-    assert len(pipeline) == 7
-    assert pipeline[4].method_name == "calculate_stats"
-    assert pipeline[5].method_name == "rescale_to_int"
-    assert pipeline[6].method_name == "save_to_images"
-    assert pipeline[6].task_id == "saveimage_sweep_t3"
-    assert pipeline[6].config_params["subfolder_name"] == "images_sweep_median_filter"
+    assert len(pipeline) == 5
+    assert pipeline[4].method_name == "save_to_images"
+    assert pipeline[4].task_id == "saveimage_sweep_t3"
+    assert pipeline[4].config_params["subfolder_name"] == "images_sweep_median_filter"
