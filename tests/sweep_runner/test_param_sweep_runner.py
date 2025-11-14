@@ -187,7 +187,6 @@ def tests_preview_modifier_paganin(mocker: MockerFixture):
         "distance": 2,
         "energy": 53,
         "ratio_delta_beta": SWEEP_VALUES,
-        
     }
     sweep_method_wrapper = make_method_wrapper(
         method_repository=make_mock_repo(mocker),

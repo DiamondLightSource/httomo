@@ -182,10 +182,7 @@ def test_insert_image_save_after_sweep(mocker: MockerFixture, tmp_path: Path):
     assert len(pipeline) == 4
     assert pipeline[3].method_name == "save_to_images"
     assert pipeline[3].task_id == "saveimage_sweep_t3"
-    assert (
-        pipeline[3].config_params["subfolder_name"]
-        == "images_sweep_paganin_filter"
-    )
+    assert pipeline[3].config_params["subfolder_name"] == "images_sweep_paganin_filter"
     assert pipeline[3].config_params["axis"] == 1
 
 
@@ -236,10 +233,7 @@ def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
     assert len(pipeline) == 6
     assert pipeline[3].method_name == "save_to_images"
     assert pipeline[3].task_id == "saveimage_sweep_t3"
-    assert (
-        pipeline[3].config_params["subfolder_name"]
-        == "images_sweep_paganin_filter"
-    )
+    assert pipeline[3].config_params["subfolder_name"] == "images_sweep_paganin_filter"
 
     assert pipeline[5].method_name == "save_to_images"
     assert pipeline[5].task_id == "saveimage_sweep_t4"
@@ -294,10 +288,7 @@ def test_insert_paganin_not_last_sweep(mocker: MockerFixture, tmp_path: Path):
     assert len(pipeline) == 7
     assert pipeline[4].method_name == "save_to_images"
     assert pipeline[4].task_id == "saveimage_sweep_t3"
-    assert (
-        pipeline[4].config_params["subfolder_name"]
-        == "images_sweep_paganin_filter"
-    )
+    assert pipeline[4].config_params["subfolder_name"] == "images_sweep_paganin_filter"
     assert pipeline[5].method_name == "FBP3d_tomobar"
     assert pipeline[6].task_id == "saveimage_sweep_t4"
     assert pipeline[6].config_params["subfolder_name"] == "images_sweep_FBP3d_tomobar"
@@ -343,10 +334,7 @@ def test_insert_paganin_is_last_sweep(mocker: MockerFixture, tmp_path: Path):
     assert len(pipeline) == 5
     assert pipeline[4].method_name == "save_to_images"
     assert pipeline[4].task_id == "saveimage_sweep_t3"
-    assert (
-        pipeline[4].config_params["subfolder_name"]
-        == "images_sweep_paganin_filter"
-    )
+    assert pipeline[4].config_params["subfolder_name"] == "images_sweep_paganin_filter"
 
 
 def test_insert_denoise_last_after_FBP_sweep(mocker: MockerFixture, tmp_path: Path):

@@ -20,7 +20,9 @@ from httomo.utils import catchtime, log_exception, log_once
 from httomo.runner.gpu_utils import get_available_gpu_memory
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.dataset_store_interfaces import DataSetSource
-from httomo_backends.methods_database.packages.backends.httomolibgpu.supporting_funcs.prep.phase import _calc_memory_bytes_paganin_filter
+from httomo_backends.methods_database.packages.backends.httomolibgpu.supporting_funcs.prep.phase import (
+    _calc_memory_bytes_paganin_filter,
+)
 
 
 class ParamSweepRunner:
@@ -153,7 +155,7 @@ class ParamSweepRunner:
         for method in self._pipeline._methods:
             if "paganin_filter" in method.method_name and method.sweep:
                 # This method will change the preview (see more in _slices_to_fit_memory_Paganin).
-                self._vertical_slices_preview  = _slices_to_fit_memory_Paganin(source)
+                self._vertical_slices_preview = _slices_to_fit_memory_Paganin(source)
 
         preview_new_start_stop = _preview_modifier(
             self._pipeline.loader.preview,
@@ -311,15 +313,17 @@ def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
     """
     Estimating the number of vertical slices that can fit on the device for running the Paganin method.
 
-    For the Paganin method, the filter kernel width can vary. Therefore, we aim to use the tallest possible 
+    For the Paganin method, the filter kernel width can vary. Therefore, we aim to use the tallest possible
     vertical preview that the current device can accommodate.
-    If the kernel width exceeds the height of the vertical preview, some deviations are expected between 
+    If the kernel width exceeds the height of the vertical preview, some deviations are expected between
     the sweep-run results and the results obtained from processing the full dataset.
     """
     available_memory = get_available_gpu_memory(10.0)
     angles_total = source.aux_data.angles_length
     det_X_length = source.chunk_shape[2]
 
-    (memory_bytes_method, subtract_bytes) = _calc_memory_bytes_paganin_filter((angles_total, det_X_length),dtype=np.float32())
+    (memory_bytes_method, subtract_bytes) = _calc_memory_bytes_paganin_filter(
+        (angles_total, det_X_length), dtype=np.float32()
+    )
 
     return (available_memory - subtract_bytes) // memory_bytes_method
