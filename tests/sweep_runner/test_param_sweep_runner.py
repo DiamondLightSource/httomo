@@ -107,9 +107,9 @@ def test_after_prepare_block_attr_contains_data(mocker: MockerFixture):
     np.testing.assert_array_equal(runner.block.data, data)
 
 
-def tests_preview_modifier_paganin_tomopy(mocker: MockerFixture):
+def tests_preview_modifier_paganin(mocker: MockerFixture):
     SINO_SLICES = 100
-    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (180, SINO_SLICES, 160)
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (1800, SINO_SLICES, 160)
     data = np.arange(np.prod(PREVIEWED_SLICES_SHAPE), dtype=np.uint16).reshape(
         PREVIEWED_SLICES_SHAPE
     )
@@ -130,8 +130,8 @@ def tests_preview_modifier_paganin_tomopy(mocker: MockerFixture):
     )
 
     class FakeModule:
-        def paganin_filter_tomopy(data: np.ndarray, alpha: float, pixel_size: float, energy: float, dist: float):  # type: ignore
-            return data * alpha
+        def paganin_filter(data: np.ndarray, pixel_size: float, distance: float, energy: float, ratio_delta_beta: float):  # type: ignore
+            return data * ratio_delta_beta
 
     mocker.patch(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
@@ -183,15 +183,15 @@ def tests_preview_modifier_paganin_tomopy(mocker: MockerFixture):
     # Create sweep method wrapper, passing the sweep values for the param to sweep over
     SWEEP_VALUES = (10, 20)
     paganin_params = {
-        "alpha": SWEEP_VALUES,
-        "pixel_size": 0.0001,
+        "pixel_size": 1.28,
+        "distance": 2,
         "energy": 53,
-        "dist": 50,
+        "ratio_delta_beta": SWEEP_VALUES,
     }
     sweep_method_wrapper = make_method_wrapper(
         method_repository=make_mock_repo(mocker),
         module_path="mocked_module_path.corr",
-        method_name="paganin_filter_tomopy",
+        method_name="paganin_filter",
         comm=MPI.COMM_WORLD,
         preview_config=make_mock_preview_config(mocker),
         save_result=None,
@@ -204,7 +204,7 @@ def tests_preview_modifier_paganin_tomopy(mocker: MockerFixture):
     runner = ParamSweepRunner(pipeline, MPI.COMM_WORLD)
     runner.modify_loader_preview()
 
-    expected_preview_config = PreviewDimConfig(start=40, stop=60)
+    expected_preview_config = PreviewDimConfig(start=0, stop=100)
     assert loader.preview.detector_y == expected_preview_config
 
 

@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import tqdm
 from mpi4py.MPI import Comm
 
+import numpy as np
+
 import httomo
 from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
 from httomo.method_wrappers.images import ImagesWrapper
@@ -18,9 +20,9 @@ from httomo.utils import catchtime, log_exception, log_once
 from httomo.runner.gpu_utils import get_available_gpu_memory
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.dataset_store_interfaces import DataSetSource
-from httomo.sweep_runner.paganin_kernel import paganin_kernel_estimator
-
-import numpy as np
+from httomo_backends.methods_database.packages.backends.httomolibgpu.supporting_funcs.prep.phase import (
+    _calc_memory_bytes_paganin_filter,
+)
 
 
 class ParamSweepRunner:
@@ -149,28 +151,11 @@ class ParamSweepRunner:
             )
             raise ValueError(err_str)
 
-        # before modifying preview here we need to check if the block fits the memory if Paganin method (TomoPy implementation) is present in the pipeline
+        # before modifying preview we need to check if the block fits the memory
         for method in self._pipeline._methods:
-            if "paganin_filter_tomopy" in method.method_name and method.sweep:
-                # Specifically dealing with the Paganin filter variable kernel size, as if the kernel is large,
-                # the larger preview needs to be taken in that case. So far this is the only method that
-                # requires an extended preview.
-
-                vertical_slices_preview_Paganin = paganin_kernel_estimator(
-                    method.config_params["pixel_size"],
-                    method.config_params["alpha"],
-                    method.config_params["energy"],
-                    method.config_params["dist"],
-                    vert_min_limit=self._vertical_slices_preview,
-                    peak_height=0.01,
-                )
-                self._vertical_slices_preview = np.max(vertical_slices_preview_Paganin)
-
-                vertical_slices_preview_max = _slices_to_fit_memory_Paganin(source)
-
-                # we do not stop the run if the Paganin's kernel is too wide, but extend the preview to the maximum allowed size for the current card
-                if self._vertical_slices_preview > vertical_slices_preview_max:
-                    self._vertical_slices_preview = vertical_slices_preview_max
+            if "paganin_filter" in method.method_name and method.sweep:
+                # This method will change the preview (see more in _slices_to_fit_memory_Paganin).
+                self._vertical_slices_preview = _slices_to_fit_memory_Paganin(source)
 
         preview_new_start_stop = _preview_modifier(
             self._pipeline.loader.preview,
@@ -326,13 +311,19 @@ def _preview_modifier(
 
 def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
     """
-    Estimating the number of vertical slices than can fit the device to run Paganin method
+    Estimating the number of vertical slices that can fit on the device for running the Paganin method.
+
+    For the Paganin method, the filter kernel width can vary. Therefore, we aim to use the tallest possible
+    vertical preview that the current device can accommodate.
+    If the kernel width exceeds the height of the vertical preview, some deviations are expected between
+    the sweep-run results and the results obtained from processing the full dataset.
     """
-    factor = 10  # ad-hoc parameter as no real memory estimation is performed. Should be increased if OOM happens.
     available_memory = get_available_gpu_memory(10.0)
-    available_memory_in_GB = round(available_memory / (1024**3), 2)
-    tot_slices_fit = int(
-        available_memory_in_GB
-        // (((source.aux_data.angles_length * source.global_shape[2]) * 4) / 1024**3)
+    angles_total = source.aux_data.angles_length
+    det_X_length = source.chunk_shape[2]
+
+    (memory_bytes_method, subtract_bytes) = _calc_memory_bytes_paganin_filter(
+        (angles_total, det_X_length), dtype=np.float32()
     )
-    return tot_slices_fit // factor
+
+    return (available_memory - subtract_bytes) // memory_bytes_method

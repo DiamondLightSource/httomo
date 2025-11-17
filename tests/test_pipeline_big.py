@@ -413,22 +413,22 @@ def test_pipe_360deg_paganin_FBP3d_tomobar_i13_179623_preview(
             "standard_tomo",
             "normalize",
             "find_center_360",
-            "paganin_filter_tomopy",
-            "paganin_filter_tomopy",
+            "paganin_filter",
+            "paganin_filter",
         ],
         key=[
             "preview",
             "minus_log",
             "ind",
             "energy",
-            "alpha",
+            "ratio_delta_beta",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1200}},
             False,
             "mid",
             15.0,
-            0.1,
+            200,
         ],
     )
 
@@ -531,7 +531,7 @@ def test_pipe_sweep_paganin_FBP3d_tomobar_i12_119647(
     path_to_files_paganin = os.path.join(
         output_folder,
         os.listdir(output_folder)[0],
-        "images_sweep_paganin_filter_tomopy32bit_tif",
+        "images_sweep_paganin_filter32bit_tif",
     )
     path_to_files_recon = os.path.join(
         output_folder,
