@@ -103,7 +103,7 @@ Here we demonstrate how to perform a sweep across multiple values of a single pa
        :language: yaml
        :emphasize-lines: 34-37
 
-.. dropdown:: Parameter sweep using the :code:`!Sweep` tag over several particular values (not a range) of the :code:`alpha` parameter for the Paganin filter. 
+.. dropdown:: Parameter sweep using the :code:`!Sweep` tag over several particular values (not a range) of the :code:`ratio_delta_beta` parameter for the Paganin filter. 
 
    .. literalinclude:: ../pipelines_full/sweep_paganin_FBP3d_tomobar.yaml
        :language: yaml
