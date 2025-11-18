@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 from httomo.method_wrappers import make_method_wrapper
@@ -687,6 +687,73 @@ def test_generic_calculate_max_slices_module(
     else:
         assert max_slices > dummy_block.chunk_shape[0]
         assert available_memory == 1_000_000_000
+
+def _linear_mem(*args, **kwargs):
+    proj, x, y = kwargs['dims_shape']
+    dtype = kwargs['dtype']
+    return proj * x * y * dtype.itemsize, 0
+
+def _linear_offset_mem(*args, **kwargs):
+    proj, x, y = kwargs['dims_shape']
+    dtype = kwargs['dtype']
+    return (x * y + proj * x * y + proj * x ** 2) * dtype.itemsize, 0
+
+def _quadratic_mem(*args, **kwargs):
+    proj, x, y = kwargs['dims_shape']
+    dtype = kwargs['dtype']
+    return (4 * x * y + proj * proj * x * y) * dtype.itemsize, 0
+
+@pytest.mark.cupy
+@pytest.mark.parametrize("available_memory", [0, 1_000, 1_000_000, 1_000_000_000])
+@pytest.mark.parametrize("memcalc_fn", [_linear_mem, _linear_offset_mem, _quadratic_mem])
+def test_generic_calculate_max_slices_iterative(
+    mocker: MockerFixture, dummy_block: DataSetBlock, available_memory: int, memcalc_fn: Callable
+):
+    class FakeModule:
+        def test_method(data):
+            return data
+
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
+
+    memory_gpu = GpuMemoryRequirement(multiplier=None, method="iterative")
+    repo = make_mock_repo(
+        mocker,
+        pattern=Pattern.projection,
+        output_dims_change=True,
+        implementation="gpu_cupy",
+        memory_gpu=memory_gpu,
+    )
+
+    memcalc_mock = mocker.patch.object(
+        repo.query("", ""), "calculate_memory_bytes_for_slices", side_effect=memcalc_fn
+    )
+    wrp = make_method_wrapper(
+        repo,
+        "mocked_module_path",
+        "test_method",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
+    )
+    shape_t = list(dummy_block.chunk_shape)
+    shape_t.pop(0)
+    shape = (shape_t[0], shape_t[1])
+    max_slices, _ = wrp.calculate_max_slices(
+        dummy_block.data.dtype,
+        shape,
+        available_memory,
+    )
+
+    if memcalc_mock(dims_shape=(1, shape[0], shape[1]), dtype=dummy_block.data.dtype)[0] > available_memory:
+        # If zero slice fits
+        assert max_slices == 0
+    else:
+        # Computed slices must fit in the available memory
+        assert memcalc_mock(dims_shape=(max_slices, shape[0], shape[1]), dtype=dummy_block.data.dtype)[0] <= available_memory
+
+        # And one more slice must not fit
+        assert memcalc_mock(dims_shape=(max_slices + 1, shape[0], shape[1]), dtype=dummy_block.data.dtype)[0] > available_memory
 
 
 @pytest.mark.cupy
