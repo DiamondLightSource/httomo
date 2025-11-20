@@ -231,3 +231,27 @@ The data being loaded with the loader can be cropped/previewed prior to being
 passed along to the first method. The loader has the :code:`preview` parameter
 for configuring the cropping/previewing. Please see :ref:`previewing` for more
 details on previewing.
+
+Continuous Scan Subset Selection
+================================
+
+Another data configuration that is supported is a single 3D hdf5 dataset
+containing multiple tomography scans in sequence along the angular dimension.
+HTTomo provides the ability to select a subset of the data along the angular
+dimension, allowing the loading and processing of the individual tomography
+scans within the 3D hdf5 dataset.
+
+This feature is configured using the parameter :code:`continuous_scan_subset`,
+where a start and stop value describing the subset along the angular dimension
+is required. The following shows an example of selecting the subset starting at
+index 90 and ending at index 179 (similar to :code:`preview`, the :code:`stop`
+index is excluded, which is why 180 is given):
+
+   .. literalinclude:: ../../../tests/samples/pipeline_template_examples/testing/loader_with_offset_param.yaml
+       :language: yaml
+       :emphasize-lines: 7-9
+
+This optional parameter can be used in conjunction with other optional
+parameters, such as using :code:`preview` to crop the :code:`detector_x` and/or
+:code:`detector_y` dimensions of the selected subset, or using the
+:code:`darks` and :code:`flats` parameters to load external darks/flats.
