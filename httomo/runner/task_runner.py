@@ -101,7 +101,7 @@ class TaskRunner:
         for method in section.methods:
             if method.method_name == "data_checker":
                 methods_info.append(
-                    f"    {"--- output check with data_checker ---"} ({method.package_name})\n"
+                    f"    --- output check with data_checker --- ({method.package_name})\n"
                 )
             else:
                 methods_info.append(
