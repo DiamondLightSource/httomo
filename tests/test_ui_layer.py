@@ -284,3 +284,31 @@ def test_update_side_output_references_notfound(mocker: MockerFixture):
         )
 
     assert "could not find method referenced" in str(e)
+
+
+@pytest.mark.parametrize(
+    "pipeline_filename, expected_call_to_transform_preview_config",
+    [
+        ("loader_with_all_auto_params.yaml", False),
+        ("loader_with_offset_param.yaml", True),
+    ],
+    ids=["don't-tramsform-preview-config", "transform-preview-config"],
+)
+def test_continuous_scan_subset_loader_param_handling(
+    standard_data: str,
+    mocker: MockerFixture,
+    pipeline_filename: str,
+    expected_call_to_transform_preview_config: bool,
+):
+    offset_function_spy = mocker.spy(ui_layer, "select_continuous_scan_subset")
+    pipeline_path = (
+        Path(__file__).parent
+        / "samples/pipeline_template_examples/testing"
+        / pipeline_filename
+    )
+    UiLayer(pipeline_path, Path(standard_data), MPI.COMM_WORLD).build_pipeline()
+
+    if expected_call_to_transform_preview_config:
+        offset_function_spy.assert_called_once()
+    else:
+        offset_function_spy.assert_not_called()

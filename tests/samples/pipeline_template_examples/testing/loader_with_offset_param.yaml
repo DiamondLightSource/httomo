@@ -1,0 +1,9 @@
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    data_path: auto
+    image_key_path: auto
+    rotation_angles: auto
+    continuous_scan_subset:
+      start: 90
+      stop: 180
