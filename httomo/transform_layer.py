@@ -92,7 +92,7 @@ class TransformLayer:
         return Pipeline(loader, methods)
 
     def insert_data_checker(self, pipeline: Pipeline) -> Pipeline:
-        """This will insert CPU or GPU data checker module before most of the methods in the pipeline"""
+        """This will insert CPU or GPU data checker method AFTER most of the methods in the pipeline"""
         loader = pipeline.loader
         methods = []
         methods.append(
@@ -110,6 +110,7 @@ class TransformLayer:
         )
         for index, m in enumerate(pipeline):
             methods.append(m)
+            # handling some exceptions here after which we don't need to insert the data checker
             if (
                 m.method_name
                 not in [
