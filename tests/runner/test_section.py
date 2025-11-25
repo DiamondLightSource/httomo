@@ -1,6 +1,8 @@
 from typing import Tuple
+from unittest import mock
 import pytest
 from pytest_mock import MockerFixture
+from httomo.method_wrappers.images import ImagesWrapper
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import (
@@ -258,6 +260,87 @@ def test_sectionizer_output_ref_after_regular_section_break_does_nothing(
     assert "referring_method" in [m.method_name for m in s[1]]
     assert len(s[0]) == 6
     assert len(s[1]) == 6
+
+
+@pytest.mark.parametrize(
+    "axis",
+    ["auto", 0, 1],
+    ids=[
+        "auto-axis-no-pattern-transform",
+        "non-auto-axis-no-pattern-transform",
+        "non-auto-axis-pattern-transform",
+    ],
+)
+def test_sectionizer_transforms_pattern_of_section_with_image_saver_based_on_axis_param(
+    axis: int | str,
+    mocker: MockerFixture,
+):
+    method = make_test_method(mocker, method_name="method", patterm=Pattern.projection)
+    image_saver = mocker.create_autospec(
+        ImagesWrapper, instance=True, pattern=Pattern.projection
+    )
+    type(image_saver).config_params = mock.PropertyMock(return_value={"axis": axis})
+    pipeline = Pipeline(
+        loader=make_test_loader(mocker),
+        methods=[
+            method,
+            image_saver,
+        ],
+    )
+    sections = sectionize(pipeline)
+
+    assert len(sections) == 1
+    assert len(sections[0].methods) == 2
+    if axis == 1:
+        assert sections[0].pattern == Pattern.sinogram
+    else:
+        assert sections[0].pattern == Pattern.projection
+
+
+@pytest.mark.parametrize(
+    "axis",
+    ["auto", 0, 1],
+    ids=[
+        "auto-axis-no-pattern-transform",
+        "non-auto-axis-no-pattern-transform",
+        "non-auto-axis-pattern-transform",
+    ],
+)
+def test_sectionizer_transforms_pattern_of_section_with_image_saver_and_side_output_referrer_based_on_axis_param(
+    axis: int | str,
+    mocker: MockerFixture,
+):
+    referenced_method = make_test_method(
+        mocker, method_name="referenced_method", patterm=Pattern.projection
+    )
+    referring_method = make_test_method(
+        mocker,
+        method_name="referring_method",
+        pattern=Pattern.projection,
+        center=OutputRef(referenced_method, "testout"),
+    )
+    image_saver = mocker.create_autospec(
+        ImagesWrapper, instance=True, pattern=Pattern.projection
+    )
+    type(image_saver).config_params = mock.PropertyMock(return_value={"axis": axis})
+    pipeline = Pipeline(
+        loader=make_test_loader(mocker),
+        methods=[
+            referenced_method,
+            referring_method,
+            image_saver,
+        ],
+    )
+    sections = sectionize(pipeline)
+
+    assert len(sections) == 2
+    assert len(sections[0].methods) == 1
+    assert len(sections[1].methods) == 2
+    assert sections[0].pattern == Pattern.projection
+    if axis == 1:
+        assert sections[1].pattern == Pattern.sinogram
+    else:
+        assert sections[1].pattern == Pattern.projection
 
 
 @pytest.mark.parametrize(

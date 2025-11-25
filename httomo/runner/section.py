@@ -6,6 +6,7 @@ into a section.
 import logging
 from typing import Iterator, List, Optional, Tuple
 
+from httomo.method_wrappers.images import ImagesWrapper
 from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
 from httomo.utils import log_once
@@ -111,6 +112,7 @@ def sectionize(pipeline: Pipeline) -> List[Section]:
     sections[-1].is_last = True
 
     _backpropagate_section_patterns(pipeline, sections)
+    _transform_section_pattern_with_non_auto_axis_image_saver(sections)
     _finalize_patterns(pipeline, sections)
     _set_method_patterns(sections)
 
@@ -157,6 +159,17 @@ def _set_method_patterns(sections: List[Section]):
     for s in sections:
         for m in s:
             m.pattern = s.pattern
+
+
+def _transform_section_pattern_with_non_auto_axis_image_saver(sections: List[Section]):
+    for section in sections:
+        for method in section.methods:
+            if (
+                isinstance(method, ImagesWrapper)
+                and (axis_val := method.config_params.get("axis")) is not None
+                and axis_val != "auto"
+            ):
+                section.pattern = Pattern(axis_val)
 
 
 def determine_section_padding(section: Section) -> Tuple[int, int]:
