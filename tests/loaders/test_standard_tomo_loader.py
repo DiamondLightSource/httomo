@@ -1308,3 +1308,163 @@ def test_standard_tomo_loader_read_block_padded_inner_chunk_boundaries_two_procs
     assert block.chunk_index == block_expected_chunk_index
     assert block.chunk_index_unpadded == block_expected_chunk_index_unpadded
     assert block.data.shape == expected_block_shape
+
+
+def test_read_block_from_offset_within_dataset_single_proc(standard_data_path: str):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+    DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
+        file=IN_FILE_PATH,
+        data_path=standard_data_path,
+        image_key_path=None,
+    )
+    ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
+    PROJS, DET_Y, DET_X = (180, 128, 160)
+    ANGULAR_SUBSET_LEN = PROJS // 10
+    OFFSET = ANGULAR_SUBSET_LEN
+    SLICING_DIM: SlicingDimType = 0
+    COMM = MPI.COMM_WORLD
+    PREVIEW_CONFIG = PreviewConfig(
+        angles=PreviewDimConfig(start=OFFSET, stop=OFFSET + ANGULAR_SUBSET_LEN),
+        detector_y=PreviewDimConfig(start=10, stop=DET_Y - 10),
+        detector_x=PreviewDimConfig(start=5, stop=DET_X - 5),
+    )
+
+    with mock.patch(
+        "httomo.darks_flats.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = StandardTomoLoader(
+            in_file=IN_FILE_PATH,
+            data_path=DARKS_FLATS_CONFIG.data_path,
+            image_key_path=DARKS_FLATS_CONFIG.image_key_path,
+            darks=DARKS_FLATS_CONFIG,
+            flats=DARKS_FLATS_CONFIG,
+            angles=ANGLES_CONFIG,
+            preview_config=PREVIEW_CONFIG,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+            padding=(0, 0),
+        )
+
+    BLOCK_START = 0
+    BLOCK_LENGTH = 4
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+
+    BLOCK_EXPECTED_GLOBAL_SHAPE = (ANGULAR_SUBSET_LEN, DET_Y - 20, DET_X - 10)
+    BLOCK_EXPECTED_CHUNK_SHAPE_UNPADDED = BLOCK_EXPECTED_GLOBAL_SHAPE
+    BLOCK_EXPECTED_CHUNK_SHAPE = BLOCK_EXPECTED_CHUNK_SHAPE_UNPADDED
+    BLOCK_EXPECTED_SHAPE_UNPADDED = (
+        BLOCK_LENGTH,
+        BLOCK_EXPECTED_GLOBAL_SHAPE[1],
+        BLOCK_EXPECTED_GLOBAL_SHAPE[2],
+    )
+    BLOCK_EXPECTED_SHAPE = BLOCK_EXPECTED_SHAPE_UNPADDED
+
+    assert block.global_shape == BLOCK_EXPECTED_GLOBAL_SHAPE
+    assert block.chunk_shape == BLOCK_EXPECTED_CHUNK_SHAPE
+    assert block.chunk_shape_unpadded == BLOCK_EXPECTED_CHUNK_SHAPE_UNPADDED
+    assert block.shape == BLOCK_EXPECTED_SHAPE
+    assert block.shape_unpadded == BLOCK_EXPECTED_SHAPE_UNPADDED
+
+    BLOCK_EXPECTED_GLOBAL_INDEX = (0, 0, 0)
+    assert block.global_index == BLOCK_EXPECTED_GLOBAL_INDEX
+
+    # Check that the loader is reading blocks from the hypothetical 3D scan starting at index
+    # `OFFSET` along the angular dimension
+    with h5py.File(IN_FILE_PATH, "r") as f:
+        dataset = f[DARKS_FLATS_CONFIG.data_path]
+        expected_projs = dataset[
+            OFFSET : OFFSET + BLOCK_LENGTH,
+            10 : DET_Y - 10,
+            5 : DET_X - 5,
+        ]
+
+    np.testing.assert_array_equal(expected_projs, block.data)
+
+
+@pytest.mark.mpi
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2, reason="Only rank-2 MPI is supported with this test"
+)
+def test_read_block_from_offset_within_dataset_two_procs(standard_data_path: str):
+    IN_FILE_PATH = Path(__file__).parent.parent / "test_data/tomo_standard.nxs"
+    DARKS_FLATS_CONFIG = DarksFlatsFileConfig(
+        file=IN_FILE_PATH,
+        data_path=standard_data_path,
+        image_key_path=None,
+    )
+    ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
+    PROJS, DET_Y, DET_X = (180, 128, 160)
+    GLOBAL_SHAPE = (PROJS, DET_Y, DET_X)
+    SCAN_SHAPE = (GLOBAL_SHAPE[0] // 2, GLOBAL_SHAPE[1], GLOBAL_SHAPE[2])
+    CHUNK_SHAPE = (SCAN_SHAPE[0] // 2, SCAN_SHAPE[1], SCAN_SHAPE[2])
+    OFFSET = SCAN_SHAPE[0]
+    SLICING_DIM: SlicingDimType = 0
+    COMM = MPI.COMM_WORLD
+    PREVIEW_CONFIG = PreviewConfig(
+        angles=PreviewDimConfig(start=OFFSET, stop=OFFSET + SCAN_SHAPE[0]),
+        detector_y=PreviewDimConfig(start=10, stop=DET_Y - 10),
+        detector_x=PreviewDimConfig(start=5, stop=DET_X - 5),
+    )
+
+    with mock.patch(
+        "httomo.darks_flats.get_darks_flats",
+        return_value=(np.zeros(1), np.zeros(1)),
+    ):
+        loader = StandardTomoLoader(
+            in_file=IN_FILE_PATH,
+            data_path=DARKS_FLATS_CONFIG.data_path,
+            image_key_path=DARKS_FLATS_CONFIG.image_key_path,
+            darks=DARKS_FLATS_CONFIG,
+            flats=DARKS_FLATS_CONFIG,
+            angles=ANGLES_CONFIG,
+            preview_config=PREVIEW_CONFIG,
+            slicing_dim=SLICING_DIM,
+            comm=COMM,
+            padding=(0, 0),
+        )
+
+    BLOCK_START = 0
+    BLOCK_LENGTH = CHUNK_SHAPE[0] // 3
+    block = loader.read_block(BLOCK_START, BLOCK_LENGTH)
+
+    BLOCK_EXPECTED_GLOBAL_SHAPE = (SCAN_SHAPE[0], DET_Y - 20, DET_X - 10)
+    BLOCK_EXPECTED_CHUNK_SHAPE_UNPADDED = (
+        CHUNK_SHAPE[0],
+        DET_Y - 20,
+        DET_X - 10,
+    )
+    BLOCK_EXPECTED_CHUNK_SHAPE = BLOCK_EXPECTED_CHUNK_SHAPE_UNPADDED
+    BLOCK_EXPECTED_SHAPE_UNPADDED = (
+        BLOCK_LENGTH,
+        BLOCK_EXPECTED_GLOBAL_SHAPE[1],
+        BLOCK_EXPECTED_GLOBAL_SHAPE[2],
+    )
+    BLOCK_EXPECTED_SHAPE = BLOCK_EXPECTED_SHAPE_UNPADDED
+
+    assert block.global_shape == BLOCK_EXPECTED_GLOBAL_SHAPE
+    assert block.chunk_shape == BLOCK_EXPECTED_CHUNK_SHAPE
+    assert block.chunk_shape_unpadded == BLOCK_EXPECTED_CHUNK_SHAPE_UNPADDED
+    assert block.shape == BLOCK_EXPECTED_SHAPE
+    assert block.shape_unpadded == BLOCK_EXPECTED_SHAPE_UNPADDED
+
+    if COMM.rank == 0:
+        block_expected_global_index = (0, 0, 0)
+    else:
+        block_expected_global_index = (CHUNK_SHAPE[0], 0, 0)
+    assert block.global_index == block_expected_global_index
+
+    # Check that the loader is reading blocks from the hypothetical 3D scan starting at index
+    # `OFFSET` along the angular dimension
+    with h5py.File(IN_FILE_PATH, "r") as f:
+        dataset = f[DARKS_FLATS_CONFIG.data_path]
+        expected_projs = dataset[
+            OFFSET
+            + block_expected_global_index[0] : OFFSET
+            + block_expected_global_index[0]
+            + BLOCK_LENGTH,
+            10 : DET_Y - 10,
+            5 : DET_X - 5,
+        ]
+
+    np.testing.assert_array_equal(expected_projs, block.data)

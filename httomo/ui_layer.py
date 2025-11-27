@@ -19,7 +19,11 @@ from httomo.runner.loader import LoaderInterface
 from httomo.runner.output_ref import OutputRef
 from httomo.sweep_runner.param_sweep_json_loader import ParamSweepJsonLoader
 from httomo.sweep_runner.param_sweep_yaml_loader import get_param_sweep_yaml_loader
-from httomo.transform_loader_params import parse_config, parse_preview
+from httomo.transform_loader_params import (
+    select_continuous_scan_subset,
+    parse_config,
+    parse_preview,
+)
 
 from httomo_backends.methods_database.query import MethodDatabaseRepository
 
@@ -139,6 +143,11 @@ class UiLayer:
         with h5py.File(data_config.in_file, "r") as f:
             data_shape = f[data_config.data_path].shape
         preview = parse_preview(parameters.get("preview", None), data_shape)
+        continuous_scan_subset_config = parameters.get("continuous_scan_subset", None)
+        if continuous_scan_subset_config is not None:
+            preview = select_continuous_scan_subset(
+                preview, continuous_scan_subset_config
+            )
         self._preview_config = preview
 
         loader = make_loader(
