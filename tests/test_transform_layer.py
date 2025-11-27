@@ -186,6 +186,82 @@ def test_insert_image_save_after_sweep(mocker: MockerFixture, tmp_path: Path):
     assert pipeline[3].config_params["axis"] == 1
 
 
+def test_insert_data_checker(mocker: MockerFixture, tmp_path: Path):
+    comm = MPI.COMM_SELF
+    repo = make_mock_repo(mocker)
+    loader = mocker.create_autospec(
+        LoaderInterface,
+        instance=True,
+    )
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[
+            make_test_method(
+                mocker,
+                method_name="remove_outlier",
+                module_path="httomolibgpu.misc.corr",
+                save_result=False,
+                task_id="t1",
+            ),
+            make_test_method(
+                mocker,
+                method_name="find_center_vo",
+                module_path="httomolibgpu.recon.rotation",
+                save_result=False,
+                task_id="t2",
+            ),
+            make_test_method(
+                mocker,
+                method_name="normalize",
+                module_path="httomolibgpu.prep.normalize",
+                save_result=False,
+                task_id="t3",
+            ),
+            make_test_method(
+                mocker,
+                method_name="FBP3d_tomobar",
+                module_path="httomolibgpu.recon.algorithm",
+                save_result=False,
+                sweep=True,
+                task_id="t4",
+            ),
+            make_test_method(
+                mocker,
+                method_name="calculate_stats",
+                module_path="httomo.methods",
+                save_result=False,
+                task_id="t5",
+            ),
+            make_test_method(
+                mocker,
+                method_name="rescale_to_int",
+                module_path="httomolib.misc.rescale",
+                save_result=False,
+                task_id="t6",
+            ),
+            make_test_method(
+                mocker,
+                method_name="save_to_images",
+                module_path="httomolib.misc.images",
+                save_result=False,
+                task_id="t7",
+            ),
+        ],
+    )
+    trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
+    pipeline = trans.insert_data_checker(pipeline)
+
+    assert len(pipeline) == 11
+    assert pipeline[0].method_name == "data_checker"
+    assert pipeline[2].method_name == "data_checker"
+    assert pipeline[4].method_name == "normalize"
+    assert pipeline[5].method_name == "data_checker"
+    assert pipeline[6].method_name == "FBP3d_tomobar"
+    assert pipeline[7].method_name == "data_checker"
+    assert pipeline[9].method_name == "rescale_to_int"
+    assert pipeline[10].method_name == "save_to_images"
+
+
 def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
     comm = MPI.COMM_SELF
     repo = make_mock_repo(mocker)
@@ -220,7 +296,7 @@ def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
             ),
             make_test_method(
                 mocker,
-                method_name="FBP",
+                method_name="FBP3d_tomobar",
                 module_path="httomolibgpu.recon.algorithm",
                 save_result=False,
                 task_id="t4",
@@ -237,7 +313,7 @@ def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
 
     assert pipeline[5].method_name == "save_to_images"
     assert pipeline[5].task_id == "saveimage_sweep_t4"
-    assert pipeline[5].config_params["subfolder_name"] == "images_sweep_FBP"
+    assert pipeline[5].config_params["subfolder_name"] == "images_sweep_FBP3d_tomobar"
     assert pipeline[5].config_params["axis"] == 1
 
 
@@ -285,13 +361,13 @@ def test_insert_paganin_not_last_sweep(mocker: MockerFixture, tmp_path: Path):
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.transform(pipeline)
 
-    assert len(pipeline) == 7
-    assert pipeline[4].method_name == "save_to_images"
-    assert pipeline[4].task_id == "saveimage_sweep_t3"
-    assert pipeline[4].config_params["subfolder_name"] == "images_sweep_paganin_filter"
-    assert pipeline[5].method_name == "FBP3d_tomobar"
-    assert pipeline[6].task_id == "saveimage_sweep_t4"
-    assert pipeline[6].config_params["subfolder_name"] == "images_sweep_FBP3d_tomobar"
+    assert len(pipeline) == 11
+    assert pipeline[7].method_name == "save_to_images"
+    assert pipeline[7].task_id == "saveimage_sweep_t3"
+    assert pipeline[7].config_params["subfolder_name"] == "images_sweep_paganin_filter"
+    assert pipeline[9].method_name == "FBP3d_tomobar"
+    assert pipeline[10].task_id == "saveimage_sweep_t4"
+    assert pipeline[10].config_params["subfolder_name"] == "images_sweep_FBP3d_tomobar"
 
 
 def test_insert_paganin_is_last_sweep(mocker: MockerFixture, tmp_path: Path):
@@ -331,10 +407,10 @@ def test_insert_paganin_is_last_sweep(mocker: MockerFixture, tmp_path: Path):
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.transform(pipeline)
 
-    assert len(pipeline) == 5
-    assert pipeline[4].method_name == "save_to_images"
-    assert pipeline[4].task_id == "saveimage_sweep_t3"
-    assert pipeline[4].config_params["subfolder_name"] == "images_sweep_paganin_filter"
+    assert len(pipeline) == 8
+    assert pipeline[7].method_name == "save_to_images"
+    assert pipeline[7].task_id == "saveimage_sweep_t3"
+    assert pipeline[7].config_params["subfolder_name"] == "images_sweep_paganin_filter"
 
 
 def test_insert_denoise_last_after_FBP_sweep(mocker: MockerFixture, tmp_path: Path):
@@ -374,7 +450,7 @@ def test_insert_denoise_last_after_FBP_sweep(mocker: MockerFixture, tmp_path: Pa
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.transform(pipeline)
 
-    assert len(pipeline) == 5
-    assert pipeline[4].method_name == "save_to_images"
-    assert pipeline[4].task_id == "saveimage_sweep_t3"
-    assert pipeline[4].config_params["subfolder_name"] == "images_sweep_median_filter"
+    assert len(pipeline) == 8
+    assert pipeline[7].method_name == "save_to_images"
+    assert pipeline[7].task_id == "saveimage_sweep_t3"
+    assert pipeline[7].config_params["subfolder_name"] == "images_sweep_median_filter"

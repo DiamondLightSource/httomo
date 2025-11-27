@@ -37,6 +37,8 @@ class TransformLayer:
 
     def transform(self, pipeline: Pipeline) -> Pipeline:
         pipeline = self.insert_data_reducer(pipeline)
+        pipeline = self.insert_data_checker(pipeline)
+
         pipeline_is_sweep = _check_if_pipeline_has_a_sweep(pipeline)
 
         if pipeline_is_sweep:
@@ -87,6 +89,70 @@ class TransformLayer:
         )
         for m in pipeline:
             methods.append(m)
+        return Pipeline(loader, methods)
+
+    def insert_data_checker(self, pipeline: Pipeline) -> Pipeline:
+        """This will insert CPU or GPU data checker method AFTER most of the methods in the pipeline"""
+        loader = pipeline.loader
+        methods = []
+        methods.append(
+            GenericMethodWrapper(
+                self._repo,
+                "httomolib.misc.utils",
+                "data_checker",
+                comm=self._comm,
+                save_result=False,
+                task_id="datachecker_0",
+                infsnans_correct=False,  # the input (raw) data is 16bit
+                zeros_warning=True,  # we count the zeros if the data is too sparse
+                data_to_method_name="Data Loader",
+            ),
+        )
+        for index, m in enumerate(pipeline):
+            methods.append(m)
+            # handling some exceptions here after which we don't need to insert the data checker
+            if (
+                m.method_name
+                not in [
+                    "data_reducer",
+                    "data_checker",
+                    "calculate_stats",
+                    "rescale_to_int",
+                ]
+                and "rotation" not in m.module_path
+                and index < len(pipeline._methods) - 1
+            ):
+                if m.is_cpu:
+                    # add the CPU checker method
+                    methods.append(
+                        GenericMethodWrapper(
+                            self._repo,
+                            "httomolib.misc.utils",
+                            "data_checker",
+                            comm=self._comm,
+                            save_result=False,
+                            task_id=f"datachecker_{m.task_id}",
+                            infsnans_correct=True,
+                            zeros_warning=True,
+                            data_to_method_name=m.method_name,
+                        ),
+                    )
+                else:
+                    # add the GPU checker method
+                    methods.append(
+                        GenericMethodWrapper(
+                            self._repo,
+                            "httomolibgpu.misc.utils",
+                            "data_checker",
+                            comm=self._comm,
+                            save_result=False,
+                            task_id=f"datachecker_{m.task_id}",
+                            infsnans_correct=True,
+                            zeros_warning=False,
+                            data_to_method_name=m.method_name,
+                        ),
+                    )
+
         return Pipeline(loader, methods)
 
     def insert_save_images_after_sweep(self, pipeline: Pipeline) -> Pipeline:
