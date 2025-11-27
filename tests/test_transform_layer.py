@@ -186,7 +186,6 @@ def test_insert_image_save_after_sweep(mocker: MockerFixture, tmp_path: Path):
     assert pipeline[3].config_params["axis"] == 1
 
 
-
 def test_insert_data_checker(mocker: MockerFixture, tmp_path: Path):
     comm = MPI.COMM_SELF
     repo = make_mock_repo(mocker)
@@ -210,14 +209,14 @@ def test_insert_data_checker(mocker: MockerFixture, tmp_path: Path):
                 module_path="httomolibgpu.recon.rotation",
                 save_result=False,
                 task_id="t2",
-            ),                   
+            ),
             make_test_method(
                 mocker,
                 method_name="normalize",
                 module_path="httomolibgpu.prep.normalize",
                 save_result=False,
                 task_id="t3",
-            ),       
+            ),
             make_test_method(
                 mocker,
                 method_name="FBP3d_tomobar",
@@ -246,7 +245,7 @@ def test_insert_data_checker(mocker: MockerFixture, tmp_path: Path):
                 module_path="httomolib.misc.images",
                 save_result=False,
                 task_id="t7",
-            ),                 
+            ),
         ],
     )
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
@@ -261,6 +260,7 @@ def test_insert_data_checker(mocker: MockerFixture, tmp_path: Path):
     assert pipeline[7].method_name == "data_checker"
     assert pipeline[9].method_name == "rescale_to_int"
     assert pipeline[10].method_name == "save_to_images"
+
 
 def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
     comm = MPI.COMM_SELF
@@ -300,7 +300,7 @@ def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
                 module_path="httomolibgpu.recon.algorithm",
                 save_result=False,
                 task_id="t4",
-            ),      
+            ),
         ],
     )
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
