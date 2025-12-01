@@ -425,22 +425,29 @@ def parse_config(
 
     data_config = DataConfig(in_file=input_file, data_path=str(data_path))
 
-    
     darks_value = config.get("darks", None)
     if darks_value == "ignore" or darks_value is None:
-        darks_config = DarksFlatsFileConfig(file=input_file,data_path=None,image_key_path=None, ignore=True)
+        darks_config = DarksFlatsFileConfig(
+            file=input_file, data_path=None, image_key_path=None, ignore=True
+        )
     else:
         if "image_key_path" not in darks_value:
-            darks_value["image_key_path"] = None        
-        darks_config = parse_darks_flats(data_config, image_key_path, darks_value, ignore=False)
+            darks_value["image_key_path"] = None
+        darks_config = parse_darks_flats(
+            data_config, image_key_path, darks_value, ignore=False
+        )
 
     flats_value = config.get("flats", None)
     if flats_value == "ignore" or flats_value is None:
-        flats_config = DarksFlatsFileConfig(file=input_file,data_path=None,image_key_path=None, ignore=True)
+        flats_config = DarksFlatsFileConfig(
+            file=input_file, data_path=None, image_key_path=None, ignore=True
+        )
     else:
         if "image_key_path" not in flats_value:
             flats_value["image_key_path"] = None
-        flats_config = parse_darks_flats(data_config, image_key_path, flats_value, ignore=False)
+        flats_config = parse_darks_flats(
+            data_config, image_key_path, flats_value, ignore=False
+        )
 
     return (
         data_config,
