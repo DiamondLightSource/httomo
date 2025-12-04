@@ -692,19 +692,19 @@ def test_generic_calculate_max_slices_module(
 def _linear_mem(*args, **kwargs):
     proj, x, y = kwargs["dims_shape"]
     dtype = kwargs["dtype"]
-    return proj * x * y * dtype.itemsize, 0
+    return proj * x * y * dtype.itemsize
 
 
 def _linear_offset_mem(*args, **kwargs):
     proj, x, y = kwargs["dims_shape"]
     dtype = kwargs["dtype"]
-    return (x * y + proj * x * y + proj * x**2) * dtype.itemsize, 0
+    return (x * y + proj * x * y + proj * x**2) * dtype.itemsize
 
 
 def _quadratic_mem(*args, **kwargs):
     proj, x, y = kwargs["dims_shape"]
     dtype = kwargs["dtype"]
-    return (4 * x * y + proj * proj * x * y) * dtype.itemsize, 0
+    return (4 * x * y + proj * proj * x * y) * dtype.itemsize
 
 
 THROW_OVER_SLICES = 77
@@ -715,7 +715,7 @@ def _quadratic_mem_throws(*args, **kwargs):
     dtype = kwargs["dtype"]
     if proj > THROW_OVER_SLICES:
         raise Exception("Memory estimator failed")
-    return (4 * x * y + proj * proj * x * y) * dtype.itemsize, 0
+    return (4 * x * y + proj * proj * x * y) * dtype.itemsize
 
 
 @pytest.mark.cupy
@@ -768,7 +768,7 @@ def test_generic_calculate_max_slices_iterative(
 
     check_slices = lambda slices: memcalc_mock(
         dims_shape=(slices, shape[0], shape[1]), dtype=dummy_block.data.dtype
-    )[0]
+    )
     if check_slices(1) > available_memory:
         # If zero slice fits
         assert max_slices == 0

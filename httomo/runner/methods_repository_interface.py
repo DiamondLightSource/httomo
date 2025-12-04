@@ -52,8 +52,8 @@ class MethodQuery(Protocol):
 
     def calculate_memory_bytes_for_slices(
         self, dims_shape: Tuple[int, int, int], dtype: np.dtype, **kwargs
-    ) -> Tuple[int, int]:
-        """Calculate the memory required in bytes, returning bytes method and subtract bytes tuple"""
+    ) -> int:
+        """Calculate the memory required in bytes for a given 3D grid"""
         ...  # pragma: no cover
 
     def calculate_output_dims(

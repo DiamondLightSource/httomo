@@ -477,7 +477,7 @@ class GenericMethodWrapper(MethodWrapper):
     ) -> int:
         def get_mem_bytes(current_slices):
             try:
-                memory_bytes, _ = self._query.calculate_memory_bytes_for_slices(
+                memory_bytes = self._query.calculate_memory_bytes_for_slices(
                     dims_shape=(
                         current_slices,
                         non_slice_dims_shape[0],
