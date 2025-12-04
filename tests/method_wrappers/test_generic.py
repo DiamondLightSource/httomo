@@ -688,34 +688,47 @@ def test_generic_calculate_max_slices_module(
         assert max_slices > dummy_block.chunk_shape[0]
         assert available_memory == 1_000_000_000
 
+
 def _linear_mem(*args, **kwargs):
-    proj, x, y = kwargs['dims_shape']
-    dtype = kwargs['dtype']
+    proj, x, y = kwargs["dims_shape"]
+    dtype = kwargs["dtype"]
     return proj * x * y * dtype.itemsize, 0
 
+
 def _linear_offset_mem(*args, **kwargs):
-    proj, x, y = kwargs['dims_shape']
-    dtype = kwargs['dtype']
-    return (x * y + proj * x * y + proj * x ** 2) * dtype.itemsize, 0
+    proj, x, y = kwargs["dims_shape"]
+    dtype = kwargs["dtype"]
+    return (x * y + proj * x * y + proj * x**2) * dtype.itemsize, 0
+
 
 def _quadratic_mem(*args, **kwargs):
-    proj, x, y = kwargs['dims_shape']
-    dtype = kwargs['dtype']
+    proj, x, y = kwargs["dims_shape"]
+    dtype = kwargs["dtype"]
     return (4 * x * y + proj * proj * x * y) * dtype.itemsize, 0
 
+
 THROW_OVER_SLICES = 77
+
+
 def _quadratic_mem_throws(*args, **kwargs):
-    proj, x, y = kwargs['dims_shape']
-    dtype = kwargs['dtype']
+    proj, x, y = kwargs["dims_shape"]
+    dtype = kwargs["dtype"]
     if proj > THROW_OVER_SLICES:
-        raise Exception('Memory estimator failed')
+        raise Exception("Memory estimator failed")
     return (4 * x * y + proj * proj * x * y) * dtype.itemsize, 0
+
 
 @pytest.mark.cupy
 @pytest.mark.parametrize("available_memory", [0, 1_000, 1_000_000, 1_000_000_000])
-@pytest.mark.parametrize("memcalc_fn", [_linear_mem, _linear_offset_mem, _quadratic_mem, _quadratic_mem_throws])
+@pytest.mark.parametrize(
+    "memcalc_fn",
+    [_linear_mem, _linear_offset_mem, _quadratic_mem, _quadratic_mem_throws],
+)
 def test_generic_calculate_max_slices_iterative(
-    mocker: MockerFixture, dummy_block: DataSetBlock, available_memory: int, memcalc_fn: Callable
+    mocker: MockerFixture,
+    dummy_block: DataSetBlock,
+    available_memory: int,
+    memcalc_fn: Callable,
 ):
     class FakeModule:
         def test_method(data):
@@ -753,7 +766,9 @@ def test_generic_calculate_max_slices_iterative(
         available_memory,
     )
 
-    check_slices = lambda slices: memcalc_mock(dims_shape=(slices, shape[0], shape[1]), dtype=dummy_block.data.dtype)[0]
+    check_slices = lambda slices: memcalc_mock(
+        dims_shape=(slices, shape[0], shape[1]), dtype=dummy_block.data.dtype
+    )[0]
     if check_slices(1) > available_memory:
         # If zero slice fits
         assert max_slices == 0
@@ -767,6 +782,7 @@ def test_generic_calculate_max_slices_iterative(
         else:
             # And one more slice must not fit
             assert check_slices(max_slices + 1) > available_memory
+
 
 @pytest.mark.cupy
 def test_generic_calculate_output_dims(mocker: MockerFixture):
