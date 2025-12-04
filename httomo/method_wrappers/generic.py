@@ -448,7 +448,12 @@ class GenericMethodWrapper(MethodWrapper):
                 * data_dtype.itemsize
             )
         elif self.memory_gpu.method == "iterative":
-            return self._calculate_max_slices_iterative(data_dtype, non_slice_dims_shape, available_memory), available_memory
+            return (
+                self._calculate_max_slices_iterative(
+                    data_dtype, non_slice_dims_shape, available_memory
+                ),
+                available_memory,
+            )
         else:
             (
                 memory_bytes_method,
@@ -464,12 +469,23 @@ class GenericMethodWrapper(MethodWrapper):
             available_memory - subtract_bytes
         ) // memory_bytes_method, available_memory
 
-    def _calculate_max_slices_iterative(self, data_dtype: np.dtype, non_slice_dims_shape: Tuple[int, int], available_memory: int) -> int:
+    def _calculate_max_slices_iterative(
+        self,
+        data_dtype: np.dtype,
+        non_slice_dims_shape: Tuple[int, int],
+        available_memory: int,
+    ) -> int:
         def get_mem_bytes(current_slices):
             try:
-                memory_bytes, _ = self._query.calculate_memory_bytes_for_slices(dims_shape=(current_slices, non_slice_dims_shape[0], non_slice_dims_shape[1]),
-                                                                                dtype=data_dtype,
-                                                                                **self._unwrap_output_ref_values())
+                memory_bytes, _ = self._query.calculate_memory_bytes_for_slices(
+                    dims_shape=(
+                        current_slices,
+                        non_slice_dims_shape[0],
+                        non_slice_dims_shape[1],
+                    ),
+                    dtype=data_dtype,
+                    **self._unwrap_output_ref_values(),
+                )
                 return memory_bytes
             except:
                 return 2**64
@@ -491,7 +507,7 @@ class GenericMethodWrapper(MethodWrapper):
                 current_slices *= 2
             slices_high = current_slices
 
-        # Binary search between low and high 
+        # Binary search between low and high
         slices_low = 0
         while slices_high - slices_low > 1:
             current_slices = (slices_low + slices_high) // 2
@@ -500,7 +516,7 @@ class GenericMethodWrapper(MethodWrapper):
                 slices_high = current_slices
             elif memory_bytes < available_memory:
                 slices_low = current_slices
-            else: # memory_bytes == available_memory
+            else:  # memory_bytes == available_memory
                 return current_slices
 
         return slices_low
