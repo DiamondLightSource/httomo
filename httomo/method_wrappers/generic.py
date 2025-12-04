@@ -466,10 +466,13 @@ class GenericMethodWrapper(MethodWrapper):
 
     def _calculate_max_slices_iterative(self, data_dtype: np.dtype, non_slice_dims_shape: Tuple[int, int], available_memory: int) -> int:
         def get_mem_bytes(current_slices):
-            memory_bytes, _ = self._query.calculate_memory_bytes_for_slices(dims_shape=(current_slices, non_slice_dims_shape[0], non_slice_dims_shape[1]),
-                                                                            dtype=data_dtype,
-                                                                            **self._unwrap_output_ref_values())
-            return memory_bytes
+            try:
+                memory_bytes, _ = self._query.calculate_memory_bytes_for_slices(dims_shape=(current_slices, non_slice_dims_shape[0], non_slice_dims_shape[1]),
+                                                                                dtype=data_dtype,
+                                                                                **self._unwrap_output_ref_values())
+                return memory_bytes
+            except:
+                return 2**64
 
         # Find a number of slices that does not fit
         current_slices = 100
