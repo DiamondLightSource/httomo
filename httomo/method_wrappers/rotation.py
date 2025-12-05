@@ -111,7 +111,7 @@ class RotationWrapper(GenericMethodWrapper):
         res: Optional[Union[tuple, float, np.float32]] = None
         if self.method.__name__ == "find_center_pc":
             # initialising proj1 & proj2
-            if block.global_index[block.slicing_dim] == 0:
+            if block.global_index_unpadded[block.slicing_dim] == 0:
                 self.proj1 = block.data[0, :, :]  # first frame in the whole dataset
                 if self.cupyrun:
                     self.proj1 = xp.asnumpy(self.proj1)
