@@ -62,6 +62,8 @@ class TaskRunner:
 
         self._memory_limit_bytes = memory_limit_bytes
 
+        self._pipeline_inspector()
+
         self._sections = self._sectionize()
 
     def execute(self) -> None:
@@ -75,6 +77,14 @@ class TaskRunner:
         self._log_pipeline(f"Pipeline finished. Took {t.elapsed:.3f}s")
         if self.monitor is not None:
             self.monitor.report_total_time(t.elapsed)
+
+    def _pipeline_inspector(self) -> None:
+        for i, method in enumerate(self.pipeline._methods):
+            if method.method_name == "find_center_vo":
+                if self.pipeline[i - 1].method_name != "data_reducer":
+                    log_once(
+                        f"Advisory: It is recommended to place {method.method_name} directly after the loader and before normalize"
+                    )
 
     def _sectionize(self) -> List[Section]:
         sections = sectionize(self.pipeline)
