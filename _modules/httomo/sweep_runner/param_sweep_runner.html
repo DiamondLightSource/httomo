@@ -1,0 +1,1073 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>httomo.sweep_runner.param_sweep_runner &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../../_static/documentation_options.js?v=9d5ff1c3"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/httomo/sweep_runner/param_sweep_runner';</script>
+    <link rel="icon" href="../../../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="Dec 05, 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo_light.png" class="logo__image only-light" alt="HTTomo Documentation page - Home"/>
+    <script>document.write(`<img src="../../../_static/logo_dark.png" class="logo__image only-dark" alt="HTTomo Documentation page - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../introduction/about.html">HTTomo concept</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../introduction/indepth/detailed_about.html">Detailed concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/sections.html">Sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/reslice.html">Re-slicing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/wrappers.html">Method Wrappers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/memory_estimators.html">Memory Estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/chunks.html">Chunks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/blocks.html">Blocks</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../howto/installation.html">Installation Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../howto/run_httomo.html">How to run HTTomo</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../howto/how_to_run/at_diamond.html">Inside Diamond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../howto/how_to_run/outside_diamond.html">Outside Diamond</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../howto/process_lists_guide.html">Process Lists Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../howto/process_lists/httomo_parameters.html">HTTomo-specific parameters</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../howto/process_lists/side_outputs/side_out.html">Side outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../howto/process_lists/save_results/save_results.html">Saving intermediate files</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../howto/process_lists/process_list_configure.html">Configure efficient pipelines</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../howto/httomo_features.html">HTTomo Features</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../howto/httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../howto/httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../howto/httomo_features/parameter_sweeping.html">Parameter Sweeping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../howto/httomo_features/padding.html">Padding</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto/interpret_logger.html">Interpret Log File</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../backends/list.html">Supported libraries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../backends/templates.html">Methods YAML Templates</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Ready-to-use pipelines</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../pipelines/yaml.html">Full YAML pipelines</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../developers/how_to_contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers/memory_calculation.html">GPU memory calculations</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../developers/api.html">API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.base_block.html">httomo.base_block</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.base_block.BaseBlock.html">httomo.base_block.BaseBlock</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.block_interfaces.html">httomo.block_interfaces</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.block_interfaces.Block.html">httomo.block_interfaces.Block</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.block_interfaces.BlockData.html">httomo.block_interfaces.BlockData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.block_interfaces.BlockIndexing.html">httomo.block_interfaces.BlockIndexing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.block_interfaces.BlockTransfer.html">httomo.block_interfaces.BlockTransfer</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.cli.html">httomo.cli</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.cli.PipelineFilePathOrString.html">httomo.cli.PipelineFilePathOrString</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.cli.execute_high_throughput_run.html">httomo.cli.execute_high_throughput_run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.cli.execute_sweep_run.html">httomo.cli.execute_sweep_run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.cli.generate_pipeline.html">httomo.cli.generate_pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.cli.initialise_output_directory.html">httomo.cli.initialise_output_directory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.cli.set_global_constants.html">httomo.cli.set_global_constants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.cli.transform_limit_str_to_bytes.html">httomo.cli.transform_limit_str_to_bytes</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.cli_utils.html">httomo.cli_utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.cli_utils.is_sweep_pipeline.html">httomo.cli_utils.is_sweep_pipeline</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.darks_flats.html">httomo.darks_flats</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.darks_flats.DarksFlatsFileConfig.html">httomo.darks_flats.DarksFlatsFileConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.darks_flats.get_darks_flats.html">httomo.darks_flats.get_darks_flats</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.data.html">httomo.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.data.dataset_store.html">httomo.data.dataset_store</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.data.dataset_store.DataSetStoreReader.html">httomo.data.dataset_store.DataSetStoreReader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.data.dataset_store.DataSetStoreWriter.html">httomo.data.dataset_store.DataSetStoreWriter</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.data.hdf.html">httomo.data.hdf</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.data.mpiutil.html">httomo.data.mpiutil</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.data.mpiutil.alltoall.html">httomo.data.mpiutil.alltoall</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.data.mpiutil.alltoall_ring.html">httomo.data.mpiutil.alltoall_ring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.data.padding.html">httomo.data.padding</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.data.padding.extrapolate_after.html">httomo.data.padding.extrapolate_after</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.data.padding.extrapolate_before.html">httomo.data.padding.extrapolate_before</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.data.param_sweep_store.html">httomo.data.param_sweep_store</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.data.param_sweep_store.ParamSweepReader.html">httomo.data.param_sweep_store.ParamSweepReader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.data.param_sweep_store.ParamSweepWriter.html">httomo.data.param_sweep_store.ParamSweepWriter</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../developers/generated/httomo.globals.html">httomo.globals</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.loaders.html">httomo.loaders</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.loaders.standard_tomo_loader.html">httomo.loaders.standard_tomo_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.loaders.standard_tomo_loader.StandardLoaderWrapper.html">httomo.loaders.standard_tomo_loader.StandardLoaderWrapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.loaders.standard_tomo_loader.StandardTomoLoader.html">httomo.loaders.standard_tomo_loader.StandardTomoLoader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.loaders.types.html">httomo.loaders.types</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.loaders.types.DataConfig.html">httomo.loaders.types.DataConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.loaders.types.RawAngles.html">httomo.loaders.types.RawAngles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.loaders.types.UserDefinedAngles.html">httomo.loaders.types.UserDefinedAngles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.loaders.make_loader.html">httomo.loaders.make_loader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.logger.html">httomo.logger</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.logger.setup_logger.html">httomo.logger.setup_logger</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.methods.html">httomo.methods</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.methods.calculate_stats.html">httomo.methods.calculate_stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.methods.save_intermediate_data.html">httomo.methods.save_intermediate_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.methods.setup_dataset.html">httomo.methods.setup_dataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.html">httomo.method_wrappers</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.datareducer.html">httomo.method_wrappers.datareducer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.datareducer.DatareducerWrapper.html">httomo.method_wrappers.datareducer.DatareducerWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.dezinging.html">httomo.method_wrappers.dezinging</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.dezinging.DezingingWrapper.html">httomo.method_wrappers.dezinging.DezingingWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.distortion_correction.html">httomo.method_wrappers.distortion_correction</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.distortion_correction.DistortionCorrectionWrapper.html">httomo.method_wrappers.distortion_correction.DistortionCorrectionWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.generic.html">httomo.method_wrappers.generic</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.generic.GenericMethodWrapper.html">httomo.method_wrappers.generic.GenericMethodWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.images.html">httomo.method_wrappers.images</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.images.ImagesWrapper.html">httomo.method_wrappers.images.ImagesWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.reconstruction.html">httomo.method_wrappers.reconstruction</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.reconstruction.ReconstructionWrapper.html">httomo.method_wrappers.reconstruction.ReconstructionWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.rotation.html">httomo.method_wrappers.rotation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.rotation.RotationWrapper.html">httomo.method_wrappers.rotation.RotationWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.save_intermediate.html">httomo.method_wrappers.save_intermediate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.save_intermediate.SaveIntermediateFilesWrapper.html">httomo.method_wrappers.save_intermediate.SaveIntermediateFilesWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.stats_calc.html">httomo.method_wrappers.stats_calc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.stats_calc.StatsCalcWrapper.html">httomo.method_wrappers.stats_calc.StatsCalcWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.method_wrappers.make_method_wrapper.html">httomo.method_wrappers.make_method_wrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.monitors.html">httomo.monitors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.monitors.aggregate.html">httomo.monitors.aggregate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.monitors.aggregate.AggregateMonitoring.html">httomo.monitors.aggregate.AggregateMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.monitors.benchmark.html">httomo.monitors.benchmark</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.monitors.benchmark.BenchmarkMonitoring.html">httomo.monitors.benchmark.BenchmarkMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.monitors.summary.html">httomo.monitors.summary</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.monitors.summary.SummaryMonitor.html">httomo.monitors.summary.SummaryMonitor</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.monitors.make_monitors.html">httomo.monitors.make_monitors</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.preview.html">httomo.preview</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.preview.Preview.html">httomo.preview.Preview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.preview.PreviewConfig.html">httomo.preview.PreviewConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.preview.PreviewDimConfig.html">httomo.preview.PreviewDimConfig</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.html">httomo.runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.auxiliary_data.html">httomo.runner.auxiliary_data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.auxiliary_data.AuxiliaryData.html">httomo.runner.auxiliary_data.AuxiliaryData</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.block_split.html">httomo.runner.block_split</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.block_split.BlockSplitter.html">httomo.runner.block_split.BlockSplitter</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset.html">httomo.runner.dataset</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset.DataSetBlock.html">httomo.runner.dataset.DataSetBlock</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset_store_backing.html">httomo.runner.dataset_store_backing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset_store_backing.DataSetStoreBacking.html">httomo.runner.dataset_store_backing.DataSetStoreBacking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset_store_backing.calculate_section_chunk_bytes.html">httomo.runner.dataset_store_backing.calculate_section_chunk_bytes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset_store_backing.calculate_section_chunk_shape.html">httomo.runner.dataset_store_backing.calculate_section_chunk_shape</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset_store_backing.determine_store_backing.html">httomo.runner.dataset_store_backing.determine_store_backing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset_store_interfaces.html">httomo.runner.dataset_store_interfaces</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset_store_interfaces.DataSetSink.html">httomo.runner.dataset_store_interfaces.DataSetSink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset_store_interfaces.DataSetSource.html">httomo.runner.dataset_store_interfaces.DataSetSource</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset_store_interfaces.DummySink.html">httomo.runner.dataset_store_interfaces.DummySink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.dataset_store_interfaces.ReadableDataSetSink.html">httomo.runner.dataset_store_interfaces.ReadableDataSetSink</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.gpu_utils.html">httomo.runner.gpu_utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.gpu_utils.get_available_gpu_memory.html">httomo.runner.gpu_utils.get_available_gpu_memory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.gpu_utils.get_gpu_id.html">httomo.runner.gpu_utils.get_gpu_id</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.gpu_utils.gpumem_cleanup.html">httomo.runner.gpu_utils.gpumem_cleanup</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.loader.html">httomo.runner.loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.loader.LoaderInterface.html">httomo.runner.loader.LoaderInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.method_wrapper.html">httomo.runner.method_wrapper</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.method_wrapper.GpuTimeInfo.html">httomo.runner.method_wrapper.GpuTimeInfo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.method_wrapper.MethodWrapper.html">httomo.runner.method_wrapper.MethodWrapper</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.methods_repository_interface.html">httomo.runner.methods_repository_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.methods_repository_interface.MethodQuery.html">httomo.runner.methods_repository_interface.MethodQuery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.methods_repository_interface.MethodRepository.html">httomo.runner.methods_repository_interface.MethodRepository</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.monitoring_interface.html">httomo.runner.monitoring_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.monitoring_interface.MonitoringInterface.html">httomo.runner.monitoring_interface.MonitoringInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.output_ref.html">httomo.runner.output_ref</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.output_ref.OutputRef.html">httomo.runner.output_ref.OutputRef</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.pipeline.html">httomo.runner.pipeline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.pipeline.Pipeline.html">httomo.runner.pipeline.Pipeline</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.section.html">httomo.runner.section</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.section.Section.html">httomo.runner.section.Section</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.section.determine_minimum_block_length.html">httomo.runner.section.determine_minimum_block_length</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.section.determine_section_padding.html">httomo.runner.section.determine_section_padding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.section.sectionize.html">httomo.runner.section.sectionize</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.task_runner.html">httomo.runner.task_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.task_runner.TaskRunner.html">httomo.runner.task_runner.TaskRunner</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.html">httomo.sweep_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_block.html">httomo.sweep_runner.param_sweep_block</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_block.ParamSweepBlock.html">httomo.sweep_runner.param_sweep_block.ParamSweepBlock</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_json_loader.html">httomo.sweep_runner.param_sweep_json_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_json_loader.ParamSweepJsonLoader.html">httomo.sweep_runner.param_sweep_json_loader.ParamSweepJsonLoader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_runner.html">httomo.sweep_runner.param_sweep_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html">httomo.sweep_runner.param_sweep_runner.ParamSweepRunner</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_store_interfaces.html">httomo.sweep_runner.param_sweep_store_interfaces</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSink.html">httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSource.html">httomo.sweep_runner.param_sweep_store_interfaces.ParamSweepSource</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_yaml_loader.html">httomo.sweep_runner.param_sweep_yaml_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_yaml_loader.ParamSweepYamlLoader.html">httomo.sweep_runner.param_sweep_yaml_loader.ParamSweepYamlLoader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_yaml_loader.get_param_sweep_yaml_loader.html">httomo.sweep_runner.param_sweep_yaml_loader.get_param_sweep_yaml_loader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.side_output_manager.html">httomo.sweep_runner.side_output_manager</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.side_output_manager.SideOutputManager.html">httomo.sweep_runner.side_output_manager.SideOutputManager</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.stages.html">httomo.sweep_runner.stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.stages.NonSweepStage.html">httomo.sweep_runner.stages.NonSweepStage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.stages.Stages.html">httomo.sweep_runner.stages.Stages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.stages.SweepStage.html">httomo.sweep_runner.stages.SweepStage</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.transform_layer.html">httomo.transform_layer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_layer.TransformLayer.html">httomo.transform_layer.TransformLayer</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.html">httomo.transform_loader_params</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.ContinuousScanSubsetParam.html">httomo.transform_loader_params.ContinuousScanSubsetParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.DarksFlatsParam.html">httomo.transform_loader_params.DarksFlatsParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.PreviewParam.html">httomo.transform_loader_params.PreviewParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.RawAnglesParam.html">httomo.transform_loader_params.RawAnglesParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.StartStopEntry.html">httomo.transform_loader_params.StartStopEntry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.UserDefinedAnglesParam.html">httomo.transform_loader_params.UserDefinedAnglesParam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.UserDefinedAnglesParamInner.html">httomo.transform_loader_params.UserDefinedAnglesParamInner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.find_tomo_entry.html">httomo.transform_loader_params.find_tomo_entry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.parse_angles.html">httomo.transform_loader_params.parse_angles</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.parse_config.html">httomo.transform_loader_params.parse_config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.parse_darks_flats.html">httomo.transform_loader_params.parse_darks_flats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.parse_data.html">httomo.transform_loader_params.parse_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.parse_preview.html">httomo.transform_loader_params.parse_preview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.transform_loader_params.select_continuous_scan_subset.html">httomo.transform_loader_params.select_continuous_scan_subset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../developers/generated/httomo.types.html">httomo.types</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.ui_layer.html">httomo.ui_layer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.ui_layer.PipelineFormat.html">httomo.ui_layer.PipelineFormat</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.ui_layer.UiLayer.html">httomo.ui_layer.UiLayer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.ui_layer.check_valid_ref_id.html">httomo.ui_layer.check_valid_ref_id</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.ui_layer.get_ref_split.html">httomo.ui_layer.get_ref_split</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.ui_layer.get_regex_pattern.html">httomo.ui_layer.get_regex_pattern</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.ui_layer.get_valid_ref_str.html">httomo.ui_layer.get_valid_ref_str</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.ui_layer.update_side_output_references.html">httomo.ui_layer.update_side_output_references</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.ui_layer.yaml_loader.html">httomo.ui_layer.yaml_loader</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.utils.html">httomo.utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.utils.catch_gputime.html">httomo.utils.catch_gputime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.utils.catchtime.html">httomo.utils.catchtime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.utils.get_data_in_data_out.html">httomo.utils.get_data_in_data_out</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.utils.log_exception.html">httomo.utils.log_exception</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.utils.log_once.html">httomo.utils.log_once</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.utils.log_rank.html">httomo.utils.log_rank</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.utils.make_3d_shape_from_array.html">httomo.utils.make_3d_shape_from_array</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.utils.make_3d_shape_from_shape.html">httomo.utils.make_3d_shape_from_shape</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.utils.mpi_abort_excepthook.html">httomo.utils.mpi_abort_excepthook</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.html">httomo.yaml_checker</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.Colour.html">httomo.yaml_checker.Colour</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.UniqueKeyLoader.html">httomo.yaml_checker.UniqueKeyLoader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_first_method_is_loader.html">httomo.yaml_checker.check_first_method_is_loader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_hdf5_paths_against_loader.html">httomo.yaml_checker.check_hdf5_paths_against_loader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_id_has_side_out.html">httomo.yaml_checker.check_id_has_side_out</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_keys.html">httomo.yaml_checker.check_keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_methods_exist_in_templates.html">httomo.yaml_checker.check_methods_exist_in_templates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_no_duplicated_keys.html">httomo.yaml_checker.check_no_duplicated_keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_no_imagesaver_after_sweep_method.html">httomo.yaml_checker.check_no_imagesaver_after_sweep_method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_no_required_parameter_values.html">httomo.yaml_checker.check_no_required_parameter_values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_parameter_names_are_known.html">httomo.yaml_checker.check_parameter_names_are_known</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_parameter_names_are_str.html">httomo.yaml_checker.check_parameter_names_are_str</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_ref_id_valid.html">httomo.yaml_checker.check_ref_id_valid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.check_side_out_matches_ref_arg.html">httomo.yaml_checker.check_side_out_matches_ref_arg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.sanity_check.html">httomo.yaml_checker.sanity_check</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.yaml_checker.validate_yaml_config.html">httomo.yaml_checker.validate_yaml_config</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for httomo.sweep_runner.param_sweep_runner</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">tqdm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mpi4py.MPI</span><span class="w"> </span><span class="kn">import</span> <span class="n">Comm</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">httomo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.data.param_sweep_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamSweepReader</span><span class="p">,</span> <span class="n">ParamSweepWriter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.method_wrappers.images</span><span class="w"> </span><span class="kn">import</span> <span class="n">ImagesWrapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.method_wrappers.save_intermediate</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaveIntermediateFilesWrapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.runner.block_split</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlockSplitter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.runner.method_wrapper</span><span class="w"> </span><span class="kn">import</span> <span class="n">MethodWrapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.runner.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.sweep_runner.param_sweep_block</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamSweepBlock</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.sweep_runner.side_output_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">SideOutputManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.sweep_runner.stages</span><span class="w"> </span><span class="kn">import</span> <span class="n">NonSweepStage</span><span class="p">,</span> <span class="n">Stages</span><span class="p">,</span> <span class="n">SweepStage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">catchtime</span><span class="p">,</span> <span class="n">log_exception</span><span class="p">,</span> <span class="n">log_once</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.runner.gpu_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_available_gpu_memory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreviewConfig</span><span class="p">,</span> <span class="n">PreviewDimConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.runner.dataset_store_interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataSetSource</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo_backends.methods_database.packages.backends.httomolibgpu.supporting_funcs.prep.phase</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_calc_memory_bytes_paganin_filter</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="ParamSweepRunner">
+<a class="viewcode-back" href="../../../developers/generated/httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html#httomo.sweep_runner.param_sweep_runner.ParamSweepRunner">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParamSweepRunner</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">pipeline</span><span class="p">:</span> <span class="n">Pipeline</span><span class="p">,</span>
+        <span class="n">comm</span><span class="p">:</span> <span class="n">Comm</span><span class="p">,</span>
+        <span class="n">side_output_manager</span><span class="p">:</span> <span class="n">SideOutputManager</span> <span class="o">=</span> <span class="n">SideOutputManager</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="n">pipeline</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vertical_slices_preview</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_side_output_manager</span> <span class="o">=</span> <span class="n">side_output_manager</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_block</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamSweepBlock</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_params_for_sweep</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">determine_stages</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_sweep_idx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_sweep_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_determine_sweep_indices</span><span class="p">(</span>
+            <span class="n">comm</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sweep_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">sweep</span><span class="o">.</span><span class="n">values</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start_sweep_idx</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_sweep_idx</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_image_saver_params</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">block</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParamSweepBlock</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Block from input data has not yet been loaded&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_determine_sweep_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="p">:</span> <span class="n">Comm</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+        <span class="n">no_of_sweep_vals</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">sweep</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">nprocs</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">rank</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">no_of_sweep_vals</span> <span class="o">/</span> <span class="n">nprocs</span><span class="p">)</span> <span class="o">*</span> <span class="n">rank</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">no_of_sweep_vals</span> <span class="o">/</span> <span class="n">nprocs</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_params_for_sweep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check pipeline for the number of parameter sweeps present.</span>
+
+<span class="sd">        If none are defined, then raise an error. If more than one is defined, then also raise</span>
+<span class="sd">        an error, due to not supporting parameter sweeps over more than one parameter at a</span>
+<span class="sd">        time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">config_params</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">]</span>
+        <span class="n">no_of_sweeps</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">_count_tuple_values</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">no_of_sweeps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">err_str</span> <span class="o">=</span> <span class="s2">&quot;No parameter sweep detected in pipeline&quot;</span>
+            <span class="n">log_exception</span><span class="p">(</span><span class="n">err_str</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">err_str</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">no_of_sweeps</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">err_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;Parameter sweep over more than one parameter detected in pipeline; &quot;</span>
+                <span class="s2">&quot;a sweep over only one parameter at a time is supported&quot;</span>
+            <span class="p">)</span>
+            <span class="n">log_exception</span><span class="p">(</span><span class="n">err_str</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">err_str</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_image_saver_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the `offset` and `watermark_vals` parameters for any `ImagesWrapper`</span>
+<span class="sd">        instances in the pipeline.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">non_sweep_stages</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">before_sweep</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">after_sweep</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">non_sweep_stage</span> <span class="ow">in</span> <span class="n">non_sweep_stages</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">non_sweep_stage</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">ImagesWrapper</span><span class="p">):</span>
+                    <span class="n">method</span><span class="p">[</span><span class="s2">&quot;offset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_sweep_idx</span>
+                    <span class="n">method</span><span class="p">[</span><span class="s2">&quot;watermark_vals&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sweep_values</span>
+
+<div class="viewcode-block" id="ParamSweepRunner.determine_stages">
+<a class="viewcode-back" href="../../../developers/generated/httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html#httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.determine_stages">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">determine_stages</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stages</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Groups methods into &quot;before sweep&quot;, &quot;sweep&quot;, and &quot;after sweep&quot; stages</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">before_sweep</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">MethodWrapper</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">sweep_wrapper</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MethodWrapper</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">sweep_param_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">sweep_param_vals</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">after_sweep</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">MethodWrapper</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">non_sweep_stage_methods</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">MethodWrapper</span><span class="p">]</span> <span class="o">=</span> <span class="n">before_sweep</span>
+        <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">config_params</span>
+            <span class="n">no_of_sweeps</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">_count_tuple_values</span><span class="p">,</span> <span class="p">[</span><span class="n">params</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">no_of_sweeps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">non_sweep_stage_methods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sweep_wrapper</span> <span class="o">=</span> <span class="n">method</span>
+                <span class="n">sweep_param_name</span><span class="p">,</span> <span class="n">sweep_param_vals</span> <span class="o">=</span> <span class="n">_get_param_sweep_name_and_vals</span><span class="p">(</span>
+                    <span class="n">params</span>
+                <span class="p">)</span>
+                <span class="n">non_sweep_stage_methods</span> <span class="o">=</span> <span class="n">after_sweep</span>
+
+        <span class="k">assert</span> <span class="n">sweep_wrapper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="n">sweep_param_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="n">sweep_param_vals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">Stages</span><span class="p">(</span>
+            <span class="n">before_sweep</span><span class="o">=</span><span class="n">NonSweepStage</span><span class="p">(</span><span class="n">before_sweep</span><span class="p">),</span>
+            <span class="n">sweep</span><span class="o">=</span><span class="n">SweepStage</span><span class="p">(</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">sweep_wrapper</span><span class="p">,</span>
+                <span class="n">param_name</span><span class="o">=</span><span class="n">sweep_param_name</span><span class="p">,</span>
+                <span class="n">values</span><span class="o">=</span><span class="n">sweep_param_vals</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">after_sweep</span><span class="o">=</span><span class="n">NonSweepStage</span><span class="p">(</span><span class="n">after_sweep</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ParamSweepRunner.modify_loader_preview">
+<a class="viewcode-back" href="../../../developers/generated/httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html#httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.modify_loader_preview">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">modify_loader_preview</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Modifies loader&#39;s preview based on the method present in the pipeline.</span>
+<span class="sd">        In some cases we need to override users given preview, e.g., when Paganin filter is present.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># we call this only to find the global size of the data (not very efficient)</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">make_data_source</span><span class="p">(</span><span class="n">padding</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">raw_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vertical_slices_preview</span><span class="p">:</span>
+            <span class="n">err_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;The size of the raw data  &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">raw_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> is smaller than it is required by the sweep run - &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_vertical_slices_preview</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Please consider using a larger input dataset with the sweep run.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">err_str</span><span class="p">)</span>
+
+        <span class="c1"># before modifying preview we need to check if the block fits the memory</span>
+        <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="n">_methods</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;paganin_filter&quot;</span> <span class="ow">in</span> <span class="n">method</span><span class="o">.</span><span class="n">method_name</span> <span class="ow">and</span> <span class="n">method</span><span class="o">.</span><span class="n">sweep</span><span class="p">:</span>
+                <span class="c1"># This method will change the preview (see more in _slices_to_fit_memory_Paganin).</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_vertical_slices_preview</span> <span class="o">=</span> <span class="n">_slices_to_fit_memory_Paganin</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+        <span class="n">preview_new_start_stop</span> <span class="o">=</span> <span class="n">_preview_modifier</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">preview</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">raw_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_vertical_slices_preview</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">preview</span> <span class="o">=</span> <span class="n">PreviewConfig</span><span class="p">(</span>
+            <span class="n">angles</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">preview</span><span class="o">.</span><span class="n">angles</span><span class="p">,</span>
+            <span class="n">detector_y</span><span class="o">=</span><span class="n">PreviewDimConfig</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="n">preview_new_start_stop</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">stop</span><span class="o">=</span><span class="n">preview_new_start_stop</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">detector_x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">preview</span><span class="o">.</span><span class="n">detector_x</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ParamSweepRunner.prepare">
+<a class="viewcode-back" href="../../../developers/generated/httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html#httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.prepare">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load single block containing small number of sinogram slices in input data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">make_data_source</span><span class="p">(</span><span class="n">padding</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+        <span class="n">SINO_SLICING_DIM</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">log_once</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading data with shape </span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">global_shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">splitter</span> <span class="o">=</span> <span class="n">BlockSplitter</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">global_shape</span><span class="p">[</span><span class="n">source</span><span class="o">.</span><span class="n">slicing_dim</span><span class="p">])</span>
+        <span class="n">dataset_block</span> <span class="o">=</span> <span class="n">splitter</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">sweep_block</span> <span class="o">=</span> <span class="n">ParamSweepBlock</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">dataset_block</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">aux_data</span><span class="o">=</span><span class="n">dataset_block</span><span class="o">.</span><span class="n">aux_data</span><span class="p">,</span>
+            <span class="n">slicing_dim</span><span class="o">=</span><span class="n">SINO_SLICING_DIM</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_block</span> <span class="o">=</span> <span class="n">sweep_block</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pass_min_block_length_to_intermediate_data_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="n">NonSweepStage</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">stage</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">SaveIntermediateFilesWrapper</span><span class="p">):</span>
+                <span class="n">method</span><span class="o">.</span><span class="n">append_config_params</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">&quot;minimum_block_length&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_block</span><span class="o">.</span><span class="n">slicing_dim</span><span class="p">]}</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_non_sweep_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="n">NonSweepStage</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pass_min_block_length_to_intermediate_data_wrapper</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">stage</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span>
+            <span class="n">log_once</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running </span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">method_name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">package_name</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_side_output_manager</span><span class="o">.</span><span class="n">update_params</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_block</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_block</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_side_output_manager</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">get_side_output</span><span class="p">())</span>
+
+<div class="viewcode-block" id="ParamSweepRunner.execute_before_sweep">
+<a class="viewcode-back" href="../../../developers/generated/httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html#httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.execute_before_sweep">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_before_sweep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute all methods before the parameter sweep&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_execute_non_sweep_stage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">before_sweep</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ParamSweepRunner.execute_after_sweep">
+<a class="viewcode-back" href="../../../developers/generated/httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html#httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.execute_after_sweep">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_after_sweep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute all methods after the parameter sweep&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_execute_non_sweep_stage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">after_sweep</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ParamSweepRunner.execute_sweep">
+<a class="viewcode-back" href="../../../developers/generated/httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html#httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.execute_sweep">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_sweep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute all param variations of the same method in the sweep&quot;&quot;&quot;</span>
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">ParamSweepWriter</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sweep_values</span><span class="p">))</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">sweep</span><span class="o">.</span><span class="n">method</span>
+
+        <span class="n">log_once</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running </span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">method_name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">package_name</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="n">log_once</span><span class="p">(</span><span class="s2">&quot;    Beginning parameter sweep&quot;</span><span class="p">)</span>
+        <span class="n">log_once</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Parameter name: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">sweep</span><span class="o">.</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">total_vals_str</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;    Total number of values across all processes: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">sweep</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">log_once</span><span class="p">(</span><span class="n">total_vals_str</span><span class="p">)</span>
+        <span class="n">log_once</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Values executed in this process: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sweep_values</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Redirect tqdm progress bar output to /dev/null, and instead manually write sweep</span>
+        <span class="c1"># progress to logfile within loop</span>
+        <span class="n">progress</span> <span class="o">=</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span>
+            <span class="n">iterable</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sweep_values</span><span class="p">,</span>
+            <span class="n">file</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">devnull</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">),</span>
+            <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;value&quot;</span><span class="p">,</span>
+            <span class="n">ascii</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sweep_values</span><span class="p">,</span> <span class="n">progress</span><span class="p">):</span>
+            <span class="c1"># Blocks are modified in-place by method wrappers, so a new block must be created</span>
+            <span class="c1"># that contains a copy of the input data to the sweep stage</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">ParamSweepBlock</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                <span class="n">aux_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">aux_data</span><span class="p">,</span>
+                <span class="n">slicing_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">slicing_dim</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_side_output_manager</span><span class="o">.</span><span class="n">update_params</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+            <span class="n">method</span><span class="o">.</span><span class="n">append_config_params</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">sweep</span><span class="o">.</span><span class="n">param_name</span><span class="p">:</span> <span class="n">val</span><span class="p">})</span>
+            <span class="n">progress</span><span class="o">.</span><span class="n">set_postfix_str</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">sweep</span><span class="o">.</span><span class="n">param_name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">log_once</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">progress</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">get_side_output</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Producing a side output is not supported in parameter sweep methods&quot;</span>
+                <span class="p">)</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">write_sweep_result</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+
+        <span class="n">log_once</span><span class="p">(</span><span class="s2">&quot;    Finished parameter sweep&quot;</span><span class="p">)</span>
+
+        <span class="n">reader</span> <span class="o">=</span> <span class="n">ParamSweepReader</span><span class="p">(</span><span class="n">writer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_block</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">read_sweep_results</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ParamSweepRunner.execute">
+<a class="viewcode-back" href="../../../developers/generated/httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.html#httomo.sweep_runner.param_sweep_runner.ParamSweepRunner.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load input data and execute all stages (before sweep, sweep, after sweep)&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">catchtime</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
+            <span class="n">log_once</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;See the full log file at: </span><span class="si">{</span><span class="n">httomo</span><span class="o">.</span><span class="n">globals</span><span class="o">.</span><span class="n">run_out_dir</span><span class="si">}</span><span class="s2">/user.log&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modify_loader_preview</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execute_before_sweep</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execute_sweep</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execute_after_sweep</span><span class="p">()</span>
+        <span class="n">log_once</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pipeline finished. Took </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_count_tuple_values</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_param_sweep_name_and_vals</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+    <span class="n">param_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sweep_vals</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">param_name</span> <span class="o">=</span> <span class="n">k</span>
+            <span class="n">sweep_vals</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="k">assert</span> <span class="n">param_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="n">sweep_vals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">sweep_vals</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_preview_modifier</span><span class="p">(</span>
+    <span class="n">preview_old</span><span class="p">:</span> <span class="n">PreviewConfig</span><span class="p">,</span> <span class="n">det_y_dim_raw</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">vert_slices</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Modifies the size of the user-defined preview (expand it or shrink it)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">preview_new</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">det_y_dim_raw</span><span class="p">]</span>
+    <span class="n">range_preview</span> <span class="o">=</span> <span class="n">preview_old</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">stop</span> <span class="o">-</span> <span class="n">preview_old</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">start</span>
+
+    <span class="n">start_new</span> <span class="o">=</span> <span class="n">preview_old</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">range_preview</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">vert_slices</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">stop_new</span> <span class="o">=</span> <span class="n">preview_old</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">stop</span> <span class="o">-</span> <span class="n">range_preview</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">vert_slices</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">start_new</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">preview_new</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_new</span>
+    <span class="k">if</span> <span class="n">stop_new</span> <span class="o">&lt;</span> <span class="n">det_y_dim_raw</span><span class="p">:</span>
+        <span class="n">preview_new</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">stop_new</span>
+    <span class="k">return</span> <span class="n">preview_new</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_slices_to_fit_memory_Paganin</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">DataSetSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Estimating the number of vertical slices that can fit on the device for running the Paganin method.</span>
+
+<span class="sd">    For the Paganin method, the filter kernel width can vary. Therefore, we aim to use the tallest possible</span>
+<span class="sd">    vertical preview that the current device can accommodate.</span>
+<span class="sd">    If the kernel width exceeds the height of the vertical preview, some deviations are expected between</span>
+<span class="sd">    the sweep-run results and the results obtained from processing the full dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">available_memory</span> <span class="o">=</span> <span class="n">get_available_gpu_memory</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+    <span class="n">angles_total</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">aux_data</span><span class="o">.</span><span class="n">angles_length</span>
+    <span class="n">det_X_length</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">chunk_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="p">(</span><span class="n">memory_bytes_method</span><span class="p">,</span> <span class="n">subtract_bytes</span><span class="p">)</span> <span class="o">=</span> <span class="n">_calc_memory_bytes_paganin_filter</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">angles_total</span><span class="p">,</span> <span class="n">det_X_length</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">available_memory</span> <span class="o">-</span> <span class="n">subtract_bytes</span><span class="p">)</span> <span class="o">//</span> <span class="n">memory_bytes_method</span>
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By the Imaging Team
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Dec 05, 2025.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
