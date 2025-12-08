@@ -107,15 +107,6 @@ def setup_dataset(
             # MPI ranks
             frames_per_chunk = SATURATION_BW // sz_per_chunk
 
-        if frames_per_chunk > data.shape[slicing_dim]:
-            warn_message = (
-                f"frames_per_chunk={frames_per_chunk} exceeds number of elements in "
-                f"slicing dim={slicing_dim} of data with shape {data.shape}. Falling "
-                "back to 1 frame per-chunk"
-            )
-            log_once(warn_message, logging.DEBUG)
-            frames_per_chunk = 1
-
         if frames_per_chunk > minimum_block_length:
             warn_message = (
                 f"frames_per_chunk={frames_per_chunk} exceeds length of smallest block "
