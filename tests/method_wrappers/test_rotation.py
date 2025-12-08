@@ -85,9 +85,9 @@ def test_rotation_accumulates_blocks(mocker: MockerFixture, padding: Tuple[int, 
 
     class FakeModule:
         def rotation_tester(data, ind=None, average_radius=None):
-            assert data.ndim == 2  # for 1 slice only
+            assert data.ndim == 3  # for 1 slice only
             np.testing.assert_array_equal(
-                data, global_data[:, (GLOBAL_SHAPE[1] - 1) // 2, :]
+                data[:,0,:], global_data[:, (GLOBAL_SHAPE[1] - 1) // 2, :]
             )
             return 42.0
 
@@ -103,14 +103,8 @@ def test_rotation_accumulates_blocks(mocker: MockerFixture, padding: Tuple[int, 
         output_mapping={"cor": "cor"},
     )
     assert isinstance(wrp, RotationWrapper)
-    normalize = mocker.patch.object(
-        wrp, "normalize_sino", side_effect=lambda sino, flats, darks: sino
-    )
-
     wrp.execute(b1)
-    normalize.assert_not_called()
     wrp.execute(b2)
-    normalize.assert_called_once()
     assert wrp.get_side_output() == {"cor": 42.0}
 
 
@@ -148,16 +142,16 @@ def test_rotation_gathers_single_sino_slice(
     class FakeModule:
         def rotation_tester(data, ind=None, average_radius=None):
             assert rank == 0  # for rank 1, it shouldn't be called
-            assert data.ndim == 2  # for 1 slice only
+            assert data.ndim == 3  # for 1 slice only
             assert ind == 0
             assert average_radius == 0
             if ind_par == "mid" or ind_par is None:
                 xp.testing.assert_array_equal(
                     global_data[:, (GLOBAL_SHAPE[1] - 1) // 2, :],
-                    data,
+                    data[:, ind, :],
                 )
             else:
-                xp.testing.assert_array_equal(global_data[:, ind_par, :], data)
+                xp.testing.assert_array_equal(global_data[:, ind_par, :], data[:, 0, :])
             return 42.0
 
     mocker.patch(
@@ -187,9 +181,6 @@ def test_rotation_gathers_single_sino_slice(
         assert isinstance(ind_par, int)
         sino_slice = global_data[:, ind_par, :]
     mocker.patch.object(wrp, "_gather_sino_slice", side_effect=lambda s: sino_slice)
-    normalize = mocker.patch.object(
-        wrp, "normalize_sino", side_effect=lambda sino, f, d: sino
-    )
 
     comm.bcast.return_value = 42.0
 
@@ -198,10 +189,6 @@ def test_rotation_gathers_single_sino_slice(
     assert wrp.pattern == Pattern.projection
     xp.testing.assert_array_equal(res.data, rank0_data if rank == 0 else rank1_data)
     comm.bcast.assert_called_once()
-    if rank == 0:
-        normalize.assert_called_once()
-    else:
-        normalize.assert_not_called()
 
 
 @pytest.mark.parametrize("rank", [0, 1])
@@ -243,103 +230,6 @@ def test_rotation_gather_sino_slice(mocker: MockerFixture, rank: int):
     else:
         assert res is None
         comm.gather.assert_called_once_with(3 * 6)
-
-
-def test_rotation_normalize_sino_no_darks_flats():
-    self_mock = MagicMock()  # this mocks self - as function only sets gpu time
-    ret = RotationWrapper.normalize_sino(
-        self_mock, np.ones((10, 10), dtype=np.float32), None, None
-    )
-
-    assert ret.shape == (10, 1, 10)
-    np.testing.assert_allclose(np.squeeze(ret), 1.0)
-
-
-def test_rotation_normalize_sino_same_darks_flats():
-    self_mock = MagicMock()  # this mocks self - as function only sets gpu time
-    ret = RotationWrapper.normalize_sino(
-        self_mock,
-        np.ones((10, 10), dtype=np.float32),
-        0.5
-        * np.ones(
-            (
-                10,
-                10,
-            ),
-            dtype=np.float32,
-        ),
-        0.5
-        * np.ones(
-            (
-                10,
-                10,
-            ),
-            dtype=np.float32,
-        ),
-    )
-
-    assert ret.shape == (10, 1, 10)
-    np.testing.assert_allclose(ret, 0.5)
-
-
-def test_rotation_normalize_sino_scalar():
-    self_mock = MagicMock()  # this mocks self - as function only sets gpu time
-    ret = RotationWrapper.normalize_sino(
-        self_mock,
-        np.ones((10, 10), dtype=np.float32),
-        0.5
-        * np.ones(
-            (
-                10,
-                10,
-            ),
-            dtype=np.float32,
-        ),
-        0.5
-        * np.ones(
-            (
-                10,
-                10,
-            ),
-            dtype=np.float32,
-        ),
-    )
-
-    assert ret.shape == (10, 1, 10)
-    np.testing.assert_allclose(ret, 0.5)
-
-
-def test_rotation_normalize_sino_different_darks_flats():
-    self_mock = MagicMock()  # this mocks self - as function only sets gpu time
-    ret = RotationWrapper.normalize_sino(
-        self_mock,
-        2.0 * np.ones((10, 10), dtype=np.float32),
-        1.0 * np.ones((10, 10), dtype=np.float32),
-        0.5 * np.ones((10, 10), dtype=np.float32),
-    )
-
-    assert ret.shape == (10, 1, 10)
-    np.testing.assert_allclose(np.squeeze(ret), 1.0)
-
-
-@pytest.mark.skipif(
-    not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
-    reason="skipped as cupy is not available",
-)
-@pytest.mark.cupy
-def test_rotation_normalize_sino_different_darks_flats_gpu():
-    self_mock = MagicMock()  # this mocks self - as function only sets gpu time
-    ret = RotationWrapper.normalize_sino(
-        self_mock,
-        2.0 * xp.ones((10, 10), dtype=np.float32),
-        1.0 * xp.ones((10, 10), dtype=np.float32),
-        0.5 * xp.ones((10, 10), dtype=np.float32),
-    )
-
-    assert ret.shape == (10, 1, 10)
-    assert getattr(ret, "device", None) is not None
-    xp.testing.assert_allclose(xp.squeeze(ret), 1.0)
-
 
 def test_rotation_180(mocker: MockerFixture):
     class FakeModule:
