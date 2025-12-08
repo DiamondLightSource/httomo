@@ -448,12 +448,16 @@ class GenericMethodWrapper(MethodWrapper):
                 * data_dtype.itemsize
             )
         elif self.memory_gpu.method == "iterative":
-            return (
-                self._calculate_max_slices_iterative(
-                    data_dtype, non_slice_dims_shape, available_memory
-                ),
-                available_memory,
-            )
+            # The iterative method may use the GPU
+            assert gpu_enabled, "GPU method used on a system without GPU support"
+            with xp.cuda.Device(self._gpu_id):
+                gpumem_cleanup()
+                return (
+                    self._calculate_max_slices_iterative(
+                        data_dtype, non_slice_dims_shape, available_memory
+                    ),
+                    available_memory,
+                )
         else:
             (
                 memory_bytes_method,
@@ -489,6 +493,8 @@ class GenericMethodWrapper(MethodWrapper):
                 return memory_bytes
             except:
                 return 2**64
+            finally:
+                gpumem_cleanup()
 
         # Find a number of slices that does not fit
         current_slices = 100
@@ -498,7 +504,7 @@ class GenericMethodWrapper(MethodWrapper):
             slices_high = current_slices
         else:
             # linear approximation
-            current_slices = (available_memory + memory_bytes - 1) // memory_bytes
+            current_slices = int(current_slices * available_memory / memory_bytes)
             while True:
                 memory_bytes = get_mem_bytes(current_slices)
                 if memory_bytes > available_memory:
