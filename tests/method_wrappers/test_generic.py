@@ -769,6 +769,7 @@ def test_generic_calculate_max_slices_iterative(
     check_slices = lambda slices: memcalc_mock(
         dims_shape=(slices, shape[0], shape[1]), dtype=dummy_block.data.dtype
     )
+    threshold = 0.9
     if check_slices(1) > available_memory:
         # If zero slice fits
         assert max_slices == 0
@@ -780,8 +781,8 @@ def test_generic_calculate_max_slices_iterative(
             with pytest.raises(Exception):
                 check_slices(max_slices + 1)
         else:
-            # And one more slice must not fit
-            assert check_slices(max_slices + 1) > available_memory
+            # And one more slice must not fit OR above threshold
+            assert check_slices(max_slices + 1) > available_memory or check_slices(max_slices) >= available_memory * threshold
 
 
 @pytest.mark.cupy

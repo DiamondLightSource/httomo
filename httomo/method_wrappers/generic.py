@@ -479,6 +479,8 @@ class GenericMethodWrapper(MethodWrapper):
         non_slice_dims_shape: Tuple[int, int],
         available_memory: int,
     ) -> int:
+        MEM_RATIO_THRESHOLD = 0.9
+
         def get_mem_bytes(current_slices):
             try:
                 memory_bytes = self._query.calculate_memory_bytes_for_slices(
@@ -501,6 +503,7 @@ class GenericMethodWrapper(MethodWrapper):
         slices_high = None
         memory_bytes = get_mem_bytes(current_slices)
         if memory_bytes > available_memory:
+            # Found upper limit, continue to binary search
             slices_high = current_slices
         else:
             # linear approximation
@@ -508,7 +511,12 @@ class GenericMethodWrapper(MethodWrapper):
             while True:
                 memory_bytes = get_mem_bytes(current_slices)
                 if memory_bytes > available_memory:
+                    # Found upper limit, continue to binary search
                     break
+                elif memory_bytes >= available_memory * MEM_RATIO_THRESHOLD:
+                    # This is "good enough", return
+                    return current_slices
+            
                 # If linear approximation is not enough, just double every iteration
                 current_slices *= 2
             slices_high = current_slices
@@ -520,10 +528,10 @@ class GenericMethodWrapper(MethodWrapper):
             memory_bytes = get_mem_bytes(current_slices)
             if memory_bytes > available_memory:
                 slices_high = current_slices
-            elif memory_bytes < available_memory:
-                slices_low = current_slices
-            else:  # memory_bytes == available_memory
+            elif memory_bytes >= available_memory * MEM_RATIO_THRESHOLD:
                 return current_slices
+            else:
+                slices_low = current_slices
 
         return slices_low
 
