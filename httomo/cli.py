@@ -197,6 +197,11 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     default="Yaml",
     help="Format of the pipeline input (YAML or JSON)",
 )
+@click.option(
+    "--mpi-abort-hook",
+    is_flag=True,
+    help="Enable hook that invokes MPI abort if an unhandled exception is encountered",
+)
 def run(
     in_data_file: Path,
     pipeline: Union[Path, str],
@@ -216,9 +221,11 @@ def run(
     syslog_port: int,
     frames_per_chunk: int,
     recon_filename_stem: Optional[str],
+    mpi_abort_hook: bool,
 ):
     """Run a pipeline on input data."""
-    sys.excepthook = mpi_abort_excepthook
+    if mpi_abort_hook:
+        sys.excepthook = mpi_abort_excepthook
 
     set_global_constants(
         out_dir,
@@ -262,7 +269,8 @@ def run(
     else:
         execute_sweep_run(pipeline, global_comm)
 
-    sys.excepthook = sys.__excepthook__
+    if mpi_abort_hook:
+        sys.excepthook = sys.__excepthook__
 
 
 def _check_yaml(yaml_config: Path, in_data: Path):

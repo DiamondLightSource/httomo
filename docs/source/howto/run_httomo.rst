@@ -189,6 +189,8 @@ The :code:`run` command
       --recon-filename-stem TEXT      Name of output recon file without file
                                       extension (assumes `.h5`)
       --pipeline-format [yaml|json]   Format of the pipeline input (YAML or JSON)
+      --mpi-abort-hook                Enable hook that invokes MPI abort if an
+                                      unhandled exception is encountered
       --help                          Show this message and exit.
 
 Arguments
@@ -233,7 +235,7 @@ directory created by HTTomo would be
 Options/flags
 #############
 
-The :code:`run` command has 15 options/flags:
+The :code:`run` command has 16 options/flags:
 
 - :code:`--output-folder-name`
 - :code:`--save-all`
@@ -250,6 +252,7 @@ The :code:`run` command has 15 options/flags:
 - :code:`--frames-per-chunk`
 - :code:`--recon-filename-stem`
 - :code:`--pipeline-format`
+- :code:`--mpi-abort-hook`
 
 :code:`--output-folder-name`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -496,6 +499,31 @@ YAML pipeline.
 .. note:: HTTomo currently only accepts YAML pipelines as files and JSON
    pipelines as strings. Ie, both YAML pipelines provided as strings and JSON
    pipelines provided as files are not currently supported.
+
+:code:`--mpi-abort-hook`
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: This is a flag primarily for debugging.
+
+When running HTTomo under MPI, there are cases when an exception can be raised in one or more
+processes but not in all processes. If execution of the alive process(es) reaches a point which
+involves communication with the other process(es) (for example, an MPI gather), the alive
+process(es) will be stuck indefinitely, waiting for the dead process(es) to communicate to
+them.
+
+To avoid a deadlock in such cases, a hook into python's exception handling can be used to
+invoke MPI abort if any of the python processes encounter an unhandled exception. This results
+in the following behaviour: if one process encounters an unhandled exception, all processes are
+guaranteed to be terminated, and thus no deadlock will be encountered.
+
+Something to be aware about with this aproach is that the MPI abort occurs not at the python
+layer, but rather, at the MPI implementation layer. In particular, this means that python's
+writing to stdout/stderr is not guaranteed to complete before the MPI abort is invoked.
+Meaning, while printing of the traceback of the unhandled exception that triggered the MPI
+abort does exist in the python code, there is no guarantee that this printing will be complete
+before the MPI abort mechanism begins to terminate the python processes. Thus, the output in a
+terminal when MPI abort is invoked may only contain partial information about the exception
+that triggered the MPI abort.
 
 Developer options
 +++++++++++++++++

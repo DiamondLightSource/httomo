@@ -263,7 +263,7 @@ def test_save_intermediate_data_frames_per_chunk(
     # dim of the data that was saved
     expected_chunk_shape = [0, 0, 0]
     expected_chunk_shape[block.slicing_dim] = (
-        frames_per_chunk if frames_per_chunk != 1000 else 1
+        frames_per_chunk if frames_per_chunk != 1000 else GLOBAL_SHAPE[0]
     )
     DIMS = [0, 1, 2]
     non_slicing_dims = list(set(DIMS) - set([block.slicing_dim]))
@@ -278,8 +278,10 @@ def test_save_intermediate_data_frames_per_chunk(
     elif frames_per_chunk == -1:
         # when this is -1, it is decided automatically and because of the
         # very small frame size, this exceeds the value of the slicing
-        # dimension, and the fallback is 1
-        assert chunk_shape == (1, *expected_chunk_shape[1:])
+        # dimension, and the fallback is the length of the smallest block
+        # (in this case there is only one block, which has length
+        # `GLOBAL_SHAPE[0]`)
+        assert chunk_shape == (GLOBAL_SHAPE[0], *expected_chunk_shape[1:])
     else:
         assert chunk_shape is None
 
