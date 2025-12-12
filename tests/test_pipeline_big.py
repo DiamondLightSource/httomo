@@ -411,21 +411,18 @@ def test_pipe_360deg_paganin_FBP3d_tomobar_i13_179623_preview(
         deg360_paganin_FBP3d_tomobar,
         method=[
             "standard_tomo",
-            "normalize",
             "find_center_360",
             "paganin_filter",
             "paganin_filter",
         ],
         key=[
             "preview",
-            "minus_log",
             "ind",
             "energy",
             "ratio_delta_beta",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1200}},
-            False,
             "mid",
             15.0,
             200,

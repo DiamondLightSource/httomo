@@ -87,7 +87,7 @@ def test_rotation_accumulates_blocks(mocker: MockerFixture, padding: Tuple[int, 
         def rotation_tester(data, ind=None, average_radius=None):
             assert data.ndim == 3  # for 1 slice only
             np.testing.assert_array_equal(
-                data[:,0,:], global_data[:, (GLOBAL_SHAPE[1] - 1) // 2, :]
+                data[:, 0, :], global_data[:, (GLOBAL_SHAPE[1] - 1) // 2, :]
             )
             return 42.0
 
@@ -230,6 +230,7 @@ def test_rotation_gather_sino_slice(mocker: MockerFixture, rank: int):
     else:
         assert res is None
         comm.gather.assert_called_once_with(3 * 6)
+
 
 def test_rotation_180(mocker: MockerFixture):
     class FakeModule:

@@ -58,7 +58,7 @@ def log_once(output: Any, level: int = logging.INFO) -> None:
             elif "Pipeline" in output:
                 logger.opt(colors=True).info("<red>{}</red>".format(output))
             elif "Advisory" in output:
-                logger.opt(colors=True).info("\033[43m{}\033[0m".format(output))                      
+                logger.opt(colors=True).info("\033[43m{}\033[0m".format(output))
             else:
                 logger.info(output)
 

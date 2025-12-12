@@ -249,8 +249,6 @@ def test_parallel_pipe_LPRec3d_tomobar_i12_119647_preview(
 
 
 # ########################################################################
-
-
 @pytest.mark.full_data_parallel
 def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
     get_files: Callable,
@@ -264,30 +262,24 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
         deg360_distortion_FBP3d_tomobar,
         method=[
             "standard_tomo",
-            "normalize",
             "find_center_360",
             "find_center_360",
             "find_center_360",
             "distortion_correction_proj_discorpy",
-            "FBP3d_tomobar",
         ],
         key=[
             "preview",
-            "minus_log",
             "ind",
             "use_overlap",
             "norm",
             "metadata_path",
-            "neglog",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1100}},
-            False,
             24,
             True,
             True,
             "/data/tomography/raw_data/i13/360/179623_coeff.txt",
-            True,
         ],
     )
 
