@@ -40,26 +40,28 @@ def test_can_read_cpu_pipeline(tomopy_gridrec: str):
 def test_can_read_gpu_pipeline(FBP3d_tomobar: str):
     pipline_stage_config = ui_layer.yaml_loader(Path(FBP3d_tomobar))
 
-    assert len(pipline_stage_config) == 9
+    assert len(pipline_stage_config) == 10
     assert pipline_stage_config[0]["method"] == "standard_tomo"
     assert pipline_stage_config[0]["module_path"] == "httomo.data.hdf.loaders"
-    assert pipline_stage_config[1]["method"] == "find_center_vo"
-    assert pipline_stage_config[1]["module_path"] == "httomolibgpu.recon.rotation"
-    assert pipline_stage_config[1]["side_outputs"] == {"cor": "centre_of_rotation"}
-    assert pipline_stage_config[2]["method"] == "remove_outlier"
-    assert pipline_stage_config[2]["module_path"] == "httomolibgpu.misc.corr"
-    assert pipline_stage_config[3]["method"] == "normalize"
-    assert pipline_stage_config[3]["module_path"] == "httomolibgpu.prep.normalize"
+    assert pipline_stage_config[1]["method"] == "remove_outlier"
+    assert pipline_stage_config[1]["module_path"] == "httomolibgpu.misc.corr"
+    assert pipline_stage_config[2]["method"] == "dark_flat_field_correction"
+    assert pipline_stage_config[2]["module_path"] == "httomolibgpu.prep.normalize"
+    assert pipline_stage_config[3]["method"] == "find_center_vo"
+    assert pipline_stage_config[3]["module_path"] == "httomolibgpu.recon.rotation"
+    assert pipline_stage_config[3]["side_outputs"] == {"cor": "centre_of_rotation"}
     assert pipline_stage_config[4]["method"] == "remove_all_stripe"
     assert pipline_stage_config[4]["module_path"] == "httomolibgpu.prep.stripe"
-    assert pipline_stage_config[5]["method"] == "FBP3d_tomobar"
-    assert pipline_stage_config[5]["module_path"] == "httomolibgpu.recon.algorithm"
-    assert pipline_stage_config[6]["method"] == "calculate_stats"
-    assert pipline_stage_config[6]["module_path"] == "httomo.methods"
-    assert pipline_stage_config[7]["method"] == "rescale_to_int"
-    assert pipline_stage_config[7]["module_path"] == "httomolib.misc.rescale"
-    assert pipline_stage_config[8]["method"] == "save_to_images"
-    assert pipline_stage_config[8]["module_path"] == "httomolib.misc.images"
+    assert pipline_stage_config[5]["method"] == "minus_log"
+    assert pipline_stage_config[5]["module_path"] == "httomolibgpu.prep.normalize"
+    assert pipline_stage_config[6]["method"] == "FBP3d_tomobar"
+    assert pipline_stage_config[6]["module_path"] == "httomolibgpu.recon.algorithm"
+    assert pipline_stage_config[7]["method"] == "calculate_stats"
+    assert pipline_stage_config[7]["module_path"] == "httomo.methods"
+    assert pipline_stage_config[8]["method"] == "rescale_to_int"
+    assert pipline_stage_config[8]["module_path"] == "httomolib.misc.rescale"
+    assert pipline_stage_config[9]["method"] == "save_to_images"
+    assert pipline_stage_config[9]["module_path"] == "httomolib.misc.images"
 
 
 @pytest.mark.parametrize("file", ["does_not_exist.yaml"])
@@ -153,16 +155,6 @@ def test_build_pipeline_from_json(standard_data: str):
         }
     },
     {
-        "method": "normalize",
-        "module_path": "httomolibgpu.prep.normalize",
-        "parameters": {
-            "cutoff": 10.0,
-            "minus_log": true,
-            "nonnegativity": false,
-            "remove_nans": false
-        }
-    },
-    {
         "method": "FBP3d_tomobar",
         "module_path": "httomolibgpu.recon.algorithm",
         "parameters": {
@@ -181,7 +173,7 @@ def test_build_pipeline_from_json(standard_data: str):
         comm=MPI.COMM_WORLD,
         pipeline_format=PipelineFormat.Json,
     ).build_pipeline()
-    RECON_METHOD_IDX = 2
+    RECON_METHOD_IDX = 1
     ref_to_centering = pipeline[RECON_METHOD_IDX]["center"]
     assert isinstance(ref_to_centering, OutputRef)
     assert ref_to_centering.mapped_output_name == "centre_of_rotation"
