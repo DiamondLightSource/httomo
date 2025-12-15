@@ -61,7 +61,7 @@ class TaskRunner:
         self.sink: Optional[Union[DataSetSink, ReadableDataSetSink]] = None
 
         self._memory_limit_bytes = memory_limit_bytes
-
+        self._pipeline_inspector()
         self._sections = self._sectionize()
 
     def execute(self) -> None:
@@ -75,6 +75,24 @@ class TaskRunner:
         self._log_pipeline(f"Pipeline finished. Took {t.elapsed:.3f}s")
         if self.monitor is not None:
             self.monitor.report_total_time(t.elapsed)
+
+    def _pipeline_inspector(self) -> None:
+        phase_in_pipeline = False
+        minus_log_in_pipeline = False
+        for i, method in enumerate(self.pipeline._methods):
+            if "phase" in method.module_path:
+                phase_in_pipeline = True
+            if "minus_log" == method.method_name:
+                minus_log_in_pipeline = True
+            if "rotation" in method.module_path:
+                if self.pipeline[i - 1].method_name == "data_reducer":
+                    log_once(
+                        f"Advisory: It is recommended to place {method.method_name} after the dark/flat field correction"
+                    )
+        if phase_in_pipeline and minus_log_in_pipeline:
+            log_once(
+                f"Advisory: minus_log method should be removed when Paganin filter is present in the pipeline."
+            )
 
     def _sectionize(self) -> List[Section]:
         sections = sectionize(self.pipeline)
