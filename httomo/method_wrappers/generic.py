@@ -479,7 +479,7 @@ class GenericMethodWrapper(MethodWrapper):
         non_slice_dims_shape: Tuple[int, int],
         available_memory: int,
     ) -> int:
-        MEM_RATIO_THRESHOLD = 0.9
+        MEM_RATIO_THRESHOLD = 0.9 # 90% of the used device memory is the target
 
         def get_mem_bytes(current_slices):
             try:
@@ -516,7 +516,7 @@ class GenericMethodWrapper(MethodWrapper):
                 elif memory_bytes >= available_memory * MEM_RATIO_THRESHOLD:
                     # This is "good enough", return
                     return current_slices
-            
+
                 # If linear approximation is not enough, just double every iteration
                 current_slices *= 2
             slices_high = current_slices

@@ -782,7 +782,10 @@ def test_generic_calculate_max_slices_iterative(
                 check_slices(max_slices + 1)
         else:
             # And one more slice must not fit OR above threshold
-            assert check_slices(max_slices + 1) > available_memory or check_slices(max_slices) >= available_memory * threshold
+            assert (
+                check_slices(max_slices + 1) > available_memory
+                or check_slices(max_slices) >= available_memory * threshold
+            )
 
 
 @pytest.mark.cupy
