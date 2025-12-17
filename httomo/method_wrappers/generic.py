@@ -14,7 +14,14 @@ from httomo.runner.methods_repository_interface import (
     MethodRepository,
 )
 from httomo.runner.output_ref import OutputRef
-from httomo.utils import catch_gputime, catchtime, gpu_enabled, log_rank, xp
+from httomo.utils import (
+    catch_gputime,
+    catchtime,
+    gpu_enabled,
+    log_rank,
+    xp,
+    search_max_slices_iterative,
+)
 
 
 import numpy as np
@@ -479,8 +486,6 @@ class GenericMethodWrapper(MethodWrapper):
         non_slice_dims_shape: Tuple[int, int],
         available_memory: int,
     ) -> int:
-        MEM_RATIO_THRESHOLD = 0.9 # 90% of the used device memory is the target
-
         def get_mem_bytes(current_slices):
             try:
                 memory_bytes = self._query.calculate_memory_bytes_for_slices(
@@ -498,42 +503,7 @@ class GenericMethodWrapper(MethodWrapper):
             finally:
                 gpumem_cleanup()
 
-        # Find a number of slices that does not fit
-        current_slices = 100
-        slices_high = None
-        memory_bytes = get_mem_bytes(current_slices)
-        if memory_bytes > available_memory:
-            # Found upper limit, continue to binary search
-            slices_high = current_slices
-        else:
-            # linear approximation
-            current_slices = int(current_slices * available_memory / memory_bytes)
-            while True:
-                memory_bytes = get_mem_bytes(current_slices)
-                if memory_bytes > available_memory:
-                    # Found upper limit, continue to binary search
-                    break
-                elif memory_bytes >= available_memory * MEM_RATIO_THRESHOLD:
-                    # This is "good enough", return
-                    return current_slices
-
-                # If linear approximation is not enough, just double every iteration
-                current_slices *= 2
-            slices_high = current_slices
-
-        # Binary search between low and high
-        slices_low = 0
-        while slices_high - slices_low > 1:
-            current_slices = (slices_low + slices_high) // 2
-            memory_bytes = get_mem_bytes(current_slices)
-            if memory_bytes > available_memory:
-                slices_high = current_slices
-            elif memory_bytes >= available_memory * MEM_RATIO_THRESHOLD:
-                return current_slices
-            else:
-                slices_low = current_slices
-
-        return slices_low
+        return search_max_slices_iterative(available_memory, get_mem_bytes)
 
     def _unwrap_output_ref_values(self) -> Dict[str, Any]:
         """

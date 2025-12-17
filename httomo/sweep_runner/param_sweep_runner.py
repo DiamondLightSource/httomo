@@ -16,12 +16,12 @@ from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import NonSweepStage, Stages, SweepStage
-from httomo.utils import catchtime, log_exception, log_once
-from httomo.runner.gpu_utils import get_available_gpu_memory
+from httomo.utils import catchtime, log_exception, log_once, search_max_slices_iterative
+from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo_backends.methods_database.packages.backends.httomolibgpu.supporting_funcs.prep.phase import (
-    _calc_memory_bytes_paganin_filter,
+    _calc_memory_bytes_for_slices_paganin_filter,
 )
 
 
@@ -322,8 +322,15 @@ def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
     angles_total = source.aux_data.angles_length
     det_X_length = source.chunk_shape[2]
 
-    (memory_bytes_method, subtract_bytes) = _calc_memory_bytes_paganin_filter(
-        (angles_total, det_X_length), dtype=np.float32()
-    )
+    def get_mem_bytes(slices):
+        try:
+            return _calc_memory_bytes_for_slices_paganin_filter(
+                (slices, angles_total, det_X_length), dtype=np.float32()
+            )
+        except:
+            return 2**64
+        finally:
+            gpumem_cleanup()
 
-    return (available_memory - subtract_bytes) // memory_bytes_method
+    gpumem_cleanup()
+    return search_max_slices_iterative(available_memory, get_mem_bytes)

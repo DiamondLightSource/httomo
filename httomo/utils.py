@@ -299,3 +299,60 @@ def mpi_abort_excepthook(type, value, traceback):
     log_rank("\n".join(format_tb(traceback)), MPI.COMM_WORLD)
     MPI.COMM_WORLD.Abort()
     sys.__excepthook__(type, value, traceback)
+
+
+def search_max_slices_iterative(
+    available_memory: int, get_mem_bytes: Callable[[int], int]
+) -> int:
+    """
+    Approximates the maximum number of fitting slices to the GPU memory for a given function.
+    The memory profile of the function must be increasing in the function of the number of slices.
+    First, a linear approximation of the memory profile is performed. If this is not accurate enough,
+    a binary search follows to determine the number of fitting slices. This function never returns a
+    number of slices for what `get_mem_bytes(slices) > available_memory`.
+
+    :param available_memory: Bytes of available device memory
+    :type available_memory: int
+    :param get_mem_bytes: A functor that produces the bytes of device memory needed for a given number of slices.
+    :type get_mem_bytes: Callable[[int], int]
+    :return: Returns the approximation of the maximum number of fitting slices.
+    :rtype: int
+    """
+    MEM_RATIO_THRESHOLD = 0.9  # 90% of the used device memory is the target
+
+    # Find a number of slices that does not fit
+    current_slices = 100
+    slices_high = None
+    memory_bytes = get_mem_bytes(current_slices)
+    if memory_bytes > available_memory:
+        # Found upper limit, continue to binary search
+        slices_high = current_slices
+    else:
+        # linear approximation
+        current_slices = int(current_slices * available_memory / memory_bytes)
+        while True:
+            memory_bytes = get_mem_bytes(current_slices)
+            if memory_bytes > available_memory:
+                # Found upper limit, continue to binary search
+                break
+            elif memory_bytes >= available_memory * MEM_RATIO_THRESHOLD:
+                # This is "good enough", return
+                return current_slices
+
+            # If linear approximation is not enough, just double every iteration
+            current_slices *= 2
+        slices_high = current_slices
+
+    # Binary search between low and high
+    slices_low = 0
+    while slices_high - slices_low > 1:
+        current_slices = (slices_low + slices_high) // 2
+        memory_bytes = get_mem_bytes(current_slices)
+        if memory_bytes > available_memory:
+            slices_high = current_slices
+        elif memory_bytes >= available_memory * MEM_RATIO_THRESHOLD:
+            return current_slices
+        else:
+            slices_low = current_slices
+
+    return slices_low
