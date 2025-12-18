@@ -1,5 +1,6 @@
 from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
+from httomo.runner.gpu_utils import gpumem_cleanup
 from httomo.runner.method_wrapper import GpuTimeInfo
 from httomo.runner.methods_repository_interface import MethodRepository
 
@@ -60,6 +61,9 @@ class DezingingWrapper(GenericMethodWrapper):
         with catch_gputime() as t:
             block.data = self.method(block.data, **self._config_params)
             if not self._flats_darks_processed:
+                # Clean up to avoid darks and flats keeping a reference to large chunks
+                # in the CuPy memory pool
+                gpumem_cleanup()
                 block.darks = self.method(block.darks, **self._config_params)
                 block.flats = self.method(block.flats, **self._config_params)
                 self._flats_darks_processed = True
