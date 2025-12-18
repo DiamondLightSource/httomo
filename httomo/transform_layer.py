@@ -36,10 +36,12 @@ class TransformLayer:
         self._out_dir = out_dir if out_dir is not None else httomo.globals.run_out_dir
 
     def transform(self, pipeline: Pipeline) -> Pipeline:
-        pipeline = self.insert_data_reducer(pipeline)
-        pipeline = self.insert_data_checker(pipeline)
-
         pipeline_is_sweep = _check_if_pipeline_has_a_sweep(pipeline)
+
+        pipeline = self.insert_data_reducer(pipeline)
+        if pipeline_is_sweep:
+            pipeline = self.remove_redundant_method_in_sweep(pipeline)
+        pipeline = self.insert_data_checker(pipeline)
 
         if pipeline_is_sweep:
             pipeline = self.insert_save_images_after_sweep(pipeline)
@@ -95,30 +97,18 @@ class TransformLayer:
         """This will insert CPU or GPU data checker method AFTER most of the methods in the pipeline"""
         loader = pipeline.loader
         methods = []
-        methods.append(
-            GenericMethodWrapper(
-                self._repo,
-                "httomolib.misc.utils",
-                "data_checker",
-                comm=self._comm,
-                save_result=False,
-                task_id="datachecker_0",
-                infsnans_correct=False,  # the input (raw) data is 16bit
-                zeros_warning=True,  # we count the zeros if the data is too sparse
-                data_to_method_name="Data Loader",
-            ),
-        )
         for index, m in enumerate(pipeline):
             methods.append(m)
             # handling some exceptions here after which we don't need to insert the data checker
+            exceptions_methods = [
+                "data_reducer",
+                "data_checker",
+                "calculate_stats",
+                "rescale_to_int",
+                "save_to_images",
+            ]
             if (
-                m.method_name
-                not in [
-                    "data_reducer",
-                    "data_checker",
-                    "calculate_stats",
-                    "rescale_to_int",
-                ]
+                m.method_name not in exceptions_methods
                 and "rotation" not in m.module_path
                 and index < len(pipeline._methods) - 1
             ):
@@ -152,7 +142,6 @@ class TransformLayer:
                             data_to_method_name=m.method_name,
                         ),
                     )
-
         return Pipeline(loader, methods)
 
     def insert_save_images_after_sweep(self, pipeline: Pipeline) -> Pipeline:
@@ -176,4 +165,14 @@ class TransformLayer:
                     ),
                 )
                 sweep_before = True
+        return Pipeline(loader, methods)
+
+    def remove_redundant_method_in_sweep(self, pipeline: Pipeline) -> Pipeline:
+        """Remove "redundant" methods in the sweep pipeline that were inserted by the user."""
+        redundant_methods = ["calculate_stats", "rescale_to_int", "save_to_images"]
+        loader = pipeline.loader
+        methods = []
+        for m in pipeline:
+            if m.method_name not in redundant_methods:
+                methods.append(m)
         return Pipeline(loader, methods)
