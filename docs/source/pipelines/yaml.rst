@@ -58,19 +58,6 @@ Those pipelines consist of methods from HTTomolibgpu (GPU) and HTTomolib (CPU) b
     .. literalinclude:: ../pipelines_full/FISTA3d_tomobar.yaml
         :language: yaml
 
-.. _tutorials_pl_templates_cpu:
-
-Pipelines using TomoPy library
-------------------------------
-
-One can build CPU-only pipelines by using mostly TomoPy methods. They are expected to be slower than the pipelines above.
-
-.. dropdown:: CPU pipeline using auto-centering and the gridrec reconstruction method from TomoPy.
-
-    .. literalinclude:: ../pipelines_full/tomopy_gridrec.yaml
-        :language: yaml
-
-
 .. _tutorials_pl_templates_dls:
 
 DLS-specific pipelines
@@ -95,17 +82,31 @@ Pipelines with parameter sweeps
 
 Here we demonstrate how to perform a sweep across multiple values of a single parameter (see :ref:`parameter_sweeping` for more details).
 
-.. note::  There is no need to add image saving plugin for sweep runs as it will be added automatically. It is also preferable to keep the `preview` small as the time of computation can be substantial.
+.. note::  There is no need to add image saving plugin for sweep runs as it will be added automatically. 
 
 .. dropdown:: Parameter sweep using the :code:`!SweepRange` tag to do a sweep over several CoR values of the :code:`center` parameter in the reconstruction method. 
 
    .. literalinclude:: ../pipelines_full/sweep_center_FBP3d_tomobar.yaml
        :language: yaml
-       :emphasize-lines: 34-37
+       :emphasize-lines: 36-39
 
 .. dropdown:: Parameter sweep using the :code:`!Sweep` tag over several particular values (not a range) of the :code:`ratio_delta_beta` parameter for the Paganin filter. 
 
    .. literalinclude:: ../pipelines_full/sweep_paganin_FBP3d_tomobar.yaml
        :language: yaml
-       :emphasize-lines: 53-56
+       :emphasize-lines: 51-54
             
+
+.. _tutorials_pl_templates_cpu:
+
+Pipelines using TomoPy library
+------------------------------
+
+One can build CPU-only pipelines by using mostly TomoPy methods. 
+
+.. note::  Methods from TomoPy are expected to be slower than the GPU-accelerated methods from the libraries above.
+
+.. dropdown:: CPU pipeline using auto-centering and the gridrec reconstruction method from TomoPy.
+
+    .. literalinclude:: ../pipelines_full/tomopy_gridrec.yaml
+        :language: yaml
