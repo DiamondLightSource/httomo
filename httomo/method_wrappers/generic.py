@@ -14,7 +14,14 @@ from httomo.runner.methods_repository_interface import (
     MethodRepository,
 )
 from httomo.runner.output_ref import OutputRef
-from httomo.utils import catch_gputime, catchtime, gpu_enabled, log_rank, xp
+from httomo.utils import (
+    catch_gputime,
+    catchtime,
+    gpu_enabled,
+    log_rank,
+    xp,
+    search_max_slices_iterative,
+)
 
 
 import numpy as np
@@ -447,6 +454,17 @@ class GenericMethodWrapper(MethodWrapper):
                 * np.prod(non_slice_dims_shape)
                 * data_dtype.itemsize
             )
+        elif self.memory_gpu.method == "iterative":
+            # The iterative method may use the GPU
+            assert gpu_enabled, "GPU method used on a system without GPU support"
+            with xp.cuda.Device(self._gpu_id):
+                gpumem_cleanup()
+                return (
+                    self._calculate_max_slices_iterative(
+                        data_dtype, non_slice_dims_shape, available_memory
+                    ),
+                    available_memory,
+                )
         else:
             (
                 memory_bytes_method,
@@ -461,6 +479,31 @@ class GenericMethodWrapper(MethodWrapper):
         return (
             available_memory - subtract_bytes
         ) // memory_bytes_method, available_memory
+
+    def _calculate_max_slices_iterative(
+        self,
+        data_dtype: np.dtype,
+        non_slice_dims_shape: Tuple[int, int],
+        available_memory: int,
+    ) -> int:
+        def get_mem_bytes(current_slices):
+            try:
+                memory_bytes = self._query.calculate_memory_bytes_for_slices(
+                    dims_shape=(
+                        current_slices,
+                        non_slice_dims_shape[0],
+                        non_slice_dims_shape[1],
+                    ),
+                    dtype=data_dtype,
+                    **self._unwrap_output_ref_values(),
+                )
+                return memory_bytes
+            except:
+                return 2**64
+            finally:
+                gpumem_cleanup()
+
+        return search_max_slices_iterative(available_memory, get_mem_bytes)
 
     def _unwrap_output_ref_values(self) -> Dict[str, Any]:
         """
