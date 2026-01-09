@@ -21,6 +21,8 @@ These are archived YAML templates that can be used with already released and tag
    :download:`HTTomo version 2.5 templates <../templates_archive/httomo_ver2_5_yaml_templates.zip>`
 
    :download:`HTTomo version 2.6 templates <../templates_archive/httomo_ver2_6_yaml_templates.zip>`
+   
+   :download:`HTTomo version 3.0 templates <../templates_archive/httomo_ver3_0_yaml_templates.zip>`
 
 .. _latest_templates:
 

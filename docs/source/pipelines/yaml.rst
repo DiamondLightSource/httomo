@@ -22,6 +22,8 @@ These are archived full YAML pipelines that can be used with already released an
    :download:`HTTomo version 2.5 full YAML pipelines <../templates_archive/httomo_ver2_5_full_yaml_pipelines.zip>`
 
    :download:`HTTomo version 2.6 full YAML pipelines <../templates_archive/httomo_ver2_6_full_yaml_pipelines.zip>`
+   
+   :download:`HTTomo version 3.0 full YAML pipelines <../templates_archive/httomo_ver3_0_full_yaml_pipelines.zip>`
 
 
 .. warning:: At DLS, the templates below should work with the :code:`httomo/latest` module, however, for production please use :ref:`full_pipelines_archived`. 
