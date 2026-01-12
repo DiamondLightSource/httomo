@@ -162,7 +162,7 @@ def check_hdf5_paths_against_loader(conf: PipelineConfig, in_file_path: str) -> 
     ]
     for key in non_auto_path_keys:
         if key == "image_key_path" and params[key] is None:
-            break
+            continue
         if params[key].strip("/") not in hdf5_members:
             _print_with_colour(
                 f"'{params[key]}' is not a valid path to a dataset in YAML_CONFIG. "
