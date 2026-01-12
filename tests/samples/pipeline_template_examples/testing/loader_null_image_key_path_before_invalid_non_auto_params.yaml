@@ -1,0 +1,6 @@
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    image_key_path: null
+    data_path: /foo
+    rotation_angles: auto
