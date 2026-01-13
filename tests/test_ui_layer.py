@@ -6,6 +6,24 @@ from httomo.runner.output_ref import OutputRef
 from httomo.ui_layer import PipelineFormat, UiLayer
 from httomo import ui_layer
 import pytest
+import numpy as np
+
+from httomo.preview import PreviewConfig, PreviewDimConfig
+from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.runner.dataset import DataSetBlock
+from httomo.runner.dataset_store_interfaces import DataSetSource
+from httomo.runner.loader import LoaderInterface
+from httomo_backends.methods_database.query import Pattern
+from typing import Literal, Optional
+from httomo.method_wrappers import make_method_wrapper
+from tests.testing_utils import (
+    make_mock_preview_config,
+    make_mock_repo,
+)
+from httomo_backends.methods_database.query import GpuMemoryRequirement
+
+from httomo.ui_layer import fix_preview_y_if_smaller_than_padding
+
 
 from .testing_utils import make_test_method
 
@@ -304,3 +322,131 @@ def test_continuous_scan_subset_loader_param_handling(
         offset_function_spy.assert_called_once()
     else:
         offset_function_spy.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "detY_preview_stop",
+    [18, 19, 20, 21],
+)
+def tests_preview_modifier_padding(mocker: MockerFixture, detY_preview_stop: int):
+    detY_preview_start = 10
+    detY_preview_stop = detY_preview_stop
+    slices_total = detY_preview_stop - detY_preview_start
+    EXPECTED_PADDING = (5, 5)
+    GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (1800, slices_total, 160)
+    data = np.arange(np.prod(PREVIEWED_SLICES_SHAPE), dtype=np.uint16).reshape(
+        PREVIEWED_SLICES_SHAPE
+    )
+    aux_data = AuxiliaryData(np.ones(PREVIEWED_SLICES_SHAPE[0], dtype=np.float32))
+    block = DataSetBlock(
+        data=data,
+        aux_data=aux_data,
+        slicing_dim=0,
+        global_shape=GLOBAL_SHAPE,
+        chunk_start=0,
+        chunk_shape=GLOBAL_SHAPE,
+        block_start=0,
+    )
+    preview = PreviewConfig(
+        angles=PreviewDimConfig(start=0, stop=PREVIEWED_SLICES_SHAPE[0]),
+        detector_y=PreviewDimConfig(start=detY_preview_start, stop=detY_preview_stop),
+        detector_x=PreviewDimConfig(start=0, stop=PREVIEWED_SLICES_SHAPE[2]),
+    )
+
+    class FakeModule:
+        def total_variation_PD(data: np.ndarray, regularisation_parameter: float, iterations: int):  # type: ignore
+            return data
+
+    mocker.patch(
+        "httomo.method_wrappers.generic.import_module", return_value=FakeModule
+    )
+
+    loader: LoaderInterface = mocker.create_autospec(
+        LoaderInterface,
+        instance=True,
+        pattern=Pattern.all,
+        method_name="testloader",
+        reslice=False,
+        preview=preview,
+    )
+
+    def mock_make_data_source(padding) -> DataSetSource:
+        ret = mocker.create_autospec(
+            DataSetSource,
+            global_shape=block.global_shape,
+            dtype=block.data.dtype,
+            chunk_shape=block.chunk_shape,
+            chunk_index=block.chunk_index,
+            slicing_dim=1 if loader.pattern == Pattern.sinogram else 0,
+            aux_data=block.aux_data,
+            preview=preview,
+        )
+        type(ret).raw_shape = mock.PropertyMock(return_value=GLOBAL_SHAPE)
+        slicing_dim: Literal[0, 1, 2] = 0
+        mocker.patch.object(
+            ret,
+            "read_block",
+            side_effect=lambda start, length: DataSetBlock(
+                data=block.data[start : start + length, :, :],
+                aux_data=block.aux_data,
+                global_shape=block.global_shape,
+                chunk_shape=block.chunk_shape,
+                slicing_dim=slicing_dim,
+                block_start=start,
+                chunk_start=block.chunk_index[slicing_dim],
+            ),
+        )
+        return ret
+
+    mocker.patch.object(
+        loader,
+        "make_data_source",
+        side_effect=mock_make_data_source,
+    )
+
+    total_variation_PD_params = {
+        "regularisation_parameter": 1.5e-4,
+        "iterations": 100,
+    }
+    memory_gpu: Optional[GpuMemoryRequirement] = None
+    repo = make_mock_repo(
+        mocker,
+        pattern=Pattern.all,
+        implementation="gpu_cupy",
+        memory_gpu=memory_gpu,
+        padding=True,
+    )
+    padding_calc_mock = mocker.patch.object(
+        repo.query("", ""), "calculate_padding", return_value=EXPECTED_PADDING
+    )
+    wrp = make_method_wrapper(
+        repo,
+        module_path="mocked_module_path.misc",
+        method_name="total_variation_PD",
+        comm=MPI.COMM_WORLD,
+        preview_config=make_mock_preview_config(mocker),
+        save_result=None,
+        output_mapping={},
+        **total_variation_PD_params,
+    )
+    fix_preview_y_if_smaller_than_padding(loader, [wrp])
+    padding = wrp.calculate_padding()
+
+    if slices_total <= sum(padding):
+        EXPECTED_PREVIEW_CONFIG = PreviewConfig(
+            angles=preview.angles,
+            detector_y=PreviewDimConfig(
+                start=detY_preview_start - padding[0],
+                stop=detY_preview_stop + padding[1],
+            ),
+            detector_x=preview.detector_x,
+        )
+    else:
+        EXPECTED_PREVIEW_CONFIG = PreviewConfig(
+            angles=preview.angles,
+            detector_y=PreviewDimConfig(
+                start=detY_preview_start, stop=detY_preview_stop
+            ),
+            detector_x=preview.detector_x,
+        )
+    assert loader.preview == EXPECTED_PREVIEW_CONFIG

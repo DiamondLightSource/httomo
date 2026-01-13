@@ -173,8 +173,7 @@ class UiLayer:
 
 def fix_preview_y_if_smaller_than_padding(
     loader: LoaderInterface, methods_list: List[MethodWrapper]
-) -> LoaderInterface:
-    # in case if vertical preview is smaller that the padded chunk we need to modify (enlarge) the preview
+) -> None:
     vertical_preview_length = (
         loader.preview.detector_y.stop - loader.preview.detector_y.start
     )
@@ -192,7 +191,6 @@ def fix_preview_y_if_smaller_than_padding(
             ),
             detector_x=loader.preview.detector_x,
         )
-    return loader
 
 
 def get_valid_ref_str(parameters: Dict[str, Any]) -> Dict[str, str]:
