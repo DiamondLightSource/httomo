@@ -139,6 +139,8 @@ def check_hdf5_paths_against_loader(conf: PipelineConfig, in_file_path: str) -> 
         colour=Colour.GREEN,
     )
     params = conf[0]["parameters"]
+    if "image_key_path" not in params:
+        params["image_key_path"] = None
     POSSIBLE_AUTO_PARAMS = ["data_path", "image_key_path", "rotation_angles"]
     possible_auto_param_pairs = {name: params[name] for name in POSSIBLE_AUTO_PARAMS}
     auto_pairs = {k: v for k, v in possible_auto_param_pairs.items() if v == "auto"}
