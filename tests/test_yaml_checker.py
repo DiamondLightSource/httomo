@@ -87,6 +87,14 @@ def test_hdf5_paths_invalid_non_auto_value_caught_if_null_image_key_path(
     assert not check_hdf5_paths_against_loader(conf, standard_data)
 
 
+def test_hdf5_paths_accepts_omitted_image_key_path(
+    standard_data: str, sample_pipelines: str, load_yaml: Callable
+):
+    filepath = sample_pipelines + "testing/loader_omitted_image_key_path.yaml"
+    conf = load_yaml(filepath)
+    assert check_hdf5_paths_against_loader(conf, standard_data)
+
+
 def test_check_methods_exist_in_templates(sample_pipelines: str, load_yaml: Callable):
     incorrect_method_pipeline = sample_pipelines + "testing/incorrect_method.yaml"
     conf = load_yaml(incorrect_method_pipeline)
