@@ -9,7 +9,7 @@ import re
 import h5py
 from mpi4py.MPI import Comm
 
-from httomo.preview import PreviewConfig
+from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 
@@ -24,8 +24,6 @@ from httomo.transform_loader_params import (
     parse_config,
     parse_preview,
 )
-from httomo.preview import PreviewConfig, PreviewDimConfig
-
 from httomo_backends.methods_database.query import MethodDatabaseRepository
 
 MethodConfig: TypeAlias = Dict[str, Any]

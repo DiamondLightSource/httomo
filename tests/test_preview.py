@@ -1,11 +1,8 @@
 from pathlib import Path
 from typing import Tuple
-from unittest import mock
 import pytest
 import h5py
 import numpy as np
-from pytest_mock import MockerFixture
-
 from httomo.preview import Preview, PreviewConfig, PreviewDimConfig
 
 
