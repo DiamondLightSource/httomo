@@ -294,7 +294,7 @@ class DataSetStoreReader(DataSetSource):
                 )
             else:
                 log_once(
-                    f"Slicing axis change (reslice) from sinogram to projections took {(end - start):.9f}s.",
+                    f"Slicing axis change (reslice) from sinogram to projection took {(end - start):.9f}s.",
                     level=logging.INFO,
                 )
             self._slicing_dim = slicing_dim
