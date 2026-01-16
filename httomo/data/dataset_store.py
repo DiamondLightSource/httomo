@@ -40,7 +40,7 @@ import numpy as np
 from numpy.typing import DTypeLike
 import weakref
 
-from httomo.utils import catchtime, log_once, make_3d_shape_from_shape
+from httomo.utils import log_once, make_3d_shape_from_shape
 
 
 class DataSetStoreWriter(ReadableDataSetSink):
