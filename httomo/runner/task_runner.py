@@ -239,10 +239,18 @@ class TaskRunner:
         self, section: Section, block: DataSetBlock
     ) -> DataSetBlock:
         self._gpu_time_info = GpuTimeInfo()
+        if_previous_block_is_on_gpu = False
         for method in section:
+            if_current_block_is_on_gpu = False
             self.set_side_inputs(method)
             block = self._execute_method(method, block)
-        if method.cupyrun:
+            if method.implementation == "gpu_cupy":
+                if_current_block_is_on_gpu = True
+            if method.method_name == "calculate_stats" and if_previous_block_is_on_gpu:
+                if_current_block_is_on_gpu = True
+            if_previous_block_is_on_gpu = if_current_block_is_on_gpu
+
+        if if_current_block_is_on_gpu:
             with catchtime() as t:
                 block.to_cpu()
             self._gpu_time_info.device2host = t.elapsed
