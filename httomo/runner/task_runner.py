@@ -1,4 +1,3 @@
-from itertools import islice
 import logging
 import time
 from typing import Any, Dict, Literal, Optional, List, Tuple, Union
@@ -38,6 +37,7 @@ from httomo.utils import (
     log_rank,
 )
 import numpy as np
+from httomo.runner.method_wrapper import GpuTimeInfo
 
 
 class TaskRunner:
@@ -238,9 +238,14 @@ class TaskRunner:
     def _execute_section_block(
         self, section: Section, block: DataSetBlock
     ) -> DataSetBlock:
+        self._gpu_time_info = GpuTimeInfo()
         for method in section:
             self.set_side_inputs(method)
             block = self._execute_method(method, block)
+        if method.cupyrun:
+            with catchtime() as t:
+                block.to_cpu()
+            self._gpu_time_info.device2host = t.elapsed
         return block
 
     def _log_pipeline(self, msg: Any, level: int = logging.INFO):

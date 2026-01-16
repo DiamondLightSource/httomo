@@ -117,7 +117,6 @@ class DataSetStoreWriter(ReadableDataSetSink):
     def write_block(self, block: DataSetBlock):
         if self._readonly:
             raise ValueError("Cannot write after creating a reader")
-        block.to_cpu()  # TODO: possibly needs moving outside the block writing
         start = max(block.chunk_index_unpadded)
         if self._data is None:
             # if non-slice dims in block are different, update the shapes here
