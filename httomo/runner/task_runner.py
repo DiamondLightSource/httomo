@@ -300,7 +300,7 @@ class TaskRunner:
         if convert_gpu_block_to_cpu:
             with catchtime() as t:
                 block.to_cpu()
-            method.gpu_time.device2host += t.elapsed
+            method.gpu_time.device2host = t.elapsed
 
         if self.monitor is not None:
             self.monitor.report_method_block(
