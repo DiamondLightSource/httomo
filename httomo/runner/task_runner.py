@@ -238,22 +238,27 @@ class TaskRunner:
     def _execute_section_block(
         self, section: Section, block: DataSetBlock
     ) -> DataSetBlock:
-        self._gpu_time_info = GpuTimeInfo()
         if_previous_block_is_on_gpu = False
+        convert_gpu_block_to_cpu = False
+        last_section_method_name = section[len(section) - 1].method_name
+
         for method in section:
             if_current_block_is_on_gpu = False
-            self.set_side_inputs(method)
-            block = self._execute_method(method, block)
             if method.implementation == "gpu_cupy":
                 if_current_block_is_on_gpu = True
             if method.method_name == "calculate_stats" and if_previous_block_is_on_gpu:
                 if_current_block_is_on_gpu = True
-            if_previous_block_is_on_gpu = if_current_block_is_on_gpu
 
-        if if_current_block_is_on_gpu:
-            with catchtime() as t:
-                block.to_cpu()
-            self._gpu_time_info.device2host += t.elapsed
+            if (
+                last_section_method_name == method.method_name
+                and if_current_block_is_on_gpu
+            ):
+                convert_gpu_block_to_cpu = True
+
+            self.set_side_inputs(method)
+            block = self._execute_method(method, block, convert_gpu_block_to_cpu)
+
+            if_previous_block_is_on_gpu = if_current_block_is_on_gpu
         return block
 
     def _log_pipeline(self, msg: Any, level: int = logging.INFO):
@@ -283,13 +288,20 @@ class TaskRunner:
         )
 
     def _execute_method(
-        self, method: MethodWrapper, block: DataSetBlock
+        self, method: MethodWrapper, block: DataSetBlock, convert_gpu_block_to_cpu: bool
     ) -> DataSetBlock:
         start = time.perf_counter_ns()
         block = method.execute(block)
         end = time.perf_counter_ns()
+
         if block.is_last_in_chunk:
             self.append_side_outputs(method.get_side_output())
+
+        if convert_gpu_block_to_cpu:
+            with catchtime() as t:
+                block.to_cpu()
+            method.gpu_time.device2host += t.elapsed
+
         if self.monitor is not None:
             self.monitor.report_method_block(
                 method.method_name,
