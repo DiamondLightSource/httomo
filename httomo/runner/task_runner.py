@@ -253,7 +253,7 @@ class TaskRunner:
         if if_current_block_is_on_gpu:
             with catchtime() as t:
                 block.to_cpu()
-            self._gpu_time_info.device2host = t.elapsed
+            self._gpu_time_info.device2host += t.elapsed
         return block
 
     def _log_pipeline(self, msg: Any, level: int = logging.INFO):
