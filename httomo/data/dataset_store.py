@@ -40,7 +40,7 @@ import numpy as np
 from numpy.typing import DTypeLike
 import weakref
 
-from httomo.utils import catchtime, log_once, make_3d_shape_from_shape
+from httomo.utils import log_once, make_3d_shape_from_shape
 
 
 class DataSetStoreWriter(ReadableDataSetSink):
@@ -293,7 +293,7 @@ class DataSetStoreReader(DataSetSource):
                 )
             else:
                 log_once(
-                    f"Slicing axis change (reslice) from sinogram to projections took {(end - start):.9f}s.",
+                    f"Slicing axis change (reslice) from sinogram to projection took {(end - start):.9f}s.",
                     level=logging.INFO,
                 )
             self._slicing_dim = slicing_dim
