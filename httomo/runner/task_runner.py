@@ -292,7 +292,6 @@ class TaskRunner:
     ) -> DataSetBlock:
         start = time.perf_counter_ns()
         block = method.execute(block)
-        end = time.perf_counter_ns()
 
         if block.is_last_in_chunk:
             self.append_side_outputs(method.get_side_output())
@@ -302,6 +301,7 @@ class TaskRunner:
                 block.to_cpu()
             method.gpu_time.device2host += t.elapsed
 
+        end = time.perf_counter_ns()
         if self.monitor is not None:
             self.monitor.report_method_block(
                 method.method_name,
