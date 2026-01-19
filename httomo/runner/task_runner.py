@@ -145,7 +145,6 @@ class TaskRunner:
         self._pass_min_block_length_to_intermediate_data_wrapper(section)
 
         splitter = BlockSplitter(self.source, section.max_slices)
-        start_source = time.perf_counter_ns()
         no_of_blocks = len(splitter)
 
         # Redirect tqdm progress bar output to /dev/null, and instead manually write block
@@ -156,6 +155,7 @@ class TaskRunner:
             unit="block",
             ascii=True,
         )
+        start_source = time.perf_counter_ns()
         for idx, block in enumerate(progress):
             end_source = time.perf_counter_ns()
             if self.monitor is not None:
@@ -274,9 +274,9 @@ class TaskRunner:
     ) -> DataSetBlock:
         start = time.perf_counter_ns()
         block = method.execute(block)
+        end = time.perf_counter_ns()
         if block.is_last_in_chunk:
             self.append_side_outputs(method.get_side_output())
-        end = time.perf_counter_ns()
         if self.monitor is not None:
             self.monitor.report_method_block(
                 method.method_name,
