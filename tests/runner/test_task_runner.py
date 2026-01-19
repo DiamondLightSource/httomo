@@ -271,12 +271,12 @@ def test_calls_append_side_outputs_after_last_block(
     spy = mocker.patch.object(t, "append_side_outputs")
     t._prepare()
     t._execute_method(
-        method, block1
+        method, block1, convert_gpu_block_to_cpu=False,
     )  # the first block shouldn't trigger a side output append call
     assert spy.call_count == 0
 
     t._execute_method(
-        method, block2
+        method, block2, convert_gpu_block_to_cpu=True,
     )  # the last block should trigger side output append call
     getmock.assert_called_once()
     spy.assert_called_once_with(side_outputs)
@@ -319,7 +319,7 @@ def test_execute_method_updates_monitor(
     t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
     t._prepare()
     mocker.patch.object(method1, "execute", return_value=dummy_block)
-    t._execute_method(method1, dummy_block)
+    t._execute_method(method1, dummy_block, convert_gpu_block_to_cpu=False)
 
     mon.report_method_block.assert_called_once_with(
         method1.method_name,
