@@ -355,7 +355,7 @@ class DataSetStoreReader(DataSetSource):
                 array, newdim, startidx = reslice(
                     data, old_slicing_dim + 1, new_slicing_dim + 1, self._comm
                 )
-                self._chunk_shape = array.shape  #  type: ignore
+                self._chunk_shape = array.shape  # type: ignore
                 assert newdim == new_slicing_dim + 1
                 idx = [0, 0, 0]
                 idx[new_slicing_dim] = startidx
