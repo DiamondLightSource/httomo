@@ -174,8 +174,7 @@ def fix_preview_y_if_smaller_than_padding(
 ) -> None:
     vertical_preview_length = (
         loader.preview.detector_y.stop - loader.preview.detector_y.start
-    )
-    # we need to know the largest padding value over all methods in the pipeline
+    ) // loader.comm.size
     max_pad_value = 0
     for _, m in enumerate(methods_list):
         if m.padding:
