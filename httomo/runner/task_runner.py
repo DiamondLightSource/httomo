@@ -37,7 +37,6 @@ from httomo.utils import (
     log_rank,
 )
 import numpy as np
-from httomo.runner.method_wrapper import GpuTimeInfo
 
 
 class TaskRunner:
