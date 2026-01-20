@@ -393,7 +393,7 @@ def test_execute_section_for_block(
     exec_method = mocker.patch.object(t, "_execute_method", return_value=dummy_block)
     t._execute_section_block(s[0], dummy_block)
 
-    calls = [call(method1, ANY), call(method2, ANY)]
+    calls = [call(method1, ANY, False), call(method2, ANY, False)]
     exec_method.assert_has_calls(calls)
 
 
