@@ -138,8 +138,8 @@ class UiLayer:
                 "There is no loader in the pipeline. Please add the loader as the first method"
             )
         parameters = task_conf.get("parameters", dict())
-        (data_config, image_key_path, angles, darks_config, flats_config) = (
-            parse_config(self.in_data_file, parameters)
+        data_config, image_key_path, angles, darks_config, flats_config = parse_config(
+            self.in_data_file, parameters
         )
 
         with h5py.File(data_config.in_file, "r") as f:
@@ -229,7 +229,7 @@ def update_side_output_references(
     pattern = get_regex_pattern()
     # check if there is a reference to side_outputs to cross-link
     for param_name, param_value in valid_refs.items():
-        (ref_id, side_str, ref_arg) = get_ref_split(param_value, pattern)
+        ref_id, side_str, ref_arg = get_ref_split(param_value, pattern)
         if ref_id is None:
             continue
         method = method_id_map.get(ref_id, None)

@@ -7,7 +7,6 @@ from mpi4py import MPI
 
 from httomo.utils import log_once
 
-
 __all__ = ["alltoall", "alltoall_ring"]
 
 

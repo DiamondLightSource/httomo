@@ -329,7 +329,7 @@ def check_ref_id_valid(conf: PipelineConfig) -> bool:
         for k, v in get_valid_ref_str(m.get("parameters", dict())).items()
     }
     for k, v in ref_strs.items():
-        (ref_id, side_str, ref_arg) = get_ref_split(v, pattern)
+        ref_id, side_str, ref_arg = get_ref_split(v, pattern)
         if ref_id not in method_ids:
             _print_with_colour(
                 f"The reference id: {ref_id} was not found to have a matching method id."
@@ -347,7 +347,7 @@ def check_side_out_matches_ref_arg(conf: PipelineConfig) -> bool:
         for k, v in get_valid_ref_str(m.get("parameters", dict())).items()
     }
     for k, v in ref_strs.items():
-        (ref_id, side_str, ref_arg) = get_ref_split(v, pattern)
+        ref_id, side_str, ref_arg = get_ref_split(v, pattern)
         side_dicts = [
             m.get(side_str)
             for m in conf

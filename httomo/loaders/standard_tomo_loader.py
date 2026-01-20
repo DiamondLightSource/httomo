@@ -428,7 +428,7 @@ class StandardLoaderWrapper(LoaderInterface):
             comm=self.comm,
             padding=padding,
         )
-        (self._angles_total, self._detector_y, self._detector_x) = loader.global_shape
+        self._angles_total, self._detector_y, self._detector_x = loader.global_shape
         return loader
 
     @property
