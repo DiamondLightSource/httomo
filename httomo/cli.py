@@ -21,7 +21,6 @@ from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
 from httomo.ui_layer import UiLayer, PipelineFormat
 
-
 try:
     from . import __version__
 except:

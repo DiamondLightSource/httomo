@@ -59,7 +59,7 @@ def test_pipe_FBP3d_tomobar_k11_38731_in_disk(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP3d_tomobar_k11_38731_npz["data"]
     axis_slice = FBP3d_tomobar_k11_38731_npz["axis_slice"]
-    (slices, sizeX, sizeY) = np.shape(data_gt)
+    slices, sizeX, sizeY = np.shape(data_gt)
 
     step = axis_slice // (slices + 2)
     # store for the result
@@ -124,7 +124,7 @@ def test_pipe_FBP3d_tomobar_i12_119647_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP3d_tomobar_i12_119647_npz["data"]
     axis_slice = FBP3d_tomobar_i12_119647_npz["axis_slice"]
-    (slices, sizeX, sizeY) = np.shape(data_gt)
+    slices, sizeX, sizeY = np.shape(data_gt)
 
     step = axis_slice // (slices + 2)
     # store for the result
@@ -191,7 +191,7 @@ def test_pipe_LPRec3d_tomobar_i12_119647_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = LPRec3d_tomobar_i12_119647_npz["data"]
     axis_slice = LPRec3d_tomobar_i12_119647_npz["axis_slice"]
-    (slices, sizeX, sizeY) = np.shape(data_gt)
+    slices, sizeX, sizeY = np.shape(data_gt)
 
     step = axis_slice // (slices + 2)
     # store for the result
@@ -258,7 +258,7 @@ def test_pipe_FBP2d_astra_i12_119647_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP2d_astra_i12_119647_npz["data"]
     axis_slice = FBP2d_astra_i12_119647_npz["axis_slice"]
-    (slices, sizeX, sizeY) = np.shape(data_gt)
+    slices, sizeX, sizeY = np.shape(data_gt)
 
     step = axis_slice // (slices + 2)
     # store for the result
@@ -370,7 +370,7 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt_tv = FBP3d_tomobar_TVdenoising_i13_177906_npz["data"]
     axis_slice = FBP3d_tomobar_TVdenoising_i13_177906_npz["axis_slice"]
-    (slices, sizeX, sizeY) = np.shape(data_gt_tv)
+    slices, sizeX, sizeY = np.shape(data_gt_tv)
 
     step = axis_slice // (slices + 2)
     # store for the result
@@ -445,7 +445,7 @@ def test_pipe_360deg_paganin_FBP3d_tomobar_i13_179623_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP3d_tomobar_paganin_i13_179623_npz["data"]
     axis_slice = FBP3d_tomobar_paganin_i13_179623_npz["axis_slice"]
-    (slices, sizeX, sizeY) = np.shape(data_gt)
+    slices, sizeX, sizeY = np.shape(data_gt)
 
     step = axis_slice // (slices + 2)
     # store for the result

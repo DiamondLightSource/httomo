@@ -674,7 +674,7 @@ def test_parse_loader_config(
     expected_darks_config: DarksFlatsFileConfig,
     expected_flats_config: DarksFlatsFileConfig,
 ):
-    (data_config, image_key_path, angles_config, darks_config, flats_config) = (
+    data_config, image_key_path, angles_config, darks_config, flats_config = (
         parse_config(input_file, config)
     )
     assert data_config == expected_data_config

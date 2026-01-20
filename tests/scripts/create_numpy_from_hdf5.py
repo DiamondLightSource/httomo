@@ -25,6 +25,7 @@
 Please run the generator as:
     python -m create_numpy_from_hdf5 -i /path/to/file.hdf5 -o /path/to/output/file.npz
 """
+
 import argparse
 import os
 import h5py

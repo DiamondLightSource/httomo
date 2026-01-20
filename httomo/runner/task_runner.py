@@ -415,7 +415,7 @@ class TaskRunner:
                 continue
 
             output_dims = m.calculate_output_dims(non_slice_dims_shape)
-            (slices_estimated, available_memory) = m.calculate_max_slices(
+            slices_estimated, available_memory = m.calculate_max_slices(
                 SOURCE_DTYPE,  # self.source.dtype,
                 non_slice_dims_shape,
                 available_memory,

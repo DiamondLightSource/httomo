@@ -5,7 +5,6 @@ import numpy as np
 
 from httomo.preview import PreviewConfig
 
-
 DIMS = [0, 1, 2]
 
 
