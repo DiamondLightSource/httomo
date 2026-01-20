@@ -368,6 +368,7 @@ def tests_preview_modifier_padding(mocker: MockerFixture, detY_preview_stop: int
         method_name="testloader",
         reslice=False,
         preview=preview,
+        comm=MPI.COMM_WORLD,
     )
 
     def mock_make_data_source(padding) -> DataSetSource:
