@@ -271,12 +271,14 @@ def test_calls_append_side_outputs_after_last_block(
     spy = mocker.patch.object(t, "append_side_outputs")
     t._prepare()
     t._execute_method(
-        method, block1, convert_gpu_block_to_cpu=False,
+        method,
+        block1,
     )  # the first block shouldn't trigger a side output append call
     assert spy.call_count == 0
 
     t._execute_method(
-        method, block2, convert_gpu_block_to_cpu=True,
+        method,
+        block2,
     )  # the last block should trigger side output append call
     getmock.assert_called_once()
     spy.assert_called_once_with(side_outputs)
@@ -306,7 +308,7 @@ def test_update_side_inputs_updates_downstream_methods(
     setitem3.assert_has_calls(method3_calls)
 
 
-def test_execute_method_updates_monitor(
+def test_execute_section_block_updates_monitor(
     mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):
     loader = make_test_loader(mocker)
@@ -316,10 +318,11 @@ def test_execute_method_updates_monitor(
     )
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
     p = Pipeline(loader=loader, methods=[method1])
+    s = sectionize(p)
     t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
     t._prepare()
     mocker.patch.object(method1, "execute", return_value=dummy_block)
-    t._execute_method(method1, dummy_block, convert_gpu_block_to_cpu=False)
+    t._execute_section_block(s[0], dummy_block)
 
     mon.report_method_block.assert_called_once_with(
         method1.method_name,
@@ -393,7 +396,7 @@ def test_execute_section_for_block(
     exec_method = mocker.patch.object(t, "_execute_method", return_value=dummy_block)
     t._execute_section_block(s[0], dummy_block)
 
-    calls = [call(method1, ANY, False), call(method2, ANY, False)]
+    calls = [call(method1, ANY), call(method2, ANY)]
     exec_method.assert_has_calls(calls)
 
 

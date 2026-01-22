@@ -259,7 +259,7 @@ class TaskRunner:
                 with catchtime() as t:
                     block.to_cpu()
                 method.gpu_time.device2host += t.elapsed
-            
+
             end = time.perf_counter_ns()
 
             if self.monitor is not None:
@@ -307,7 +307,8 @@ class TaskRunner:
         )
 
     def _execute_method(
-        self, method: MethodWrapper, block: DataSetBlock) -> DataSetBlock:
+        self, method: MethodWrapper, block: DataSetBlock
+    ) -> DataSetBlock:
         block = method.execute(block)
 
         if block.is_last_in_chunk:
