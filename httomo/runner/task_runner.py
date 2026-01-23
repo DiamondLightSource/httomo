@@ -1,4 +1,3 @@
-from itertools import islice
 import logging
 import time
 from typing import Any, Dict, Literal, Optional, List, Tuple, Union
@@ -238,9 +237,47 @@ class TaskRunner:
     def _execute_section_block(
         self, section: Section, block: DataSetBlock
     ) -> DataSetBlock:
-        for method in section:
+        if_previous_block_is_on_gpu = False
+        convert_gpu_block_to_cpu = False
+
+        for ind, method in enumerate(section):
+            if_current_block_is_on_gpu = False
+            if method.implementation == "gpu_cupy":
+                if_current_block_is_on_gpu = True
+            if method.method_name == "calculate_stats" and if_previous_block_is_on_gpu:
+                if_current_block_is_on_gpu = True
+
+            if ind == len(section) - 1 and if_current_block_is_on_gpu:
+                convert_gpu_block_to_cpu = True
+
             self.set_side_inputs(method)
+
+            start = time.perf_counter_ns()
             block = self._execute_method(method, block)
+
+            if convert_gpu_block_to_cpu:
+                with catchtime() as t:
+                    block.to_cpu()
+                method.gpu_time.device2host += t.elapsed
+
+            end = time.perf_counter_ns()
+
+            if self.monitor is not None:
+                self.monitor.report_method_block(
+                    method.method_name,
+                    method.module_path,
+                    method.task_id,
+                    _get_slicing_dim(method.pattern) - 1,
+                    block.shape,
+                    block.chunk_index,
+                    block.global_index,
+                    (end - start) * 1e-9,
+                    method.gpu_time.kernel,
+                    method.gpu_time.host2device,
+                    method.gpu_time.device2host,
+                )
+
+            if_previous_block_is_on_gpu = if_current_block_is_on_gpu
         return block
 
     def _log_pipeline(self, msg: Any, level: int = logging.INFO):
@@ -272,25 +309,10 @@ class TaskRunner:
     def _execute_method(
         self, method: MethodWrapper, block: DataSetBlock
     ) -> DataSetBlock:
-        start = time.perf_counter_ns()
         block = method.execute(block)
-        end = time.perf_counter_ns()
+
         if block.is_last_in_chunk:
             self.append_side_outputs(method.get_side_output())
-        if self.monitor is not None:
-            self.monitor.report_method_block(
-                method.method_name,
-                method.module_path,
-                method.task_id,
-                _get_slicing_dim(method.pattern) - 1,
-                block.shape,
-                block.chunk_index,
-                block.global_index,
-                (end - start) * 1e-9,
-                method.gpu_time.kernel,
-                method.gpu_time.host2device,
-                method.gpu_time.device2host,
-            )
         return block
 
     def append_side_outputs(self, side_outputs: Dict[str, Any]):
