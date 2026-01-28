@@ -239,7 +239,7 @@ def check_omitted_parameters_are_not_required(conf: PipelineConfig) -> bool:
         for param in omitted_params:
             if template_param_dict[param] == "REQUIRED":
                 err_str = (
-                    f"The parameter '{param}' for '{config["method"]}' was omitted but is "
+                    f"The parameter '{param}' for '{config['method']}' was omitted but is "
                     "required."
                 )
                 _print_with_colour(err_str)
