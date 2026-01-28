@@ -1,0 +1,11 @@
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    data_path: auto
+    image_key_path: auto
+    rotation_angles: auto
+- method: distortion_correction_proj_discorpy
+  module_path: httomolibgpu.prep.alignment
+  parameters:
+    order: 3
+    mode: constant

@@ -92,6 +92,8 @@ other fields directly under the :code:`parameters` field.
 * We check methods exist for the given module path.
 * We check that the parameters for each method are valid. For example, :code:`find_center_vo` method from :code:`tomopy.recon.rotation` takes :code:`ratio` as a parameter with a float value. If you pass a string instead, it will raise an error. Again the trick is to refer the documentation always.
 * We check the required parameters for each method are present.
+* We check parameters that are omitted are not required (in particular, that omitted parameters
+  have a default value that can be assumed)
 * If you pass :code:`IN_DATA` (path to the data) along with the yaml config, as:
 
 .. code-block:: console

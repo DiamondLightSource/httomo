@@ -220,6 +220,33 @@ def check_parameter_names_are_known(conf: PipelineConfig) -> bool:
     return True
 
 
+def check_omitted_parameters_are_not_required(conf: PipelineConfig) -> bool:
+    """
+    Check that any parameters omitted in method configs are not required.
+
+    Notes
+    -----
+    This check is functionally equivalent to checking that any parameters omitted in method
+    configs have default values.
+    """
+    template_yaml_conf = _get_template_yaml_conf(conf)
+    for config, template in zip(conf, template_yaml_conf):
+        template_param_dict = template["parameters"]
+        config_params = set(config.get("parameters", {}).keys())
+        template_params = set(template_param_dict.keys())
+        omitted_params = template_params - config_params
+
+        for param in omitted_params:
+            if template_param_dict[param] == "REQUIRED":
+                err_str = (
+                    f"The parameter '{param}' for '{config["method"]}' was omitted but is "
+                    "required."
+                )
+                _print_with_colour(err_str)
+                return False
+    return True
+
+
 def check_parameter_names_are_str(conf: PipelineConfig) -> bool:
     """Parameter names should be type string"""
     non_str_param_names = {
@@ -465,6 +492,7 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
     side_out_matches_ref_arg = check_side_out_matches_ref_arg(conf)
     required_keys_present = check_keys(conf)
     are_required_parameters_missing = check_no_required_parameter_values(conf)
+    are_omitted_params_required = check_omitted_parameters_are_not_required(conf)
 
     all_checks_pass = (
         is_yaml_ok
@@ -479,6 +507,7 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
         and side_out_matches_ref_arg
         and required_keys_present
         and are_required_parameters_missing
+        and are_omitted_params_required
     )
 
     if not all_checks_pass:

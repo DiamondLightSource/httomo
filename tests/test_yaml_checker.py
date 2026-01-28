@@ -12,6 +12,7 @@ from httomo.yaml_checker import (
     check_first_method_is_loader,
     check_hdf5_paths_against_loader,
     check_methods_exist_in_templates,
+    check_omitted_parameters_are_not_required,
     check_parameter_names_are_known,
     check_parameter_names_are_str,
     check_no_required_parameter_values,
@@ -118,6 +119,14 @@ def test_check_no_required_parameter_values(sample_pipelines: str, load_yaml: Ca
     required_param_pipeline = sample_pipelines + "testing/required_param.yaml"
     conf = load_yaml(required_param_pipeline)
     assert not check_no_required_parameter_values(conf)
+
+
+def test_check_omitted_parameters_are_not_required(
+    sample_pipelines: str, load_yaml: Callable
+):
+    pipeline = sample_pipelines + "testing/omitted_required_param.yaml"
+    conf = load_yaml(pipeline)
+    assert not check_omitted_parameters_are_not_required(conf)
 
 
 def test_check_no_duplicated_keys(sample_pipelines: str, load_yaml: Callable):
