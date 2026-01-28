@@ -7,6 +7,7 @@ from httomo.ui_layer import PipelineFormat, UiLayer
 from httomo import ui_layer
 import pytest
 import numpy as np
+import math
 
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.auxiliary_data import AuxiliaryData
@@ -433,12 +434,16 @@ def tests_preview_modifier_padding(mocker: MockerFixture, detY_preview_stop: int
     fix_preview_y_if_smaller_than_padding(loader, [wrp])
     padding = wrp.calculate_padding()
 
-    if slices_total <= sum(padding):
+    required_preview_padding_size = sum(padding) + loader.comm.size
+    extend_preview_value = required_preview_padding_size - slices_total
+
+    if extend_preview_value > 0:
+        extend_preview_value_half_ceil = int(math.ceil(extend_preview_value / 2.0))
         EXPECTED_PREVIEW_CONFIG = PreviewConfig(
             angles=preview.angles,
             detector_y=PreviewDimConfig(
-                start=detY_preview_start - padding[0],
-                stop=detY_preview_stop + padding[1],
+                start=detY_preview_start - extend_preview_value_half_ceil,
+                stop=detY_preview_stop + extend_preview_value_half_ceil,
             ),
             detector_x=preview.detector_x,
         )

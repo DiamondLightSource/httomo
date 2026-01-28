@@ -3,7 +3,7 @@ from enum import Enum, auto
 from typing import Any, Dict, List, Optional, TypeAlias, Union
 from importlib import import_module
 from pathlib import Path
-import os
+import math
 import re
 
 import h5py
@@ -172,23 +172,25 @@ class UiLayer:
 def fix_preview_y_if_smaller_than_padding(
     loader: LoaderInterface, methods_list: List[MethodWrapper]
 ) -> None:
-    vertical_preview_length = (
-        loader.preview.detector_y.stop - loader.preview.detector_y.start
-    ) // loader.comm.size
     max_pad_value = 0
     for _, m in enumerate(methods_list):
         if m.padding:
-            max_pad_value = max(sum(m.calculate_padding()), max_pad_value)
-    if max_pad_value >= vertical_preview_length:
+            max_pad_value = int(max(sum(m.calculate_padding()), max_pad_value))
+    required_preview_padding_size = max_pad_value*loader.comm.size + loader.comm.size
+    current_preview_size = loader.preview.detector_y.stop - loader.preview.detector_y.start
+    extend_preview_value = required_preview_padding_size - current_preview_size    
+
+    if extend_preview_value > 0:
+        # extend the preview to the required_preview_padding_size
+        extend_preview_value_half_ceil = int(math.ceil(extend_preview_value / 2.0))
         loader.preview = PreviewConfig(
             angles=loader.preview.angles,
             detector_y=PreviewDimConfig(
-                start=loader.preview.detector_y.start - max_pad_value // 2,
-                stop=loader.preview.detector_y.stop + max_pad_value // 2,
+                start=loader.preview.detector_y.start - extend_preview_value_half_ceil,
+                stop=loader.preview.detector_y.stop + extend_preview_value_half_ceil,
             ),
             detector_x=loader.preview.detector_x,
         )
-
 
 def get_valid_ref_str(parameters: Dict[str, Any]) -> Dict[str, str]:
     """Find valid reference strings inside dictionary
