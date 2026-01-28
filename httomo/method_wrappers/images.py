@@ -7,7 +7,7 @@ from httomo.utils import _get_slicing_dim, catchtime, xp
 
 
 from mpi4py.MPI import Comm
-
+import numpy as np
 
 import os
 from typing import Dict, Optional
@@ -69,3 +69,7 @@ class ImagesWrapper(GenericMethodWrapper):
         self.method(**args)
 
         return block
+
+    def save_2d_snapshot(self, image: np.ndarray) -> None:
+        config_params = self._config_params
+        print("boo")

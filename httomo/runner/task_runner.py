@@ -11,6 +11,7 @@ from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.dataset_store_backing import determine_store_backing
 from httomo.runner.method_wrapper import MethodWrapper
+from httomo.method_wrappers.images import ImagesWrapper
 from httomo.runner.block_split import BlockSplitter
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import (
@@ -161,7 +162,7 @@ class TaskRunner:
                 self.monitor.report_source_block(
                     f"sec_{section_index}",
                     section.methods[0].task_id if len(section) > 0 else "",
-                    _get_slicing_dim(section.pattern) - 1,
+                    slicing_dim_section,
                     block.shape,
                     block.chunk_index,
                     block.global_index,
@@ -170,6 +171,12 @@ class TaskRunner:
 
             log_once(f"   {str(progress)}", level=logging.INFO)
             block = self._execute_section_block(section, block)
+            if idx == no_of_blocks // 2:
+                # save the 2D state-snapshot of the mid-data block
+                snapshot_slicer = [slice(None)] * block.data.ndim
+                snapshot_slicer[slicing_dim_section] = np.shape(block.data)[slicing_dim_section] // 2
+                snapshot_slice = block.data[tuple(snapshot_slicer)]
+                ImagesWrapper.save_2d_snapshot(self, snapshot_slice)
             log_rank(
                 f"    Finished processing block {idx + 1} of {no_of_blocks}",
                 comm=self.comm,
