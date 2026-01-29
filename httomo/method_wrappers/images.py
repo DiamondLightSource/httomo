@@ -69,7 +69,3 @@ class ImagesWrapper(GenericMethodWrapper):
         self.method(**args)
 
         return block
-
-    def save_2d_snapshot(self, image: np.ndarray) -> None:
-        config_params = self._config_params
-        print("boo")
