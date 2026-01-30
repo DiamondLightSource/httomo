@@ -96,6 +96,13 @@ class DataSetSource(Protocol):
         to give implementations a chance to close files, free memory, etc."""
         ...  # pragma: no cover
 
+    @property
+    def padding(self) -> Tuple[int, int]:
+        """
+        Padding present in `DataSetBlock`'s produced by the `DataSetSource`.
+        """
+        ...  # pragma: no cover
+
 
 class DataSetSink(Protocol):
     @property

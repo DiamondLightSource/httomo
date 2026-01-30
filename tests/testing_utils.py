@@ -79,6 +79,7 @@ def make_test_loader(
                 chunk_index=block.chunk_index,
                 slicing_dim=1 if interface.pattern == Pattern.sinogram else 0,
                 aux_data=block.aux_data,
+                padding=(0, 0),
             )
             slicing_dim: Literal[0, 1, 2] = (
                 1 if interface.pattern == Pattern.sinogram else 0

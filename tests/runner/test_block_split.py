@@ -8,7 +8,7 @@ from httomo.runner.dataset_store_interfaces import DataSetSource
 def test_block_splitter_throws_with_slicingdim_2(mocker: MockerFixture):
     """This test should be removed if dim=2 is fully supported"""
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=(10, 10, 10), slicing_dim=2
+        DataSetSource, chunk_shape=(10, 10, 10), padding=(0, 0), slicing_dim=2
     )
     with pytest.raises(AssertionError):
         BlockSplitter(source, 100000000)
@@ -18,7 +18,7 @@ def test_block_splitter_throws_with_slicingdim_2(mocker: MockerFixture):
 def test_block_splitter_gives_full_when_fits(mocker: MockerFixture, slicing_dim: int):
     CHUNK_SHAPE = (100, 70, 100)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
     )
     splitter = BlockSplitter(source, 100000000)
 
@@ -32,7 +32,7 @@ def test_block_splitter_raises_if_out_of_bounds(
 ):
     CHUNK_SHAPE = (100, 70, 100)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
     )
     splitter = BlockSplitter(source, 100000000)
 
@@ -44,7 +44,7 @@ def test_block_splitter_raises_if_out_of_bounds(
 def test_block_splitter_splits_evenly(mocker: MockerFixture, slicing_dim: int):
     CHUNK_SHAPE = (100, 70, 100)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
     )
     splitter = BlockSplitter(source, CHUNK_SHAPE[slicing_dim] // 2)
 
@@ -56,7 +56,7 @@ def test_block_splitter_splits_evenly(mocker: MockerFixture, slicing_dim: int):
 def test_block_splitter_splits_odd(mocker: MockerFixture, slicing_dim: int):
     CHUNK_SHAPE = (10, 7, 100)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
     )
 
     splitter = BlockSplitter(source, 3)
@@ -72,7 +72,7 @@ def test_block_splitter_splits_odd(mocker: MockerFixture, slicing_dim: int):
 def test_block_gives_dataset_full(mocker: MockerFixture, slicing_dim: int):
     CHUNK_SHAPE = (10, 7, 100)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
     )
     splitter = BlockSplitter(source, 100000000)
 
@@ -85,7 +85,7 @@ def test_block_gives_dataset_full(mocker: MockerFixture, slicing_dim: int):
 def test_block_reads_blocks_even(mocker: MockerFixture, slicing_dim: int):
     CHUNK_SHAPE = (100, 70, 100)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
     )
 
     max_slices = CHUNK_SHAPE[slicing_dim] // 2
@@ -103,7 +103,7 @@ def test_block_reads_blocks_even(mocker: MockerFixture, slicing_dim: int):
 def test_block_reads_blocks_odd(mocker: MockerFixture, slicing_dim: int):
     CHUNK_SHAPE = (5, 7, 100)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
     )
 
     max_slices = 4
@@ -121,7 +121,7 @@ def test_block_reads_blocks_odd(mocker: MockerFixture, slicing_dim: int):
 def test_block_can_iterate(mocker: MockerFixture, slicing_dim: int):
     CHUNK_SHAPE = (100, 70, 100)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
     )
 
     max_slices = CHUNK_SHAPE[slicing_dim] // 2
