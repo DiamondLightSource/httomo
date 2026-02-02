@@ -174,13 +174,23 @@ class TaskRunner:
 
             log_once(f"   {str(progress)}", level=logging.INFO)
             block = self._execute_section_block(section, block)
-            if self.save_snapshots and self.comm.rank == self.comm.size//2 and idx == no_of_blocks // 2:
+            if (
+                self.save_snapshots
+                and self.comm.rank == self.comm.size // 2
+                and idx == no_of_blocks // 2
+            ):
                 # save the 2D state-snapshot of the mid-data block from mid-cunk
                 snapshot_slicer = [slice(None)] * block.data.ndim
-                snapshot_slicer[slicing_dim_section] = np.shape(block.data)[slicing_dim_section] // 2
+                snapshot_slicer[slicing_dim_section] = (
+                    np.shape(block.data)[slicing_dim_section] // 2
+                )
                 snapshot_slice = block.data[tuple(snapshot_slicer)]
                 method_to_snapshot_name = self._get_methods_name_for_snapshot(section)
-                save_2d_snapshot(snapshot_slice, methods_name=method_to_snapshot_name, section_index = section_index)
+                save_2d_snapshot(
+                    snapshot_slice,
+                    methods_name=method_to_snapshot_name,
+                    section_index=section_index,
+                )
             log_rank(
                 f"    Finished processing block {idx + 1} of {no_of_blocks}",
                 comm=self.comm,
@@ -293,14 +303,21 @@ class TaskRunner:
 
     def _get_methods_name_for_snapshot(self, section: Section) -> str:
         # iteratively checking if the method's name doesn't belong to irrelevant_method_names_snapshots
-        irrelevant_method_names_snapshots = ['data_checker', 'calculate_stats', "find_center_360", 'find_center_pc', 'find_center_vo', 'save_intermediate_data']
+        irrelevant_method_names_snapshots = [
+            "data_checker",
+            "calculate_stats",
+            "find_center_360",
+            "find_center_pc",
+            "find_center_vo",
+            "save_intermediate_data",
+        ]
         for ind_outer in range(1, len(section)):
             methods_name = section.methods[-ind_outer].method_name
             if methods_name in irrelevant_method_names_snapshots:
                 for ind_inner in range(1, len(section)):
-                    methods_name = section.methods[-(ind_inner+1)].method_name
+                    methods_name = section.methods[-(ind_inner + 1)].method_name
                     if methods_name in irrelevant_method_names_snapshots:
-                        methods_name = section.methods[-ind_inner+1].method_name
+                        methods_name = section.methods[-ind_inner + 1].method_name
                     else:
                         break
             else:
