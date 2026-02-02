@@ -40,13 +40,8 @@ def save_2d_snapshot(data_slice: xp.ndarray, methods_name: str, section_index: i
     :type section_index: int  
     """
     if MPI.COMM_WORLD.rank == 0:
-        output_dir = Path(httomo.globals.run_out_dir)
-        output_dir_snapshots =  Path(os.path.join(output_dir, "pipeline_stages_snapshots"))
-        try:
-            Path.mkdir(output_dir_snapshots, parents=True, exist_ok=True)
-        except PermissionError as e:
-            log_exception(f"PermissionError when creating output directory: {e}")
-            sys.exit(1)        
+        output_dir_snapshots =  Path(httomo.globals.run_out_dir) / "pipeline_stages_snapshots"
+        output_dir_snapshots.mkdir(parents=True, exist_ok=True)  
         data_slice = np.nan_to_num(data_slice, copy=False, nan=0.0, posinf=0, neginf=0)
         vmin, vmax = np.percentile(data_slice, [1, 99])
         data_slice = np.clip(data_slice, vmin, vmax)
