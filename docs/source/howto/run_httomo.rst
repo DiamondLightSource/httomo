@@ -235,7 +235,7 @@ directory created by HTTomo would be
 Options/flags
 #############
 
-The :code:`run` command has 16 options/flags:
+The :code:`run` command has 17 options/flags:
 
 - :code:`--output-folder-name`
 - :code:`--save-all`
@@ -243,6 +243,7 @@ The :code:`run` command has 16 options/flags:
 - :code:`--reslice-dir`
 - :code:`--max-cpu-slices`
 - :code:`--max-memory`
+- :code:`--save-snapshots`
 - :code:`--monitor`
 - :code:`--monitor-output`
 - :code:`--intermediate-format`
@@ -364,6 +365,22 @@ The :code:`--max-memory` flag is for telling HTTomo how much RAM the machine has
 so then it can switch to using a file during execution of the pipeline if
 necessary.
 
+:code:`--save-snapshots`
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+When this flag is enabled, the pipeline saves image snapshots at specific execution points.
+These snapshots are captured during selected methods - typically when a section boundary 
+is reached and data is transferred to the CPU. At which time a slice of the data is saved for 
+inspection.
+
+This feature is particularly useful for complex pipelines (e.g. 360 degrees with stitching and phase contrast),
+where intermediate processing steps involved in reconstruction may unintentionally alter
+the data. By reviewing these snapshot images (JPEGs), users can more easily pinpoint
+where issues are introduced in the pipeline. 
+
+Enabling snapshots incurs almost no additional computational cost, unlike the :code:`--save-all` 
+flag, which requires saving the entire dataset into a file for each method.
+
 :code:`--monitor`
 ~~~~~~~~~~~~~~~~~
 
@@ -390,7 +407,7 @@ method to execute in the pipeline, which will look something like the following:
       Total methods CPU time:     19.376s
       Total methods GPU time:     19.042s
       Total host2device time:      0.013s
-      Total device2host time:      0.548s
+      Total device2host time:      0.54 8s
       Total sources time    :      0.063s
       Total sinks time      :      0.028s
       Other overheads       :      0.362s

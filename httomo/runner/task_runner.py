@@ -50,11 +50,13 @@ class TaskRunner:
         comm: MPI.Comm,
         memory_limit_bytes: int = 0,
         monitor: Optional[MonitoringInterface] = None,
+        save_snapshots: bool = False,
     ):
         self.pipeline = pipeline
         self.reslice_dir = reslice_dir
         self.comm = comm
         self.monitor = monitor
+        self.save_snapshots = save_snapshots
 
         self.side_outputs: Dict[str, Any] = dict()
         self.source: Optional[DataSetSource] = None
@@ -172,7 +174,7 @@ class TaskRunner:
 
             log_once(f"   {str(progress)}", level=logging.INFO)
             block = self._execute_section_block(section, block)
-            if self.comm.rank == self.comm.size//2 and idx == no_of_blocks // 2:
+            if self.save_snapshots and self.comm.rank == self.comm.size//2 and idx == no_of_blocks // 2:
                 # save the 2D state-snapshot of the mid-data block from mid-cunk
                 snapshot_slicer = [slice(None)] * block.data.ndim
                 snapshot_slicer[slicing_dim_section] = np.shape(block.data)[slicing_dim_section] // 2
