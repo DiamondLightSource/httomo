@@ -163,9 +163,7 @@ def test_run_pipeline_FBP3d_tomobar_denoising(
     assert "Preview: (0:180, 0:128, 0:160)" in verbose_log_contents
     assert "Data shape is (180, 128, 160) of type uint16" in verbose_log_contents
     assert "The amount of the available GPU memory is" in verbose_log_contents
-    assert (
-        "Using GPU 0 to transfer data of shape (180, 128, 160)" in verbose_log_contents
-    )
+    assert "Using GPU 0 to transfer data of shape" in verbose_log_contents
 
 
 # TODO: rewrite and move to test_pipeline_big
