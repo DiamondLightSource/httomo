@@ -53,6 +53,22 @@ def test_block_splitter_splits_evenly(mocker: MockerFixture, slicing_dim: int):
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
+def test_block_splitter_splits_evenly_padded(mocker: MockerFixture, slicing_dim: int):
+    CHUNK_SHAPE = (100, 70, 100)
+    PADDING = (5, 5)
+    source = mocker.create_autospec(
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=PADDING, slicing_dim=slicing_dim
+    )
+    splitter = BlockSplitter(source, CHUNK_SHAPE[slicing_dim] // 2)
+
+    assert (
+        splitter.slices_per_block
+        == CHUNK_SHAPE[slicing_dim] // 2 - PADDING[0] - PADDING[0]
+    )
+    assert len(splitter) == 3
+
+
+@pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
 def test_block_splitter_splits_odd(mocker: MockerFixture, slicing_dim: int):
     CHUNK_SHAPE = (10, 7, 100)
     source = mocker.create_autospec(
@@ -69,10 +85,41 @@ def test_block_splitter_splits_odd(mocker: MockerFixture, slicing_dim: int):
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
+def test_block_splitter_splits_odd_padded(mocker: MockerFixture, slicing_dim: int):
+    CHUNK_SHAPE = (10, 7, 100)
+    PADDING = (1, 1)
+    source = mocker.create_autospec(
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=PADDING, slicing_dim=slicing_dim
+    )
+
+    splitter = BlockSplitter(source, 3)
+
+    assert splitter.slices_per_block == 3 - PADDING[0] - PADDING[1]
+    if slicing_dim == 0:
+        assert len(splitter) == 10
+    else:
+        assert len(splitter) == 7
+    assert len(splitter) == CHUNK_SHAPE[slicing_dim]
+
+
+@pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
 def test_block_gives_dataset_full(mocker: MockerFixture, slicing_dim: int):
     CHUNK_SHAPE = (10, 7, 100)
     source = mocker.create_autospec(
         DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
+    )
+    splitter = BlockSplitter(source, 100000000)
+
+    splitter[0]
+
+    source.read_block.assert_called_with(0, CHUNK_SHAPE[slicing_dim])
+
+
+@pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
+def test_block_gives_dataset_full_padded(mocker: MockerFixture, slicing_dim: int):
+    CHUNK_SHAPE = (10, 7, 100)
+    source = mocker.create_autospec(
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(5, 5), slicing_dim=slicing_dim
     )
     splitter = BlockSplitter(source, 100000000)
 
@@ -100,6 +147,34 @@ def test_block_reads_blocks_even(mocker: MockerFixture, slicing_dim: int):
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
+def test_block_reads_blocks_even_padded(mocker: MockerFixture, slicing_dim: int):
+    CHUNK_SHAPE = (100, 70, 100)
+    PADDING = (5, 5)
+    TOTAL_PADDING = PADDING[0] + PADDING[1]
+    source = mocker.create_autospec(
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=PADDING, slicing_dim=slicing_dim
+    )
+
+    max_slices = CHUNK_SHAPE[slicing_dim] // 2
+    splitter = BlockSplitter(source, max_slices)
+
+    splitter[0]
+    splitter[1]
+    splitter[2]
+
+    source.read_block.assert_has_calls(
+        [
+            call(0, max_slices - TOTAL_PADDING),
+            call(max_slices - TOTAL_PADDING, max_slices - TOTAL_PADDING),
+            call(
+                2 * (max_slices - TOTAL_PADDING),
+                CHUNK_SHAPE[slicing_dim] - 2 * (max_slices - TOTAL_PADDING),
+            ),
+        ]
+    )
+
+
+@pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
 def test_block_reads_blocks_odd(mocker: MockerFixture, slicing_dim: int):
     CHUNK_SHAPE = (5, 7, 100)
     source = mocker.create_autospec(
@@ -115,6 +190,50 @@ def test_block_reads_blocks_odd(mocker: MockerFixture, slicing_dim: int):
     source.read_block.assert_has_calls(
         [call(0, max_slices), call(max_slices, CHUNK_SHAPE[slicing_dim] - max_slices)]
     )
+
+
+@pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
+def test_block_reads_blocks_odd_padded(mocker: MockerFixture, slicing_dim: int):
+    CHUNK_SHAPE = (5, 7, 100)
+    PADDING = (1, 1)
+    TOTAL_PADDING = PADDING[0] + PADDING[1]
+    source = mocker.create_autospec(
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=PADDING, slicing_dim=slicing_dim
+    )
+
+    max_slices = 4
+    splitter = BlockSplitter(source, max_slices)
+
+    splitter[0]
+    splitter[1]
+    splitter[2]
+
+    if slicing_dim == 1:
+        splitter[3]
+
+    if slicing_dim == 0:
+        source.read_block.assert_has_calls(
+            [
+                call(0, max_slices - TOTAL_PADDING),
+                call(max_slices - TOTAL_PADDING, max_slices - TOTAL_PADDING),
+                call(
+                    2 * (max_slices - TOTAL_PADDING),
+                    CHUNK_SHAPE[slicing_dim] - 2 * (max_slices - TOTAL_PADDING),
+                ),
+            ]
+        )
+    else:
+        source.read_block.assert_has_calls(
+            [
+                call(0, max_slices - TOTAL_PADDING),
+                call(max_slices - TOTAL_PADDING, max_slices - TOTAL_PADDING),
+                call(2 * (max_slices - TOTAL_PADDING), max_slices - TOTAL_PADDING),
+                call(
+                    3 * (max_slices - TOTAL_PADDING),
+                    CHUNK_SHAPE[slicing_dim] - 3 * (max_slices - TOTAL_PADDING),
+                ),
+            ]
+        )
 
 
 @pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
