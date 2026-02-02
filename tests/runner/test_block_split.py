@@ -40,86 +40,63 @@ def test_block_splitter_raises_if_out_of_bounds(
         splitter[12]
 
 
+@pytest.mark.parametrize("padding", [(0, 0), (1, 1)])
 @pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
-def test_block_splitter_splits_evenly(mocker: MockerFixture, slicing_dim: int):
+def test_block_splitter_splits_evenly(
+    mocker: MockerFixture, slicing_dim: int, padding: tuple[int, int]
+):
     CHUNK_SHAPE = (100, 70, 100)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
-    )
-    splitter = BlockSplitter(source, CHUNK_SHAPE[slicing_dim] // 2)
-
-    assert splitter.slices_per_block == CHUNK_SHAPE[slicing_dim] // 2
-    assert len(splitter) == 2
-
-
-@pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
-def test_block_splitter_splits_evenly_padded(mocker: MockerFixture, slicing_dim: int):
-    CHUNK_SHAPE = (100, 70, 100)
-    PADDING = (5, 5)
-    source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=PADDING, slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=padding, slicing_dim=slicing_dim
     )
     splitter = BlockSplitter(source, CHUNK_SHAPE[slicing_dim] // 2)
 
     assert (
         splitter.slices_per_block
-        == CHUNK_SHAPE[slicing_dim] // 2 - PADDING[0] - PADDING[0]
-    )
-    assert len(splitter) == 3
-
-
-@pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
-def test_block_splitter_splits_odd(mocker: MockerFixture, slicing_dim: int):
-    CHUNK_SHAPE = (10, 7, 100)
-    source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
+        == CHUNK_SHAPE[slicing_dim] // 2 - padding[0] - padding[1]
     )
 
-    splitter = BlockSplitter(source, 3)
-
-    assert splitter.slices_per_block == 3
-    if slicing_dim == 0:
-        assert len(splitter) == 4
+    if padding[0] == 0:
+        assert len(splitter) == 2
     else:
         assert len(splitter) == 3
 
 
+@pytest.mark.parametrize("padding", [(0, 0), (1, 1)])
 @pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
-def test_block_splitter_splits_odd_padded(mocker: MockerFixture, slicing_dim: int):
+def test_block_splitter_splits_odd(
+    mocker: MockerFixture, slicing_dim: int, padding: tuple[int, int]
+):
     CHUNK_SHAPE = (10, 7, 100)
-    PADDING = (1, 1)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=PADDING, slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=padding, slicing_dim=slicing_dim
     )
 
     splitter = BlockSplitter(source, 3)
 
-    assert splitter.slices_per_block == 3 - PADDING[0] - PADDING[1]
+    assert splitter.slices_per_block == 3 - padding[0] - padding[1]
     if slicing_dim == 0:
-        assert len(splitter) == 10
+        if padding[0] == 0:
+            assert len(splitter) == 4
+        else:
+            assert len(splitter) == CHUNK_SHAPE[slicing_dim]
+            assert len(splitter) == 10
     else:
-        assert len(splitter) == 7
-    assert len(splitter) == CHUNK_SHAPE[slicing_dim]
+        if padding[0] == 0:
+            assert len(splitter) == 3
+        else:
+            assert len(splitter) == CHUNK_SHAPE[slicing_dim]
+            assert len(splitter) == 7
 
 
+@pytest.mark.parametrize("padding", [(0, 0), (1, 1)])
 @pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
-def test_block_gives_dataset_full(mocker: MockerFixture, slicing_dim: int):
+def test_block_gives_dataset_full(
+    mocker: MockerFixture, slicing_dim: int, padding: tuple[int, int]
+):
     CHUNK_SHAPE = (10, 7, 100)
     source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(0, 0), slicing_dim=slicing_dim
-    )
-    splitter = BlockSplitter(source, 100000000)
-
-    splitter[0]
-
-    source.read_block.assert_called_with(0, CHUNK_SHAPE[slicing_dim])
-
-
-@pytest.mark.parametrize("slicing_dim", [0, 1], ids=["proj", "sino"])
-def test_block_gives_dataset_full_padded(mocker: MockerFixture, slicing_dim: int):
-    CHUNK_SHAPE = (10, 7, 100)
-    source = mocker.create_autospec(
-        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=(5, 5), slicing_dim=slicing_dim
+        DataSetSource, chunk_shape=CHUNK_SHAPE, padding=padding, slicing_dim=slicing_dim
     )
     splitter = BlockSplitter(source, 100000000)
 
