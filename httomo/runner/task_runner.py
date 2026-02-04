@@ -313,7 +313,7 @@ class TaskRunner:
         ]
         for wrapper in list(reversed(section.methods)):
             if wrapper.method_name not in irrelevant_method_names_snapshots:
-                return wrapper.method_name                    
+                return wrapper.method_name
         raise ValueError("Unable to find method name in section for snapshot saving")
 
     def _log_pipeline(self, msg: Any, level: int = logging.INFO):
