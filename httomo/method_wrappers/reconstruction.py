@@ -1,11 +1,14 @@
+import numpy as np
 from httomo.block_interfaces import T, Block
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.method_wrapper import MethodParameterDictType
 
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from httomo_backends.methods_database.query import Pattern
+from httomo.runner.gpu_utils import gpumem_cleanup
+from httomo.utils import search_max_slices_iterative
 
 
 class ReconstructionWrapper(GenericMethodWrapper):
@@ -18,9 +21,9 @@ class ReconstructionWrapper(GenericMethodWrapper):
 
     def _preprocess_data(self, block: T) -> T:
         # this is essential for the angles cutting below to be valid
-        assert (
-            self.pattern == Pattern.sinogram
-        ), "reconstruction methods must be sinogram"
+        assert self.pattern == Pattern.sinogram, (
+            "reconstruction methods must be sinogram"
+        )
 
         # for 360 degrees data the angular dimension will be truncated while angles are not.
         # Truncating angles if the angular dimension has got a different size
@@ -37,11 +40,41 @@ class ReconstructionWrapper(GenericMethodWrapper):
     ) -> Dict[str, Any]:
         assert dataset is not None, "Reconstruction wrappers require a dataset"
         # for recon methods, we assume that the second parameter is the angles in all cases
-        assert (
-            len(self.parameters) >= 2
-        ), "recon methods always take data + angles as the first 2 parameters"
+        assert len(self.parameters) >= 2, (
+            "recon methods always take data + angles as the first 2 parameters"
+        )
         updated_params = {**dict_params, self.parameters[1]: dataset.angles_radians}
         return super()._build_kwargs(updated_params, dataset)
+
+    def _calculate_max_slices_iterative(
+        self,
+        data_dtype: np.dtype,
+        non_slice_dims_shape: Tuple[int, int],
+        angles: np.ndarray,
+        available_memory: int,
+    ) -> int:
+        def get_mem_bytes(current_slices):
+            try:
+                kwargs = {
+                    "angles": angles[0 : non_slice_dims_shape[0]]
+                } | self._unwrap_output_ref_values()
+
+                memory_bytes = self._query.calculate_memory_bytes_for_slices(
+                    dims_shape=(
+                        current_slices,
+                        non_slice_dims_shape[0],
+                        non_slice_dims_shape[1],
+                    ),
+                    dtype=data_dtype,
+                    **kwargs,
+                )
+                return memory_bytes
+            except:
+                return 2**64
+            finally:
+                gpumem_cleanup()
+
+        return search_max_slices_iterative(available_memory, get_mem_bytes)
 
     @property
     def recon_algorithm(self) -> Optional[str]:

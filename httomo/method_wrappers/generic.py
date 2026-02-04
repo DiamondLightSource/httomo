@@ -419,6 +419,7 @@ class GenericMethodWrapper(MethodWrapper):
         self,
         data_dtype: np.dtype,
         non_slice_dims_shape: Tuple[int, int],
+        angles: np.ndarray,
         available_memory: int,
     ) -> Tuple[int, int]:
         """If it runs on GPU, determine the maximum number of slices that can fit in the
@@ -461,7 +462,7 @@ class GenericMethodWrapper(MethodWrapper):
                 gpumem_cleanup()
                 return (
                     self._calculate_max_slices_iterative(
-                        data_dtype, non_slice_dims_shape, available_memory
+                        data_dtype, non_slice_dims_shape, angles, available_memory
                     ),
                     available_memory,
                 )
@@ -484,6 +485,7 @@ class GenericMethodWrapper(MethodWrapper):
         self,
         data_dtype: np.dtype,
         non_slice_dims_shape: Tuple[int, int],
+        angles: np.ndarray,
         available_memory: int,
     ) -> int:
         def get_mem_bytes(current_slices):
