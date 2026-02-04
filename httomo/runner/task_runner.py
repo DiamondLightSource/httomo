@@ -311,19 +311,10 @@ class TaskRunner:
             "find_center_vo",
             "save_intermediate_data",
         ]
-        for ind_outer in range(1, len(section)):
-            methods_name = section.methods[-ind_outer].method_name
-            if methods_name in irrelevant_method_names_snapshots:
-                for ind_inner in range(1, len(section)):
-                    methods_name = section.methods[-(ind_inner + 1)].method_name
-                    if methods_name in irrelevant_method_names_snapshots:
-                        methods_name = section.methods[-ind_inner + 1].method_name
-                    else:
-                        break
-            else:
-                break
-            break
-        return methods_name
+        for wrapper in list(reversed(section.methods)):
+            if wrapper.method_name not in irrelevant_method_names_snapshots:
+                return wrapper.method_name                    
+        raise ValueError("Unable to find method name in section for snapshot saving")
 
     def _log_pipeline(self, msg: Any, level: int = logging.INFO):
         log_once(msg, level=level)

@@ -407,7 +407,7 @@ method to execute in the pipeline, which will look something like the following:
       Total methods CPU time:     19.376s
       Total methods GPU time:     19.042s
       Total host2device time:      0.013s
-      Total device2host time:      0.54 8s
+      Total device2host time:      0.548s
       Total sources time    :      0.063s
       Total sinks time      :      0.028s
       Other overheads       :      0.362s
