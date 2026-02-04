@@ -1,6 +1,5 @@
 import sys
 import logging
-from enum import Enum
 from time import perf_counter_ns
 from traceback import format_tb
 from typing import Any, Callable, Dict, List, Literal, Tuple
@@ -8,6 +7,11 @@ from typing import Any, Callable, Dict, List, Literal, Tuple
 from loguru import logger
 from mpi4py import MPI
 import numpy as np
+from PIL import Image
+import os
+import httomo.globals
+from pathlib import Path
+
 
 from httomo_backends.methods_database.query import Pattern
 
@@ -23,6 +27,33 @@ try:
 
 except ImportError:
     import numpy as xp
+
+
+def save_2d_snapshot(
+    data_slice: xp.ndarray, methods_name: str, section_index: int
+) -> None:
+    """
+    A utility to save stage snapshots as images to help debugging process
+
+    :param data_slice: a 2D array to save as a jpeg image
+    :type data_slice: xp.ndarray
+    :param methods_name: the name of the image to be saved (e.g. method's name)
+    :type methods_name: str
+    :param section_index: the index of the section
+    :type section_index: int
+    """
+    output_dir_snapshots = (
+        Path(httomo.globals.run_out_dir) / "pipeline_stages_snapshots"
+    )
+    output_dir_snapshots.mkdir(parents=True, exist_ok=True)
+    data_slice = np.nan_to_num(data_slice, copy=False, nan=0.0, posinf=0, neginf=0)
+    vmin, vmax = np.percentile(data_slice, [1, 99])
+    data_slice = np.clip(data_slice, vmin, vmax)
+    data_slice = (data_slice - vmin) / (vmax - vmin)
+    data_slice = (data_slice * 255).astype(np.uint8)
+    filename = f"{0}{section_index}{methods_name}.{'jpeg'}"
+    filepath_name = os.path.join(output_dir_snapshots, f"{filename}")
+    Image.fromarray(data_slice, mode="L").save(filepath_name, quality=95)
 
 
 def log_once(output: Any, level: int = logging.INFO) -> None:

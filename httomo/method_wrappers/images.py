@@ -8,7 +8,6 @@ from httomo.utils import _get_slicing_dim, catchtime, xp
 
 from mpi4py.MPI import Comm
 
-
 import os
 from typing import Dict, Optional
 

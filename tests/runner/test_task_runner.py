@@ -458,6 +458,63 @@ def test_warns_with_multiple_reslices(
     assert "Data saving or/and reslicing operation will be performed 4 times" in args[0]
 
 
+def test_get_method_names_for_snapshot_saver(
+    mocker: MockerFixture,
+    dummy_block: DataSetBlock,
+    tmp_path: PathLike,
+):
+    loader = make_test_loader(mocker, block=dummy_block, pattern=Pattern.projection)
+    method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
+    method2 = make_test_method(mocker, method_name="m2_rec", pattern=Pattern.projection)
+    method3 = make_test_method(
+        mocker, method_name="data_checker", pattern=Pattern.projection
+    )
+    method4 = make_test_method(
+        mocker, method_name="find_center_pc", pattern=Pattern.sinogram
+    )
+    method5 = make_test_method(mocker, method_name="m5_rec", pattern=Pattern.sinogram)
+    method6 = make_test_method(
+        mocker, method_name="data_checker", pattern=Pattern.sinogram
+    )
+    method7 = make_test_method(mocker, method_name="m7_rec", pattern=Pattern.projection)
+    method8 = make_test_method(
+        mocker, method_name="data_checker", pattern=Pattern.projection
+    )
+    method9 = make_test_method(mocker, method_name="m9_rec", pattern=Pattern.sinogram)
+    method10 = make_test_method(
+        mocker, method_name="data_checker", pattern=Pattern.sinogram
+    )
+    method11 = make_test_method(
+        mocker, method_name="calculate_stats", pattern=Pattern.all
+    )
+    p = Pipeline(
+        loader=loader,
+        methods=[
+            method1,
+            method2,
+            method3,
+            method4,
+            method5,
+            method6,
+            method7,
+            method8,
+            method9,
+            method10,
+            method11,
+        ],
+    )
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
+    _sections = t._sectionize()
+
+    sections_number = len(_sections)
+    METHODS_NAMES_EXPECTED = ["m2_rec", "m5_rec", "m7_rec", "m9_rec"]
+    for ind in range(0, sections_number):
+        assert (
+            t._get_methods_name_for_snapshot(_sections[ind])
+            == METHODS_NAMES_EXPECTED[ind]
+        )
+
+
 def test_warns_with_multiple_stores_from_side_outputs(
     mocker: MockerFixture,
     dummy_block: DataSetBlock,

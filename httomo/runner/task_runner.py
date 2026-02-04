@@ -19,6 +19,7 @@ from httomo.runner.dataset_store_interfaces import (
     DummySink,
     ReadableDataSetSink,
 )
+from httomo.utils import save_2d_snapshot
 from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.pipeline import Pipeline
@@ -49,11 +50,13 @@ class TaskRunner:
         comm: MPI.Comm,
         memory_limit_bytes: int = 0,
         monitor: Optional[MonitoringInterface] = None,
+        save_snapshots: bool = False,
     ):
         self.pipeline = pipeline
         self.reslice_dir = reslice_dir
         self.comm = comm
         self.monitor = monitor
+        self.save_snapshots = save_snapshots
 
         self.side_outputs: Dict[str, Any] = dict()
         self.source: Optional[DataSetSource] = None
@@ -145,6 +148,7 @@ class TaskRunner:
 
         splitter = BlockSplitter(self.source, section.max_slices)
         no_of_blocks = len(splitter)
+        section_length = len(section)
 
         # Redirect tqdm progress bar output to /dev/null, and instead manually write block
         # processing progress to logfile within loop
@@ -160,8 +164,8 @@ class TaskRunner:
             if self.monitor is not None:
                 self.monitor.report_source_block(
                     f"sec_{section_index}",
-                    section.methods[0].task_id if len(section) > 0 else "",
-                    _get_slicing_dim(section.pattern) - 1,
+                    section.methods[0].task_id if section_length > 0 else "",
+                    slicing_dim_section,
                     block.shape,
                     block.chunk_index,
                     block.global_index,
@@ -170,6 +174,23 @@ class TaskRunner:
 
             log_once(f"   {str(progress)}", level=logging.INFO)
             block = self._execute_section_block(section, block)
+            if (
+                self.save_snapshots
+                and self.comm.rank == self.comm.size // 2
+                and idx == no_of_blocks // 2
+            ):
+                # save the 2D state-snapshot of the mid-data block from mid-cunk
+                snapshot_slicer = [slice(None)] * block.data.ndim
+                snapshot_slicer[slicing_dim_section] = (
+                    np.shape(block.data)[slicing_dim_section] // 2
+                )
+                snapshot_slice = block.data[tuple(snapshot_slicer)]
+                method_to_snapshot_name = self._get_methods_name_for_snapshot(section)
+                save_2d_snapshot(
+                    snapshot_slice,
+                    methods_name=method_to_snapshot_name,
+                    section_index=section_index,
+                )
             log_rank(
                 f"    Finished processing block {idx + 1} of {no_of_blocks}",
                 comm=self.comm,
@@ -181,7 +202,7 @@ class TaskRunner:
             if self.monitor is not None:
                 self.monitor.report_sink_block(
                     f"sec_{section_index}",
-                    section.methods[-1].task_id if len(section) > 0 else "",
+                    section.methods[-1].task_id if section_length > 0 else "",
                     _get_slicing_dim(section.pattern) - 1,
                     block.shape,
                     block.chunk_index,
@@ -279,6 +300,21 @@ class TaskRunner:
 
             if_previous_block_is_on_gpu = if_current_block_is_on_gpu
         return block
+
+    def _get_methods_name_for_snapshot(self, section: Section) -> str:
+        # iteratively checking if the method's name doesn't belong to irrelevant_method_names_snapshots
+        irrelevant_method_names_snapshots = [
+            "data_checker",
+            "calculate_stats",
+            "find_center_360",
+            "find_center_pc",
+            "find_center_vo",
+            "save_intermediate_data",
+        ]
+        for wrapper in list(reversed(section.methods)):
+            if wrapper.method_name not in irrelevant_method_names_snapshots:
+                return wrapper.method_name
+        raise ValueError("Unable to find method name in section for snapshot saving")
 
     def _log_pipeline(self, msg: Any, level: int = logging.INFO):
         log_once(msg, level=level)
