@@ -78,7 +78,7 @@ def test_can_determine_max_slices_no_gpu_estimator(
     t._prepare()
     s = sectionize(p)
 
-    t.determine_max_slices(s[0], 0)
+    t.determine_max_slices(s[0], 0, dummy_block.angles)
 
     assert s[0].max_slices == dummy_block.chunk_shape[0]
 
@@ -129,7 +129,7 @@ def test_can_determine_max_slices_with_gpu_estimator(
     assert len(s[0]) == len(max_slices_methods)
     shape = (dummy_block.shape[1], dummy_block.shape[2])
 
-    t.determine_max_slices(s[0], 0)
+    t.determine_max_slices(s[0], 0, dummy_block.angles)
 
     assert s[0].max_slices == min(max_slices_methods)
     for i in range(len(max_slices_methods)):
@@ -180,13 +180,14 @@ def test_can_determine_max_slices_with_gpu_estimator_and_cpu_limit(
     s = sectionize(p)
     shape = (dummy_block.shape[1], dummy_block.shape[2])
 
-    t.determine_max_slices(s[0], 0)
+    t.determine_max_slices(s[0], 0, dummy_block.angles)
 
     for i in range(3):
         calc_dims_mocks[i].assert_called_with(shape)
         calc_max_slices_mocks[i].assert_called_with(
             dummy_block.data.dtype,
             shape,
+            dummy_block.angles,
             limit if limit != 0 else 1e7,
         )
 
@@ -204,7 +205,7 @@ def test_can_determine_max_slices_with_cpu(
     t._prepare()
     s = sectionize(p)
 
-    t.determine_max_slices(s[0], 0)
+    t.determine_max_slices(s[0], 0, dummy_block.angles)
     assert s[0].max_slices == dummy_block.chunk_shape[0]
 
 
@@ -224,7 +225,7 @@ def test_can_determine_max_slices_with_cpu_large(
     t._prepare()
     s = sectionize(p)
 
-    t.determine_max_slices(s[0], 0)
+    t.determine_max_slices(s[0], 0, block.angles)
     assert s[0].max_slices == 64
 
 
