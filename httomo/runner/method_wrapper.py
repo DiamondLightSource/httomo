@@ -192,6 +192,7 @@ class MethodWrapper(Protocol):
     def calculate_max_slices(
         self,
         data_dtype: np.dtype,
+        slicing_dim: int,
         non_slice_dims_shape: Tuple[int, int],
         available_memory: int,
     ) -> Tuple[int, int]:
