@@ -92,6 +92,10 @@ class StandardTomoLoader(DataSetSource):
         weakref.finalize(self, self.finalize)
 
     @property
+    def padding(self) -> Tuple[int, int]:
+        return self._padding
+
+    @property
     def dtype(self) -> np.dtype:
         return self._data.dtype
 
