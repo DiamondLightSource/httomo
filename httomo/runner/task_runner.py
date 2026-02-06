@@ -459,6 +459,20 @@ class TaskRunner:
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims
 
+        if (
+            min(max_slices_methods)
+            < 1 + self.source.padding[0] + self.source.padding[1]
+        ):
+            padded_method = next(
+                method.method_name for method in section.methods if method.padding
+            )
+            err_str = (
+                "Unable to process data due to GPU memory limitations.\n"
+                f"Please remove method '{padded_method}' from the pipeline, or run on a "
+                "machine with more GPU memory."
+            )
+            raise ValueError(err_str)
+
         section.max_slices = min(max_slices_methods)
 
     def _pass_min_block_length_to_intermediate_data_wrapper(self, section: Section):
