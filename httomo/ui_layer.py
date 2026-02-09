@@ -9,7 +9,7 @@ import re
 import h5py
 from mpi4py.MPI import Comm
 
-from httomo.preview import PreviewConfig
+from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 
@@ -24,7 +24,6 @@ from httomo.transform_loader_params import (
     parse_config,
     parse_preview,
 )
-
 from httomo_backends.methods_database.query import MethodDatabaseRepository
 
 MethodConfig: TypeAlias = Dict[str, Any]
@@ -86,6 +85,7 @@ class UiLayer:
             self._append_methods_list(
                 i, task_conf, methods_list, parameters, method_id_map
             )
+        fix_preview_y_if_smaller_than_padding(loader, methods_list)
         return Pipeline(loader=loader, methods=methods_list)
 
     def _append_methods_list(
@@ -134,10 +134,12 @@ class UiLayer:
         task_conf = self.PipelineStageConfig[0]
         if "loaders" not in task_conf["module_path"]:
             # TODO option to relocate to yaml_checker
-            raise ValueError("Got pipeline with no loader (must be first method)")
+            raise ValueError(
+                "There is no loader in the pipeline. Please add the loader as the first method"
+            )
         parameters = task_conf.get("parameters", dict())
-        (data_config, image_key_path, angles, darks_config, flats_config) = (
-            parse_config(self.in_data_file, parameters)
+        data_config, image_key_path, angles, darks_config, flats_config = parse_config(
+            self.in_data_file, parameters
         )
 
         with h5py.File(data_config.in_file, "r") as f:
@@ -165,6 +167,27 @@ class UiLayer:
         )
 
         return loader
+
+
+def fix_preview_y_if_smaller_than_padding(
+    loader: LoaderInterface, methods_list: List[MethodWrapper]
+) -> None:
+    vertical_preview_length = (
+        loader.preview.detector_y.stop - loader.preview.detector_y.start
+    ) // loader.comm.size
+    max_pad_value = 0
+    for _, m in enumerate(methods_list):
+        if m.padding:
+            max_pad_value = max(sum(m.calculate_padding()), max_pad_value)
+    if max_pad_value >= vertical_preview_length:
+        loader.preview = PreviewConfig(
+            angles=loader.preview.angles,
+            detector_y=PreviewDimConfig(
+                start=loader.preview.detector_y.start - max_pad_value // 2,
+                stop=loader.preview.detector_y.stop + max_pad_value // 2,
+            ),
+            detector_x=loader.preview.detector_x,
+        )
 
 
 def get_valid_ref_str(parameters: Dict[str, Any]) -> Dict[str, str]:
@@ -206,7 +229,7 @@ def update_side_output_references(
     pattern = get_regex_pattern()
     # check if there is a reference to side_outputs to cross-link
     for param_name, param_value in valid_refs.items():
-        (ref_id, side_str, ref_arg) = get_ref_split(param_value, pattern)
+        ref_id, side_str, ref_arg = get_ref_split(param_value, pattern)
         if ref_id is None:
             continue
         method = method_id_map.get(ref_id, None)

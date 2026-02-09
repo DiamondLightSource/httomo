@@ -12,6 +12,7 @@ from httomo.yaml_checker import (
     check_first_method_is_loader,
     check_hdf5_paths_against_loader,
     check_methods_exist_in_templates,
+    check_omitted_parameters_are_not_required,
     check_parameter_names_are_known,
     check_parameter_names_are_str,
     check_no_required_parameter_values,
@@ -76,6 +77,25 @@ def test_hdf5_paths_with_loader_some_auto_params(
     assert check_hdf5_paths_against_loader(conf, standard_data)
 
 
+def test_hdf5_paths_invalid_non_auto_value_caught_if_null_image_key_path(
+    standard_data: str, sample_pipelines: str, load_yaml: Callable
+):
+    filepath = (
+        sample_pipelines
+        + "testing/loader_null_image_key_path_before_invalid_non_auto_params.yaml"
+    )
+    conf = load_yaml(filepath)
+    assert not check_hdf5_paths_against_loader(conf, standard_data)
+
+
+def test_hdf5_paths_accepts_omitted_image_key_path(
+    standard_data: str, sample_pipelines: str, load_yaml: Callable
+):
+    filepath = sample_pipelines + "testing/loader_omitted_image_key_path.yaml"
+    conf = load_yaml(filepath)
+    assert check_hdf5_paths_against_loader(conf, standard_data)
+
+
 def test_check_methods_exist_in_templates(sample_pipelines: str, load_yaml: Callable):
     incorrect_method_pipeline = sample_pipelines + "testing/incorrect_method.yaml"
     conf = load_yaml(incorrect_method_pipeline)
@@ -99,6 +119,14 @@ def test_check_no_required_parameter_values(sample_pipelines: str, load_yaml: Ca
     required_param_pipeline = sample_pipelines + "testing/required_param.yaml"
     conf = load_yaml(required_param_pipeline)
     assert not check_no_required_parameter_values(conf)
+
+
+def test_check_omitted_parameters_are_not_required(
+    sample_pipelines: str, load_yaml: Callable
+):
+    pipeline = sample_pipelines + "testing/omitted_required_param.yaml"
+    conf = load_yaml(pipeline)
+    assert not check_omitted_parameters_are_not_required(conf)
 
 
 def test_check_no_duplicated_keys(sample_pipelines: str, load_yaml: Callable):

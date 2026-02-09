@@ -21,7 +21,6 @@ from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
 from httomo.ui_layer import UiLayer, PipelineFormat
 
-
 try:
     from . import __version__
 except:
@@ -138,6 +137,11 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)",
 )
 @click.option(
+    "--save-snapshots",
+    is_flag=True,
+    help="Save intermediate images (snapshots) from some methods in the pipeline.",
+)
+@click.option(
     "--monitor",
     type=click.STRING,
     multiple=True,
@@ -212,6 +216,7 @@ def run(
     reslice_dir: Union[Path, None],
     max_cpu_slices: int,
     max_memory: str,
+    save_snapshots: bool,
     monitor: List[str],
     pipeline_format: str,
     monitor_output: TextIO,
@@ -265,6 +270,7 @@ def run(
             monitor,
             monitor_output,
             reslice_dir,
+            save_snapshots,
         )
     else:
         execute_sweep_run(pipeline, global_comm)
@@ -398,6 +404,7 @@ def execute_high_throughput_run(
     monitor: List[str],
     monitor_output: TextIO,
     reslice_dir: Union[Path, None],
+    save_snapshots: bool,
 ) -> None:
     # we use half the memory for blocks since we typically have inputs/output
     memory_limit = transform_limit_str_to_bytes(max_memory) // 2
@@ -416,6 +423,7 @@ def execute_high_throughput_run(
             global_comm,
             monitor=mon,
             memory_limit_bytes=memory_limit,
+            save_snapshots=save_snapshots,
         )
         runner.execute()
         if mon is not None:

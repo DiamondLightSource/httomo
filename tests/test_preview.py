@@ -1,15 +1,9 @@
 from pathlib import Path
 from typing import Tuple
-
 import pytest
 import h5py
 import numpy as np
-
 from httomo.preview import Preview, PreviewConfig, PreviewDimConfig
-from httomo.transform_loader_params import (
-    PreviewParam,
-    parse_preview,
-)
 
 
 @pytest.mark.parametrize(

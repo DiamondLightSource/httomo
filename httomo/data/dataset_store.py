@@ -117,7 +117,6 @@ class DataSetStoreWriter(ReadableDataSetSink):
     def write_block(self, block: DataSetBlock):
         if self._readonly:
             raise ValueError("Cannot write after creating a reader")
-        block.to_cpu()
         start = max(block.chunk_index_unpadded)
         if self._data is None:
             # if non-slice dims in block are different, update the shapes here
@@ -284,7 +283,19 @@ class DataSetStoreReader(DataSetSource):
             self._slicing_dim = source.slicing_dim
             self._data = source_data
         else:
+            start = time.perf_counter()
             self._data = self._reslice(source.slicing_dim, slicing_dim, source_data)
+            end = time.perf_counter()
+            if slicing_dim == 1:
+                log_once(
+                    f"Slicing axis change (reslice) from projection to sinogram took {(end - start):.9f}s.",
+                    level=logging.INFO,
+                )
+            else:
+                log_once(
+                    f"Slicing axis change (reslice) from sinogram to projection took {(end - start):.9f}s.",
+                    level=logging.INFO,
+                )
             self._slicing_dim = slicing_dim
 
         self._padding = (0, 0) if padding is None else padding
@@ -343,7 +354,7 @@ class DataSetStoreReader(DataSetSource):
                 array, newdim, startidx = reslice(
                     data, old_slicing_dim + 1, new_slicing_dim + 1, self._comm
                 )
-                self._chunk_shape = array.shape  #  type: ignore
+                self._chunk_shape = array.shape  # type: ignore
                 assert newdim == new_slicing_dim + 1
                 idx = [0, 0, 0]
                 idx[new_slicing_dim] = startidx

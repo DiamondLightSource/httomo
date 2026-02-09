@@ -271,12 +271,14 @@ def test_calls_append_side_outputs_after_last_block(
     spy = mocker.patch.object(t, "append_side_outputs")
     t._prepare()
     t._execute_method(
-        method, block1
+        method,
+        block1,
     )  # the first block shouldn't trigger a side output append call
     assert spy.call_count == 0
 
     t._execute_method(
-        method, block2
+        method,
+        block2,
     )  # the last block should trigger side output append call
     getmock.assert_called_once()
     spy.assert_called_once_with(side_outputs)
@@ -306,7 +308,7 @@ def test_update_side_inputs_updates_downstream_methods(
     setitem3.assert_has_calls(method3_calls)
 
 
-def test_execute_method_updates_monitor(
+def test_execute_section_block_updates_monitor(
     mocker: MockerFixture, tmp_path: PathLike, dummy_block: DataSetBlock
 ):
     loader = make_test_loader(mocker)
@@ -316,10 +318,11 @@ def test_execute_method_updates_monitor(
     )
     mon = mocker.create_autospec(MonitoringInterface, instance=True)
     p = Pipeline(loader=loader, methods=[method1])
+    s = sectionize(p)
     t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD, monitor=mon)
     t._prepare()
     mocker.patch.object(method1, "execute", return_value=dummy_block)
-    t._execute_method(method1, dummy_block)
+    t._execute_section_block(s[0], dummy_block)
 
     mon.report_method_block.assert_called_once_with(
         method1.method_name,
@@ -452,6 +455,63 @@ def test_warns_with_multiple_reslices(
     spy.assert_called()
     args, _ = spy.call_args
     assert "Data saving or/and reslicing operation will be performed 4 times" in args[0]
+
+
+def test_get_method_names_for_snapshot_saver(
+    mocker: MockerFixture,
+    dummy_block: DataSetBlock,
+    tmp_path: PathLike,
+):
+    loader = make_test_loader(mocker, block=dummy_block, pattern=Pattern.projection)
+    method1 = make_test_method(mocker, method_name="m1", pattern=Pattern.projection)
+    method2 = make_test_method(mocker, method_name="m2_rec", pattern=Pattern.projection)
+    method3 = make_test_method(
+        mocker, method_name="data_checker", pattern=Pattern.projection
+    )
+    method4 = make_test_method(
+        mocker, method_name="find_center_pc", pattern=Pattern.sinogram
+    )
+    method5 = make_test_method(mocker, method_name="m5_rec", pattern=Pattern.sinogram)
+    method6 = make_test_method(
+        mocker, method_name="data_checker", pattern=Pattern.sinogram
+    )
+    method7 = make_test_method(mocker, method_name="m7_rec", pattern=Pattern.projection)
+    method8 = make_test_method(
+        mocker, method_name="data_checker", pattern=Pattern.projection
+    )
+    method9 = make_test_method(mocker, method_name="m9_rec", pattern=Pattern.sinogram)
+    method10 = make_test_method(
+        mocker, method_name="data_checker", pattern=Pattern.sinogram
+    )
+    method11 = make_test_method(
+        mocker, method_name="calculate_stats", pattern=Pattern.all
+    )
+    p = Pipeline(
+        loader=loader,
+        methods=[
+            method1,
+            method2,
+            method3,
+            method4,
+            method5,
+            method6,
+            method7,
+            method8,
+            method9,
+            method10,
+            method11,
+        ],
+    )
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
+    _sections = t._sectionize()
+
+    sections_number = len(_sections)
+    METHODS_NAMES_EXPECTED = ["m2_rec", "m5_rec", "m7_rec", "m9_rec"]
+    for ind in range(0, sections_number):
+        assert (
+            t._get_methods_name_for_snapshot(_sections[ind])
+            == METHODS_NAMES_EXPECTED[ind]
+        )
 
 
 def test_warns_with_multiple_stores_from_side_outputs(

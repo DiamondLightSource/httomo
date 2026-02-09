@@ -139,6 +139,8 @@ def check_hdf5_paths_against_loader(conf: PipelineConfig, in_file_path: str) -> 
         colour=Colour.GREEN,
     )
     params = conf[0]["parameters"]
+    if "image_key_path" not in params:
+        params["image_key_path"] = None
     POSSIBLE_AUTO_PARAMS = ["data_path", "image_key_path", "rotation_angles"]
     possible_auto_param_pairs = {name: params[name] for name in POSSIBLE_AUTO_PARAMS}
     auto_pairs = {k: v for k, v in possible_auto_param_pairs.items() if v == "auto"}
@@ -162,7 +164,7 @@ def check_hdf5_paths_against_loader(conf: PipelineConfig, in_file_path: str) -> 
     ]
     for key in non_auto_path_keys:
         if key == "image_key_path" and params[key] is None:
-            break
+            continue
         if params[key].strip("/") not in hdf5_members:
             _print_with_colour(
                 f"'{params[key]}' is not a valid path to a dataset in YAML_CONFIG. "
@@ -215,6 +217,33 @@ def check_parameter_names_are_known(conf: PipelineConfig) -> bool:
                 f"Parameter '{p}' in the '{method_dict['method']}' method is not valid."
             )
             return False
+    return True
+
+
+def check_omitted_parameters_are_not_required(conf: PipelineConfig) -> bool:
+    """
+    Check that any parameters omitted in method configs are not required.
+
+    Notes
+    -----
+    This check is functionally equivalent to checking that any parameters omitted in method
+    configs have default values.
+    """
+    template_yaml_conf = _get_template_yaml_conf(conf)
+    for config, template in zip(conf, template_yaml_conf):
+        template_param_dict = template["parameters"]
+        config_params = set(config.get("parameters", {}).keys())
+        template_params = set(template_param_dict.keys())
+        omitted_params = template_params - config_params
+
+        for param in omitted_params:
+            if template_param_dict[param] == "REQUIRED":
+                err_str = (
+                    f"The parameter '{param}' for '{config['method']}' was omitted but is "
+                    "required."
+                )
+                _print_with_colour(err_str)
+                return False
     return True
 
 
@@ -327,7 +356,7 @@ def check_ref_id_valid(conf: PipelineConfig) -> bool:
         for k, v in get_valid_ref_str(m.get("parameters", dict())).items()
     }
     for k, v in ref_strs.items():
-        (ref_id, side_str, ref_arg) = get_ref_split(v, pattern)
+        ref_id, side_str, ref_arg = get_ref_split(v, pattern)
         if ref_id not in method_ids:
             _print_with_colour(
                 f"The reference id: {ref_id} was not found to have a matching method id."
@@ -345,7 +374,7 @@ def check_side_out_matches_ref_arg(conf: PipelineConfig) -> bool:
         for k, v in get_valid_ref_str(m.get("parameters", dict())).items()
     }
     for k, v in ref_strs.items():
-        (ref_id, side_str, ref_arg) = get_ref_split(v, pattern)
+        ref_id, side_str, ref_arg = get_ref_split(v, pattern)
         side_dicts = [
             m.get(side_str)
             for m in conf
@@ -463,6 +492,7 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
     side_out_matches_ref_arg = check_side_out_matches_ref_arg(conf)
     required_keys_present = check_keys(conf)
     are_required_parameters_missing = check_no_required_parameter_values(conf)
+    are_omitted_params_required = check_omitted_parameters_are_not_required(conf)
 
     all_checks_pass = (
         is_yaml_ok
@@ -477,6 +507,7 @@ def validate_yaml_config(yaml_file: Path, in_file: Optional[Path] = None) -> boo
         and side_out_matches_ref_arg
         and required_keys_present
         and are_required_parameters_missing
+        and are_omitted_params_required
     )
 
     if not all_checks_pass:

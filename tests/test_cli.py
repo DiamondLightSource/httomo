@@ -16,7 +16,6 @@ from httomo.cli import (
 )
 from httomo.ui_layer import PipelineFormat
 
-
 # Sample JSON pipeline data for testing
 SAMPLE_JSON_PIPELINE = [
     {

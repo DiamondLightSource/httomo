@@ -7,7 +7,6 @@ from httomo.monitors.benchmark import BenchmarkMonitoring
 from httomo.monitors.summary import SummaryMonitor
 from httomo.runner.monitoring_interface import MonitoringInterface
 
-
 MONITORS_MAP = {"bench": BenchmarkMonitoring, "summary": SummaryMonitor}
 
 
