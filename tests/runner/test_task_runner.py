@@ -615,7 +615,6 @@ def test_execute_section_with_padding_produces_correct_result(
         file=IN_FILE_PATH,
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     COMM = MPI.COMM_WORLD

@@ -75,12 +75,11 @@ class DarksFlatsFileConfig(NamedTuple):
     file: Path
     data_path: str
     image_key_path: Optional[str]
-    ignore: bool = False
 
 
 def get_darks_flats(
-    darks_config: DarksFlatsFileConfig,
-    flats_config: DarksFlatsFileConfig,
+    darks_config: Optional[DarksFlatsFileConfig],
+    flats_config: Optional[DarksFlatsFileConfig],
     preview_config: PreviewConfig,
     datatype: np.dtype,
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -90,10 +89,12 @@ def get_darks_flats(
 
     Parameters
     ----------
-    darks_config : DarksFlatsFileConfig
-        Configuration of where to get the dark-field images from.
-    flats_config : DarksFlatsFileConfig
-        Configuration of where to get the flat-field images from.
+    darks_config : Optional[DarksFlatsFileConfig]
+        Configuration of where to get the dark-field images from. If `None`, then generate
+        dummy darks.
+    flats_config : Optional[DarksFlatsFileConfig]
+        Configuration of where to get the flat-field images from. If `None`, then generate
+        dummy flats.
     preview_config : PreviewConfig
         Configuration of previewing to be applied to projection, dark-field, and flat-field
         images.
@@ -194,22 +195,22 @@ def get_darks_flats(
                 dtype=datatype,
             )
 
-    if darks_config.ignore and flats_config.ignore:
+    if darks_config is None and flats_config is None:
         return generate_dummy(ImageType.Dark), generate_dummy(ImageType.Flat)
 
-    if darks_config.ignore and not flats_config.ignore:
+    if darks_config is None and flats_config is not None:
         return generate_dummy(ImageType.Dark), get_separate(
             flats_config, ImageType.Flat
         )
 
-    if not darks_config.ignore and flats_config.ignore:
+    if darks_config is not None and flats_config is None:
         return get_separate(darks_config, ImageType.Dark), generate_dummy(
             ImageType.Flat
         )
 
     if (
-        not darks_config.ignore
-        and not flats_config.ignore
+        darks_config is not None
+        and flats_config is not None
         and darks_config.file != flats_config.file
     ):
         darks = get_separate(darks_config, ImageType.Dark)
@@ -217,8 +218,8 @@ def get_darks_flats(
         return darks, flats
 
     if (
-        not darks_config.ignore
-        and not flats_config.ignore
+        darks_config is not None
+        and flats_config is not None
         and darks_config.file == flats_config.file
     ):
         return get_together(darks_config, flats_config)
