@@ -325,7 +325,6 @@ class DarksFlatsParam(TypedDict):
     file: str
     data_path: str
     image_key_path: Optional[str]
-    ignore: bool
 
 
 def parse_darks_flats(
