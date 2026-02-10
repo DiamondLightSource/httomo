@@ -3,6 +3,7 @@ Dark-field/flat-field storage location configuration type and reading function, 
 loaders.
 """
 
+from enum import Enum
 from pathlib import Path
 from typing import NamedTuple, Optional, Tuple
 
@@ -10,6 +11,22 @@ import h5py
 import numpy as np
 
 from httomo.preview import PreviewConfig
+
+
+class ImageType(Enum):
+    """
+    Darks/flats image types mapped to their associated integer value with respect to an image
+    key.
+
+    Notes
+    -----
+    See the following link for more information on an "image key" in the context of the NXtomo
+    application definition:
+    https://manual.nexusformat.org/classes/base_classes/NXdetector.html#nxdetector-image-key-field.
+    """
+
+    Flat = 1
+    Dark = 2
 
 
 class DarksFlatsFileConfig(NamedTuple):
@@ -103,17 +120,21 @@ def get_darks_flats(
         with h5py.File(darks_config.file, "r") as f:
             dataset: h5py.Dataset = f[darks_config.data_path]
             if darks_config.image_key_path is not None:
-                darks_indices = np.where(f[darks_config.image_key_path][:] == 2)[0]
+                darks_indices = np.where(
+                    f[darks_config.image_key_path][:] == ImageType.Dark.value
+                )[0]
             else:
                 darks_indices = []
             if flats_config.image_key_path is not None:
-                flats_indices = np.where(f[flats_config.image_key_path][:] == 1)[0]
+                flats_indices = np.where(
+                    f[flats_config.image_key_path][:] == ImageType.Flat.value
+                )[0]
             else:
                 flats_indices = []
 
             if len(darks_indices) == 0:
                 # there are no darks in the data file so we generate a dummy array
-                darks = generate_dummy("dark")
+                darks = generate_dummy(ImageType.Dark)
             else:
                 darks = dataset[
                     darks_indices,
@@ -122,7 +143,7 @@ def get_darks_flats(
                 ]
             if len(flats_indices) == 0:
                 # there are no flats in the data file so we generate a dummy array
-                flats = generate_dummy("flat")
+                flats = generate_dummy(ImageType.Flat)
             else:
                 flats = dataset[
                     flats_indices,
@@ -131,7 +152,7 @@ def get_darks_flats(
                 ]
         return darks, flats
 
-    def get_separate(config: DarksFlatsFileConfig, image_type: str) -> np.ndarray:
+    def get_separate(config: DarksFlatsFileConfig, image_type: ImageType) -> np.ndarray:
         """
         Get darks/flats from a separate file that may or may not contain an image key.
         """
@@ -143,19 +164,18 @@ def get_darks_flats(
                     preview_config.detector_x.start : preview_config.detector_x.stop,
                 ]
 
-            index = 2 if image_type == "dark" else 1
-            indices = np.where(f[config.image_key_path][:] == index)[0]
+            indices = np.where(f[config.image_key_path][:] == image_type.value)[0]
             return f[config.data_path][
                 indices,
                 preview_config.detector_y.start : preview_config.detector_y.stop,
                 preview_config.detector_x.start : preview_config.detector_x.stop,
             ]
 
-    def generate_dummy(image_type: str) -> np.ndarray:
+    def generate_dummy(image_type: ImageType) -> np.ndarray:
         """
         Generate dummy darks or flats data.
         """
-        if image_type == "dark":
+        if image_type == ImageType.Dark:
             return np.zeros(
                 (
                     1,
@@ -175,21 +195,25 @@ def get_darks_flats(
             )
 
     if darks_config.ignore and flats_config.ignore:
-        return generate_dummy("dark"), generate_dummy("flat")
+        return generate_dummy(ImageType.Dark), generate_dummy(ImageType.Flat)
 
     if darks_config.ignore and not flats_config.ignore:
-        return generate_dummy("dark"), get_separate(flats_config, "flat")
+        return generate_dummy(ImageType.Dark), get_separate(
+            flats_config, ImageType.Flat
+        )
 
     if not darks_config.ignore and flats_config.ignore:
-        return get_separate(darks_config, "dark"), generate_dummy("flat")
+        return get_separate(darks_config, ImageType.Dark), generate_dummy(
+            ImageType.Flat
+        )
 
     if (
         not darks_config.ignore
         and not flats_config.ignore
         and darks_config.file != flats_config.file
     ):
-        darks = get_separate(darks_config, "dark")
-        flats = get_separate(flats_config, "flat")
+        darks = get_separate(darks_config, ImageType.Dark)
+        flats = get_separate(flats_config, ImageType.Flat)
         return darks, flats
 
     if (
