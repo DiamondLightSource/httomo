@@ -65,6 +65,7 @@ def get_darks_flats(
     darks_config: DarksFlatsFileConfig,
     flats_config: DarksFlatsFileConfig,
     preview_config: PreviewConfig,
+    datatype: np.dtype,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Reads the dark-field and flat-field images from the file(s) defined in the input
@@ -79,6 +80,8 @@ def get_darks_flats(
     preview_config : PreviewConfig
         Configuration of previewing to be applied to projection, dark-field, and flat-field
         images.
+    datatype: np.dtype
+        Data type for any dummy darks/flats that need to be generated
 
     Returns
     -------
@@ -86,7 +89,17 @@ def get_darks_flats(
         Index zero contains the dark-field images and index one contains the flat-field images.
     """
 
-    def get_together_or_dummy() -> Tuple[np.ndarray, np.ndarray]:
+    def get_together(
+        darks_config: DarksFlatsFileConfig, flats_config: DarksFlatsFileConfig
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Get darks and flats from the same file and the same dataset within that file.
+
+        Notes
+        -----
+        If the dataset contains no images marked as darks/flats, then dummy darks/flats will be
+        generated accordingly.
+        """
         with h5py.File(darks_config.file, "r") as f:
             dataset: h5py.Dataset = f[darks_config.data_path]
             if darks_config.image_key_path is not None:
@@ -98,36 +111,18 @@ def get_darks_flats(
             else:
                 flats_indices = []
 
-            if len(darks_indices) == 0 or darks_config.ignore:
-                # there are no darks in the data file OR we need to ignore them, so we generate a dummy array
-                darks = np.zeros(
-                    (
-                        1,
-                        preview_config.detector_y.stop
-                        - preview_config.detector_y.start,
-                        preview_config.detector_x.stop
-                        - preview_config.detector_x.start,
-                    ),
-                    dtype=dataset.dtype,
-                )
+            if len(darks_indices) == 0:
+                # there are no darks in the data file so we generate a dummy array
+                darks = generate_dummy("dark")
             else:
                 darks = dataset[
                     darks_indices,
                     preview_config.detector_y.start : preview_config.detector_y.stop,
                     preview_config.detector_x.start : preview_config.detector_x.stop,
                 ]
-            if len(flats_indices) == 0 or flats_config.ignore:
-                # there are no flats in the data file and we generate a dummy array
-                flats = np.ones(
-                    (
-                        1,
-                        preview_config.detector_y.stop
-                        - preview_config.detector_y.start,
-                        preview_config.detector_x.stop
-                        - preview_config.detector_x.start,
-                    ),
-                    dtype=dataset.dtype,
-                )
+            if len(flats_indices) == 0:
+                # there are no flats in the data file so we generate a dummy array
+                flats = generate_dummy("flat")
             else:
                 flats = dataset[
                     flats_indices,
@@ -136,49 +131,72 @@ def get_darks_flats(
                 ]
         return darks, flats
 
-    def get_separate(config: DarksFlatsFileConfig):
+    def get_separate(config: DarksFlatsFileConfig, image_type: str) -> np.ndarray:
+        """
+        Get darks/flats from a separate file that may or may not contain an image key.
+        """
         with h5py.File(config.file, "r") as f:
+            if config.image_key_path is None:
+                return f[config.data_path][
+                    :,
+                    preview_config.detector_y.start : preview_config.detector_y.stop,
+                    preview_config.detector_x.start : preview_config.detector_x.stop,
+                ]
+
+            index = 2 if image_type == "dark" else 1
+            indices = np.where(f[config.image_key_path][:] == index)[0]
             return f[config.data_path][
-                :,
+                indices,
                 preview_config.detector_y.start : preview_config.detector_y.stop,
                 preview_config.detector_x.start : preview_config.detector_x.stop,
             ]
 
+    def generate_dummy(image_type: str) -> np.ndarray:
+        """
+        Generate dummy darks or flats data.
+        """
+        if image_type == "dark":
+            return np.zeros(
+                (
+                    1,
+                    preview_config.detector_y.stop - preview_config.detector_y.start,
+                    preview_config.detector_x.stop - preview_config.detector_x.start,
+                ),
+                dtype=datatype,
+            )
+        else:
+            return np.ones(
+                (
+                    1,
+                    preview_config.detector_y.stop - preview_config.detector_y.start,
+                    preview_config.detector_x.stop - preview_config.detector_x.start,
+                ),
+                dtype=datatype,
+            )
+
+    if darks_config.ignore and flats_config.ignore:
+        return generate_dummy("dark"), generate_dummy("flat")
+
+    if darks_config.ignore and not flats_config.ignore:
+        return generate_dummy("dark"), get_separate(flats_config, "flat")
+
+    if not darks_config.ignore and flats_config.ignore:
+        return get_separate(darks_config, "dark"), generate_dummy("flat")
+
     if (
-        darks_config.ignore
+        not darks_config.ignore
         and not flats_config.ignore
         and darks_config.file != flats_config.file
     ):
-        flats = get_separate(flats_config)
-        darks = np.zeros(
-            (
-                1,
-                preview_config.detector_y.stop - preview_config.detector_y.start,
-                preview_config.detector_x.stop - preview_config.detector_x.start,
-            ),
-            dtype=flats.dtype,
-        )
+        darks = get_separate(darks_config, "dark")
+        flats = get_separate(flats_config, "flat")
         return darks, flats
 
     if (
         not darks_config.ignore
-        and flats_config.ignore
-        and darks_config.file != flats_config.file
+        and not flats_config.ignore
+        and darks_config.file == flats_config.file
     ):
-        darks = get_separate(darks_config)
-        flats = np.ones(
-            (
-                1,
-                preview_config.detector_y.stop - preview_config.detector_y.start,
-                preview_config.detector_x.stop - preview_config.detector_x.start,
-            ),
-            dtype=darks.dtype,
-        )
-        return darks, flats
+        return get_together(darks_config, flats_config)
 
-    if darks_config.file != flats_config.file:
-        darks = get_separate(darks_config)
-        flats = get_separate(flats_config)
-        return darks, flats  # type: ignore
-
-    return get_together_or_dummy()
+    raise ValueError("Unsupported darks and/or flats config")

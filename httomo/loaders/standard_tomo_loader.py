@@ -342,9 +342,7 @@ class StandardTomoLoader(DataSetSource):
     ) -> AuxiliaryData:
         angles_arr = np.deg2rad(self._get_angles())
         darks_arr, flats_arr = get_darks_flats(
-            darks_config,
-            flats_config,
-            self._preview.config,
+            darks_config, flats_config, self._preview.config, self._data.dtype
         )
         return AuxiliaryData(angles=angles_arr, darks=darks_arr, flats=flats_arr)
 

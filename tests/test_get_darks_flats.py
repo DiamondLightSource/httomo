@@ -57,6 +57,7 @@ def test_ignore_darks_same_file_same_dataset(
         standard_data_ignore_darks_flats_config,
         standard_data_darks_flats_config,
         preview_config,
+        np.uint16,
     )
 
     FLATS_START = 180
@@ -129,6 +130,7 @@ def test_ignore_darks_and_flats_same_file_same_dataset(
         standard_data_ignore_darks_flats_config,
         standard_data_ignore_darks_flats_config,
         preview_config,
+        np.uint16,
     )
 
     flats = np.ones(
@@ -201,6 +203,7 @@ def test_get_darks_flats_same_file_same_dataset(
         standard_data_darks_flats_config,
         standard_data_darks_flats_config,
         preview_config,
+        np.uint16,
     )
 
     FLATS_START = 180
@@ -279,6 +282,7 @@ def test_get_darks_flats_different_file(preview_config: PreviewConfig):
         DARKS_CONFIG,
         FLATS_CONFIG,
         preview_config,
+        np.uint16,
     )
 
     with h5py.File(DARKS_CONFIG.file, "r") as f:
@@ -322,6 +326,7 @@ def test_ignore_darks_get_separate_flats():
         DARKS_CONFIG,
         FLATS_CONFIG,
         PREVIEW_CONFIG,
+        np.uint16,
     )
 
     expected_darks = np.zeros(
@@ -367,6 +372,7 @@ def test_ignore_flats_get_separate_darks():
         DARKS_CONFIG,
         FLATS_CONFIG,
         PREVIEW_CONFIG,
+        np.uint16,
     )
 
     expected_flats = np.ones(
