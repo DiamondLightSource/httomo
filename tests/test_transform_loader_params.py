@@ -435,18 +435,16 @@ def test_parse_data():
 
 
 @pytest.mark.parametrize(
-    "data_config, image_key_path, config, ignore, expected_output",
+    "data_config, image_key_path, config, expected_output",
     [
         (
             DataConfig(Path("/some/path/to/data.nxs"), "/entry1/tomo_entry/data/data"),
             "/entry1/tomo_entry/data/image_key",
             None,
-            False,  # ignore param
             DarksFlatsFileConfig(
                 file=Path("/some/path/to/data.nxs"),
                 data_path="/entry1/tomo_entry/data/data",
                 image_key_path="/entry1/tomo_entry/data/image_key",
-                ignore=False,
             ),
         ),
         (
@@ -457,12 +455,10 @@ def test_parse_data():
                 "data_path": "/data",
                 "image_key_path": None,
             },
-            False,  # ignore param
             DarksFlatsFileConfig(
                 file=Path("/some/other/path/to/data.h5"),
                 data_path="/data",
                 image_key_path=None,
-                ignore=False,
             ),
         ),
         (
@@ -473,28 +469,10 @@ def test_parse_data():
                 "data_path": "/data",
                 "image_key_path": "/path/to/keys/data_two",
             },
-            False,  # ignore param
             DarksFlatsFileConfig(
                 file=Path("/some/path/to/data2.nxs"),
                 data_path="/data",
                 image_key_path="/path/to/keys/data_two",
-                ignore=False,
-            ),
-        ),
-        (
-            DataConfig(Path("/some/path/to/data.nxs"), "/entry1/tomo_entry/data/data"),
-            "/path/to/keys/data_one",
-            {
-                "file": "/some/path/to/data2.nxs",
-                "data_path": "/data",
-                "image_key_path": "/path/to/keys/data_two",
-            },
-            True,  # ignore param
-            DarksFlatsFileConfig(
-                file=Path("/some/path/to/data2.nxs"),
-                data_path="/data",
-                image_key_path="/path/to/keys/data_two",
-                ignore=True,
             ),
         ),
     ],
@@ -502,20 +480,15 @@ def test_parse_data():
         "darks/flats-in-input-file",
         "darks/flats-in-separate-file",
         "darks/flats-in-separate-file-with-image-key",
-        "darks/flats-ignore",
     ],
 )
 def test_parse_darks_flats_(
     data_config: DataConfig,
     image_key_path: Optional[str],
     config: Optional[DarksFlatsParam],
-    ignore: bool,
     expected_output: DarksFlatsFileConfig,
 ):
-    assert (
-        parse_darks_flats(data_config, image_key_path, config, ignore)
-        == expected_output
-    )
+    assert parse_darks_flats(data_config, image_key_path, config) == expected_output
 
 
 def test_find_tomo_entry_raises_error_if_group_doesnt_exist():
@@ -551,13 +524,11 @@ def test_find_tomo_entry_raises_error_if_group_doesnt_exist():
                 file=Path(__file__).parent / "test_data/tomo_standard.nxs",
                 data_path="/entry1/tomo_entry/data/data",
                 image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
-                ignore=False,
             ),
             DarksFlatsFileConfig(
                 file=Path(__file__).parent / "test_data/tomo_standard.nxs",
                 data_path="/entry1/tomo_entry/data/data",
                 image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
-                ignore=False,
             ),
         ),
         (
@@ -573,13 +544,11 @@ def test_find_tomo_entry_raises_error_if_group_doesnt_exist():
                 file=Path(__file__).parent / "test_data/tomo_standard.nxs",
                 data_path="/entry1/tomo_entry/data/data",
                 image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
-                ignore=False,
             ),
             DarksFlatsFileConfig(
                 file=Path(__file__).parent / "test_data/tomo_standard.nxs",
                 data_path="/entry1/tomo_entry/data/data",
                 image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
-                ignore=False,
             ),
         ),
         (
@@ -599,13 +568,11 @@ def test_find_tomo_entry_raises_error_if_group_doesnt_exist():
                 file=Path(__file__).parent / "test_data/k11_diad/k11-18014.nxs",
                 data_path="/entry/imaging/data",
                 image_key_path="/entry/instrument/imaging/image_key",
-                ignore=False,
             ),
             DarksFlatsFileConfig(
                 file=Path(__file__).parent / "test_data/k11_diad/k11-18014.nxs",
                 data_path="/entry/imaging/data",
                 image_key_path="/entry/instrument/imaging/image_key",
-                ignore=False,
             ),
         ),
         (
@@ -647,14 +614,12 @@ def test_find_tomo_entry_raises_error_if_group_doesnt_exist():
                 / "test_data/i12/separate_flats_darks/dark_field.h5",
                 data_path="/1-NoProcessPlugin-tomo/data",
                 image_key_path=None,
-                ignore=False,
             ),
             DarksFlatsFileConfig(
                 file=Path(__file__).parent
                 / "test_data/i12/separate_flats_darks/flat_field.h5",
                 data_path="/1-NoProcessPlugin-tomo/data",
                 image_key_path=None,
-                ignore=False,
             ),
         ),
     ],

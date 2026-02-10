@@ -26,7 +26,6 @@ def make_standard_tomo_loader() -> StandardTomoLoader:
         file=IN_FILE_PATH,
         data_path="/entry1/tomo_entry/data/data",
         image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     PREVIEW_CONFIG = PreviewConfig(
@@ -182,7 +181,6 @@ def test_standard_tomo_loader_get_chunk_shape_single_proc(
         file=IN_FILE_PATH,
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     SLICING_DIM: SlicingDimType = 0
@@ -252,7 +250,6 @@ def test_standard_tomo_loader_get_chunk_shape_two_procs(
         file=IN_FILE_PATH,
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     SLICING_DIM: SlicingDimType = 0
@@ -324,7 +321,6 @@ def test_standard_tomo_loader_read_block_single_proc(
         file=IN_FILE_PATH,
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     SLICING_DIM: SlicingDimType = 0
@@ -427,7 +423,6 @@ def test_standard_tomo_loader_read_block_two_procs(
         file=IN_FILE_PATH,
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     SLICING_DIM: SlicingDimType = 0
@@ -501,7 +496,6 @@ def test_standard_tomo_loader_read_flats_darks_other_data(
         file=IN_FILE2_PATH,
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     SLICING_DIM: SlicingDimType = 0
@@ -538,7 +532,6 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_single_proc() ->
         file=IN_FILE_PATH,
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
-        ignore=False,
     )
     PREVIEW_CONFIG = PreviewConfig(
         angles=PreviewDimConfig(start=0, stop=3201),
@@ -600,7 +593,6 @@ def test_standard_tomo_loader_read_block_adjust_for_darks_flats_two_procs() -> N
         file=IN_FILE_PATH,
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
-        ignore=False,
     )
     PREVIEW_CONFIG = PreviewConfig(
         angles=PreviewDimConfig(start=0, stop=3201),
@@ -786,7 +778,6 @@ def test_standard_tomo_loader_properties_reflect_nonzero_padding(
         file=IN_FILE_PATH,
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     SLICING_DIM: SlicingDimType = 0
@@ -833,7 +824,6 @@ def test_non_zero_loader_padding_loaded_block_shape_properties(
         file=IN_FILE_PATH,
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     SLICING_DIM: SlicingDimType = 0
@@ -930,7 +920,6 @@ def test_standard_tomo_loader_read_block_padded_outer_chunk_boundary_lower_bound
         file=IN_FILE_PATH,
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry/imaging_sum/gts_theta_value")
     SLICING_DIM: SlicingDimType = 0
@@ -1042,7 +1031,6 @@ def test_standard_tomo_loader_read_block_padded_outer_chunk_boundary_upper_bound
         file=IN_FILE_PATH,
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     SLICING_DIM: SlicingDimType = 0
@@ -1138,7 +1126,6 @@ def test_standard_tomo_loader_read_block_padded_middle_of_chunk_single_proc():
         file=IN_FILE_PATH,
         data_path=DATA_PATH,
         image_key_path=IMAGE_KEY_PATH,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry/imaging_sum/gts_theta_value")
     SLICING_DIM: SlicingDimType = 0
@@ -1222,7 +1209,6 @@ def test_standard_tomo_loader_read_block_padded_inner_chunk_boundaries_two_procs
         file=IN_FILE_PATH,
         data_path=standard_data_path,
         image_key_path=standard_image_key_path,
-        ignore=False,
     )
     ANGLES_CONFIG = RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle")
     SLICING_DIM: SlicingDimType = 0
