@@ -622,12 +622,56 @@ def test_find_tomo_entry_raises_error_if_group_doesnt_exist():
                 image_key_path=None,
             ),
         ),
+        (
+            Path(__file__).parent / "test_data/tomo_standard.nxs",
+            {
+                "data_path": "auto",
+                "image_key_path": "auto",
+                "rotation_angles": "auto",
+                "darks": "ignore",
+            },
+            DataConfig(
+                in_file=Path(__file__).parent / "test_data/tomo_standard.nxs",
+                data_path="/entry1/tomo_entry/data/data",
+            ),
+            "/entry1/tomo_entry/instrument/detector/image_key",
+            RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle"),
+            None,
+            DarksFlatsFileConfig(
+                file=Path(__file__).parent / "test_data/tomo_standard.nxs",
+                data_path="/entry1/tomo_entry/data/data",
+                image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
+            ),
+        ),
+        (
+            Path(__file__).parent / "test_data/tomo_standard.nxs",
+            {
+                "data_path": "auto",
+                "image_key_path": "auto",
+                "rotation_angles": "auto",
+                "flats": "ignore",
+            },
+            DataConfig(
+                in_file=Path(__file__).parent / "test_data/tomo_standard.nxs",
+                data_path="/entry1/tomo_entry/data/data",
+            ),
+            "/entry1/tomo_entry/instrument/detector/image_key",
+            RawAngles(data_path="/entry1/tomo_entry/data/rotation_angle"),
+            DarksFlatsFileConfig(
+                file=Path(__file__).parent / "test_data/tomo_standard.nxs",
+                data_path="/entry1/tomo_entry/data/data",
+                image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
+            ),
+            None,
+        ),
     ],
     ids=[
         "test-data-manual",
         "test-data-auto",
         "diad-manual",
         "i12-manual-separate-darks-flats",
+        "test-data-auto-ignore-darks",
+        "test-data-auto-ignore-flats",
     ],
 )
 def test_parse_loader_config(

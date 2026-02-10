@@ -425,17 +425,21 @@ def parse_config(
     data_config = DataConfig(in_file=input_file, data_path=str(data_path))
 
     darks_value = config.get("darks", None)
-    if darks_value == "ignore":
-        darks_value = None
-    if darks_value is not None and "image_key_path" not in darks_value:
+    if isinstance(darks_value, dict) and "image_key_path" not in darks_value:
         darks_value["image_key_path"] = None
-    darks_config = parse_darks_flats(data_config, image_key_path, darks_value)
+    darks_config = (
+        None
+        if darks_value == "ignore"
+        else parse_darks_flats(data_config, image_key_path, darks_value)
+    )
     flats_value = config.get("flats", None)
-    if flats_value == "ignore":
-        flats_value = None
-    if flats_value is not None and "image_key_path" not in flats_value:
+    if isinstance(flats_value, dict) and "image_key_path" not in flats_value:
         flats_value["image_key_path"] = None
-    flats_config = parse_darks_flats(data_config, image_key_path, flats_value)
+    flats_config = (
+        None
+        if flats_value == "ignore"
+        else parse_darks_flats(data_config, image_key_path, flats_value)
+    )
 
     return (
         data_config,
