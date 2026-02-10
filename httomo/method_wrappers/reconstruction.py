@@ -49,6 +49,7 @@ class ReconstructionWrapper(GenericMethodWrapper):
     def _calculate_max_slices_iterative(
         self,
         data_dtype: np.dtype,
+        slicing_dim: int,
         non_slice_dims_shape: Tuple[int, int],
         angles: np.ndarray,
         available_memory: int,
@@ -59,12 +60,11 @@ class ReconstructionWrapper(GenericMethodWrapper):
                     "angles": angles[0 : non_slice_dims_shape[0]]
                 } | self._unwrap_output_ref_values()
 
+                dims_shape = list(non_slice_dims_shape)
+                dims_shape.insert(slicing_dim, current_slices)
+
                 memory_bytes = self._query.calculate_memory_bytes_for_slices(
-                    dims_shape=(
-                        current_slices,
-                        non_slice_dims_shape[0],
-                        non_slice_dims_shape[1],
-                    ),
+                    dims_shape=tuple(dims_shape),
                     dtype=data_dtype,
                     **kwargs,
                 )
