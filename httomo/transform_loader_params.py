@@ -9,6 +9,7 @@ from typing import (
     Any,
     Dict,
     Literal,
+    NotRequired,
     Optional,
     Tuple,
     TypeAlias,
@@ -317,9 +318,19 @@ def parse_data(in_file: str, data_path: str) -> DataConfig:
     return DataConfig(in_file=Path(in_file), data_path=data_path)
 
 
-class DarksFlatsParam(TypedDict):
+class PartialDarksFlatsParam(TypedDict):
     """
-    Darks/flats configuration dict.
+    Potentially incomplete darks/flats configuration dict directly from YAML config.
+    """
+
+    file: str
+    data_path: str
+    image_key_path: NotRequired[Optional[str]]
+
+
+class DarksFlatsParam(PartialDarksFlatsParam):
+    """
+    Complete darks/flats configuration dict.
     """
 
     file: str
@@ -425,22 +436,45 @@ def parse_config(input_file: Path, config: Dict[str, Any]) -> Tuple[
 
     data_config = DataConfig(in_file=input_file, data_path=str(data_path))
 
-    darks_value = config.get("darks", None)
-    if isinstance(darks_value, dict) and "image_key_path" not in darks_value:
-        darks_value["image_key_path"] = None
-    darks_config = (
-        None
-        if darks_value == "ignore"
-        else parse_darks_flats(data_config, image_key_path, darks_value)
+    darks_value: Optional[PartialDarksFlatsParam | Literal["ignore"]] = config.get(
+        "darks", None
     )
-    flats_value = config.get("flats", None)
-    if isinstance(flats_value, dict) and "image_key_path" not in flats_value:
-        flats_value["image_key_path"] = None
-    flats_config = (
-        None
-        if flats_value == "ignore"
-        else parse_darks_flats(data_config, image_key_path, flats_value)
+    darks_config: Optional[DarksFlatsFileConfig]
+    match darks_value:
+        case "ignore":
+            darks_config = None
+        case None:
+            darks_config = parse_darks_flats(data_config, image_key_path, None)
+        case _:
+            darks_config = parse_darks_flats(
+                data_config,
+                image_key_path,
+                DarksFlatsParam(
+                    file=darks_value["file"],
+                    data_path=darks_value["data_path"],
+                    image_key_path=darks_value.get("image_key_path", None),
+                ),
+            )
+
+    flats_value: Optional[PartialDarksFlatsParam | Literal["ignore"]] = config.get(
+        "flats", None
     )
+    flats_config: Optional[DarksFlatsFileConfig]
+    match flats_value:
+        case "ignore":
+            flats_config = None
+        case None:
+            flats_config = parse_darks_flats(data_config, image_key_path, None)
+        case _:
+            flats_config = parse_darks_flats(
+                data_config,
+                image_key_path,
+                DarksFlatsParam(
+                    file=flats_value["file"],
+                    data_path=flats_value["data_path"],
+                    image_key_path=flats_value.get("image_key_path", None),
+                ),
+            )
 
     return (
         data_config,
