@@ -135,10 +135,6 @@ class TaskRunner:
         slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
         self.determine_max_slices(section, slicing_dim_section)
 
-        # Account for potential padding in number of max slices
-        padding = determine_section_padding(section)
-        section.max_slices -= padding[0] + padding[1]
-
         self._log_pipeline(
             f"Maximum amount of slices is {section.max_slices} for section {section_index}",
             level=logging.DEBUG,
@@ -410,7 +406,9 @@ class TaskRunner:
         assert len(section) > 0, "Section should contain at least 1 method"
 
         data_shape = self.source.chunk_shape
-        max_slices = data_shape[slicing_dim]
+        max_slices = (
+            data_shape[slicing_dim] + self.source.padding[0] + self.source.padding[1]
+        )
         # loop over all methods in section
         has_gpu = False
         for idx, m in enumerate(section):
@@ -460,6 +458,20 @@ class TaskRunner:
             )
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims
+
+        if (
+            min(max_slices_methods)
+            < 1 + self.source.padding[0] + self.source.padding[1]
+        ):
+            padded_method = next(
+                method.method_name for method in section.methods if method.padding
+            )
+            err_str = (
+                "Unable to process data due to GPU memory limitations.\n"
+                f"Please remove method '{padded_method}' from the pipeline, or run on a "
+                "machine with more GPU memory."
+            )
+            raise ValueError(err_str)
 
         section.max_slices = min(max_slices_methods)
 

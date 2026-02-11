@@ -228,6 +228,48 @@ def test_can_determine_max_slices_with_cpu_large(
     assert s[0].max_slices == 64
 
 
+def test_determine_max_slices_raises_error_if_padded_data_cannot_fit(
+    mocker: MockerFixture, tmp_path: PathLike
+):
+    METHOD_NAME = "method_requiring_padding"
+    PADDING = (5, 5)
+    MAX_SLICES_LESS_THAN_CORE_PLUS_PADDING = 9
+    data = np.ones((10, 10, 10), dtype=np.float32)
+    aux = AuxiliaryData(angles=np.ones(data.shape[0], dtype=np.float32))
+    block = DataSetBlock(data, aux)
+    loader = make_test_loader(mocker, block=block, padding=PADDING)
+    padded_gpu_method = make_test_method(
+        mocker,
+        method_name=METHOD_NAME,
+        gpu=True,
+        padding=True,
+        memory_gpu=GpuMemoryRequirement(multiplier=2.0, method="direct"),
+    )
+    mocker.patch.object(
+        padded_gpu_method,
+        "calculate_max_slices",
+        return_value=(MAX_SLICES_LESS_THAN_CORE_PLUS_PADDING, 0),
+    )
+    mocker.patch.object(
+        padded_gpu_method,
+        "calculate_output_dims",
+        return_value=(data.shape[1], data.shape[2]),
+    )
+
+    p = Pipeline(loader=loader, methods=[padded_gpu_method])
+    t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)
+    t._prepare()
+    s = sectionize(p)
+
+    err_str = (
+        "Unable to process data due to GPU memory limitations.\n"
+        f"Please remove method '{METHOD_NAME}' from the pipeline, or run on a machine with "
+        "more GPU memory."
+    )
+    with pytest.raises(ValueError, match=err_str):
+        t.determine_max_slices(s[0], 0)
+
+
 def test_append_side_outputs(mocker: MockerFixture, tmp_path: PathLike):
     p = Pipeline(make_test_loader(mocker), methods=[])
     t = TaskRunner(p, reslice_dir=tmp_path, comm=MPI.COMM_WORLD)

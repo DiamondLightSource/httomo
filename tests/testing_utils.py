@@ -55,6 +55,7 @@ def make_test_loader(
     block: Optional[DataSetBlock] = None,
     pattern: Pattern = Pattern.all,
     method_name="testloader",
+    padding: tuple[int, int] = (0, 0),
 ) -> LoaderInterface:
     interface: LoaderInterface = mocker.create_autospec(
         LoaderInterface,
@@ -66,9 +67,6 @@ def make_test_loader(
     )
     if block is not None:
 
-        # NOTE: Even though the `padding` parameter is unused, this is needed in order to
-        # replicate the signature of the `make_data_source()` method defined on the
-        # `LoaderInterface` protocol
         def mock_make_data_source(padding) -> DataSetSource:
             ret = mocker.create_autospec(
                 DataSetSource,
@@ -79,6 +77,7 @@ def make_test_loader(
                 chunk_index=block.chunk_index,
                 slicing_dim=1 if interface.pattern == Pattern.sinogram else 0,
                 aux_data=block.aux_data,
+                padding=padding,
             )
             slicing_dim: Literal[0, 1, 2] = (
                 1 if interface.pattern == Pattern.sinogram else 0
@@ -102,7 +101,7 @@ def make_test_loader(
         mocker.patch.object(
             interface,
             "make_data_source",
-            side_effect=mock_make_data_source,
+            return_value=mock_make_data_source(padding),
         )
     return interface
 
