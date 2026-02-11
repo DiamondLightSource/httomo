@@ -380,10 +380,12 @@ def _recurse_input_file(group: h5py.Group) -> Optional[h5py.Group]:
                 return ret
 
 
-def parse_config(
-    input_file: Path, config: Dict[str, Any]
-) -> Tuple[
-    DataConfig, Optional[str], AnglesConfig, DarksFlatsFileConfig, DarksFlatsFileConfig
+def parse_config(input_file: Path, config: Dict[str, Any]) -> Tuple[
+    DataConfig,
+    Optional[str],
+    AnglesConfig,
+    Optional[DarksFlatsFileConfig],
+    Optional[DarksFlatsFileConfig],
 ]:
     """
     Convert python dict representing loader parameters generated from parsing the pipeline

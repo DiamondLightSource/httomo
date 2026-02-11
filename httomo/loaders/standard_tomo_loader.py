@@ -36,8 +36,8 @@ class StandardTomoLoader(DataSetSource):
         in_file: Path,
         data_path: str,
         image_key_path: Optional[str],
-        darks: DarksFlatsFileConfig,
-        flats: DarksFlatsFileConfig,
+        darks: Optional[DarksFlatsFileConfig],
+        flats: Optional[DarksFlatsFileConfig],
         angles: AnglesConfig,
         preview_config: PreviewConfig,
         slicing_dim: Literal[0, 1, 2],
@@ -337,8 +337,8 @@ class StandardTomoLoader(DataSetSource):
 
     def _setup_aux_data(
         self,
-        darks_config: DarksFlatsFileConfig,
-        flats_config: DarksFlatsFileConfig,
+        darks_config: Optional[DarksFlatsFileConfig],
+        flats_config: Optional[DarksFlatsFileConfig],
     ) -> AuxiliaryData:
         angles_arr = np.deg2rad(self._get_angles())
         darks_arr, flats_arr = get_darks_flats(
@@ -396,8 +396,8 @@ class StandardLoaderWrapper(LoaderInterface):
         in_file: Path,
         data_path: str,
         image_key_path: Optional[str],
-        darks: DarksFlatsFileConfig,
-        flats: DarksFlatsFileConfig,
+        darks: Optional[DarksFlatsFileConfig],
+        flats: Optional[DarksFlatsFileConfig],
         angles: AnglesConfig,
         preview: PreviewConfig,
     ):
