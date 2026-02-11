@@ -9,7 +9,7 @@ import re
 import h5py
 from mpi4py.MPI import Comm
 
-from httomo.preview import PreviewConfig, PreviewDimConfig
+from httomo.preview import PreviewConfig
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 
@@ -85,7 +85,6 @@ class UiLayer:
             self._append_methods_list(
                 i, task_conf, methods_list, parameters, method_id_map
             )
-        fix_preview_y_if_smaller_than_padding(loader, methods_list)
         return Pipeline(loader=loader, methods=methods_list)
 
     def _append_methods_list(
@@ -167,27 +166,6 @@ class UiLayer:
         )
 
         return loader
-
-
-def fix_preview_y_if_smaller_than_padding(
-    loader: LoaderInterface, methods_list: List[MethodWrapper]
-) -> None:
-    vertical_preview_length = (
-        loader.preview.detector_y.stop - loader.preview.detector_y.start
-    ) // loader.comm.size
-    max_pad_value = 0
-    for _, m in enumerate(methods_list):
-        if m.padding:
-            max_pad_value = max(sum(m.calculate_padding()), max_pad_value)
-    if max_pad_value >= vertical_preview_length:
-        loader.preview = PreviewConfig(
-            angles=loader.preview.angles,
-            detector_y=PreviewDimConfig(
-                start=loader.preview.detector_y.start - max_pad_value // 2,
-                stop=loader.preview.detector_y.stop + max_pad_value // 2,
-            ),
-            detector_x=loader.preview.detector_x,
-        )
 
 
 def get_valid_ref_str(parameters: Dict[str, Any]) -> Dict[str, str]:

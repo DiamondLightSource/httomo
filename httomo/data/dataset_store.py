@@ -305,6 +305,10 @@ class DataSetStoreReader(DataSetSource):
         source.finalize()
 
     @property
+    def padding(self) -> Tuple[int, int]:
+        return self._padding
+
+    @property
     def aux_data(self) -> AuxiliaryData:
         return self._aux_data
 
