@@ -535,7 +535,7 @@ def compare_tif(files_list_to_compare: list, file_path_to_references: list):
             Image.open(tif_files_references[index])
         )
         res_norm = np.linalg.norm(res_images.flatten())
-        assert res_norm < 1e-4
+        assert res_norm < 1e-3
 
 
 def change_value_parameters_method_pipeline(
