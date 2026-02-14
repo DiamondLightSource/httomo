@@ -56,7 +56,7 @@ class DarksFlatsFileConfig(NamedTuple):
     """
 
     file: Path
-    data_path: str
+    data_path: Optional[str]
     image_key_path: Optional[str]
     ignore: bool = False
 
@@ -177,8 +177,12 @@ def get_darks_flats(
         return darks, flats
 
     if darks_config.file != flats_config.file:
-        darks = get_separate(darks_config)
-        flats = get_separate(flats_config)
+        darks = None
+        flats = None
+        if not darks_config.ignore:
+            darks = get_separate(darks_config)
+        if not flats_config.ignore:
+            flats = get_separate(flats_config)
         return darks, flats  # type: ignore
 
     return get_together_or_dummy()

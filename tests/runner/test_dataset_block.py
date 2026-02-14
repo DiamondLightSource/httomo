@@ -33,10 +33,10 @@ def test_full_block_for_global_data():
     np.testing.assert_array_equal(data, block.data)
     np.testing.assert_array_equal(angles, block.angles)
     np.testing.assert_array_equal(angles, block.angles_radians)
-    assert block.darks.shape == (0, 10, 10)
-    assert block.dark.shape == (0, 10, 10)
-    assert block.flats.shape == (0, 10, 10)
-    assert block.flat.shape == (0, 10, 10)
+    assert block.darks.shape == (1, 10, 10)
+    assert block.dark.shape == (1, 10, 10)
+    assert block.flats.shape == (1, 10, 10)
+    assert block.flat.shape == (1, 10, 10)
     assert block.darks.dtype == data.dtype
     assert block.flats.dtype == data.dtype
     assert block.dark.dtype == data.dtype
