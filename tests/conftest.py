@@ -443,17 +443,6 @@ def standard_data_darks_flats_config() -> DarksFlatsFileConfig:
         file=Path(__file__).parent / "test_data/tomo_standard.nxs",
         data_path="/entry1/tomo_entry/data/data",
         image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
-        ignore=False,
-    )
-
-
-@pytest.fixture
-def standard_data_ignore_darks_flats_config() -> DarksFlatsFileConfig:
-    return DarksFlatsFileConfig(
-        file=Path(__file__).parent / "test_data/tomo_standard.nxs",
-        data_path="/entry1/tomo_entry/data/data",
-        image_key_path="/entry1/tomo_entry/instrument/detector/image_key",
-        ignore=True,
     )
 
 
