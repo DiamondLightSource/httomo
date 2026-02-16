@@ -144,6 +144,38 @@ def get_darks_flats(
                 preview_config.detector_x.start : preview_config.detector_x.stop,
             ]
 
+    if (
+        darks_config.ignore
+        and not flats_config.ignore
+        and darks_config.file != flats_config.file
+    ):
+        flats = get_separate(flats_config)
+        darks = np.zeros(
+            (
+                1,
+                preview_config.detector_y.stop - preview_config.detector_y.start,
+                preview_config.detector_x.stop - preview_config.detector_x.start,
+            ),
+            dtype=flats.dtype,
+        )
+        return darks, flats
+
+    if (
+        not darks_config.ignore
+        and flats_config.ignore
+        and darks_config.file != flats_config.file
+    ):
+        darks = get_separate(darks_config)
+        flats = np.ones(
+            (
+                1,
+                preview_config.detector_y.stop - preview_config.detector_y.start,
+                preview_config.detector_x.stop - preview_config.detector_x.start,
+            ),
+            dtype=darks.dtype,
+        )
+        return darks, flats
+
     if darks_config.file != flats_config.file:
         darks = get_separate(darks_config)
         flats = get_separate(flats_config)

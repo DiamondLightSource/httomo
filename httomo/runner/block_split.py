@@ -1,4 +1,3 @@
-import math
 from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
 
@@ -24,9 +23,31 @@ class BlockSplitter:
 
     def __init__(self, source: DataSetSource, max_slices: int):
         self._source = source
-        self._chunk_size = source.chunk_shape[source.slicing_dim]
+        self._chunk_size = (
+            source.chunk_shape[source.slicing_dim]
+            + source.padding[0]
+            + source.padding[1]
+        )
         self._max_slices = int(min(max_slices, self._chunk_size))
-        self._num_blocks = math.ceil(self._chunk_size / self._max_slices)
+
+        core_slices = self._max_slices - source.padding[0] - source.padding[1]
+        step = core_slices
+        num_blocks = 0
+        start_of_next_block = 0
+        while (
+            start_of_next_block + source.padding[0] + core_slices + source.padding[1]
+            < self._chunk_size
+        ):
+            num_blocks += 1
+            start_of_next_block += step
+
+        if (
+            start_of_next_block + source.padding[0] + core_slices + source.padding[1]
+            >= self._chunk_size
+        ):
+            num_blocks += 1
+
+        self._num_blocks = num_blocks
         self._current = 0
         assert self._source.slicing_dim in [
             0,
@@ -35,24 +56,23 @@ class BlockSplitter:
 
     @property
     def slices_per_block(self) -> int:
-        return self._max_slices
+        return self._max_slices - self._source.padding[0] - self._source.padding[1]
 
     def __len__(self):
         return self._num_blocks
 
     def __getitem__(self, idx: int) -> DataSetBlock:
         start = idx * self.slices_per_block
-        if start >= self._chunk_size:
+        if (
+            start
+            >= self._chunk_size - self._source.padding[0] - self._source.padding[1]
+        ):
             raise IndexError("Index out of bounds")
-        len = min(self.slices_per_block, self._chunk_size - start)
+        len = min(
+            self.slices_per_block,
+            self._chunk_size
+            - self._source.padding[0]
+            - self._source.padding[1]
+            - start,
+        )
         return self._source.read_block(start, len)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self) -> DataSetBlock:
-        if self._current >= len(self):
-            raise StopIteration
-        v = self[self._current]
-        self._current += 1
-        return v

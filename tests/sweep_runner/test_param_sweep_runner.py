@@ -603,6 +603,7 @@ def test_execute_modifies_block_extend_preview(mocker: MockerFixture):
             slicing_dim=1 if loader.pattern == Pattern.sinogram else 0,
             aux_data=block.aux_data,
             preview=preview,
+            padding=(0, 0),
         )
         type(ret).raw_shape = mock.PropertyMock(return_value=GLOBAL_SHAPE)
         slicing_dim: Literal[0, 1, 2] = 0
