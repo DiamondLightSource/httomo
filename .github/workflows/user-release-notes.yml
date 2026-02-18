@@ -1,0 +1,60 @@
+name: Create User Release Notes Asset
+
+on:
+  workflow_run:
+    workflows: [Create Release with Changelog]
+    types:
+      - completed
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract User Release Notes and Upload Asset
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const REPO_OWNER = "diamondlightsource";
+            const REPO_NAME = "httomo";
+            const FILENAME = "user-release-notes.txt";
+            const USER_RELEASE_NOTES_HEADER = "Notable Changes for Users";
+
+            function extractUserReleaseNotes(text) {
+              if (!text.includes(USER_RELEASE_NOTES_HEADER)) {
+                return [];
+              }
+
+              const lines = text.split("\n");
+              const idx = lines.findIndex((element) => element === `### ${USER_RELEASE_NOTES_HEADER}`);
+
+              let notes = [];
+              for (const line of lines.slice(idx + 1)) {
+                if (line.slice(0, 2) === "* ") {
+                  const prTitle = line.split(" by")[0];
+                  notes.push(prTitle);
+                  continue;
+                }
+                break;
+              }
+
+              return notes;
+            };
+
+            const release = await github.rest.repos.getReleaseByTag({
+              owner: REPO_OWNER,
+              repo: REPO_NAME,
+              tag: context.payload.workflow_run.head_branch
+            });
+
+            const lines = extractUserReleaseNotes(release.data.body);
+
+            if (lines.length > 0) {
+              const encoder = new TextEncoder();
+              await github.rest.repos.uploadReleaseAsset({
+                owner: REPO_OWNER,
+                repo: REPO_NAME,
+                release_id: release.data.id,
+                name: FILENAME,
+                data: encoder.encode(lines.join("\n")),
+              });
+            }
