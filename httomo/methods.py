@@ -37,7 +37,7 @@ def calculate_stats(
     """
 
     # do this whereever the data is at the moment (GPU/CPU)
-    if getattr(data, "device", None) is not None:
+    if data.device != "cpu":
         # GPU
         data = xp.nan_to_num(data, copy=False, nan=0.0, posinf=0, neginf=0)
     else:
@@ -181,7 +181,7 @@ def _save_dataset_data(
 ):
     start = np.array(global_index)
     stop = start + np.array(data.shape)
-    assert getattr(data, "device", None) is None, "data must be on CPU for saving"
+    assert data.device == "cpu", "data must be on CPU for saving"
     assert stop[0] <= dataset.shape[0]
     assert stop[1] <= dataset.shape[1]
     assert stop[2] <= dataset.shape[2]

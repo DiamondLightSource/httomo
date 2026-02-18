@@ -121,4 +121,4 @@ class BaseBlock(BlockData, BlockTransfer):
 
     @property
     def is_cpu(self) -> bool:
-        return getattr(self._data, "device", None) is None
+        return self._data.device == "cpu"

@@ -255,7 +255,7 @@ def test_to_cpu_transfers_the_data_back():
 
     assert block.is_gpu is False
     assert block.is_cpu is True
-    assert getattr(block.data, "device", None) is None
+    assert block.data.device == "cpu"
 
 
 def test_transfer_to_cpu_with_no_gpu(mocker: MockerFixture):
@@ -270,7 +270,7 @@ def test_transfer_to_cpu_with_no_gpu(mocker: MockerFixture):
 
     assert block.is_gpu is False
     assert block.is_cpu is True
-    assert getattr(block.data, "device", None) is None
+    assert block.data.device == "cpu"
 
 
 def test_to_cpu_twice_has_no_effect():
