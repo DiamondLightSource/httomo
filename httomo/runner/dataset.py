@@ -171,7 +171,7 @@ class DataSetBlock(BaseBlock, BlockIndexing):
 
     def _empty_aux_array(self):
         empty_shape = list(self._data.shape)
-        empty_shape[self.slicing_dim] = 0
+        empty_shape[self.slicing_dim] = 1
         return np.empty_like(self._data, shape=empty_shape)
 
     @property

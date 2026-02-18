@@ -322,8 +322,8 @@ class DarksFlatsParam(TypedDict):
     Darks/flats configuration dict.
     """
 
-    file: str
-    data_path: str
+    file: Path
+    data_path: Optional[str]
     image_key_path: Optional[str]
     ignore: bool
 
@@ -426,25 +426,28 @@ def parse_config(
     data_config = DataConfig(in_file=input_file, data_path=str(data_path))
 
     darks_value = config.get("darks", None)
-    ignore_darks = False
-    if darks_value == "ignore":
-        ignore_darks = True  # ignore darks in the data
-        darks_value = None
-    if darks_value is not None and "image_key_path" not in darks_value:
-        darks_value["image_key_path"] = None
-    darks_config = parse_darks_flats(
-        data_config, image_key_path, darks_value, ignore=ignore_darks
-    )
+    if darks_value == "ignore" or darks_value is None:
+        darks_config = DarksFlatsFileConfig(
+            file=input_file, data_path=None, image_key_path=None, ignore=True
+        )
+    else:
+        if "image_key_path" not in darks_value:
+            darks_value["image_key_path"] = None
+        darks_config = parse_darks_flats(
+            data_config, image_key_path, darks_value, ignore=False
+        )
+
     flats_value = config.get("flats", None)
-    ignore_flats = False
-    if flats_value == "ignore":
-        ignore_flats = True  # ignore flats in the data
-        flats_value = None
-    if flats_value is not None and "image_key_path" not in flats_value:
-        flats_value["image_key_path"] = None
-    flats_config = parse_darks_flats(
-        data_config, image_key_path, flats_value, ignore=ignore_flats
-    )
+    if flats_value == "ignore" or flats_value is None:
+        flats_config = DarksFlatsFileConfig(
+            file=input_file, data_path=None, image_key_path=None, ignore=True
+        )
+    else:
+        if "image_key_path" not in flats_value:
+            flats_value["image_key_path"] = None
+        flats_config = parse_darks_flats(
+            data_config, image_key_path, flats_value, ignore=False
+        )
 
     return (
         data_config,
