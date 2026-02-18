@@ -330,8 +330,8 @@ def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
                 extra_input_copy_bytes
                 + _calc_memory_bytes_for_slices_paganin_filter(
                     shape, dtype=np.float32()
-                )  # NOTE: default arguments to Paganin estimator are passed. It should be safe as long the padding is kept to the next power of 
-                   # 2 to be the default one. 
+                )  # NOTE: default arguments to Paganin estimator are passed. It should be safe as long the padding is kept to the next power of
+                # 2 to be the default one.
             )
         except:
             return 2**64
