@@ -48,15 +48,15 @@ from httomo.preview import PreviewConfig, PreviewDimConfig
 def test_ignore_darks_same_file_same_dataset(
     standard_data_path: str,
     standard_data_darks_flats_config: DarksFlatsFileConfig,
-    standard_data_ignore_darks_flats_config: DarksFlatsFileConfig,
     preview_config: PreviewConfig,
 ):
     IN_FILE_PATH = Path(__file__).parent / "test_data/tomo_standard.nxs"
 
     loaded_darks, loaded_flats = get_darks_flats(
-        standard_data_ignore_darks_flats_config,
+        None,
         standard_data_darks_flats_config,
         preview_config,
+        np.uint16,
     )
 
     FLATS_START = 180
@@ -121,14 +121,14 @@ def test_ignore_darks_same_file_same_dataset(
 )
 def test_ignore_darks_and_flats_same_file_same_dataset(
     standard_data_path: str,
-    standard_data_ignore_darks_flats_config: DarksFlatsFileConfig,
     preview_config: PreviewConfig,
 ):
 
     loaded_darks, loaded_flats = get_darks_flats(
-        standard_data_ignore_darks_flats_config,
-        standard_data_ignore_darks_flats_config,
+        None,
+        None,
         preview_config,
+        np.uint16,
     )
 
     flats = np.ones(
@@ -201,6 +201,7 @@ def test_get_darks_flats_same_file_same_dataset(
         standard_data_darks_flats_config,
         standard_data_darks_flats_config,
         preview_config,
+        np.uint16,
     )
 
     FLATS_START = 180
@@ -266,19 +267,18 @@ def test_get_darks_flats_different_file(preview_config: PreviewConfig):
         file=Path(__file__).parent / "test_data/i12/separate_flats_darks/dark_field.h5",
         data_path="/1-NoProcessPlugin-tomo/data",
         image_key_path=None,
-        ignore=False,
     )
     FLATS_CONFIG = DarksFlatsFileConfig(
         file=Path(__file__).parent / "test_data/i12/separate_flats_darks/flat_field.h5",
         data_path="/1-NoProcessPlugin-tomo/data",
         image_key_path=None,
-        ignore=False,
     )
 
     loaded_darks, loaded_flats = get_darks_flats(
         DARKS_CONFIG,
         FLATS_CONFIG,
         preview_config,
+        np.uint16,
     )
 
     with h5py.File(DARKS_CONFIG.file, "r") as f:
@@ -300,17 +300,11 @@ def test_get_darks_flats_different_file(preview_config: PreviewConfig):
 
 
 def test_ignore_darks_get_separate_flats():
-    DARKS_CONFIG = DarksFlatsFileConfig(
-        file=Path(__file__).parent / "",
-        data_path="",
-        image_key_path=None,
-        ignore=True,
-    )
+    DARKS_CONFIG = None
     FLATS_CONFIG = DarksFlatsFileConfig(
         file=Path(__file__).parent / "test_data/i12/separate_flats_darks/flat_field.h5",
         data_path="/1-NoProcessPlugin-tomo/data",
         image_key_path=None,
-        ignore=False,
     )
     PREVIEW_CONFIG = PreviewConfig(
         angles=PreviewDimConfig(start=0, stop=180),
@@ -322,6 +316,7 @@ def test_ignore_darks_get_separate_flats():
         DARKS_CONFIG,
         FLATS_CONFIG,
         PREVIEW_CONFIG,
+        np.uint16,
     )
 
     expected_darks = np.zeros(
@@ -349,14 +344,8 @@ def test_ignore_flats_get_separate_darks():
         file=Path(__file__).parent / "test_data/i12/separate_flats_darks/dark_field.h5",
         data_path="/1-NoProcessPlugin-tomo/data",
         image_key_path=None,
-        ignore=False,
     )
-    FLATS_CONFIG = DarksFlatsFileConfig(
-        file=Path(__file__).parent / "",
-        data_path="",
-        image_key_path=None,
-        ignore=True,
-    )
+    FLATS_CONFIG = None
     PREVIEW_CONFIG = PreviewConfig(
         angles=PreviewDimConfig(start=0, stop=180),
         detector_y=PreviewDimConfig(start=0, stop=128),
@@ -367,6 +356,7 @@ def test_ignore_flats_get_separate_darks():
         DARKS_CONFIG,
         FLATS_CONFIG,
         PREVIEW_CONFIG,
+        np.uint16,
     )
 
     expected_flats = np.ones(
