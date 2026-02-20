@@ -68,7 +68,6 @@ class TaskRunner:
 
     def execute(self) -> None:
         with catchtime() as t:
-
             self._prepare()
             for i, section in enumerate(self._sections):
                 self._execute_section(section, i)
@@ -133,7 +132,9 @@ class TaskRunner:
         self._log_pipeline(methods_info, level=logging.INFO)
 
         slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
-        self.determine_max_slices(section, slicing_dim_section, self.source.aux_data.get_angles())
+        self.determine_max_slices(
+            section, slicing_dim_section, self.source.aux_data.get_angles()
+        )
 
         self._log_pipeline(
             f"Maximum amount of slices is {section.max_slices} for section {section_index}",
@@ -378,7 +379,7 @@ class TaskRunner:
         output_str_list = [
             f"    Finished {id}: {name} (",
             package,
-            f") Took {float(time.perf_counter_ns() - start_time)*1e-6:.2f}ms",
+            f") Took {float(time.perf_counter_ns() - start_time) * 1e-6:.2f}ms",
         ]
         log_once(output_str_list)
 
@@ -401,7 +402,9 @@ class TaskRunner:
     def _count_tuple_values(self, d: Dict[str, Any]) -> int:
         return sum(1 for v in d.values() if isinstance(v, tuple))
 
-    def determine_max_slices(self, section: Section, slicing_dim: int, angles: np.ndarray):
+    def determine_max_slices(
+        self, section: Section, slicing_dim: int, angles: np.ndarray
+    ):
         assert self.source is not None
         assert len(section) > 0, "Section should contain at least 1 method"
 

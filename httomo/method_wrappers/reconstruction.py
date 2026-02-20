@@ -21,9 +21,9 @@ class ReconstructionWrapper(GenericMethodWrapper):
 
     def _preprocess_data(self, block: T) -> T:
         # this is essential for the angles cutting below to be valid
-        assert self.pattern == Pattern.sinogram, (
-            "reconstruction methods must be sinogram"
-        )
+        assert (
+            self.pattern == Pattern.sinogram
+        ), "reconstruction methods must be sinogram"
 
         # for 360 degrees data the angular dimension will be truncated while angles are not.
         # Truncating angles if the angular dimension has got a different size
@@ -40,9 +40,9 @@ class ReconstructionWrapper(GenericMethodWrapper):
     ) -> Dict[str, Any]:
         assert dataset is not None, "Reconstruction wrappers require a dataset"
         # for recon methods, we assume that the second parameter is the angles in all cases
-        assert len(self.parameters) >= 2, (
-            "recon methods always take data + angles as the first 2 parameters"
-        )
+        assert (
+            len(self.parameters) >= 2
+        ), "recon methods always take data + angles as the first 2 parameters"
         updated_params = {**dict_params, self.parameters[1]: dataset.angles_radians}
         return super()._build_kwargs(updated_params, dataset)
 

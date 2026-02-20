@@ -135,9 +135,7 @@ def test_can_determine_max_slices_with_gpu_estimator(
     for i in range(len(max_slices_methods)):
         calc_dims_mocks[i].assert_called_with(shape)
         calc_max_slices_mocks[i].assert_called_with(
-            dummy_block.data.dtype,
-            shape,
-            ANY,
+            dummy_block.data.dtype, 0, shape, dummy_block.angles, ANY
         )
 
 
@@ -186,6 +184,7 @@ def test_can_determine_max_slices_with_gpu_estimator_and_cpu_limit(
         calc_dims_mocks[i].assert_called_with(shape)
         calc_max_slices_mocks[i].assert_called_with(
             dummy_block.data.dtype,
+            0,
             shape,
             dummy_block.angles,
             limit if limit != 0 else 1e7,
@@ -268,7 +267,7 @@ def test_determine_max_slices_raises_error_if_padded_data_cannot_fit(
         "more GPU memory."
     )
     with pytest.raises(ValueError, match=err_str):
-        t.determine_max_slices(s[0], 0)
+        t.determine_max_slices(s[0], 0, block.angles)
 
 
 def test_append_side_outputs(mocker: MockerFixture, tmp_path: PathLike):

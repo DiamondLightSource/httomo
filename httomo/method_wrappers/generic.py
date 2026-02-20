@@ -463,7 +463,11 @@ class GenericMethodWrapper(MethodWrapper):
                 gpumem_cleanup()
                 return (
                     self._calculate_max_slices_iterative(
-                        data_dtype, slicing_dim, non_slice_dims_shape, angles, available_memory
+                        data_dtype,
+                        slicing_dim,
+                        non_slice_dims_shape,
+                        angles,
+                        available_memory,
                     ),
                     available_memory,
                 )
