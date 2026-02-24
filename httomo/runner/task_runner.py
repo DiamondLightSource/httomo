@@ -256,9 +256,9 @@ class TaskRunner:
     ) -> DataSetBlock:
         if_previous_block_is_on_gpu = False
         convert_gpu_block_to_cpu = False
+        if_current_block_is_on_gpu = False
 
         for ind, method in enumerate(section):
-            if_current_block_is_on_gpu = False
             if method.implementation == "gpu_cupy":
                 if_current_block_is_on_gpu = True
             if method.method_name == "calculate_stats" and if_previous_block_is_on_gpu:
