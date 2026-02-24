@@ -157,7 +157,7 @@ def test_save_intermediate_leaves_gpu_data(
             angles: np.ndarray,
         ):
             assert isinstance(data, np.ndarray)
-            assert getattr(data, "device", None) is None
+            assert data.device == "cpu"
 
     mocker.patch(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule

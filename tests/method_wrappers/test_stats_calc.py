@@ -128,9 +128,9 @@ def test_calculate_stats_uses_gpu_if_available(
         def calculate_stats(data, comm):
             # regardless of dataset input, we want device data if gpu enabled
             if gpu_enabled:
-                assert getattr(data, "device", None) is not None
+                assert data.device != "cpu"
             else:
-                assert getattr(data, "device", None) is None
+                assert data.device == "cpu"
             return (1.2, 3.1, 42.0, 10)
 
     mocker.patch(
