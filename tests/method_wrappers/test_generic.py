@@ -630,7 +630,9 @@ def test_generic_calculate_max_slices_direct(
         available_memory_in = 5
     max_slices, available_memory = wrp.calculate_max_slices(
         dummy_block.data.dtype,
+        0,
         shape,
+        dummy_block.angles,
         available_memory_in,
     )
 
@@ -676,7 +678,9 @@ def test_generic_calculate_max_slices_module(
     shape = (shape_t[0], shape_t[1])
     max_slices, available_memory = wrp.calculate_max_slices(
         dummy_block.data.dtype,
+        0,
         shape,
+        dummy_block.angles,
         1_000_000_000,
     )
 
@@ -762,7 +766,9 @@ def test_generic_calculate_max_slices_iterative(
     shape = (shape_t[0], shape_t[1])
     max_slices, _ = wrp.calculate_max_slices(
         dummy_block.data.dtype,
+        0,
         shape,
+        dummy_block.angles,
         available_memory,
     )
 
