@@ -107,7 +107,35 @@ To configure the loader to handle such cases, please refer to
 Dealing with darks and flats
 ============================
 
-HTTomo currently supports several options to deal with the flats and darks images.
+HTTomo currently supports several options to deal with the flats and darks images:
+
+1. Darks, flats and projections are all stored in the same dataset in the same file
+2. Darks and/or flats are stored in separate files from the file containing the projections,
+   and the dataset that contains the darks or flats contains **only** darks or flats
+
+   .. note:: For example, the darks are in a separate file to the file containing the
+             projections, and the dataset within the separate file containing the darks
+             contains **only** darks and no other images.
+
+             This means that no additional image key dataset is required for fetching the
+             darks, as there is no need to identify which indices within that dataset are what
+             kind of image.
+
+3. Darks and/or flats are stored in a separate file from the file containing the projections,
+   and the dataset that contains the darks or flats contains **multiple** kinds of images (ie,
+   the dataset contains darks, flats and projections)
+
+   .. note:: For example, the darks are in a separate file to the file containing the
+             projections, and the dataset within the separate file containing the darks
+             contains darks, flats and projections.
+
+             This means that an additional image key dataset is required for fetching the
+             darks, as there is a need to identify which indices within that dataset are what
+             kind of image, in order to extract the desired darks.
+
+4. Darks and/or flats do not exist, neither in the same file as the projections nor in separate
+   files
+5. Darks and/or flats exist in the same dataset as the projections, but they need to be ignored
 
 Files that do not contain image keys
 ++++++++++++++++++++++++++++++++++++

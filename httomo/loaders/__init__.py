@@ -18,8 +18,8 @@ def make_loader(
     data_path: str,
     image_key_path: Optional[str],
     angles: AnglesConfig,
-    darks: DarksFlatsFileConfig,
-    flats: DarksFlatsFileConfig,
+    darks: Optional[DarksFlatsFileConfig],
+    flats: Optional[DarksFlatsFileConfig],
     preview: PreviewConfig,
     comm: MPI.Comm,
 ) -> LoaderInterface:
