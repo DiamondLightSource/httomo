@@ -1,0 +1,1227 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>How to run HTTomo &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=f6d992e5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'howto/run_httomo';</script>
+    <link rel="icon" href="../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Inside Diamond" href="how_to_run/at_diamond.html" />
+    <link rel="prev" title="Installation Guide" href="installation.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="Mar 02, 2026"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo_light.png" class="logo__image only-light" alt="HTTomo Documentation page - Home"/>
+    <script>document.write(`<img src="../_static/logo_dark.png" class="logo__image only-dark" alt="HTTomo Documentation page - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../introduction/about.html">HTTomo concept</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../introduction/indepth/detailed_about.html">Detailed concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/sections.html">Sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/reslice.html">Re-slicing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/wrappers.html">Method Wrappers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/memory_estimators.html">Memory Estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/chunks.html">Chunks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../introduction/indepth/blocks.html">Blocks</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">How to run HTTomo</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="how_to_run/at_diamond.html">Inside Diamond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how_to_run/outside_diamond.html">Outside Diamond</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="process_lists_guide.html">Process Lists Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="process_lists/httomo_parameters.html">HTTomo-specific parameters</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="process_lists/side_outputs/side_out.html">Side outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="process_lists/save_results/save_results.html">Saving intermediate files</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="process_lists/process_list_configure.html">Configure efficient pipelines</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="httomo_features.html">HTTomo Features</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomo_features/parameter_sweeping.html">Parameter Sweeping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="httomo_features/padding.html">Padding</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="interpret_logger.html">Interpret Log File</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../backends/list.html">Supported libraries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../backends/templates.html">Methods YAML Templates</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Ready-to-use pipelines</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../pipelines/yaml.html">Full YAML pipelines</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../developers/how_to_contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/memory_calculation.html">GPU memory calculations</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developers/api.html">API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.cli_utils.html">httomo.cli_utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.cli_utils.is_sweep_pipeline.html">httomo.cli_utils.is_sweep_pipeline</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.darks_flats.html">httomo.darks_flats</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.darks_flats.DarksFlatsFileConfig.html">httomo.darks_flats.DarksFlatsFileConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.darks_flats.ImageType.html">httomo.darks_flats.ImageType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.darks_flats.get_darks_flats.html">httomo.darks_flats.get_darks_flats</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.data.html">httomo.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.data.hdf.html">httomo.data.hdf</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.data.padding.html">httomo.data.padding</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.data.padding.extrapolate_after.html">httomo.data.padding.extrapolate_after</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.data.padding.extrapolate_before.html">httomo.data.padding.extrapolate_before</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../developers/generated/httomo.globals.html">httomo.globals</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.logger.html">httomo.logger</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.logger.setup_logger.html">httomo.logger.setup_logger</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.monitors.html">httomo.monitors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.monitors.aggregate.html">httomo.monitors.aggregate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.monitors.aggregate.AggregateMonitoring.html">httomo.monitors.aggregate.AggregateMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.monitors.benchmark.html">httomo.monitors.benchmark</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.monitors.benchmark.BenchmarkMonitoring.html">httomo.monitors.benchmark.BenchmarkMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.monitors.summary.html">httomo.monitors.summary</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.monitors.summary.SummaryMonitor.html">httomo.monitors.summary.SummaryMonitor</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.monitors.make_monitors.html">httomo.monitors.make_monitors</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.preview.html">httomo.preview</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.preview.Preview.html">httomo.preview.Preview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.preview.PreviewConfig.html">httomo.preview.PreviewConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developers/generated/httomo.preview.PreviewDimConfig.html">httomo.preview.PreviewDimConfig</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.html">httomo.runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.methods_repository_interface.html">httomo.runner.methods_repository_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.methods_repository_interface.MethodQuery.html">httomo.runner.methods_repository_interface.MethodQuery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.methods_repository_interface.MethodRepository.html">httomo.runner.methods_repository_interface.MethodRepository</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.monitoring_interface.html">httomo.runner.monitoring_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.monitoring_interface.MonitoringInterface.html">httomo.runner.monitoring_interface.MonitoringInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.runner.output_ref.html">httomo.runner.output_ref</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.runner.output_ref.OutputRef.html">httomo.runner.output_ref.OutputRef</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.html">httomo.sweep_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_json_loader.html">httomo.sweep_runner.param_sweep_json_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developers/generated/httomo.sweep_runner.param_sweep_json_loader.ParamSweepJsonLoader.html">httomo.sweep_runner.param_sweep_json_loader.ParamSweepJsonLoader</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/howto/run_httomo.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>How to run HTTomo</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-overview-of-running-httomo">Quick Overview of Running HTTomo</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#required-inputs">Required inputs</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-httomo-inside-or-outside-of-diamond">Running HTTomo Inside or Outside of Diamond</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#in-depth-look-at-running-httomo">In-depth Look at Running HTTomo</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interacting-with-httomo-through-the-command-line-interface-cli">Interacting with HTTomo through the command line interface (CLI)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-check-command">The <code class="code docutils literal notranslate"><span class="pre">check</span></code> command</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#arguments">Arguments</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#yaml-config-required"><code class="code docutils literal notranslate"><span class="pre">YAML_CONFIG</span></code> (required)</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#in-data-optional"><code class="code docutils literal notranslate"><span class="pre">IN_DATA</span></code> (optional)</a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#options-flags">Options/flags</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-run-command">The <code class="code docutils literal notranslate"><span class="pre">run</span></code> command</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Arguments</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#in-file-required"><code class="code docutils literal notranslate"><span class="pre">IN_FILE</span></code> (required)</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-required"><code class="code docutils literal notranslate"><span class="pre">PIPELINE</span></code> (required)</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#out-dir-required"><code class="code docutils literal notranslate"><span class="pre">OUT_DIR</span></code> (required)</a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Options/flags</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#output-folder-name"><code class="code docutils literal notranslate"><span class="pre">--output-folder-name</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#save-all"><code class="code docutils literal notranslate"><span class="pre">--save-all</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-id"><code class="code docutils literal notranslate"><span class="pre">--gpu-id</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#reslice-dir"><code class="code docutils literal notranslate"><span class="pre">--reslice-dir</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#max-cpu-slices"><code class="code docutils literal notranslate"><span class="pre">--max-cpu-slices</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#max-memory"><code class="code docutils literal notranslate"><span class="pre">--max-memory</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#save-snapshots"><code class="code docutils literal notranslate"><span class="pre">--save-snapshots</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#monitor"><code class="code docutils literal notranslate"><span class="pre">--monitor</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#monitor-summary"><code class="code docutils literal notranslate"><span class="pre">--monitor=summary</span></code></a></li>
+<li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#monitor-bench"><code class="code docutils literal notranslate"><span class="pre">--monitor=bench</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#monitor-output"><code class="code docutils literal notranslate"><span class="pre">--monitor-output</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#intermediate-format"><code class="code docutils literal notranslate"><span class="pre">--intermediate-format</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#compress-intermediate"><code class="code docutils literal notranslate"><span class="pre">--compress-intermediate</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#syslog-host"><code class="code docutils literal notranslate"><span class="pre">--syslog-host</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#syslog-port"><code class="code docutils literal notranslate"><span class="pre">--syslog-port</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#frames-per-chunk"><code class="code docutils literal notranslate"><span class="pre">--frames-per-chunk</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#recon-filename-stem"><code class="code docutils literal notranslate"><span class="pre">--recon-filename-stem</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-format"><code class="code docutils literal notranslate"><span class="pre">--pipeline-format</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#mpi-abort-hook"><code class="code docutils literal notranslate"><span class="pre">--mpi-abort-hook</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#continuous-scan-subset"><code class="code docutils literal notranslate"><span class="pre">--continuous-scan-subset</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#developer-options">Developer options</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#tracing">Tracing</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">VizTracer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="how-to-run-httomo">
+<span id="howto-run"></span><h1>How to run HTTomo<a class="headerlink" href="#how-to-run-httomo" title="Link to this heading">#</a></h1>
+<p>The next section gives an overview of the commands to quickly get started running
+HTTomo.</p>
+<p>For those interested in learning about the different ways HTTomo can be configured
+to run, there is the <a class="reference internal" href="#run-httomo-indepth"><span class="std std-ref">In-depth Look at Running HTTomo</span></a> section.</p>
+<section id="quick-overview-of-running-httomo">
+<h2>Quick Overview of Running HTTomo<a class="headerlink" href="#quick-overview-of-running-httomo" title="Link to this heading">#</a></h2>
+<section id="required-inputs">
+<h3>Required inputs<a class="headerlink" href="#required-inputs" title="Link to this heading">#</a></h3>
+<p>In order to run HTTomo you require a data file (an HDF5 file) and a YAML process
+list file that describes the desired processing pipeline. For information on
+getting started creating this YAML file, please see <a class="reference internal" href="process_lists/process_list_configure.html#howto-process-list"><span class="std std-ref">Configure efficient pipelines</span></a>
+and also ready-to-be-used <a class="reference internal" href="../pipelines/yaml.html#tutorials-pl-templates"><span class="std std-ref">Full YAML pipelines</span></a>.</p>
+</section>
+<section id="running-httomo-inside-or-outside-of-diamond">
+<h3>Running HTTomo Inside or Outside of Diamond<a class="headerlink" href="#running-httomo-inside-or-outside-of-diamond" title="Link to this heading">#</a></h3>
+<p>As HTTomo was developed at the Diamond Light Source, there have been some extra
+efforts to accommodate the users at Diamond (for example, aliases for commands
+and launcher scripts). As such, there are some differences as to how one would run
+HTTomo at Diamond vs. outside of Diamond, and the guidance on running HTTomo has
+been split into two sections accordingly.</p>
+<p>Additionally, HTTomo is able to run in serial or in parallel depending on what
+computer hardware is available to the user, so some sections have been further
+split into these two subsections where relevant.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="how_to_run/at_diamond.html">Inside Diamond</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="how_to_run/at_diamond.html#cluster">Cluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how_to_run/at_diamond.html#workstation">Workstation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_run/outside_diamond.html">Outside Diamond</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="how_to_run/outside_diamond.html#serial">Serial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how_to_run/outside_diamond.html#parallel">Parallel</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="in-depth-look-at-running-httomo">
+<span id="run-httomo-indepth"></span><h2>In-depth Look at Running HTTomo<a class="headerlink" href="#in-depth-look-at-running-httomo" title="Link to this heading">#</a></h2>
+<section id="interacting-with-httomo-through-the-command-line-interface-cli">
+<h3>Interacting with HTTomo through the command line interface (CLI)<a class="headerlink" href="#interacting-with-httomo-through-the-command-line-interface-cli" title="Link to this heading">#</a></h3>
+<p>The way to interact with the HTTomo software is through its “command line
+interface” (CLI).</p>
+<p>As mentioned earlier, the preliminary step to accessing installed HTTomo software
+depends on if you are using a Diamond machine or not:</p>
+<ul class="simple">
+<li><p>not on a Diamond machine: activate the conda environment that HTTomo was
+installed into (please refer to <a class="reference internal" href="installation.html"><span class="doc">Installation Guide</span></a> for instructions on how to
+install HTTomo)</p></li>
+<li><p>on a Diamond machine: run the command <code class="code docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span> <span class="pre">httomo</span></code></p></li>
+</ul>
+<p>Once the appropriate step has been done, you will have access to the HTTomo CLI:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>httomo<span class="w"> </span>--help
+<span class="go">Usage: python -m httomo [OPTIONS] COMMAND [ARGS]...</span>
+
+<span class="go">  httomo: High Throughput Tomography.</span>
+
+<span class="go">Options:</span>
+<span class="go">  --version  Show the version and exit.</span>
+<span class="go">  --help     Show this message and exit.</span>
+
+<span class="go">Commands:</span>
+<span class="go">  check  Check a YAML pipeline file for errors.</span>
+<span class="go">  run    Run a processing pipeline defined in YAML on input data.</span>
+</pre></div>
+</div>
+<p>As can be seen from the output above, there are two HTTomo commands available:
+<code class="code docutils literal notranslate"><span class="pre">check</span></code> and <code class="code docutils literal notranslate"><span class="pre">run</span></code>.</p>
+<p>The <code class="code docutils literal notranslate"><span class="pre">check</span></code> command is used for checking a YAML process list file for
+errors, and is highly recommended to be run before attempting to run the
+pipeline. Please see <a class="reference internal" href="../utilities/yaml_checker.html#utilities-yamlchecker"><span class="std std-ref">YAML Checker - Why use it?</span></a> for more information about
+the checks being performed, the help information that is printed, etc.</p>
+<p>The <code class="code docutils literal notranslate"><span class="pre">run</span></code> command is used for running HTTomo with a pipeline on the given
+HDF5 input data.</p>
+<p>Both commands have arguments that are necessary to provide, arguments that are
+optional, as well as several options/flags to customise their behaviour.</p>
+<p>Condensed information regarding the arguments that the commands take, as well as
+the options for both commands, can be found directly from the command line by
+using the <code class="code docutils literal notranslate"><span class="pre">--help</span></code> flag, such as <code class="code docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">httomo</span> <span class="pre">check</span> <span class="pre">--help</span></code>.</p>
+<p>However, the next sections will describe each command in more detail, providing
+supplementary material to the information in the CLI.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Diamond users will be able to use <code class="code docutils literal notranslate"><span class="pre">httomo</span></code> as a shortcut for
+<code class="code docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">httomo</span></code></p>
+</div>
+</section>
+<section id="the-check-command">
+<h3>The <code class="code docutils literal notranslate"><span class="pre">check</span></code> command<a class="headerlink" href="#the-check-command" title="Link to this heading">#</a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>httomo<span class="w"> </span>check<span class="w"> </span>--help
+<span class="go">Usage: python -m httomo check [OPTIONS] YAML_CONFIG [IN_DATA]</span>
+
+<span class="go">  Check a YAML pipeline file for errors.</span>
+
+<span class="go">Options:</span>
+<span class="go">  --help  Show this message and exit.</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>While HTTomo does support running pipelines in both YAML and JSON format, currently
+the check functionality is only supported for YAML pipelines.</p>
+</div>
+<section id="arguments">
+<h4>Arguments<a class="headerlink" href="#arguments" title="Link to this heading">#</a></h4>
+<p>For <code class="code docutils literal notranslate"><span class="pre">check</span></code>, there is one <em>required</em> argument <code class="code docutils literal notranslate"><span class="pre">YAML_CONFIG</span></code>, and one
+<em>optional</em> argument <code class="code docutils literal notranslate"><span class="pre">IN_DATA</span></code>.</p>
+<section id="yaml-config-required">
+<h5><code class="code docutils literal notranslate"><span class="pre">YAML_CONFIG</span></code> (required)<a class="headerlink" href="#yaml-config-required" title="Link to this heading">#</a></h5>
+<p>This is the filepath to the YAML process list file that is to be checked.</p>
+</section>
+<section id="in-data-optional">
+<h5><code class="code docutils literal notranslate"><span class="pre">IN_DATA</span></code> (optional)<a class="headerlink" href="#in-data-optional" title="Link to this heading">#</a></h5>
+<p>This is the filepath to the HDF5 input data that you are intending to run the
+YAML process list file on.</p>
+<p>This is useful to provide because the configuration of the loader in the YAML
+process list file will have some references to the internal paths within the
+HDF5 file, which must be typed correctly otherwise HTTomo will fail to access
+the intended dataset within the HDF5 file.</p>
+<p>Providing the filepath to the HDF5 input data will perform a check of the loader
+configuration in the YAML process list, determining if the paths mentioned in it
+exist or not in the accompanying HDF5 file.</p>
+</section>
+</section>
+<section id="options-flags">
+<h4>Options/flags<a class="headerlink" href="#options-flags" title="Link to this heading">#</a></h4>
+<p>The <code class="code docutils literal notranslate"><span class="pre">check</span></code> command has <em>no</em> options/flags.</p>
+</section>
+</section>
+<section id="the-run-command">
+<h3>The <code class="code docutils literal notranslate"><span class="pre">run</span></code> command<a class="headerlink" href="#the-run-command" title="Link to this heading">#</a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>httomo<span class="w"> </span>run<span class="w"> </span>--help
+<span class="go">Usage: python -m httomo run [OPTIONS] IN_DATA_FILE PIPELINE OUT_DIR</span>
+
+<span class="go">  Run a pipeline on input data.</span>
+
+<span class="go">Options:</span>
+<span class="go">  --output-folder-name DIRECTORY  Define the name of the output folder created</span>
+<span class="go">                                  by HTTomo</span>
+<span class="go">  --save-all                      Save intermediate datasets for all tasks in</span>
+<span class="go">                                  the pipeline.</span>
+<span class="go">  --gpu-id INTEGER                The GPU ID of the device to use.</span>
+<span class="go">  --reslice-dir DIRECTORY         Directory for temporary files potentially</span>
+<span class="go">                                  needed for reslicing (defaults to output</span>
+<span class="go">                                  dir)</span>
+<span class="go">  --max-cpu-slices INTEGER        Maximum number of slices to use for a block</span>
+<span class="go">                                  for CPU-only sections (default: 64)</span>
+<span class="go">  --max-memory TEXT               Limit the amount of memory used by the</span>
+<span class="go">                                  pipeline to the given memory (supports</span>
+<span class="go">                                  strings like 3.2G or bytes)</span>
+<span class="go">  --monitor TEXT                  Add monitor to the runner (can be given</span>
+<span class="go">                                  multiple times). Available monitors: bench,</span>
+<span class="go">                                  summary</span>
+<span class="go">  --monitor-output FILENAME       File to store the monitoring output.</span>
+<span class="go">                                  Defaults to &#39;-&#39;, which denotes stdout</span>
+<span class="go">  --intermediate-format [hdf5]    Write intermediate data in hdf5 format</span>
+<span class="go">  --compress-intermediate         Write intermediate data in chunked format</span>
+<span class="go">                                  with BLOSC compression applied</span>
+<span class="go">  --syslog-host TEXT              Host of the syslog server</span>
+<span class="go">  --syslog-port INTEGER           Port on the host the syslog server is</span>
+<span class="go">                                  running on</span>
+<span class="go">  --frames-per-chunk INTEGER RANGE</span>
+<span class="go">                                  Number of frames per-chunk in intermediate</span>
+<span class="go">                                  data (0 = write as contiguous, -1 = decide</span>
+<span class="go">                                  automatically)  [x&gt;=-1]</span>
+<span class="go">  --recon-filename-stem TEXT      Name of output recon file without file</span>
+<span class="go">                                  extension (assumes `.h5`)</span>
+<span class="go">  --pipeline-format [yaml|json]   Format of the pipeline input (YAML or JSON)</span>
+<span class="go">  --mpi-abort-hook                Enable hook that invokes MPI abort if an</span>
+<span class="go">                                  unhandled exception is encountered</span>
+<span class="go">  --help                          Show this message and exit.</span>
+</pre></div>
+</div>
+<section id="id1">
+<h4>Arguments<a class="headerlink" href="#id1" title="Link to this heading">#</a></h4>
+<p>For <code class="code docutils literal notranslate"><span class="pre">run</span></code>, there are three <em>required</em> arguments:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">IN_FILE</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">PIPELINE</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">OUT_DIR</span></code></p></li>
+</ul>
+<p>and zero <em>optional</em> arguments.</p>
+<section id="in-file-required">
+<h5><code class="code docutils literal notranslate"><span class="pre">IN_FILE</span></code> (required)<a class="headerlink" href="#in-file-required" title="Link to this heading">#</a></h5>
+<p>This is the filepath to the HDF5 input data that you are intending to process.</p>
+</section>
+<section id="pipeline-required">
+<h5><code class="code docutils literal notranslate"><span class="pre">PIPELINE</span></code> (required)<a class="headerlink" href="#pipeline-required" title="Link to this heading">#</a></h5>
+<p>Most commonly, this is the filepath to the YAML process list file that contains
+the desired processing pipeline.</p>
+<p>HTTomo also supports pipelines in JSON format provided as a string. See
+<a class="reference internal" href="#pipeline-format"><span class="std std-ref">--pipeline-format</span></a> for specifying the pipeline format.</p>
+</section>
+<section id="out-dir-required">
+<h5><code class="code docutils literal notranslate"><span class="pre">OUT_DIR</span></code> (required)<a class="headerlink" href="#out-dir-required" title="Link to this heading">#</a></h5>
+<p>This is the path to a directory which HTTomo will create its output directory
+inside.</p>
+<p>The output directory created by HTTomo contains a date and timestamp in the
+following format: <code class="code docutils literal notranslate"><span class="pre">{DAY}-{MONTH}-{YEAR}_{HOUR}_{MIN}_{SEC}_output/</span></code>. For
+example, the output directory created for an HTTomo run on 1st May 2023 at
+15:30:45 would be <code class="code docutils literal notranslate"><span class="pre">01-05-2023_15_30_45_output/</span></code>. If the <code class="code docutils literal notranslate"><span class="pre">OUT_DIR</span></code>
+path provided was <code class="code docutils literal notranslate"><span class="pre">/home/myuser/</span></code>, then the absolute path to the output
+directory created by HTTomo would be
+<code class="code docutils literal notranslate"><span class="pre">/home/myuser/01-05-2023_15_30_45_output/</span></code>.</p>
+</section>
+</section>
+<section id="id2">
+<h4>Options/flags<a class="headerlink" href="#id2" title="Link to this heading">#</a></h4>
+<p>The <code class="code docutils literal notranslate"><span class="pre">run</span></code> command has 18 options/flags:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">--output-folder-name</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--save-all</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--gpu-id</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--reslice-dir</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--max-cpu-slices</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--max-memory</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--save-snapshots</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--monitor</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--monitor-output</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--intermediate-format</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--compress-intermediate</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--syslog-host</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--syslog-port</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--frames-per-chunk</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--recon-filename-stem</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--pipeline-format</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--mpi-abort-hook</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">--continuous-scan-subset</span></code></p></li>
+</ul>
+<section id="output-folder-name">
+<h5><code class="code docutils literal notranslate"><span class="pre">--output-folder-name</span></code><a class="headerlink" href="#output-folder-name" title="Link to this heading">#</a></h5>
+<p>As described in the documentation for the <code class="code docutils literal notranslate"><span class="pre">OUT_DIR</span></code> argument, the default name of the
+output directory created by HTTomo consists primarily of a timestamp. If one wishes to provide
+a name for the directory created by HTTomo instead of using the default timestamp name, then
+the <code class="code docutils literal notranslate"><span class="pre">--output-folder-name</span></code> flag may be used to achieve this.</p>
+<p>For example, if the <code class="code docutils literal notranslate"><span class="pre">OUT_DIR</span></code> path provided was <code class="code docutils literal notranslate"><span class="pre">/home/myuser</span></code>, and
+<code class="code docutils literal notranslate"><span class="pre">--output-folder-name=test-1</span></code> was given, then the absolute path of the output directory
+created by HTTomo would be <code class="code docutils literal notranslate"><span class="pre">/home/myuser/test-1/</span></code>.</p>
+</section>
+<section id="save-all">
+<span id="httomo-saving"></span><h5><code class="code docutils literal notranslate"><span class="pre">--save-all</span></code><a class="headerlink" href="#save-all" title="Link to this heading">#</a></h5>
+<p>Regarding the output of methods, HTTomo’s default behaviour is to <em>not</em> write
+the output of a method to a file in the output directory unless one of the
+following conditions is satisfied:</p>
+<ul class="simple">
+<li><p>the method is the last one in the processing pipeline</p></li>
+<li><p>the method is a reconstruction method</p></li>
+<li><p>the <code class="code docutils literal notranslate"><span class="pre">save_result</span></code> parameter has been provided a value of <code class="code docutils literal notranslate"><span class="pre">true</span></code> in
+a method’s YAML configuration (see <a class="reference internal" href="process_lists/save_results/save_results.html#save-result-examples"><span class="std std-ref">Saving intermediate files</span></a> for more info
+on the <code class="code docutils literal notranslate"><span class="pre">save_result</span></code> parameter)</p></li>
+</ul>
+<p>However, there are certain cases such as debugging, where saving the output of
+all methods to files in the output directory is beneficial. This flag is a quick
+way of doing so.</p>
+</section>
+<section id="gpu-id">
+<h5><code class="code docutils literal notranslate"><span class="pre">--gpu-id</span></code><a class="headerlink" href="#gpu-id" title="Link to this heading">#</a></h5>
+<p>TODO</p>
+</section>
+<section id="reslice-dir">
+<h5><code class="code docutils literal notranslate"><span class="pre">--reslice-dir</span></code><a class="headerlink" href="#reslice-dir" title="Link to this heading">#</a></h5>
+<p>This is related to the <code class="code docutils literal notranslate"><span class="pre">--file-based-reslice</span></code> flag.</p>
+<p>By default, the directory that the file being used for the re-slice operation is
+the output directory that HTTomo creates.</p>
+<p>If this output directory is on a network-mounted disk, then read/write
+operations to such a disk will in general be much slower compared to a local
+disk. In particular, this means that the re-slice operation will be much slower
+if the output directory is on a network-mounted disk rather than on a local
+disk.</p>
+<p>This flag can be used to specify a different directory inside which the file
+used for re-slicing should reside.</p>
+<p>In particular, if performing the re-slice with a file and the output directory is
+on a <em>network-mounted disk</em>, it is recommended to use this flag to choose an
+output directory that is on a <em>local disk</em> where possible. This will
+<em>drastically</em> improve performance, compared to performing the re-slice with a
+file on a network-mounted disk.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If running HTTomo across multiple machines, using a single local disk
+to contain the file used for re-slicing is not possible.</p>
+</div>
+<p>Below is a summary of the different re-slicing approaches and their relative
+performances:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Re-slice type</p></th>
+<th class="head"><p>Speed</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>In-memory</p></td>
+<td><p>Very fast</p></td>
+</tr>
+<tr class="row-odd"><td><p>File w/ local disk</p></td>
+<td><p>Fast</p></td>
+</tr>
+<tr class="row-even"><td><p>File w/ network-mounted disk</p></td>
+<td><p>Very slow</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="max-cpu-slices">
+<h5><code class="code docutils literal notranslate"><span class="pre">--max-cpu-slices</span></code><a class="headerlink" href="#max-cpu-slices" title="Link to this heading">#</a></h5>
+<p>This flag is only relevant only for runs which are using a pipeline that contains
+1 or more sections that are composed of purely CPU methods.</p>
+<p>Understanding this flag’s usage is dependent on knowledge of the concept of
+“chunks”, “blocks”, and “sections” within HTTomo’s framework, so please refer to
+<a class="reference internal" href="../introduction/indepth/detailed_about.html#detailed-about"><span class="std std-ref">Detailed concepts</span></a> for information on these concepts.</p>
+<p>The notion of a block is fully utilised to increase performance when a sequence of
+two or more GPU methods are being executed. When two or more CPU methods are
+executed in sequence, the notion of a block plays a less significant role in
+performance. The number of slices in a block is driven by the memory capacity of
+the GPU, but if no GPU is being used for executing a sequence of methods in the
+pipeline, there is no obvious way to choose the number of slices in a block (the
+“block size”).</p>
+<p>In such cases the user may wish to tweak the block size to explore if a specific
+block size happens to improve performance for the CPU-only section(s).</p>
+</section>
+<section id="max-memory">
+<h5><code class="code docutils literal notranslate"><span class="pre">--max-memory</span></code><a class="headerlink" href="#max-memory" title="Link to this heading">#</a></h5>
+<p>HTTomo supports running on both:</p>
+<ul class="simple">
+<li><p>a compute cluster, where RAM on the host machine is often quite large</p></li>
+<li><p>a personal machine, where RAM is not nearly as large</p></li>
+</ul>
+<p>This is done by a mechanism within HTTomo to hold data in RAM wherever there is
+enough RAM to do the required processing, and write data to a file if there is not
+enough RAM.</p>
+<p>The <code class="code docutils literal notranslate"><span class="pre">--max-memory</span></code> flag is for telling HTTomo how much RAM the machine has,
+so then it can switch to using a file during execution of the pipeline if
+necessary.</p>
+</section>
+<section id="save-snapshots">
+<h5><code class="code docutils literal notranslate"><span class="pre">--save-snapshots</span></code><a class="headerlink" href="#save-snapshots" title="Link to this heading">#</a></h5>
+<p>When this flag is enabled, the pipeline saves image snapshots at specific execution points.
+These snapshots are captured during selected methods - typically when a section boundary
+is reached and data is transferred to the CPU. At which time a slice of the data is saved for
+inspection.</p>
+<p>This feature is particularly useful for complex pipelines (e.g. 360 degrees with stitching and phase contrast),
+where intermediate processing steps involved in reconstruction may unintentionally alter
+the data. By reviewing these snapshot images (JPEGs), users can more easily pinpoint
+where issues are introduced in the pipeline.</p>
+<p>Enabling snapshots incurs almost no additional computational cost, unlike the <code class="code docutils literal notranslate"><span class="pre">--save-all</span></code>
+flag, which requires saving the entire dataset into a file for each method.</p>
+</section>
+<section id="monitor">
+<h5><code class="code docutils literal notranslate"><span class="pre">--monitor</span></code><a class="headerlink" href="#monitor" title="Link to this heading">#</a></h5>
+<p>HTTomo has the capability of reporting information about the performance of the
+various methods involved in the specific pipeline that will be executed.
+Specifically:</p>
+<ul class="simple">
+<li><p>time taken for methods to execute on the CPU/GPU</p></li>
+<li><p>transfer time to and from the GPU</p></li>
+<li><p>time taken to write to files (if HTTomo uses a file instead of RAM to hold data
+during pipeline execution)</p></li>
+</ul>
+<p>There are two options for this flag, <code class="code docutils literal notranslate"><span class="pre">summary</span></code> and <code class="code docutils literal notranslate"><span class="pre">bench</span></code>.</p>
+<section id="monitor-summary">
+<h6><code class="code docutils literal notranslate"><span class="pre">--monitor=summary</span></code><a class="headerlink" href="#monitor-summary" title="Link to this heading">#</a></h6>
+<p>The <code class="code docutils literal notranslate"><span class="pre">summary</span></code> option will produce a brief summary of the time taken for each
+method to execute in the pipeline, which will look something like the following:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Summary Statistics (aggregated across 1 processes):</span>
+<span class="go">  Total methods CPU time:     19.376s</span>
+<span class="go">  Total methods GPU time:     19.042s</span>
+<span class="go">  Total host2device time:      0.013s</span>
+<span class="go">  Total device2host time:      0.548s</span>
+<span class="go">  Total sources time    :      0.063s</span>
+<span class="go">  Total sinks time      :      0.028s</span>
+<span class="go">  Other overheads       :      0.362s</span>
+<span class="go">  ---------------------------------------</span>
+<span class="go">  Total pipeline time   :     19.829s</span>
+<span class="go">  Total wall time       :     19.829s</span>
+<span class="go">  ---------------------------------------</span>
+<span class="go">Method breakdowns:</span>
+<span class="go">                    data_reducer :      0.001s ( 0.0%)</span>
+<span class="go">                  find_center_vo :     11.586s (58.4%)</span>
+<span class="go">                  remove_outlier :      3.312s (16.7%)</span>
+<span class="go">                       normalize :      0.334s ( 1.7%)</span>
+<span class="go">     remove_stripe_based_sorting :      2.987s (15.1%)</span>
+<span class="go">                             FBP :      0.966s ( 4.9%)</span>
+<span class="go">          save_intermediate_data :      0.019s ( 0.1%)</span>
+<span class="go">                  save_to_images :      0.171s ( 0.9%)</span>
+</pre></div>
+</div>
+</section>
+<section id="monitor-bench">
+<h6><code class="code docutils literal notranslate"><span class="pre">--monitor=bench</span></code><a class="headerlink" href="#monitor-bench" title="Link to this heading">#</a></h6>
+<p>The <code class="code docutils literal notranslate"><span class="pre">bench</span></code> option (short for “benchmark”) provides a much more in-depth
+breakdown of the time taken for each method to execute (dividing it into time
+taken on CPU vs. GPU, data transfer times to and from the GPU), and providing this
+information for all processes involved in the run.</p>
+<p>This output is very verbose, but can provide some insight if, for example, wanting
+to see what parts of the pipeline may be slower than expected.</p>
+</section>
+</section>
+<section id="monitor-output">
+<h5><code class="code docutils literal notranslate"><span class="pre">--monitor-output</span></code><a class="headerlink" href="#monitor-output" title="Link to this heading">#</a></h5>
+<p>By default the output of any usage of the <code class="code docutils literal notranslate"><span class="pre">--monitor</span></code> flag will be written
+to <code class="code docutils literal notranslate"><span class="pre">stdout</span></code> (ie, printed to the terminal). However, there are times when
+it’s useful to write the monitoring output to a file, such as for performance
+analysis.</p>
+<p>HTTomo supports writing the monitoring results in CSV format, and so any given
+filepath to the <code class="code docutils literal notranslate"><span class="pre">--monitor-output</span></code> flag will produce a file with the
+benchmarking results written in CSV format.</p>
+</section>
+<section id="intermediate-format">
+<h5><code class="code docutils literal notranslate"><span class="pre">--intermediate-format</span></code><a class="headerlink" href="#intermediate-format" title="Link to this heading">#</a></h5>
+<p>TODO</p>
+</section>
+<section id="compress-intermediate">
+<h5><code class="code docutils literal notranslate"><span class="pre">--compress-intermediate</span></code><a class="headerlink" href="#compress-intermediate" title="Link to this heading">#</a></h5>
+<p>TODO</p>
+</section>
+<section id="syslog-host">
+<h5><code class="code docutils literal notranslate"><span class="pre">--syslog-host</span></code><a class="headerlink" href="#syslog-host" title="Link to this heading">#</a></h5>
+<p>TODO</p>
+</section>
+<section id="syslog-port">
+<h5><code class="code docutils literal notranslate"><span class="pre">--syslog-port</span></code><a class="headerlink" href="#syslog-port" title="Link to this heading">#</a></h5>
+<p>TODO</p>
+</section>
+<section id="frames-per-chunk">
+<h5><code class="code docutils literal notranslate"><span class="pre">--frames-per-chunk</span></code><a class="headerlink" href="#frames-per-chunk" title="Link to this heading">#</a></h5>
+<p>This flag sets the number of frames in a chunk for the intermediate file.</p>
+<ul class="simple">
+<li><p>-1 (the default), it will be decided automatically;</p></li>
+<li><p>0, contiguous storage will be used (no chunk storage);</p></li>
+<li><p>&gt;= 1, the number of frames in a chunk.</p></li>
+</ul>
+<p>For most cases the default -1 should be sufficient as the actual number of
+frames in a chunk is optimised by considering the saturation bandwidth of the
+filesystem.</p>
+</section>
+<section id="recon-filename-stem">
+<h5><code class="code docutils literal notranslate"><span class="pre">--recon-filename-stem</span></code><a class="headerlink" href="#recon-filename-stem" title="Link to this heading">#</a></h5>
+<p>By default, if the output of a method is saved to a file, the filename is of
+the form <code class="code docutils literal notranslate"><span class="pre">task_{N}-{PACKAGE_NAME}-{METHOD_NAME}.h5</span></code>, where:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">N</span></code> is the index of the method in the pipeline (zero-indexing)</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">PACKAGE_NAME</span></code> is the name of the package that the method comes from</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">METHOD_NAME</span></code> is the name of the method</p></li>
+</ul>
+<p>For the output of a reconstruction method specifically, if a filename different
+to the above format is desired, this can be provided using the
+<code class="code docutils literal notranslate"><span class="pre">--recon-filename-stem</span></code> flag. The files created will always be hdf5
+files, so the file extension should always be <code class="code docutils literal notranslate"><span class="pre">h5</span></code>. Therefore, only the
+“stem” of the desired filename needs to be provided (the part of the filename
+before the file extension).</p>
+<p>For example, if the desired reconstruction filename is <code class="code docutils literal notranslate"><span class="pre">my-recon.h5</span></code>,
+then the flag should be used as <code class="code docutils literal notranslate"><span class="pre">--recon-filename-stem=my-recon</span></code>.</p>
+</section>
+<section id="pipeline-format">
+<span id="id3"></span><h5><code class="code docutils literal notranslate"><span class="pre">--pipeline-format</span></code><a class="headerlink" href="#pipeline-format" title="Link to this heading">#</a></h5>
+<p>HTTomo supports running pipelines defined in YAML and JSON format. The format
+of a given pipeline can be specified with this flag by providing a string
+stating either YAML or JSON, where the string is case-insensitive.</p>
+<p>The default setting is YAML, so this flag can be omitted if one wishes to run a
+YAML pipeline.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>HTTomo currently only accepts YAML pipelines as files and JSON
+pipelines as strings. Ie, both YAML pipelines provided as strings and JSON
+pipelines provided as files are not currently supported.</p>
+</div>
+</section>
+<section id="mpi-abort-hook">
+<h5><code class="code docutils literal notranslate"><span class="pre">--mpi-abort-hook</span></code><a class="headerlink" href="#mpi-abort-hook" title="Link to this heading">#</a></h5>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is a flag primarily for debugging.</p>
+</div>
+<p>When running HTTomo under MPI, there are cases when an exception can be raised in one or more
+processes but not in all processes. If execution of the alive process(es) reaches a point which
+involves communication with the other process(es) (for example, an MPI gather), the alive
+process(es) will be stuck indefinitely, waiting for the dead process(es) to communicate to
+them.</p>
+<p>To avoid a deadlock in such cases, a hook into python’s exception handling can be used to
+invoke MPI abort if any of the python processes encounter an unhandled exception. This results
+in the following behaviour: if one process encounters an unhandled exception, all processes are
+guaranteed to be terminated, and thus no deadlock will be encountered.</p>
+<p>Something to be aware about with this aproach is that the MPI abort occurs not at the python
+layer, but rather, at the MPI implementation layer. In particular, this means that python’s
+writing to stdout/stderr is not guaranteed to complete before the MPI abort is invoked.
+Meaning, while printing of the traceback of the unhandled exception that triggered the MPI
+abort does exist in the python code, there is no guarantee that this printing will be complete
+before the MPI abort mechanism begins to terminate the python processes. Thus, the output in a
+terminal when MPI abort is invoked may only contain partial information about the exception
+that triggered the MPI abort.</p>
+</section>
+<section id="continuous-scan-subset">
+<h5><code class="code docutils literal notranslate"><span class="pre">--continuous-scan-subset</span></code><a class="headerlink" href="#continuous-scan-subset" title="Link to this heading">#</a></h5>
+<p>This is an alternative to the <code class="code docutils literal notranslate"><span class="pre">continuous_scan_subset</span></code> loader parameter, see
+<a class="reference internal" href="../reference/loaders.html#continuous-scan-subset-selection"><span class="std std-ref">Continuous Scan Subset Selection</span></a> for more details.</p>
+<p>This flag takes two values, the first one being the start index and the second one being the
+stop index. For example, an equivalent of the following config:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="hll"><span class="w">    </span><span class="nt">continuous_scan_subset</span><span class="p">:</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">180</span>
+</span></pre></div>
+</div>
+<p>can be achieved with the flag via <code class="code docutils literal notranslate"><span class="pre">--continuous-scan-subset</span> <span class="pre">90</span> <span class="pre">180</span></code></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This flag overrides the <code class="code docutils literal notranslate"><span class="pre">continuous_scan_subset</span></code> parameter in the YAML
+config. Meaning, if the <code class="code docutils literal notranslate"><span class="pre">continuous_scan_subset</span></code> parameter is present in the loader’s
+config in the YAML pipeline but the <code class="code docutils literal notranslate"><span class="pre">--continuous-scan-subset</span></code> flag is used, then the
+values given in the YAML config are ignored and the values given to the flag take
+precedence. If this occurs, it will be logged to the <code class="code docutils literal notranslate"><span class="pre">debug.log</span></code> file that HTTomo
+produces.</p>
+</div>
+</section>
+</section>
+</section>
+<section id="developer-options">
+<h3>Developer options<a class="headerlink" href="#developer-options" title="Link to this heading">#</a></h3>
+<section id="tracing">
+<h4>Tracing<a class="headerlink" href="#tracing" title="Link to this heading">#</a></h4>
+<p>One tool that can be used to record CPU traces, along with CPU and memory usage statistics is <a class="reference external" href="https://viztracer.readthedocs.io">VizTracer</a>.</p>
+<p>To enable CPU and memory usage statistic recording in the traces use the <code class="code docutils literal notranslate"><span class="pre">--no-standalone</span></code> option of httomo.</p>
+</section>
+<section id="id4">
+<h4>VizTracer<a class="headerlink" href="#id4" title="Link to this heading">#</a></h4>
+<p>Recording a trace with viztracer:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">viztracer</span> <span class="pre">--plugin</span> <span class="pre">&quot;vizplugins</span> <span class="pre">--cpu_usage</span> <span class="pre">--memory_usage&quot;</span> <span class="pre">--output_file</span> <span class="pre">output.json</span> <span class="pre">-m</span> <span class="pre">httomo</span> <span class="pre">run</span> <span class="pre">--no-standalone</span> <span class="pre">data.nxs</span> <span class="pre">pipeline.yaml</span> <span class="pre">output_directory</span></code></p>
+<p>Recording a trace for multiple ranks:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">mpirun</span> <span class="pre">-n</span> <span class="pre">4</span> <span class="pre">bash</span> <span class="pre">-c</span> <span class="pre">'python</span> <span class="pre">-m</span> <span class="pre">viztracer</span> <span class="pre">--plugin</span> <span class="pre">&quot;vizplugins</span> <span class="pre">--cpu_usage</span> <span class="pre">--memory_usage&quot;</span> <span class="pre">--output_file</span> <span class="pre">output_rank_${OMPI_COMM_WORLD_RANK}.json</span> <span class="pre">-m</span> <span class="pre">httomo</span> <span class="pre">run</span> <span class="pre">--no-standalone</span> <span class="pre">data.nxs</span> <span class="pre">pipeline.yaml</span> <span class="pre">output_directory'</span></code></p>
+<p>A separate file is created for each rank.
+VizTracer can combine them into a single json file:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">viztracer</span> <span class="pre">--combine</span> <span class="pre">output_rank_*.json</span> <span class="pre">-o</span> <span class="pre">output.json</span></code></p>
+<p>VizTracer’s output json files can be viewed by vizviewer offline:</p>
+<p><code class="code docutils literal notranslate"><span class="pre">vizviewer</span> <span class="pre">output.json</span></code></p>
+<p>Or by using the online version of <a class="reference external" href="https://ui.perfetto.dev">Perfetto</a>.</p>
+</section>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="installation.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Installation Guide</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="how_to_run/at_diamond.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Inside Diamond</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-overview-of-running-httomo">Quick Overview of Running HTTomo</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#required-inputs">Required inputs</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-httomo-inside-or-outside-of-diamond">Running HTTomo Inside or Outside of Diamond</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#in-depth-look-at-running-httomo">In-depth Look at Running HTTomo</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interacting-with-httomo-through-the-command-line-interface-cli">Interacting with HTTomo through the command line interface (CLI)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-check-command">The <code class="code docutils literal notranslate"><span class="pre">check</span></code> command</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#arguments">Arguments</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#yaml-config-required"><code class="code docutils literal notranslate"><span class="pre">YAML_CONFIG</span></code> (required)</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#in-data-optional"><code class="code docutils literal notranslate"><span class="pre">IN_DATA</span></code> (optional)</a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#options-flags">Options/flags</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-run-command">The <code class="code docutils literal notranslate"><span class="pre">run</span></code> command</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Arguments</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#in-file-required"><code class="code docutils literal notranslate"><span class="pre">IN_FILE</span></code> (required)</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-required"><code class="code docutils literal notranslate"><span class="pre">PIPELINE</span></code> (required)</a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#out-dir-required"><code class="code docutils literal notranslate"><span class="pre">OUT_DIR</span></code> (required)</a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Options/flags</a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#output-folder-name"><code class="code docutils literal notranslate"><span class="pre">--output-folder-name</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#save-all"><code class="code docutils literal notranslate"><span class="pre">--save-all</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-id"><code class="code docutils literal notranslate"><span class="pre">--gpu-id</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#reslice-dir"><code class="code docutils literal notranslate"><span class="pre">--reslice-dir</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#max-cpu-slices"><code class="code docutils literal notranslate"><span class="pre">--max-cpu-slices</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#max-memory"><code class="code docutils literal notranslate"><span class="pre">--max-memory</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#save-snapshots"><code class="code docutils literal notranslate"><span class="pre">--save-snapshots</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#monitor"><code class="code docutils literal notranslate"><span class="pre">--monitor</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#monitor-summary"><code class="code docutils literal notranslate"><span class="pre">--monitor=summary</span></code></a></li>
+<li class="toc-h6 nav-item toc-entry"><a class="reference internal nav-link" href="#monitor-bench"><code class="code docutils literal notranslate"><span class="pre">--monitor=bench</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#monitor-output"><code class="code docutils literal notranslate"><span class="pre">--monitor-output</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#intermediate-format"><code class="code docutils literal notranslate"><span class="pre">--intermediate-format</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#compress-intermediate"><code class="code docutils literal notranslate"><span class="pre">--compress-intermediate</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#syslog-host"><code class="code docutils literal notranslate"><span class="pre">--syslog-host</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#syslog-port"><code class="code docutils literal notranslate"><span class="pre">--syslog-port</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#frames-per-chunk"><code class="code docutils literal notranslate"><span class="pre">--frames-per-chunk</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#recon-filename-stem"><code class="code docutils literal notranslate"><span class="pre">--recon-filename-stem</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-format"><code class="code docutils literal notranslate"><span class="pre">--pipeline-format</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#mpi-abort-hook"><code class="code docutils literal notranslate"><span class="pre">--mpi-abort-hook</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#continuous-scan-subset"><code class="code docutils literal notranslate"><span class="pre">--continuous-scan-subset</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#developer-options">Developer options</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#tracing">Tracing</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">VizTracer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By the Imaging Team
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Mar 02, 2026.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

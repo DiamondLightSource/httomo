@@ -1,0 +1,779 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Side outputs &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../../_static/documentation_options.js?v=f6d992e5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'howto/process_lists/side_outputs/side_out';</script>
+    <link rel="icon" href="../../../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Saving intermediate files" href="../save_results/save_results.html" />
+    <link rel="prev" title="HTTomo-specific parameters" href="../httomo_parameters.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="Mar 02, 2026"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo_light.png" class="logo__image only-light" alt="HTTomo Documentation page - Home"/>
+    <script>document.write(`<img src="../../../_static/logo_dark.png" class="logo__image only-dark" alt="HTTomo Documentation page - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../introduction/about.html">HTTomo concept</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../introduction/indepth/detailed_about.html">Detailed concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/sections.html">Sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/reslice.html">Re-slicing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/wrappers.html">Method Wrappers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/memory_estimators.html">Memory Estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/chunks.html">Chunks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../introduction/indepth/blocks.html">Blocks</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../run_httomo.html">How to run HTTomo</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../how_to_run/at_diamond.html">Inside Diamond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how_to_run/outside_diamond.html">Outside Diamond</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../process_lists_guide.html">Process Lists Guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../httomo_parameters.html">HTTomo-specific parameters</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">Side outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../save_results/save_results.html">Saving intermediate files</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../process_list_configure.html">Configure efficient pipelines</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../httomo_features.html">HTTomo Features</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../httomo_features/parameter_sweeping.html">Parameter Sweeping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../httomo_features/padding.html">Padding</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../interpret_logger.html">Interpret Log File</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../backends/list.html">Supported libraries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../backends/templates.html">Methods YAML Templates</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Ready-to-use pipelines</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../pipelines/yaml.html">Full YAML pipelines</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../developers/how_to_contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developers/memory_calculation.html">GPU memory calculations</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../developers/api.html">API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.cli_utils.html">httomo.cli_utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.cli_utils.is_sweep_pipeline.html">httomo.cli_utils.is_sweep_pipeline</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.darks_flats.html">httomo.darks_flats</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.darks_flats.DarksFlatsFileConfig.html">httomo.darks_flats.DarksFlatsFileConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.darks_flats.ImageType.html">httomo.darks_flats.ImageType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.darks_flats.get_darks_flats.html">httomo.darks_flats.get_darks_flats</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.data.html">httomo.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.data.hdf.html">httomo.data.hdf</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.data.padding.html">httomo.data.padding</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.data.padding.extrapolate_after.html">httomo.data.padding.extrapolate_after</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.data.padding.extrapolate_before.html">httomo.data.padding.extrapolate_before</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../developers/generated/httomo.globals.html">httomo.globals</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.logger.html">httomo.logger</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.logger.setup_logger.html">httomo.logger.setup_logger</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.monitors.html">httomo.monitors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.monitors.aggregate.html">httomo.monitors.aggregate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.monitors.aggregate.AggregateMonitoring.html">httomo.monitors.aggregate.AggregateMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.monitors.benchmark.html">httomo.monitors.benchmark</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.monitors.benchmark.BenchmarkMonitoring.html">httomo.monitors.benchmark.BenchmarkMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.monitors.summary.html">httomo.monitors.summary</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.monitors.summary.SummaryMonitor.html">httomo.monitors.summary.SummaryMonitor</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.monitors.make_monitors.html">httomo.monitors.make_monitors</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.preview.html">httomo.preview</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.preview.Preview.html">httomo.preview.Preview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.preview.PreviewConfig.html">httomo.preview.PreviewConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../developers/generated/httomo.preview.PreviewDimConfig.html">httomo.preview.PreviewDimConfig</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.html">httomo.runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.methods_repository_interface.html">httomo.runner.methods_repository_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.methods_repository_interface.MethodQuery.html">httomo.runner.methods_repository_interface.MethodQuery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.methods_repository_interface.MethodRepository.html">httomo.runner.methods_repository_interface.MethodRepository</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.monitoring_interface.html">httomo.runner.monitoring_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.monitoring_interface.MonitoringInterface.html">httomo.runner.monitoring_interface.MonitoringInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.runner.output_ref.html">httomo.runner.output_ref</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.runner.output_ref.OutputRef.html">httomo.runner.output_ref.OutputRef</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.html">httomo.sweep_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_json_loader.html">httomo.sweep_runner.param_sweep_json_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../developers/generated/httomo.sweep_runner.param_sweep_json_loader.ParamSweepJsonLoader.html">httomo.sweep_runner.param_sweep_json_loader.ParamSweepJsonLoader</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../../_sources/howto/process_lists/side_outputs/side_out.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Side outputs</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#specifying-the-side-output">Specifying the side output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#referring-to-the-side-output">Referring to the side output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-of-side-outputs">Example of side outputs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-overview">Pipeline overview</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#detailed-look-at-side-outputs-usage">Detailed look at side outputs usage</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="side-outputs">
+<span id="side-output"></span><h1>Side outputs<a class="headerlink" href="#side-outputs" title="Link to this heading">#</a></h1>
+<p>There are cases where the output of a method is needed as the value of a parameter
+for a method further down the pipeline. For example, the output of a method that
+calculates the <a class="reference internal" href="../../httomo_features/centering.html#centering"><span class="std std-ref">Centre of Rotation (CoR)</span></a>, that is required for a reconstruction method.</p>
+<p>HTTomo provides a special syntax (loosely based on the syntax for references in
+<a class="reference external" href="https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions">GitHub Actions</a>)
+for how such an output of a method needs to be defined and how to refer to that
+special output later.</p>
+<section id="specifying-the-side-output">
+<h2>Specifying the side output<a class="headerlink" href="#specifying-the-side-output" title="Link to this heading">#</a></h2>
+<p>The output of some methods isn’t processed data, but rather supplementary
+information to be used later in the pipeline. The given term for that supplementary
+data is “side outputs”, and is what the <code class="code docutils literal notranslate"><span class="pre">side_outputs</span></code> parameter is for. As
+an example, let us consider the following centering algorithm:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">find_center_vo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.rotation</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">smin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-50</span>
+<span class="w">    </span><span class="nt">smax</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">    </span><span class="nt">srad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6.0</span>
+<span class="w">    </span><span class="nt">step</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.25</span>
+<span class="w">    </span><span class="nt">ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">    </span><span class="nt">drop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="hll"><span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centering</span>
+</span><span class="hll"><span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+</span><span class="hll"><span class="w">    </span><span class="nt">cor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centre_of_rotation</span>
+</span></pre></div>
+</div>
+<p>One can see that <code class="code docutils literal notranslate"><span class="pre">side_outputs</span></code> here includes a single value <code class="code docutils literal notranslate"><span class="pre">cor</span></code> with
+the <code class="code docutils literal notranslate"><span class="pre">centre_of_rotation</span></code> reference. The <code class="code docutils literal notranslate"><span class="pre">id</span></code> parameter here is needed to
+refer to the method later.</p>
+</section>
+<section id="referring-to-the-side-output">
+<h2>Referring to the side output<a class="headerlink" href="#referring-to-the-side-output" title="Link to this heading">#</a></h2>
+<p>The purpose of <code class="code docutils literal notranslate"><span class="pre">side_outputs</span></code> is to refer to it later, when some method(s)
+require the contained information in the reference. Consider this example where the
+reconstruction method refers to the centering method’s side outputs. The required
+information of <a class="reference internal" href="../../httomo_features/centering.html#centering"><span class="std std-ref">Centre of Rotation (CoR)</span></a> is stored in the reference
+<code class="code docutils literal notranslate"><span class="pre">${{centering.side_outputs.centre_of_rotation}}</span></code>.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FBP3d_tomobar</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.algorithm</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="hll"><span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.centre_of_rotation}}</span>
+</span><span class="w">    </span><span class="nt">filter_freq_cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.1</span>
+<span class="w">    </span><span class="nt">recon_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">recon_mask_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+</pre></div>
+</div>
+<p>There could be various configurations when this reference is required from other methods as well. We present more verbose <a class="reference internal" href="#side-output-example"><span class="std std-ref">Example of side outputs</span></a> below.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Side outputs and references to them are generated automatically with the
+<a class="reference external" href="https://diamondlightsource.github.io/httomo-backends/utilities/yaml_generator.html">YAML generator</a>. Usually there is no need to modify them when
+editing a process list.</p>
+</div>
+</section>
+<section id="example-of-side-outputs">
+<span id="side-output-example"></span><h2>Example of side outputs<a class="headerlink" href="#example-of-side-outputs" title="Link to this heading">#</a></h2>
+<section id="pipeline-overview">
+<h3>Pipeline overview<a class="headerlink" href="#pipeline-overview" title="Link to this heading">#</a></h3>
+<p>This pipeline is for reconstructing DFoV data which needs to be stitched into the
+traditional 180 degrees data. It demonstrates three cases where a method produces
+one or more side outputs, and a method later in the pipeline references them.</p>
+<p>A rough outline of the three side outputs being used is:</p>
+<ol class="arabic simple">
+<li><p>the 360 centering method produces an “overlap” value as a side output, for the
+stitching method to use</p></li>
+<li><p>the 360 centering method also produces a CoR value as a side output, for the
+recon method to use</p></li>
+<li><p>the stats calculator method produces a global stats value as a side output, for
+the image saver method to use</p></li>
+</ol>
+</section>
+<section id="detailed-look-at-side-outputs-usage">
+<h3>Detailed look at side outputs usage<a class="headerlink" href="#detailed-look-at-side-outputs-usage" title="Link to this heading">#</a></h3>
+<p>Parameters for stitching are generated by <code class="code docutils literal notranslate"><span class="pre">find_center_360</span></code>, stored in side
+outputs, and then used later in the <code class="code docutils literal notranslate"><span class="pre">sino_360_to_180</span></code> method. The
+reconstruction method <code class="code docutils literal notranslate"><span class="pre">FBP3d_tomobar</span></code> then refers to the found <a class="reference internal" href="../../httomo_features/centering.html#centering"><span class="std std-ref">Centre of Rotation (CoR)</span></a> for the
+stitched dataset produced by <code class="code docutils literal notranslate"><span class="pre">find_center_360</span></code>. Finally, we also need to
+extract the global statistics for normalisation of the data using the
+<code class="code docutils literal notranslate"><span class="pre">calculate_stats</span></code> method when saving into images with the
+<code class="code docutils literal notranslate"><span class="pre">save_to_images</span></code> method.</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-number">Listing 1 </span><span class="caption-text">Pipeline for 360 degrees scan, a double field of view (DFoV) data.</span><a class="headerlink" href="#id1" title="Link to this code">#</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># This pipeline should be supported by the latest developments of HTTomo. Use module load httomo/latest module at Diamond.</span>
+<span class="c1"># --- Standard tomography loader for NeXus files. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard_tomo</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.data.hdf.loaders</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">image_key_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">rotation_angles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">detector_x</span><span class="p">:</span><span class="w">   </span><span class="c1"># horizontal data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">      </span><span class="nt">detector_y</span><span class="p">:</span><span class="w">   </span><span class="c1"># vertical data previewing/cropping.</span>
+<span class="w">        </span><span class="c1"># when null, the full data dimension is used, i.e., no previewing</span>
+<span class="w">        </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">        </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">darks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">flats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">continuous_scan_subset</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="c1"># --- Flat-field and dark-field projection correction. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dark_flat_field_correction</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">flats_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">darks_multiplier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">    </span><span class="nt">cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+<span class="c1"># --- Applying optical distortion correction to projections. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">distortion_correction_proj_discorpy</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.alignment</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">metadata_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">REQUIRED</span><span class="w">  </span><span class="c1"># Provide an absolute path to the text file with distortion coefficients.</span>
+<span class="w">    </span><span class="nt">order</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">constant</span>
+<span class="c1"># --- Center of Rotation auto-finding. Required for reconstruction bellow. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">find_center_360</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.rotation</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">  </span><span class="c1"># A vertical slice (sinogram) index to calculate CoR, &#39;mid&#39; can be used for middle</span>
+<span class="w">    </span><span class="nt">win_width</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1"># &#39;None&#39; corresponds to fully automated determination, &#39;left&#39; to the left side, &#39;right&#39; to the right side.</span>
+<span class="w">    </span><span class="nt">denoise</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">norm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">use_overlap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centering</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centre_of_rotation</span><span class="w">  </span><span class="c1"># An estimated CoR value provided as a side output</span>
+<span class="w">    </span><span class="nt">overlap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">overlap</span><span class="w"> </span><span class="c1"># An overlap to use for converting 360 degrees scan to 180 degrees scan.</span>
+<span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">side</span>
+<span class="w">    </span><span class="nt">overlap_position</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">overlap_position</span>
+<span class="c1"># --- Using the overlap and side provided, converting 360 degrees scan to 180 degrees scan. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sino_360_to_180</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.misc.morph</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">overlap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.overlap}}</span>
+<span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.side}}</span>
+<span class="c1"># --- Method to remove stripe artefacts in the data that lead to ring artefacts in the reconstruction. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remove_stripe_based_sorting</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.stripe</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">11</span>
+<span class="w">    </span><span class="nt">dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="c1"># --- Negative log is required for reconstruction to convert raw intensity measurements into the line integrals of attenuation. --- </span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minus_log</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.prep.normalize</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="c1"># --- Reconstruction method. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FBP3d_tomobar</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolibgpu.recon.algorithm</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{centering.side_outputs.centre_of_rotation}}</span><span class="w">  </span><span class="c1"># Reference to center of rotation side output above OR a float number.</span>
+<span class="w">    </span><span class="nt">detector_pad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Horizontal detector padding to minimise circle/arc-type artifacts in the reconstruction. Set to &#39;true&#39; to enable automatic padding or an integer</span>
+<span class="w">    </span><span class="nt">filter_freq_cutoff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.35</span>
+<span class="w">    </span><span class="nt">recon_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">recon_mask_radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.95</span><span class="w"> </span><span class="c1"># Zero pixels outside the mask-circle radius. Make radius equal to 2.0 to remove the mask effect.</span>
+<span class="c1"># --- Calculate global statistics on the reconstructed volume, required for data rescaling. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calculate_stats</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomo.methods</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">statistics</span>
+<span class="w">  </span><span class="nt">side_outputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glob_stats</span>
+<span class="c1"># --- Rescaling the data using min/max obtained from `calculate_stats`. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rescale_to_int</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.rescale</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">perc_range_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">    </span><span class="nt">perc_range_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span>
+<span class="w">    </span><span class="nt">bits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">    </span><span class="nt">glob_stats</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{statistics.side_outputs.glob_stats}}</span>
+<span class="c1"># --- Saving data into images. ---</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">save_to_images</span>
+<span class="w">  </span><span class="nt">module_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httomolib.misc.images</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">subfolder_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">images</span>
+<span class="w">    </span><span class="nt">axis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span>
+<span class="w">    </span><span class="nt">file_format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tif</span><span class="w">  </span><span class="c1"># `tif` or `jpeg` can be used.</span>
+<span class="w">    </span><span class="nt">asynchronous</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+</div>
+<p>Please see below for a concise description of how each of the individual side
+outputs of methods are connected to the method using them:</p>
+<ol class="arabic simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">find_center_360</span></code> produces side outputs called <code class="code docutils literal notranslate"><span class="pre">overlap</span></code> and <code class="code docutils literal notranslate"><span class="pre">side</span></code> that the
+<code class="code docutils literal notranslate"><span class="pre">sino_360_to_180</span></code> method uses.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">find_center_360</span></code> also produces a side output called
+<code class="code docutils literal notranslate"><span class="pre">centre_of_rotation</span></code> that the <code class="code docutils literal notranslate"><span class="pre">FBP3d_tomobar</span></code> method uses.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">calculate_stats</span></code> produces a side output called <code class="code docutils literal notranslate"><span class="pre">glob_stats</span></code> that
+the <code class="code docutils literal notranslate"><span class="pre">rescale_to_int</span></code> method uses.</p></li>
+</ol>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../httomo_parameters.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">HTTomo-specific parameters</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../save_results/save_results.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Saving intermediate files</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#specifying-the-side-output">Specifying the side output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#referring-to-the-side-output">Referring to the side output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-of-side-outputs">Example of side outputs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pipeline-overview">Pipeline overview</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#detailed-look-at-side-outputs-usage">Detailed look at side outputs usage</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By the Imaging Team
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Mar 02, 2026.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

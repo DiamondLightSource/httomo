@@ -1,0 +1,712 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>httomo.darks_flats &#8212; HTTomo Documentation page</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=f6d992e5"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/httomo/darks_flats';</script>
+    <link rel="icon" href="../../_static/logo_light.png"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="Mar 02, 2026"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo_light.png" class="logo__image only-light" alt="HTTomo Documentation page - Home"/>
+    <script>document.write(`<img src="../../_static/logo_dark.png" class="logo__image only-dark" alt="HTTomo Documentation page - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../introduction/about.html">HTTomo concept</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../introduction/indepth/detailed_about.html">Detailed concepts</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/sections.html">Sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/reslice.html">Re-slicing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/wrappers.html">Method Wrappers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/memory_estimators.html">Memory Estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/chunks.html">Chunks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../introduction/indepth/blocks.html">Blocks</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/templates.html">What is a template?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/process_list.html">What is a process list?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">How To's</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../howto/installation.html">Installation Guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../howto/run_httomo.html">How to run HTTomo</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/how_to_run/at_diamond.html">Inside Diamond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/how_to_run/outside_diamond.html">Outside Diamond</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../howto/process_lists_guide.html">Process Lists Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../howto/process_lists/httomo_parameters.html">HTTomo-specific parameters</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../howto/process_lists/side_outputs/side_out.html">Side outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../howto/process_lists/save_results/save_results.html">Saving intermediate files</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/process_lists/process_list_configure.html">Configure efficient pipelines</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../howto/httomo_features.html">HTTomo Features</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/httomo_features/previewing.html">Previewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/httomo_features/centering.html">Centre of Rotation (CoR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/httomo_features/parameter_sweeping.html">Parameter Sweeping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../howto/httomo_features/padding.html">Padding</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../howto/interpret_logger.html">Interpret Log File</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference guides</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../reference/yaml.html">What is YAML?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/loaders.html">HTTomo Loaders</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Data processing</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../backends/list.html">Supported libraries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../backends/templates.html">Methods YAML Templates</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Ready-to-use pipelines</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../pipelines/yaml.html">Full YAML pipelines</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utilities</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../utilities/yaml_checker.html">YAML Checker - Why use it?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Developers</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../developers/how_to_contribute.html">How to contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developers/memory_calculation.html">GPU memory calculations</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../developers/api.html">API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../developers/generated/httomo.cli_utils.html">httomo.cli_utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../developers/generated/httomo.cli_utils.is_sweep_pipeline.html">httomo.cli_utils.is_sweep_pipeline</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../developers/generated/httomo.darks_flats.html">httomo.darks_flats</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../developers/generated/httomo.darks_flats.DarksFlatsFileConfig.html">httomo.darks_flats.DarksFlatsFileConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developers/generated/httomo.darks_flats.ImageType.html">httomo.darks_flats.ImageType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developers/generated/httomo.darks_flats.get_darks_flats.html">httomo.darks_flats.get_darks_flats</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../developers/generated/httomo.data.html">httomo.data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../developers/generated/httomo.data.hdf.html">httomo.data.hdf</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../developers/generated/httomo.data.padding.html">httomo.data.padding</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../developers/generated/httomo.data.padding.extrapolate_after.html">httomo.data.padding.extrapolate_after</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../developers/generated/httomo.data.padding.extrapolate_before.html">httomo.data.padding.extrapolate_before</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developers/generated/httomo.globals.html">httomo.globals</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../developers/generated/httomo.logger.html">httomo.logger</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../developers/generated/httomo.logger.setup_logger.html">httomo.logger.setup_logger</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../developers/generated/httomo.monitors.html">httomo.monitors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../developers/generated/httomo.monitors.aggregate.html">httomo.monitors.aggregate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../developers/generated/httomo.monitors.aggregate.AggregateMonitoring.html">httomo.monitors.aggregate.AggregateMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../developers/generated/httomo.monitors.benchmark.html">httomo.monitors.benchmark</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../developers/generated/httomo.monitors.benchmark.BenchmarkMonitoring.html">httomo.monitors.benchmark.BenchmarkMonitoring</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../developers/generated/httomo.monitors.summary.html">httomo.monitors.summary</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../developers/generated/httomo.monitors.summary.SummaryMonitor.html">httomo.monitors.summary.SummaryMonitor</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developers/generated/httomo.monitors.make_monitors.html">httomo.monitors.make_monitors</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../developers/generated/httomo.preview.html">httomo.preview</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../developers/generated/httomo.preview.Preview.html">httomo.preview.Preview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developers/generated/httomo.preview.PreviewConfig.html">httomo.preview.PreviewConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developers/generated/httomo.preview.PreviewDimConfig.html">httomo.preview.PreviewDimConfig</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../developers/generated/httomo.runner.html">httomo.runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../developers/generated/httomo.runner.methods_repository_interface.html">httomo.runner.methods_repository_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../developers/generated/httomo.runner.methods_repository_interface.MethodQuery.html">httomo.runner.methods_repository_interface.MethodQuery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../developers/generated/httomo.runner.methods_repository_interface.MethodRepository.html">httomo.runner.methods_repository_interface.MethodRepository</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../developers/generated/httomo.runner.monitoring_interface.html">httomo.runner.monitoring_interface</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../developers/generated/httomo.runner.monitoring_interface.MonitoringInterface.html">httomo.runner.monitoring_interface.MonitoringInterface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../developers/generated/httomo.runner.output_ref.html">httomo.runner.output_ref</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../developers/generated/httomo.runner.output_ref.OutputRef.html">httomo.runner.output_ref.OutputRef</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../developers/generated/httomo.sweep_runner.html">httomo.sweep_runner</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../developers/generated/httomo.sweep_runner.param_sweep_json_loader.html">httomo.sweep_runner.param_sweep_json_loader</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../developers/generated/httomo.sweep_runner.param_sweep_json_loader.ParamSweepJsonLoader.html">httomo.sweep_runner.param_sweep_json_loader.ParamSweepJsonLoader</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for httomo.darks_flats</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Dark-field/flat-field storage location configuration type and reading function, used by</span>
+<span class="sd">loaders.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">httomo.preview</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreviewConfig</span>
+
+
+<div class="viewcode-block" id="ImageType">
+<a class="viewcode-back" href="../../developers/generated/httomo.darks_flats.ImageType.html#httomo.darks_flats.ImageType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ImageType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Darks/flats image types mapped to their associated integer value with respect to an image</span>
+<span class="sd">    key.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    See the following link for more information on an &quot;image key&quot; in the context of the NXtomo</span>
+<span class="sd">    application definition:</span>
+<span class="sd">    https://manual.nexusformat.org/classes/base_classes/NXdetector.html#nxdetector-image-key-field.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">Flat</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">Dark</span> <span class="o">=</span> <span class="mi">2</span></div>
+
+
+
+<div class="viewcode-block" id="DarksFlatsFileConfig">
+<a class="viewcode-back" href="../../developers/generated/httomo.darks_flats.DarksFlatsFileConfig.html#httomo.darks_flats.DarksFlatsFileConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DarksFlatsFileConfig</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration for where dark-field or flat-field images associated with the projection data</span>
+<span class="sd">    are stored.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+
+<span class="sd">    There are currently **five** supported configurations for where dark-field or flat-field images</span>
+<span class="sd">    can be loaded **or** ignored:</span>
+
+<span class="sd">    1. Dark-field and flat-field images are stored in the same file as the projection images,</span>
+<span class="sd">    and in the same dataset in that file.</span>
+
+<span class="sd">    An image key dataset is present in the file to indicate (by values 0, 1, or 2) which images</span>
+<span class="sd">    in the dataset are projections (0), darks (1), or flats (2). For this case, the</span>
+<span class="sd">    `image_key_path` should be provided.</span>
+
+<span class="sd">    Please see the NeXuS format manual for more information:</span>
+<span class="sd">    https://manual.nexusformat.org/classes/base_classes/NXdetector.html#nxdetector-image-key-field</span>
+
+<span class="sd">    2. Dark-field and flat-field images are stored in separate files from the file containing</span>
+<span class="sd">    the projection images.</span>
+
+<span class="sd">    Typically this case is such that dark-field images are in a dataset in one file, and</span>
+<span class="sd">    flat-field images are in a dataset in another file. Furthermore, the dataset that either</span>
+<span class="sd">    dark-field or flat-field images are stored in contains only one kind of image (ie, the</span>
+<span class="sd">    dataset containing dark-field images will contain only dark-field images and nothing else).</span>
+
+<span class="sd">    Therefore, an image key is not needed to distinguish between projection, dark-field, or</span>
+<span class="sd">    flat-field images. For this case, the `image_key_path` should be given as `None`.</span>
+
+<span class="sd">    3. Dark-field and flat-field images are stored in separate files with own unique or identical image keys.</span>
+<span class="sd">    This can be a new dataset or two different dataset. Therefore, the image_key_path parameter should be provided</span>
+<span class="sd">    for both flats and darks.</span>
+
+<span class="sd">    4. Dark-field or flat-field images are not available in the dataset, yet some processing of data is still required</span>
+<span class="sd">    (e.g., the case of applying distortion correction only).</span>
+
+<span class="sd">    5. Dark-field or flat-field images are available in the dataset but they need to be ignored, for instance to proceed</span>
+<span class="sd">    with the other types of data correction or reconstruction avoiding normalisation to d/f.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">file</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">data_path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">image_key_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="get_darks_flats">
+<a class="viewcode-back" href="../../developers/generated/httomo.darks_flats.get_darks_flats.html#httomo.darks_flats.get_darks_flats">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_darks_flats</span><span class="p">(</span>
+    <span class="n">darks_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DarksFlatsFileConfig</span><span class="p">],</span>
+    <span class="n">flats_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DarksFlatsFileConfig</span><span class="p">],</span>
+    <span class="n">preview_config</span><span class="p">:</span> <span class="n">PreviewConfig</span><span class="p">,</span>
+    <span class="n">datatype</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads the dark-field and flat-field images from the file(s) defined in the input</span>
+<span class="sd">    configurations.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    darks_config : Optional[DarksFlatsFileConfig]</span>
+<span class="sd">        Configuration of where to get the dark-field images from. If `None`, then generate</span>
+<span class="sd">        dummy darks.</span>
+<span class="sd">    flats_config : Optional[DarksFlatsFileConfig]</span>
+<span class="sd">        Configuration of where to get the flat-field images from. If `None`, then generate</span>
+<span class="sd">        dummy flats.</span>
+<span class="sd">    preview_config : PreviewConfig</span>
+<span class="sd">        Configuration of previewing to be applied to projection, dark-field, and flat-field</span>
+<span class="sd">        images.</span>
+<span class="sd">    datatype: np.dtype</span>
+<span class="sd">        Data type for any dummy darks/flats that need to be generated</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[np.ndarray, np.ndarray]</span>
+<span class="sd">        Index zero contains the dark-field images and index one contains the flat-field images.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_together</span><span class="p">(</span>
+        <span class="n">darks_config</span><span class="p">:</span> <span class="n">DarksFlatsFileConfig</span><span class="p">,</span> <span class="n">flats_config</span><span class="p">:</span> <span class="n">DarksFlatsFileConfig</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get darks and flats from the same file and the same dataset within that file.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        If the dataset contains no images marked as darks/flats, then dummy darks/flats will be</span>
+<span class="sd">        generated accordingly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">darks_config</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">dataset</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">darks_config</span><span class="o">.</span><span class="n">data_path</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">darks_config</span><span class="o">.</span><span class="n">image_key_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">darks_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                    <span class="n">f</span><span class="p">[</span><span class="n">darks_config</span><span class="o">.</span><span class="n">image_key_path</span><span class="p">][:]</span> <span class="o">==</span> <span class="n">ImageType</span><span class="o">.</span><span class="n">Dark</span><span class="o">.</span><span class="n">value</span>
+                <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">darks_indices</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">flats_config</span><span class="o">.</span><span class="n">image_key_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">flats_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                    <span class="n">f</span><span class="p">[</span><span class="n">flats_config</span><span class="o">.</span><span class="n">image_key_path</span><span class="p">][:]</span> <span class="o">==</span> <span class="n">ImageType</span><span class="o">.</span><span class="n">Flat</span><span class="o">.</span><span class="n">value</span>
+                <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">flats_indices</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">darks_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># there are no darks in the data file so we generate a dummy array</span>
+                <span class="n">darks</span> <span class="o">=</span> <span class="n">generate_dummy</span><span class="p">(</span><span class="n">ImageType</span><span class="o">.</span><span class="n">Dark</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">darks</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span>
+                    <span class="n">darks_indices</span><span class="p">,</span>
+                    <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">start</span> <span class="p">:</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+                    <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">start</span> <span class="p">:</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">flats_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># there are no flats in the data file so we generate a dummy array</span>
+                <span class="n">flats</span> <span class="o">=</span> <span class="n">generate_dummy</span><span class="p">(</span><span class="n">ImageType</span><span class="o">.</span><span class="n">Flat</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">flats</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span>
+                    <span class="n">flats_indices</span><span class="p">,</span>
+                    <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">start</span> <span class="p">:</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+                    <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">start</span> <span class="p">:</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+                <span class="p">]</span>
+        <span class="k">return</span> <span class="n">darks</span><span class="p">,</span> <span class="n">flats</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_separate</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">DarksFlatsFileConfig</span><span class="p">,</span> <span class="n">image_type</span><span class="p">:</span> <span class="n">ImageType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get darks/flats from a separate file that may or may not contain an image key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">image_key_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">f</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">data_path</span><span class="p">][</span>
+                    <span class="p">:,</span>
+                    <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">start</span> <span class="p">:</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+                    <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">start</span> <span class="p">:</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+                <span class="p">]</span>
+
+            <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">image_key_path</span><span class="p">][:]</span> <span class="o">==</span> <span class="n">image_type</span><span class="o">.</span><span class="n">value</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">f</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">data_path</span><span class="p">][</span>
+                <span class="n">indices</span><span class="p">,</span>
+                <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">start</span> <span class="p">:</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+                <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">start</span> <span class="p">:</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+            <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_dummy</span><span class="p">(</span><span class="n">image_type</span><span class="p">:</span> <span class="n">ImageType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate dummy darks or flats data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">image_type</span> <span class="o">==</span> <span class="n">ImageType</span><span class="o">.</span><span class="n">Dark</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">stop</span> <span class="o">-</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+                    <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">stop</span> <span class="o">-</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">datatype</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">stop</span> <span class="o">-</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_y</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+                    <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">stop</span> <span class="o">-</span> <span class="n">preview_config</span><span class="o">.</span><span class="n">detector_x</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">datatype</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">darks_config</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">flats_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">generate_dummy</span><span class="p">(</span><span class="n">ImageType</span><span class="o">.</span><span class="n">Dark</span><span class="p">),</span> <span class="n">generate_dummy</span><span class="p">(</span><span class="n">ImageType</span><span class="o">.</span><span class="n">Flat</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">darks_config</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">flats_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">generate_dummy</span><span class="p">(</span><span class="n">ImageType</span><span class="o">.</span><span class="n">Dark</span><span class="p">),</span> <span class="n">get_separate</span><span class="p">(</span>
+            <span class="n">flats_config</span><span class="p">,</span> <span class="n">ImageType</span><span class="o">.</span><span class="n">Flat</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">darks_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">flats_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">get_separate</span><span class="p">(</span><span class="n">darks_config</span><span class="p">,</span> <span class="n">ImageType</span><span class="o">.</span><span class="n">Dark</span><span class="p">),</span> <span class="n">generate_dummy</span><span class="p">(</span>
+            <span class="n">ImageType</span><span class="o">.</span><span class="n">Flat</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">darks_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">flats_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">darks_config</span><span class="o">.</span><span class="n">file</span> <span class="o">!=</span> <span class="n">flats_config</span><span class="o">.</span><span class="n">file</span>
+    <span class="p">):</span>
+        <span class="n">darks</span> <span class="o">=</span> <span class="n">get_separate</span><span class="p">(</span><span class="n">darks_config</span><span class="p">,</span> <span class="n">ImageType</span><span class="o">.</span><span class="n">Dark</span><span class="p">)</span>
+        <span class="n">flats</span> <span class="o">=</span> <span class="n">get_separate</span><span class="p">(</span><span class="n">flats_config</span><span class="p">,</span> <span class="n">ImageType</span><span class="o">.</span><span class="n">Flat</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">darks</span><span class="p">,</span> <span class="n">flats</span>
+
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">darks_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">flats_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">darks_config</span><span class="o">.</span><span class="n">file</span> <span class="o">==</span> <span class="n">flats_config</span><span class="o">.</span><span class="n">file</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">get_together</span><span class="p">(</span><span class="n">darks_config</span><span class="p">,</span> <span class="n">flats_config</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unsupported darks and/or flats config&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By the Imaging Team
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, Diamond Light Source.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on Mar 02, 2026.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
