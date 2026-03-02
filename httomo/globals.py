@@ -16,3 +16,4 @@ COMPRESS_INTERMEDIATE: bool = False
 SYSLOG_SERVER = "localhost"
 SYSLOG_PORT = 514
 RECON_FILENAME_STEM: Optional[str] = None
+CONTINUOUS_SCAN_SUBSET: Optional[tuple[int, int]] = None

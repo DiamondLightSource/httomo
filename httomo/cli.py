@@ -206,6 +206,13 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     is_flag=True,
     help="Enable hook that invokes MPI abort if an unhandled exception is encountered",
 )
+@click.option(
+    "--continuous-scan-subset",
+    nargs=2,
+    type=click.INT,
+    default=None,
+    help="Start and stop indices for selecting subset of projections along angular dimension",
+)
 def run(
     in_data_file: Path,
     pipeline: Union[Path, str],
@@ -227,6 +234,7 @@ def run(
     frames_per_chunk: int,
     recon_filename_stem: Optional[str],
     mpi_abort_hook: bool,
+    continuous_scan_subset: Optional[tuple[int, int]],
 ):
     """Run a pipeline on input data."""
     if mpi_abort_hook:
@@ -242,6 +250,7 @@ def run(
         syslog_port,
         output_folder_name,
         recon_filename_stem,
+        continuous_scan_subset,
     )
 
     does_contain_sweep = is_sweep_pipeline(pipeline)
@@ -329,6 +338,7 @@ def set_global_constants(
     syslog_port: int,
     output_folder_name: Optional[Path],
     recon_filename_stem: Optional[str],
+    continuous_scan_subset: Optional[tuple[int, int]],
 ) -> None:
     if compress_intermediate and frames_per_chunk == 0:
         # 0 means write contiguously but compression must have chunk
@@ -340,6 +350,7 @@ def set_global_constants(
     httomo.globals.SYSLOG_SERVER = syslog_host
     httomo.globals.SYSLOG_PORT = syslog_port
     httomo.globals.RECON_FILENAME_STEM = recon_filename_stem
+    httomo.globals.CONTINUOUS_SCAN_SUBSET = continuous_scan_subset
 
     if output_folder_name is None:
         httomo.globals.run_out_dir = out_dir.joinpath(

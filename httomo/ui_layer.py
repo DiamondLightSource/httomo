@@ -1,3 +1,4 @@
+import logging
 import yaml
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional, TypeAlias, Union
@@ -13,6 +14,7 @@ from httomo.preview import PreviewConfig
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 
+import httomo.globals
 from httomo.method_wrappers import make_method_wrapper
 from httomo.loaders import make_loader
 from httomo.runner.loader import LoaderInterface
@@ -20,10 +22,12 @@ from httomo.runner.output_ref import OutputRef
 from httomo.sweep_runner.param_sweep_json_loader import ParamSweepJsonLoader
 from httomo.sweep_runner.param_sweep_yaml_loader import get_param_sweep_yaml_loader
 from httomo.transform_loader_params import (
+    ContinuousScanSubsetParam,
     select_continuous_scan_subset,
     parse_config,
     parse_preview,
 )
+from httomo.utils import log_once
 from httomo_backends.methods_database.query import MethodDatabaseRepository
 
 MethodConfig: TypeAlias = Dict[str, Any]
@@ -144,7 +148,28 @@ class UiLayer:
         with h5py.File(data_config.in_file, "r") as f:
             data_shape = f[data_config.data_path].shape
         preview = parse_preview(parameters.get("preview", None), data_shape)
-        continuous_scan_subset_config = parameters.get("continuous_scan_subset", None)
+        continuous_scan_subset_param = parameters.get("continuous_scan_subset", None)
+        if (
+            continuous_scan_subset_param is not None
+            and httomo.globals.CONTINUOUS_SCAN_SUBSET is not None
+        ):
+            warn_str = (
+                "continuous_scan_subset parameter exists in loader config with "
+                f"start={continuous_scan_subset_param["start"]} and "
+                f"stop={continuous_scan_subset_param["stop"]}, but is overidden by "
+                "values given to --continuous-scan-subset flag "
+                f"start={httomo.globals.CONTINUOUS_SCAN_SUBSET[0]} and "
+                f"stop={httomo.globals.CONTINUOUS_SCAN_SUBSET[1]}"
+            )
+            log_once(warn_str, level=logging.DEBUG)
+        continuous_scan_subset_config = (
+            ContinuousScanSubsetParam(
+                start=httomo.globals.CONTINUOUS_SCAN_SUBSET[0],
+                stop=httomo.globals.CONTINUOUS_SCAN_SUBSET[1],
+            )
+            if httomo.globals.CONTINUOUS_SCAN_SUBSET is not None
+            else continuous_scan_subset_param
+        )
         if continuous_scan_subset_config is not None:
             preview = select_continuous_scan_subset(
                 preview, continuous_scan_subset_config
