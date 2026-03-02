@@ -260,6 +260,8 @@ passed along to the first method. The loader has the :code:`preview` parameter
 for configuring the cropping/previewing. Please see :ref:`previewing` for more
 details on previewing.
 
+.. _continuous_scan_subset_selection:
+
 Continuous Scan Subset Selection
 ================================
 
