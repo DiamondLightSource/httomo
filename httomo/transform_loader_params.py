@@ -9,6 +9,7 @@ from typing import (
     Any,
     Dict,
     Literal,
+    NotRequired,
     Optional,
     Tuple,
     TypeAlias,
@@ -317,22 +318,30 @@ def parse_data(in_file: str, data_path: str) -> DataConfig:
     return DataConfig(in_file=Path(in_file), data_path=data_path)
 
 
-class DarksFlatsParam(TypedDict):
+class PartialDarksFlatsParam(TypedDict):
     """
-    Darks/flats configuration dict.
+    Potentially incomplete darks/flats configuration dict directly from YAML config.
+    """
+
+    file: str
+    data_path: str
+    image_key_path: NotRequired[Optional[str]]
+
+
+class DarksFlatsParam(PartialDarksFlatsParam):
+    """
+    Complete darks/flats configuration dict.
     """
 
     file: str
     data_path: str
     image_key_path: Optional[str]
-    ignore: bool
 
 
 def parse_darks_flats(
     data_config: DataConfig,
     image_key_path: Optional[str],
     config: Optional[DarksFlatsParam],
-    ignore: bool,
 ) -> DarksFlatsFileConfig:
     """
     Convert python dict representing darks/flats information generated from parsing the
@@ -344,7 +353,7 @@ def parse_darks_flats(
     data_path = config["data_path"] if config is not None else data_config.data_path
     image_key_path = config["image_key_path"] if config is not None else image_key_path
     return DarksFlatsFileConfig(
-        file=in_file, data_path=data_path, image_key_path=image_key_path, ignore=ignore
+        file=in_file, data_path=data_path, image_key_path=image_key_path
     )
 
 
@@ -382,10 +391,12 @@ def _recurse_input_file(group: h5py.Group) -> Optional[h5py.Group]:
                 return ret
 
 
-def parse_config(
-    input_file: Path, config: Dict[str, Any]
-) -> Tuple[
-    DataConfig, Optional[str], AnglesConfig, DarksFlatsFileConfig, DarksFlatsFileConfig
+def parse_config(input_file: Path, config: Dict[str, Any]) -> Tuple[
+    DataConfig,
+    Optional[str],
+    AnglesConfig,
+    Optional[DarksFlatsFileConfig],
+    Optional[DarksFlatsFileConfig],
 ]:
     """
     Convert python dict representing loader parameters generated from parsing the pipeline
@@ -424,26 +435,11 @@ def parse_config(
         angles_config = parse_angles(config["rotation_angles"])
 
     data_config = DataConfig(in_file=input_file, data_path=str(data_path))
-
-    darks_value = config.get("darks", None)
-    ignore_darks = False
-    if darks_value == "ignore":
-        ignore_darks = True  # ignore darks in the data
-        darks_value = None
-    if darks_value is not None and "image_key_path" not in darks_value:
-        darks_value["image_key_path"] = None
-    darks_config = parse_darks_flats(
-        data_config, image_key_path, darks_value, ignore=ignore_darks
+    darks_config = _darks_flats_dict_to_config(
+        config.get("darks", None), data_config, image_key_path
     )
-    flats_value = config.get("flats", None)
-    ignore_flats = False
-    if flats_value == "ignore":
-        ignore_flats = True  # ignore flats in the data
-        flats_value = None
-    if flats_value is not None and "image_key_path" not in flats_value:
-        flats_value["image_key_path"] = None
-    flats_config = parse_darks_flats(
-        data_config, image_key_path, flats_value, ignore=ignore_flats
+    flats_config = _darks_flats_dict_to_config(
+        config.get("flats", None), data_config, image_key_path
     )
 
     return (
@@ -453,3 +449,25 @@ def parse_config(
         darks_config,
         flats_config,
     )
+
+
+def _darks_flats_dict_to_config(
+    value: Optional[PartialDarksFlatsParam | Literal["ignore"]],
+    data_config: DataConfig,
+    image_key_path: Optional[str],
+) -> Optional[DarksFlatsFileConfig]:
+    match value:
+        case "ignore":
+            return None
+        case None:
+            return parse_darks_flats(data_config, image_key_path, None)
+        case _:
+            return parse_darks_flats(
+                data_config,
+                image_key_path,
+                DarksFlatsParam(
+                    file=value["file"],
+                    data_path=value["data_path"],
+                    image_key_path=value.get("image_key_path", None),
+                ),
+            )
