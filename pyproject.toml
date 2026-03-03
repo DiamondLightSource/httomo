@@ -38,8 +38,8 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
     "click",
-    "cupy",
-    "numpy",
+    "cupy==13.6.*",
+    "numpy==2.3.*",
     "hdf5plugin",
     "httomo-backends",
     "loguru",

@@ -70,7 +70,7 @@ class AuxiliaryData:
         self._flats = flats
 
     def set_angles(self, angles: np.ndarray) -> None:
-        assert getattr(angles, "device", None) is None, "Angles must be a CPU array"
+        assert angles.device == "cpu", "Angles must be a CPU array"
         self._angles = angles
 
     def _get_field(self, field: str, gpu=False) -> generic_array:

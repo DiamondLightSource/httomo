@@ -79,7 +79,7 @@ def test_save_to_images_with_comm_rank_raises(mocker: MockerFixture):
 def test_images_leaves_gpudata(mocker: MockerFixture, dummy_block: DataSetBlock):
     class FakeModule:
         def save_to_images(data, out_dir, offset):
-            assert getattr(data, "device", None) is None  # make sure it's on CPU
+            assert data.device == "cpu"  # make sure it's on CPU
 
     mocker.patch(
         "httomo.method_wrappers.generic.import_module", return_value=FakeModule
