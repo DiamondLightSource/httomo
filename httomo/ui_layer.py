@@ -155,8 +155,8 @@ class UiLayer:
         ):
             warn_str = (
                 "continuous_scan_subset parameter exists in loader config with "
-                f"start={continuous_scan_subset_param["start"]} and "
-                f"stop={continuous_scan_subset_param["stop"]}, but is overidden by "
+                f"start={continuous_scan_subset_param['start']} and "
+                f"stop={continuous_scan_subset_param['stop']}, but is overidden by "
                 "values given to --continuous-scan-subset flag "
                 f"start={httomo.globals.CONTINUOUS_SCAN_SUBSET[0]} and "
                 f"stop={httomo.globals.CONTINUOUS_SCAN_SUBSET[1]}"
