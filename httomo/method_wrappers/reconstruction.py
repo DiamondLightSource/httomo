@@ -1,11 +1,14 @@
+import numpy as np
 from httomo.block_interfaces import T, Block
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.method_wrapper import MethodParameterDictType
 
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from httomo_backends.methods_database.query import Pattern
+from httomo.runner.gpu_utils import gpumem_cleanup
+from httomo.utils import search_max_slices_iterative
 
 
 class ReconstructionWrapper(GenericMethodWrapper):
@@ -42,6 +45,36 @@ class ReconstructionWrapper(GenericMethodWrapper):
         ), "recon methods always take data + angles as the first 2 parameters"
         updated_params = {**dict_params, self.parameters[1]: dataset.angles_radians}
         return super()._build_kwargs(updated_params, dataset)
+
+    def _calculate_max_slices_iterative(
+        self,
+        data_dtype: np.dtype,
+        slicing_dim: int,
+        non_slice_dims_shape: Tuple[int, int],
+        angles: np.ndarray,
+        available_memory: int,
+    ) -> int:
+        def get_mem_bytes(current_slices):
+            try:
+                kwargs = {
+                    "angles": angles[0 : non_slice_dims_shape[0]]
+                } | self._unwrap_output_ref_values()
+
+                dims_shape = list(non_slice_dims_shape)
+                dims_shape.insert(slicing_dim, current_slices)
+
+                memory_bytes = self._query.calculate_memory_bytes_for_slices(
+                    dims_shape=tuple(dims_shape),
+                    dtype=data_dtype,
+                    **kwargs,
+                )
+                return memory_bytes
+            except:
+                return 2**64
+            finally:
+                gpumem_cleanup()
+
+        return search_max_slices_iterative(available_memory, get_mem_bytes)
 
     @property
     def recon_algorithm(self) -> Optional[str]:
