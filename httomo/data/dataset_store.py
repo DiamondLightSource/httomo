@@ -34,6 +34,7 @@ from httomo.runner.dataset_store_interfaces import (
     DataSetSource,
     ReadableDataSetSink,
 )
+from httomo.utils import make_pinned_host_array
 from mpi4py import MPI
 from mpi4py.util import dtlib
 import numpy as np
@@ -384,7 +385,7 @@ class DataSetStoreReader(DataSetSource):
         self, shape: List[int], dim: int, start_idx: List[int]
     ) -> np.ndarray:
         start_idx[dim] += self._global_index[dim] - self._padding[0]
-        block_data = np.empty(shape, dtype=self._data.dtype)
+        block_data = make_pinned_host_array(shape, dtype=self._data.dtype)
         before_cut = 0
         after_cut = 0
         # check before boundary
@@ -547,7 +548,9 @@ class DataSetStoreReader(DataSetSource):
             slice(start_idx[1], start_idx[1] + shape[1]),
             slice(start_idx[2], start_idx[2] + shape[2]),
         ]
-        return self._data[read_slices[0], read_slices[1], read_slices[2]]
+        block_data = make_pinned_host_array(shape, self._data.dtype)
+        block_data[:] = self._data[read_slices[0], read_slices[1], read_slices[2]]
+        return block_data
 
     def read_block(self, start: int, length: int) -> DataSetBlock:
         shape = list(self._global_shape)

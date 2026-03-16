@@ -5,7 +5,7 @@ import logging
 import numpy as np
 from mpi4py import MPI
 
-from httomo.utils import log_once
+from httomo.utils import log_once, make_pinned_host_array
 
 __all__ = ["alltoall", "alltoall_ring"]
 
@@ -85,7 +85,7 @@ def alltoall_ring(
     output_shape[concat_axis] = sum(s[concat_axis] for s in shapes_rec)
 
     # Pre-allocate the final concatenated output array
-    output_array = np.empty(output_shape, dtype=arrays[0].dtype)
+    output_array = make_pinned_host_array(output_shape, dtype=arrays[0].dtype)
 
     # Calculate offsets for each rank's data in the output array
     offsets = [0]

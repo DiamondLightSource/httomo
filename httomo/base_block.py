@@ -4,7 +4,12 @@ import numpy as np
 
 from httomo.block_interfaces import BlockData, BlockTransfer, generic_array
 from httomo.runner.auxiliary_data import AuxiliaryData
-from httomo.utils import gpu_enabled, make_3d_shape_from_array, xp
+from httomo.utils import (
+    gpu_enabled,
+    make_3d_shape_from_array,
+    xp,
+    make_pinned_host_array,
+)
 
 
 class BaseBlock(BlockData, BlockTransfer):
@@ -108,6 +113,7 @@ class BaseBlock(BlockData, BlockTransfer):
     def to_gpu(self):
         if not gpu_enabled:
             raise ValueError("no GPU available")
+        assert self._data.flags.c_contiguous
         self._data = xp.asarray(self.data, order="C")
 
     def to_cpu(self):
