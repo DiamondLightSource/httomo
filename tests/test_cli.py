@@ -271,6 +271,7 @@ def test_output_folder_name_correctly_sets_run_out_dir_global_constant(output_fo
         syslog_port=514,
         output_folder_name=Path(dir_name),
         recon_filename_stem=None,
+        continuous_scan_subset=int,
     )
     assert httomo.globals.run_out_dir == custom_output_dir
 
