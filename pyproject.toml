@@ -31,15 +31,15 @@ authors = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
 ]
 
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dynamic = ["version"]
 dependencies = [
     "click",
-    "cupy==13.6.*",
-    "numpy==2.3.*",
+    "cupy==14.0.*",
+    "numpy==2.4.*",
     "hdf5plugin",
     "httomo-backends",
     "loguru",
@@ -92,7 +92,7 @@ dev-gpu = [
 [tool.mypy]
 # Ignore missing stubs for modules we use
 ignore_missing_imports = true
-python_version = "3.10"  # make sure we're compatible with 3.9
+python_version = "3.12"  # make sure we're compatible with 3.12
 plugins = 'numpy.typing.mypy_plugin'
 
 [tool.isort]
