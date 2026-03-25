@@ -259,7 +259,7 @@ def run(
     )
     pipeline = generate_pipeline(
         in_data_file, pipeline, save_all, method_wrapper_comm, format_enum
-    )
+    )    
 
     if not does_contain_sweep:
         execute_high_throughput_run(
@@ -283,6 +283,11 @@ def _check_yaml(yaml_config: Path, in_data: Path):
     """Check a YAML pipeline file for errors."""
     return validate_yaml_config(yaml_config, in_data)
 
+def _check_pipeline_cpu_or_gpu(pipeline: Pipeline) -> bool:
+    for _, method in enumerate(pipeline):
+        if 'gpu' in method._module_path:
+            return True
+    return False
 
 def transform_limit_str_to_bytes(limit_str: str):
     try:
@@ -299,9 +304,12 @@ def transform_limit_str_to_bytes(limit_str: str):
         raise ValueError(f"invalid memory limit string {limit_str}")
 
 
-def _set_gpu_id(gpu_id: int):
+def _set_gpu_id(gpu_id: int, pipeline_needs_gpu: bool):
     try:
         import cupy as cp
+
+        if not cp.cuda.is_available() and pipeline_needs_gpu:
+            raise ImportError("This pipeline requires an access to the GPU-enabled machine.")
 
         gpu_count = cp.cuda.runtime.getDeviceCount()
 
@@ -316,8 +324,11 @@ def _set_gpu_id(gpu_id: int):
         httomo.globals.gpu_id = gpu_id
 
     except ImportError:
-        pass  # silently pass and run if the CPU pipeline is given
-
+        # we handle two cases here: 1. CPU pipeline is given (continue). 2. GPU pipeline is given (raise error).
+        if pipeline_needs_gpu:
+            raise ImportError("This pipeline requires an access to the GPU-enabled machine.")
+        else:
+            pass
 
 def set_global_constants(
     out_dir: Path,
@@ -408,8 +419,10 @@ def execute_high_throughput_run(
 ) -> None:
     # we use half the memory for blocks since we typically have inputs/output
     memory_limit = transform_limit_str_to_bytes(max_memory) // 2
+    
+    pipeline_needs_gpu = _check_pipeline_cpu_or_gpu(pipeline)
 
-    _set_gpu_id(gpu_id)
+    _set_gpu_id(gpu_id, pipeline_needs_gpu)
 
     # Run the pipeline using Taskrunner, with temp dir or reslice dir
     mon = make_monitors(monitor, global_comm)
