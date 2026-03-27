@@ -183,8 +183,6 @@ in the older scan should be ignored. In this instance, we need to provide a para
           data_path: /entry1/tomo_entry/data/data
           image_key_path: /entry1/tomo_entry/instrument/detector/image_key 
         
-.. _user_defined_angles:
-
 Data without darks/flats
 ++++++++++++++++++++++++
 
@@ -207,6 +205,7 @@ the keyword :code:`ignore` into the loader, like in the example below where both
         darks: ignore
         flats: ignore
 
+.. _user_defined_angles:
 
 Providing/Overriding Angles Data
 ================================
