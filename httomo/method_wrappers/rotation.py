@@ -5,8 +5,6 @@ from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import catchtime, log_once, xp, gpu_enabled
 
 from httomo_backends.methods_database.query import Pattern
-import httomo.globals
-
 import numpy as np
 from mpi4py import MPI
 from mpi4py.MPI import Comm
