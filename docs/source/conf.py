@@ -44,6 +44,7 @@ autodoc_mock_imports = [
     "h5py",
     "hdf5plugin",
     "httomo_backends",
+    "PIL",
     "scipy",
     "scipy.signal",
 ]

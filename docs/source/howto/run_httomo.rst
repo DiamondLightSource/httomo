@@ -235,7 +235,7 @@ directory created by HTTomo would be
 Options/flags
 #############
 
-The :code:`run` command has 17 options/flags:
+The :code:`run` command has 18 options/flags:
 
 - :code:`--output-folder-name`
 - :code:`--save-all`
@@ -254,6 +254,7 @@ The :code:`run` command has 17 options/flags:
 - :code:`--recon-filename-stem`
 - :code:`--pipeline-format`
 - :code:`--mpi-abort-hook`
+- :code:`--continuous-scan-subset`
 
 :code:`--output-folder-name`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -541,6 +542,28 @@ abort does exist in the python code, there is no guarantee that this printing wi
 before the MPI abort mechanism begins to terminate the python processes. Thus, the output in a
 terminal when MPI abort is invoked may only contain partial information about the exception
 that triggered the MPI abort.
+
+:code:`--continuous-scan-subset`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is an alternative to the :code:`continuous_scan_subset` loader parameter, see
+:ref:`continuous_scan_subset_selection` for more details.
+
+This flag takes two values, the first one being the start index and the second one being the
+stop index. For example, an equivalent of the following config:
+
+.. literalinclude:: ../../../tests/samples/pipeline_template_examples/testing/loader_with_offset_param.yaml
+   :language: yaml
+   :emphasize-lines: 7-9
+
+can be achieved with the flag via :code:`--continuous-scan-subset 90 180`
+
+.. note:: This flag overrides the :code:`continuous_scan_subset` parameter in the YAML
+   config. Meaning, if the :code:`continuous_scan_subset` parameter is present in the loader's
+   config in the YAML pipeline but the :code:`--continuous-scan-subset` flag is used, then the
+   values given in the YAML config are ignored and the values given to the flag take
+   precedence. If this occurs, it will be logged to the :code:`debug.log` file that HTTomo
+   produces.
 
 Developer options
 +++++++++++++++++

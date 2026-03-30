@@ -32,13 +32,15 @@ A virtual environment can be used if the following conditions are met:
 Conda environment
 =================
 
+By default the :code:`cupy` installation will install the latest :code:`cuda-cudart`, which might be the higher CUDA version than on the system. One can specify the compatible to their system CUDA package, e.g., :code:`cuda-cudart==12.9.79`.
+
 .. code-block:: console
 
    $ conda create --name httomo
    $ conda activate httomo
-   $ conda install -c conda-forge cupy==12.3.0 openmpi==4.1.6 h5py[build=*openmpi*]
-   $ conda install -c conda-forge tomopy==1.15 # optional
-   $ pip install httomo httomolib httomolibgpu
+   $ conda install -c conda-forge cupy==14.0.1 openmpi==4.1.6 h5py[build=*openmpi*]
+   $ conda install -c conda-forge tomopy==1.15.3 # optional
+   $ pip install httomo httomolib httomolibgpu tomobar
 
 Setup HTTomo development environment:
 ======================================================
