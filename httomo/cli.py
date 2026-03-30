@@ -268,7 +268,7 @@ def run(
     )
     pipeline = generate_pipeline(
         in_data_file, pipeline, save_all, method_wrapper_comm, format_enum
-    )    
+    )
 
     if not does_contain_sweep:
         execute_high_throughput_run(
@@ -291,6 +291,7 @@ def run(
 def _check_yaml(yaml_config: Path, in_data: Path):
     """Check a YAML pipeline file for errors."""
     return validate_yaml_config(yaml_config, in_data)
+
 
 def transform_limit_str_to_bytes(limit_str: str):
     try:
@@ -326,7 +327,8 @@ def _set_gpu_id(gpu_id: int):
 
     except ImportError:
         # the edge case when cupy is not installed since cupy is the dependency
-        pass # running cpu pipeline
+        pass  # running cpu pipeline
+
 
 def set_global_constants(
     out_dir: Path,

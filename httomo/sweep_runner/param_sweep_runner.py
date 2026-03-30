@@ -318,7 +318,8 @@ def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
     """
     from httomo_backends.methods_database.packages.backends.httomolibgpu.supporting_funcs.prep.phase import (
         _calc_memory_bytes_for_slices_paganin_filter,
-    )    
+    )
+
     available_memory = get_available_gpu_memory(10.0)
     angles_total = source.aux_data.angles_length
     det_X_length = source.chunk_shape[2]
