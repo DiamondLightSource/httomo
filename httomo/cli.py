@@ -292,13 +292,6 @@ def _check_yaml(yaml_config: Path, in_data: Path):
     """Check a YAML pipeline file for errors."""
     return validate_yaml_config(yaml_config, in_data)
 
-def _check_pipeline_cpu_or_gpu(pipeline: Pipeline) -> bool:
-    for _, method in enumerate(pipeline):
-        if 'gpu' in method.module_path:
-            return True
-    :param data_slice: a 2D array to save as 
-    return False
-
 def transform_limit_str_to_bytes(limit_str: str):
     try:
         limit_upper = limit_str.upper()
@@ -314,7 +307,7 @@ def transform_limit_str_to_bytes(limit_str: str):
         raise ValueError(f"invalid memory limit string {limit_str}")
 
 
-def _set_gpu_id(gpu_id: int, pipeline_needs_gpu: bool):
+def _set_gpu_id(gpu_id: int):
     try:
         import cupy as cp
 
@@ -330,16 +323,10 @@ def _set_gpu_id(gpu_id: int, pipeline_needs_gpu: bool):
                 cp.cuda.Device(gpu_id).use()
 
             httomo.globals.gpu_id = gpu_id
-        else:
-            if pipeline_needs_gpu:
-                raise ImportError("This pipeline requires an access to the GPU-enabled machine.")
-            else:
-                httomo.globals.gpu_id = None
+
     except ImportError:
         # the edge case when cupy is not installed since cupy is the dependency
-        if pipeline_needs_gpu:
-            raise ImportError("This pipeline requires an access to the GPU-enabled machine.")
-
+        pass # running cpu pipeline
 
 def set_global_constants(
     out_dir: Path,
@@ -432,10 +419,8 @@ def execute_high_throughput_run(
 ) -> None:
     # we use half the memory for blocks since we typically have inputs/output
     memory_limit = transform_limit_str_to_bytes(max_memory) // 2
-    
-    pipeline_needs_gpu = _check_pipeline_cpu_or_gpu(pipeline)
 
-    _set_gpu_id(gpu_id, pipeline_needs_gpu)
+    _set_gpu_id(gpu_id)
 
     # Run the pipeline using Taskrunner, with temp dir or reslice dir
     mon = make_monitors(monitor, global_comm)

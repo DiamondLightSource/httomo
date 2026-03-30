@@ -326,7 +326,7 @@ class GenericMethodWrapper(MethodWrapper):
             block = self._run_method(block, args)
             block = self._postprocess_data(block)
 
-        if httomo.globals.gpu_id is not None:
+        if gpu_enabled:
             self._gpu_time_info.kernel = t.elapsed
         else:
             self._gpu_time_info.kernel = 0
