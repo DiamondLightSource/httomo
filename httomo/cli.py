@@ -294,8 +294,9 @@ def _check_yaml(yaml_config: Path, in_data: Path):
 
 def _check_pipeline_cpu_or_gpu(pipeline: Pipeline) -> bool:
     for _, method in enumerate(pipeline):
-        if 'gpu' in method._module_path:
+        if 'gpu' in method.module_path:
             return True
+    :param data_slice: a 2D array to save as 
     return False
 
 def transform_limit_str_to_bytes(limit_str: str):
@@ -317,27 +318,28 @@ def _set_gpu_id(gpu_id: int, pipeline_needs_gpu: bool):
     try:
         import cupy as cp
 
-        if not cp.cuda.is_available() and pipeline_needs_gpu:
-            raise ImportError("This pipeline requires an access to the GPU-enabled machine.")
+        if cp.cuda.is_available():
+            gpu_count = cp.cuda.runtime.getDeviceCount()
 
-        gpu_count = cp.cuda.runtime.getDeviceCount()
+            if gpu_id != -1:
+                if gpu_id not in range(0, gpu_count):
+                    raise ValueError(
+                        f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
+                    )
 
-        if gpu_id != -1:
-            if gpu_id not in range(0, gpu_count):
-                raise ValueError(
-                    f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
-                )
+                cp.cuda.Device(gpu_id).use()
 
-            cp.cuda.Device(gpu_id).use()
-
-        httomo.globals.gpu_id = gpu_id
-
+            httomo.globals.gpu_id = gpu_id
+        else:
+            if pipeline_needs_gpu:
+                raise ImportError("This pipeline requires an access to the GPU-enabled machine.")
+            else:
+                httomo.globals.gpu_id = None
     except ImportError:
-        # we handle two cases here: 1. CPU pipeline is given (continue). 2. GPU pipeline is given (raise error).
+        # the edge case when cupy is not installed since cupy is the dependency
         if pipeline_needs_gpu:
             raise ImportError("This pipeline requires an access to the GPU-enabled machine.")
-        else:
-            pass
+
 
 def set_global_constants(
     out_dir: Path,

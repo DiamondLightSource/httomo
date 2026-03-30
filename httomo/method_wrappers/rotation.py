@@ -5,7 +5,7 @@ from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import catchtime, log_once, xp
 
 from httomo_backends.methods_database.query import Pattern
-
+import httomo.globals
 
 import numpy as np
 from mpi4py import MPI
@@ -209,7 +209,8 @@ class RotationWrapper(GenericMethodWrapper):
                     self._gpu_time_info.host2device += t.elapsed
                 if not self.cupyrun:
                     with catchtime() as t:
-                        sino_slice = xp.asnumpy(sino_slice)
+                        if httomo.globals.gpu_id is not None:
+                            sino_slice = xp.asnumpy(sino_slice)
                     self._gpu_time_info.device2host += t.elapsed
                 args["ind"] = 0
                 args[self.parameters[0]] = sino_slice[:, xp.newaxis, :]
