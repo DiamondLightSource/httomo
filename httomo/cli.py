@@ -312,20 +312,22 @@ def _set_gpu_id(gpu_id: int):
     try:
         import cupy as cp
 
-        gpu_count = cp.cuda.runtime.getDeviceCount()
+        if cp.cuda.is_available():
+            gpu_count = cp.cuda.runtime.getDeviceCount()
 
-        if gpu_id != -1:
-            if gpu_id not in range(0, gpu_count):
-                raise ValueError(
-                    f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
-                )
+            if gpu_id != -1:
+                if gpu_id not in range(0, gpu_count):
+                    raise ValueError(
+                        f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
+                    )
 
-            cp.cuda.Device(gpu_id).use()
+                cp.cuda.Device(gpu_id).use()
 
-        httomo.globals.gpu_id = gpu_id
+            httomo.globals.gpu_id = gpu_id
 
     except ImportError:
-        pass  # silently pass and run if the CPU pipeline is given
+        # the edge case when cupy is not installed since cupy is the dependency
+        pass  # running cpu pipeline
 
 
 def set_global_constants(

@@ -20,9 +20,6 @@ from httomo.utils import catchtime, log_exception, log_once, search_max_slices_i
 from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.dataset_store_interfaces import DataSetSource
-from httomo_backends.methods_database.packages.backends.httomolibgpu.supporting_funcs.prep.phase import (
-    _calc_memory_bytes_for_slices_paganin_filter,
-)
 
 
 class ParamSweepRunner:
@@ -312,12 +309,17 @@ def _preview_modifier(
 def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
     """
     Estimating the number of vertical slices that can fit on the device for running the Paganin method.
+    This function assumes that it is running on the GPU-enabled machine
 
     For the Paganin method, the filter kernel width can vary. Therefore, we aim to use the tallest possible
     vertical preview that the current device can accommodate.
     If the kernel width exceeds the height of the vertical preview, some deviations are expected between
     the sweep-run results and the results obtained from processing the full dataset.
     """
+    from httomo_backends.methods_database.packages.backends.httomolibgpu.supporting_funcs.prep.phase import (
+        _calc_memory_bytes_for_slices_paganin_filter,
+    )
+
     available_memory = get_available_gpu_memory(10.0)
     angles_total = source.aux_data.angles_length
     det_X_length = source.chunk_shape[2]
