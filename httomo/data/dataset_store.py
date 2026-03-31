@@ -25,7 +25,7 @@ from pathlib import Path
 import time
 import h5py
 from typing import List, Literal, Optional, Tuple, Union
-from httomo.data.hdf._utils.reslice import reslice
+from httomo.data.hdf._utils.reslice import reslice, reslice_memory_estimator
 from httomo.data.padding import extrapolate_after, extrapolate_before
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.runner.dataset import DataSetBlock
@@ -286,6 +286,10 @@ class DataSetStoreReader(DataSetSource):
             start = time.perf_counter()
             self._data = self._reslice(source.slicing_dim, slicing_dim, source_data)
             end = time.perf_counter()
+            log_once(
+                f"reslice_memory_estimator: {reslice_memory_estimator(source_data.shape, source_data.dtype, source.slicing_dim, slicing_dim, self._comm)}",
+                level=logging.ERROR,
+            )
             if slicing_dim == 1:
                 log_once(
                     f"Slicing axis change (reslice) from projection to sinogram took {(end - start):.9f}s.",
