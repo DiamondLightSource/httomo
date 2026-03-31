@@ -141,4 +141,4 @@ def reslice_memory_estimator(
 
     peak_after_ring = output_size
 
-    return max(peak_before_ring, peak_during_ring, peak_after_ring)
+    return max(peak_before_ring, peak_during_ring, peak_after_ring) * 1.01
