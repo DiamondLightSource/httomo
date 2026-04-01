@@ -16,7 +16,7 @@ from httomo.monitors import MONITORS_MAP, make_monitors
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.transform_layer import TransformLayer
-from httomo.utils import log_exception, mpi_abort_excepthook
+from httomo.utils import log_exception, log_once, mpi_abort_excepthook
 from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
 from httomo.ui_layer import UiLayer, PipelineFormat
@@ -312,21 +312,22 @@ def _set_gpu_id(gpu_id: int):
     try:
         import cupy as cp
 
-        gpu_count = cp.cuda.runtime.getDeviceCount()
+        if cp.cuda.is_available():
+            gpu_count = cp.cuda.runtime.getDeviceCount()
 
-        if gpu_id != -1:
-            if gpu_id not in range(0, gpu_count):
-                raise ValueError(
-                    f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
-                )
+            if gpu_id != -1:
+                if gpu_id not in range(0, gpu_count):
+                    raise ValueError(
+                        f"GPU Device not available for access. Use a GPU ID in the range: 0 to {gpu_count} (exclusive)"
+                    )
 
-            cp.cuda.Device(gpu_id).use()
+                cp.cuda.Device(gpu_id).use()
+        else:
+            log_once("CuPy is installed but the GPU device is inaccessible. Only CPU pipelines would work.")
 
-        httomo.globals.gpu_id = gpu_id
-
-    except ImportError:
-        pass  # silently pass and run if the CPU pipeline is given
-
+            httomo.globals.gpu_id = gpu_id
+    except ImportError as e:
+        log_exception(f"CuPy is not installed {e}. Only CPU pipelines would work.")
 
 def set_global_constants(
     out_dir: Path,

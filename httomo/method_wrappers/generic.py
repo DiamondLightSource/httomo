@@ -326,7 +326,7 @@ class GenericMethodWrapper(MethodWrapper):
             block = self._run_method(block, args)
             block = self._postprocess_data(block)
 
-        if xp.get_array_module(block.data).__name__ == "cupy":
+        if gpu_enabled:
             self._gpu_time_info.kernel = t.elapsed
         else:
             self._gpu_time_info.kernel = 0
