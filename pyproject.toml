@@ -86,7 +86,6 @@ dev-gpu = [
   "mypy",
   "types-PyYAML",
   "pre-commit",
-  "ccpi-regularisation-cupy",
 ]
 
 [tool.mypy]
