@@ -16,7 +16,7 @@ from httomo.monitors import MONITORS_MAP, make_monitors
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.transform_layer import TransformLayer
-from httomo.utils import log_exception, mpi_abort_excepthook
+from httomo.utils import log_exception, log_once, mpi_abort_excepthook
 from httomo.yaml_checker import validate_yaml_config
 from httomo.runner.task_runner import TaskRunner
 from httomo.ui_layer import UiLayer, PipelineFormat
@@ -322,13 +322,12 @@ def _set_gpu_id(gpu_id: int):
                     )
 
                 cp.cuda.Device(gpu_id).use()
+        else:
+            log_once("CuPy is installed but the GPU device is inaccessible. Only CPU pipelines would work.")
 
             httomo.globals.gpu_id = gpu_id
-
-    except ImportError:
-        # the edge case when cupy is not installed since cupy is the dependency
-        pass  # running cpu pipeline
-
+    except ImportError as e:
+        log_exception(f"CuPy is not installed {e}. Only CPU pipelines would work.")
 
 def set_global_constants(
     out_dir: Path,
