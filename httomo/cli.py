@@ -323,11 +323,14 @@ def _set_gpu_id(gpu_id: int):
 
                 cp.cuda.Device(gpu_id).use()
         else:
-            log_once("CuPy is installed but the GPU device is inaccessible. Only CPU pipelines would work.")
+            log_once(
+                "CuPy is installed but the GPU device is inaccessible. Only CPU pipelines would work."
+            )
 
             httomo.globals.gpu_id = gpu_id
     except ImportError as e:
         log_exception(f"CuPy is not installed {e}. Only CPU pipelines would work.")
+
 
 def set_global_constants(
     out_dir: Path,
