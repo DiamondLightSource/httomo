@@ -72,6 +72,7 @@ class TaskRunner:
             for i, section in enumerate(self._sections):
                 self._execute_section(section, i)
                 gpumem_cleanup()
+            self.source.finalize()
 
         self._log_pipeline(f"Pipeline finished. Took {t.elapsed:.3f}s")
         if self.monitor is not None:
@@ -228,9 +229,11 @@ class TaskRunner:
             # we have a store-based sink from the last section - use that to determine
             # the source for this one
             assert isinstance(self.sink, ReadableDataSetSink)
-            self.source = self.sink.make_reader(
+            new_source = self.sink.make_reader(
                 slicing_dim_section, determine_section_padding(section)
             )
+            self.source.finalize()
+            self.source = new_source
 
         store_backing = determine_store_backing(
             comm=self.comm,
