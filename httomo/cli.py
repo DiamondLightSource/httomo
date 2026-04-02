@@ -1,5 +1,6 @@
 from contextlib import AbstractContextManager, nullcontext
 from datetime import datetime
+from os import PathLike
 from pathlib import Path, PurePath
 import sys
 import tempfile
@@ -278,7 +279,7 @@ def run(
             max_memory,
             monitor,
             monitor_output,
-            reslice_dir,
+            reslice_dir if reslice_dir is not None else httomo.globals.run_out_dir,
             save_snapshots,
         )
     else:
@@ -418,7 +419,7 @@ def execute_high_throughput_run(
     max_memory: str,
     monitor: List[str],
     monitor_output: TextIO,
-    reslice_dir: Union[Path, None],
+    reslice_dir: PathLike,
     save_snapshots: bool,
 ) -> None:
     # we use half the memory for blocks since we typically have inputs/output
@@ -429,8 +430,6 @@ def execute_high_throughput_run(
     # Run the pipeline using Taskrunner, with temp dir or reslice dir
     mon = make_monitors(monitor, global_comm)
     ctx: AbstractContextManager = nullcontext(reslice_dir)
-    if reslice_dir is None:
-        ctx = tempfile.TemporaryDirectory()
     with ctx as tmp_dir:
         runner = TaskRunner(
             pipeline,
