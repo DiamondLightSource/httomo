@@ -393,10 +393,10 @@ def test_determine_store_backing_non_last_section_pipeline_two_procs(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (7 * 1024**2, DataSetStoreBacking.File),
-        (10 * 1024**2, DataSetStoreBacking.RAM),
+        (41 * 1024**2, DataSetStoreBacking.File),
+        (42 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["7MB-limit-file-backing", "10MB-limit-ram-backing"],
+    ids=["41MB-limit-file-backing", "42MB-limit-ram-backing"],
 )
 def test_determine_store_backing_non_last_section_pipeline_large_padding_single_proc(
     mocker: MockerFixture,
@@ -408,20 +408,21 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_single_
     # For a single process, chunk shape = global shape
     #
     # The dtype, shape, and padding combined makes:
-    # - the write chunk ~3.4MB
-    # - the read chunk ~5.7MB
+    # - the unpadded input chunk ~3.4MB (10 * 300 * 300 * 4 / (1024 ** 2))
+    # - the padded input chunk ~37.7MB (110 * 300 * 300 * 4 / (1024 ** 2))
+    # - the output chunk ~3.4MB (10 * 300 * 300 * 4 / (1024 ** 2))
     DTYPE = np.float32
     GLOBAL_SHAPE = (10, 300, 300)
     PADDING = (50, 50)
 
     # Define dummy loader and method wrapper objects
     loader = make_test_loader(mocker=mocker)
-    m1 = make_test_method(mocker=mocker, method_name="m1", pattern=Pattern.projection)
-    m2 = make_test_method(
-        mocker=mocker, method_name="m2", pattern=Pattern.sinogram, padding=True
+    m1 = make_test_method(
+        mocker=mocker, method_name="m1", pattern=Pattern.projection, padding=True
     )
+    m2 = make_test_method(mocker=mocker, method_name="m2", pattern=Pattern.sinogram)
     mocker.patch.object(
-        target=m2,
+        target=m1,
         attribute="calculate_padding",
         return_value=PADDING,
     )
@@ -432,14 +433,15 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_single_
         methods=[m1, m2],
     )
     sections = sectionize(pipeline)
+    print(sections)
 
-    # For execution of non-last sections in pipelines, the writer must take into account that a
-    # copy of the chunk is made by the reader of the following section. Therefore, two copies
-    # of the chunk must be taken into account when deciding the backing of the store.
+    # For execution of non-last sections which have non-zero padding, the reader creates a
+    # padded copy of the chunk that is made. Therefore, two copies of the chunk must be taken
+    # into account when deciding the backing of the store.
     #
-    # Note that section 0 is only the section that is "not the last section", so it's the only
-    # one that will need to account for two copies of the chunk, and thus the main target of
-    # the test. Hence, why `section_idx=0` is given.
+    # Note that section 0 is the only section of the two produced that is "not the last
+    # section", so it's the only one that will need to account for two copies of the chunk, and
+    # thus the main target of the test. Hence, why `section_idx=0` is given.
     store_backing = determine_store_backing(
         comm=COMM,
         sections=sections,
@@ -458,10 +460,10 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_single_
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (4 * 1024**2, DataSetStoreBacking.File),
-        (5 * 1024**2, DataSetStoreBacking.RAM),
+        (37 * 1024**2, DataSetStoreBacking.File),
+        (38 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["4MB-limit-file-backing", "5MB-limit-ram-backing"],
+    ids=["37MB-limit-file-backing", "38MB-limit-ram-backing"],
 )
 def test_determine_store_backing_non_last_section_pipeline_large_padding_two_procs(
     mocker: MockerFixture,
@@ -473,20 +475,21 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_two_pro
     # For a single process, chunk shape = global shape
     #
     # The dtype, shape, and padding combined makes:
-    # - the write chunk ~1.7MB
-    # - the read chunk ~2.8MB
+    # - the unpadded input chunk ~1.7MB (5 * 300 * 300 * 4 / (1024 ** 2))
+    # - the padded input chunk ~36.0MB (105 * 300 * 300 * 4 / (1024 ** 2))
+    # - the output chunk ~1.7MB (5 * 300 * 300 * 4 / (1024 ** 2))
     DTYPE = np.float32
     GLOBAL_SHAPE = (10, 300, 300)
     PADDING = (50, 50)
 
     # Define dummy loader and method wrapper objects
     loader = make_test_loader(mocker=mocker)
-    m1 = make_test_method(mocker=mocker, method_name="m1", pattern=Pattern.projection)
-    m2 = make_test_method(
-        mocker=mocker, method_name="m2", pattern=Pattern.sinogram, padding=True
+    m1 = make_test_method(
+        mocker=mocker, method_name="m1", pattern=Pattern.projection, padding=True
     )
+    m2 = make_test_method(mocker=mocker, method_name="m2", pattern=Pattern.sinogram)
     mocker.patch.object(
-        target=m2,
+        target=m1,
         attribute="calculate_padding",
         return_value=PADDING,
     )
@@ -498,13 +501,13 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_two_pro
     )
     sections = sectionize(pipeline)
 
-    # For execution of non-last sections in pipelines, the writer must take into account that a
-    # copy of the chunk is made by the reader of the following section. Therefore, two copies
-    # of the chunk must be taken into account when deciding the backing of the store.
+    # For execution of non-last sections which have non-zero padding, the reader creates a
+    # padded copy of the chunk that is made. Therefore, two copies of the chunk must be taken
+    # into account when deciding the backing of the store.
     #
-    # Note that section 0 is only the section that is "not the last section", so it's the only
-    # one that will need to account for two copies of the chunk, and thus the main target of
-    # the test. Hence, why `section_idx=0` is given.
+    # Note that section 0 is the only section of the two produced that is "not the last
+    # section", so it's the only one that will need to account for two copies of the chunk, and
+    # thus the main target of the test. Hence, why `section_idx=0` is given.
     store_backing = determine_store_backing(
         comm=COMM,
         sections=sections,

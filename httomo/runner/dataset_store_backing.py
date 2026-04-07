@@ -140,7 +140,8 @@ def determine_store_backing(
 ) -> DataSetStoreBacking:
     reduce_decorator = _reduce_decorator_factory(comm)
 
-    # Get chunk shape input to section
+    # Get unpadded chunk shape input to current section (for calculation of bytes in output
+    # chunk for the current section)
     input_chunk_shape = calculate_section_chunk_shape(
         comm=comm,
         global_shape=global_shape,
@@ -163,17 +164,21 @@ def determine_store_backing(
             write_chunk_bytes=output_chunk_bytes,
         )
 
-    # Get chunk shape created by reader of section `n+1`, that will add padding to the
-    # chunk shape written by the writer of section `n`
-    next_chunk_shape = calculate_section_chunk_shape(
+    # Get chunk shape created by reader of section `n` (the current section) that will account
+    # for padding. This chunk shape is based on the chunk shape written by the writer of
+    # section `n - 1` (the previous section)
+    padded_input_chunk_shape = calculate_section_chunk_shape(
         comm=comm,
         global_shape=global_shape,
-        slicing_dim=_get_slicing_dim(sections[section_idx + 1].pattern) - 1,
-        padding=determine_section_padding(sections[section_idx + 1]),
+        slicing_dim=_get_slicing_dim(sections[section_idx].pattern) - 1,
+        padding=determine_section_padding(sections[section_idx]),
     )
-    next_chunk_bytes = int(np.prod(next_chunk_shape) * np.dtype(dtype).itemsize)
+    padded_input_chunk_bytes = int(
+        np.prod(padded_input_chunk_shape) * np.dtype(dtype).itemsize
+    )
+
     return reduce_decorator(_non_last_section_in_pipeline)(
         memory_limit_bytes=memory_limit_bytes,
         write_chunk_bytes=output_chunk_bytes,
-        read_chunk_bytes=next_chunk_bytes,
+        read_chunk_bytes=padded_input_chunk_bytes,
     )
