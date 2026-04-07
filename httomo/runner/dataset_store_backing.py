@@ -141,7 +141,7 @@ def determine_store_backing(
     reduce_decorator = _reduce_decorator_factory(comm)
 
     # Get chunk shape input to section
-    current_chunk_shape = calculate_section_chunk_shape(
+    input_chunk_shape = calculate_section_chunk_shape(
         comm=comm,
         global_shape=global_shape,
         slicing_dim=_get_slicing_dim(sections[section_idx].pattern) - 1,
@@ -149,9 +149,10 @@ def determine_store_backing(
     )
 
     # Get the number of bytes in the input chunk to the section w/ potential modifications to
-    # the non-slicing dims
-    current_chunk_bytes = calculate_section_chunk_bytes(
-        chunk_shape=current_chunk_shape,
+    # the non-slicing dims, to then determine the number of bytes in the output chunk written
+    # by the current section
+    output_chunk_bytes = calculate_section_chunk_bytes(
+        chunk_shape=input_chunk_shape,
         dtype=dtype,
         section=sections[section_idx],
     )
@@ -159,7 +160,7 @@ def determine_store_backing(
     if section_idx == len(sections) - 1:
         return reduce_decorator(_last_section_in_pipeline)(
             memory_limit_bytes=memory_limit_bytes,
-            write_chunk_bytes=current_chunk_bytes,
+            write_chunk_bytes=output_chunk_bytes,
         )
 
     # Get chunk shape created by reader of section `n+1`, that will add padding to the
@@ -173,6 +174,6 @@ def determine_store_backing(
     next_chunk_bytes = int(np.prod(next_chunk_shape) * np.dtype(dtype).itemsize)
     return reduce_decorator(_non_last_section_in_pipeline)(
         memory_limit_bytes=memory_limit_bytes,
-        write_chunk_bytes=current_chunk_bytes,
+        write_chunk_bytes=output_chunk_bytes,
         read_chunk_bytes=next_chunk_bytes,
     )
