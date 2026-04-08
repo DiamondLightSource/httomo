@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, List, ParamSpec, Tuple
+from typing import List, Tuple
 
 import numpy as np
 from numpy.typing import DTypeLike
@@ -56,50 +56,6 @@ class DataSetStoreBacking(Enum):
     File = 2
 
 
-P = ParamSpec("P")
-
-
-def _reduce_decorator_factory(
-    comm: MPI.Comm,
-) -> Callable[[Callable[P, DataSetStoreBacking]], Callable[P, DataSetStoreBacking]]:
-    """
-    Generate decorator for store-backing calculator function that will use the given MPI
-    communicator for the reduce operation.
-    """
-
-    def reduce_decorator(
-        func: Callable[P, DataSetStoreBacking],
-    ) -> Callable[P, DataSetStoreBacking]:
-        """
-        Decorator for store-backing calculator function.
-        """
-
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> DataSetStoreBacking:
-            """
-            Perform store-backing calculation across all MPI processes and reduce.
-            """
-            # reduce store backing enum variant across all processes - if any has
-            # `File` variant, all should use a file
-            send_buffer = np.zeros(1, dtype=bool)
-            recv_buffer = np.zeros(1, dtype=bool)
-            store_backing = func(*args, **kwargs)
-
-            if store_backing is DataSetStoreBacking.File:
-                send_buffer[0] = True
-
-            # do a logical or of all the enum variants across the processes
-            comm.Allreduce([send_buffer, MPI.BOOL], [recv_buffer, MPI.BOOL], MPI.LOR)
-
-            if bool(recv_buffer[0]) is True:
-                return DataSetStoreBacking.File
-
-            return DataSetStoreBacking.RAM
-
-        return wrapper
-
-    return reduce_decorator
-
-
 def _non_last_section_in_pipeline(
     memory_limit_bytes: int,
     write_chunk_bytes: int,
@@ -125,8 +81,6 @@ def determine_store_backing(
     global_shape: Tuple[int, int, int],
     section_idx: int,
 ) -> DataSetStoreBacking:
-    reduce_decorator = _reduce_decorator_factory(comm)
-
     # Get chunk shape created by reader of section `n` (the current section) that will account
     # for padding. This chunk shape is based on the chunk shape written by the writer of
     # section `n - 1` (the previous section)
@@ -158,8 +112,21 @@ def determine_store_backing(
         section=sections[section_idx],
     )
 
-    return reduce_decorator(_non_last_section_in_pipeline)(
+    send_buffer = np.zeros(1, dtype=bool)
+    recv_buffer = np.zeros(1, dtype=bool)
+    store_backing = _non_last_section_in_pipeline(
         memory_limit_bytes=memory_limit_bytes,
-        write_chunk_bytes=output_chunk_bytes,
         read_chunk_bytes=padded_input_chunk_bytes,
+        write_chunk_bytes=output_chunk_bytes,
     )
+
+    if store_backing is DataSetStoreBacking.File:
+        send_buffer[0] = True
+
+    # do a logical OR of all the enum variants across the processes
+    comm.Allreduce([send_buffer, MPI.BOOL], [recv_buffer, MPI.BOOL], MPI.LOR)
+
+    if bool(recv_buffer[0]) is True:
+        return DataSetStoreBacking.File
+
+    return DataSetStoreBacking.RAM
