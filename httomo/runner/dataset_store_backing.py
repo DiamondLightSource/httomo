@@ -117,19 +117,6 @@ def _non_last_section_in_pipeline(
     return DataSetStoreBacking.RAM
 
 
-def _last_section_in_pipeline(
-    memory_limit_bytes: int,
-    write_chunk_bytes: int,
-) -> DataSetStoreBacking:
-    """
-    Calculate backing of dataset store for last section in pipeline
-    """
-    if memory_limit_bytes > 0 and write_chunk_bytes >= memory_limit_bytes:
-        return DataSetStoreBacking.File
-
-    return DataSetStoreBacking.RAM
-
-
 def determine_store_backing(
     comm: MPI.Comm,
     sections: List[Section],
@@ -170,12 +157,6 @@ def determine_store_backing(
         dtype=dtype,
         section=sections[section_idx],
     )
-
-    if section_idx == len(sections) - 1:
-        return reduce_decorator(_last_section_in_pipeline)(
-            memory_limit_bytes=memory_limit_bytes,
-            write_chunk_bytes=output_chunk_bytes,
-        )
 
     return reduce_decorator(_non_last_section_in_pipeline)(
         memory_limit_bytes=memory_limit_bytes,
