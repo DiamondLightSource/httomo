@@ -1,6 +1,7 @@
 name: HTTomo tests
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - main
@@ -57,7 +58,3 @@ jobs:
       - name: Run HTTomo framework tests
         run: |
           pytest tests/
-
-      - name: Run HTTomo pipelines tests (small data)
-        run: |
-          pytest tests/test_pipeline_small.py --small_data
