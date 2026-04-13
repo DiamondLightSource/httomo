@@ -51,7 +51,7 @@ def pytest_addoption(parser):
         action="store_true",
         default=False,
         help="run cupy involved tests",
-    )    
+    )
     parser.addoption(
         "--small_data",
         action="store_true",
@@ -91,9 +91,7 @@ def pytest_collection_modifyitems(config, items):
             if "cupy" not in item.keywords:
                 item.add_marker(skip_other)
     else:
-        skip_perf = pytest.mark.skip(
-            reason="cupy test - use '--cupy' to run"
-        )
+        skip_perf = pytest.mark.skip(reason="cupy test - use '--cupy' to run")
         for item in items:
             if "cupy" in item.keywords:
                 item.add_marker(skip_perf)
