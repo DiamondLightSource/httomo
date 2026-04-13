@@ -97,7 +97,7 @@ def test_dezinging(mocker: MockerFixture):
 
 
 @pytest.mark.cupy
-def test_dezinging_no_pool_memory_leak(mocker: MockerFixture, ensure_clean_memory):
+def test_dezinging_no_pool_memory_leak(mocker: MockerFixture):
     class FakeModule:
         def remove_outlier(x, axis="auto"):
             # Needs more memory than the return size

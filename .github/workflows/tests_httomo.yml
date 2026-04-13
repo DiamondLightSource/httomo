@@ -1,4 +1,4 @@
-name: Running HTTomo tests
+name: HTTomo tests
 
 on:
   pull_request:
