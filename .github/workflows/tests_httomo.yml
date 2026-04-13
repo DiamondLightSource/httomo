@@ -1,4 +1,4 @@
-name: Running Tests (cpu)
+name: Running HTTomo tests
 
 on:
   pull_request:
@@ -50,6 +50,7 @@ jobs:
       - name: Generate full yaml pipelines using pipeline directives
         run: |
           python -m pip install pyyaml pluggy Pygments iniconfig loguru tqdm graypy hdf5plugin pytest_mock plumbum click
+          python -m pip install aiofiles pillow
           python -m pip install "ruamel.yaml>0.18.0"
           python ./docs/source/scripts/execute_pipelines_build.py -o ./docs/source/pipelines_full/
 
