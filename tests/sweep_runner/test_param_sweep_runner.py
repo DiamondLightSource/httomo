@@ -106,7 +106,7 @@ def test_after_prepare_block_attr_contains_data(mocker: MockerFixture):
     assert runner.block is not None
     np.testing.assert_array_equal(runner.block.data, data)
 
-
+@pytest.mark.cupy
 def tests_preview_modifier_paganin(mocker: MockerFixture):
     SINO_SLICES = 100
     GLOBAL_SHAPE = PREVIEWED_SLICES_SHAPE = (1800, SINO_SLICES, 160)
