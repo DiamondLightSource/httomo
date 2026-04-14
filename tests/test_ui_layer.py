@@ -139,7 +139,7 @@ def test_build_pipeline_from_json(standard_data: str):
     },
     {
         "method": "find_center_vo",
-        "module_path": "httomolibgpu.recon.rotation",
+        "module_path": "tomopy.recon.rotation",
         "parameters": {
             "ind": "mid",
             "smin": -50,
@@ -155,8 +155,8 @@ def test_build_pipeline_from_json(standard_data: str):
         }
     },
     {
-        "method": "FBP3d_tomobar",
-        "module_path": "httomolibgpu.recon.algorithm",
+        "method": "recon",
+        "module_path": "tomopy.recon.algorithm",
         "parameters": {
             "center": "${{centering.side_outputs.centre_of_rotation}}",
             "filter_freq_cutoff": 0.6,

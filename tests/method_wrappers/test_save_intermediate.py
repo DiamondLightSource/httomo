@@ -253,7 +253,7 @@ def test_writes_core_of_blocks_only(
     # Create intermediate data wrapper
     mocker.patch.object(httomo.globals, "run_out_dir", tmp_path)
     wrp = make_method_wrapper(
-        make_mock_repo(mocker, implementation="gpu_cupy"),
+        make_mock_repo(mocker, implementation="cpu"),
         "httomo.methods",
         "save_intermediate_data",
         MPI.COMM_WORLD,

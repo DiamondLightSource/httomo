@@ -26,6 +26,7 @@ def test_get_available_memory_cpu(mocker: MockerFixture):
     assert get_available_gpu_memory() > 10e9
 
 
+@pytest.mark.cupy
 @pytest.mark.parametrize(
     "nodes, gpus_per_node, global_rank, local_rank",
     [

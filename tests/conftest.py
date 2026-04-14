@@ -47,6 +47,12 @@ def pytest_addoption(parser):
         help="run performance tests only",
     )
     parser.addoption(
+        "--cupy",
+        action="store_true",
+        default=False,
+        help="run cupy involved tests",
+    )
+    parser.addoption(
         "--small_data",
         action="store_true",
         default=False,
@@ -78,6 +84,16 @@ def pytest_collection_modifyitems(config, items):
         )
         for item in items:
             if "perf" in item.keywords:
+                item.add_marker(skip_perf)
+    if config.getoption("--cupy"):
+        skip_other = pytest.mark.skip(reason="not a CuPy test")
+        for item in items:
+            if "cupy" not in item.keywords:
+                item.add_marker(skip_other)
+    else:
+        skip_perf = pytest.mark.skip(reason="cupy test - use '--cupy' to run")
+        for item in items:
+            if "cupy" in item.keywords:
                 item.add_marker(skip_perf)
     if config.getoption("--small_data"):
         skip_other = pytest.mark.skip(reason="not a pipeline small data test")
@@ -158,21 +174,6 @@ def standard_data():
 @pytest.fixture(scope="session")
 def test_data_path():
     return os.path.join(CUR_DIR, "test_data")
-
-
-@pytest.fixture
-def ensure_clean_memory():
-    import cupy as cp
-
-    cp.get_default_memory_pool().free_all_blocks()
-    cp.get_default_pinned_memory_pool().free_all_blocks()
-    cache = cp.fft.config.get_plan_cache()
-    cache.clear()
-    yield None
-    cp.get_default_memory_pool().free_all_blocks()
-    cp.get_default_pinned_memory_pool().free_all_blocks()
-    cache = cp.fft.config.get_plan_cache()
-    cache.clear()
 
 
 @pytest.fixture
