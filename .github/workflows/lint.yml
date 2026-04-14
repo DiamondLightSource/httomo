@@ -14,5 +14,10 @@ jobs:
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v5
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Run black
         uses: psf/black@stable

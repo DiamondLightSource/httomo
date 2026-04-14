@@ -54,7 +54,9 @@ def test_insert_save_methods_save_all(mocker: MockerFixture, tmp_path: Path):
     assert pipeline[3].task_id == "save_t2"
 
 
-@pytest.mark.parametrize("method_name", ["save_to_images", "find_center_vo", "data_checker"])
+@pytest.mark.parametrize(
+    "method_name", ["save_to_images", "find_center_vo", "data_checker"]
+)
 def test_insert_save_methods_does_not_save_for_some_methods(
     mocker: MockerFixture, method_name: str, tmp_path: Path
 ):
