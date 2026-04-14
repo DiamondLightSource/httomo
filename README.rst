@@ -1,3 +1,8 @@
+|HTTomo tests|
+
+.. |HTTomo tests| image:: https://github.com/DiamondLightSource/httomo/actions/workflows/tests_httomo.yml/badge.svg
+   :target:
+
 HTTomo (High Throughput Tomography pipeline)
 *******************************************************
 
