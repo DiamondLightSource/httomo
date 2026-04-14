@@ -57,7 +57,7 @@ class TransformLayer:
             methods.append(m)
             if (
                 (m.save_result or self._save_all)
-                and m.method_name not in ["save_to_images", "data_checker"]                
+                and m.method_name not in ["save_to_images", "data_checker"]
                 and "center" not in m.method_name
             ):
                 methods.append(
