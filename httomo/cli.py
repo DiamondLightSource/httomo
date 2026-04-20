@@ -8,6 +8,7 @@ from typing import List, Optional, TextIO, Union, Any
 import yaml
 
 import click
+import shutil
 from mpi4py import MPI
 from loguru import logger
 
@@ -380,12 +381,16 @@ def initialise_output_directory(
 
     # If pipeline is a file path, copy it to output directory
     if isinstance(pipeline, Path):
+        pipeline_conf = yaml_loader(pipeline)
+        distortion_coeff_path = _get_distortion_coeff_path(pipeline_conf)
+        if distortion_coeff_path is not None:
+            shutil.copyfile(distortion_coeff_path, Path(httomo.globals.run_out_dir) / "dist_coeff.txt")
         path_to_pipeline = pipeline
         path_to_saved_pipeline = Path(httomo.globals.run_out_dir) / pipeline.name
         # if does_contain_sweep do not inject default parameters due to issue around "sweep" aliases in yaml
         if not does_contain_sweep:
             path_to_pipeline = path_to_saved_pipeline
-            pipeline_updated = _substitute_ommitted_default_values(pipeline)
+            pipeline_updated = _substitute_ommitted_default_values(pipeline_conf)
             with open(path_to_saved_pipeline, "w") as file_descriptor:
                 yaml.dump(
                     pipeline_updated,
@@ -404,8 +409,7 @@ def initialise_output_directory(
             f.write(pipeline)
 
 
-def _substitute_ommitted_default_values(pipeline: Path) -> PipelineConfig:
-    pipeline_conf = yaml_loader(pipeline)
+def _substitute_ommitted_default_values(pipeline_conf: PipelineConfig) -> PipelineConfig:    
     templates_conf = _get_template_yaml_conf(pipeline_conf)
     for i, (method, template) in enumerate(zip(pipeline_conf, templates_conf)):
         template_param_dict = template["parameters"]
@@ -418,6 +422,12 @@ def _substitute_ommitted_default_values(pipeline: Path) -> PipelineConfig:
             pipeline_conf[i]["parameters"][param] = template["parameters"][param]
     return pipeline_conf
 
+def _get_distortion_coeff_path(pipeline_conf: PipelineConfig) -> Union[None, Path]:
+    distortion_coeff_path = None
+    for method in pipeline_conf:
+        if 'distortion_correction' in method['method']:
+            distortion_coeff_path = method['parameters']['metadata_path']
+    return distortion_coeff_path
 
 def generate_pipeline(
     in_data_file: Path,
