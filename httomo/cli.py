@@ -264,7 +264,7 @@ def run(
     method_wrapper_comm = global_comm if not does_contain_sweep else MPI.COMM_SELF
 
     if global_comm.rank == 0:
-        initialise_output_directory(pipeline)
+        initialise_output_directory(pipeline, does_contain_sweep)
 
     setup_logger(Path(httomo.globals.run_out_dir))
 
@@ -369,7 +369,7 @@ def set_global_constants(
     httomo.globals.MAX_CPU_SLICES = max_cpu_slices
 
 
-def initialise_output_directory(pipeline: Union[Path, str]) -> None:
+def initialise_output_directory(pipeline: Union[Path, str], does_contain_sweep: bool) -> None:
     try:
         Path.mkdir(httomo.globals.run_out_dir, parents=True, exist_ok=True)
     except PermissionError as e:
@@ -378,20 +378,23 @@ def initialise_output_directory(pipeline: Union[Path, str]) -> None:
 
     # If pipeline is a file path, copy it to output directory
     if isinstance(pipeline, Path):
-        pipeline_updated = _substitute_ommitted_default_values(pipeline)
-        with open(
-            Path(httomo.globals.run_out_dir) / pipeline.name, "w"
-        ) as file_descriptor:
-            yaml.dump(
-                pipeline_updated,
-                file_descriptor,
-                default_flow_style=False,
-                sort_keys=False,
-            )
-        # re-open the yaml again in order to add the version comment.
-        with open(Path(httomo.globals.run_out_dir) / pipeline.name, "r") as input:
+        path_to_pipeline = pipeline
+        path_to_saved_pipeline = Path(httomo.globals.run_out_dir) / pipeline.name
+         # if does_contain_sweep do not inject default parameters due to issue around "sweep" aliases in yaml
+        if not does_contain_sweep:
+            path_to_pipeline = path_to_saved_pipeline
+            pipeline_updated = _substitute_ommitted_default_values(pipeline)            
+            with open(path_to_saved_pipeline, "w"
+            ) as file_descriptor:
+                yaml.dump(
+                    pipeline_updated,
+                    file_descriptor,
+                    default_flow_style=False,
+                    sort_keys=False,
+                )
+        with open(path_to_pipeline, "r") as input:
             pipeline_contents = input.read()
-        with open(Path(httomo.globals.run_out_dir) / pipeline.name, "w") as output:
+        with open(path_to_saved_pipeline, "w") as output:
             output.write(f"# Created with HTTomo version {__version__}\n")
             output.write(pipeline_contents)
     # If pipeline is a JSON string, write it to a file in the output directory
