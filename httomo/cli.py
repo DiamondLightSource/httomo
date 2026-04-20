@@ -384,7 +384,10 @@ def initialise_output_directory(
         pipeline_conf = yaml_loader(pipeline)
         distortion_coeff_path = _get_distortion_coeff_path(pipeline_conf)
         if distortion_coeff_path is not None:
-            shutil.copyfile(distortion_coeff_path, Path(httomo.globals.run_out_dir) / "dist_coeff.txt")
+            shutil.copyfile(
+                distortion_coeff_path,
+                Path(httomo.globals.run_out_dir) / "dist_coeff.txt",
+            )
         path_to_pipeline = pipeline
         path_to_saved_pipeline = Path(httomo.globals.run_out_dir) / pipeline.name
         # if does_contain_sweep do not inject default parameters due to issue around "sweep" aliases in yaml
@@ -409,7 +412,9 @@ def initialise_output_directory(
             f.write(pipeline)
 
 
-def _substitute_ommitted_default_values(pipeline_conf: PipelineConfig) -> PipelineConfig:    
+def _substitute_ommitted_default_values(
+    pipeline_conf: PipelineConfig,
+) -> PipelineConfig:
     templates_conf = _get_template_yaml_conf(pipeline_conf)
     for i, (method, template) in enumerate(zip(pipeline_conf, templates_conf)):
         template_param_dict = template["parameters"]
@@ -422,12 +427,14 @@ def _substitute_ommitted_default_values(pipeline_conf: PipelineConfig) -> Pipeli
             pipeline_conf[i]["parameters"][param] = template["parameters"][param]
     return pipeline_conf
 
+
 def _get_distortion_coeff_path(pipeline_conf: PipelineConfig) -> Union[None, Path]:
     distortion_coeff_path = None
     for method in pipeline_conf:
-        if 'distortion_correction' in method['method']:
-            distortion_coeff_path = method['parameters']['metadata_path']
+        if "distortion_correction" in method["method"]:
+            distortion_coeff_path = method["parameters"]["metadata_path"]
     return distortion_coeff_path
+
 
 def generate_pipeline(
     in_data_file: Path,
