@@ -369,7 +369,9 @@ def set_global_constants(
     httomo.globals.MAX_CPU_SLICES = max_cpu_slices
 
 
-def initialise_output_directory(pipeline: Union[Path, str], does_contain_sweep: Optional[bool] = False) -> None:
+def initialise_output_directory(
+    pipeline: Union[Path, str], does_contain_sweep: Optional[bool] = False
+) -> None:
     try:
         Path.mkdir(httomo.globals.run_out_dir, parents=True, exist_ok=True)
     except PermissionError as e:
@@ -380,12 +382,11 @@ def initialise_output_directory(pipeline: Union[Path, str], does_contain_sweep: 
     if isinstance(pipeline, Path):
         path_to_pipeline = pipeline
         path_to_saved_pipeline = Path(httomo.globals.run_out_dir) / pipeline.name
-         # if does_contain_sweep do not inject default parameters due to issue around "sweep" aliases in yaml
+        # if does_contain_sweep do not inject default parameters due to issue around "sweep" aliases in yaml
         if not does_contain_sweep:
             path_to_pipeline = path_to_saved_pipeline
-            pipeline_updated = _substitute_ommitted_default_values(pipeline)            
-            with open(path_to_saved_pipeline, "w"
-            ) as file_descriptor:
+            pipeline_updated = _substitute_ommitted_default_values(pipeline)
+            with open(path_to_saved_pipeline, "w") as file_descriptor:
                 yaml.dump(
                     pipeline_updated,
                     file_descriptor,
