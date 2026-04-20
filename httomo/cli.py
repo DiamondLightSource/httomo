@@ -19,10 +19,13 @@ from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.transform_layer import TransformLayer
 from httomo.utils import log_exception, log_once, mpi_abort_excepthook
-from httomo.yaml_checker import validate_yaml_config, _get_template_yaml_conf, PipelineConfig
+from httomo.yaml_checker import (
+    validate_yaml_config,
+    _get_template_yaml_conf,
+    PipelineConfig,
+)
 from httomo.runner.task_runner import TaskRunner
 from httomo.ui_layer import UiLayer, PipelineFormat, yaml_loader
-
 
 try:
     from . import __version__
@@ -376,11 +379,18 @@ def initialise_output_directory(pipeline: Union[Path, str]) -> None:
     # If pipeline is a file path, copy it to output directory
     if isinstance(pipeline, Path):
         pipeline_updated = _substitute_ommitted_default_values(pipeline)
-        with open(Path(httomo.globals.run_out_dir) / pipeline.name, "w") as file_descriptor:
-            yaml.dump(pipeline_updated, file_descriptor, default_flow_style=False, sort_keys=False)
+        with open(
+            Path(httomo.globals.run_out_dir) / pipeline.name, "w"
+        ) as file_descriptor:
+            yaml.dump(
+                pipeline_updated,
+                file_descriptor,
+                default_flow_style=False,
+                sort_keys=False,
+            )
         # re-open the yaml again in order to add the version comment.
         with open(Path(httomo.globals.run_out_dir) / pipeline.name, "r") as input:
-           pipeline_contents = input.read()
+            pipeline_contents = input.read()
         with open(Path(httomo.globals.run_out_dir) / pipeline.name, "w") as output:
             output.write(f"# Created with HTTomo version {__version__}\n")
             output.write(pipeline_contents)
@@ -388,6 +398,7 @@ def initialise_output_directory(pipeline: Union[Path, str]) -> None:
     else:
         with open(httomo.globals.run_out_dir / "pipeline.json", "w") as f:
             f.write(pipeline)
+
 
 def _substitute_ommitted_default_values(pipeline: Path) -> PipelineConfig:
     pipeline_conf = yaml_loader(pipeline)
@@ -400,8 +411,9 @@ def _substitute_ommitted_default_values(pipeline: Path) -> PipelineConfig:
 
         for param in omitted_params:
             # insert ommited parameter into the pipeline
-            pipeline_conf[i]['parameters'][param] = template['parameters'][param]
+            pipeline_conf[i]["parameters"][param] = template["parameters"][param]
     return pipeline_conf
+
 
 def generate_pipeline(
     in_data_file: Path,
