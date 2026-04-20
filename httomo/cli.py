@@ -369,7 +369,7 @@ def set_global_constants(
     httomo.globals.MAX_CPU_SLICES = max_cpu_slices
 
 
-def initialise_output_directory(pipeline: Union[Path, str], does_contain_sweep: bool) -> None:
+def initialise_output_directory(pipeline: Union[Path, str], does_contain_sweep: Optional[bool] = False) -> None:
     try:
         Path.mkdir(httomo.globals.run_out_dir, parents=True, exist_ok=True)
     except PermissionError as e:
