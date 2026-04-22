@@ -94,8 +94,6 @@ def reslice_memory_estimator(
         split_sizes.append(numpy.prod(split_shape) * itemsize)
         prev_idx = next_idx
 
-    total_split_size = sum(split_sizes)
-
     all_split_sizes = comm.allgather(split_sizes)
     recv_sizes = [all_split_sizes[p][rank] for p in range(nprocs)]
 
@@ -129,7 +127,7 @@ def reslice_memory_estimator(
         chunk_overhead_send = 0
         chunk_overhead_recv = 0
 
-    peak_before_ring = input_size + total_split_size + output_size
+    peak_before_ring = input_size + output_size
 
     peak_during_ring = (
         peak_before_ring
