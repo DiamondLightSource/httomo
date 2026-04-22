@@ -235,19 +235,18 @@ class TaskRunner:
             self.source.finalize()
             self.source = new_source
 
-        store_backing = determine_store_backing(
-            comm=self.comm,
-            sections=self._sections,
-            memory_limit_bytes=self._memory_limit_bytes,
-            dtype=self.source.dtype,
-            global_shape=self.source.global_shape,
-            section_idx=idx,
-        )
-
         if section.is_last:
             # we don't need to store the results - this sink just discards it
             self.sink = DummySink(slicing_dim_section)
         else:
+            store_backing = determine_store_backing(
+                comm=self.comm,
+                sections=self._sections,
+                memory_limit_bytes=self._memory_limit_bytes,
+                dtype=self.source.dtype,
+                global_shape=self.source.global_shape,
+                section_idx=idx,
+            )
             self.sink = DataSetStoreWriter(
                 slicing_dim_section,
                 self.comm,
