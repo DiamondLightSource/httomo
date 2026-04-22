@@ -76,11 +76,10 @@ def reslice_memory_estimator(
     current_slice_dim: int,
     next_slice_dim: int,
     comm: Comm,
-) -> dict:
+) -> Tuple[int, int]:
     rank = comm.rank
     nprocs = comm.size
     itemsize = numpy.dtype(dtype).itemsize
-    input_size = numpy.prod(data_shape) * itemsize
 
     split_sizes = []
     length = data_shape[next_slice_dim]
@@ -127,16 +126,26 @@ def reslice_memory_estimator(
         chunk_overhead_send = 0
         chunk_overhead_recv = 0
 
-    peak_before_ring = input_size + output_size
+    # The final values for the peak allocation sizes before, during, and after the ring
+    # algorithm have been kept in for the sake of completeness. However, the values that matter
+    # most are the allocations that the reslice algorithm require, namely:
+    # - what the ring algorithm allocates
+    # - what the output size allocated is
+    #
+    # peak_before_ring = input_size + output_size
+    #
+    # peak_during_ring = (
+    #     peak_before_ring
+    #     + max_send_buffer  # Temporary send buffer
+    #     + max_recv_buffer  # Temporary recv buffer
+    #     + chunk_overhead_send  # Flattened send array (if chunking)
+    #     + chunk_overhead_recv  # Flattened recv array (if chunking)
+    # )
+    #
+    # peak_after_ring = input_size + output_size
 
-    peak_during_ring = (
-        peak_before_ring
-        + max_send_buffer  # Temporary send buffer
-        + max_recv_buffer  # Temporary recv buffer
-        + chunk_overhead_send  # Flattened send array (if chunking)
-        + chunk_overhead_recv  # Flattened recv array (if chunking)
+    ring_algorithm_allocations = (
+        max_send_buffer + max_recv_buffer + chunk_overhead_send + chunk_overhead_recv
     )
 
-    peak_after_ring = input_size + output_size
-
-    return max(peak_before_ring, peak_during_ring, peak_after_ring) * 1.01
+    return (ring_algorithm_allocations, output_size)
