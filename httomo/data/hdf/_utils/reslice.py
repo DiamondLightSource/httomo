@@ -137,6 +137,6 @@ def reslice_memory_estimator(
         + chunk_overhead_recv  # Flattened recv array (if chunking)
     )
 
-    peak_after_ring = output_size
+    peak_after_ring = input_size + output_size
 
     return max(peak_before_ring, peak_during_ring, peak_after_ring) * 1.01
