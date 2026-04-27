@@ -8,7 +8,7 @@ from pytest_mock import MockerFixture
 from httomo.runner.dataset_store_backing import (
     DataSetStoreBacking,
     calculate_section_chunk_shape,
-    calculate_section_chunk_bytes,
+    calculate_section_output_chunk_shape,
     determine_store_backing,
 )
 from httomo.runner.pipeline import Pipeline
@@ -108,10 +108,12 @@ def test_calculate_section_chunk_bytes_output_dims_change(mocker: MockerFixture)
 
     # Check that the number of bytes in the chunk accounts for the non-slicing dims change by
     # the method in the section
-    section_output_chunk_bytes = calculate_section_chunk_bytes(
+    section_output_chunk_shape = calculate_section_output_chunk_shape(
         chunk_shape=SECTION_INPUT_CHUNK_SHAPE,
-        dtype=DTYPE,
         section=sections[0],
+    )
+    section_output_chunk_bytes = (
+        np.prod(section_output_chunk_shape) * np.dtype(DTYPE).itemsize
     )
     assert section_output_chunk_bytes == EXPECTED_SECTION_OUTPUT_CHUNK_BYTES
 
@@ -170,10 +172,12 @@ def test_calculate_section_chunk_bytes_output_dims_change_and_swap(
 
     # Check that the number of bytes in the chunk accounts for the non-slicing dims change by
     # the method in the section
-    section_output_chunk_bytes = calculate_section_chunk_bytes(
+    section_output_chunk_shape = calculate_section_output_chunk_shape(
         chunk_shape=SECTION_INPUT_CHUNK_SHAPE,
-        dtype=DTYPE,
         section=sections[0],
+    )
+    section_output_chunk_bytes = (
+        np.prod(section_output_chunk_shape) * np.dtype(DTYPE).itemsize
     )
     assert section_output_chunk_bytes == EXPECTED_SECTION_OUTPUT_CHUNK_BYTES
 
