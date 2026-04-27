@@ -11,6 +11,7 @@ from httomo.runner.dataset_store_backing import (
     calculate_section_output_chunk_shape,
     determine_store_backing,
 )
+from httomo.runner.output_ref import OutputRef
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import sectionize
 from httomo.utils import make_3d_shape_from_shape
@@ -190,7 +191,7 @@ def test_calculate_section_chunk_bytes_output_dims_change_and_swap(
     ],
     ids=["6MB-limit-file-backing", "7MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_single_proc(
+def test_determine_store_backing_non_last_section_pipeline_no_reslice_single_proc(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -208,7 +209,12 @@ def test_determine_store_backing_non_last_section_pipeline_single_proc(
     # Define dummy loader and method wrapper objects
     loader = make_test_loader(mocker=mocker)
     m1 = make_test_method(mocker=mocker, method_name="m1", pattern=Pattern.projection)
-    m2 = make_test_method(mocker=mocker, method_name="m2", pattern=Pattern.sinogram)
+    m2 = make_test_method(
+        mocker=mocker,
+        method_name="m2",
+        pattern=Pattern.projection,
+        some_param=(OutputRef(m1, "some-param")),
+    )
 
     # Get list of section objects that represent pipeline
     pipeline = Pipeline(
@@ -247,7 +253,7 @@ def test_determine_store_backing_non_last_section_pipeline_single_proc(
     ],
     ids=["3MB-limit-file-backing", "4MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_two_procs(
+def test_determine_store_backing_non_last_section_pipeline_no_reslice_two_procs(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -265,7 +271,12 @@ def test_determine_store_backing_non_last_section_pipeline_two_procs(
     # Define dummy loader and method wrapper objects
     loader = make_test_loader(mocker=mocker)
     m1 = make_test_method(mocker=mocker, method_name="m1", pattern=Pattern.projection)
-    m2 = make_test_method(mocker=mocker, method_name="m2", pattern=Pattern.sinogram)
+    m2 = make_test_method(
+        mocker=mocker,
+        method_name="m2",
+        pattern=Pattern.projection,
+        some_param=(OutputRef(m1, "some-param")),
+    )
 
     # Get list of section objects that represent pipeline
     pipeline = Pipeline(
@@ -300,7 +311,7 @@ def test_determine_store_backing_non_last_section_pipeline_two_procs(
     ],
     ids=["41MB-limit-file-backing", "42MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_large_padding_single_proc(
+def test_determine_store_backing_non_last_section_pipeline_large_padding_no_reslice_single_proc(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -322,7 +333,12 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_single_
     m1 = make_test_method(
         mocker=mocker, method_name="m1", pattern=Pattern.projection, padding=True
     )
-    m2 = make_test_method(mocker=mocker, method_name="m2", pattern=Pattern.sinogram)
+    m2 = make_test_method(
+        mocker=mocker,
+        method_name="m2",
+        pattern=Pattern.projection,
+        some_param=(OutputRef(m1, "some-param")),
+    )
     mocker.patch.object(
         target=m1,
         attribute="calculate_padding",
@@ -367,7 +383,7 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_single_
     ],
     ids=["37MB-limit-file-backing", "38MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_large_padding_two_procs(
+def test_determine_store_backing_non_last_section_pipeline_large_padding_no_reslice_two_procs(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -389,7 +405,12 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_two_pro
     m1 = make_test_method(
         mocker=mocker, method_name="m1", pattern=Pattern.projection, padding=True
     )
-    m2 = make_test_method(mocker=mocker, method_name="m2", pattern=Pattern.sinogram)
+    m2 = make_test_method(
+        mocker=mocker,
+        method_name="m2",
+        pattern=Pattern.projection,
+        some_param=(OutputRef(m1, "some-param")),
+    )
     mocker.patch.object(
         target=m1,
         attribute="calculate_padding",
