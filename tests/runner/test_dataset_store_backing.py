@@ -7,7 +7,7 @@ from pytest_mock import MockerFixture
 
 from httomo.runner.dataset_store_backing import (
     DataSetStoreBacking,
-    calculate_section_chunk_shape,
+    calculate_section_input_chunk_shape,
     calculate_section_output_chunk_shape,
     determine_store_backing,
 )
@@ -63,7 +63,7 @@ def test_calculate_section_chunk_shape(
     expected_chunk_shape[section_slicing_dim] = (
         slicing_dim_len + section_padding[0] + section_padding[1]
     )
-    section_chunk_shape = calculate_section_chunk_shape(
+    section_chunk_shape = calculate_section_input_chunk_shape(
         comm=mock_global_comm,
         global_shape=GLOBAL_SHAPE,
         slicing_dim=section_slicing_dim,

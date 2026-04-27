@@ -9,14 +9,14 @@ from httomo.runner.section import Section, determine_section_padding
 from httomo.utils import _get_slicing_dim, make_3d_shape_from_shape
 
 
-def calculate_section_chunk_shape(
+def calculate_section_input_chunk_shape(
     comm: MPI.Comm,
     global_shape: Tuple[int, int, int],
     slicing_dim: int,
     padding: Tuple[int, int],
 ) -> Tuple[int, int, int]:
     """
-    Calculate chunk shape (w/ or w/o padding) for a section.
+    Calculate the shape of the section input chunk w/ or w/o padding.
     """
     start = round((global_shape[slicing_dim] / comm.size) * comm.rank)
     stop = round((global_shape[slicing_dim] / comm.size) * (comm.rank + 1))
@@ -85,7 +85,7 @@ def determine_store_backing(
     # Get chunk shape created by reader of section `n` (the current section) that will account
     # for padding. This chunk shape is based on the chunk shape written by the writer of
     # section `n - 1` (the previous section)
-    padded_input_chunk_shape = calculate_section_chunk_shape(
+    padded_input_chunk_shape = calculate_section_input_chunk_shape(
         comm=comm,
         global_shape=global_shape,
         slicing_dim=_get_slicing_dim(sections[section_idx].pattern) - 1,
@@ -97,7 +97,7 @@ def determine_store_backing(
 
     # Get unpadded chunk shape input to current section (for calculation of bytes in output
     # chunk for the current section)
-    input_chunk_shape = calculate_section_chunk_shape(
+    input_chunk_shape = calculate_section_input_chunk_shape(
         comm=comm,
         global_shape=global_shape,
         slicing_dim=_get_slicing_dim(sections[section_idx].pattern) - 1,
