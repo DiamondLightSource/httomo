@@ -117,17 +117,11 @@ def determine_store_backing(
     send_buffer = np.zeros(1, dtype=bool)
     recv_buffer = np.zeros(1, dtype=bool)
 
-    store_backing: DataSetStoreBacking
     if (
         memory_limit_bytes > 0
         and padded_input_chunk_bytes + output_chunk_bytes + reslice_bytes
         >= memory_limit_bytes
     ):
-        store_backing = DataSetStoreBacking.File
-    else:
-        store_backing = DataSetStoreBacking.RAM
-
-    if store_backing is DataSetStoreBacking.File:
         send_buffer[0] = True
 
     # do a logical OR of all the enum variants across the processes
