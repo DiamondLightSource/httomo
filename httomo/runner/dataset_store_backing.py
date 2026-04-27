@@ -102,7 +102,8 @@ def determine_store_backing(
     # input to it (which would be the output chunk of the current section)
     reslice_bytes = 0
     if (
-        section_idx < len(sections) - 1
+        comm.size > 1
+        and section_idx < len(sections) - 1
         and sections[section_idx].pattern != sections[section_idx + 1].pattern
     ):
         ring_algorithm_bytes, reslice_output_bytes = reslice_memory_estimator(
