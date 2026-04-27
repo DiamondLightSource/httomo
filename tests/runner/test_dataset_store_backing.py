@@ -191,7 +191,7 @@ def test_calculate_section_chunk_bytes_output_dims_change_and_swap(
     ],
     ids=["6MB-limit-file-backing", "7MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_reslice_single_proc(
+def test_determine_store_backing_reslice_single_proc(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -219,13 +219,6 @@ def test_determine_store_backing_non_last_section_pipeline_reslice_single_proc(
     )
     sections = sectionize(pipeline)
 
-    # For execution of non-last sections in pipelines, the writer must take into account that a
-    # copy of the chunk is made by the reader of the following section. Therefore, two copies
-    # of the chunk must be taken into account when deciding the backing of the store.
-    #
-    # Note that section 0 is only the section that is "not the last section", so it's the only
-    # one that will need to account for two copies of the chunk, and thus the main target of
-    # the test. Hence, why `section_idx=0` is given.
     store_backing = determine_store_backing(
         comm=COMM,
         sections=sections,
@@ -245,7 +238,7 @@ def test_determine_store_backing_non_last_section_pipeline_reslice_single_proc(
     ],
     ids=["6MB-limit-file-backing", "7MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_no_reslice_single_proc(
+def test_determine_store_backing_no_reslice_single_proc(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -277,13 +270,6 @@ def test_determine_store_backing_non_last_section_pipeline_no_reslice_single_pro
     )
     sections = sectionize(pipeline)
 
-    # For execution of non-last sections in pipelines, the writer must take into account that a
-    # copy of the chunk is made by the reader of the following section. Therefore, two copies
-    # of the chunk must be taken into account when deciding the backing of the store.
-    #
-    # Note that section 0 is only the section that is "not the last section", so it's the only
-    # one that will need to account for two copies of the chunk, and thus the main target of
-    # the test. Hence, why `section_idx=0` is given.
     store_backing = determine_store_backing(
         comm=COMM,
         sections=sections,
@@ -307,7 +293,7 @@ def test_determine_store_backing_non_last_section_pipeline_no_reslice_single_pro
     ],
     ids=["6MB-limit-file-backing", "7MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_reslice_two_procs(
+def test_determine_store_backing_reslice_two_procs(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -336,13 +322,6 @@ def test_determine_store_backing_non_last_section_pipeline_reslice_two_procs(
     )
     sections = sectionize(pipeline)
 
-    # For exeuction of non-last sections in pipelines, the writer must take into account that a
-    # copy of the chunk is made by the reader of the following section. Therefore, two copies
-    # of the chunk must be taken into account when deciding the backing of the store.
-    #
-    # Note that section 0 is only the section that is "not the last section", so it's the only
-    # one that will need to account for two copies of the chunk, and thus the main target of
-    # the test. Hence, why `section_idx=0` is given.
     store_backing = determine_store_backing(
         comm=COMM,
         sections=sections,
@@ -366,7 +345,7 @@ def test_determine_store_backing_non_last_section_pipeline_reslice_two_procs(
     ],
     ids=["3MB-limit-file-backing", "4MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_no_reslice_two_procs(
+def test_determine_store_backing_no_reslice_two_procs(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -398,13 +377,6 @@ def test_determine_store_backing_non_last_section_pipeline_no_reslice_two_procs(
     )
     sections = sectionize(pipeline)
 
-    # For exeuction of non-last sections in pipelines, the writer must take into account that a
-    # copy of the chunk is made by the reader of the following section. Therefore, two copies
-    # of the chunk must be taken into account when deciding the backing of the store.
-    #
-    # Note that section 0 is only the section that is "not the last section", so it's the only
-    # one that will need to account for two copies of the chunk, and thus the main target of
-    # the test. Hence, why `section_idx=0` is given.
     store_backing = determine_store_backing(
         comm=COMM,
         sections=sections,
@@ -424,7 +396,7 @@ def test_determine_store_backing_non_last_section_pipeline_no_reslice_two_procs(
     ],
     ids=["41MB-limit-file-backing", "42MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_large_padding_reslice_single_proc(
+def test_determine_store_backing_large_padding_reslice_single_proc(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -460,13 +432,6 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_reslice
     )
     sections = sectionize(pipeline)
 
-    # For execution of non-last sections in pipelines, the writer must take into account that a
-    # copy of the chunk is made by the reader of the following section. Therefore, two copies
-    # of the chunk must be taken into account when deciding the backing of the store.
-    #
-    # Note that section 0 is only the section that is "not the last section", so it's the only
-    # one that will need to account for two copies of the chunk, and thus the main target of
-    # the test. Hence, why `section_idx=0` is given.
     store_backing = determine_store_backing(
         comm=COMM,
         sections=sections,
@@ -486,7 +451,7 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_reslice
     ],
     ids=["41MB-limit-file-backing", "42MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_large_padding_no_reslice_single_proc(
+def test_determine_store_backing_large_padding_no_reslice_single_proc(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -528,13 +493,6 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_no_resl
     sections = sectionize(pipeline)
     print(sections)
 
-    # For execution of non-last sections which have non-zero padding, the reader creates a
-    # padded copy of the chunk that is made. Therefore, two copies of the chunk must be taken
-    # into account when deciding the backing of the store.
-    #
-    # Note that section 0 is the only section of the two produced that is "not the last
-    # section", so it's the only one that will need to account for two copies of the chunk, and
-    # thus the main target of the test. Hence, why `section_idx=0` is given.
     store_backing = determine_store_backing(
         comm=COMM,
         sections=sections,
@@ -558,7 +516,7 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_no_resl
     ],
     ids=["41MB-limit-file-backing", "42MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_large_padding_reslice_two_procs(
+def test_determine_store_backing_large_padding_reslice_two_procs(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -595,13 +553,6 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_reslice
     )
     sections = sectionize(pipeline)
 
-    # For exeuction of non-last sections in pipelines, the writer must take into account that a
-    # copy of the chunk is made by the reader of the following section. Therefore, two copies
-    # of the chunk must be taken into account when deciding the backing of the store.
-    #
-    # Note that section 0 is only the section that is "not the last section", so it's the only
-    # one that will need to account for two copies of the chunk, and thus the main target of
-    # the test. Hence, why `section_idx=0` is given.
     store_backing = determine_store_backing(
         comm=COMM,
         sections=sections,
@@ -625,7 +576,7 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_reslice
     ],
     ids=["37MB-limit-file-backing", "38MB-limit-ram-backing"],
 )
-def test_determine_store_backing_non_last_section_pipeline_large_padding_no_reslice_two_procs(
+def test_determine_store_backing_large_padding_no_reslice_two_procs(
     mocker: MockerFixture,
     memory_limit: int,
     expected_store_backing: DataSetStoreBacking,
@@ -666,13 +617,6 @@ def test_determine_store_backing_non_last_section_pipeline_large_padding_no_resl
     )
     sections = sectionize(pipeline)
 
-    # For execution of non-last sections which have non-zero padding, the reader creates a
-    # padded copy of the chunk that is made. Therefore, two copies of the chunk must be taken
-    # into account when deciding the backing of the store.
-    #
-    # Note that section 0 is the only section of the two produced that is "not the last
-    # section", so it's the only one that will need to account for two copies of the chunk, and
-    # thus the main target of the test. Hence, why `section_idx=0` is given.
     store_backing = determine_store_backing(
         comm=COMM,
         sections=sections,
