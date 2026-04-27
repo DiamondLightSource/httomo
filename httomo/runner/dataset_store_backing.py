@@ -5,6 +5,7 @@ import numpy as np
 from numpy.typing import DTypeLike
 from mpi4py import MPI
 
+from httomo.data.hdf._utils.reslice import reslice_memory_estimator
 from httomo.runner.section import Section, determine_section_padding
 from httomo.utils import _get_slicing_dim, make_3d_shape_from_shape
 
@@ -57,23 +58,6 @@ class DataSetStoreBacking(Enum):
     File = 2
 
 
-def _non_last_section_in_pipeline(
-    memory_limit_bytes: int,
-    write_chunk_bytes: int,
-    read_chunk_bytes: int,
-) -> DataSetStoreBacking:
-    """
-    Calculate backing of dataset store for non-last sections in pipeline
-    """
-    if (
-        memory_limit_bytes > 0
-        and write_chunk_bytes + read_chunk_bytes >= memory_limit_bytes
-    ):
-        return DataSetStoreBacking.File
-
-    return DataSetStoreBacking.RAM
-
-
 def determine_store_backing(
     comm: MPI.Comm,
     sections: List[Section],
@@ -113,13 +97,35 @@ def determine_store_backing(
     )
     output_chunk_bytes = int(np.prod(output_chunk_shape) * np.dtype(dtype).itemsize)
 
+    # If a reslice operation would occur in moving from the current section to the next
+    # section, then calculate the number of bytes the reslice operation would take, given the
+    # input to it (which would be the output chunk of the current section)
+    reslice_bytes = 0
+    if (
+        section_idx < len(sections) - 1
+        and sections[section_idx].pattern != sections[section_idx + 1].pattern
+    ):
+        ring_algorithm_bytes, reslice_output_bytes = reslice_memory_estimator(
+            output_chunk_shape,
+            dtype,
+            _get_slicing_dim(sections[section_idx].pattern),
+            _get_slicing_dim(sections[section_idx + 1].pattern),
+            comm,
+        )
+        reslice_bytes += ring_algorithm_bytes + reslice_output_bytes
+
     send_buffer = np.zeros(1, dtype=bool)
     recv_buffer = np.zeros(1, dtype=bool)
-    store_backing = _non_last_section_in_pipeline(
-        memory_limit_bytes=memory_limit_bytes,
-        read_chunk_bytes=padded_input_chunk_bytes,
-        write_chunk_bytes=output_chunk_bytes,
-    )
+
+    store_backing: DataSetStoreBacking
+    if (
+        memory_limit_bytes > 0
+        and padded_input_chunk_bytes + output_chunk_bytes + reslice_bytes
+        >= memory_limit_bytes
+    ):
+        store_backing = DataSetStoreBacking.File
+    else:
+        store_backing = DataSetStoreBacking.RAM
 
     if store_backing is DataSetStoreBacking.File:
         send_buffer[0] = True
