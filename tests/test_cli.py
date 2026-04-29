@@ -181,7 +181,7 @@ def test_initialise_output_directory_handles_json_string(tmp_path):
     json_string = json.dumps(SAMPLE_JSON_PIPELINE)
 
     # Call the function with a JSON string
-    initialise_output_directory(json_string)
+    initialise_output_directory(json_string, False)
 
     # Verify directory was created
     assert output_dir.exists()
@@ -206,7 +206,7 @@ def test_initialise_output_directory_handles_path_input(
     pipeline_path = Path(__file__).parent.parent / standard_loader
 
     # Call the function with a Path
-    initialise_output_directory(pipeline_path)
+    initialise_output_directory(pipeline_path, False)
 
     # Verify directory was created
     assert output_dir.exists()
@@ -219,7 +219,7 @@ def test_output_dir_created_if_doesnt_exist(tmp_path: Path, standard_loader: str
     output_dir_cli_arg = tmp_path / "out"
     httomo.globals.run_out_dir = output_dir_cli_arg / "httomo-output-dir"
     pipeline_path = Path(__file__).parent.parent / standard_loader
-    initialise_output_directory(pipeline_path)
+    initialise_output_directory(pipeline_path, False)
     assert output_dir_cli_arg.exists()
     assert httomo.globals.run_out_dir.exists()
 
