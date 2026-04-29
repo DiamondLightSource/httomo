@@ -68,3 +68,84 @@ def reslice(
 
     start_idx = 0 if comm.rank == 0 else split_indices[comm.rank - 1]
     return new_data, next_slice_dim, start_idx
+
+
+def reslice_memory_estimator(
+    data_shape: Tuple[int, int, int],
+    dtype: numpy.dtype,
+    current_slice_dim: int,
+    next_slice_dim: int,
+    comm: Comm,
+) -> Tuple[int, int]:
+    rank = comm.rank
+    nprocs = comm.size
+    itemsize = numpy.dtype(dtype).itemsize
+
+    split_sizes = []
+    length = data_shape[next_slice_dim]
+    split_indices = [round((length / nprocs) * r) for r in range(1, nprocs)]
+
+    prev_idx = 0
+    for i in range(nprocs):
+        next_idx = split_indices[i] if i < len(split_indices) else length
+        split_shape = list(data_shape)
+        split_shape[next_slice_dim] = next_idx - prev_idx
+        split_sizes.append(numpy.prod(split_shape) * itemsize)
+        prev_idx = next_idx
+
+    all_split_sizes = comm.allgather(split_sizes)
+    recv_sizes = [all_split_sizes[p][rank] for p in range(nprocs)]
+
+    output_shape = list(data_shape)
+    output_shape[current_slice_dim] = sum(
+        recv_sizes[p]
+        // (
+            itemsize
+            * numpy.prod([data_shape[d] for d in range(3) if d != next_slice_dim])
+        )
+        for p in range(nprocs)
+    )
+    output_size = numpy.prod(output_shape) * itemsize
+
+    max_send_buffer = max(split_sizes)
+    max_recv_buffer = max(recv_sizes)
+
+    from httomo.data.mpiutil import _mpi_max_elements
+
+    max_elements = _mpi_max_elements - 1
+    max_transfer_elements = max(
+        max(split_sizes) // itemsize, max(recv_sizes) // itemsize
+    )
+
+    needs_chunking = max_transfer_elements > max_elements
+
+    if needs_chunking:
+        chunk_overhead_send = max_send_buffer
+        chunk_overhead_recv = max_recv_buffer
+    else:
+        chunk_overhead_send = 0
+        chunk_overhead_recv = 0
+
+    # The final values for the peak allocation sizes before, during, and after the ring
+    # algorithm have been kept in for the sake of completeness. However, the values that matter
+    # most are the allocations that the reslice algorithm require, namely:
+    # - what the ring algorithm allocates
+    # - what the output size allocated is
+    #
+    # peak_before_ring = input_size + output_size
+    #
+    # peak_during_ring = (
+    #     peak_before_ring
+    #     + max_send_buffer  # Temporary send buffer
+    #     + max_recv_buffer  # Temporary recv buffer
+    #     + chunk_overhead_send  # Flattened send array (if chunking)
+    #     + chunk_overhead_recv  # Flattened recv array (if chunking)
+    # )
+    #
+    # peak_after_ring = input_size + output_size
+
+    ring_algorithm_allocations = (
+        max_send_buffer + max_recv_buffer + chunk_overhead_send + chunk_overhead_recv
+    )
+
+    return (ring_algorithm_allocations, output_size)
