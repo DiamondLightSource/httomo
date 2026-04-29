@@ -371,7 +371,7 @@ def set_global_constants(
 
 
 def initialise_output_directory(
-    pipeline: Union[Path, str], does_contain_sweep: Optional[bool] = False
+    pipeline: Union[Path, str], does_contain_sweep: bool
 ) -> None:
     try:
         Path.mkdir(httomo.globals.run_out_dir, parents=True, exist_ok=True)
@@ -393,7 +393,7 @@ def initialise_output_directory(
         # if does_contain_sweep do not inject default parameters due to issue around "sweep" aliases in yaml
         if not does_contain_sweep:
             path_to_pipeline = path_to_saved_pipeline
-            pipeline_updated = _substitute_ommitted_default_values(pipeline_conf)
+            pipeline_updated = _substitute_omitted_default_values(pipeline_conf)
             with open(path_to_saved_pipeline, "w") as file_descriptor:
                 yaml.dump(
                     pipeline_updated,
@@ -412,7 +412,7 @@ def initialise_output_directory(
             f.write(pipeline)
 
 
-def _substitute_ommitted_default_values(
+def _substitute_omitted_default_values(
     pipeline_conf: PipelineConfig,
 ) -> PipelineConfig:
     templates_conf = _get_template_yaml_conf(pipeline_conf)
