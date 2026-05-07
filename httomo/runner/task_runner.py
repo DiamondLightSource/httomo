@@ -81,11 +81,16 @@ class TaskRunner:
     def _pipeline_inspector(self) -> None:
         phase_in_pipeline = False
         minus_log_in_pipeline = False
+        seam_blend_in_pipeline = False
         for i, method in enumerate(self.pipeline._methods):
             if "phase" in method.module_path:
                 phase_in_pipeline = True
             if "minus_log" == method.method_name:
                 minus_log_in_pipeline = True
+            if "seam_blend" in method.method_name:
+                seam_blend_in_pipeline = True
+            if "dark_flat" in method.method_name and seam_blend_in_pipeline:
+                raise RuntimeError("Seam blending method should be used only after the dark/flat field correction") 
             if "rotation" in method.module_path:
                 if self.pipeline[i - 1].method_name == "data_reducer":
                     log_once(
