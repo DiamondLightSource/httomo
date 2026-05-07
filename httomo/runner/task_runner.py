@@ -90,7 +90,9 @@ class TaskRunner:
             if "seam_blend" in method.method_name:
                 seam_blend_in_pipeline = True
             if "dark_flat" in method.method_name and seam_blend_in_pipeline:
-                raise RuntimeError("Seam blending method should be used only after the dark/flat field correction") 
+                raise RuntimeError(
+                    "Seam blending method should be used only after the dark/flat field correction"
+                )
             if "rotation" in method.module_path:
                 if self.pipeline[i - 1].method_name == "data_reducer":
                     log_once(

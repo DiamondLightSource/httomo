@@ -16,9 +16,7 @@ def test_class_only_selected_for_methods_with_seam_blend_in_name(
     method_name: str, expected_result: bool
 ):
     assert (
-        SeamBlenderWrapper.should_select_this_class(
-            "dummy.module.path", method_name
-        )
+        SeamBlenderWrapper.should_select_this_class("dummy.module.path", method_name)
         is expected_result
     )
 
