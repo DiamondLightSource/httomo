@@ -469,9 +469,6 @@ def execute_high_throughput_run(
     reslice_dir: PathLike,
     save_snapshots: bool,
 ) -> None:
-    # we use half the memory for blocks since we typically have inputs/output
-    memory_limit = transform_limit_str_to_bytes(max_memory) // 2
-
     _set_gpu_id(gpu_id)
 
     # Run the pipeline using Taskrunner, with temp dir or reslice dir
@@ -483,7 +480,7 @@ def execute_high_throughput_run(
             Path(tmp_dir),
             global_comm,
             monitor=mon,
-            memory_limit_bytes=memory_limit,
+            memory_limit_bytes=transform_limit_str_to_bytes(max_memory),
             save_snapshots=save_snapshots,
         )
         runner.execute()
