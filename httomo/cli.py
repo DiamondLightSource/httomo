@@ -274,7 +274,15 @@ def run(
         PipelineFormat.Json if pipeline_format == "Json" else PipelineFormat.Yaml
     )
     pipeline_object = generate_pipeline(
-        in_data_file, pipeline, save_all, method_wrapper_comm, format_enum
+        in_data_file,
+        (
+            httomo.globals.run_out_dir / pipeline.name
+            if format_enum == PipelineFormat.Yaml
+            else pipeline
+        ),
+        save_all,
+        method_wrapper_comm,
+        format_enum,
     )
 
     if not does_contain_sweep:
