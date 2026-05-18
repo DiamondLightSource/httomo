@@ -34,12 +34,12 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
     "click",
-    "cupy==14.0.*",
-    "numpy==2.4.*",
+    "cupy",
+    "numpy",
     "hdf5plugin",
     "httomo-backends",
     "loguru",
