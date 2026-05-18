@@ -11,7 +11,8 @@ from httomo.utils import _get_slicing_dim, make_3d_shape_from_shape
 
 
 def calculate_section_input_chunk_shape(
-    comm: MPI.Comm,
+    nprocs: int,
+    rank: int,
     global_shape: Tuple[int, int, int],
     slicing_dim: int,
     padding: Tuple[int, int],
@@ -19,8 +20,8 @@ def calculate_section_input_chunk_shape(
     """
     Calculate the shape of the section input chunk w/ or w/o padding.
     """
-    start = round((global_shape[slicing_dim] / comm.size) * comm.rank)
-    stop = round((global_shape[slicing_dim] / comm.size) * (comm.rank + 1))
+    start = round((global_shape[slicing_dim] / nprocs) * rank)
+    stop = round((global_shape[slicing_dim] / nprocs) * (rank + 1))
     section_slicing_dim_len = stop - start
     shape = list(global_shape)
     shape[slicing_dim] = section_slicing_dim_len + padding[0] + padding[1]
@@ -70,7 +71,8 @@ def determine_store_backing(
     # for padding. This chunk shape is based on the chunk shape written by the writer of
     # section `n - 1` (the previous section)
     padded_input_chunk_shape = calculate_section_input_chunk_shape(
-        comm=comm,
+        nprocs=comm.size,
+        rank=comm.rank,
         global_shape=global_shape,
         slicing_dim=_get_slicing_dim(sections[section_idx].pattern) - 1,
         padding=determine_section_padding(sections[section_idx]),
@@ -82,7 +84,8 @@ def determine_store_backing(
     # Get unpadded chunk shape input to current section (for calculation of bytes in output
     # chunk for the current section)
     input_chunk_shape = calculate_section_input_chunk_shape(
-        comm=comm,
+        nprocs=comm.size,
+        rank=comm.rank,
         global_shape=global_shape,
         slicing_dim=_get_slicing_dim(sections[section_idx].pattern) - 1,
         padding=(0, 0),
@@ -111,7 +114,9 @@ def determine_store_backing(
             dtype,
             _get_slicing_dim(sections[section_idx].pattern),
             _get_slicing_dim(sections[section_idx + 1].pattern),
-            comm,
+            comm.size,
+            comm.rank,
+            comm.allgather,
         )
         reslice_bytes += ring_algorithm_bytes + reslice_output_bytes
 

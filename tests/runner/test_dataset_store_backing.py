@@ -48,13 +48,8 @@ def test_calculate_section_chunk_shape(
     rank: int,
     section_slicing_dim: int,
     section_padding: Tuple[int, int],
-    mocker: MockerFixture,
 ):
     GLOBAL_SHAPE = (1801, 2160, 2560)
-
-    # Define mock communicator that reflects the desired data splitting/distribution to be
-    # tested
-    mock_global_comm = mocker.create_autospec(spec=MPI.Comm, size=nprocs, rank=rank)
 
     # The chunk shape for the section should reflect the padding needed for that section
     expected_chunk_shape: List[int] = list(GLOBAL_SHAPE)
@@ -65,7 +60,8 @@ def test_calculate_section_chunk_shape(
         slicing_dim_len + section_padding[0] + section_padding[1]
     )
     section_chunk_shape = calculate_section_input_chunk_shape(
-        comm=mock_global_comm,
+        nprocs=nprocs,
+        rank=rank,
         global_shape=GLOBAL_SHAPE,
         slicing_dim=section_slicing_dim,
         padding=section_padding,
