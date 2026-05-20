@@ -267,6 +267,8 @@ def run(
     if global_comm.rank == 0:
         initialise_output_directory(pipeline, does_contain_sweep)
 
+    global_comm.Barrier()
+
     setup_logger(Path(httomo.globals.run_out_dir))
 
     # Convert string to enum
