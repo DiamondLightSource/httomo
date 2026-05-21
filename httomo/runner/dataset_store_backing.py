@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import DTypeLike
 from mpi4py import MPI
 
-from httomo.data.hdf._utils.reslice import reslice_memory_estimator
+from httomo.data.hdf._utils.reslice import AllGatherFunc, reslice_memory_estimator
 from httomo.runner.section import Section, determine_section_padding
 from httomo.utils import _get_slicing_dim, make_3d_shape_from_shape
 
@@ -59,20 +59,21 @@ class DataSetStoreBacking(Enum):
     File = 2
 
 
-def determine_store_backing(
-    comm: MPI.Comm,
-    sections: List[Section],
-    memory_limit_bytes: int,
+def estimate_section_memory(
+    nprocs: int,
+    rank: int,
+    allgather_func: AllGatherFunc,
     dtype: DTypeLike,
     global_shape: Tuple[int, int, int],
+    sections: List[Section],
     section_idx: int,
-) -> DataSetStoreBacking:
+) -> int:
     # Get chunk shape created by reader of section `n` (the current section) that will account
     # for padding. This chunk shape is based on the chunk shape written by the writer of
     # section `n - 1` (the previous section)
     padded_input_chunk_shape = calculate_section_input_chunk_shape(
-        nprocs=comm.size,
-        rank=comm.rank,
+        nprocs=nprocs,
+        rank=rank,
         global_shape=global_shape,
         slicing_dim=_get_slicing_dim(sections[section_idx].pattern) - 1,
         padding=determine_section_padding(sections[section_idx]),
@@ -84,8 +85,8 @@ def determine_store_backing(
     # Get unpadded chunk shape input to current section (for calculation of bytes in output
     # chunk for the current section)
     input_chunk_shape = calculate_section_input_chunk_shape(
-        nprocs=comm.size,
-        rank=comm.rank,
+        nprocs=nprocs,
+        rank=rank,
         global_shape=global_shape,
         slicing_dim=_get_slicing_dim(sections[section_idx].pattern) - 1,
         padding=(0, 0),
@@ -105,7 +106,7 @@ def determine_store_backing(
     # input to it (which would be the output chunk of the current section)
     reslice_bytes = 0
     if (
-        comm.size > 1
+        nprocs > 1
         and section_idx < len(sections) - 1
         and sections[section_idx].pattern != sections[section_idx + 1].pattern
     ):
@@ -114,20 +115,37 @@ def determine_store_backing(
             dtype,
             _get_slicing_dim(sections[section_idx].pattern),
             _get_slicing_dim(sections[section_idx + 1].pattern),
-            comm.size,
-            comm.rank,
-            comm.allgather,
+            nprocs,
+            rank,
+            allgather_func,
         )
         reslice_bytes += ring_algorithm_bytes + reslice_output_bytes
+
+    return padded_input_chunk_bytes + output_chunk_bytes + reslice_bytes
+
+
+def determine_store_backing(
+    comm: MPI.Comm,
+    sections: List[Section],
+    memory_limit_bytes: int,
+    dtype: DTypeLike,
+    global_shape: Tuple[int, int, int],
+    section_idx: int,
+) -> DataSetStoreBacking:
+    section_memory = estimate_section_memory(
+        comm.size,
+        comm.rank,
+        comm.allgather,
+        dtype,
+        global_shape,
+        sections,
+        section_idx,
+    )
 
     send_buffer = np.zeros(1, dtype=bool)
     recv_buffer = np.zeros(1, dtype=bool)
 
-    if (
-        memory_limit_bytes > 0
-        and padded_input_chunk_bytes + output_chunk_bytes + reslice_bytes
-        >= memory_limit_bytes
-    ):
+    if memory_limit_bytes > 0 and section_memory >= memory_limit_bytes:
         send_buffer[0] = True
 
     # do a logical OR of all the enum variants across the processes
