@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Callable
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 import numpy
 from mpi4py.MPI import Comm
@@ -78,7 +78,7 @@ def reslice_memory_estimator(
     next_slice_dim: int,
     nprocs: int,
     rank: int,
-    allgather_func: Callable[[Any], list[Any]],
+    allgather_func: Optional[Callable[[Any], list[Any]]],
 ) -> Tuple[int, int]:
     itemsize = numpy.dtype(dtype).itemsize
 
@@ -94,7 +94,10 @@ def reslice_memory_estimator(
         split_sizes.append(numpy.prod(split_shape) * itemsize)
         prev_idx = next_idx
 
-    all_split_sizes = allgather_func(split_sizes)
+    if allgather_func is not None:
+        all_split_sizes = allgather_func(split_sizes)
+    else:
+        all_split_sizes = [split_sizes] * nprocs
     recv_sizes = [all_split_sizes[p][rank] for p in range(nprocs)]
 
     output_shape = list(data_shape)
