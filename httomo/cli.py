@@ -77,6 +77,32 @@ def main():
 
 @main.command()
 @click.argument(
+    "in_data_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+)
+@click.argument(
+    "pipeline",
+    type=PipelineFilePathOrString(
+        types=[click.Path(exists=True, dir_okay=False, path_type=Path), click.STRING]
+    ),
+)
+@click.argument(
+    "nprocs",
+    type=click.IntRange(1),
+)
+def memory_check(in_data_file: Path, pipeline: Union[Path, str], nprocs: int):
+    """
+    Estimate CPU memory requirements for processing input data with a given pipeline and number
+    of processes
+    """
+    memory_peak = estimate_cpu_memory(in_data_file, pipeline, nprocs)
+    print(
+        f"Estimated peak CPU memory usage for {nprocs} process run: {(memory_peak * nprocs) / (1024 ** 3):.3f} GB"
+    )
+
+
+@main.command()
+@click.argument(
     "pipeline",
     type=PipelineFilePathOrString(
         types=[click.Path(exists=True, dir_okay=False, path_type=Path), click.STRING]
