@@ -8,6 +8,7 @@ from typing import List, Optional, TextIO, Union, Any
 import yaml
 
 import click
+import h5py
 import shutil
 from mpi4py import MPI
 from loguru import logger
@@ -16,9 +17,12 @@ import httomo.globals
 from httomo.cli_utils import is_sweep_pipeline
 from httomo.logger import setup_logger
 from httomo.monitors import MONITORS_MAP, make_monitors
+from httomo.runner.dataset_store_backing import estimate_section_memory
 from httomo.runner.pipeline import Pipeline
+from httomo.runner.section import sectionize
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.transform_layer import TransformLayer
+from httomo.transform_loader_params import parse_config, parse_preview
 from httomo.utils import log_exception, log_once, mpi_abort_excepthook
 from httomo.yaml_checker import (
     validate_yaml_config,
@@ -507,3 +511,42 @@ def execute_high_throughput_run(
 
 def execute_sweep_run(pipeline: Pipeline, global_comm: MPI.Comm) -> None:
     ParamSweepRunner(pipeline, global_comm).execute()
+
+
+def estimate_cpu_memory(in_data_file: Path, pipeline_file: Path, nprocs: int) -> int:
+    pipeline = generate_pipeline(
+        in_data_file, pipeline_file, False, MPI.COMM_WORLD, PipelineFormat.Yaml
+    )
+    sections = sectionize(pipeline)
+    config = yaml_loader(pipeline_file)
+    data_config, _, _, _, _ = parse_config(in_data_file, config[0]["parameters"])
+    with h5py.File(in_data_file, "r") as f:
+        dataset = f[data_config.data_path]
+        dtype = dataset.dtype
+        full_shape = dataset.shape
+
+    preview_config = parse_preview(
+        config[0]["parameters"].get("preview", None), full_shape
+    )
+    previewed_shape = (
+        preview_config.angles.stop - preview_config.angles.start,
+        preview_config.detector_y.stop - preview_config.detector_y.start,
+        preview_config.detector_x.stop - preview_config.detector_x.start,
+    )
+
+    section_memory_peak = 0
+    for idx in range(len(sections)):
+        section_memory_peak = max(
+            section_memory_peak,
+            estimate_section_memory(
+                nprocs,
+                0,
+                None,
+                dtype,
+                previewed_shape,
+                sections,
+                idx,
+            ),
+        )
+
+    return section_memory_peak
