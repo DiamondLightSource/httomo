@@ -182,10 +182,10 @@ def test_calculate_section_chunk_bytes_output_dims_change_and_swap(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (6 * 1024**2, DataSetStoreBacking.File),
-        (7 * 1024**2, DataSetStoreBacking.RAM),
+        (8 * 1024**2, DataSetStoreBacking.File),
+        (9 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["6MB-limit-file-backing", "7MB-limit-ram-backing"],
+    ids=["8MB-limit-file-backing", "9MB-limit-ram-backing"],
 )
 def test_determine_store_backing_reslice_single_proc(
     mocker: MockerFixture,
@@ -200,6 +200,7 @@ def test_determine_store_backing_reslice_single_proc(
     # - the write chunk ~3.4MB
     # - the read chunk also ~3.4MB
     # - reslice shouldn't occur due to running with a single process
+    # - the cupy pinned memory allocations is ~1.7MB
     DTYPE = np.float32
     GLOBAL_SHAPE = (10, 300, 300)
 
@@ -229,10 +230,10 @@ def test_determine_store_backing_reslice_single_proc(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (6 * 1024**2, DataSetStoreBacking.File),
-        (7 * 1024**2, DataSetStoreBacking.RAM),
+        (8 * 1024**2, DataSetStoreBacking.File),
+        (9 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["6MB-limit-file-backing", "7MB-limit-ram-backing"],
+    ids=["8MB-limit-file-backing", "9MB-limit-ram-backing"],
 )
 def test_determine_store_backing_no_reslice_single_proc(
     mocker: MockerFixture,
@@ -246,6 +247,7 @@ def test_determine_store_backing_no_reslice_single_proc(
     # The dtype and shape combined makes:
     # - the write chunk ~3.4MB
     # - the read chunk also ~3.4MB
+    # - the cupy pinned memory allocations is ~1.7MB
     DTYPE = np.float32
     GLOBAL_SHAPE = (10, 300, 300)
 
@@ -284,10 +286,10 @@ def test_determine_store_backing_no_reslice_single_proc(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (6 * 1024**2, DataSetStoreBacking.File),
-        (7 * 1024**2, DataSetStoreBacking.RAM),
+        (8 * 1024**2, DataSetStoreBacking.File),
+        (9 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["6MB-limit-file-backing", "7MB-limit-ram-backing"],
+    ids=["8MB-limit-file-backing", "9MB-limit-ram-backing"],
 )
 def test_determine_store_backing_reslice_two_procs(
     mocker: MockerFixture,
@@ -303,6 +305,7 @@ def test_determine_store_backing_reslice_two_procs(
     # - the read chunk also ~1.7MB
     # - the output of reslice also ~1.7MB
     # - the intermediate data created by reslice algorithm ~1.7MB
+    # - the cupy pinned memory allocations is ~1.7MB
     DTYPE = np.float32
     GLOBAL_SHAPE = (10, 300, 300)
 
@@ -336,10 +339,10 @@ def test_determine_store_backing_reslice_two_procs(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (3 * 1024**2, DataSetStoreBacking.File),
-        (4 * 1024**2, DataSetStoreBacking.RAM),
+        (5 * 1024**2, DataSetStoreBacking.File),
+        (6 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["3MB-limit-file-backing", "4MB-limit-ram-backing"],
+    ids=["5MB-limit-file-backing", "6MB-limit-ram-backing"],
 )
 def test_determine_store_backing_no_reslice_two_procs(
     mocker: MockerFixture,
@@ -353,6 +356,7 @@ def test_determine_store_backing_no_reslice_two_procs(
     # The dtype and shape combined makes:
     # - the write chunk ~1.7MB
     # - the read chunk also ~1.7MB
+    # - the cupy pinned memory allocations is ~1.7MB
     DTYPE = np.float32
     GLOBAL_SHAPE = (10, 300, 300)
 
@@ -387,10 +391,10 @@ def test_determine_store_backing_no_reslice_two_procs(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (41 * 1024**2, DataSetStoreBacking.File),
-        (42 * 1024**2, DataSetStoreBacking.RAM),
+        (42 * 1024**2, DataSetStoreBacking.File),
+        (43 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["41MB-limit-file-backing", "42MB-limit-ram-backing"],
+    ids=["42MB-limit-file-backing", "43MB-limit-ram-backing"],
 )
 def test_determine_store_backing_large_padding_reslice_single_proc(
     mocker: MockerFixture,
@@ -405,6 +409,7 @@ def test_determine_store_backing_large_padding_reslice_single_proc(
     # - the write chunk ~3.4MB
     # - the padded input chunk ~37.7MB (110 * 300 * 300 * 4 / (1024 ** 2))
     # - reslice shouldn't occur due to running with a single process
+    # - the cupy pinned memory allocations is ~1.7MB
     DTYPE = np.float32
     GLOBAL_SHAPE = (10, 300, 300)
     PADDING = (50, 50)
@@ -442,10 +447,10 @@ def test_determine_store_backing_large_padding_reslice_single_proc(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (41 * 1024**2, DataSetStoreBacking.File),
-        (42 * 1024**2, DataSetStoreBacking.RAM),
+        (42 * 1024**2, DataSetStoreBacking.File),
+        (43 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["41MB-limit-file-backing", "42MB-limit-ram-backing"],
+    ids=["42MB-limit-file-backing", "43MB-limit-ram-backing"],
 )
 def test_determine_store_backing_large_padding_no_reslice_single_proc(
     mocker: MockerFixture,
@@ -460,6 +465,7 @@ def test_determine_store_backing_large_padding_no_reslice_single_proc(
     # - the unpadded input chunk ~3.4MB (10 * 300 * 300 * 4 / (1024 ** 2))
     # - the padded input chunk ~37.7MB (110 * 300 * 300 * 4 / (1024 ** 2))
     # - the output chunk ~3.4MB (10 * 300 * 300 * 4 / (1024 ** 2))
+    # - the cupy pinned memory allocations is ~1.7MB
     DTYPE = np.float32
     GLOBAL_SHAPE = (10, 300, 300)
     PADDING = (50, 50)
@@ -507,10 +513,10 @@ def test_determine_store_backing_large_padding_no_reslice_single_proc(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (41 * 1024**2, DataSetStoreBacking.File),
-        (42 * 1024**2, DataSetStoreBacking.RAM),
+        (42 * 1024**2, DataSetStoreBacking.File),
+        (43 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["41MB-limit-file-backing", "42MB-limit-ram-backing"],
+    ids=["42MB-limit-file-backing", "43MB-limit-ram-backing"],
 )
 def test_determine_store_backing_large_padding_reslice_two_procs(
     mocker: MockerFixture,
@@ -526,6 +532,7 @@ def test_determine_store_backing_large_padding_reslice_two_procs(
     # - the padded input chunk ~36.0MB (105 * 300 * 300 * 4 / (1024 ** 2))
     # - the output of reslice also ~1.7MB
     # - the intermediate data created by reslice algorithm ~1.7MB
+    # - the cupy pinned memory allocations is ~1.7MB
     DTYPE = np.float32
     GLOBAL_SHAPE = (10, 300, 300)
     PADDING = (50, 50)
@@ -567,10 +574,10 @@ def test_determine_store_backing_large_padding_reslice_two_procs(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (37 * 1024**2, DataSetStoreBacking.File),
-        (38 * 1024**2, DataSetStoreBacking.RAM),
+        (39 * 1024**2, DataSetStoreBacking.File),
+        (40 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["37MB-limit-file-backing", "38MB-limit-ram-backing"],
+    ids=["39MB-limit-file-backing", "40MB-limit-ram-backing"],
 )
 def test_determine_store_backing_large_padding_no_reslice_two_procs(
     mocker: MockerFixture,
@@ -585,6 +592,7 @@ def test_determine_store_backing_large_padding_no_reslice_two_procs(
     # - the unpadded input chunk ~1.7MB (5 * 300 * 300 * 4 / (1024 ** 2))
     # - the padded input chunk ~36.0MB (105 * 300 * 300 * 4 / (1024 ** 2))
     # - the output chunk ~1.7MB (5 * 300 * 300 * 4 / (1024 ** 2))
+    # - the cupy pinned memory allocations is ~1.7MB
     DTYPE = np.float32
     GLOBAL_SHAPE = (10, 300, 300)
     PADDING = (50, 50)

@@ -121,7 +121,25 @@ def estimate_section_memory(
         )
         reslice_bytes += ring_algorithm_bytes + reslice_output_bytes
 
-    return padded_input_chunk_bytes + output_chunk_bytes + reslice_bytes
+    # TODO: The nature of the pinned memory allocations by cupy is currently under
+    # investigation, so a more precise calculation for its size is not yet known.
+    #
+    # It's known that this can grow quite large via allocations exceeding the current
+    # allocation being bumped to the next power of 2 (ie, a 16GiB allocation that is exceeded
+    # by 1 byte will have a 32GiB allocation made in addition to the original 16GiB).
+    #
+    # Taking half the input data size seems to be in the ballpark for what has been observed
+    # with larger datasets (ie, an 84GB dataset being processed took ~520GB of memory, and with
+    # this arbitrary choice of 0.5 as a multiplicative factor gets the estimated value to
+    # ~514GB)
+    CUPY_PINNED_CPU_MEMORY = int(0.5 * np.prod(global_shape) * np.dtype(dtype).itemsize)
+
+    return (
+        padded_input_chunk_bytes
+        + output_chunk_bytes
+        + reslice_bytes
+        + CUPY_PINNED_CPU_MEMORY
+    )
 
 
 def determine_store_backing(
