@@ -74,15 +74,21 @@ Once the appropriate step has been done, you will have access to the HTTomo CLI:
 
     Commands:
       check  Check a YAML pipeline file for errors.
+      memory-check  Estimate CPU memory requirements for processing input...
       run    Run a processing pipeline defined in YAML on input data.
 
-As can be seen from the output above, there are two HTTomo commands available:
-:code:`check` and :code:`run`.
+As can be seen from the output above, there are three HTTomo commands
+available: :code:`check`, :code:`memory-check`, and :code:`run`.
 
 The :code:`check` command is used for checking a YAML process list file for
 errors, and is highly recommended to be run before attempting to run the
 pipeline. Please see :ref:`utilities_yamlchecker` for more information about
 the checks being performed, the help information that is printed, etc.
+
+The :code:`memory-check` command is for estimating the CPU memory requirements
+for processing the input data with a given pipeline and number of processes.
+The underlying functionality was primarily developed for use with the DLS
+HTTomo launcher, and has been exposed as a CLI command for convenience.
 
 The :code:`run` command is used for running HTTomo with a pipeline on the given
 HDF5 input data.
@@ -146,6 +152,66 @@ Options/flags
 #############
 
 The :code:`check` command has *no* options/flags.
+
+The :code:`memory-check` command
+++++++++++++++++++++++++++++++++
+
+.. code-block:: console
+
+    $ python -m httomo memory-check --help
+    Usage: python -m httomo memory-check [OPTIONS] IN_DATA_FILE PIPELINE NPROCS
+
+      Estimate CPU memory requirements for processing input data with a given
+      pipeline and number of processes
+
+    Options:
+      --help  Show this message and exit.
+
+
+Arguments
+#########
+
+For :code:`memory-check` there are three *required* arguments:
+:code:`IN_DATA_FILE`, :code:`PIPELINE`, and :code:`NPROCS`, and zero *optional*
+arguments.
+
+:code:`IN_DATA_FILE` (required)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the filepath to the HDF5 input data that is intended to be processed.
+This is required primarily for querying the size of the input data.
+
+:code:`PIPELINE` (required)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the filepath to the YAML process list file that defines the processing
+to be applied to the input data.
+
+This is required for several reasons:
+
+- any cropping of the data via the loader's :code:`preview` parameter will
+  affect the size of the data being processed
+- any methods requiring padding will affect the size of the data being
+  processed
+- any :ref:`info_reslice` in the pipeline will affect the amount of memory
+  required
+
+:code:`NPROCS` (required)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the number of processes the input data is intended to be processed
+with.
+
+This is required primarily due to the number of processes affecting how the
+input data is split up, and thus affects the allocations required for
+processing the subsets of data.
+
+.. note:: The value of :code:`NPROCS` must be >= 1.
+
+Options/flags
+#############
+
+The :code:`memory-check` command has *zero* options/flags.
 
 The :code:`run` command
 +++++++++++++++++++++++
