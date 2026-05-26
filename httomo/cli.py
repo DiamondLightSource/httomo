@@ -267,6 +267,8 @@ def run(
     if global_comm.rank == 0:
         initialise_output_directory(pipeline, does_contain_sweep)
 
+    global_comm.Barrier()
+
     setup_logger(Path(httomo.globals.run_out_dir))
 
     # Convert string to enum
@@ -274,7 +276,15 @@ def run(
         PipelineFormat.Json if pipeline_format == "Json" else PipelineFormat.Yaml
     )
     pipeline_object = generate_pipeline(
-        in_data_file, pipeline, save_all, method_wrapper_comm, format_enum
+        in_data_file,
+        (
+            httomo.globals.run_out_dir / pipeline.name
+            if format_enum == PipelineFormat.Yaml
+            else pipeline
+        ),
+        save_all,
+        method_wrapper_comm,
+        format_enum,
     )
 
     if not does_contain_sweep:
