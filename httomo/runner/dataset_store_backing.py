@@ -7,7 +7,12 @@ from mpi4py import MPI
 
 from httomo.data.hdf._utils.reslice import AllGatherFunc, reslice_memory_estimator
 from httomo.runner.section import Section, determine_section_padding
-from httomo.utils import _get_slicing_dim, make_3d_shape_from_shape
+from httomo.utils import (
+    _get_slicing_dim,
+    make_3d_shape_from_shape,
+    gpu_enabled,
+    xp,
+)
 
 
 def calculate_section_input_chunk_shape(
@@ -121,24 +126,30 @@ def estimate_section_memory(
         )
         reslice_bytes += ring_algorithm_bytes + reslice_output_bytes
 
-    # TODO: The nature of the pinned memory allocations by cupy is currently under
-    # investigation, so a more precise calculation for its size is not yet known.
-    #
-    # It's known that this can grow quite large via allocations exceeding the current
-    # allocation being bumped to the next power of 2 (ie, a 16GiB allocation that is exceeded
-    # by 1 byte will have a 32GiB allocation made in addition to the original 16GiB).
-    #
-    # Taking half the input data size seems to be in the ballpark for what has been observed
-    # with larger datasets (ie, an 84GB dataset being processed took ~520GB of memory, and with
-    # this arbitrary choice of 0.5 as a multiplicative factor gets the estimated value to
-    # ~514GB)
-    CUPY_PINNED_CPU_MEMORY = int(0.5 * np.prod(global_shape) * np.dtype(dtype).itemsize)
+    # The default CuPy pinned memory pool allocates sizes that are the smallest power of two equal or above
+    # the requested size. These chunks are reused for the subsequent h2d copies, however, a larger chunk is
+    # not going to be used for a small transfer. E.g. a transfer of 1.5 GiB will allocate a new 2 GiB chunk,
+    # even if a 4 GiB chunk already sits free in the pool.
+    # Therefore, preparing for the worst case, we accumulate all significantly large potential pool chunks below:
+    cupy_pinned_cpu_pool_memory = 0
+    cupy_transfer_overhead = 0
+    if gpu_enabled:
+        _, total_mem = xp.cuda.Device().mem_info
+        mem_allocation = 1 << 27  # 128 MiB
+        while mem_allocation < total_mem:
+            cupy_pinned_cpu_pool_memory += mem_allocation
+            mem_allocation *= 2
+
+        # CuPy copies the host array before uploading to the device. This is at most the size of the device memory
+        # See https://github.com/cupy/cupy/issues/9813
+        cupy_transfer_overhead = total_mem
 
     return (
         padded_input_chunk_bytes
         + output_chunk_bytes
         + reslice_bytes
-        + CUPY_PINNED_CPU_MEMORY
+        + cupy_pinned_cpu_pool_memory
+        + cupy_transfer_overhead
     )
 
 
