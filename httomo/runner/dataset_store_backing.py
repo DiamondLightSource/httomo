@@ -12,6 +12,7 @@ from httomo.utils import (
     make_3d_shape_from_shape,
     gpu_enabled,
     xp,
+    clp2,
 )
 
 
@@ -135,8 +136,12 @@ def estimate_section_memory(
     cupy_transfer_overhead = 0
     if gpu_enabled:
         _, total_mem = xp.cuda.Device().mem_info
+        # if the max size fits to the device memory, we can use it as a lower bound
+        max_size = np.prod(global_shape) * np.dtype(dtype).itemsize
+        size_limit = min(clp2(max_size), total_mem)
+
         mem_allocation = 1 << 27  # 128 MiB
-        while mem_allocation < total_mem:
+        while mem_allocation <= size_limit:
             cupy_pinned_cpu_pool_memory += mem_allocation
             mem_allocation *= 2
 
