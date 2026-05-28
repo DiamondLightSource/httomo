@@ -312,6 +312,7 @@ class TaskRunner:
         irrelevant_method_names_snapshots = [
             "data_checker",
             "calculate_stats",
+            "find_center",
             "find_center_360",
             "find_center_pc",
             "find_center_vo",
