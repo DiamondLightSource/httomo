@@ -272,7 +272,7 @@ def run(
     method_wrapper_comm = global_comm if not does_contain_sweep else MPI.COMM_SELF
 
     if global_comm.rank == 0:
-        initialise_output_directory(pipeline, does_contain_sweep)
+        initialise_output_dir_copy_files_inject_defaults(pipeline, does_contain_sweep)
 
     global_comm.Barrier()
 
@@ -381,9 +381,15 @@ def set_global_constants(
     httomo.globals.MAX_CPU_SLICES = max_cpu_slices
 
 
-def initialise_output_directory(
+def initialise_output_dir_copy_files_inject_defaults(
     pipeline: Union[Path, str], does_contain_sweep: bool
 ) -> None:
+    """This function does the following:
+    - creates output folder
+    - copies the distortion coefficient file (if provided)
+    - injects omitted default parameters into the pipeline file
+    - copies the YAML or JSON pipeline file
+    """
     try:
         Path.mkdir(httomo.globals.run_out_dir, parents=True, exist_ok=True)
     except PermissionError as e:
