@@ -75,6 +75,8 @@ class RotationWrapper(GenericMethodWrapper):
             updated_params = {**dict_params, "ind": (dataset.shape[1] - 1) // 2}
         if "average_radius" not in dict_params:
             updated_params.update({"average_radius": 0})
+        if self.method_name == "find_center":
+            updated_params.update({"theta": dataset.angles_radians})
         return super()._build_kwargs(updated_params, dataset)
 
     def _gather_sino_slice(self, global_shape: Tuple[int, int, int]):
@@ -213,6 +215,8 @@ class RotationWrapper(GenericMethodWrapper):
                 args["ind"] = 0
                 args[self.parameters[0]] = sino_slice[:, xp.newaxis, :]
                 res = self.method(**args)
+        if isinstance(res, np.ndarray):
+            res = res[0]
         # and broadcast
         if self.comm.size > 1:
             res = self.comm.bcast(res, root=0)
