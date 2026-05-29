@@ -255,13 +255,20 @@ def run(
         max_cpu_slices,
         syslog_host,
         syslog_port,
-        output_folder_name,
+        (
+            output_folder_name
+            if output_folder_name is not None
+            else Path(f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output")
+        ),
         recon_filename_stem,
         continuous_scan_subset,
     )
 
-    does_contain_sweep = is_sweep_pipeline(pipeline)
     global_comm = MPI.COMM_WORLD
+    if output_folder_name is None:
+        httomo.globals.run_out_dir = global_comm.bcast(httomo.globals.run_out_dir, 0)
+
+    does_contain_sweep = is_sweep_pipeline(pipeline)
     method_wrapper_comm = global_comm if not does_contain_sweep else MPI.COMM_SELF
 
     if global_comm.rank == 0:
@@ -352,7 +359,7 @@ def set_global_constants(
     max_cpu_slices: int,
     syslog_host: str,
     syslog_port: int,
-    output_folder_name: Optional[Path],
+    output_folder_name: Path,
     recon_filename_stem: Optional[str],
     continuous_scan_subset: Optional[tuple[int, int]],
 ) -> None:
@@ -367,13 +374,7 @@ def set_global_constants(
     httomo.globals.SYSLOG_PORT = syslog_port
     httomo.globals.RECON_FILENAME_STEM = recon_filename_stem
     httomo.globals.CONTINUOUS_SCAN_SUBSET = continuous_scan_subset
-
-    if output_folder_name is None:
-        httomo.globals.run_out_dir = out_dir.joinpath(
-            f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
-        )
-    else:
-        httomo.globals.run_out_dir = out_dir.joinpath(output_folder_name)
+    httomo.globals.run_out_dir = out_dir.joinpath(output_folder_name)
 
     if max_cpu_slices < 1:
         raise ValueError("max-cpu-slices must be greater or equal to 1")
