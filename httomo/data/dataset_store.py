@@ -288,7 +288,7 @@ class DataSetStoreReader(DataSetSource):
             self._data = self._reslice(source.slicing_dim, slicing_dim, source_data)
             end = time.perf_counter()
             log_once(
-                f"reslice_memory_estimator: {reslice_memory_estimator(source_data.shape, source_data.dtype, source.slicing_dim, slicing_dim, self._comm)}",
+                f"reslice_memory_estimator: {reslice_memory_estimator(source_data.shape, source_data.dtype, source.slicing_dim, slicing_dim, self._comm.size, self._comm.rank, self._comm.allgather)}",
                 level=logging.DEBUG,
             )
             if slicing_dim == 1:
