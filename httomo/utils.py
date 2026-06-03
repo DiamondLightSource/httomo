@@ -402,6 +402,7 @@ def make_pinned_host_array(shape, dtype) -> np.ndarray:
     else:
         return np.empty(shape, dtype=dtype)
 
+
 def clp2(x: int) -> int:
     """
     Round up to next power of two

@@ -73,6 +73,7 @@ def estimate_section_memory(
     global_shape: Tuple[int, int, int],
     sections: List[Section],
     section_idx: int,
+    consider_pinned_memory_pool: bool = False,
 ) -> int:
     # Get chunk shape created by reader of section `n` (the current section) that will account
     # for padding. This chunk shape is based on the chunk shape written by the writer of
@@ -134,7 +135,7 @@ def estimate_section_memory(
     # Therefore, preparing for the worst case, we accumulate all significantly large potential pool chunks below:
     cupy_pinned_cpu_pool_memory = 0
     cupy_transfer_overhead = 0
-    if gpu_enabled:
+    if consider_pinned_memory_pool and gpu_enabled:
         _, total_mem = xp.cuda.Device().mem_info
         # if the max size fits to the device memory, we can use it as a lower bound
         max_size = np.prod(global_shape) * np.dtype(dtype).itemsize
