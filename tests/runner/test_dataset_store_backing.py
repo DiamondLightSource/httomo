@@ -182,10 +182,10 @@ def test_calculate_section_chunk_bytes_output_dims_change_and_swap(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (8 * 1024**2, DataSetStoreBacking.File),
-        (9 * 1024**2, DataSetStoreBacking.RAM),
+        (6 * 1024**2, DataSetStoreBacking.File),
+        (7 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["8MB-limit-file-backing", "9MB-limit-ram-backing"],
+    ids=["6MB-limit-file-backing", "7MB-limit-ram-backing"],
 )
 def test_determine_store_backing_reslice_single_proc(
     mocker: MockerFixture,
@@ -230,10 +230,10 @@ def test_determine_store_backing_reslice_single_proc(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (8 * 1024**2, DataSetStoreBacking.File),
-        (9 * 1024**2, DataSetStoreBacking.RAM),
+        (6 * 1024**2, DataSetStoreBacking.File),
+        (7 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["8MB-limit-file-backing", "9MB-limit-ram-backing"],
+    ids=["6MB-limit-file-backing", "7MB-limit-ram-backing"],
 )
 def test_determine_store_backing_no_reslice_single_proc(
     mocker: MockerFixture,
@@ -391,10 +391,10 @@ def test_determine_store_backing_no_reslice_two_procs(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (42 * 1024**2, DataSetStoreBacking.File),
-        (43 * 1024**2, DataSetStoreBacking.RAM),
+        (41 * 1024**2, DataSetStoreBacking.File),
+        (42 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["42MB-limit-file-backing", "43MB-limit-ram-backing"],
+    ids=["41MB-limit-file-backing", "42MB-limit-ram-backing"],
 )
 def test_determine_store_backing_large_padding_reslice_single_proc(
     mocker: MockerFixture,
@@ -447,10 +447,10 @@ def test_determine_store_backing_large_padding_reslice_single_proc(
 @pytest.mark.parametrize(
     "memory_limit, expected_store_backing",
     [
-        (42 * 1024**2, DataSetStoreBacking.File),
-        (43 * 1024**2, DataSetStoreBacking.RAM),
+        (41 * 1024**2, DataSetStoreBacking.File),
+        (42 * 1024**2, DataSetStoreBacking.RAM),
     ],
-    ids=["42MB-limit-file-backing", "43MB-limit-ram-backing"],
+    ids=["41MB-limit-file-backing", "42MB-limit-ram-backing"],
 )
 def test_determine_store_backing_large_padding_no_reslice_single_proc(
     mocker: MockerFixture,
