@@ -352,7 +352,7 @@ def transform_limit_str_to_bytes(limit_str: str):
         elif limit_upper.endswith("G"):
             return int(float(limit_str[:-1]) * 1024**3)
         else:
-            return int(limit_str)
+            return int(float(limit_str))
     except ValueError:
         raise ValueError(f"invalid memory limit string {limit_str}")
 
