@@ -45,6 +45,7 @@ from httomo.utils import (
     log_exception,
     log_once,
     log_rank,
+    get_available_system_memory_bytes,
 )
 import numpy as np
 
@@ -71,7 +72,25 @@ class TaskRunner:
         self.source: Optional[DataSetSource] = None
         self.sink: Optional[Union[DataSetSink, ReadableDataSetSink]] = None
 
-        self._memory_limit_bytes = memory_limit_bytes
+        available_system_memory = np.zeros((1,), dtype=np.int64)
+        global_available_system_memory = np.empty_like(available_system_memory)
+        # Rank 0 queries memory
+        if self.comm.rank == 0:
+            available_system_memory[0] = get_available_system_memory_bytes()
+        self.comm.Allreduce(
+            [available_system_memory, MPI.INT64_T],
+            [global_available_system_memory, MPI.INT64_T],
+            MPI.MAX,
+        )
+        if memory_limit_bytes == 0:
+            self._memory_limit_bytes = global_available_system_memory[0]
+        else:
+            if memory_limit_bytes > global_available_system_memory[0]:
+                log_once(
+                    f"WARNING: Memory limit set is larger than available system memory ({memory_limit_bytes} > {global_available_system_memory[0]})",
+                )
+            self._memory_limit_bytes = memory_limit_bytes
+
         self._pipeline_inspector()
         self._sections = self._sectionize()
 
@@ -371,7 +390,7 @@ class TaskRunner:
                 nprocs=self.comm.size,
                 rank=self.comm.rank,
                 allgather_func=self.comm.allgather,
-                dtype=self.source.dtype,
+                dtype=self.source.dtype if i == 0 else np.float32,
                 global_shape=self.source.global_shape,
                 sections=self._sections,
                 section_idx=i,
@@ -391,47 +410,17 @@ class TaskRunner:
             MPI.MAX,
         )
 
-        global_memory_pool_allowed = np.asarray([True], dtype=np.bool)
-        limit_bytes = self._memory_limit_bytes
-
-        # If the limit is passed, use the limit on all ranks
-        if limit_bytes > 0:
-            global_memory_pool_allowed[0] = (
-                limit_bytes >= global_peak_estimated_memory_bytes[0]
-            )
-        else:
-            # Else rank 0 queries the available memory and makes the decision
-            rank_memory_pool_allowed = np.asarray([True], dtype=np.bool)
-            if self.comm.rank == 0:
-                # First two lines of 'free -t -b':
-                #                total        used        free      shared  buff/cache   available
-                # Mem:     33413799936 10897051648 11293478912   303587328 11639463936 22516748288
-                limit_bytes = int(os.popen("free -t -b").readlines()[1].split()[-1])
-
-                # 10% margin
-                limit_bytes = int(limit_bytes * 0.9)
-                rank_memory_pool_allowed[0] = (
-                    limit_bytes >= global_peak_estimated_memory_bytes[0]
-                )
-
-            # The decision is communicated back to the other ranks
-            self.comm.Allreduce(
-                [rank_memory_pool_allowed, MPI.BOOL],
-                [global_memory_pool_allowed, MPI.BOOL],
-                MPI.LAND,
-            )
-
         # Apply decision on all ranks
-        if global_memory_pool_allowed[0]:
+        if self._memory_limit_bytes >= global_peak_estimated_memory_bytes[0]:
             log_once(
-                f"Estimated CPU memory peak under limit, enabling CuPy pinned memory pool ({limit_bytes} >= {global_peak_estimated_memory_bytes[0]})",
+                f"Estimated CPU memory peak under limit, enabling CuPy pinned memory pool ({self._memory_limit_bytes} >= {global_peak_estimated_memory_bytes[0]})",
                 level=logging.DEBUG,
             )
         else:
             xp.get_default_pinned_memory_pool().free_all_blocks()
             xp.cuda.set_pinned_memory_allocator(None)
             log_once(
-                f"Estimated CPU memory peak over limit, disabling CuPy pinned memory pool ({limit_bytes} < {global_peak_estimated_memory_bytes[0]})",
+                f"Estimated CPU memory peak over limit, disabling CuPy pinned memory pool ({self._memory_limit_bytes} < {global_peak_estimated_memory_bytes[0]})",
                 level=logging.DEBUG,
             )
 
