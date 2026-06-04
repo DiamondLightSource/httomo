@@ -2,6 +2,7 @@ import logging
 import time
 from typing import Any, Dict, Literal, Optional, List, Tuple, Union
 import os
+import resource
 
 import tqdm
 from mpi4py import MPI
@@ -9,7 +10,10 @@ from mpi4py import MPI
 import httomo.globals
 from httomo.data.dataset_store import DataSetStoreWriter
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
-from httomo.runner.dataset_store_backing import determine_store_backing
+from httomo.runner.dataset_store_backing import (
+    determine_store_backing,
+    estimate_section_memory,
+)
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.block_split import BlockSplitter
 from httomo.runner.dataset import DataSetBlock
@@ -20,7 +24,12 @@ from httomo.runner.dataset_store_interfaces import (
     ReadableDataSetSink,
 )
 from httomo.utils import save_2d_snapshot
-from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
+from httomo.runner.gpu_utils import (
+    get_available_gpu_memory,
+    gpumem_cleanup,
+    gpu_enabled,
+    xp,
+)
 from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import (
@@ -332,6 +341,7 @@ class TaskRunner:
         )
         self._check_params_for_sweep()
         self._load_datasets()
+        self._setup_pinned_memory_pool()
 
     def _load_datasets(self):
         start_time = self._log_task_start(
@@ -348,6 +358,82 @@ class TaskRunner:
             self.pipeline.loader.method_name,
             self.pipeline.loader.package_name,
         )
+
+    def _setup_pinned_memory_pool(self):
+        if not gpu_enabled:
+            return
+
+        # Calculate peak on every rank
+        rank_peak_estimated_memory_bytes = np.zeros(shape=(1,), dtype=np.int64)
+        for i in range(len(self._sections)):
+            assert self.source is not None
+            section_memory = estimate_section_memory(
+                nprocs=self.comm.size,
+                rank=self.comm.rank,
+                allgather_func=self.comm.allgather,
+                dtype=self.source.dtype,
+                global_shape=self.source.global_shape,
+                sections=self._sections,
+                section_idx=i,
+                consider_pinned_memory_pool=True,
+            )
+            rank_peak_estimated_memory_bytes[0] = max(
+                rank_peak_estimated_memory_bytes[0], section_memory
+            )
+
+        # Select maximum peak of all ranks
+        global_peak_estimated_memory_bytes = np.zeros_like(
+            rank_peak_estimated_memory_bytes
+        )
+        self.comm.Allreduce(
+            [rank_peak_estimated_memory_bytes * self.comm.size, MPI.INT64_T],
+            [global_peak_estimated_memory_bytes, MPI.INT64_T],
+            MPI.MAX,
+        )
+
+        global_memory_pool_allowed = np.asarray([True], dtype=np.bool)
+        limit_bytes = self._memory_limit_bytes
+
+        # If the limit is passed, use the limit on all ranks
+        if limit_bytes > 0:
+            global_memory_pool_allowed[0] = (
+                limit_bytes >= global_peak_estimated_memory_bytes[0]
+            )
+        else:
+            # Else rank 0 queries the available memory and makes the decision
+            rank_memory_pool_allowed = np.asarray([True], dtype=np.bool)
+            if self.comm.rank == 0:
+                # First two lines of 'free -t -b':
+                #                total        used        free      shared  buff/cache   available
+                # Mem:     33413799936 10897051648 11293478912   303587328 11639463936 22516748288
+                limit_bytes = int(os.popen("free -t -b").readlines()[1].split()[-1])
+
+                # 10% margin
+                limit_bytes = int(limit_bytes * 0.9)
+                rank_memory_pool_allowed[0] = (
+                    limit_bytes >= global_peak_estimated_memory_bytes[0]
+                )
+
+            # The decision is communicated back to the other ranks
+            self.comm.Allreduce(
+                [rank_memory_pool_allowed, MPI.BOOL],
+                [global_memory_pool_allowed, MPI.BOOL],
+                MPI.LAND,
+            )
+
+        # Apply decision on all ranks
+        if global_memory_pool_allowed[0]:
+            log_once(
+                f"Estimated CPU memory peak under limit, enabling CuPy pinned memory pool ({limit_bytes} >= {global_peak_estimated_memory_bytes[0]})",
+                level=logging.DEBUG,
+            )
+        else:
+            xp.get_default_pinned_memory_pool().free_all_blocks()
+            xp.cuda.set_pinned_memory_allocator(None)
+            log_once(
+                f"Estimated CPU memory peak over limit, disabling CuPy pinned memory pool ({limit_bytes} < {global_peak_estimated_memory_bytes[0]})",
+                level=logging.DEBUG,
+            )
 
     def _execute_method(
         self, method: MethodWrapper, block: DataSetBlock
