@@ -20,7 +20,12 @@ from httomo.runner.dataset_store_interfaces import (
     ReadableDataSetSink,
 )
 from httomo.utils import save_2d_snapshot
-from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
+from httomo.runner.gpu_utils import (
+    get_available_gpu_memory,
+    gpumem_cleanup,
+    gpu_enabled,
+    xp,
+)
 from httomo.runner.monitoring_interface import MonitoringInterface
 from httomo.runner.pipeline import Pipeline
 from httomo.runner.section import (
@@ -332,6 +337,11 @@ class TaskRunner:
         )
         self._check_params_for_sweep()
         self._load_datasets()
+
+        if gpu_enabled:
+            xp.get_default_pinned_memory_pool().free_all_blocks()
+            xp.cuda.set_pinned_memory_allocator(None)
+            log_once("Disabled CuPy pinned memory pool", logging.DEBUG)
 
     def _load_datasets(self):
         start_time = self._log_task_start(
