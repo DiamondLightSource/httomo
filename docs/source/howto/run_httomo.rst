@@ -419,18 +419,23 @@ block size happens to improve performance for the CPU-only section(s).
 :code:`--max-memory`
 ~~~~~~~~~~~~~~~~~~~~
 
-HTTomo supports running on both:
+HTTomo supports execution on both:
 
-- a compute cluster, where RAM on the host machine is often quite large
-- a personal machine, where RAM is not nearly as large
+-  compute clusters, where large amounts of system RAM are typically available
+-  personal workstations or laptops, where available RAM is often more limited
 
-This is done by a mechanism within HTTomo to hold data in RAM wherever there is
-enough RAM to do the required processing, and write data to a file if there is not
-enough RAM.
+To accommodate these different environments, HTTomo dynamically manages intermediate 
+data during pipeline execution. Whenever sufficient RAM is available, data is kept 
+in memory to maximise performance. If memory requirements exceed the available 
+RAM, HTTomo automatically stores intermediate data on disk and reloads it as needed.
 
-The :code:`--max-memory` flag is for telling HTTomo how much RAM the machine has,
-so then it can switch to using a file during execution of the pipeline if
-necessary.
+The :code:`--max-memory` option specifies the amount of RAM available to HTTomo.
+It sets the limit in terms of the maximum amount of the CPU memory per process available
+on the system. For instance, if you're running HTTomo on 1 process serially, you need
+to pass the value of the CPU memory available on your system, e.g., :code:`--max-memory 32G` would 
+set it to 32 Gigabyte. Providing an accurate value allows HTTomo to optimise memory usage 
+while avoiding out-of-memory errors.
+
 
 :code:`--save-snapshots`
 ~~~~~~~~~~~~~~~~~~~~~~~~
