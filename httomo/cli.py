@@ -171,7 +171,7 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     "--max-memory",
     type=click.STRING,
     default="0",
-    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)",
+    help="The maximum amount of the CPU memory per process available on the system (supports strings like 3.2G or bytes)",
 )
 @click.option(
     "--save-snapshots",
