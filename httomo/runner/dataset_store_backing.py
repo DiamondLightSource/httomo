@@ -52,7 +52,7 @@ def calculate_section_output_chunk_shape(
     for method in section.methods:
         if method.memory_gpu is None:
             continue
-        output_non_slice_dims = method.calculate_output_dims(input_non_slice_dims)
+        output_non_slice_dims = method.calculate_output_dims(output_non_slice_dims)
 
     output_chunk_shape = list(output_non_slice_dims)
     output_chunk_shape.insert(slicing_dim, chunk_shape[slicing_dim])
