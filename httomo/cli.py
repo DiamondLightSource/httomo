@@ -562,17 +562,18 @@ def estimate_cpu_memory(in_data_file: Path, pipeline_file: Path, nprocs: int) ->
 
     section_memory_peak = 0
     for idx in range(len(sections)):
+        mem, previewed_shape = estimate_section_memory(
+            nprocs,
+            0,
+            None,
+            dtype,
+            previewed_shape,
+            sections,
+            idx,
+        )
         section_memory_peak = max(
             section_memory_peak,
-            estimate_section_memory(
-                nprocs,
-                0,
-                None,
-                dtype,
-                previewed_shape,
-                sections,
-                idx,
-            ),
+            mem,
         )
 
     return section_memory_peak

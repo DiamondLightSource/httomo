@@ -74,7 +74,7 @@ def estimate_section_memory(
     sections: List[Section],
     section_idx: int,
     consider_pinned_memory_pool: bool = False,
-) -> int:
+) -> tuple[int, tuple[int, int, int]]:
     # Get chunk shape created by reader of section `n` (the current section) that will account
     # for padding. This chunk shape is based on the chunk shape written by the writer of
     # section `n - 1` (the previous section)
@@ -150,12 +150,26 @@ def estimate_section_memory(
         # See https://github.com/cupy/cupy/issues/9813
         cupy_transfer_overhead = total_mem
 
+    # Calculate the shape of the global data of the output of the section to pass back to the
+    # caller.
+    #
+    # NOTE: The caller will only use this if performing CPU memory estimation of the entire
+    # pipeline not at runtime of htttomo (ie, the `memory-check` CLI command). If performing
+    # CPU memory estimation of a section during runtime of httomo, the caller won't use this
+    # value.
+    current_section_slicing_dim = _get_slicing_dim(sections[section_idx].pattern) - 1
+    output_global_shape = list(output_chunk_shape)
+    output_global_shape[current_section_slicing_dim] = (
+        output_global_shape[current_section_slicing_dim] * nprocs
+    )
+
     return (
         padded_input_chunk_bytes
         + output_chunk_bytes
         + reslice_bytes
         + cupy_pinned_cpu_pool_memory
-        + cupy_transfer_overhead
+        + cupy_transfer_overhead,
+        output_global_shape,
     )
 
 
@@ -167,7 +181,7 @@ def determine_store_backing(
     global_shape: Tuple[int, int, int],
     section_idx: int,
 ) -> DataSetStoreBacking:
-    section_memory = estimate_section_memory(
+    section_memory, _ = estimate_section_memory(
         comm.size,
         comm.rank,
         comm.allgather,
