@@ -193,12 +193,15 @@ def test_parallel_pipe_LPRec3d_tomobar_i12_119647_preview(
         LPRec3d_tomobar,
         method=[
             "standard_tomo",
+            "remove_all_stripe",
         ],
         key=[
             "preview",
+            "normalize",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1200}},
+            True,
         ],
     )
 
