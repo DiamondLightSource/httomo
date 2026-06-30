@@ -324,6 +324,10 @@ def run(
         format_enum,
     )
 
+    for wrapper in pipeline_object:
+        wrapper.check()
+        wrapper.prep()
+
     if not does_contain_sweep:
         execute_high_throughput_run(
             pipeline_object,
