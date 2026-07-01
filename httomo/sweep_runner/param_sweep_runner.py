@@ -2,6 +2,8 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import tqdm
+
+from mpi4py import MPI
 from mpi4py.MPI import Comm
 
 import numpy as np
@@ -16,7 +18,7 @@ from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 from httomo.sweep_runner.side_output_manager import SideOutputManager
 from httomo.sweep_runner.stages import NonSweepStage, Stages, SweepStage
-from httomo.utils import catchtime, log_exception, log_once, search_max_slices_iterative
+from httomo.utils import catchtime, log_exception, log_rank, log_once, search_max_slices_iterative
 from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.dataset_store_interfaces import DataSetSource
@@ -319,8 +321,16 @@ def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
     from httomo_backends.methods_database.packages.backends.httomolibgpu.supporting_funcs.prep.phase import (
         _calc_memory_bytes_for_slices_paganin_filter,
     )
+    gpumem_cleanup()
 
     available_memory = get_available_gpu_memory(10.0)
+    available_memory_in_GB = round(available_memory / (1024**3), 2)
+    memory_str = (
+            f"The amount of the available GPU memory is {available_memory_in_GB} GB"
+        )
+    comm = MPI.COMM_WORLD
+    log_rank(memory_str, comm=comm)
+    
     angles_total = source.aux_data.angles_length
     det_X_length = source.chunk_shape[2]
 
@@ -339,6 +349,13 @@ def _slices_to_fit_memory_Paganin(source: DataSetSource) -> int:
             return 2**64
         finally:
             gpumem_cleanup()
-
-    gpumem_cleanup()
-    return search_max_slices_iterative(available_memory, get_mem_bytes)
+    
+    slices_max = 3
+    if comm.rank == 0:
+        # assuming here that the GPU devices have the same amount of memory
+        slices_max = search_max_slices_iterative(available_memory, get_mem_bytes)
+    comm.Barrier()
+    # Broadcast
+    if comm.size > 1:
+        slices_max = comm.bcast(slices_max, root=0)
+    return slices_max
