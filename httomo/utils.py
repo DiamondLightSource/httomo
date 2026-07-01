@@ -415,3 +415,11 @@ def clp2(x: int) -> int:
     x |= x >> 16
     x |= x >> 32
     return x + 1
+
+
+def get_available_system_memory_bytes(safety_margin_percent: float = 10):
+    # First two lines of 'free -t -b':
+    #                total        used        free      shared  buff/cache   available
+    # Mem:     33413799936 10897051648 11293478912   303587328 11639463936 22516748288
+    available_system_memory = int(os.popen("free -t -b").readlines()[1].split()[-1])
+    return int(available_system_memory * (1 - safety_margin_percent / 100))
