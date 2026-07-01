@@ -10,6 +10,7 @@ import httomo.method_wrappers.datareducer
 import httomo.method_wrappers.dezinging
 import httomo.method_wrappers.distortion_correction
 import httomo.method_wrappers.seam_blender
+import httomo.method_wrappers.average_frames
 import httomo.method_wrappers.images
 import httomo.method_wrappers.reconstruction
 import httomo.method_wrappers.rotation

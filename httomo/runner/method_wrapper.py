@@ -194,6 +194,7 @@ class MethodWrapper(Protocol):
         data_dtype: np.dtype,
         slicing_dim: int,
         non_slice_dims_shape: Tuple[int, int],
+        angles: np.ndarray,
         available_memory: int,
     ) -> Tuple[int, int]:
         """If it runs on GPU, determine the maximum number of slices that can fit in the
