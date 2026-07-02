@@ -7,6 +7,7 @@ from .generic import GenericMethodWrapper
 # import all other wrappers to make sure they are available to the factory function
 # (add imports here when createing new wrappers)
 import httomo.method_wrappers.datareducer
+import httomo.method_wrappers.sino360_to_180
 import httomo.method_wrappers.dezinging
 import httomo.method_wrappers.distortion_correction
 import httomo.method_wrappers.seam_blender
