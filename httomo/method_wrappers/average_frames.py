@@ -1,10 +1,6 @@
-from typing import Dict, Optional
-
-from mpi4py.MPI import Comm
-
 from httomo.method_wrappers.generic import GenericMethodWrapper
-from httomo.preview import PreviewConfig
-from httomo.runner.methods_repository_interface import MethodRepository
+from httomo.block_interfaces import T
+import numpy as np
 
 
 class AverageFramesWrapper(GenericMethodWrapper):
@@ -16,47 +12,27 @@ class AverageFramesWrapper(GenericMethodWrapper):
     def should_select_this_class(cls, module_path: str, method_name: str) -> bool:
         return "average_projection_frames" in method_name
 
-    @classmethod
-    def requires_preview(cls) -> bool:
-        return True
+    def _preprocess_data(self, block: T) -> T:
+        # when the angular preview is getting changed by averaging the angles should be changed accordingly
+        config_params = self._config_params
+        k = config_params["projection_averaging_factor"]
 
-    def __init__(
-        self,
-        method_repository: MethodRepository,
-        module_path: str,
-        method_name: str,
-        comm: Comm,
-        preview_config: PreviewConfig,
-        save_result: Optional[bool] = None,
-        output_mapping: Dict[str, str] = {},
-        **kwargs,
-    ):
-        super().__init__(
-            method_repository,
-            module_path,
-            method_name,
-            comm,
-            save_result,
-            output_mapping,
-            **kwargs,
-        )
-        self._update_params_from_preview(preview_config)
+        n_proj = block.data.shape[0]  # original data angular size
+        n_full = n_proj // k
+        remainder = n_proj % k
 
-    def _update_params_from_preview(self, preview_config: PreviewConfig) -> None:
-        """
-        Extract information from preview config to define the parameter values required for
-        distortion correction methods, and update `self._config_params`.
-        """
-        SHIFT_PARAM_NAME = "shift_xy"
-        STEP_PARAM_NAME = "step_xy"
-        shift_param_value = [
-            preview_config.detector_x.start,
-            preview_config.detector_y.start,
-        ]
-        step_param_value = [1, 1]
-        self.append_config_params(
-            {
-                SHIFT_PARAM_NAME: shift_param_value,
-                STEP_PARAM_NAME: step_param_value,
-            }
-        )
+        n_out = n_full + (remainder > 0)
+
+        averaged_angles = np.float32(np.empty((n_out,)))
+
+        # if n_full:
+        #     averaged[:n_full] = (
+        #         data[: n_full * k].reshape(n_full, k, *data.shape[1:]).mean(axis=1)
+        #     )
+
+        # if remainder:
+        #     averaged[-1] = data[n_full * k :].mean(axis=0)
+
+        # TODO: assertion on angles length and data shape
+        # block.angles_radians = block.angles_radians[0 : block.data.shape[0]]
+        return block
