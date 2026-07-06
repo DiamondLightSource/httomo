@@ -23,16 +23,18 @@ class AverageFramesWrapper(GenericMethodWrapper):
 
         n_out = n_full + (remainder > 0)
 
-        averaged_angles = np.float32(np.empty((n_out,)))
+        averaged_angles = np.empty(n_out, dtype=block.angles.dtype)
 
-        # if n_full:
-        #     averaged[:n_full] = (
-        #         data[: n_full * k].reshape(n_full, k, *data.shape[1:]).mean(axis=1)
-        #     )
+        if n_full:
+            averaged_angles[:n_full] = (
+                block.angles_radians[: n_full * k]
+                .reshape(n_full, k)
+                .mean(axis=1)
+            )
 
-        # if remainder:
-        #     averaged[-1] = data[n_full * k :].mean(axis=0)
+        if remainder:
+            averaged_angles[-1] = block.angles_radians[n_full * k :].mean()
 
         # TODO: assertion on angles length and data shape
-        # block.angles_radians = block.angles_radians[0 : block.data.shape[0]]
+        block.angles_radians = averaged_angles
         return block
