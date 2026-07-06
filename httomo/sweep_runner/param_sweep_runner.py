@@ -7,7 +7,12 @@ from mpi4py.MPI import Comm
 import numpy as np
 
 import httomo
-from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
+from httomo import globals
+from httomo.data.param_sweep_store import (
+    ParamSweepReaderHdf5,
+    ParamSweepWriter,
+    ParamSweepWriterHdf5,
+)
 from httomo.method_wrappers.images import ImagesWrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.block_split import BlockSplitter
@@ -42,6 +47,7 @@ class ParamSweepRunner:
             self._start_sweep_idx : self._stop_sweep_idx
         ]
         self._set_image_saver_params()
+        self._comm = comm
 
     @property
     def block(self) -> ParamSweepBlock:
@@ -212,8 +218,16 @@ class ParamSweepRunner:
 
     def execute_sweep(self):
         """Execute all param variations of the same method in the sweep"""
-        writer = ParamSweepWriter(len(self._sweep_values))
         method = self._stages.sweep.method
+        if method.method_name == "paganin_filter":
+            sweep_output_filepath = (
+                globals.run_out_dir / f"sweep-output-rank-{self._comm.rank}.h5"
+            )
+            writer = ParamSweepWriterHdf5(
+                len(self._sweep_values), sweep_output_filepath
+            )
+        else:
+            writer = ParamSweepWriter(len(self._sweep_values))
 
         log_once(f"Running {method.method_name} ({method.package_name})")
         log_once("    Beginning parameter sweep")
@@ -254,8 +268,10 @@ class ParamSweepRunner:
 
         log_once("    Finished parameter sweep")
 
-        reader = ParamSweepReader(writer)
+        reader = writer.make_reader()
         self._block = reader.read_sweep_results()
+        if isinstance(reader, ParamSweepReaderHdf5):
+            reader.finalize()
 
     def execute(self):
         """Load input data and execute all stages (before sweep, sweep, after sweep)"""
