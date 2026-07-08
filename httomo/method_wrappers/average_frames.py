@@ -35,6 +35,5 @@ class AverageFramesWrapper(GenericMethodWrapper):
         if remainder:
             averaged_angles[-1] = block.angles_radians[n_full * k :].mean()
 
-        # TODO: assertion on angles length and data shape
         block.angles_radians = averaged_angles
         return block

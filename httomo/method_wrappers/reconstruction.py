@@ -12,8 +12,7 @@ from httomo.utils import search_max_slices_iterative
 
 
 class ReconstructionWrapper(GenericMethodWrapper):
-    """Wraps reconstruction functions, limiting the length of the angles array
-    before calling the method."""
+    """Wraps reconstruction functions."""
 
     @classmethod
     def should_select_this_class(cls, module_path: str, method_name: str) -> bool:
@@ -23,6 +22,7 @@ class ReconstructionWrapper(GenericMethodWrapper):
         assert (
             self.pattern == Pattern.sinogram
         ), "reconstruction methods must be sinogram"
+        assert len(block.angles_radians) == block.data.shape[0]
         self._input_shape = block.data.shape
         return super()._preprocess_data(block)
 
