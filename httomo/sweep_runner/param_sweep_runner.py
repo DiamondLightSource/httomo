@@ -23,6 +23,10 @@ from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.dataset_store_interfaces import DataSetSource
 
+PAGANIN_SWEEP_VALUE_THRESHOLD = 50
+"""The number of sweep values for the paganin filter above which the sweep results should be
+written to an hdf5 file as opposed to kept in RAM."""
+
 
 class ParamSweepRunner:
     def __init__(
@@ -216,7 +220,10 @@ class ParamSweepRunner:
     def execute_sweep(self):
         """Execute all param variations of the same method in the sweep"""
         method = self._stages.sweep.method
-        if method.method_name == "paganin_filter":
+        if (
+            method.method_name == "paganin_filter"
+            and len(self._stages.sweep.values) > PAGANIN_SWEEP_VALUE_THRESHOLD
+        ):
             writer = ParamSweepWriter(
                 len(self._sweep_values),
                 self._comm,
