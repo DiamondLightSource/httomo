@@ -75,6 +75,9 @@ class ParamSweepReader(ParamSweepSource):
         if self.h5file is not None:
             self.h5file.close()
             self.h5file = None
+        if self._h5filename is not None:
+            self._h5filename.unlink()
+            self._h5filename = None
 
     @property
     def is_file_based(self) -> bool:
