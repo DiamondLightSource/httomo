@@ -143,3 +143,58 @@ def test_param_sweep_writer_reader_write_res_and_read(tmp_path: PathLike):
     np.testing.assert_array_equal(
         block_with_middle_slices.data[:, 1, :], SWEEP_RESULT_TWO_MID_SLICE
     )
+
+
+def test_writer_closes_file_on_finalize(mocker: MockerFixture, tmp_path: PathLike):
+    CONCAT_DIM = 1
+    BLOCK_SHAPE = (180, 3, 160)
+    block_data = np.arange(np.prod(BLOCK_SHAPE), dtype=np.float32).reshape(BLOCK_SHAPE)
+    aux_data = AuxiliaryData(np.ones(BLOCK_SHAPE[0], dtype=np.float32))
+    writer = ParamSweepWriter(
+        no_of_sweeps=1,
+        comm=COMM_WORLD,
+        temppath=tmp_path,
+        backing=DataSetStoreBacking.File,
+    )
+    writer.write_sweep_result(
+        ParamSweepBlock(
+            data=block_data,
+            aux_data=aux_data,
+            slicing_dim=CONCAT_DIM,
+        )
+    )
+    mock_fileclose = mocker.patch.object(writer.h5file, "close")
+    writer.finalize()
+    mock_fileclose.assert_called_once()
+
+
+def test_making_reader_closes_file_and_deletes(tmp_path: PathLike):
+    CONCAT_DIM = 1
+    BLOCK_SHAPE = (180, 3, 160)
+    block_data = np.arange(np.prod(BLOCK_SHAPE), dtype=np.float32).reshape(BLOCK_SHAPE)
+    aux_data = AuxiliaryData(np.ones(BLOCK_SHAPE[0], dtype=np.float32))
+    writer = ParamSweepWriter(
+        no_of_sweeps=1,
+        comm=COMM_WORLD,
+        temppath=tmp_path,
+        backing=DataSetStoreBacking.File,
+    )
+    writer.write_sweep_result(
+        ParamSweepBlock(
+            data=block_data,
+            aux_data=aux_data,
+            slicing_dim=CONCAT_DIM,
+        )
+    )
+    reader = writer.make_reader()
+
+    assert writer.h5file is None
+    assert writer.filename is not None
+    assert writer.filename.exists()
+    assert reader.filename == writer.filename
+    assert reader.h5file is not None
+    assert reader.h5file.get("data", None) is not None
+
+    reader.finalize()
+
+    assert not writer.filename.exists()
