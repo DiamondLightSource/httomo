@@ -38,6 +38,8 @@ class ParamSweepReader(ParamSweepSource):
         else:
             self._data = source._data
 
+        source.finalize()
+
     @property
     def no_of_sweeps(self) -> int:
         return self._no_of_sweeps
