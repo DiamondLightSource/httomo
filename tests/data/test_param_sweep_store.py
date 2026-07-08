@@ -1,29 +1,35 @@
+from os import PathLike
+
 import pytest
 import numpy as np
+from mpi4py.MPI import COMM_WORLD
 from pytest_mock import MockerFixture
 
 from httomo.data.param_sweep_store import ParamSweepWriter
 from httomo.runner.auxiliary_data import AuxiliaryData
+from httomo.runner.dataset_store_backing import DataSetStoreBacking
 from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 
 
-def make_param_sweep_writer() -> ParamSweepWriter:
+def make_param_sweep_writer(tmp_path: PathLike) -> ParamSweepWriter:
     NO_OF_SWEEPS = 5
-    return ParamSweepWriter(NO_OF_SWEEPS)
+    return ParamSweepWriter(NO_OF_SWEEPS, COMM_WORLD, tmp_path, DataSetStoreBacking.RAM)
 
 
-def test_param_sweep_writer_get_no_of_sweeps():
-    writer = make_param_sweep_writer()
+def test_param_sweep_writer_get_no_of_sweeps(tmp_path: PathLike):
+    writer = make_param_sweep_writer(tmp_path)
     assert writer.no_of_sweeps == 5
 
 
-def test_param_sweep_writer_get_concat_dim():
-    writer = make_param_sweep_writer()
+def test_param_sweep_writer_get_concat_dim(tmp_path: PathLike):
+    writer = make_param_sweep_writer(tmp_path)
     assert writer.concat_dim == 1
 
 
-def test_param_sweep_writer_get_single_shape_before_write_raises_error():
-    writer = make_param_sweep_writer()
+def test_param_sweep_writer_get_single_shape_before_write_raises_error(
+    tmp_path: PathLike,
+):
+    writer = make_param_sweep_writer(tmp_path)
     with pytest.raises(ValueError) as e:
         writer.single_shape
     assert (
@@ -31,15 +37,19 @@ def test_param_sweep_writer_get_single_shape_before_write_raises_error():
     ) in str(e)
 
 
-def test_param_sweep_writer_get_slices_per_sweep_before_write_raises_error():
-    writer = make_param_sweep_writer()
+def test_param_sweep_writer_get_slices_per_sweep_before_write_raises_error(
+    tmp_path: PathLike,
+):
+    writer = make_param_sweep_writer(tmp_path)
     with pytest.raises(ValueError) as e:
         writer.slices_per_sweep
     assert ("Slices per sweep isn't known until the first write has occurred") in str(e)
 
 
-def test_param_sweep_writer_get_total_shape_before_write_raises_error():
-    writer = make_param_sweep_writer()
+def test_param_sweep_writer_get_total_shape_before_write_raises_error(
+    tmp_path: PathLike,
+):
+    writer = make_param_sweep_writer(tmp_path)
     with pytest.raises(ValueError) as e:
         writer.total_shape
     assert (
@@ -48,8 +58,8 @@ def test_param_sweep_writer_get_total_shape_before_write_raises_error():
     ) in str(e)
 
 
-def test_param_sweep_write_make_reader_errors_if_data_none():
-    writer = make_param_sweep_writer()
+def test_param_sweep_write_make_reader_errors_if_data_none(tmp_path: PathLike):
+    writer = make_param_sweep_writer(tmp_path)
     with pytest.raises(ValueError) as e:
         writer.make_reader()
 
@@ -57,10 +67,10 @@ def test_param_sweep_write_make_reader_errors_if_data_none():
 
 
 def test_param_sweep_writer_write_sweep_result_transfers_gpu_arr_to_cpu(
-    mocker: MockerFixture,
+    mocker: MockerFixture, tmp_path: PathLike
 ):
     SWEEP_RES_SHAPE = (180, 3, 160)
-    writer = make_param_sweep_writer()
+    writer = make_param_sweep_writer(tmp_path)
     block = ParamSweepBlock(
         data=np.ones(SWEEP_RES_SHAPE, dtype=np.float32),
         aux_data=AuxiliaryData(angles=np.ones(SWEEP_RES_SHAPE[0], dtype=np.float32)),
@@ -77,7 +87,7 @@ def test_param_sweep_writer_write_sweep_result_transfers_gpu_arr_to_cpu(
     to_cpu_spy.assert_called_once()
 
 
-def test_param_sweep_writer_reader_write_res_and_read():
+def test_param_sweep_writer_reader_write_res_and_read(tmp_path: PathLike):
     CONCAT_DIM = 1
     SWEEP_RES_SHAPE = (180, 3, 160)
     NO_OF_SWEEPS = 2
@@ -86,7 +96,9 @@ def test_param_sweep_writer_reader_write_res_and_read():
         SWEEP_RES_SHAPE[1] * NO_OF_SWEEPS,
         SWEEP_RES_SHAPE[2],
     )
-    writer = ParamSweepWriter(NO_OF_SWEEPS)
+    writer = ParamSweepWriter(
+        NO_OF_SWEEPS, COMM_WORLD, tmp_path, DataSetStoreBacking.RAM
+    )
 
     # Define an array that will contain data representing the fake result of two parameter
     # sweep executions.

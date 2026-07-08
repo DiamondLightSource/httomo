@@ -8,14 +8,11 @@ import numpy as np
 
 import httomo
 from httomo import globals
-from httomo.data.param_sweep_store import (
-    ParamSweepReaderHdf5,
-    ParamSweepWriter,
-    ParamSweepWriterHdf5,
-)
+from httomo.data.param_sweep_store import ParamSweepWriter
 from httomo.method_wrappers.images import ImagesWrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.block_split import BlockSplitter
+from httomo.runner.dataset_store_backing import DataSetStoreBacking
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
@@ -220,14 +217,19 @@ class ParamSweepRunner:
         """Execute all param variations of the same method in the sweep"""
         method = self._stages.sweep.method
         if method.method_name == "paganin_filter":
-            sweep_output_filepath = (
-                globals.run_out_dir / f"sweep-output-rank-{self._comm.rank}.h5"
-            )
-            writer = ParamSweepWriterHdf5(
-                len(self._sweep_values), sweep_output_filepath
+            writer = ParamSweepWriter(
+                len(self._sweep_values),
+                self._comm,
+                globals.run_out_dir,
+                DataSetStoreBacking.File,
             )
         else:
-            writer = ParamSweepWriter(len(self._sweep_values))
+            writer = ParamSweepWriter(
+                len(self._sweep_values),
+                self._comm,
+                globals.run_out_dir,
+                DataSetStoreBacking.RAM,
+            )
 
         log_once(f"Running {method.method_name} ({method.package_name})")
         log_once("    Beginning parameter sweep")
@@ -270,7 +272,7 @@ class ParamSweepRunner:
 
         reader = writer.make_reader()
         self._block = reader.read_sweep_results()
-        if isinstance(reader, ParamSweepReaderHdf5):
+        if reader.is_file_based:
             reader.finalize()
 
     def execute(self):
