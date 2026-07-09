@@ -228,6 +228,10 @@ def FBP2d_astra():
 def FBP3d_tomobar_denoising():
     return "docs/source/pipelines_full/FBP3d_tomobar_denoising.yaml"
 
+@pytest.fixture
+def angles_averaging():
+    return "docs/source/pipelines_full/angles_averaging.yaml"
+
 
 @pytest.fixture
 def FISTA3d_tomobar():
