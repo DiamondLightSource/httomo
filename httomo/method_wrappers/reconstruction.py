@@ -2,7 +2,7 @@ import numpy as np
 from httomo.block_interfaces import T, Block
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.method_wrapper import MethodParameterDictType
-
+from httomo.utils import log_once
 
 from typing import Any, Dict, Optional, Tuple
 
@@ -44,6 +44,16 @@ class ReconstructionWrapper(GenericMethodWrapper):
             len(self.parameters) >= 2
         ), "recon methods always take data + angles as the first 2 parameters"
         updated_params = {**dict_params, self.parameters[1]: dataset.angles_radians}
+        if "detector_pad" not in dict_params:
+            updated_params.update({"detector_pad": 0})
+        else:
+            if dict_params["detector_pad"]:
+                det_half = dataset.data.shape[2] // 2
+                padded_value_exact = int(np.sqrt(2 * (det_half**2))) - det_half
+                padded_add_margin = padded_value_exact // 2
+                dict_params["detector_pad"] = padded_value_exact + padded_add_margin
+                detpad_str = f"    The calculated 'detector_pad' value is {dict_params["detector_pad"]}"
+                log_once(detpad_str)
         return super()._build_kwargs(updated_params, dataset)
 
     def _calculate_max_slices_iterative(
