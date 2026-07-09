@@ -27,9 +27,7 @@ class AverageFramesWrapper(GenericMethodWrapper):
 
         if n_full:
             averaged_angles[:n_full] = (
-                block.angles_radians[: n_full * k]
-                .reshape(n_full, k)
-                .mean(axis=1)
+                block.angles_radians[: n_full * k].reshape(n_full, k).mean(axis=1)
             )
 
         if remainder:

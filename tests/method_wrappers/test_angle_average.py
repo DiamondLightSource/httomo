@@ -9,6 +9,7 @@ import numpy as np
 from mpi4py import MPI
 from pytest_mock import MockerFixture
 
+
 def test_angle_averaging(mocker: MockerFixture):
     GLOBAL_SHAPE = (10, 20, 30)
 
@@ -26,14 +27,16 @@ def test_angle_averaging(mocker: MockerFixture):
         "average_projection_frames_tester",
         MPI.COMM_WORLD,
         make_mock_preview_config(mocker),
-        projection_averaging_factor = 2,
+        projection_averaging_factor=2,
     )
     assert isinstance(wrp, AverageFramesWrapper)
 
     aux_data = AuxiliaryData(
         angles=2.0 * np.ones(GLOBAL_SHAPE[0] + 10, dtype=np.float32)
     )
-    data = np.ones(GLOBAL_SHAPE, dtype=np.float32) # assuming the data already averaged here by factor of 2
+    data = np.ones(
+        GLOBAL_SHAPE, dtype=np.float32
+    )  # assuming the data already averaged here by factor of 2
     input = DataSetBlock(
         data[:, 0:3, :],
         slicing_dim=1,
