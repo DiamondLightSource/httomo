@@ -207,7 +207,7 @@ def test_angles_averaging_LPRec_i12_119647_preview(
             "/entry/imaging/data",
             "/entry/instrument/imaging/image_key",
             {"data_path": "/entry/imaging_sum/gts_cs_theta"},
-            {"detector_y": {"start": 500, "stop": 1500}},
+            {"detector_y": {"start": 800, "stop": 1200}},
             12,
         ],
     )
