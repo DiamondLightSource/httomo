@@ -206,3 +206,17 @@ class MethodWrapper(Protocol):
         something persists afterwards.
         """
         ...  # pragma: nocover
+
+    def check(self) -> None:
+        """
+        Perform any checks necessary to ensure that the method is capable of executing on the
+        machine (for example, if it's a GPU method, check that execution is on a machine with a
+        GPU that is accessible).
+        """
+        ...  # pragma: nocover
+
+    def prep(self) -> None:
+        """
+        Perform any preparation needed prior to beginning pipeline execution.
+        """
+        ...  # pragma: nocover

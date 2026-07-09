@@ -213,7 +213,7 @@ def test_generic_fails_for_gpumethods_with_no_gpu(mocker: MockerFixture):
             "fake_method",
             MPI.COMM_WORLD,
             make_mock_preview_config(mocker),
-        )
+        ).check()
 
     assert "GPU is not available" in str(e)
 
