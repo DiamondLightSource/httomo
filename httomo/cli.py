@@ -179,6 +179,12 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     help="Save intermediate images (snapshots) from some methods in the pipeline.",
 )
 @click.option(
+    "--bits_sweep_images",
+    type=click.INT,
+    default=32,
+    help="Change the bit depth of saved tiff images in the sweep run from default 32 bit to 16 or 8 bit tiffs.",
+)
+@click.option(
     "--monitor",
     type=click.STRING,
     multiple=True,
@@ -257,6 +263,7 @@ def run(
     output_folder_name: Optional[Path],
     gpu_id: int,
     save_all: bool,
+    bits_sweep_images: int,
     reslice_dir: Union[Path, None],
     max_cpu_slices: int,
     max_memory: str,
@@ -320,6 +327,7 @@ def run(
             else pipeline
         ),
         save_all,
+        bits_sweep_images,
         method_wrapper_comm,
         format_enum,
     )
@@ -491,6 +499,7 @@ def generate_pipeline(
     in_data_file: Path,
     pipeline: Union[Path, str],
     save_all: bool,
+    bits_sweep_images: int,
     method_wrapper_comm: MPI.Comm,
     pipeline_format: PipelineFormat,
 ) -> Pipeline:
@@ -504,7 +513,9 @@ def generate_pipeline(
     pipeline_object = init_UiLayer.build_pipeline()
 
     # perform transformations on pipeline
-    tr = TransformLayer(comm=method_wrapper_comm, save_all=save_all)
+    tr = TransformLayer(
+        comm=method_wrapper_comm, save_all=save_all, bits_sweep_images=bits_sweep_images
+    )
     pipeline_object = tr.transform(pipeline_object)
 
     return pipeline_object
