@@ -138,13 +138,21 @@ class GenericMethodWrapper(MethodWrapper):
             self._query.save_result_default() if save_result is None else save_result
         )
 
-        if self.is_gpu and not gpu_enabled:
-            raise ValueError("GPU is not available, please use only CPU methods")
-
         self._side_output: Dict[str, Any] = dict()
 
         self._gpu_time_info = GpuTimeInfo()
 
+    def check(self) -> None:
+        """
+        Raises
+        ------
+        ValueError
+            If the method is a GPU method and the machine is not GPU-enabled.
+        """
+        if self.is_gpu and not gpu_enabled:
+            raise ValueError("GPU is not available, please use only CPU methods")
+
+    def prep(self) -> None:
         if gpu_enabled:
             _id = httomo.globals.gpu_id
             self._gpu_id = get_gpu_id() if _id == -1 else _id

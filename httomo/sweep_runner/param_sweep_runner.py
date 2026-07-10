@@ -241,7 +241,7 @@ class ParamSweepRunner:
             unit="value",
             ascii=True,
         )
-        for val, _ in zip(self._sweep_values, progress):
+        for val in progress:
             # Blocks are modified in-place by method wrappers, so a new block must be created
             # that contains a copy of the input data to the sweep stage
             block = ParamSweepBlock(

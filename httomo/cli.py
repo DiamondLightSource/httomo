@@ -171,7 +171,7 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     "--max-memory",
     type=click.STRING,
     default="0",
-    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)",
+    help="The maximum amount of the CPU memory per process available on the system (supports strings like 3.2G or bytes)",
 )
 @click.option(
     "--save-snapshots",
@@ -323,6 +323,10 @@ def run(
         method_wrapper_comm,
         format_enum,
     )
+
+    for wrapper in pipeline_object:
+        wrapper.check()
+        wrapper.prep()
 
     if not does_contain_sweep:
         execute_high_throughput_run(
@@ -539,7 +543,12 @@ def execute_sweep_run(pipeline: Pipeline, global_comm: MPI.Comm) -> None:
     ParamSweepRunner(pipeline, global_comm).execute()
 
 
-def estimate_cpu_memory(in_data_file: Path, pipeline_file: Path, nprocs: int) -> int:
+def estimate_cpu_memory(
+    in_data_file: Path,
+    pipeline_file: Path,
+    nprocs: int,
+    shape: Optional[tuple[int, int, int]] = None,
+) -> int:
     pipeline = generate_pipeline(
         in_data_file, pipeline_file, False, MPI.COMM_WORLD, PipelineFormat.Yaml
     )
@@ -551,14 +560,17 @@ def estimate_cpu_memory(in_data_file: Path, pipeline_file: Path, nprocs: int) ->
         dtype = dataset.dtype
         full_shape = dataset.shape
 
-    preview_config = parse_preview(
-        config[0]["parameters"].get("preview", None), full_shape
-    )
-    previewed_shape = (
-        preview_config.angles.stop - preview_config.angles.start,
-        preview_config.detector_y.stop - preview_config.detector_y.start,
-        preview_config.detector_x.stop - preview_config.detector_x.start,
-    )
+    if shape is None:
+        preview_config = parse_preview(
+            config[0]["parameters"].get("preview", None), full_shape
+        )
+        previewed_shape = (
+            preview_config.angles.stop - preview_config.angles.start,
+            preview_config.detector_y.stop - preview_config.detector_y.start,
+            preview_config.detector_x.stop - preview_config.detector_x.start,
+        )
+    else:
+        previewed_shape = shape
 
     section_memory_peak = 0
     for idx in range(len(sections)):
