@@ -191,22 +191,13 @@ def test_angles_averaging_LPRec_i12_119647_preview(
         angles_averaging,
         method=[
             "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
             "average_projection_frames",
         ],
         key=[
-            "data_path",
-            "image_key_path",
-            "rotation_angles",
             "preview",
             "projection_averaging_factor",
         ],
         value=[
-            "/entry/imaging/data",
-            "/entry/instrument/imaging/image_key",
-            {"data_path": "/entry/imaging_sum/gts_cs_theta"},
             {"detector_y": {"start": 800, "stop": 1200}},
             12,
         ],
@@ -222,7 +213,7 @@ def test_angles_averaging_LPRec_i12_119647_preview(
     output, error = process.communicate()
     print(output)
 
-    files = get_files(output_folder)
+    # files = get_files(output_folder)
 
     # #: check the generated reconstruction (hdf5 file)
     # h5_files = list(filter(lambda x: ".h5" in x, files))
