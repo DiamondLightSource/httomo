@@ -28,10 +28,12 @@ class TransformLayer:
         comm: MPI.Comm,
         repo=MethodDatabaseRepository(),
         save_all=False,
+        bits_sweep_images=32,
         out_dir: Optional[os.PathLike] = None,
     ):
         self._repo = repo
         self._save_all = save_all
+        self._bits_sweep_images = bits_sweep_images
         self._comm = comm
         self._out_dir = out_dir if out_dir is not None else httomo.globals.run_out_dir
 
@@ -162,6 +164,7 @@ class TransformLayer:
                         task_id=f"saveimage_sweep_{m.task_id}",
                         subfolder_name="images_sweep_" + str(m.method_name),
                         axis=1,
+                        bit_depth=self._bits_sweep_images,
                     ),
                 )
                 sweep_before = True
