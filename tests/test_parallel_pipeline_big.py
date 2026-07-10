@@ -229,7 +229,7 @@ def test_angles_averaging_LPRec_i12_119647_preview(
     data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
 
     path_to_data = "data/"
-    h5_file_name = "FBP3d_tomobar"
+    h5_file_name = "LPRec3d_tomobar"
     for file_to_open in h5_files:
         if h5_file_name in file_to_open:
             h5f = h5py.File(file_to_open, "r")
