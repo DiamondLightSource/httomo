@@ -228,6 +228,7 @@ def FBP2d_astra():
 def FBP3d_tomobar_denoising():
     return "docs/source/pipelines_full/FBP3d_tomobar_denoising.yaml"
 
+
 @pytest.fixture
 def angles_averaging():
     return "docs/source/pipelines_full/angles_averaging.yaml"
@@ -341,6 +342,12 @@ def FBP3d_tomobar_i12_119647_npz():
 def FBP2d_astra_i12_119647_npz():
     # 10 slices numpy array
     return np.load("tests/test_data/raw_data/i12/FBP2d_astra_i12_119647.npz")
+
+
+@pytest.fixture
+def angle_average_LPrec_i12_119647_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/i12/angle_average_LPrec_i12_119647.npz")
 
 
 @pytest.fixture
