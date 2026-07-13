@@ -146,7 +146,7 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
 )
 @click.option(
     "--save-all",
-    type=click.BOOL,    
+    type=click.BOOL,
     is_flag=True,
     help="Save intermediate datasets for all tasks in the pipeline. Set to True or False.",
 )
