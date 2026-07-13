@@ -179,7 +179,7 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     help="Save intermediate images (snapshots) from some methods in the pipeline.",
 )
 @click.option(
-    "--bits_sweep_images",
+    "--bits-sweep-images",
     type=click.INT,
     default=32,
     help="Change the bit depth of saved tiff images in the sweep run from default 32 bit to 16 or 8 bit tiffs.",
