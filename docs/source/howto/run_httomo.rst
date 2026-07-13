@@ -226,8 +226,8 @@ The :code:`run` command
     Options:
       --output-folder-name DIRECTORY  Define the name of the output folder created
                                       by HTTomo
-      --save-all                      Save intermediate datasets for all tasks in
-                                      the pipeline.
+      --save-all BOOL                 Save intermediate datasets for all tasks in
+                                      the pipeline. Set to True or False.
       --gpu-id INTEGER                The GPU ID of the device to use.
       --reslice-dir DIRECTORY         Directory for temporary files potentially
                                       needed for reslicing (defaults to output
@@ -237,6 +237,12 @@ The :code:`run` command
       --max-memory TEXT               Limit the amount of memory used by the
                                       pipeline to the given memory (supports
                                       strings like 3.2G or bytes)
+      --save-snapshots BOOL           Save intermediate images (snapshots) from
+                                      some methods in the pipeline. Set to True or
+                                      False.
+      --bits-sweep-images INTEGER     Change the bit depth of saved tiff images in
+                                      the sweep run from default 32 bit to 16 or 8
+                                      bit tiffs.
       --monitor TEXT                  Add monitor to the runner (can be given
                                       multiple times). Available monitors: bench,
                                       summary
@@ -301,7 +307,7 @@ directory created by HTTomo would be
 Options/flags
 #############
 
-The :code:`run` command has 18 options/flags:
+The :code:`run` command has 19 options/flags:
 
 - :code:`--output-folder-name`
 - :code:`--save-all`
@@ -310,6 +316,7 @@ The :code:`run` command has 18 options/flags:
 - :code:`--max-cpu-slices`
 - :code:`--max-memory`
 - :code:`--save-snapshots`
+- :code:`--bits-sweep-images`
 - :code:`--monitor`
 - :code:`--monitor-output`
 - :code:`--intermediate-format`
@@ -352,11 +359,6 @@ following conditions is satisfied:
 However, there are certain cases such as debugging, where saving the output of
 all methods to files in the output directory is beneficial. This flag is a quick
 way of doing so.
-
-:code:`--gpu-id`
-~~~~~~~~~~~~~~~~
-
-TODO
 
 :code:`--reslice-dir`
 ~~~~~~~~~~~~~~~~~~~~~
@@ -452,6 +454,12 @@ where issues are introduced in the pipeline.
 
 Enabling snapshots incurs almost no additional computational cost, unlike the :code:`--save-all` 
 flag, which requires saving the entire dataset into a file for each method.
+
+:code:`--bits-sweep-images`
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This flag allows to set the bit depth for tiff images saved during :ref:`parameter_sweeping`. By default,
+HTTomo will use the bit-depth of the data, select here 8, 16 or 32-bit (default).
 
 :code:`--monitor`
 ~~~~~~~~~~~~~~~~~

@@ -146,8 +146,9 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
 )
 @click.option(
     "--save-all",
+    type=click.BOOL,    
     is_flag=True,
-    help="Save intermediate datasets for all tasks in the pipeline.",
+    help="Save intermediate datasets for all tasks in the pipeline. Set to True or False.",
 )
 @click.option(
     "--gpu-id",
@@ -175,8 +176,9 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
 )
 @click.option(
     "--save-snapshots",
+    type=click.BOOL,
     is_flag=True,
-    help="Save intermediate images (snapshots) from some methods in the pipeline.",
+    help="Save intermediate images (snapshots) from some methods in the pipeline. Set to True or False.",
 )
 @click.option(
     "--bits-sweep-images",
