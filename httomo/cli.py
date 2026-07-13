@@ -561,7 +561,7 @@ def estimate_cpu_memory(
     shape: Optional[tuple[int, int, int]] = None,
 ) -> int:
     pipeline = generate_pipeline(
-        in_data_file, pipeline_file, False, MPI.COMM_WORLD, PipelineFormat.Yaml
+        in_data_file, pipeline_file, False, 32, MPI.COMM_WORLD, PipelineFormat.Yaml
     )
     sections = sectionize(pipeline)
     config = yaml_loader(pipeline_file)
