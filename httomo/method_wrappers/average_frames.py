@@ -23,6 +23,9 @@ class AverageFramesWrapper(GenericMethodWrapper):
 
         n_out = n_full + (remainder > 0)
 
+        if len(block.angles_radians) == n_out:
+            return block
+
         averaged_angles = np.empty(n_out, dtype=block.angles.dtype)
 
         if n_full:
