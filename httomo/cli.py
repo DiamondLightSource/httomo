@@ -430,7 +430,7 @@ def initialise_output_dir_copy_files_inject_defaults(
 ) -> None:
     """This function does the following:
     - creates output folder
-    - copies the distortion coefficient file (if provided)
+    - if distortion coefficient file is provided copies all parameters to yaml pipeline
     - injects omitted default parameters into the pipeline file
     - copies the YAML or JSON pipeline file
     """
@@ -443,12 +443,7 @@ def initialise_output_dir_copy_files_inject_defaults(
     # If pipeline is a file path, copy it to output directory
     if isinstance(pipeline, Path):
         pipeline_conf = yaml_loader(pipeline)
-        distortion_coeff_path = _get_distortion_coeff_path(pipeline_conf)
-        if distortion_coeff_path is not None:
-            shutil.copyfile(
-                distortion_coeff_path,
-                Path(httomo.globals.run_out_dir) / "dist_coeff.txt",
-            )
+        _inject_distortion_coeff_values_into_method(pipeline_conf)
         path_to_pipeline = pipeline
         path_to_saved_pipeline = Path(httomo.globals.run_out_dir) / pipeline.name
         # if does_contain_sweep do not inject default parameters due to issue around "sweep" aliases in yaml
@@ -489,12 +484,23 @@ def _substitute_omitted_default_values(
     return pipeline_conf
 
 
-def _get_distortion_coeff_path(pipeline_conf: PipelineConfig) -> Union[None, Path]:
-    distortion_coeff_path = None
+def _inject_distortion_coeff_values_into_method(
+    pipeline_conf: PipelineConfig,
+) -> PipelineConfig:
     for method in pipeline_conf:
         if "distortion_correction" in method["method"]:
             distortion_coeff_path = method["parameters"]["metadata_path"]
-    return distortion_coeff_path
+            if distortion_coeff_path is not None:
+                # inject values from the text file into parameters of the method
+                with open(distortion_coeff_path) as f:
+                    xcenter, ycenter, *list_fact = (
+                        float(line.split()[-1]) for line in f
+                    )
+                method["parameters"]["metadata_path"] = None
+                method["parameters"]["xcenter"] = xcenter
+                method["parameters"]["ycenter"] = ycenter
+                method["parameters"]["list_fact"] = list_fact
+    return pipeline_conf
 
 
 def generate_pipeline(
