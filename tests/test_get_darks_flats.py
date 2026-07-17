@@ -299,6 +299,81 @@ def test_get_darks_flats_different_file(preview_config: PreviewConfig):
     np.testing.assert_array_equal(loaded_darks, darks)
 
 
+@pytest.mark.parametrize(
+    "preview_config",
+    [
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=128),
+            detector_x=PreviewDimConfig(start=0, stop=160),
+        ),
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=10),
+            detector_x=PreviewDimConfig(start=0, stop=160),
+        ),
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=10, stop=20),
+            detector_x=PreviewDimConfig(start=0, stop=160),
+        ),
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=128),
+            detector_x=PreviewDimConfig(start=0, stop=10),
+        ),
+        PreviewConfig(
+            angles=PreviewDimConfig(start=0, stop=180),
+            detector_y=PreviewDimConfig(start=0, stop=128),
+            detector_x=PreviewDimConfig(start=10, stop=20),
+        ),
+    ],
+    ids=[
+        "no_cropping",
+        "crop_det_y_start_0",
+        "crop_det_y_start_10",
+        "crop_det_x_start_0",
+        "crop_det_x_start_10",
+    ],
+)
+def test_get_darks_flats_different_file_and_paths(preview_config: PreviewConfig):
+    DARKS_CONFIG = DarksFlatsFileConfig(
+        file=Path(__file__).parent
+        / "test_data/i12/separate_flats_darks/dark_field_different_path.h5",
+        data_path="/tomo/data",
+        image_key_path=None,
+    )
+    FLATS_CONFIG = DarksFlatsFileConfig(
+        file=Path(__file__).parent / "test_data/i12/separate_flats_darks/flat_field.h5",
+        data_path="/1-NoProcessPlugin-tomo/data",
+        image_key_path=None,
+    )
+
+    loaded_darks, loaded_flats = get_darks_flats(
+        DARKS_CONFIG,
+        FLATS_CONFIG,
+        preview_config,
+        np.uint16,
+    )
+
+    with h5py.File(DARKS_CONFIG.file, "r") as f:
+        darks = f[DARKS_CONFIG.data_path][
+            :,
+            preview_config.detector_y.start : preview_config.detector_y.stop,
+            preview_config.detector_x.start : preview_config.detector_x.stop,
+        ]
+
+    with h5py.File(FLATS_CONFIG.file, "r") as f:
+        flats = f[FLATS_CONFIG.data_path][
+            :,
+            preview_config.detector_y.start : preview_config.detector_y.stop,
+            preview_config.detector_x.start : preview_config.detector_x.stop,
+        ]
+
+    np.testing.assert_array_equal(loaded_flats, flats)
+    np.testing.assert_array_equal(loaded_darks, darks)
+
+
 def test_ignore_darks_get_separate_flats():
     DARKS_CONFIG = None
     FLATS_CONFIG = DarksFlatsFileConfig(
