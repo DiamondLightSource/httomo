@@ -211,6 +211,15 @@ def get_darks_flats(
     if (
         darks_config is not None
         and flats_config is not None
+        and darks_config.data_path != flats_config.data_path
+    ):
+        darks = get_separate(darks_config, ImageType.Dark)
+        flats = get_separate(flats_config, ImageType.Flat)
+        return darks, flats
+
+    if (
+        darks_config is not None
+        and flats_config is not None
         and darks_config.file != flats_config.file
     ):
         darks = get_separate(darks_config, ImageType.Dark)
