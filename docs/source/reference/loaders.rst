@@ -143,7 +143,7 @@ Files that do not contain image keys
 These are the files without the image keys that contain only flats or darks in two separate files.
 Here one needs to add :code:`darks` and :code:`flats` parameters to the loader parameters with the following fields (see the example below): 
 
-- :code:`file`, the path to the hdf5/NeXus file containing the darks/flats
+- :code:`file`, the path to the hdf5/NeXus file containing the darks/flats. The :code:`input_data` keyword can be also used, see more info bellow. 
 - :code:`data_path`, the dataset within the hdf5/NeXus file that contains the
   darks/flats
 
@@ -159,6 +159,24 @@ Here one needs to add :code:`darks` and :code:`flats` parameters to the loader p
         flats:
           file: path/to/new/file.nxs
           data_path: /entry1/tomo_entry/data/data
+
+If darks and/or flats are in the same dataset as the input dataset, one can use the :code:`input_data` shortcut for the :code:`file` field. For instance,
+in the situation when darks and flats are the part of the same input dataset: 
+
+.. code-block:: yaml
+   :emphasize-lines: 5,8
+
+
+    - method: standard_tomo
+      module_path: httomo.data.hdf.loaders
+      parameters:
+        darks:
+          file: input_data
+          data_path: /exchange/darks
+        flats:
+          file: input_data
+          data_path: /exchange/flats
+
 
 Files with image keys
 +++++++++++++++++++++
@@ -183,24 +201,6 @@ in the older scan should be ignored. In this instance, we need to provide a para
           data_path: /entry1/tomo_entry/data/data
           image_key_path: /entry1/tomo_entry/instrument/detector/image_key 
 
-If darks and/or flats are in the same dataset as the input dataset, one can use the :code:`input_data` shortcut for :code:`file` fields. For instance,
-in the situation when darks and flats are the part of the same input dataset, but there are no keys: 
-
-.. code-block:: yaml
-   :emphasize-lines: 7,11
-
-
-    - method: standard_tomo
-      module_path: httomo.data.hdf.loaders
-      parameters:
-        darks:
-          file: input_data
-          data_path: /exchange/darks
-          image_key_path: null
-        flats:
-          file: input_data
-          data_path: /exchange/flats
-          image_key_path: null 
 
 Data without darks/flats
 ++++++++++++++++++++++++
