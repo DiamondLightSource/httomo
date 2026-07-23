@@ -1,8 +1,13 @@
 from __future__ import annotations
+from os import PathLike
+from pathlib import Path
 from typing import Literal, Optional, Tuple
 
+from mpi4py import MPI
 import numpy as np
+import h5py
 
+from httomo.runner.dataset_store_backing import DataSetStoreBacking
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
 from httomo.sweep_runner.param_sweep_store_interfaces import ParamSweepSource
@@ -23,6 +28,17 @@ class ParamSweepReader(ParamSweepSource):
         ), "Reader should be created from writer with data not `None`"
         self._data = source._data
         self._aux_data = source.aux_data
+        self._h5filename: Optional[Path] = None
+        self.h5file: Optional[h5py.File] = None
+
+        if source.is_file_based:
+            self._h5filename = source.filename
+            self.h5file = h5py.File(source.filename, "r")
+            self._data = self.h5file["/data"]
+        else:
+            self._data = source._data
+
+        source.finalize()
 
     @property
     def no_of_sweeps(self) -> int:
@@ -56,18 +72,52 @@ class ParamSweepReader(ParamSweepSource):
             slicing_dim=self.extract_dim,
         )
 
+    def finalize(self):
+        self._data = None
+        if self.h5file is not None:
+            self.h5file.close()
+            self.h5file = None
+        if self._h5filename is not None:
+            self._h5filename.unlink()
+            self._h5filename = None
+
+    @property
+    def is_file_based(self) -> bool:
+        return self._h5filename is not None
+
+    @property
+    def filename(self) -> Optional[Path]:
+        return self._h5filename
+
 
 class ParamSweepWriter:
     """Write parameter sweep results, concatenating them along the `detector_y` dim"""
 
-    def __init__(self, no_of_sweeps: int) -> None:
+    def __init__(
+        self,
+        no_of_sweeps: int,
+        comm: MPI.Comm,
+        temppath: PathLike,
+        backing: DataSetStoreBacking,
+    ) -> None:
         self._concat_dim: Literal[1] = 1
         self._no_of_sweeps = no_of_sweeps
         self._no_of_sweeps_written: int = 0
         self._single_shape: Optional[Tuple[int, int, int]] = None
         self._total_shape: Optional[Tuple[int, int, int]] = None
-        self._data: Optional[np.ndarray] = None
+        self._data: Optional[np.ndarray | h5py.Dataset] = None
         self._slices_per_sweep: Optional[int] = None
+        self._comm = comm
+        self._backing = backing
+        self._temppath = temppath
+        self._h5filename: Optional[Path] = None
+        self.h5file: Optional[h5py.File] = None
+
+        if backing == DataSetStoreBacking.File:
+            self._h5filename = (
+                Path(self._temppath) / f"sweep-output-rank-{self._comm.rank}.h5"
+            )
+            self.h5file = h5py.File(self._h5filename, "w")
 
     @property
     def no_of_sweeps(self) -> int:
@@ -128,8 +178,14 @@ class ParamSweepWriter:
                 self.single_shape[2],
             )
             self._slices_per_sweep = self.single_shape[self.concat_dim]
-            self._data = np.empty(shape=self.total_shape, dtype=block.data.dtype)
             self._aux_data = block.aux_data
+            if self._backing == DataSetStoreBacking.RAM:
+                self._data = np.empty(shape=self.total_shape, dtype=block.data.dtype)
+            elif self._backing == DataSetStoreBacking.File:
+                assert self.h5file is not None
+                self._data = self.h5file.create_dataset(
+                    "/data", shape=self.total_shape, dtype=block.data.dtype
+                )
 
         slices = [slice(None, None, 1)] * 3
         sweep_res_start = self.no_of_sweeps_written * self.slices_per_sweep
@@ -138,5 +194,22 @@ class ParamSweepWriter:
             sweep_res_start + self.slices_per_sweep,
             1,
         )
+        assert (
+            self._data is not None
+        ), "Numpy array or hdf5 file should be created prior to writing sweep result"
         self._data[slices[0], slices[1], slices[2]] = block.data
         self.increment_no_of_sweeps_written()
+
+    def finalize(self):
+        self._data = None
+        if self.h5file is not None:
+            self.h5file.close()
+            self.h5file = None
+
+    @property
+    def is_file_based(self) -> bool:
+        return self._backing is DataSetStoreBacking.File
+
+    @property
+    def filename(self) -> Optional[Path]:
+        return self._h5filename
