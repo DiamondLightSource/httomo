@@ -182,7 +182,26 @@ in the older scan should be ignored. In this instance, we need to provide a para
           file: path/to/new/file.nxs
           data_path: /entry1/tomo_entry/data/data
           image_key_path: /entry1/tomo_entry/instrument/detector/image_key 
-        
+
+If darks and/or flats are in the same dataset as the input dataset, one can use the :code:`input_data` shortcut for :code:`file` fields. For instance,
+in the situation when darks and flats are the part of the same input dataset, but there are no keys: 
+
+.. code-block:: yaml
+   :emphasize-lines: 7,11
+
+
+    - method: standard_tomo
+      module_path: httomo.data.hdf.loaders
+      parameters:
+        darks:
+          file: input_data
+          data_path: /exchange/darks
+          image_key_path: null
+        flats:
+          file: input_data
+          data_path: /exchange/flats
+          image_key_path: null 
+
 Data without darks/flats
 ++++++++++++++++++++++++
 
