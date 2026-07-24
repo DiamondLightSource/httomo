@@ -1,3 +1,5 @@
+.. _installation_main:
+
 Installation Guide
 ******************
 
@@ -7,6 +9,9 @@ conda environment.
 However, there are certain constraints under which a virtual environment can be used, due to
 the dependence on an MPI implementation, the hdf5 library, CUDA libraries, and whether the user
 requires using :code:`tomopy` methods in pipelines.
+
+.. note:: Installation bellow assumes that OS is Linux and CUDA-compatible GPU device is available. See also :ref:`installation_other`, if applicable. 
+
 
 Conda environment
 =================
@@ -50,3 +55,24 @@ A virtual environment can be used if the following conditions are met:
    $ pip install cupy-cuda13x # install cupy-cuda13x if CUDA library/CUDA toolkit version is 13.x
    $ pip install aiofiles astra-toolbox click graypy hdf5plugin loguru nvtx pillow pyyaml scikit-image scipy tqdm
    $ pip install --no-deps httomo httomolib httomolibgpu httomo-backends tomobar
+
+.. _installation_other:
+
+Installation on Other Platforms
+===============================
+
+.. toctree::
+   :maxdepth: 2
+
+   installation_variants/installation_windows
+   installation_variants/installation_mac
+
+.. _running_tests:
+
+Run tests (optional)
+====================
+
+.. toctree::
+   :maxdepth: 2
+
+   running_tests
