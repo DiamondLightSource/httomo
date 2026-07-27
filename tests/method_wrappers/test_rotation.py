@@ -160,6 +160,7 @@ def test_rotation_gathers_single_sino_slice(
     comm = mocker.MagicMock()
     comm.rank = rank
     comm.size = 2
+
     wrp = make_method_wrapper(
         make_mock_repo(mocker, pattern=Pattern.projection, implementation="gpu_cupy"),
         "mocked_module_path.rotation",
@@ -167,6 +168,8 @@ def test_rotation_gathers_single_sino_slice(
         comm,
         make_mock_preview_config(mocker),
     )
+    wrp.prep()
+
     assert isinstance(wrp, RotationWrapper)
 
     if ind_par is not None:
