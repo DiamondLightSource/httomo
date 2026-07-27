@@ -22,7 +22,7 @@ Steps 1-3 are following the official WSL installation provided `here <https://le
 4. Get the latest Miniforge for Linux using this `link <https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh>`_.
 5. Get into the **base** environment of conda by :code:`source /path/to/.bashrc`. 
 6. Install HTTomo and dependencies by following the :ref:`installation_main` notes for Linux.
-7. Optional step. :ref:`run_tests` to make sure that everything working.
+7. Optional step. :ref:`run_tests` to make sure that everything works correctly.
 
 .. dropdown:: Troubleshooting: HTTomoLib library requires a :code:`gcc` compiler.
 

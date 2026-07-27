@@ -1,7 +1,7 @@
 .. _installation_mac:
 
-macOS (Apple Silicon) — CPU-only Installation
-==============================================
+macOS (Apple Silicon)
+*********************
 
 .. note::
    HTTomo's GPU-accelerated methods (``httomolibgpu``) depend on `CuPy
@@ -9,13 +9,15 @@ macOS (Apple Silicon) — CPU-only Installation
    Macs (M1/M2/M3/M4) have no CUDA support, so this path installs HTTomo in
    **CPU-only mode**, using TomoPy for reconstruction instead of the GPU
    backends. Pipelines must use CPU/TomoPy methods only (see
-   :doc:`../pipelines/yaml` for an example CPU pipeline).
+   :ref:`tutorials_pl_templates` for an example CPU pipeline).
 
 This guide has been tested on an M1 MacBook (16GB RAM) running native
 arm64 conda (not under Rosetta).
 
+Installation steps
+==================
+
 1. Install a native arm64 conda distribution
----------------------------------------------
 
 Make sure you install the **arm64**, not Intel/x86_64, build — otherwise
 everything below runs emulated under Rosetta and is significantly slower:
@@ -26,7 +28,6 @@ everything below runs emulated under Rosetta and is significantly slower:
    bash Miniforge3-MacOSX-arm64.sh
 
 2. Create the environment
----------------------------
 
 Skip ``cupy`` entirely — there is no arm64/macOS build, and it cannot be
 installed on Apple Silicon. ``astra-toolbox`` and ``tomopy`` do have
@@ -53,7 +54,6 @@ Replace `conda` with `mamba` below if it's available in the environment, for a f
    conda install -c conda-forge compilers llvm-openmp
 
 3. Install HTTomo
--------------------
 
 .. code-block:: bash
 
@@ -66,7 +66,6 @@ Verify:
    python -m httomo --help
 
 4. Known issues on this path (as of httomo 3.0 / httomolib 4.0.1)
----------------------------------------------------------------------
 
 If ``h5py`` ever gets silently swapped back to a non-MPI build by a later ``conda install`` (check with
 ``python -c "import h5py; print(h5py.get_config().mpi)"``), pin it:
@@ -75,8 +74,9 @@ If ``h5py`` ever gets silently swapped back to a non-MPI build by a later ``cond
 
      conda config --env --append pinned_packages 'h5py=*=mpi_openmpi*'
 
-5. Running a CPU pipeline
----------------------------
+5. Optional step. :ref:`run_tests` to make sure that everything works correctly.
+
+6. Running a CPU pipeline
 
 Always validate the pipeline first:
 
