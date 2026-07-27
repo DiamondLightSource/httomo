@@ -10,7 +10,9 @@ However, there are certain constraints under which a virtual environment can be 
 the dependence on an MPI implementation, the hdf5 library, CUDA libraries, and whether the user
 requires using :code:`tomopy` methods in pipelines.
 
-.. note:: Installation bellow assumes that OS is Linux and CUDA-compatible GPU device is available. See also :ref:`installation_other`, if applicable. 
+.. note:: 
+   These instructions assume a Linux OS with a CUDA-compatible GPU. 
+   If you are using Windows or macOS, see :ref:`installation_other` for platform-specific guidance.
 
 
 Conda environment
@@ -29,7 +31,7 @@ By default the :code:`cupy` installation will install the latest :code:`cuda-cud
 Setup HTTomo development environment:
 ======================================================
 
-Development mode requires git cloning the HTTomo's repository and pip installing from the source as bellow. Note that all other dependencies, apart from :code:`httomo`, must be satisfied as above.
+Development mode requires git cloning the HTTomo's repository and pip installing from the source as below. Note that all other dependencies, apart from :code:`httomo`, must be satisfied as above.
 
 .. code-block:: console
 
