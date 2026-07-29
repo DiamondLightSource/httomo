@@ -261,7 +261,6 @@ class ParamSweepRunner:
             writer.write_sweep_result(block)
 
         log_once("    Finished parameter sweep")
-        
 
         reader = ParamSweepReader(writer)
         self._block = reader.read_sweep_results()
@@ -274,7 +273,9 @@ class ParamSweepRunner:
             self.prepare()
             self.execute_before_sweep()
             self.execute_sweep()
-            log_once("Stand by until all processes are finished (some can take longer).")
+            log_once(
+                "Stand by until all processes are finished (some can take longer)."
+            )
             comm = MPI.COMM_WORLD
             comm.Barrier()
             self.execute_after_sweep()
