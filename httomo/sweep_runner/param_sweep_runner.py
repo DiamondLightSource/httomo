@@ -273,6 +273,11 @@ class ParamSweepRunner:
             self.prepare()
             self.execute_before_sweep()
             self.execute_sweep()
+            log_once(
+                "Stand by until all processes are finished (some can take longer)."
+            )
+            comm = MPI.COMM_WORLD
+            comm.Barrier()
             self.execute_after_sweep()
         log_once(f"Pipeline finished. Took {t.elapsed:.3f}s")
 
