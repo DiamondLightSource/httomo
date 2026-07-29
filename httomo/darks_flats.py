@@ -5,7 +5,7 @@ loaders.
 
 from enum import Enum
 from pathlib import Path
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple, Optional, Tuple, Union
 
 import h5py
 import numpy as np
@@ -72,7 +72,7 @@ class DarksFlatsFileConfig(NamedTuple):
     with the other types of data correction or reconstruction avoiding normalisation to d/f.
     """
 
-    file: Path
+    file: Union[Path, str]
     data_path: str
     image_key_path: Optional[str]
 
@@ -207,6 +207,15 @@ def get_darks_flats(
         return get_separate(darks_config, ImageType.Dark), generate_dummy(
             ImageType.Flat
         )
+
+    if (
+        darks_config is not None
+        and flats_config is not None
+        and darks_config.data_path != flats_config.data_path
+    ):
+        darks = get_separate(darks_config, ImageType.Dark)
+        flats = get_separate(flats_config, ImageType.Flat)
+        return darks, flats
 
     if (
         darks_config is not None

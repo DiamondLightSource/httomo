@@ -2,7 +2,7 @@ import numpy as np
 from httomo.block_interfaces import T, Block
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.method_wrapper import MethodParameterDictType
-
+from httomo.utils import log_once
 
 from typing import Any, Dict, Optional, Tuple
 
@@ -12,24 +12,17 @@ from httomo.utils import search_max_slices_iterative
 
 
 class ReconstructionWrapper(GenericMethodWrapper):
-    """Wraps reconstruction functions, limiting the length of the angles array
-    before calling the method."""
+    """Wraps reconstruction functions."""
 
     @classmethod
     def should_select_this_class(cls, module_path: str, method_name: str) -> bool:
         return module_path.endswith(".algorithm")
 
     def _preprocess_data(self, block: T) -> T:
-        # this is essential for the angles cutting below to be valid
         assert (
             self.pattern == Pattern.sinogram
         ), "reconstruction methods must be sinogram"
-
-        # for 360 degrees data the angular dimension will be truncated while angles are not.
-        # Truncating angles if the angular dimension has got a different size
-        datashape0 = block.data.shape[0]
-        if datashape0 != len(block.angles_radians):
-            block.angles_radians = block.angles_radians[0:datashape0]
+        assert len(block.angles_radians) == block.data.shape[0]
         self._input_shape = block.data.shape
         return super()._preprocess_data(block)
 
@@ -44,6 +37,18 @@ class ReconstructionWrapper(GenericMethodWrapper):
             len(self.parameters) >= 2
         ), "recon methods always take data + angles as the first 2 parameters"
         updated_params = {**dict_params, self.parameters[1]: dataset.angles_radians}
+        if "sinogram_order" not in dict_params:
+            # avoid passing detector_pad argument to TomoPy reconstruction
+            if "detector_pad" not in dict_params:
+                updated_params.update({"detector_pad": 0})
+            else:
+                if dict_params["detector_pad"]:
+                    det_half = dataset.data.shape[2] // 2
+                    padded_value_exact = int(np.sqrt(2 * (det_half**2))) - det_half
+                    padded_add_margin = padded_value_exact // 2
+                    dict_params["detector_pad"] = padded_value_exact + padded_add_margin
+                    detpad_str = f"    The calculated 'detector_pad' value is {dict_params["detector_pad"]}"
+                    log_once(detpad_str)
         return super()._build_kwargs(updated_params, dataset)
 
     def _calculate_max_slices_iterative(

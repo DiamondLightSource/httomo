@@ -194,6 +194,7 @@ class MethodWrapper(Protocol):
         data_dtype: np.dtype,
         slicing_dim: int,
         non_slice_dims_shape: Tuple[int, int],
+        angles: np.ndarray,
         available_memory: int,
     ) -> Tuple[int, int]:
         """If it runs on GPU, determine the maximum number of slices that can fit in the
@@ -203,5 +204,19 @@ class MethodWrapper(Protocol):
 
         The available memory may have been adjusted for the methods that follow, in case
         something persists afterwards.
+        """
+        ...  # pragma: nocover
+
+    def check(self) -> None:
+        """
+        Perform any checks necessary to ensure that the method is capable of executing on the
+        machine (for example, if it's a GPU method, check that execution is on a machine with a
+        GPU that is accessible).
+        """
+        ...  # pragma: nocover
+
+    def prep(self) -> None:
+        """
+        Perform any preparation needed prior to beginning pipeline execution.
         """
         ...  # pragma: nocover

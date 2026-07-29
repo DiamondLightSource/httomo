@@ -5,13 +5,20 @@ import numpy as np
 from numpy.typing import DTypeLike
 from mpi4py import MPI
 
-from httomo.data.hdf._utils.reslice import reslice_memory_estimator
+from httomo.data.hdf._utils.reslice import AllGatherFunc, reslice_memory_estimator
 from httomo.runner.section import Section, determine_section_padding
-from httomo.utils import _get_slicing_dim, make_3d_shape_from_shape
+from httomo.utils import (
+    _get_slicing_dim,
+    make_3d_shape_from_shape,
+    gpu_enabled,
+    xp,
+    clp2,
+)
 
 
 def calculate_section_input_chunk_shape(
-    comm: MPI.Comm,
+    nprocs: int,
+    rank: int,
     global_shape: Tuple[int, int, int],
     slicing_dim: int,
     padding: Tuple[int, int],
@@ -19,8 +26,8 @@ def calculate_section_input_chunk_shape(
     """
     Calculate the shape of the section input chunk w/ or w/o padding.
     """
-    start = round((global_shape[slicing_dim] / comm.size) * comm.rank)
-    stop = round((global_shape[slicing_dim] / comm.size) * (comm.rank + 1))
+    start = round((global_shape[slicing_dim] / nprocs) * rank)
+    stop = round((global_shape[slicing_dim] / nprocs) * (rank + 1))
     section_slicing_dim_len = stop - start
     shape = list(global_shape)
     shape[slicing_dim] = section_slicing_dim_len + padding[0] + padding[1]
@@ -45,7 +52,7 @@ def calculate_section_output_chunk_shape(
     for method in section.methods:
         if method.memory_gpu is None:
             continue
-        output_non_slice_dims = method.calculate_output_dims(input_non_slice_dims)
+        output_non_slice_dims = method.calculate_output_dims(output_non_slice_dims)
 
     output_chunk_shape = list(output_non_slice_dims)
     output_chunk_shape.insert(slicing_dim, chunk_shape[slicing_dim])
@@ -58,19 +65,22 @@ class DataSetStoreBacking(Enum):
     File = 2
 
 
-def determine_store_backing(
-    comm: MPI.Comm,
-    sections: List[Section],
-    memory_limit_bytes: int,
+def estimate_section_memory(
+    nprocs: int,
+    rank: int,
+    allgather_func: AllGatherFunc,
     dtype: DTypeLike,
     global_shape: Tuple[int, int, int],
+    sections: List[Section],
     section_idx: int,
-) -> DataSetStoreBacking:
+    consider_pinned_memory_pool: bool = False,
+) -> tuple[int, tuple[int, int, int]]:
     # Get chunk shape created by reader of section `n` (the current section) that will account
     # for padding. This chunk shape is based on the chunk shape written by the writer of
     # section `n - 1` (the previous section)
     padded_input_chunk_shape = calculate_section_input_chunk_shape(
-        comm=comm,
+        nprocs=nprocs,
+        rank=rank,
         global_shape=global_shape,
         slicing_dim=_get_slicing_dim(sections[section_idx].pattern) - 1,
         padding=determine_section_padding(sections[section_idx]),
@@ -82,7 +92,8 @@ def determine_store_backing(
     # Get unpadded chunk shape input to current section (for calculation of bytes in output
     # chunk for the current section)
     input_chunk_shape = calculate_section_input_chunk_shape(
-        comm=comm,
+        nprocs=nprocs,
+        rank=rank,
         global_shape=global_shape,
         slicing_dim=_get_slicing_dim(sections[section_idx].pattern) - 1,
         padding=(0, 0),
@@ -102,7 +113,7 @@ def determine_store_backing(
     # input to it (which would be the output chunk of the current section)
     reslice_bytes = 0
     if (
-        comm.size > 1
+        nprocs > 1
         and section_idx < len(sections) - 1
         and sections[section_idx].pattern != sections[section_idx + 1].pattern
     ):
@@ -111,18 +122,79 @@ def determine_store_backing(
             dtype,
             _get_slicing_dim(sections[section_idx].pattern),
             _get_slicing_dim(sections[section_idx + 1].pattern),
-            comm,
+            nprocs,
+            rank,
+            allgather_func,
         )
         reslice_bytes += ring_algorithm_bytes + reslice_output_bytes
+
+    # The default CuPy pinned memory pool allocates sizes that are the smallest power of two equal or above
+    # the requested size. These chunks are reused for the subsequent h2d copies, however, a larger chunk is
+    # not going to be used for a small transfer. E.g. a transfer of 1.5 GiB will allocate a new 2 GiB chunk,
+    # even if a 4 GiB chunk already sits free in the pool.
+    # Therefore, preparing for the worst case, we accumulate all significantly large potential pool chunks below:
+    cupy_pinned_cpu_pool_memory = 0
+    cupy_transfer_overhead = 0
+    if consider_pinned_memory_pool and gpu_enabled:
+        _, total_mem = xp.cuda.Device().mem_info
+        # if the max size fits to the device memory, we can use it as a lower bound
+        max_size = np.prod(global_shape) * np.dtype(dtype).itemsize
+        size_limit = min(clp2(max_size), total_mem)
+
+        mem_allocation = 1 << 27  # 128 MiB
+        while mem_allocation <= size_limit:
+            cupy_pinned_cpu_pool_memory += mem_allocation
+            mem_allocation *= 2
+
+        # CuPy copies the host array before uploading to the device. This is at most the size of the device memory
+        # See https://github.com/cupy/cupy/issues/9813
+        cupy_transfer_overhead = total_mem
+
+    # Calculate the shape of the global data of the output of the section to pass back to the
+    # caller.
+    #
+    # NOTE: The caller will only use this if performing CPU memory estimation of the entire
+    # pipeline not at runtime of htttomo (ie, the `memory-check` CLI command). If performing
+    # CPU memory estimation of a section during runtime of httomo, the caller won't use this
+    # value.
+    current_section_slicing_dim = _get_slicing_dim(sections[section_idx].pattern) - 1
+    output_global_shape = list(output_chunk_shape)
+    output_global_shape[current_section_slicing_dim] = (
+        output_global_shape[current_section_slicing_dim] * nprocs
+    )
+
+    return (
+        padded_input_chunk_bytes
+        + output_chunk_bytes
+        + reslice_bytes
+        + cupy_pinned_cpu_pool_memory
+        + cupy_transfer_overhead,
+        output_global_shape,
+    )
+
+
+def determine_store_backing(
+    comm: MPI.Comm,
+    sections: List[Section],
+    memory_limit_bytes: int,
+    dtype: DTypeLike,
+    global_shape: Tuple[int, int, int],
+    section_idx: int,
+) -> DataSetStoreBacking:
+    section_memory, _ = estimate_section_memory(
+        comm.size,
+        comm.rank,
+        comm.allgather,
+        dtype,
+        global_shape,
+        sections,
+        section_idx,
+    )
 
     send_buffer = np.zeros(1, dtype=bool)
     recv_buffer = np.zeros(1, dtype=bool)
 
-    if (
-        memory_limit_bytes > 0
-        and padded_input_chunk_bytes + output_chunk_bytes + reslice_bytes
-        >= memory_limit_bytes
-    ):
+    if memory_limit_bytes > 0 and section_memory >= memory_limit_bytes:
         send_buffer[0] = True
 
     # do a logical OR of all the enum variants across the processes

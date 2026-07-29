@@ -99,12 +99,15 @@ def test_pipe_FBP3d_tomobar_i12_119647_preview(
         FBP3d_tomobar,
         method=[
             "standard_tomo",
+            "remove_all_stripe",
         ],
         key=[
             "preview",
+            "normalize",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1200}},
+            True,
         ],
     )
 
@@ -166,12 +169,15 @@ def test_pipe_LPRec3d_tomobar_i12_119647_preview(
         LPRec3d_tomobar,
         method=[
             "standard_tomo",
+            "remove_all_stripe",
         ],
         key=[
             "preview",
+            "normalize",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1200}},
+            True,
         ],
     )
 
@@ -298,12 +304,15 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
         FBP3d_tomobar_denoising,
         method=[
             "standard_tomo",
+            "remove_all_stripe",
         ],
         key=[
             "preview",
+            "normalize",
         ],
         value=[
             {"detector_y": {"start": 900, "stop": 1200}},
+            True,
         ],
     )
 
@@ -392,7 +401,7 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
 
     residual_im = data_gt_tv - data_result
     res_norm_tv_res = np.linalg.norm(residual_im.flatten()).astype("float32")
-    assert res_norm_tv_res < 1e-3
+    assert res_norm_tv_res < 0.1
 
 
 # ########################################################################

@@ -36,8 +36,17 @@ This will allow HTTomo to be run on the local machine like so:
 Parallel
 ~~~~~~~~
 
-A parallel run of HTTomo at Diamond would usually be done on a compute cluster.
-However, there are cases where a parallel run on a local machine on cropped data
-is also useful, so that has also been described below.
+Parallel execution of HTTomo at Diamond is typically performed on a compute cluster. 
+The HTTomo launcher is integrated with the SLURM workload manager via REST APIs and is 
+configured to submit jobs to the :code:`wilson` compute cluster.
 
-TODO (:code:`httomo_mpi_local`?)
+To run HTTomo, either log in to a Wilson compute node directly or load the HTTomo environment on a workstation
+with :code:`module load httomo`.
+
+Once the environment is loaded, HTTomo jobs can be submitted and executed in parallel as described below.
+
+.. code-block:: console
+
+  $ httomo_mpi IN_FILE YAML_CONFIG OUT_DIR
+`
+Also look for help with :code:`httomo_mpi --help`.

@@ -21,7 +21,7 @@ from httomo.runner.dataset import DataSetBlock
 from httomo.runner.dataset_store_interfaces import DataSetSource
 from httomo.runner.loader import LoaderInterface
 from httomo.types import generic_array
-from httomo.utils import log_once, make_3d_shape_from_shape
+from httomo.utils import log_once, make_3d_shape_from_shape, make_pinned_host_array
 
 from httomo_backends.methods_database.query import Pattern
 
@@ -172,7 +172,7 @@ class StandardTomoLoader(DataSetSource):
         start_idx[self._slicing_dim] += start + self._chunk_index[self._slicing_dim]
         block_shape = list(self.global_shape)
         block_shape[self._slicing_dim] = length + self._padding[0] + self._padding[1]
-        block_data = np.empty(block_shape, dtype=self._data.dtype)
+        block_data = make_pinned_host_array(block_shape, dtype=self._data.dtype)
 
         # Bools that reflect if an extended read is needed on either the lower or upper
         # boundary of the block, in order to fill in the before/after padded areas

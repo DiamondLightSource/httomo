@@ -1,3 +1,5 @@
+.. _installation_main:
+
 Installation Guide
 ******************
 
@@ -7,6 +9,33 @@ conda environment.
 However, there are certain constraints under which a virtual environment can be used, due to
 the dependence on an MPI implementation, the hdf5 library, CUDA libraries, and whether the user
 requires using :code:`tomopy` methods in pipelines.
+
+.. note:: 
+   These instructions assume a Linux OS with a CUDA-compatible GPU. 
+   If you are using Windows or macOS, see :ref:`installation_other` for platform-specific guidance.
+
+
+Conda environment
+=================
+
+By default the :code:`cupy` installation will install the latest :code:`cuda-cudart`. This can result in CUDA versions higher than the supported by the GPU device of the system. One can specify the compatible to their system CUDA package, e.g., :code:`cuda-cudart==12.9.79`.
+
+.. code-block:: console
+
+   $ conda create --name httomo
+   $ conda activate httomo
+   $ conda install -c conda-forge cupy==14.0.1 openmpi==4.1.6 h5py[build=*openmpi*] python numpy astra-toolbox aiofiles click graypy loguru nvtx pillow pyyaml scikit-image scipy tqdm hdf5plugin pip pywavelets
+   $ conda install -c conda-forge tomopy==1.15.3 # optional
+   $ pip install httomo httomo-backends httomolib httomolibgpu tomobar --no-deps
+
+Setup HTTomo development environment:
+======================================================
+
+Development mode requires git cloning the HTTomo's repository and pip installing from the source as below. Note that all other dependencies, apart from :code:`httomo`, must be satisfied as above.
+
+.. code-block:: console
+
+   $ pip install -e .[dev] # development mode
 
 Virtual environment
 ===================
@@ -26,25 +55,26 @@ A virtual environment can be used if the following conditions are met:
    $ pip install cython numpy pkgconfig setuptools # build dependencies of h5py
    $ CC=$(type -p mpicc) HDF5_MPI="ON" HDF5_DIR=/path/to/parallel-hdf5 pip install --no-build-isolation --no-binary=h5py h5py
    $ pip install cupy-cuda13x # install cupy-cuda13x if CUDA library/CUDA toolkit version is 13.x
-   $ pip install aiofiles astra-toolbox click graypy hdf5plugin loguru nvtx pillow pyyaml scikit-image scipy tomobar tqdm
-   $ pip install --no-deps httomo httomolib httomolibgpu httomo-backends
-
-Conda environment
-=================
-
-By default the :code:`cupy` installation will install the latest :code:`cuda-cudart`. This can result in CUDA versions higher than the supported by the GPU device of the system. One can specify the compatible to their system CUDA package, e.g., :code:`cuda-cudart==12.9.79`.
-
-.. code-block:: console
-
-   $ conda create --name httomo
-   $ conda activate httomo
-   $ conda install -c conda-forge cupy==14.0.1 openmpi==4.1.6 h5py[build=*openmpi*]
-   $ conda install -c conda-forge tomopy==1.15.3 # optional
    $ pip install aiofiles astra-toolbox click graypy hdf5plugin loguru nvtx pillow pyyaml scikit-image scipy tqdm
-   $ pip install httomo httomolib httomolibgpu tomobar
+   $ pip install --no-deps httomo httomolib httomolibgpu httomo-backends tomobar
 
-Setup HTTomo development environment:
-======================================================
-.. code-block:: console
+.. _installation_other:
 
-   $ pip install -e .[dev] # development mode
+Installation on Other Platforms
+===============================
+
+.. toctree::
+   :maxdepth: 2
+
+   installation_variants/installation_windows
+   installation_variants/installation_mac
+
+.. _running_tests:
+
+Run tests (optional)
+====================
+
+.. toctree::
+   :maxdepth: 2
+
+   running_tests

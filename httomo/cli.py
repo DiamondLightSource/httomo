@@ -8,6 +8,7 @@ from typing import List, Optional, TextIO, Union, Any
 import yaml
 
 import click
+import h5py
 import shutil
 from mpi4py import MPI
 from loguru import logger
@@ -16,9 +17,12 @@ import httomo.globals
 from httomo.cli_utils import is_sweep_pipeline
 from httomo.logger import setup_logger
 from httomo.monitors import MONITORS_MAP, make_monitors
+from httomo.runner.dataset_store_backing import estimate_section_memory
 from httomo.runner.pipeline import Pipeline
+from httomo.runner.section import sectionize
 from httomo.sweep_runner.param_sweep_runner import ParamSweepRunner
 from httomo.transform_layer import TransformLayer
+from httomo.transform_loader_params import parse_config, parse_preview
 from httomo.utils import log_exception, log_once, mpi_abort_excepthook
 from httomo.yaml_checker import (
     validate_yaml_config,
@@ -73,6 +77,32 @@ def main():
 
 @main.command()
 @click.argument(
+    "in_data_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+)
+@click.argument(
+    "pipeline",
+    type=PipelineFilePathOrString(
+        types=[click.Path(exists=True, dir_okay=False, path_type=Path), click.STRING]
+    ),
+)
+@click.argument(
+    "nprocs",
+    type=click.IntRange(1),
+)
+def memory_check(in_data_file: Path, pipeline: Union[Path, str], nprocs: int):
+    """
+    Estimate CPU memory requirements for processing input data with a given pipeline and number
+    of processes
+    """
+    memory_peak = estimate_cpu_memory(in_data_file, pipeline, nprocs)
+    print(
+        f"Estimated peak CPU memory usage for {nprocs} process run: {(memory_peak * nprocs) / (1024 ** 3):.3f} GB"
+    )
+
+
+@main.command()
+@click.argument(
     "pipeline",
     type=PipelineFilePathOrString(
         types=[click.Path(exists=True, dir_okay=False, path_type=Path), click.STRING]
@@ -116,8 +146,9 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
 )
 @click.option(
     "--save-all",
+    type=click.BOOL,
     is_flag=True,
-    help="Save intermediate datasets for all tasks in the pipeline.",
+    help="Save intermediate datasets for all tasks in the pipeline. Set to True or False.",
 )
 @click.option(
     "--gpu-id",
@@ -141,12 +172,19 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     "--max-memory",
     type=click.STRING,
     default="0",
-    help="Limit the amount of memory used by the pipeline to the given memory (supports strings like 3.2G or bytes)",
+    help="The maximum amount of the CPU memory per process available on the system (supports strings like 3.2G or bytes)",
 )
 @click.option(
     "--save-snapshots",
+    type=click.BOOL,
     is_flag=True,
-    help="Save intermediate images (snapshots) from some methods in the pipeline.",
+    help="Save intermediate images (snapshots) from some methods in the pipeline. Set to True or False.",
+)
+@click.option(
+    "--bits-sweep-images",
+    type=click.INT,
+    default=32,
+    help="Change the bit depth of saved tiff images in the sweep run from default 32 bit to 16 or 8 bit tiffs.",
 )
 @click.option(
     "--monitor",
@@ -227,6 +265,7 @@ def run(
     output_folder_name: Optional[Path],
     gpu_id: int,
     save_all: bool,
+    bits_sweep_images: int,
     reslice_dir: Union[Path, None],
     max_cpu_slices: int,
     max_memory: str,
@@ -255,17 +294,26 @@ def run(
         max_cpu_slices,
         syslog_host,
         syslog_port,
-        output_folder_name,
+        (
+            output_folder_name
+            if output_folder_name is not None
+            else Path(f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output")
+        ),
         recon_filename_stem,
         continuous_scan_subset,
     )
 
-    does_contain_sweep = is_sweep_pipeline(pipeline)
     global_comm = MPI.COMM_WORLD
+    if output_folder_name is None:
+        httomo.globals.run_out_dir = global_comm.bcast(httomo.globals.run_out_dir, 0)
+
+    does_contain_sweep = is_sweep_pipeline(pipeline)
     method_wrapper_comm = global_comm if not does_contain_sweep else MPI.COMM_SELF
 
     if global_comm.rank == 0:
-        initialise_output_directory(pipeline, does_contain_sweep)
+        initialise_output_dir_copy_files_inject_defaults(pipeline, does_contain_sweep)
+
+    global_comm.Barrier()
 
     setup_logger(Path(httomo.globals.run_out_dir))
 
@@ -281,9 +329,14 @@ def run(
             else pipeline
         ),
         save_all,
+        bits_sweep_images,
         method_wrapper_comm,
         format_enum,
     )
+
+    for wrapper in pipeline_object:
+        wrapper.check()
+        wrapper.prep()
 
     if not does_contain_sweep:
         execute_high_throughput_run(
@@ -313,7 +366,7 @@ def transform_limit_str_to_bytes(limit_str: str):
         elif limit_upper.endswith("G"):
             return int(float(limit_str[:-1]) * 1024**3)
         else:
-            return int(limit_str)
+            return int(float(limit_str))
     except ValueError:
         raise ValueError(f"invalid memory limit string {limit_str}")
 
@@ -350,7 +403,7 @@ def set_global_constants(
     max_cpu_slices: int,
     syslog_host: str,
     syslog_port: int,
-    output_folder_name: Optional[Path],
+    output_folder_name: Path,
     recon_filename_stem: Optional[str],
     continuous_scan_subset: Optional[tuple[int, int]],
 ) -> None:
@@ -365,22 +418,22 @@ def set_global_constants(
     httomo.globals.SYSLOG_PORT = syslog_port
     httomo.globals.RECON_FILENAME_STEM = recon_filename_stem
     httomo.globals.CONTINUOUS_SCAN_SUBSET = continuous_scan_subset
-
-    if output_folder_name is None:
-        httomo.globals.run_out_dir = out_dir.joinpath(
-            f"{datetime.now().strftime('%d-%m-%Y_%H_%M_%S')}_output"
-        )
-    else:
-        httomo.globals.run_out_dir = out_dir.joinpath(output_folder_name)
+    httomo.globals.run_out_dir = out_dir.joinpath(output_folder_name)
 
     if max_cpu_slices < 1:
         raise ValueError("max-cpu-slices must be greater or equal to 1")
     httomo.globals.MAX_CPU_SLICES = max_cpu_slices
 
 
-def initialise_output_directory(
+def initialise_output_dir_copy_files_inject_defaults(
     pipeline: Union[Path, str], does_contain_sweep: bool
 ) -> None:
+    """This function does the following:
+    - creates output folder
+    - if distortion coefficient file is provided copies all parameters to yaml pipeline
+    - injects omitted default parameters into the pipeline file
+    - copies the YAML or JSON pipeline file
+    """
     try:
         Path.mkdir(httomo.globals.run_out_dir, parents=True, exist_ok=True)
     except PermissionError as e:
@@ -390,12 +443,7 @@ def initialise_output_directory(
     # If pipeline is a file path, copy it to output directory
     if isinstance(pipeline, Path):
         pipeline_conf = yaml_loader(pipeline)
-        distortion_coeff_path = _get_distortion_coeff_path(pipeline_conf)
-        if distortion_coeff_path is not None:
-            shutil.copyfile(
-                distortion_coeff_path,
-                Path(httomo.globals.run_out_dir) / "dist_coeff.txt",
-            )
+        _inject_distortion_coeff_values_into_method(pipeline_conf)
         path_to_pipeline = pipeline
         path_to_saved_pipeline = Path(httomo.globals.run_out_dir) / pipeline.name
         # if does_contain_sweep do not inject default parameters due to issue around "sweep" aliases in yaml
@@ -436,18 +484,30 @@ def _substitute_omitted_default_values(
     return pipeline_conf
 
 
-def _get_distortion_coeff_path(pipeline_conf: PipelineConfig) -> Union[None, Path]:
-    distortion_coeff_path = None
+def _inject_distortion_coeff_values_into_method(
+    pipeline_conf: PipelineConfig,
+) -> PipelineConfig:
     for method in pipeline_conf:
         if "distortion_correction" in method["method"]:
             distortion_coeff_path = method["parameters"]["metadata_path"]
-    return distortion_coeff_path
+            if distortion_coeff_path is not None:
+                # inject values from the text file into parameters of the method
+                with open(distortion_coeff_path) as f:
+                    xcenter, ycenter, *list_fact = (
+                        float(line.split()[-1]) for line in f
+                    )
+                method["parameters"]["metadata_path"] = None
+                method["parameters"]["xcenter"] = xcenter
+                method["parameters"]["ycenter"] = ycenter
+                method["parameters"]["list_fact"] = list_fact
+    return pipeline_conf
 
 
 def generate_pipeline(
     in_data_file: Path,
     pipeline: Union[Path, str],
     save_all: bool,
+    bits_sweep_images: int,
     method_wrapper_comm: MPI.Comm,
     pipeline_format: PipelineFormat,
 ) -> Pipeline:
@@ -461,7 +521,9 @@ def generate_pipeline(
     pipeline_object = init_UiLayer.build_pipeline()
 
     # perform transformations on pipeline
-    tr = TransformLayer(comm=method_wrapper_comm, save_all=save_all)
+    tr = TransformLayer(
+        comm=method_wrapper_comm, save_all=save_all, bits_sweep_images=bits_sweep_images
+    )
     pipeline_object = tr.transform(pipeline_object)
 
     return pipeline_object
@@ -498,3 +560,51 @@ def execute_high_throughput_run(
 
 def execute_sweep_run(pipeline: Pipeline, global_comm: MPI.Comm) -> None:
     ParamSweepRunner(pipeline, global_comm).execute()
+
+
+def estimate_cpu_memory(
+    in_data_file: Path,
+    pipeline_file: Path,
+    nprocs: int,
+    shape: Optional[tuple[int, int, int]] = None,
+) -> int:
+    pipeline = generate_pipeline(
+        in_data_file, pipeline_file, False, 32, MPI.COMM_WORLD, PipelineFormat.Yaml
+    )
+    sections = sectionize(pipeline)
+    config = yaml_loader(pipeline_file)
+    data_config, _, _, _, _ = parse_config(in_data_file, config[0]["parameters"])
+    with h5py.File(in_data_file, "r") as f:
+        dataset = f[data_config.data_path]
+        dtype = dataset.dtype
+        full_shape = dataset.shape
+
+    if shape is None:
+        preview_config = parse_preview(
+            config[0]["parameters"].get("preview", None), full_shape
+        )
+        previewed_shape = (
+            preview_config.angles.stop - preview_config.angles.start,
+            preview_config.detector_y.stop - preview_config.detector_y.start,
+            preview_config.detector_x.stop - preview_config.detector_x.start,
+        )
+    else:
+        previewed_shape = shape
+
+    section_memory_peak = 0
+    for idx in range(len(sections)):
+        mem, previewed_shape = estimate_section_memory(
+            nprocs,
+            0,
+            None,
+            dtype,
+            previewed_shape,
+            sections,
+            idx,
+        )
+        section_memory_peak = max(
+            section_memory_peak,
+            mem,
+        )
+
+    return section_memory_peak

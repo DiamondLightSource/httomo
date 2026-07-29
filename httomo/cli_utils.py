@@ -1,9 +1,7 @@
 import json
 from pathlib import Path
-from typing import Union, Dict, List, Any
-
-MANUAL_SWEEP_TAG = "!Sweep"
-RANGE_SWEEP_TAG = "!SweepRange"
+from typing import Union, Dict, Any
+from httomo.ui_layer import yaml_loader
 
 
 def is_sweep_pipeline(pipeline: Union[Path, str]) -> bool:
@@ -34,9 +32,12 @@ def is_sweep_pipeline(pipeline: Union[Path, str]) -> bool:
     if isinstance(pipeline, (Path, str)) and (
         isinstance(pipeline, Path) or Path(pipeline).exists()
     ):
-        with open(pipeline) as f:
-            for line in f:
-                if MANUAL_SWEEP_TAG in line or RANGE_SWEEP_TAG in line:
+        pipeline_conf = yaml_loader(pipeline)
+        for method in pipeline_conf:
+            for value in method["parameters"].values():
+                if isinstance(
+                    value, tuple
+                ):  # checking if sweep tags were parsed into tuples
                     return True
         return False
 

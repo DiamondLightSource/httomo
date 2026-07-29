@@ -3,7 +3,6 @@ import json
 import tempfile
 
 import pytest
-from pytest_mock import MockerFixture
 from click.testing import CliRunner
 
 import httomo
@@ -12,7 +11,7 @@ from httomo.cli import (
     set_global_constants,
     transform_limit_str_to_bytes,
     main,
-    initialise_output_directory,
+    initialise_output_dir_copy_files_inject_defaults,
 )
 from httomo.ui_layer import PipelineFormat
 
@@ -121,7 +120,7 @@ def test_cli_run_accepts_json_string_with_format_flag(mocker, pipeline_format: s
             mock_transform_layer.return_value = mock_transform_instance
             mock_transform_instance.transform.return_value = mock_pipeline
 
-            mocker.patch("httomo.cli.initialise_output_directory")
+            mocker.patch("httomo.cli.initialise_output_dir_copy_files_inject_defaults")
             mocker.patch("httomo.cli.execute_high_throughput_run")
             mocker.patch("httomo.cli.is_sweep_pipeline", return_value=False)
             mocker.patch("httomo.cli.make_monitors", return_value=None)
@@ -172,7 +171,6 @@ def test_cli_run_accepts_json_string_with_format_flag(mocker, pipeline_format: s
 
 def test_initialise_output_directory_handles_json_string(tmp_path):
     """Test that initialise_output_directory correctly handles JSON string input."""
-    from httomo.cli import initialise_output_directory
 
     # Set up the global output directory
     output_dir = tmp_path / "output"
@@ -181,7 +179,7 @@ def test_initialise_output_directory_handles_json_string(tmp_path):
     json_string = json.dumps(SAMPLE_JSON_PIPELINE)
 
     # Call the function with a JSON string
-    initialise_output_directory(json_string, False)
+    initialise_output_dir_copy_files_inject_defaults(json_string, False)
 
     # Verify directory was created
     assert output_dir.exists()
@@ -206,7 +204,7 @@ def test_initialise_output_directory_handles_path_input(
     pipeline_path = Path(__file__).parent.parent / standard_loader
 
     # Call the function with a Path
-    initialise_output_directory(pipeline_path, False)
+    initialise_output_dir_copy_files_inject_defaults(pipeline_path, False)
 
     # Verify directory was created
     assert output_dir.exists()
@@ -219,7 +217,7 @@ def test_output_dir_created_if_doesnt_exist(tmp_path: Path, standard_loader: str
     output_dir_cli_arg = tmp_path / "out"
     httomo.globals.run_out_dir = output_dir_cli_arg / "httomo-output-dir"
     pipeline_path = Path(__file__).parent.parent / standard_loader
-    initialise_output_directory(pipeline_path, False)
+    initialise_output_dir_copy_files_inject_defaults(pipeline_path, False)
     assert output_dir_cli_arg.exists()
     assert httomo.globals.run_out_dir.exists()
 
