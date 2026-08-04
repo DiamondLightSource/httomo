@@ -348,6 +348,8 @@ def parse_darks_flats(
     pipeline file, into an internal darks/flats configuration type that loaders can use.
     """
     in_file = config["file"] if config is not None else data_config.in_file
+    if in_file == "input_data":
+        in_file = data_config.in_file
     if isinstance(in_file, str):
         in_file = Path(in_file)
     data_path = config["data_path"] if config is not None else data_config.data_path

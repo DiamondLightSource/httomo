@@ -475,11 +475,26 @@ def test_parse_data():
                 image_key_path="/path/to/keys/data_two",
             ),
         ),
+        (
+            DataConfig(Path("/some/path/to/data.nxs"), "/entry1/tomo_entry/data/data"),
+            "/path/to/keys/data_one",
+            {
+                "file": "input_data",
+                "data_path": "/exchange/data",
+                "image_key_path": "/path/to/keys/data_two",
+            },
+            DarksFlatsFileConfig(
+                file=Path("/some/path/to/data.nxs"),
+                data_path="/exchange/data",
+                image_key_path="/path/to/keys/data_two",
+            ),
+        ),
     ],
     ids=[
         "darks/flats-in-input-file",
         "darks/flats-in-separate-file",
         "darks/flats-in-separate-file-with-image-key",
+        "darks/flats-in-same-file-with-different-data-path-shortcut",
     ],
 )
 def test_parse_darks_flats_(

@@ -146,8 +146,9 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
 )
 @click.option(
     "--save-all",
+    type=click.BOOL,
     is_flag=True,
-    help="Save intermediate datasets for all tasks in the pipeline.",
+    help="Save intermediate datasets for all tasks in the pipeline. Set to True or False.",
 )
 @click.option(
     "--gpu-id",
@@ -175,8 +176,15 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
 )
 @click.option(
     "--save-snapshots",
+    type=click.BOOL,
     is_flag=True,
-    help="Save intermediate images (snapshots) from some methods in the pipeline.",
+    help="Save intermediate images (snapshots) from some methods in the pipeline. Set to True or False.",
+)
+@click.option(
+    "--bits-sweep-images",
+    type=click.INT,
+    default=32,
+    help="Change the bit depth of saved tiff images in the sweep run from default 32 bit to 16 or 8 bit tiffs.",
 )
 @click.option(
     "--monitor",
@@ -257,6 +265,7 @@ def run(
     output_folder_name: Optional[Path],
     gpu_id: int,
     save_all: bool,
+    bits_sweep_images: int,
     reslice_dir: Union[Path, None],
     max_cpu_slices: int,
     max_memory: str,
@@ -320,6 +329,7 @@ def run(
             else pipeline
         ),
         save_all,
+        bits_sweep_images,
         method_wrapper_comm,
         format_enum,
     )
@@ -420,7 +430,7 @@ def initialise_output_dir_copy_files_inject_defaults(
 ) -> None:
     """This function does the following:
     - creates output folder
-    - copies the distortion coefficient file (if provided)
+    - if distortion coefficient file is provided copies all parameters to yaml pipeline
     - injects omitted default parameters into the pipeline file
     - copies the YAML or JSON pipeline file
     """
@@ -433,12 +443,7 @@ def initialise_output_dir_copy_files_inject_defaults(
     # If pipeline is a file path, copy it to output directory
     if isinstance(pipeline, Path):
         pipeline_conf = yaml_loader(pipeline)
-        distortion_coeff_path = _get_distortion_coeff_path(pipeline_conf)
-        if distortion_coeff_path is not None:
-            shutil.copyfile(
-                distortion_coeff_path,
-                Path(httomo.globals.run_out_dir) / "dist_coeff.txt",
-            )
+        _inject_distortion_coeff_values_into_method(pipeline_conf)
         path_to_pipeline = pipeline
         path_to_saved_pipeline = Path(httomo.globals.run_out_dir) / pipeline.name
         # if does_contain_sweep do not inject default parameters due to issue around "sweep" aliases in yaml
@@ -479,18 +484,30 @@ def _substitute_omitted_default_values(
     return pipeline_conf
 
 
-def _get_distortion_coeff_path(pipeline_conf: PipelineConfig) -> Union[None, Path]:
-    distortion_coeff_path = None
+def _inject_distortion_coeff_values_into_method(
+    pipeline_conf: PipelineConfig,
+) -> PipelineConfig:
     for method in pipeline_conf:
         if "distortion_correction" in method["method"]:
             distortion_coeff_path = method["parameters"]["metadata_path"]
-    return distortion_coeff_path
+            if distortion_coeff_path is not None:
+                # inject values from the text file into parameters of the method
+                with open(distortion_coeff_path) as f:
+                    xcenter, ycenter, *list_fact = (
+                        float(line.split()[-1]) for line in f
+                    )
+                method["parameters"]["metadata_path"] = None
+                method["parameters"]["xcenter"] = xcenter
+                method["parameters"]["ycenter"] = ycenter
+                method["parameters"]["list_fact"] = list_fact
+    return pipeline_conf
 
 
 def generate_pipeline(
     in_data_file: Path,
     pipeline: Union[Path, str],
     save_all: bool,
+    bits_sweep_images: int,
     method_wrapper_comm: MPI.Comm,
     pipeline_format: PipelineFormat,
 ) -> Pipeline:
@@ -504,7 +521,9 @@ def generate_pipeline(
     pipeline_object = init_UiLayer.build_pipeline()
 
     # perform transformations on pipeline
-    tr = TransformLayer(comm=method_wrapper_comm, save_all=save_all)
+    tr = TransformLayer(
+        comm=method_wrapper_comm, save_all=save_all, bits_sweep_images=bits_sweep_images
+    )
     pipeline_object = tr.transform(pipeline_object)
 
     return pipeline_object
@@ -550,7 +569,7 @@ def estimate_cpu_memory(
     shape: Optional[tuple[int, int, int]] = None,
 ) -> int:
     pipeline = generate_pipeline(
-        in_data_file, pipeline_file, False, MPI.COMM_WORLD, PipelineFormat.Yaml
+        in_data_file, pipeline_file, False, 32, MPI.COMM_WORLD, PipelineFormat.Yaml
     )
     sections = sectionize(pipeline)
     config = yaml_loader(pipeline_file)

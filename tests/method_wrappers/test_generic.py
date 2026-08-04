@@ -77,6 +77,7 @@ def test_generic_execute_transfers_to_gpu(
         MPI.COMM_WORLD,
         make_mock_preview_config(mocker),
     )
+    wrp.prep()
     res = wrp.execute(dummy_block)
 
     assert res.is_gpu == gpu_enabled
@@ -104,6 +105,7 @@ def test_generic_excute_measures_gpu_times(
         MPI.COMM_WORLD,
         make_mock_preview_config(mocker),
     )
+    wrp.prep()
     wrp.execute(dummy_block)
 
     if gpu_enabled:
@@ -190,6 +192,7 @@ def test_generic_sets_gpuid(mocker: MockerFixture, dummy_block: DataSetBlock):
         MPI.COMM_WORLD,
         make_mock_preview_config(mocker),
     )
+    wrp.prep()
     gpu_id_getter_spy.assert_called_once()
 
     wrp.execute(dummy_block)
@@ -761,6 +764,7 @@ def test_generic_calculate_max_slices_iterative(
         MPI.COMM_WORLD,
         make_mock_preview_config(mocker),
     )
+    wrp.prep()
     shape_t = list(dummy_block.chunk_shape)
     shape_t.pop(0)
     shape = (shape_t[0], shape_t[1])
