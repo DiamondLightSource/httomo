@@ -292,7 +292,7 @@ class DataSetStoreReader(DataSetSource):
                 log_once(
                     f"reslice_memory_estimator: {reslice_memory_estimator(source_data.shape, source_data.dtype, source.slicing_dim, slicing_dim, self._comm.size, self._comm.rank, self._comm.allgather)}",
                     level=logging.DEBUG,
-                )        
+                )
                 if slicing_dim == 1:
                     log_once(
                         f"Reslice in memory from projection to sinogram took {(end - start):.9f}s.",
