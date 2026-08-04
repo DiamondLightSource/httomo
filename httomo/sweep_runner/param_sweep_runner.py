@@ -9,10 +9,12 @@ from mpi4py.MPI import Comm
 import numpy as np
 
 import httomo
-from httomo.data.param_sweep_store import ParamSweepReader, ParamSweepWriter
+from httomo import globals
+from httomo.data.param_sweep_store import ParamSweepWriter
 from httomo.method_wrappers.images import ImagesWrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.block_split import BlockSplitter
+from httomo.runner.dataset_store_backing import DataSetStoreBacking
 from httomo.runner.method_wrapper import MethodWrapper
 from httomo.runner.pipeline import Pipeline
 from httomo.sweep_runner.param_sweep_block import ParamSweepBlock
@@ -28,6 +30,10 @@ from httomo.utils import (
 from httomo.runner.gpu_utils import get_available_gpu_memory, gpumem_cleanup
 from httomo.preview import PreviewConfig, PreviewDimConfig
 from httomo.runner.dataset_store_interfaces import DataSetSource
+
+PAGANIN_SWEEP_VALUE_THRESHOLD = 50
+"""The number of sweep values for the paganin filter above which the sweep results should be
+written to an hdf5 file as opposed to kept in RAM."""
 
 
 class ParamSweepRunner:
@@ -50,6 +56,7 @@ class ParamSweepRunner:
             self._start_sweep_idx : self._stop_sweep_idx
         ]
         self._set_image_saver_params()
+        self._comm = comm
 
     @property
     def block(self) -> ParamSweepBlock:
@@ -220,8 +227,24 @@ class ParamSweepRunner:
 
     def execute_sweep(self):
         """Execute all param variations of the same method in the sweep"""
-        writer = ParamSweepWriter(len(self._sweep_values))
         method = self._stages.sweep.method
+        if (
+            method.method_name == "paganin_filter"
+            and len(self._stages.sweep.values) > PAGANIN_SWEEP_VALUE_THRESHOLD
+        ):
+            writer = ParamSweepWriter(
+                len(self._sweep_values),
+                self._comm,
+                globals.run_out_dir,
+                DataSetStoreBacking.File,
+            )
+        else:
+            writer = ParamSweepWriter(
+                len(self._sweep_values),
+                self._comm,
+                globals.run_out_dir,
+                DataSetStoreBacking.RAM,
+            )
 
         log_once(f"Running {method.method_name} ({method.package_name})")
         log_once("    Beginning parameter sweep")
@@ -262,8 +285,10 @@ class ParamSweepRunner:
 
         log_once("    Finished parameter sweep")
 
-        reader = ParamSweepReader(writer)
+        reader = writer.make_reader()
         self._block = reader.read_sweep_results()
+        if reader.is_file_based:
+            reader.finalize()
 
     def execute(self):
         """Load input data and execute all stages (before sweep, sweep, after sweep)"""
