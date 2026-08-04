@@ -287,20 +287,22 @@ class DataSetStoreReader(DataSetSource):
             start = time.perf_counter()
             self._data = self._reslice(source.slicing_dim, slicing_dim, source_data)
             end = time.perf_counter()
-            log_once(
-                f"reslice_memory_estimator: {reslice_memory_estimator(source_data.shape, source_data.dtype, source.slicing_dim, slicing_dim, self._comm.size, self._comm.rank, self._comm.allgather)}",
-                level=logging.DEBUG,
-            )
-            if slicing_dim == 1:
+            if not source.is_file_based:
+                # time for the in-disk reslice is included in the block loop itself
                 log_once(
-                    f"Slicing axis change (reslice) from projection to sinogram took {(end - start):.9f}s.",
-                    level=logging.INFO,
+                    f"reslice_memory_estimator: {reslice_memory_estimator(source_data.shape, source_data.dtype, source.slicing_dim, slicing_dim, self._comm.size, self._comm.rank, self._comm.allgather)}",
+                    level=logging.DEBUG,
                 )
-            else:
-                log_once(
-                    f"Slicing axis change (reslice) from sinogram to projection took {(end - start):.9f}s.",
-                    level=logging.INFO,
-                )
+                if slicing_dim == 1:
+                    log_once(
+                        f"Reslice in memory from projection to sinogram took {(end - start):.9f}s.",
+                        level=logging.INFO,
+                    )
+                else:
+                    log_once(
+                        f"Reslice in memory from sinogram to projection took {(end - start):.9f}s.",
+                        level=logging.INFO,
+                    )
             self._slicing_dim = slicing_dim
 
         self._padding = (0, 0) if padding is None else padding
