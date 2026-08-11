@@ -12,6 +12,170 @@ from .conftest import (
 
 
 @pytest.mark.full_data
+def test_pipe_tomopy_tomobank_preview(
+    get_files: Callable,
+    cmd,
+    tomobank_00088,
+    tomopy_tomobank,
+    tomobank00088_tomopy_npz,
+    output_folder,
+):
+    change_value_parameters_method_pipeline(
+        tomopy_tomobank,
+        method=[
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "find_center_vo",
+        ],
+        key=[
+            "preview",
+            "data_path",
+            "image_key_path",
+            "rotation_angles",
+            "darks",
+            "flats",
+            "ind",
+        ],
+        value=[
+            {"detector_y": {"start": 500, "stop": 510}},
+            "/exchange/data",
+            None,
+            {
+                "user_defined": {
+                    "start_angle": 0,
+                    "stop_angle": 179.876,
+                    "angles_total": 1500,
+                }
+            },
+            {
+                "file": "input_data",
+                "image_key_path": None,
+                "data_path": "/exchange/data_dark",
+            },
+            {
+                "file": "input_data",
+                "image_key_path": None,
+                "data_path": "/exchange/data_white",
+            },
+            "mid",
+        ],
+    )
+
+    cmd.pop(4)  #: don't save all
+    cmd.insert(5, tomobank_00088)
+    cmd.insert(7, tomopy_tomobank)
+    cmd.insert(8, output_folder)
+
+    subprocess.check_output(cmd)
+
+    files = get_files(output_folder)
+
+    #: check the generated reconstruction (hdf5 file)
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    # load the pre-saved numpy array for comparison bellow
+    data_gt = tomobank00088_tomopy_npz["data"]
+    axis_slice = tomobank00088_tomopy_npz["axis_slice"]
+
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="tomopy",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
+
+    assert res_norm < 1e-4
+
+
+@pytest.mark.full_data
+def test_pipe_FBP3d_tomobar_tomobank_preview(
+    get_files: Callable,
+    cmd,
+    tomobank_00088,
+    FBP3d_tomobar_tomobank,
+    tomobank00088_FBP3d_tomobar,
+    output_folder,
+):
+    change_value_parameters_method_pipeline(
+        FBP3d_tomobar_tomobank,
+        method=[
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "find_center_vo",
+        ],
+        key=[
+            "preview",
+            "data_path",
+            "image_key_path",
+            "rotation_angles",
+            "darks",
+            "flats",
+            "ind",
+        ],
+        value=[
+            {"detector_y": {"start": 500, "stop": 510}},
+            "/exchange/data",
+            None,
+            {
+                "user_defined": {
+                    "start_angle": 0,
+                    "stop_angle": 179.876,
+                    "angles_total": 1500,
+                }
+            },
+            {
+                "file": "input_data",
+                "image_key_path": None,
+                "data_path": "/exchange/data_dark",
+            },
+            {
+                "file": "input_data",
+                "image_key_path": None,
+                "data_path": "/exchange/data_white",
+            },
+            "mid",
+        ],
+    )
+
+    cmd.pop(4)  #: don't save all
+    cmd.insert(5, tomobank_00088)
+    cmd.insert(7, FBP3d_tomobar_tomobank)
+    cmd.insert(8, output_folder)
+
+    subprocess.check_output(cmd)
+
+    files = get_files(output_folder)
+
+    #: check the generated reconstruction (hdf5 file)
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    # load the pre-saved numpy array for comparison bellow
+    data_gt = tomobank00088_FBP3d_tomobar["data"]
+    axis_slice = tomobank00088_FBP3d_tomobar["axis_slice"]
+
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="FBP3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
+
+    assert res_norm < 1e-4
+
+
+@pytest.mark.full_data
 def test_pipe_FBP3d_tomobar_k11_38731_in_disk(
     get_files: Callable,
     cmd,
@@ -476,167 +640,3 @@ def test_pipe_sweep_paganin_FBP3d_tomobar_i12_119647(
 
 
 # ########################################################################
-
-
-@pytest.mark.full_data
-def test_pipe_tomopy_tomobank_preview(
-    get_files: Callable,
-    cmd,
-    tomobank_00088,
-    tomopy_tomobank,
-    tomobank00088_tomopy_npz,
-    output_folder,
-):
-    change_value_parameters_method_pipeline(
-        tomopy_tomobank,
-        method=[
-            "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
-            "find_center_vo",
-        ],
-        key=[
-            "preview",
-            "data_path",
-            "image_key_path",
-            "rotation_angles",
-            "darks",
-            "flats",
-            "ind",
-        ],
-        value=[
-            {"detector_y": {"start": 500, "stop": 510}},
-            "/exchange/data",
-            None,
-            {
-                "user_defined": {
-                    "start_angle": 0,
-                    "stop_angle": 179.876,
-                    "angles_total": 1500,
-                }
-            },
-            {
-                "file": "input_data",
-                "image_key_path": None,
-                "data_path": "/exchange/data_dark",
-            },
-            {
-                "file": "input_data",
-                "image_key_path": None,
-                "data_path": "/exchange/data_white",
-            },
-            "mid",
-        ],
-    )
-
-    cmd.pop(4)  #: don't save all
-    cmd.insert(5, tomobank_00088)
-    cmd.insert(7, tomopy_tomobank)
-    cmd.insert(8, output_folder)
-
-    subprocess.check_output(cmd)
-
-    files = get_files(output_folder)
-
-    #: check the generated reconstruction (hdf5 file)
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 1
-
-    # load the pre-saved numpy array for comparison bellow
-    data_gt = tomobank00088_tomopy_npz["data"]
-    axis_slice = tomobank00088_tomopy_npz["axis_slice"]
-
-    res_norm = calculate_gt_residual(
-        path_to_data="data/",
-        h5_file_name="tomopy",
-        h5_files=h5_files,
-        data_gt=data_gt,
-        axis_slice=axis_slice,
-    )
-
-    assert res_norm < 1e-4
-
-
-@pytest.mark.full_data
-def test_pipe_FBP3d_tomobar_tomobank_preview(
-    get_files: Callable,
-    cmd,
-    tomobank_00088,
-    FBP3d_tomobar_tomobank,
-    tomobank00088_FBP3d_tomobar,
-    output_folder,
-):
-    change_value_parameters_method_pipeline(
-        FBP3d_tomobar_tomobank,
-        method=[
-            "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
-            "standard_tomo",
-            "find_center_vo",
-        ],
-        key=[
-            "preview",
-            "data_path",
-            "image_key_path",
-            "rotation_angles",
-            "darks",
-            "flats",
-            "ind",
-        ],
-        value=[
-            {"detector_y": {"start": 500, "stop": 510}},
-            "/exchange/data",
-            None,
-            {
-                "user_defined": {
-                    "start_angle": 0,
-                    "stop_angle": 179.876,
-                    "angles_total": 1500,
-                }
-            },
-            {
-                "file": "input_data",
-                "image_key_path": None,
-                "data_path": "/exchange/data_dark",
-            },
-            {
-                "file": "input_data",
-                "image_key_path": None,
-                "data_path": "/exchange/data_white",
-            },
-            "mid",
-        ],
-    )
-
-    cmd.pop(4)  #: don't save all
-    cmd.insert(5, tomobank_00088)
-    cmd.insert(7, FBP3d_tomobar_tomobank)
-    cmd.insert(8, output_folder)
-
-    subprocess.check_output(cmd)
-
-    files = get_files(output_folder)
-
-    #: check the generated reconstruction (hdf5 file)
-    h5_files = list(filter(lambda x: ".h5" in x, files))
-    assert len(h5_files) == 1
-
-    # load the pre-saved numpy array for comparison bellow
-    data_gt = tomobank00088_FBP3d_tomobar["data"]
-    axis_slice = tomobank00088_FBP3d_tomobar["axis_slice"]
-
-    res_norm = calculate_gt_residual(
-        path_to_data="data/",
-        h5_file_name="FBP3d_tomobar",
-        h5_files=h5_files,
-        data_gt=data_gt,
-        axis_slice=axis_slice,
-    )
-
-    assert res_norm < 1e-4
