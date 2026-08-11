@@ -3,7 +3,19 @@
 Real data processing
 ====================
 
-This section presents an example of processing real experimental data using HTTomo.
+This section presents an example of processing real experimental data using HTTomo from the `TomoBank`_ data archive.
+
+.. list-table::
+
+
+    * - .. figure:: ../../_static/real_data/sino_tomo088.jpg
+
+           Dark/Flat field corrected sinogram of the `Lorentz data set`_.
+
+      - .. figure:: ../../_static/real_data/recon_tomo088.jpg
+
+           Reconstructed slice using FBP method
+
 
 Before starting, we assume that HTTomo has been successfully installed. If you have not installed HTTomo yet, please follow the
 :ref:`installation_main`.
@@ -51,3 +63,18 @@ This can significantly reduce the processing time for suitable pipelines. Run th
 
     .. literalinclude:: ../../pipelines_full/FBP3d_tomobar_tomobank.yaml
         :language: yaml
+
+Output results
+++++++++++++++
+
+In the output folder you will find:
+
+1. Copied YAML file with the executed pipeline.
+2. Debug log and the user log, see more :ref:`info_logger`.
+3. The result of the reconstruction saved as HDF5 file. This file can be open, for instance with `Dawn`_ software.
+4. Saved tiff files of the reconstructed image. You can use `ImageJ`_ or `ImageJ.JS`_ to visualise.
+
+
+.. _Dawn: https://dawnsci.org/
+.. _ImageJ: https://imagej.net/ij/
+.. _ImageJ.JS: https://ij.imjoy.io/
