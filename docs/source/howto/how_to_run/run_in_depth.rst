@@ -13,7 +13,7 @@ As mentioned earlier, the preliminary step to accessing installed HTTomo softwar
 depends on if you are using a Diamond machine or not:
 
 - not on a Diamond machine: activate the conda environment that HTTomo was
-  installed into (please refer to :doc:`installation` for instructions on how to
+  installed into (please refer to :ref:`installation_main` for instructions on how to
   install HTTomo)
 
 - on a Diamond machine: run the command :code:`module load httomo`

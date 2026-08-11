@@ -1,13 +1,178 @@
+# NOTE: those tests have path integrated that are compatible with running jobs in Jenkins at DLS infrastructure.
 import subprocess
-from typing import Callable, List, Tuple, Union
-import h5py
-import numpy as np
+from typing import Callable
 import pytest
 import os
-from plumbum import local
-from .conftest import change_value_parameters_method_pipeline, check_tif, compare_tif
+from .conftest import (
+    change_value_parameters_method_pipeline,
+    check_tif,
+    compare_tif,
+    calculate_gt_residual,
+)
 
-# NOTE: those tests have path integrated that are compatible with running jobs in Jenkins at DLS infrastructure.
+
+@pytest.mark.full_data
+def test_pipe_tomopy_tomobank_preview(
+    get_files: Callable,
+    cmd,
+    tomobank_00088,
+    tomopy_tomobank,
+    tomobank00088_tomopy_npz,
+    output_folder,
+):
+    change_value_parameters_method_pipeline(
+        tomopy_tomobank,
+        method=[
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "find_center_vo",
+        ],
+        key=[
+            "preview",
+            "data_path",
+            "image_key_path",
+            "rotation_angles",
+            "darks",
+            "flats",
+            "ind",
+        ],
+        value=[
+            {"detector_y": {"start": 500, "stop": 510}},
+            "/exchange/data",
+            None,
+            {
+                "user_defined": {
+                    "start_angle": 0,
+                    "stop_angle": 179.876,
+                    "angles_total": 1500,
+                }
+            },
+            {
+                "file": "input_data",
+                "image_key_path": None,
+                "data_path": "/exchange/data_dark",
+            },
+            {
+                "file": "input_data",
+                "image_key_path": None,
+                "data_path": "/exchange/data_white",
+            },
+            "mid",
+        ],
+    )
+
+    cmd.pop(4)  #: don't save all
+    cmd.insert(5, tomobank_00088)
+    cmd.insert(7, tomopy_tomobank)
+    cmd.insert(8, output_folder)
+
+    subprocess.check_output(cmd)
+
+    files = get_files(output_folder)
+
+    #: check the generated reconstruction (hdf5 file)
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    # load the pre-saved numpy array for comparison bellow
+    data_gt = tomobank00088_tomopy_npz["data"]
+    axis_slice = tomobank00088_tomopy_npz["axis_slice"]
+
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="tomopy",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
+
+    assert res_norm < 0.1
+
+
+@pytest.mark.full_data
+def test_pipe_FBP3d_tomobar_tomobank_preview(
+    get_files: Callable,
+    cmd,
+    tomobank_00088,
+    FBP3d_tomobar_tomobank,
+    tomobank00088_FBP3d_tomobar,
+    output_folder,
+):
+    change_value_parameters_method_pipeline(
+        FBP3d_tomobar_tomobank,
+        method=[
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "standard_tomo",
+            "find_center_vo",
+        ],
+        key=[
+            "preview",
+            "data_path",
+            "image_key_path",
+            "rotation_angles",
+            "darks",
+            "flats",
+            "ind",
+        ],
+        value=[
+            {"detector_y": {"start": 500, "stop": 510}},
+            "/exchange/data",
+            None,
+            {
+                "user_defined": {
+                    "start_angle": 0,
+                    "stop_angle": 179.876,
+                    "angles_total": 1500,
+                }
+            },
+            {
+                "file": "input_data",
+                "image_key_path": None,
+                "data_path": "/exchange/data_dark",
+            },
+            {
+                "file": "input_data",
+                "image_key_path": None,
+                "data_path": "/exchange/data_white",
+            },
+            "mid",
+        ],
+    )
+
+    cmd.pop(4)  #: don't save all
+    cmd.insert(5, tomobank_00088)
+    cmd.insert(7, FBP3d_tomobar_tomobank)
+    cmd.insert(8, output_folder)
+
+    subprocess.check_output(cmd)
+
+    files = get_files(output_folder)
+
+    #: check the generated reconstruction (hdf5 file)
+    h5_files = list(filter(lambda x: ".h5" in x, files))
+    assert len(h5_files) == 1
+
+    # load the pre-saved numpy array for comparison bellow
+    data_gt = tomobank00088_FBP3d_tomobar["data"]
+    axis_slice = tomobank00088_FBP3d_tomobar["axis_slice"]
+
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="FBP3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
+
+    assert res_norm < 1e-4
 
 
 @pytest.mark.full_data
@@ -59,28 +224,13 @@ def test_pipe_FBP3d_tomobar_k11_38731_in_disk(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP3d_tomobar_k11_38731_npz["data"]
     axis_slice = FBP3d_tomobar_k11_38731_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
-
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "FBP3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="FBP3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
     assert res_norm < 1e-6
 
 
@@ -127,28 +277,13 @@ def test_pipe_FBP3d_tomobar_i12_119647_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP3d_tomobar_i12_119647_npz["data"]
     axis_slice = FBP3d_tomobar_i12_119647_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
-
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "FBP3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="FBP3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
     assert res_norm < 1e-4
 
 
@@ -197,28 +332,14 @@ def test_pipe_LPRec3d_tomobar_i12_119647_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = LPRec3d_tomobar_i12_119647_npz["data"]
     axis_slice = LPRec3d_tomobar_i12_119647_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="LPRec3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
 
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "LPRec3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-4
 
 
@@ -264,28 +385,14 @@ def test_pipe_FBP2d_astra_i12_119647_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP2d_astra_i12_119647_npz["data"]
     axis_slice = FBP2d_astra_i12_119647_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
 
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "FBP2d_astra"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="FBP2d_astra",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
     assert res_norm < 1e-6
 
 
@@ -377,31 +484,17 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
     assert len(h5_files) == 1
 
     # load the pre-saved numpy array for comparison bellow
-    data_gt_tv = FBP3d_tomobar_TVdenoising_i13_177906_npz["data"]
+    data_gt = FBP3d_tomobar_TVdenoising_i13_177906_npz["data"]
     axis_slice = FBP3d_tomobar_TVdenoising_i13_177906_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt_tv)
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="total_variation_PD",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
 
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "total_variation_PD"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt_tv - data_result
-    res_norm_tv_res = np.linalg.norm(residual_im.flatten()).astype("float32")
-    assert res_norm_tv_res < 0.1
+    assert res_norm < 0.1
 
 
 # ########################################################################
@@ -454,28 +547,14 @@ def test_pipe_360deg_paganin_FBP3d_tomobar_i13_179623_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP3d_tomobar_paganin_i13_179623_npz["data"]
     axis_slice = FBP3d_tomobar_paganin_i13_179623_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="FBP3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
 
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "FBP3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-4
 
 

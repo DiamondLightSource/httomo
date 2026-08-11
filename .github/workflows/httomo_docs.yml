@@ -39,6 +39,8 @@ jobs:
         - name: Generate full yaml pipelines using pipeline directives
           run: |
             python ./docs/source/scripts/execute_pipelines_build.py -o ./docs/source/pipelines_full/
+            python ./docs/source/scripts/modify_pipeline.py -i ./docs/source/pipelines_full/tomopy_tomobank.yaml
+            python ./docs/source/scripts/modify_pipeline.py -i ./docs/source/pipelines_full/FBP3d_tomobar_tomobank.yaml
 
         - name: Create ZIP archive for pipelines
           run: |
