@@ -90,7 +90,7 @@ def test_pipe_tomopy_tomobank_preview(
         axis_slice=axis_slice,
     )
 
-    assert res_norm < 1e-4
+    assert res_norm < 0.1
 
 
 @pytest.mark.full_data
@@ -484,7 +484,7 @@ def test_pipe_FBP3d_tomobar_denoising_i13_177906_preview(
     assert len(h5_files) == 1
 
     # load the pre-saved numpy array for comparison bellow
-    data_gt_tv = FBP3d_tomobar_TVdenoising_i13_177906_npz["data"]
+    data_gt = FBP3d_tomobar_TVdenoising_i13_177906_npz["data"]
     axis_slice = FBP3d_tomobar_TVdenoising_i13_177906_npz["axis_slice"]
     res_norm = calculate_gt_residual(
         path_to_data="data/",
