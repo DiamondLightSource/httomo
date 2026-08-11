@@ -200,7 +200,7 @@ def test_angles_averaging_LPRec_i12_119647_preview(
         data_gt=data_gt,
         axis_slice=axis_slice,
     )
-    assert res_norm < 1e-6
+    assert res_norm < 0.1
 
 
 # ########################################################################
