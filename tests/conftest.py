@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, TypeAlias, Union, Tuple
 import numpy as np
 from PIL import Image
+import h5py
 
 import pytest
 import yaml
@@ -235,6 +236,16 @@ def angles_averaging():
 
 
 @pytest.fixture
+def tomopy_tomobank():
+    return "docs/source/pipelines_full/tomopy_tomobank.yaml"
+
+
+@pytest.fixture
+def FBP3d_tomobar_tomobank():
+    return "docs/source/pipelines_full/FBP3d_tomobar_tomobank.yaml"
+
+
+@pytest.fixture
 def FISTA3d_tomobar():
     return "docs/source/pipelines_full/FISTA3d_tomobar.yaml"
 
@@ -317,6 +328,12 @@ def i12_119647():
     return "tests/test_data/raw_data/i12/119647.nxs"
 
 
+@pytest.fixture
+def tomobank_00088():
+    # TomoBank data
+    return "tests/test_data/raw_data/tomobank/tomo_00088.h5"
+
+
 ############## --Ground Truth references-- #################
 
 
@@ -384,6 +401,18 @@ def LPRec3d_tomobar_i12_119647_npz():
 def FISTA3d_tomobar_k11_38731_npz():
     # 10 slices numpy array
     return np.load("tests/test_data/raw_data/diad/FISTA3d_tomobar_k11_38731.npz")
+
+
+@pytest.fixture
+def tomobank00088_tomopy_npz():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/tomobank/tomobank00088_tomopy.npz")
+
+
+@pytest.fixture
+def tomobank00088_FBP3d_tomobar():
+    # 10 slices numpy array
+    return np.load("tests/test_data/raw_data/tomobank/tomobank00088_FBP3d_tomobar.npz")
 
 
 @pytest.fixture
@@ -537,6 +566,44 @@ def compare_tif(files_list_to_compare: list, file_path_to_references: list):
         )
         res_norm = np.linalg.norm(res_images.flatten())
         assert res_norm < 1e-3
+
+
+def calculate_gt_residual(
+    path_to_data: str,
+    h5_file_name: str,
+    h5_files: list,
+    data_gt: np.ndarray,
+    axis_slice: int,
+) -> float:
+
+    slices, sizeX, sizeY = np.shape(data_gt)
+    step = axis_slice // (slices + 2)
+    data_result = np.zeros(
+        (slices, sizeX, sizeY),
+        dtype=np.float32,
+    )
+    for file_to_open in h5_files:
+        if h5_file_name in file_to_open:
+            with h5py.File(file_to_open, "r") as h5f:
+                dataset = h5f[path_to_data]
+
+                if not isinstance(dataset, h5py.Dataset):
+                    raise TypeError(f"{path_to_data!r} is not an HDF5 dataset.")
+
+                index_prog = step
+
+                for i in range(slices):
+                    data_result[i, :, :] = dataset[:, index_prog, :]
+                    index_prog += step
+
+            break
+    else:
+        raise FileNotFoundError(
+            f"File name containing '{h5_file_name}' cannot be found."
+        )
+    residual_im = data_gt - data_result
+    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    return res_norm
 
 
 def change_value_parameters_method_pipeline(

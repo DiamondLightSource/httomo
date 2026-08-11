@@ -1,17 +1,16 @@
-import subprocess
-from typing import Callable, List, Tuple, Union
+# NOTE: those tests have path integrated that are compatible with running jobs in Jenkins at DLS infrastructure.
+from typing import Callable
 
 from subprocess import Popen, PIPE
 import os
 
-
-import h5py
-import numpy as np
 import pytest
-from plumbum import local
-from .conftest import change_value_parameters_method_pipeline, check_tif, compare_tif
-
-# NOTE: those tests have path integrated that are compatible with running jobs in Jenkins at DLS infrastructure.
+from .conftest import (
+    change_value_parameters_method_pipeline,
+    check_tif,
+    compare_tif,
+    calculate_gt_residual,
+)
 
 ########################################################################
 
@@ -72,28 +71,14 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_disk_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP3d_tomobar_k11_38730_npz["data"]
     axis_slice = FBP3d_tomobar_k11_38730_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
 
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "FBP3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="FBP3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
     assert res_norm < 1e-6
 
 
@@ -151,28 +136,13 @@ def test_pipe_parallel_FBP3d_tomobar_k11_38730_in_memory_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP3d_tomobar_k11_38730_npz["data"]
     axis_slice = FBP3d_tomobar_k11_38730_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
-
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "FBP3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="FBP3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
     assert res_norm < 1e-6
 
 
@@ -222,28 +192,14 @@ def test_angles_averaging_LPRec_i12_119647_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = angle_average_LPrec_i12_119647_npz["data"]
     axis_slice = angle_average_LPrec_i12_119647_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
 
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "LPRec3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="LPRec3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
     assert res_norm < 1e-6
 
 
@@ -295,28 +251,13 @@ def test_parallel_pipe_LPRec3d_tomobar_i12_119647_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = LPRec3d_tomobar_i12_119647_npz["data"]
     axis_slice = LPRec3d_tomobar_i12_119647_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
-
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "LPRec3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="LPRec3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
     assert (
         res_norm < 0.2
     )  # TODO: known issue with the Log-Polar, the tolerance will be reduced when fixed
@@ -379,28 +320,13 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FBP3d_tomobar_distortion_i13_179623_npz["data"]
     axis_slice = FBP3d_tomobar_distortion_i13_179623_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
-
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "FBP3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="FBP3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
     assert res_norm < 1e-4
 
 
@@ -519,28 +445,14 @@ def test_parallel_pipe_FISTA3d_tomobar_k11_38731(
     # load the pre-saved numpy array for comparison bellow
     data_gt = FISTA3d_tomobar_k11_38731_npz["data"]
     axis_slice = FISTA3d_tomobar_k11_38731_npz["axis_slice"]
-    slices, sizeX, sizeY = np.shape(data_gt)
+    res_norm = calculate_gt_residual(
+        path_to_data="data/",
+        h5_file_name="FISTA3d_tomobar",
+        h5_files=h5_files,
+        data_gt=data_gt,
+        axis_slice=axis_slice,
+    )
 
-    step = axis_slice // (slices + 2)
-    # store for the result
-    data_result = np.zeros((slices, sizeX, sizeY), dtype=np.float32)
-
-    path_to_data = "data/"
-    h5_file_name = "FISTA3d_tomobar"
-    for file_to_open in h5_files:
-        if h5_file_name in file_to_open:
-            h5f = h5py.File(file_to_open, "r")
-            index_prog = step
-            for i in range(slices):
-                data_result[i, :, :] = h5f[path_to_data][:, index_prog, :]
-                index_prog += step
-            h5f.close()
-        else:
-            message_str = f"File name with {h5_file_name} string cannot be found."
-            raise FileNotFoundError(message_str)
-
-    residual_im = data_gt - data_result
-    res_norm = np.linalg.norm(residual_im.flatten()).astype("float32")
     assert res_norm < 1e-2
 
 

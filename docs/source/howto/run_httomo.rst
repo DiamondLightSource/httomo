@@ -39,4 +39,5 @@ split into these two subsections where relevant.
    how_to_run/at_diamond
    how_to_run/outside_diamond
    how_to_run/run_in_depth
+   how_to_run/real_data_example
 
