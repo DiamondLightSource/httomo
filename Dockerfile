@@ -12,5 +12,6 @@ FROM nvidia/cuda:12.9.1-base-ubuntu24.04 AS deploy
 
 COPY --from=build /opt/conda /opt/conda
 ENV CONDA_PREFIX=/opt/conda
+ENV OMPI_MCA_plm_rsh_agent=
 
 ENTRYPOINT ["/opt/conda/bin/python", "-m", "httomo", "run"]
