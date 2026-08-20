@@ -43,13 +43,13 @@ class TransformLayer:
         pipeline = self.insert_data_reducer(pipeline)
         if pipeline_is_sweep:
             pipeline = self.remove_redundant_method_in_sweep(pipeline)
-        pipeline = self.insert_data_checker(pipeline)
 
         if pipeline_is_sweep:
             pipeline = self.insert_save_images_after_sweep(pipeline)
         else:
             pipeline = self.insert_save_methods(pipeline)
 
+        pipeline = self.insert_data_checker(pipeline)
         return pipeline
 
     def insert_save_methods(self, pipeline: Pipeline) -> Pipeline:
@@ -108,6 +108,7 @@ class TransformLayer:
                 "calculate_stats",
                 "rescale_to_int",
                 "save_to_images",
+                "save_intermediate_data",
             ]
             if (
                 m.method_name not in exceptions_methods

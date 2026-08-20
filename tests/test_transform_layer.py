@@ -426,13 +426,13 @@ def test_insert_paganin_not_last_sweep(mocker: MockerFixture, tmp_path: Path):
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.transform(pipeline)
 
-    assert len(pipeline) == 10
-    assert pipeline[6].method_name == "save_to_images"
-    assert pipeline[6].task_id == "saveimage_sweep_t3"
-    assert pipeline[6].config_params["subfolder_name"] == "images_sweep_paganin_filter"
+    assert len(pipeline) == 11
+    assert pipeline[7].method_name == "save_to_images"
+    assert pipeline[7].task_id == "saveimage_sweep_t3"
+    assert pipeline[7].config_params["subfolder_name"] == "images_sweep_paganin_filter"
     assert pipeline[8].method_name == "FBP3d_tomobar"
-    assert pipeline[9].task_id == "saveimage_sweep_t4"
-    assert pipeline[9].config_params["subfolder_name"] == "images_sweep_FBP3d_tomobar"
+    assert pipeline[10].task_id == "saveimage_sweep_t4"
+    assert pipeline[10].config_params["subfolder_name"] == "images_sweep_FBP3d_tomobar"
 
 
 def test_insert_paganin_is_last_sweep(mocker: MockerFixture, tmp_path: Path):
@@ -472,10 +472,10 @@ def test_insert_paganin_is_last_sweep(mocker: MockerFixture, tmp_path: Path):
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.transform(pipeline)
 
-    assert len(pipeline) == 7
-    assert pipeline[6].method_name == "save_to_images"
-    assert pipeline[6].task_id == "saveimage_sweep_t3"
-    assert pipeline[6].config_params["subfolder_name"] == "images_sweep_paganin_filter"
+    assert len(pipeline) == 8
+    assert pipeline[7].method_name == "save_to_images"
+    assert pipeline[7].task_id == "saveimage_sweep_t3"
+    assert pipeline[7].config_params["subfolder_name"] == "images_sweep_paganin_filter"
 
 
 def test_insert_denoise_last_after_FBP_sweep(mocker: MockerFixture, tmp_path: Path):
@@ -515,7 +515,7 @@ def test_insert_denoise_last_after_FBP_sweep(mocker: MockerFixture, tmp_path: Pa
     trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
     pipeline = trans.transform(pipeline)
 
-    assert len(pipeline) == 7
-    assert pipeline[6].method_name == "save_to_images"
-    assert pipeline[6].task_id == "saveimage_sweep_t3"
-    assert pipeline[6].config_params["subfolder_name"] == "images_sweep_median_filter"
+    assert len(pipeline) == 8
+    assert pipeline[7].method_name == "save_to_images"
+    assert pipeline[7].task_id == "saveimage_sweep_t3"
+    assert pipeline[7].config_params["subfolder_name"] == "images_sweep_median_filter"
