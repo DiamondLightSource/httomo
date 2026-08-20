@@ -269,14 +269,11 @@ class TaskRunner:
     def _execute_section_block(
         self, section: Section, block: DataSetBlock
     ) -> DataSetBlock:
-        if_previous_block_is_on_gpu = False
         convert_gpu_block_to_cpu = False
         if_current_block_is_on_gpu = False
 
         for ind, method in enumerate(section):
             if method.implementation == "gpu_cupy":
-                if_current_block_is_on_gpu = True
-            if method.method_name == "calculate_stats" and if_previous_block_is_on_gpu:
                 if_current_block_is_on_gpu = True
 
             if ind == len(section) - 1 and if_current_block_is_on_gpu:
@@ -309,7 +306,6 @@ class TaskRunner:
                     method.gpu_time.device2host,
                 )
 
-            if_previous_block_is_on_gpu = if_current_block_is_on_gpu
         return block
 
     def _get_methods_name_for_snapshot(self, section: Section) -> str:

@@ -334,7 +334,7 @@ class GenericMethodWrapper(MethodWrapper):
             block = self._run_method(block, args)
             block = self._postprocess_data(block)
 
-        if gpu_enabled:
+        if self.is_cpu:
             self._gpu_time_info.kernel = t.elapsed
         else:
             self._gpu_time_info.kernel = 0
