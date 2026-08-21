@@ -370,13 +370,6 @@ def test_no_data_checker_after_save_intermediate_data(
                 save_result=True,
                 task_id="t4",
             ),
-            # make_test_method(
-            #     mocker,
-            #     method_name="save_intermediate_data",
-            #     module_path="httomo.methods.save_intermediate_data",
-            #     save_result=False,
-            #     task_id="t5",
-            # ),
             make_test_method(
                 mocker,
                 method_name="calculate_stats",

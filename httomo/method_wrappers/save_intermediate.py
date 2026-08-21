@@ -65,7 +65,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
     def _transfer_data(self, block: T) -> T:
         if block.is_cpu:
             return block
-        if not self.cupyrun and self._next_method_is_cpu:
+        if self._next_method_is_cpu:
             # convert the whole (GPU) block to CPU if the next method is CPU
             self._gpu_time_info = GpuTimeInfo()
             with catchtime() as t:

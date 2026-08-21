@@ -130,9 +130,18 @@ def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Pat
     assert wrp._file.filename.startswith(str(tmp_path))
 
 
-@pytest.mark.parametrize("gpu", [False, True], ids=["CPU", "GPU"])
+@pytest.mark.parametrize("gpu", [False, True], ids=["data_CPU", "data_GPU"])
+@pytest.mark.parametrize(
+    "next_method_is_cpu",
+    [False, True],
+    ids=["Next Method is GPU", "Next Method is CPU"],
+)
 def test_save_intermediate_leaves_gpu_data(
-    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: Path, gpu: bool
+    mocker: MockerFixture,
+    dummy_block: DataSetBlock,
+    tmp_path: Path,
+    gpu: bool,
+    next_method_is_cpu: bool,
 ):
     if gpu and not gpu_enabled:
         pytest.skip("No GPU available")
@@ -179,6 +188,7 @@ def test_save_intermediate_leaves_gpu_data(
         loader=loader,
         out_dir=tmp_path,
         prev_method=prev_method,
+        next_method_is_cpu=next_method_is_cpu,
         minimum_block_length=dummy_block.shape[0],
     )
 
@@ -189,7 +199,10 @@ def test_save_intermediate_leaves_gpu_data(
     with mock.patch("httomo.globals.FRAMES_PER_CHUNK", FRAMES_PER_CHUNK):
         res = wrp.execute(dummy_block)
 
-    assert res.is_gpu == gpu
+    if next_method_is_cpu and gpu:
+        assert res.is_cpu == True
+    else:
+        assert res.is_gpu == gpu
 
 
 @pytest.mark.parametrize(
