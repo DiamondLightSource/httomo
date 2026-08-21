@@ -8,7 +8,7 @@ from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import catchtime, xp
+from httomo.utils import catchtime, xp, gpu_enabled
 
 import h5py
 
@@ -79,13 +79,16 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         # we transfer the data to CPU only if the next method is CPU, otherwise we keep it on GPU
         # in case if save_intermediate is the last method we also keep the data on GPU
         block = self._transfer_data(block)
-        if self._next_method_is_cpu:
+
+        if self._next_method_is_cpu or not gpu_enabled:
             data = block.data_unpadded
         else:
-            # we transfer the data to CPU while the main block stays on GPU
+            # Transfer data to CPU while the main block stays on GPU
             self._gpu_time_info = GpuTimeInfo()
+
             with catchtime() as t:
                 data = xp.asnumpy(block.data_unpadded)
+
             self._gpu_time_info.device2host += t.elapsed
 
         MIN_BLOCK_LEN_PARAM = "minimum_block_length"
