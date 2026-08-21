@@ -327,6 +327,93 @@ def test_insert_data_checker(mocker: MockerFixture, tmp_path: Path):
     assert pipeline[9].method_name == "save_to_images"
 
 
+def test_no_data_checker_after_save_intermediate_data(
+    mocker: MockerFixture, tmp_path: Path
+):
+    comm = MPI.COMM_SELF
+    repo = make_mock_repo(mocker)
+    loader = mocker.create_autospec(
+        LoaderInterface,
+        instance=True,
+    )
+    pipeline = Pipeline(
+        loader=loader,
+        methods=[
+            make_test_method(
+                mocker,
+                method_name="remove_outlier",
+                module_path="httomolibgpu.misc.corr",
+                save_result=False,
+                task_id="t1",
+                gpu=True,
+            ),
+            make_test_method(
+                mocker,
+                method_name="find_center_vo",
+                module_path="httomolibgpu.recon.rotation",
+                save_result=False,
+                task_id="t2",
+                gpu=True,
+            ),
+            make_test_method(
+                mocker,
+                method_name="normalize",
+                module_path="httomolibgpu.prep.normalize",
+                save_result=False,
+                task_id="t3",
+                gpu=True,
+            ),
+            make_test_method(
+                mocker,
+                method_name="FBP3d_tomobar",
+                module_path="httomolibgpu.recon.algorithm",
+                save_result=True,
+                task_id="t4",
+            ),
+            # make_test_method(
+            #     mocker,
+            #     method_name="save_intermediate_data",
+            #     module_path="httomo.methods.save_intermediate_data",
+            #     save_result=False,
+            #     task_id="t5",
+            # ),
+            make_test_method(
+                mocker,
+                method_name="calculate_stats",
+                module_path="httomo.methods",
+                save_result=False,
+                task_id="t6",
+                gpu=False,
+            ),
+            make_test_method(
+                mocker,
+                method_name="rescale_to_int",
+                module_path="httomolib.misc.rescale",
+                save_result=False,
+                task_id="t7",
+                gpu=False,
+            ),
+            make_test_method(
+                mocker,
+                method_name="save_to_images",
+                module_path="httomolib.misc.images",
+                save_result=False,
+                task_id="t8",
+                gpu=False,
+            ),
+        ],
+    )
+    trans = TransformLayer(comm, repo=repo, save_all=False, out_dir=tmp_path)
+    pipeline = trans.insert_data_checker(pipeline)
+
+    assert len(pipeline) == 10
+    assert pipeline[5].method_name == "FBP3d_tomobar"
+    assert pipeline[6].method_name == "data_checker"
+    assert pipeline[6].module_path == "httomolib.misc.utils"
+    assert pipeline[7].method_name == "calculate_stats"
+    assert pipeline[8].method_name == "rescale_to_int"
+
+
 def test_insert_image_save_after_sweep2(mocker: MockerFixture, tmp_path: Path):
     comm = MPI.COMM_SELF
     repo = make_mock_repo(mocker)

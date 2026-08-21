@@ -1,6 +1,5 @@
 import os
-import pathlib
-from typing import Any, Dict, Optional, Union
+from typing import Dict, Optional
 import weakref
 from mpi4py.MPI import Comm, MIN
 import httomo
@@ -12,7 +11,6 @@ from httomo.runner.methods_repository_interface import MethodRepository
 from httomo.utils import catchtime, xp
 
 import h5py
-import numpy as np
 
 
 class SaveIntermediateFilesWrapper(GenericMethodWrapper):
