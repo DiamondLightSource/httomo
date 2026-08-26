@@ -1,7 +1,7 @@
 from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import catchtime, log_rank, xp, gpu_enabled
+from httomo.utils import log_rank
 
 
 from mpi4py.MPI import Comm
@@ -51,13 +51,6 @@ class StatsCalcWrapper(GenericMethodWrapper):
         return dataset
 
     def _run_method(self, dataset: T, args: Dict[str, Any]) -> T:
-        # transfer data to GPU if we can / have it available (always faster),
-        # but don't want to fail if we don't have a GPU (underlying method works for both)
-        # and don't touch original dataset
-        if gpu_enabled and dataset.is_cpu:
-            with catchtime() as t:
-                args[self._parameters[0]] = xp.asarray(dataset.data)
-            self._gpu_time_info.host2device += t.elapsed
         ret = self._method(**args)
         return self._process_return_type(ret, dataset)
 

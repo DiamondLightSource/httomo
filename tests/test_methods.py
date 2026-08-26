@@ -21,17 +21,6 @@ def test_calculate_stats_simple():
     assert ret == (-10.0, 19.0, np.sum(data), 30)
 
 
-def test_calculate_stats_with_nan_and_inf():
-    data = np.arange(30, dtype=np.float32).reshape((2, 3, 5)) - 10.0
-    expected = np.sum(data) - data[1, 1, 1] - data[0, 2, 3] - data[1, 2, 3]
-    data[1, 1, 1] = float("inf")
-    data[0, 2, 3] = float("-inf")
-    data[1, 2, 3] = float("nan")
-    ret = calculate_stats(data)
-
-    assert ret == (-10.0, 19.0, expected, 30)
-
-
 @pytest.mark.skipif(
     not gpu_enabled or xp.cuda.runtime.getDeviceCount() == 0,
     reason="skipped as cupy is not available",

@@ -1,11 +1,9 @@
 import os
 from typing import Optional
 from httomo.method_wrappers import make_method_wrapper
-from httomo.runner.output_ref import OutputRef
 from httomo.method_wrappers.datareducer import DatareducerWrapper
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.method_wrappers.images import ImagesWrapper
-from httomo.method_wrappers.stats_calc import StatsCalcWrapper
 from httomo.method_wrappers.save_intermediate import SaveIntermediateFilesWrapper
 from httomo.runner.pipeline import Pipeline
 from mpi4py import MPI
@@ -43,25 +41,29 @@ class TransformLayer:
         pipeline = self.insert_data_reducer(pipeline)
         if pipeline_is_sweep:
             pipeline = self.remove_redundant_method_in_sweep(pipeline)
-        pipeline = self.insert_data_checker(pipeline)
 
         if pipeline_is_sweep:
             pipeline = self.insert_save_images_after_sweep(pipeline)
         else:
             pipeline = self.insert_save_methods(pipeline)
 
+        pipeline = self.insert_data_checker(pipeline)
         return pipeline
 
     def insert_save_methods(self, pipeline: Pipeline) -> Pipeline:
         loader = pipeline.loader
         methods = []
-        for m in pipeline:
+        for i, m in enumerate(pipeline):
             methods.append(m)
             if (
                 (m.save_result or self._save_all)
                 and m.method_name not in ["save_to_images", "data_checker"]
                 and "center" not in m.method_name
             ):
+                if i + 1 < len(pipeline):
+                    next_method_is_cpu = pipeline[i + 1].is_cpu
+                else:
+                    next_method_is_cpu = False
                 methods.append(
                     SaveIntermediateFilesWrapper(
                         self._repo,
@@ -71,6 +73,7 @@ class TransformLayer:
                         save_result=False,
                         loader=loader,
                         prev_method=m,
+                        next_method_is_cpu=next_method_is_cpu,
                         task_id=f"save_{m.task_id}",
                         out_dir=self._out_dir,
                     )
@@ -108,6 +111,7 @@ class TransformLayer:
                 "calculate_stats",
                 "rescale_to_int",
                 "save_to_images",
+                "save_intermediate_data",
             ]
             if (
                 m.method_name not in exceptions_methods

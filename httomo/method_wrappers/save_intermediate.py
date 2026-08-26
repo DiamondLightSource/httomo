@@ -1,6 +1,5 @@
 import os
-import pathlib
-from typing import Any, Dict, Optional, Union
+from typing import Dict, Optional
 import weakref
 from mpi4py.MPI import Comm, MIN
 import httomo
@@ -9,10 +8,9 @@ from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import catchtime, xp
+from httomo.utils import catchtime, xp, gpu_enabled
 
 import h5py
-import numpy as np
 
 
 class SaveIntermediateFilesWrapper(GenericMethodWrapper):
@@ -30,6 +28,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         output_mapping: Dict[str, str] = {},
         out_dir: Optional[os.PathLike] = None,
         prev_method: Optional[MethodWrapper] = None,
+        next_method_is_cpu: bool = False,
         loader: Optional[LoaderInterface] = None,
         **kwargs,
     ):
@@ -45,6 +44,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         assert loader is not None
         self._loader = loader
         assert prev_method is not None
+        self._next_method_is_cpu = next_method_is_cpu
 
         filename = f"{prev_method.task_id}-{prev_method.package_name}-{prev_method.method_name}"
         is_saving_recon = prev_method.module_path.endswith(".algorithm")
@@ -62,21 +62,34 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         # make sure file gets closed properly
         weakref.finalize(self, self._file.close)
 
+    def _transfer_data(self, block: T) -> T:
+        if block.is_cpu:
+            return block
+        if self._next_method_is_cpu:
+            # convert the whole (GPU) block to CPU if the next method is CPU
+            self._gpu_time_info = GpuTimeInfo()
+            with catchtime() as t:
+                block.to_cpu()
+            self._gpu_time_info.device2host = t.elapsed
+            return block
+        return block
+
     def execute(self, block: T) -> T:
-        # we overwrite the whole execute method here, as we do not need any of the helper
-        # methods from the Generic Wrapper
-        # What we know:
-        # - we do not transfer the dataset as a whole to CPU - only the data and angles locally
-        # (and never back)
-        # - the user does not insert this method - it's automatic - so no config params are
-        # relevant
-        # - we return just the input as it is
-        self._gpu_time_info = GpuTimeInfo()
-        with catchtime() as t:
-            data = (
-                block.data_unpadded if block.is_cpu else xp.asnumpy(block.data_unpadded)
-            )
-        self._gpu_time_info.device2host += t.elapsed
+        # we overwrite the most of the execute method here
+        # we transfer the data to CPU only if the next method is CPU, otherwise we keep it on GPU
+        # in case if save_intermediate is the last method we also keep the data on GPU
+        block = self._transfer_data(block)
+
+        if self._next_method_is_cpu or not gpu_enabled:
+            data = block.data_unpadded
+        else:
+            # Transfer data to CPU while the main block stays on GPU
+            self._gpu_time_info = GpuTimeInfo()
+
+            with catchtime() as t:
+                data = xp.asnumpy(block.data_unpadded)
+
+            self._gpu_time_info.device2host += t.elapsed
 
         MIN_BLOCK_LEN_PARAM = "minimum_block_length"
         if block.chunk_index_unpadded[block.slicing_dim] == 0 and self.comm.size > 1:

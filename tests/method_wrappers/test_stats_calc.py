@@ -118,7 +118,7 @@ def test_calculate_stats_2_processes(mocker: MockerFixture, dummy_block: DataSet
 
 
 @pytest.mark.parametrize("gpu", [False, True], ids=["CPU-input", "GPU-input"])
-def test_calculate_stats_uses_gpu_if_available(
+def test_calculate_stats_agnostic(
     mocker: MockerFixture, dummy_block: DataSetBlock, gpu: bool
 ):
     if gpu and not gpu_enabled:
@@ -127,10 +127,6 @@ def test_calculate_stats_uses_gpu_if_available(
     class FakeModule:
         def calculate_stats(data, comm):
             # regardless of dataset input, we want device data if gpu enabled
-            if gpu_enabled:
-                assert data.device != "cpu"
-            else:
-                assert data.device == "cpu"
             return (1.2, 3.1, 42.0, 10)
 
     mocker.patch(
@@ -149,5 +145,7 @@ def test_calculate_stats_uses_gpu_if_available(
         dummy_block.to_gpu()
 
     res = wrp.execute(dummy_block)
-
-    assert res.is_gpu == gpu
+    if gpu is True:
+        assert res.is_gpu is True
+    else:
+        assert res.is_cpu is True

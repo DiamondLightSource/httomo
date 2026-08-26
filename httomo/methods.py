@@ -35,15 +35,6 @@ def calculate_stats(
     Returns:
         tuple[(float, float, float, int)]: (min, max, sum, total_elements)
     """
-
-    # do this whereever the data is at the moment (GPU/CPU)
-    if data.device != "cpu":
-        # GPU
-        data = xp.nan_to_num(data, copy=False, nan=0.0, posinf=0, neginf=0)
-    else:
-        # CPU
-        data = np.nan_to_num(data, copy=False, nan=0.0, posinf=0, neginf=0)
-
     return (float(data.min()), float(data.max()), float(data.sum()), data.size)
 
 
