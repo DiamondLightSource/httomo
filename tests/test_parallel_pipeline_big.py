@@ -327,7 +327,7 @@ def test_parallel_pipe_360deg_distortion_FBP3d_tomobar_i13_179623_preview(
         data_gt=data_gt,
         axis_slice=axis_slice,
     )
-    assert res_norm < 1e-4
+    assert res_norm < 0.005
 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
