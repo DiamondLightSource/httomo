@@ -18,12 +18,12 @@ Pipelines for released HTTomo versions
 These are archived full YAML pipelines that can be used with already released and tagged version of HTTomo. They are built using the :ref:`archived_templates`.
 
 .. only:: builder_html
-
-   :download:`HTTomo version 3.0 full YAML pipelines <../templates_archive/httomo_ver3_0_full_yaml_pipelines.zip>`
-   
+ 
    :download:`HTTomo version 3.1 full YAML pipelines <../templates_archive/httomo_ver3_1_full_yaml_pipelines.zip>`
 
    :download:`HTTomo version 3.2 full YAML pipelines <../templates_archive/httomo_ver3_2_full_yaml_pipelines.zip>`
+
+   :download:`HTTomo version 3.3 full YAML pipelines <../templates_archive/httomo_ver3_3_full_yaml_pipelines.zip>`
 
 
 .. warning:: At DLS, the templates below should work with the :code:`httomo/latest` module, however, for production please use :ref:`full_pipelines_archived`. 

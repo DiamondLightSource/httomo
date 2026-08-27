@@ -13,5 +13,5 @@ After installing HTTomo, you can quickly verify that the installation and all re
 
 4. **Run the GPU test suite (CUDA-enabled systems only).** If you have a CUDA-compatible GPU, run: :code:`pytest tests/ --cupy`.
 
-5. **Run the small dataset pipeline tests.** :code:`pytest tests/ --small_data`. These tests execute example pipelines using a small test dataset. On systems without a CUDA-compatible GPU, some tests are expected to fail. However, if TomoPy is installed, the TomoPy pipeline test should pass successfully.
+5. **Run the small dataset pipeline tests.** Get full YAML `pipelines <https://diamondlightsource.github.io/httomo/pipelines/yaml.html>`_ and place/unzip them into the :code:`/docs/source/pipelines_full/` folder of your cloned HTTomo repository. Then you can run :code:`pytest tests/ --small_data`. These tests execute example pipelines using a small test dataset. On systems without a CUDA-compatible GPU, some tests are expected to fail. However, if TomoPy is installed, the TomoPy pipeline test should pass successfully.
 
