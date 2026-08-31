@@ -1,0 +1,31 @@
+{
+    "name": "httomo",
+    "image": "gcr.io/diamond-pubreg/httomo/dev:0.0.1",
+    "workspaceMount": "src=${localWorkspaceFolder},dst=/httomo,type=bind",
+    "workspaceFolder": "/httomo",
+    // Please fill in:
+    // - `HTTOMOLIB_LOCAL_REPO` and `HTTOMOLIBGPU_LOCAL_REPO` with your local
+    // git repos of httomolib and httomolibgpu respectively
+    // - `LOCAL_OUT` with a directory that supports parallel I/O (any directory
+    // on a local drive will be sufficient)
+    "mounts": [
+        "src=HTTOMOLIB_LOCAL_REPO,dst=/httomolib,type=bind",
+        "src=HTTOMOLIBGPU_LOCAL_REPO,dst=/httomolibgpu,type=bind",
+        "src=LOCAL_OUT,dst=/httomo/output_dir,type=bind",
+    ],
+    "containerUser": "root",
+    "securityOpt": [ "label=disable" ],
+    "postCreateCommand": "micromamba run -n base pip install -e /httomolib -e /httomolibgpu -e /httomo",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-pyright.pyright",
+                "charliermarsh.ruff",
+            ]
+        }
+    },
+    "settings": {
+        "python.analysis.typeCheckingMode": "strict",
+    }
+}
