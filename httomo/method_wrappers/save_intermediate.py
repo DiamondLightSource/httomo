@@ -47,6 +47,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         self._next_method_is_cpu = next_method_is_cpu
 
         filename = f"{prev_method.task_id}-{prev_method.package_name}-{prev_method.method_name}"
+        self.frames_per_chunk = httomo.globals.FRAMES_PER_CHUNK
         is_saving_recon = prev_method.module_path.endswith(".algorithm")
         if is_saving_recon and prev_method.recon_algorithm is not None:
             filename += f"-{prev_method.recon_algorithm}"
@@ -105,7 +106,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             global_index=block.global_index_unpadded,
             slicing_dim=block.slicing_dim,
             file=self._file,
-            frames_per_chunk=httomo.globals.FRAMES_PER_CHUNK,
+            frames_per_chunk=self.frames_per_chunk,
             minimum_block_length=self.config_params[MIN_BLOCK_LEN_PARAM],
             path="/data",
             detector_x=self._loader.detector_x,

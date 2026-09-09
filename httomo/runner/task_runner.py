@@ -430,9 +430,12 @@ class TaskRunner:
         )
         # loop over all methods in section
         has_gpu = False
+        has_file_save = False
         for idx, m in enumerate(section):
             if m.implementation in ["gpu", "gpu_cupy"] or m.is_gpu:
                 has_gpu = True
+            if "save_intermediate_data" in m.method_name:
+                has_file_save = True
 
         # if section consists of all cpu method then MAX_CPU_SLICES defines the block size
         if not has_gpu:
@@ -494,13 +497,21 @@ class TaskRunner:
             )
             raise ValueError(err_str)
 
-        section.max_slices = min(max_slices_methods)
+        if has_file_save:
+            section.max_slices = self.comm.reduce(min(max_slices_methods), MPI.MIN)
+            for m in section:
+                if type(m) is SaveIntermediateFilesWrapper:
+                    m.frames_per_chunk = section.max_slices
+        else:
+            section.max_slices = min(max_slices_methods)
 
     def _pass_min_block_length_to_intermediate_data_wrapper(self, section: Section):
         assert self.source is not None
         for method in section.methods:
             if isinstance(method, SaveIntermediateFilesWrapper):
-                min_block_len = determine_minimum_block_length(
-                    self.source.chunk_shape[self.source.slicing_dim], section.max_slices
+                # min_block_len = determine_minimum_block_length(
+                #     self.source.chunk_shape[self.source.slicing_dim], section.max_slices
+                # )
+                method.append_config_params(
+                    {"minimum_block_length": section.max_slices}
                 )
-                method.append_config_params({"minimum_block_length": min_block_len})
