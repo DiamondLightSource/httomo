@@ -499,6 +499,8 @@ class TaskRunner:
 
         if has_file_save:
             section.max_slices = self.comm.reduce(min(max_slices_methods), MPI.MIN)
+            section.max_slices = self.comm.bcast(section.max_slices)
+
             for m in section:
                 if type(m) is SaveIntermediateFilesWrapper:
                     m.frames_per_chunk = section.max_slices
