@@ -43,6 +43,7 @@ from httomo.utils import (
     log_rank,
 )
 import numpy as np
+from .pinned_memory_pool import PinnedMemoryPool
 
 
 class TaskRunner:
@@ -335,9 +336,8 @@ class TaskRunner:
         self._load_datasets()
 
         if gpu_enabled:
-            xp.get_default_pinned_memory_pool().free_all_blocks()
-            xp.cuda.set_pinned_memory_allocator(None)
-            log_once("Disabled CuPy pinned memory pool", logging.DEBUG)
+            pool = PinnedMemoryPool(self.comm)
+            xp.cuda.set_pinned_memory_allocator(pool.malloc)
 
     def _load_datasets(self):
         start_time = self._log_task_start(
