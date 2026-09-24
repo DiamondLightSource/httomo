@@ -40,18 +40,34 @@ class PinnedMemoryPool:
     def __init__(self, comm) -> None:
         self._weakref = weakref.ref(self)
         self.comm = comm
+        self.huge = None
+        self.is_free = True
 
     def malloc(self, size):
+        HUGE_THRESHOLD = 1024**3  # 1 GiB
         if size == 0:
             return PinnedMemoryPointer(PinnedMemory(0), 0)
-        start = perf_counter()
-        pmem = PooledPinnedMemory(_malloc(size).mem, self._weakref)
-        elapsed = perf_counter() - start
-        log_rank(
-            f"Pinned memory pool allocated {size} bytes (duration: {elapsed:.3f} s)",
-            self.comm,
-        )
-        return PinnedMemoryPointer(pmem, 0)
+        if size < HUGE_THRESHOLD or not self.is_free:
+            start = perf_counter()
+            ret = _malloc(size)
+            elapsed = perf_counter() - start
+            if size >= HUGE_THRESHOLD:
+                log_rank(
+                    f"PinnedMemoryPool raw huge alloc {size} bytes ({elapsed:.3f} s)",
+                    self.comm,
+                )
+            return ret
+
+        if (self.huge is None) or (self.huge.mem.size < size):
+            start = perf_counter()
+            self.huge = _malloc(size)
+            elapsed = perf_counter() - start
+            log_rank(
+                f"PinnedMemoryPool huge alloc {size} bytes ({elapsed:.3f} s)", self.comm
+            )
+
+        self.is_free = False
+        return PinnedMemoryPointer(PooledPinnedMemory(self.huge.mem, self._weakref), 0)
 
     def free(self, mem, size):
-        log_rank(f"Pinned memory pool freed {size} bytes", self.comm)
+        self.is_free = True
