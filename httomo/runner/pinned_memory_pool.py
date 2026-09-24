@@ -59,11 +59,13 @@ class PinnedMemoryPool:
             return ret
 
         if (self.huge is None) or (self.huge.mem.size < size):
+            alloc_size = size * 2
             start = perf_counter()
-            self.huge = _malloc(size)
+            self.huge = _malloc(alloc_size)
             elapsed = perf_counter() - start
             log_rank(
-                f"PinnedMemoryPool huge alloc {size} bytes ({elapsed:.3f} s)", self.comm
+                f"PinnedMemoryPool huge alloc {alloc_size} bytes ({elapsed:.3f} s)",
+                self.comm,
             )
 
         self.is_free = False
