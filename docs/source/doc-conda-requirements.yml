@@ -2,9 +2,9 @@ name: httomo-docs
 channels:
   - conda-forge 
 dependencies:
-  - python>=3.10,<3.13
+  - python
   - numpy
-  - sphinx>=8.0,<8.2.0
+  - sphinx
   - sphinx-book-theme
   - pandoc
   - jinja2
