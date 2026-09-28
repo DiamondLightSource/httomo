@@ -57,7 +57,8 @@ class CustomMock(mock.Mock):
 
 sys.modules["scipy"] = CustomMock()
 sys.modules["scipy.signal"] = CustomMock()
-
+sys.modules["loguru"] = CustomMock()
+sys.modules["graypy"] = CustomMock()
 
 # ------------------------------------------------------------------------------
 

@@ -4,6 +4,7 @@ macOS (Apple Silicon)
 *********************
 
 .. note::
+   
    HTTomo's GPU-accelerated methods (``httomolibgpu``) depend on `CuPy
    <https://cupy.dev/>`_, which requires an NVIDIA CUDA GPU. Apple Silicon
    Macs (M1/M2/M3/M4) have no CUDA support, so this path installs HTTomo in
@@ -29,75 +30,56 @@ everything below runs emulated under Rosetta and is significantly slower:
 
 2. Create the environment
 
-Skip ``cupy`` entirely — there is no arm64/macOS build, and it cannot be
-installed on Apple Silicon. ``astra-toolbox`` and ``tomopy`` do have
-osx-arm64 conda-forge builds (CPU-only algorithms), which is all a CPU
-pipeline needs. ``mpi4py`` is required even for a single-process run, since
-HTTomo's CLI unconditionally imports ``mpi4py.MPI``.
-Replace `conda` with `mamba` below if it's available in the environment, for a faster package resolution.
+HTTomo requires Python 3.12 or later and NumPy 2.4. CuPy and
+``httomolibgpu`` are not installed because they require an NVIDIA CUDA GPU.
 
-.. code-block:: bash
+``mpi4py`` is required even for a single-process run because HTTomo imports
+``mpi4py.MPI`` when its command-line interface starts.
 
-   conda create --name httomo python=3.11
-   conda activate httomo
+.. code-block:: console
 
-   # numpy must stay below 2.0 — HTTomo's CPU/GPU array-type detection
-   # (block.is_gpu) relies on numpy.ndarray *not* having a `.device`
-   # attribute, an assumption NumPy 2.0's Array API support breaks.
-   conda install -c conda-forge "numpy<2" mpi4py openmpi==4.1.6 \
-     "h5py=*=mpi_openmpi*" astra-toolbox tomopy==1.15.3 \
-     aiofiles click graypy loguru nvtx pillow pyyaml \
-     scikit-image scipy tqdm hdf5plugin pywavelets
+   $ conda create --name httomo --channel conda-forge 
+       python=3.12 "numpy==2.4.*" 
+       mpi4py openmpi==4.1.6 "h5py=*=mpi_openmpi*" 
+       tomopy==1.15.3 astra-toolbox 
+       aiofiles click graypy loguru nvtx pillow pyyaml 
+       scikit-image scipy tqdm hdf5plugin pywavelets 
+       compilers llvm-openmp pip
+   $ conda activate httomo
 
-   # compilers needed to build httomolib's OpenMP-based C extension —
-   # macOS's system clang has no -fopenmp support
-   conda install -c conda-forge compilers llvm-openmp
+NumPy 2.x is required by the current HTTomo implementation. In particular,
+HTTomo uses the ``numpy.ndarray.device`` attribute introduced in NumPy 2.0 to
+identify CPU arrays.
+
+The ``compilers`` and ``llvm-openmp`` packages are needed when building
+HTTomoLib's OpenMP-based extension because the system Clang compiler supplied
+by macOS does not provide OpenMP support by default.
 
 3. Install HTTomo
 
-.. code-block:: bash
+Install only the CPU backend packages. ``--no-deps`` is required because the
+published package metadata currently includes CUDA-only dependencies that
+cannot be installed on Apple Silicon.
 
-   pip install httomo httomo-backends httomolib tomobar --no-deps
+.. code-block:: console
 
-Verify:
+   $ python -m pip install --no-deps 
+       httomo httomo-backends httomolib
 
-.. code-block:: bash
+Do not install ``httomolibgpu`` or ``tomobar`` in this environment. Both are
+GPU-oriented packages with CUDA dependencies.
 
-   python -m httomo --help
+4. Verify the installation
 
-4. Known issues on this path (as of httomo 3.0 / httomolib 4.0.1)
+Confirm the Python and NumPy versions and verify that parallel HDF5 is enabled:
 
-If ``h5py`` ever gets silently swapped back to a non-MPI build by a later ``conda install`` (check with
-``python -c "import h5py; print(h5py.get_config().mpi)"``), pin it:
+.. code-block:: console
 
-  .. code-block:: bash
+   $ python -c "import sys, numpy; print(sys.version); print(numpy.__version__)"
+   $ python -c "import h5py; print('Parallel HDF5:', h5py.get_config().mpi)"
+   $ python -m httomo --help
 
-     conda config --env --append pinned_packages 'h5py=*=mpi_openmpi*'
+The first command should report Python 3.12 or later and NumPy 2.4.x. The
+second command should print ``Parallel HDF5: True``.
 
 5. Optional step. :ref:`run_tests` to make sure that everything works correctly.
-
-6. Running a CPU pipeline
-
-Always validate the pipeline first:
-
-.. code-block:: bash
-
-   python -m httomo check pipeline.yaml data.nxs
-
-Run serially:
-
-.. code-block:: bash
-
-   python -m httomo run data.nxs pipeline.yaml ./output --max-memory 10G
-
-Or across multiple CPU cores with MPI (``--max-memory`` is per-process,
-so divide your budget by the process count):
-
-.. code-block:: bash
-
-   mpirun -np 4 python -m httomo run data.nxs pipeline.yaml ./output --max-memory 2G
-
-.. note::
-   With 16GB of unified memory shared with macOS itself, keep
-   ``--max-memory`` well under the physical total (8–10G total budget is a
-   safe starting point) to avoid swapping.

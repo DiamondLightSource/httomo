@@ -1,57 +1,66 @@
 .. _installation_main:
 
-Installation Guide
-******************
+Installation
+************
 
-HTTomo is available on PyPI, so it can be installed into either a virtual environment or a
-conda environment.
-
-However, there are certain constraints under which a virtual environment can be used, due to
-the dependence on an MPI implementation, the hdf5 library, CUDA libraries, and whether the user
-requires using :code:`tomopy` methods in pipelines.
+HTTomo is available from PyPI. We recommend installing it in a Conda
+environment because HTTomo depends on MPI, parallel HDF5, and CUDA libraries.
+A Python virtual environment can also be used when these system dependencies
+are already available.
 
 .. note:: 
-   These instructions assume a Linux OS with a CUDA-compatible GPU. 
-   If you are using Windows or macOS, see :ref:`installation_other` for platform-specific guidance.
+
+   These instructions assume Linux and a CUDA-compatible GPU. For Windows or macOS, see :ref:`installation_other`.
 
 
 Conda environment
 =================
 
-By default the :code:`cupy` installation will install the latest :code:`cuda-cudart`. This can result in CUDA versions higher than the supported by the GPU device of the system. One can specify the compatible to their system CUDA package, e.g., :code:`cuda-cudart==12.9.79`.
-
 .. code-block:: console
 
-   $ conda create --name httomo
+   $ conda create --name httomo --channel conda-forge 
+       cupy==14.2 openmpi==4.1.6 "h5py[build=*openmpi*]"
+       python numpy astra-toolbox aiofiles click graypy loguru nvtx pillow 
+       pyyaml scikit-image scipy tqdm hdf5plugin pip pywavelets
    $ conda activate httomo
-   $ conda install -c conda-forge cupy==14.2 openmpi==4.1.6 h5py[build=*openmpi*] python numpy astra-toolbox aiofiles click graypy loguru nvtx pillow pyyaml scikit-image scipy tqdm hdf5plugin pip pywavelets
-   $ conda install -c conda-forge tomopy==1.15.3 # optional
-   $ pip install httomo httomo-backends httomolib httomolibgpu tomobar --no-deps
+   $ conda install --channel conda-forge tomopy==1.15.3  # Optional
+   $ pip install --no-deps 
+       httomo httomo-backends httomolib httomolibgpu tomobar
+
+
+.. note:: 
+
+   By default the :code:`cupy` installation will install the latest :code:`cuda-cudart`. This can result in CUDA versions higher than the supported by the GPU device of the system. One can specify the compatible to their system CUDA package, e.g., :code:`cuda-cudart==12.9.79`.
+
 
 Setup HTTomo development environment:
 ======================================================
 
-Development mode requires git cloning the HTTomo's repository and pip installing from the source as below. Note that all other dependencies, apart from :code:`httomo`, must be satisfied as above.
+Clone the HTTomo repository, create and activate the environment described
+above, and then run the following command from the repository root:
 
 .. code-block:: console
 
-   $ pip install -e .[dev] # development mode
+   $ pip install --editable ".[dev-gpu]"
 
 Virtual environment
 ===================
 
-A virtual environment can be used if the following conditions are met:
+A Python virtual environment can be used when:
 
-- an MPI implementation is installed on the system (ie, OpenMPI)
-- the hdf5 library is installed on the system
-- CUDA libraries or CUDA toolkit are installed on the system
-- methods from :code:`tomopy` are not required to be used in pipelines
+- an MPI implementation, such as OpenMPI, is installed;
+- a parallel build of HDF5 is installed;
+- the required CUDA libraries or CUDA Toolkit are installed; and
+- TomoPy methods are not required in HTTomo pipelines.
+
+The exact installation commands depend on the locally installed MPI, HDF5,
+CUDA, and NVIDIA driver versions.
 
 .. code-block:: console
 
    $ python -m venv httomo
    $ source httomo/bin/activate
-   $ MPICC=$(type -p mpicc) pip install mpi4py==3.1.6
+   $ MPICC=$(type -p mpicc) pip install mpi4py
    $ pip install cython numpy pkgconfig setuptools # build dependencies of h5py
    $ CC=$(type -p mpicc) HDF5_MPI="ON" HDF5_DIR=/path/to/parallel-hdf5 pip install --no-build-isolation --no-binary=h5py h5py
    $ pip install cupy-cuda14x # install cupy-cuda14x if CUDA library/CUDA toolkit version is 14.x

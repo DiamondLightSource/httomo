@@ -3,37 +3,99 @@
 Windows
 *******
 
-Although the libraries (backends) can be installed on Windows natively, the HTTomo framework requires Linux. For Windows 10 and newer one can install Linux through `WSL <https://learn.microsoft.com/en-us/windows/wsl/install>`_ and run HTTomo there. 
-WSL supports also CUDA-compatible GPU devices, so the GPU methods will also be working smoothly. 
+HTTomo requires Linux and cannot run directly on Windows. On supported
+versions of Windows, HTTomo can be run using Windows Subsystem for Linux 2
+(WSL 2).
+
+These instructions require Windows 10 version 2004 (build 19041) or later, or
+Windows 11. GPU acceleration additionally requires a supported NVIDIA GPU and
+an NVIDIA Windows driver that supports CUDA in WSL.
+
+See the following documentation before continuing:
+
+- `Install WSL <https://learn.microsoft.com/en-us/windows/wsl/install>`_
+- `Enable NVIDIA CUDA on WSL
+  <https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl>`_
 
 Installation steps
 ==================
 
-Steps 1-3 are following the official WSL installation provided `here <https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command>`_.
+1. Open PowerShell or Windows Terminal as an administrator.
 
-1. Open Terminal as Admin: Right-click Start, select "Windows PowerShell (Admin)" or "Terminal (Admin)".
-2. Run Install Command: Type :code:`wsl --install` and hit Enter. Reboot PC.
-3. Open Promt and type :code:`wsl` to start WSL.
+2. Install WSL and its default Ubuntu distribution:
 
-.. dropdown:: Troubleshooting: No Internet connection in WSL.
+   .. code-block:: powershell
 
-	Perform the steps as described in `here <https://stackoverflow.com/a/67756837>`_.
+      wsl --install
 
-4. Get the latest Miniforge for Linux using this `link <https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh>`_.
-5. Get into the **base** environment of conda by :code:`source /path/to/.bashrc`. 
-6. Install HTTomo and dependencies by following the :ref:`installation_main` notes for Linux.
-7. Optional step. :ref:`run_tests` to make sure that everything works correctly.
+3. Restart Windows when prompted. Then open Ubuntu from the Start menu and
+   complete the initial Linux user setup.
 
-.. dropdown:: Troubleshooting: HTTomoLib library requires a :code:`gcc` compiler.
+4. Confirm that the distribution is using WSL 2:
 
-	Install the :code:`gcc` compiler with :code:`sudo apt-get install gcc`.
+   .. code-block:: powershell
 
-.. dropdown:: Troubleshooting: HTTomo doesn't run on a GPU with an older architecture.
+      wsl --list --verbose
 
-	If there is a GPU with an older GPU architecture then try:
+   If necessary, replace ``Ubuntu`` below with the distribution name shown by
+   the preceding command:
 
-	a. :code:`conda install -c conda-forge cupy==12.3.6 openmpi==4.1.6 h5py[build=*openmpi*] python>=3.10 numpy astra-toolbox aiofiles click graypy loguru nvtx pillow pyyaml scikit-image scipy tqdm hdf5plugin pip pywavelets`
+   .. code-block:: powershell
 
-	b. :code:`pip install tomobar httomolib httomolibgpu httomo-backends --no deps`
+      wsl --set-version Ubuntu 2
 
-	c. Go to :code:`numpy1` branch on the cloned HTTomo repository and run :code:`pip install . --no-deps` to install a compatible older version.
+5. Inside the WSL terminal, update the package index and install the required
+   build tools:
+
+   .. code-block:: console
+
+      $ sudo apt update
+      $ sudo apt install build-essential wget
+
+6. Download and install Miniforge inside WSL:
+
+   .. code-block:: console
+
+      $ wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+      $ bash Miniforge3-Linux-x86_64.sh
+      $ source ~/.bashrc
+
+   The installer shown above is for x86-64 systems. Select a different
+   `Miniforge installer
+   <https://github.com/conda-forge/miniforge#requirements-and-installers>`_
+   when using another architecture.
+
+7. Follow the Conda instructions in :ref:`installation_main` to create an
+   environment and install HTTomo.
+
+8. Optionally, :ref:`run_tests` to verify the installation.
+
+.. dropdown:: Troubleshooting: WSL has no network connection
+
+   Follow Microsoft's
+   `WSL troubleshooting guidance
+   <https://learn.microsoft.com/en-us/windows/wsl/troubleshooting>`_.
+
+.. dropdown:: Troubleshooting: A compiler is missing
+
+   Install the standard Ubuntu build tools:
+
+   .. code-block:: console
+
+      $ sudo apt update
+      $ sudo apt install build-essential
+
+.. dropdown:: Troubleshooting: HTTomo cannot use the GPU
+
+   First confirm that the GPU is visible inside WSL:
+
+   .. code-block:: console
+
+      $ nvidia-smi
+
+   If this command fails, update the NVIDIA driver installed on Windows and
+   follow Microsoft's
+   `CUDA on WSL guidance
+   <https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl>`_.
+
+   Do not install a Linux NVIDIA display driver inside WSL.   

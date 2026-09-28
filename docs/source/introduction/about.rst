@@ -19,8 +19,3 @@ About HTTomo
     :alt: Simple tomographic pipeline
 
     HTTomo is tailored to work with 3D data, here 3D parallel-beam tomographic projection data is split and sent to a cluster with multiple GPUs for processing and reconstruction.
-
-.. toctree::
-   :maxdepth: 2
-
-   indepth/detailed_about

@@ -1,0 +1,44 @@
+# This pipeline should be supported by the latest developments of HTTomo. Use module load httomo/latest module at Diamond.
+# --- Standard tomography loader for NeXus files. ---
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    data_path: auto
+    image_key_path: auto
+    rotation_angles: auto
+    preview:
+      detector_x:   # horizontal data previewing/cropping.
+        # when null, the full data dimension is used, i.e., no previewing
+        start: null
+        stop: null
+      detector_y:   # vertical data previewing/cropping.
+        # when null, the full data dimension is used, i.e., no previewing
+        start: null
+        stop: null
+    darks: null
+    flats: null
+    continuous_scan_subset: null
+# --- Flat-field and dark-field projection correction. --- 
+- method: dark_flat_field_correction
+  module_path: httomolibgpu.prep.normalize
+  parameters:
+    flats_multiplier: 1.0
+    darks_multiplier: 1.0
+    upper_bound: null
+    lower_bound: null
+# --- Negative log is required for reconstruction to convert raw intensity measurements into the line integrals of attenuation. --- 
+- method: minus_log
+  module_path: httomolibgpu.prep.normalize
+  parameters: {}
+# --- Reconstruction method. ---
+- method: FBP3d_tomobar
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: !SweepRange  # Reference to center of rotation side output, a float number or 'null' for a middle of the horizontal dimension.
+      start: 1100
+      stop: 1300
+      step: 25
+    detector_pad: false # Horizontal detector padding to minimise circle/arc-type artifacts in the reconstruction. Set to 'true' to enable automatic padding or an integer
+    filter_freq_cutoff: 0.35
+    recon_size: null
+    recon_mask_radius: 0.95 # Zero pixels outside the mask-circle radius. Make radius equal to 2.0 to remove the mask effect.

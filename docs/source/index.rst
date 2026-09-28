@@ -8,14 +8,13 @@
     :glob:
 
     introduction/about
-    explanation/templates
-    explanation/process_list
-    explanation/faq
+    introduction/data_proc_concepts
+    introduction/execution_model
 
 .. _how_to_content:
 
 .. toctree::
-    :caption: How To's
+    :caption: Getting started
     :maxdepth: 2
 
     howto/installation
@@ -30,7 +29,6 @@
     :caption: Reference guides
     :maxdepth: 2
 
-    reference/yaml
     reference/loaders
 
 .. _backends_content:
@@ -66,5 +64,13 @@
     :maxdepth: 2
 
     developers/how_to_contribute
+    developers/add_own_method
+    developers/httomo_backends
     developers/memory_calculation
     developers/api
+
+.. toctree::
+    :caption: FAQ
+    :maxdepth: 2
+
+    faq/faq
