@@ -70,6 +70,7 @@ class TaskRunner:
         self._memory_limit_bytes = memory_limit_bytes
         self._pipeline_inspector()
         self._sections = self._sectionize()
+        self.pinned_transfer_buffer = None
 
     def execute(self) -> None:
         with catchtime() as t:
@@ -143,11 +144,6 @@ class TaskRunner:
         methods_info[-1] = methods_info[-1].rstrip("\n")
 
         self._log_pipeline(methods_info, level=logging.INFO)
-
-        slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
-        self.determine_max_slices(
-            section, slicing_dim_section, self.source.aux_data.get_angles()
-        )
 
         self._log_pipeline(
             f"Maximum amount of slices is {section.max_slices} for section {section_index}",
@@ -246,6 +242,7 @@ class TaskRunner:
             )
             self.source.finalize()
             self.source = new_source
+            self.source.gpu_transfer_buffer = self.pinned_transfer_buffer
 
         if section.is_last:
             # we don't need to store the results - this sink just discards it
@@ -265,6 +262,7 @@ class TaskRunner:
                 self.reslice_dir,
                 store_backing=store_backing,
             )
+            self.sink.gpu_transfer_buffer = self.pinned_transfer_buffer
 
     def _execute_section_block(
         self, section: Section, block: DataSetBlock
@@ -334,10 +332,31 @@ class TaskRunner:
         self._check_params_for_sweep()
         self._load_datasets()
 
+        max_device_upload_size = 0
+        for section in self._sections:
+            slicing_dim_section: Literal[0, 1] = _get_slicing_dim(section.pattern) - 1  # type: ignore
+            self.determine_max_slices(
+                section, slicing_dim_section, self.source.aux_data.get_angles()
+            )
+            chunk_shape = list(self.source.chunk_shape)
+            chunk_shape[slicing_dim_section] = section.max_slices
+            max_device_upload_size = max(
+                max_device_upload_size, np.prod(chunk_shape) * np.float32().itemsize
+            )
+
         if gpu_enabled:
             xp.get_default_pinned_memory_pool().free_all_blocks()
             xp.cuda.set_pinned_memory_allocator(None)
             log_once("Disabled CuPy pinned memory pool", logging.DEBUG)
+
+            self.pinned_transfer_buffer = xp.cuda.alloc_pinned_memory(
+                max_device_upload_size
+            )
+            log_rank(
+                f"Allocated {max_device_upload_size} bytes pinned memory for H2D transfers",
+                self.comm,
+            )
+            self.source.gpu_transfer_buffer = self.pinned_transfer_buffer
 
     def _load_datasets(self):
         start_time = self._log_task_start(

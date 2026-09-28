@@ -75,6 +75,7 @@ class DataSetStoreWriter(ReadableDataSetSink):
         self._global_shape: Optional[Tuple[int, int, int]] = None
         self._chunk_shape: Optional[Tuple[int, int, int]] = None
         self._global_index: Optional[Tuple[int, int, int]] = None
+        self.gpu_transfer_buffer = None
 
         # make sure finalize is called when this object is garbage-collected
         weakref.finalize(self, weakref.WeakMethod(self.finalize))
@@ -391,7 +392,9 @@ class DataSetStoreReader(DataSetSource):
         self, shape: List[int], dim: int, start_idx: List[int]
     ) -> np.ndarray:
         start_idx[dim] += self._global_index[dim] - self._padding[0]
-        block_data = make_pinned_host_array(shape, dtype=self._data.dtype)
+        block_data = make_pinned_host_array(
+            shape, dtype=self._data.dtype, pinned_ptr=self.gpu_transfer_buffer
+        )
         before_cut = 0
         after_cut = 0
         # check before boundary
@@ -556,7 +559,9 @@ class DataSetStoreReader(DataSetSource):
         ]
         data_slice = self._data[read_slices[0], read_slices[1], read_slices[2]]
         if gpu_enabled:
-            block_data = make_pinned_host_array(shape, self._data.dtype)
+            block_data = make_pinned_host_array(
+                shape, self._data.dtype, self.gpu_transfer_buffer
+            )
             block_data[:] = data_slice
             return block_data
         else:

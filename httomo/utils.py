@@ -391,11 +391,12 @@ def search_max_slices_iterative(
     return slices_low
 
 
-def make_pinned_host_array(shape, dtype) -> np.ndarray:
+def make_pinned_host_array(shape, dtype, pinned_ptr) -> np.ndarray:
     if gpu_enabled:
-        pinned_ptr = xp.cuda.alloc_pinned_memory(
-            np.prod(shape) * np.dtype(dtype).itemsize
-        )
+        if pinned_ptr is None:
+            pinned_ptr = xp.cuda.alloc_pinned_memory(
+                np.prod(shape) * np.dtype(dtype).itemsize
+            )
         return np.frombuffer(pinned_ptr, dtype=dtype, count=np.prod(shape)).reshape(
             shape
         )
