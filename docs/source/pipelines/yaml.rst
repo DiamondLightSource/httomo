@@ -1,32 +1,21 @@
 .. _tutorials_pl_templates:
 
-Full YAML pipelines
-==============================
+Ready-to-use pipelines
+======================
 
-This is a collection of ready to be used full pipelines or process lists for HTTomo.
-See more on :ref:`explanation_process_list` and how to :ref:`howto_process_list`.
+This is a collection of complete HTTomo pipelines, also called process lists.
+Use one as a starting point and adapt its loader paths and method parameters to
+the input data. See :ref:`explanation_process_list` for the underlying concepts
+and :ref:`howto_process_list` for configuration guidance.
 
-HTTomo mainly targets GPU computations, therefore the use of :ref:`tutorials_pl_templates_gpu` is 
-preferable. However, when the GPU device is not available or a GPU method is not implemented, the use of 
-:ref:`tutorials_pl_templates_cpu` is possible. 
+HTTomo primarily targets GPU processing, so use
+:ref:`tutorials_pl_templates_gpu` when a compatible GPU is available. Otherwise,
+select a :ref:`tutorials_pl_templates_cpu` pipeline.
 
-.. _full_pipelines_archived:
-
-Pipelines for released HTTomo versions
---------------------------------------
-
-These are archived full YAML pipelines that can be used with already released and tagged version of HTTomo. They are built using the :ref:`archived_templates`.
-
-.. only:: builder_html
- 
-   :download:`HTTomo version 3.1 full YAML pipelines <../templates_archive/httomo_ver3_1_full_yaml_pipelines.zip>`
-
-   :download:`HTTomo version 3.2 full YAML pipelines <../templates_archive/httomo_ver3_2_full_yaml_pipelines.zip>`
-   
-   :download:`HTTomo version 3.3 full YAML pipelines <../templates_archive/httomo_ver3_3_full_yaml_pipelines.zip>`
-
-
-.. warning:: At DLS, the templates below should work with the :code:`httomo/latest` module, however, for production please use :ref:`full_pipelines_archived`. 
+.. warning::
+   These examples track the current HTTomo development version. For production
+   with a tagged release, use the matching pipeline from
+   :ref:`versioned_downloads`.
 
 .. _tutorials_pl_templates_gpu:
 
@@ -58,6 +47,23 @@ Those pipelines consist of methods from HTTomolibgpu (GPU) and HTTomolib (CPU) b
 .. dropdown:: Using advanced iterative reconstruction :code:`FISTA3d_tomobar` with Total Variation regularisation. Recommended for undersampled and/or noisy data.
 
     .. literalinclude:: ../pipelines_full/FISTA3d_tomobar.yaml
+        :language: yaml
+
+.. _tutorials_pipelines:
+
+Tutorial pipelines
+------------------
+
+These pipelines are for :ref:`data_tutorials`, where data is also provided or can be generated.
+
+.. dropdown:: TomoPy (CPU) pipeline for :ref:`real-data-lorentz`
+
+    .. literalinclude:: ../pipelines_full/tomopy_tomobank.yaml
+        :language: yaml
+
+.. dropdown:: GPU-enabled processing for :ref:`real-data-lorentz`
+
+    .. literalinclude:: ../pipelines_full/FBP3d_tomobar_tomobank.yaml
         :language: yaml
 
 .. _tutorials_pl_templates_dls:

@@ -1,640 +1,271 @@
 .. _run-httomo-indepth:
 
-In-depth guide
-==============
+Command-line reference
+======================
 
-Interacting with HTTomo through the command line interface (CLI)
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+HTTomo provides a command-line interface (CLI) for validating and running
+processing pipelines.
 
-The way to interact with the HTTomo software is through its "command line
-interface" (CLI).
+Before using the CLI:
 
-As mentioned earlier, the preliminary step to accessing installed HTTomo software
-depends on if you are using a Diamond machine or not:
+* outside Diamond, activate the environment in which HTTomo is installed;
+* at Diamond, run ``module load httomo``.
 
-- not on a Diamond machine: activate the conda environment that HTTomo was
-  installed into (please refer to :ref:`installation_main` for instructions on how to
-  install HTTomo)
+Outside Diamond, invoke the CLI using ``python -m httomo``. Diamond users can
+use ``httomo`` as a shortcut.
 
-- on a Diamond machine: run the command :code:`module load httomo`
-
-Once the appropriate step has been done, you will have access to the HTTomo CLI:
+To list the available commands, run:
 
 .. code-block:: console
 
-    $ python -m httomo --help
-    Usage: python -m httomo [OPTIONS] COMMAND [ARGS]...
+   $ python -m httomo --help
 
-      httomo: High Throughput Tomography.
+The main commands are:
 
-    Options:
-      --version  Show the version and exit.
-      --help     Show this message and exit.
+``check``
+   Validate a YAML pipeline, optionally against an input HDF5 file.
 
-    Commands:
-      check  Check a YAML pipeline file for errors.
-      memory-check  Estimate CPU memory requirements for processing input...
-      run    Run a processing pipeline defined in YAML on input data.
+``memory-check``
+   Estimate the peak CPU memory required to run a pipeline.
 
-As can be seen from the output above, there are three HTTomo commands
-available: :code:`check`, :code:`memory-check`, and :code:`run`.
+``run``
+   Run a pipeline on an input dataset.
 
-The :code:`check` command is used for checking a YAML process list file for
-errors, and is highly recommended to be run before attempting to run the
-pipeline. Please see :ref:`utilities_yamlchecker` for more information about
-the checks being performed, the help information that is printed, etc.
-
-The :code:`memory-check` command is for estimating the CPU memory requirements
-for processing the input data with a given pipeline and number of processes.
-The underlying functionality was primarily developed for use with the DLS
-HTTomo launcher, and has been exposed as a CLI command for convenience.
-
-The :code:`run` command is used for running HTTomo with a pipeline on the given
-HDF5 input data.
-
-Both commands have arguments that are necessary to provide, arguments that are
-optional, as well as several options/flags to customise their behaviour.
-
-Condensed information regarding the arguments that the commands take, as well as
-the options for both commands, can be found directly from the command line by
-using the :code:`--help` flag, such as :code:`python -m httomo check --help`.
-
-However, the next sections will describe each command in more detail, providing
-supplementary material to the information in the CLI.
-
-.. note:: Diamond users will be able to use :code:`httomo` as a shortcut for
-          :code:`python -m httomo`
-
-The :code:`check` command
-+++++++++++++++++++++++++
+Use ``--help`` after any command to see its current arguments and options:
 
 .. code-block:: console
 
-    $ python -m httomo check --help
-    Usage: python -m httomo check [OPTIONS] YAML_CONFIG [IN_DATA]
+   $ python -m httomo run --help
 
-      Check a YAML pipeline file for errors.
 
-    Options:
-      --help  Show this message and exit.
+The ``check`` command
++++++++++++++++++++++
 
-.. note:: While HTTomo does support running pipelines in both YAML and JSON format, currently
-   the check functionality is only supported for YAML pipelines.
+Validate a YAML pipeline before running it:
+
+.. code-block:: console
+
+   $ python -m httomo check PIPELINE [IN_DATA_FILE]
+
+``PIPELINE``
+   Path to the YAML pipeline to validate.
+
+``IN_DATA_FILE``
+   Optional path to the input HDF5 file. When supplied, HTTomo also checks that
+   the dataset paths referenced by the pipeline loader exist in the file.
+
+For details of the validation performed, see :ref:`utilities_yamlchecker`.
+
+.. note::
+
+   The ``check`` command accepts pipeline files only. Checking a pipeline
+   supplied as a string is not currently supported.
+
+
+The ``memory-check`` command
+++++++++++++++++++++++++++++
+
+Estimate the peak CPU memory required to process a dataset:
+
+.. code-block:: console
+
+   $ python -m httomo memory-check IN_DATA_FILE PIPELINE NPROCS
+
+``IN_DATA_FILE``
+   Path to the input HDF5 file.
+
+``PIPELINE``
+   Path to the pipeline that will process the data.
+
+``NPROCS``
+   Number of processes that will run the pipeline. The value must be at least
+   one.
+
+The reported value is the estimated peak memory across all processes. It is
+calculated from the estimated peak memory for one process multiplied by
+``NPROCS``.
+
+The estimate accounts for the input data type and dimensions, loader previews,
+padding, re-slicing and changes in data shape between pipeline sections.
+
+
+The ``run`` command
++++++++++++++++++++
+
+Run a processing pipeline:
+
+.. code-block:: console
+
+   $ python -m httomo run [OPTIONS] IN_DATA_FILE PIPELINE OUT_DIR
 
 Arguments
 #########
 
-For :code:`check`, there is one *required* argument :code:`YAML_CONFIG`, and one
-*optional* argument :code:`IN_DATA`.
+``IN_DATA_FILE``
+   Path to an existing HDF5 input file.
 
-:code:`YAML_CONFIG` (required)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``PIPELINE``
+   Path to a YAML pipeline. HTTomo can also accept a JSON pipeline supplied as
+   a string when ``--pipeline-format json`` is used.
 
-This is the filepath to the YAML process list file that is to be checked.
+``OUT_DIR``
+   Parent directory in which HTTomo creates the run output directory.
 
-:code:`IN_DATA` (optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+By default, the output directory is named using the start time of the run:
 
-This is the filepath to the HDF5 input data that you are intending to run the
-YAML process list file on.
+.. code-block:: text
 
-This is useful to provide because the configuration of the loader in the YAML
-process list file will have some references to the internal paths within the
-HDF5 file, which must be typed correctly otherwise HTTomo will fail to access
-the intended dataset within the HDF5 file.
+   DD-MM-YYYY_HH_MM_SS_output
 
-Providing the filepath to the HDF5 input data will perform a check of the loader
-configuration in the YAML process list, determining if the paths mentioned in it
-exist or not in the accompanying HDF5 file.
+For example, a run started at 15:30:45 on 1 May 2023 with ``OUT_DIR`` set to
+``/home/myuser`` would write to:
 
-Options/flags
-#############
+.. code-block:: text
 
-The :code:`check` command has *no* options/flags.
-
-The :code:`memory-check` command
-++++++++++++++++++++++++++++++++
-
-.. code-block:: console
-
-    $ python -m httomo memory-check --help
-    Usage: python -m httomo memory-check [OPTIONS] IN_DATA_FILE PIPELINE NPROCS
-
-      Estimate CPU memory requirements for processing input data with a given
-      pipeline and number of processes
-
-    Options:
-      --help  Show this message and exit.
+   /home/myuser/01-05-2023_15_30_45_output/
 
 
-Arguments
-#########
+Options
+#######
 
-For :code:`memory-check` there are three *required* arguments:
-:code:`IN_DATA_FILE`, :code:`PIPELINE`, and :code:`NPROCS`, and zero *optional*
-arguments.
-
-:code:`IN_DATA_FILE` (required)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This is the filepath to the HDF5 input data that is intended to be processed.
-This is required primarily for querying the size of the input data.
-
-:code:`PIPELINE` (required)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This is the filepath to the YAML process list file that defines the processing
-to be applied to the input data.
-
-This is required for several reasons:
-
-- any cropping of the data via the loader's :code:`preview` parameter will
-  affect the size of the data being processed
-- any methods requiring padding will affect the size of the data being
-  processed
-- any :ref:`info_reslice` in the pipeline will affect the amount of memory
-  required
-
-:code:`NPROCS` (required)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This is the number of processes the input data is intended to be processed
-with.
-
-This is required primarily due to the number of processes affecting how the
-input data is split up, and thus affects the allocations required for
-processing the subsets of data.
-
-.. note:: The value of :code:`NPROCS` must be >= 1.
-
-Options/flags
-#############
-
-The :code:`memory-check` command has *zero* options/flags.
-
-The :code:`run` command
-+++++++++++++++++++++++
-
-.. code-block:: console
-
-    $ python -m httomo run --help
-    Usage: python -m httomo run [OPTIONS] IN_DATA_FILE PIPELINE OUT_DIR
-
-      Run a pipeline on input data.
-
-    Options:
-      --output-folder-name DIRECTORY  Define the name of the output folder created
-                                      by HTTomo
-      --save-all BOOL                 Save intermediate datasets for all tasks in
-                                      the pipeline. Set to True or False.
-      --gpu-id INTEGER                The GPU ID of the device to use.
-      --reslice-dir DIRECTORY         Directory for temporary files potentially
-                                      needed for reslicing (defaults to output
-                                      dir)
-      --max-cpu-slices INTEGER        Maximum number of slices to use for a block
-                                      for CPU-only sections (default: 64)
-      --max-memory TEXT               Limit the amount of memory used by the
-                                      pipeline to the given memory (supports
-                                      strings like 3.2G or bytes)
-      --save-snapshots BOOL           Save intermediate images (snapshots) from
-                                      some methods in the pipeline. Set to True or
-                                      False.
-      --bits-sweep-images INTEGER     Change the bit depth of saved tiff images in
-                                      the sweep run from default 32 bit to 16 or 8
-                                      bit tiffs.
-      --monitor TEXT                  Add monitor to the runner (can be given
-                                      multiple times). Available monitors: bench,
-                                      summary
-      --monitor-output FILENAME       File to store the monitoring output.
-                                      Defaults to '-', which denotes stdout
-      --intermediate-format [hdf5]    Write intermediate data in hdf5 format
-      --compress-intermediate         Write intermediate data in chunked format
-                                      with BLOSC compression applied
-      --syslog-host TEXT              Host of the syslog server
-      --syslog-port INTEGER           Port on the host the syslog server is
-                                      running on
-      --frames-per-chunk INTEGER RANGE
-                                      Number of frames per-chunk in intermediate
-                                      data (0 = write as contiguous, -1 = decide
-                                      automatically)  [x>=-1]
-      --recon-filename-stem TEXT      Name of output recon file without file
-                                      extension (assumes `.h5`)
-      --pipeline-format [yaml|json]   Format of the pipeline input (YAML or JSON)
-      --mpi-abort-hook                Enable hook that invokes MPI abort if an
-                                      unhandled exception is encountered
-      --help                          Show this message and exit.
-
-Arguments
-#########
-
-For :code:`run`, there are three *required* arguments:
-
-- :code:`IN_FILE`
-- :code:`PIPELINE`
-- :code:`OUT_DIR`
-
-and zero *optional* arguments.
-
-:code:`IN_FILE` (required)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This is the filepath to the HDF5 input data that you are intending to process.
-
-:code:`PIPELINE` (required)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Most commonly, this is the filepath to the YAML process list file that contains
-the desired processing pipeline.
-
-HTTomo also supports pipelines in JSON format provided as a string. See
-:ref:`pipeline-format` for specifying the pipeline format.
-
-:code:`OUT_DIR` (required)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This is the path to a directory which HTTomo will create its output directory
-inside.
-
-The output directory created by HTTomo contains a date and timestamp in the
-following format: :code:`{DAY}-{MONTH}-{YEAR}_{HOUR}_{MIN}_{SEC}_output/`. For
-example, the output directory created for an HTTomo run on 1st May 2023 at
-15:30:45 would be :code:`01-05-2023_15_30_45_output/`. If the :code:`OUT_DIR`
-path provided was :code:`/home/myuser/`, then the absolute path to the output
-directory created by HTTomo would be
-:code:`/home/myuser/01-05-2023_15_30_45_output/`.
-
-Options/flags
-#############
-
-The :code:`run` command has 19 options/flags:
-
-- :code:`--output-folder-name`
-- :code:`--save-all`
-- :code:`--gpu-id`
-- :code:`--reslice-dir`
-- :code:`--max-cpu-slices`
-- :code:`--max-memory`
-- :code:`--save-snapshots`
-- :code:`--bits-sweep-images`
-- :code:`--monitor`
-- :code:`--monitor-output`
-- :code:`--intermediate-format`
-- :code:`--compress-intermediate`
-- :code:`--syslog-host`
-- :code:`--syslog-port`
-- :code:`--frames-per-chunk`
-- :code:`--recon-filename-stem`
-- :code:`--pipeline-format`
-- :code:`--mpi-abort-hook`
-- :code:`--continuous-scan-subset`
-
-:code:`--output-folder-name`
+Output and intermediate data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As described in the documentation for the :code:`OUT_DIR` argument, the default name of the
-output directory created by HTTomo consists primarily of a timestamp. If one wishes to provide
-a name for the directory created by HTTomo instead of using the default timestamp name, then
-the :code:`--output-folder-name` flag may be used to achieve this.
+``--output-folder-name DIRECTORY``
+   Use the given output-directory name instead of the timestamp-based default.
+   For example, ``--output-folder-name test-1`` creates ``OUT_DIR/test-1``.
 
-For example, if the :code:`OUT_DIR` path provided was :code:`/home/myuser`, and
-:code:`--output-folder-name=test-1` was given, then the absolute path of the output directory
-created by HTTomo would be :code:`/home/myuser/test-1/`.
+``--save-all``
+   Save intermediate datasets for every task in the pipeline. Without this
+   option, datasets are saved only for tasks whose ``save_result`` setting is
+   enabled, either explicitly in the pipeline or by the method's default
+   configuration.
 
-.. _httomo-saving:
+``--save-snapshots``
+   Save image snapshots at selected points in the pipeline. Snapshots are
+   useful for inspecting intermediate processing without saving every complete
+   intermediate dataset.
 
-:code:`--save-all`
-~~~~~~~~~~~~~~~~~~
+``--intermediate-format hdf5``
+   Store intermediate datasets in HDF5 format. This is currently the only
+   supported intermediate format and is selected by default.
 
-Regarding the output of methods, HTTomo's default behaviour is to *not* write
-the output of a method to a file in the output directory unless one of the
-following conditions is satisfied:
+``--compress-intermediate``
+   Store intermediate datasets in chunked HDF5 files with BLOSC compression.
 
-- the method is the last one in the processing pipeline
-- the method is a reconstruction method
-- the :code:`save_result` parameter has been provided a value of :code:`true` in
-  a method's YAML configuration (see :ref:`save-result-examples` for more info
-  on the :code:`save_result` parameter)
+``--frames-per-chunk INTEGER``
+   Set the number of frames per HDF5 chunk for intermediate data. The value
+   must be at least ``-1``:
 
-However, there are certain cases such as debugging, where saving the output of
-all methods to files in the output directory is beneficial. This flag is a quick
-way of doing so.
+   * ``-1`` selects the chunk size automatically and is the default;
+   * ``0`` uses contiguous storage;
+   * a positive value sets the number of frames per chunk.
 
-:code:`--reslice-dir`
-~~~~~~~~~~~~~~~~~~~~~
+   Compression requires chunked storage. If ``--compress-intermediate`` is
+   combined with ``--frames-per-chunk 0``, HTTomo changes the chunk setting to
+   ``-1`` and selects it automatically.
 
-This is related to the :code:`--file-based-reslice` flag.
-
-By default, the directory that the file being used for the re-slice operation is
-the output directory that HTTomo creates.
-
-If this output directory is on a network-mounted disk, then read/write
-operations to such a disk will in general be much slower compared to a local
-disk. In particular, this means that the re-slice operation will be much slower
-if the output directory is on a network-mounted disk rather than on a local
-disk.
-
-This flag can be used to specify a different directory inside which the file
-used for re-slicing should reside.
-
-In particular, if performing the re-slice with a file and the output directory is
-on a *network-mounted disk*, it is recommended to use this flag to choose an
-output directory that is on a *local disk* where possible. This will
-*drastically* improve performance, compared to performing the re-slice with a
-file on a network-mounted disk.
-
-.. note:: If running HTTomo across multiple machines, using a single local disk
-          to contain the file used for re-slicing is not possible.
-
-Below is a summary of the different re-slicing approaches and their relative
-performances:
-
-============================ =========
-Re-slice type                 Speed
-============================ =========
-In-memory                    Very fast
-File w/ local disk           Fast
-File w/ network-mounted disk Very slow
-============================ =========
-
-:code:`--max-cpu-slices`
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-This flag is only relevant only for runs which are using a pipeline that contains
-1 or more sections that are composed of purely CPU methods.
-
-Understanding this flag's usage is dependent on knowledge of the concept of
-"chunks", "blocks", and "sections" within HTTomo's framework, so please refer to
-:ref:`detailed_about` for information on these concepts.
-
-The notion of a block is fully utilised to increase performance when a sequence of
-two or more GPU methods are being executed. When two or more CPU methods are
-executed in sequence, the notion of a block plays a less significant role in
-performance. The number of slices in a block is driven by the memory capacity of
-the GPU, but if no GPU is being used for executing a sequence of methods in the
-pipeline, there is no obvious way to choose the number of slices in a block (the
-"block size").
-
-In such cases the user may wish to tweak the block size to explore if a specific
-block size happens to improve performance for the CPU-only section(s).
-
-:code:`--max-memory`
-~~~~~~~~~~~~~~~~~~~~
-
-HTTomo supports execution on both:
-
--  compute clusters, where large amounts of system RAM are typically available
--  personal workstations or laptops, where available RAM is often more limited
-
-To accommodate these different environments, HTTomo dynamically manages intermediate 
-data during pipeline execution. Whenever sufficient RAM is available, data is kept 
-in memory to maximise performance. If memory requirements exceed the available 
-RAM, HTTomo automatically stores intermediate data on disk and reloads it as needed.
-
-The :code:`--max-memory` option specifies the amount of RAM available to HTTomo.
-It sets the limit in terms of the maximum amount of the CPU memory per process available
-on the system. For instance, if you're running HTTomo on 1 process serially, you need
-to pass the value of the CPU memory available on your system, e.g., :code:`--max-memory 32G` would 
-set it to 32 Gigabyte. Providing an accurate value allows HTTomo to optimise memory usage 
-while avoiding out-of-memory errors.
+``--recon-filename-stem NAME``
+   Set the filename stem used for reconstruction output. HTTomo adds the
+   ``.h5`` extension. For example, ``--recon-filename-stem my-recon`` produces
+   ``my-recon.h5``.
 
 
-:code:`--save-snapshots`
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-When this flag is enabled, the pipeline saves image snapshots at specific execution points.
-These snapshots are captured during selected methods - typically when a section boundary 
-is reached and data is transferred to the CPU. At which time a slice of the data is saved for 
-inspection.
-
-This feature is particularly useful for complex pipelines (e.g. 360 degrees with stitching and phase contrast),
-where intermediate processing steps involved in reconstruction may unintentionally alter
-the data. By reviewing these snapshot images (JPEGs), users can more easily pinpoint
-where issues are introduced in the pipeline. 
-
-Enabling snapshots incurs almost no additional computational cost, unlike the :code:`--save-all` 
-flag, which requires saving the entire dataset into a file for each method.
-
-:code:`--bits-sweep-images`
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-This flag allows to set the bit depth for tiff images saved during :ref:`parameter_sweeping`. By default,
-HTTomo will use the bit-depth of the data, select here 8, 16 or 32-bit (default).
-
-:code:`--monitor`
-~~~~~~~~~~~~~~~~~
-
-HTTomo has the capability of reporting information about the performance of the
-various methods involved in the specific pipeline that will be executed.
-Specifically:
-
-- time taken for methods to execute on the CPU/GPU
-- transfer time to and from the GPU
-- time taken to write to files (if HTTomo uses a file instead of RAM to hold data
-  during pipeline execution)
-
-There are two options for this flag, :code:`summary` and :code:`bench`.
-
-:code:`--monitor=summary`
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The :code:`summary` option will produce a brief summary of the time taken for each
-method to execute in the pipeline, which will look something like the following:
-
-.. code-block:: console
-
-    Summary Statistics (aggregated across 1 processes):
-      Total methods CPU time:     19.376s
-      Total methods GPU time:     19.042s
-      Total host2device time:      0.013s
-      Total device2host time:      0.548s
-      Total sources time    :      0.063s
-      Total sinks time      :      0.028s
-      Other overheads       :      0.362s
-      ---------------------------------------
-      Total pipeline time   :     19.829s
-      Total wall time       :     19.829s
-      ---------------------------------------
-    Method breakdowns:
-                        data_reducer :      0.001s ( 0.0%)
-                      find_center_vo :     11.586s (58.4%)
-                      remove_outlier :      3.312s (16.7%)
-                           normalize :      0.334s ( 1.7%)
-         remove_stripe_based_sorting :      2.987s (15.1%)
-                                 FBP :      0.966s ( 4.9%)
-              save_intermediate_data :      0.019s ( 0.1%)
-                      save_to_images :      0.171s ( 0.9%)
-
-:code:`--monitor=bench`
-^^^^^^^^^^^^^^^^^^^^^^^
-
-The :code:`bench` option (short for "benchmark") provides a much more in-depth
-breakdown of the time taken for each method to execute (dividing it into time
-taken on CPU vs. GPU, data transfer times to and from the GPU), and providing this
-information for all processes involved in the run.
-
-This output is very verbose, but can provide some insight if, for example, wanting
-to see what parts of the pipeline may be slower than expected.
-
-:code:`--monitor-output`
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-By default the output of any usage of the :code:`--monitor` flag will be written
-to :code:`stdout` (ie, printed to the terminal). However, there are times when
-it's useful to write the monitoring output to a file, such as for performance
-analysis.
-
-HTTomo supports writing the monitoring results in CSV format, and so any given
-filepath to the :code:`--monitor-output` flag will produce a file with the
-benchmarking results written in CSV format.
-
-:code:`--intermediate-format`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TODO
-
-:code:`--compress-intermediate`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TODO
-
-:code:`--syslog-host`
-~~~~~~~~~~~~~~~~~~~~~
-
-TODO
-
-:code:`--syslog-port`
-~~~~~~~~~~~~~~~~~~~~~
-
-TODO
-
-:code:`--frames-per-chunk`
+Execution and resource use
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This flag sets the number of frames in a chunk for the intermediate file.
+``--gpu-id INTEGER``
+   Select the GPU device to use. The default is ``-1``, which does not
+   explicitly select a different CUDA device.
 
-- -1 (the default), it will be decided automatically;
-- 0, contiguous storage will be used (no chunk storage);
-- >= 1, the number of frames in a chunk.
+``--max-memory SIZE``
+   Set the maximum CPU memory available to each process. Values may be supplied
+   as bytes or with a ``K``, ``M`` or ``G`` suffix, for example
+   ``--max-memory 32G``.
 
-For most cases the default -1 should be sufficient as the actual number of
-frames in a chunk is optimised by considering the saturation bandwidth of the
-filesystem.
+   When the estimated memory for a pipeline section reaches this limit, HTTomo
+   uses disk-backed intermediate storage. The default is ``0``, which disables
+   the limit.
 
-:code:`--recon-filename-stem`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``--max-cpu-slices INTEGER``
+   Set the maximum number of slices in a block for CPU-only pipeline sections.
+   The value must be at least one and defaults to ``64``.
 
-By default, if the output of a method is saved to a file, the filename is of
-the form :code:`task_{N}-{PACKAGE_NAME}-{METHOD_NAME}.h5`, where:
+   Adjusting this value may affect the performance of CPU-only processing. See
+   :ref:`detailed_about` for information about blocks, chunks and sections.
 
-- :code:`N` is the index of the method in the pipeline (zero-indexing)
-- :code:`PACKAGE_NAME` is the name of the package that the method comes from
-- :code:`METHOD_NAME` is the name of the method
+``--reslice-dir DIRECTORY``
+   Choose the directory used for temporary re-slicing files. The directory
+   must already exist and be writable. The run output directory is used by
+   default.
 
-For the output of a reconstruction method specifically, if a filename different
-to the above format is desired, this can be provided using the
-:code:`--recon-filename-stem` flag. The files created will always be hdf5
-files, so the file extension should always be :code:`h5`. Therefore, only the
-"stem" of the desired filename needs to be provided (the part of the filename
-before the file extension).
+   When the output is on network-mounted storage, using a local temporary
+   directory can substantially improve file-based re-slicing performance. For
+   a multi-node run, the directory must be accessible to every participating
+   process.
 
-For example, if the desired reconstruction filename is :code:`my-recon.h5`,
-then the flag should be used as :code:`--recon-filename-stem=my-recon`.
+``--continuous-scan-subset START STOP``
+   Select a subset of projections along the angular dimension. This option
+   overrides the ``continuous_scan_subset`` value in the pipeline loader
+   configuration. See :ref:`continuous_scan_subset_selection`.
+
+``--mpi-abort-hook``
+   Abort all MPI processes when any process encounters an unhandled exception.
+   This prevents the remaining processes from waiting indefinitely for a failed
+   process.
+
+   This option is mainly intended for debugging. Because termination occurs at
+   the MPI level, the exception traceback may be incomplete.
+
+
+Pipeline format and parameter sweeps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. _pipeline-format:
 
-:code:`--pipeline-format`
-~~~~~~~~~~~~~~~~~~~~~~~~~
+``--pipeline-format {yaml,json}``
+   Select the pipeline format. The value is case-insensitive and defaults to
+   YAML.
 
-HTTomo supports running pipelines defined in YAML and JSON format. The format
-of a given pipeline can be specified with this flag by providing a string
-stating either YAML or JSON, where the string is case-insensitive.
+   YAML pipelines must be provided as files. JSON pipelines must be provided
+   as strings.
 
-The default setting is YAML, so this flag can be omitted if one wishes to run a
-YAML pipeline.
+``--bits-sweep-images INTEGER``
+   Set the bit depth of TIFF images produced by a
+   :ref:`parameter_sweeping` run. Use ``8``, ``16`` or ``32``. The default is
+   ``32``.
 
-.. note:: HTTomo currently only accepts YAML pipelines as files and JSON
-   pipelines as strings. Ie, both YAML pipelines provided as strings and JSON
-   pipelines provided as files are not currently supported.
+   The CLI currently accepts any integer, although the supported output bit
+   depths are 8, 16 and 32.
 
-:code:`--mpi-abort-hook`
-~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note:: This is a flag primarily for debugging.
+Monitoring
+~~~~~~~~~~
 
-When running HTTomo under MPI, there are cases when an exception can be raised in one or more
-processes but not in all processes. If execution of the alive process(es) reaches a point which
-involves communication with the other process(es) (for example, an MPI gather), the alive
-process(es) will be stuck indefinitely, waiting for the dead process(es) to communicate to
-them.
+``--monitor NAME``
+   Enable a performance monitor. The available monitors are ``summary`` and
+   ``bench``. This option can be supplied more than once.
 
-To avoid a deadlock in such cases, a hook into python's exception handling can be used to
-invoke MPI abort if any of the python processes encounter an unhandled exception. This results
-in the following behaviour: if one process encounters an unhandled exception, all processes are
-guaranteed to be terminated, and thus no deadlock will be encountered.
+   ``summary``
+      Report aggregate timings and a per-method breakdown.
 
-Something to be aware about with this aproach is that the MPI abort occurs not at the python
-layer, but rather, at the MPI implementation layer. In particular, this means that python's
-writing to stdout/stderr is not guaranteed to complete before the MPI abort is invoked.
-Meaning, while printing of the traceback of the unhandled exception that triggered the MPI
-abort does exist in the python code, there is no guarantee that this printing will be complete
-before the MPI abort mechanism begins to terminate the python processes. Thus, the output in a
-terminal when MPI abort is invoked may only contain partial information about the exception
-that triggered the MPI abort.
+   ``bench``
+      Report detailed timings for every process, including CPU and GPU
+      execution, data transfers and file operations.
 
-:code:`--continuous-scan-subset`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``--monitor-output FILENAME``
+   Write monitoring results to a file. By default, results are written to
+   standard output.
 
-This is an alternative to the :code:`continuous_scan_subset` loader parameter, see
-:ref:`continuous_scan_subset_selection` for more details.
+   The ``summary`` monitor produces human-readable text, while the ``bench``
+   monitor produces CSV data.
 
-This flag takes two values, the first one being the start index and the second one being the
-stop index. For example, an equivalent of the following config:
 
-.. literalinclude:: ../../../tests/samples/pipeline_template_examples/testing/loader_with_offset_param.yaml
-   :language: yaml
-   :emphasize-lines: 7-9
+System logging
+~~~~~~~~~~~~~~
 
-can be achieved with the flag via :code:`--continuous-scan-subset 90 180`
+``--syslog-host HOST``
+   Set the hostname of the syslog server. The default is ``localhost``.
 
-.. note:: This flag overrides the :code:`continuous_scan_subset` parameter in the YAML
-   config. Meaning, if the :code:`continuous_scan_subset` parameter is present in the loader's
-   config in the YAML pipeline but the :code:`--continuous-scan-subset` flag is used, then the
-   values given in the YAML config are ignored and the values given to the flag take
-   precedence. If this occurs, it will be logged to the :code:`debug.log` file that HTTomo
-   produces.
-
-Developer options
-+++++++++++++++++
-
-Tracing
-#######
-
-One tool that can be used to record CPU traces, along with CPU and memory usage statistics is `VizTracer`_. 
-
-.. _VizTracer: https://viztracer.readthedocs.io
-
-To enable CPU and memory usage statistic recording in the traces use the :code:`--no-standalone` option of httomo.
-
-VizTracer
-#########
-
-Recording a trace with viztracer:
-
-:code:`python -m viztracer --plugin "vizplugins --cpu_usage --memory_usage" --output_file output.json -m httomo run --no-standalone data.nxs pipeline.yaml output_directory`
-
-Recording a trace for multiple ranks:
-
-:code:`mpirun -n 4 bash -c 'python -m viztracer --plugin "vizplugins --cpu_usage --memory_usage" --output_file output_rank_${OMPI_COMM_WORLD_RANK}.json -m httomo run --no-standalone data.nxs pipeline.yaml output_directory'`
-
-A separate file is created for each rank.
-VizTracer can combine them into a single json file:
-
-:code:`viztracer --combine output_rank_*.json -o output.json`
-
-VizTracer's output json files can be viewed by vizviewer offline:
-
-:code:`vizviewer output.json`
-
-Or by using the online version of `Perfetto`_.
-
-.. _Perfetto: https://ui.perfetto.dev
+``--syslog-port PORT``
+   Set the syslog server port. The default is ``514``.

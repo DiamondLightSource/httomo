@@ -1,43 +1,67 @@
 .. _info_logger:
 
-Interpret Log File
-======================
+Run output and log messages
+===========================
 
-This section contains information on how to interpret the log file created by HTTomo.
+HTTomo uses ``loguru`` for logging. A run can produce:
 
-HTTomo uses :code:`loguru` software to unify and simplify the logging system. During the job execution, the concise information
-goes to the terminal (see :numref:`fig_log`) and also to the :code:`user.log` file. More verbose information, that is usually
-needed to debug the run, is saved into the :code:`debug.log` file. Let us explain few main elements of the :code:`user.log`
-file and also stdout.
+* ``user.log``, containing the same concise progress information shown in the
+  terminal;
+* ``debug.log``, containing additional information for diagnosing problems;
+* ``pipeline.yaml``, a copy of the pipeline used for the run;
+* HDF5 files requested with ``save_result: true`` or the ``--save-all`` option;
+  and
+* snapshot images when ``--save-snapshots`` is used.
+
+See :ref:`run-httomo-indepth` for the output-related command-line options.
+
 
 .. _fig_log:
-.. figure::  ../_static/log/log_screenshot.png
-    :scale: 40 %
-    :alt: HTTomo log screenshot
 
-    The screenshot of the terminal output (AKA stdout) which also goes into the :code:`user.log` file.
+.. figure:: ../_static/log/log_screenshot.png
+   :scale: 40 %
+   :alt: HTTomo terminal output
 
+   Terminal output, which is also recorded in ``user.log``.
 
-* :code:`Pipeline has been separated into N sections`
-   This means that `N` :ref:`info_sections` created for this pipeline and each section contains a certain amount of methods grouped together to work on :ref:`blocks_data`. The progress can be seen in every
-   section processing all of the input data divided into :ref:`chunks_data` and :ref:`blocks_data`, before continue to the next section.
+Common log messages
++++++++++++++++++++
 
-* :code:`Running loader`
-   The loader does not belong to sections and always at the start of the pipeline. Note that the loader
-   loads the data using the specific :code:`pattern=projection` (See more :ref:`info_reslice`). The same pattern is used by the
-   following section.
+``Pipeline has been separated into N sections``
+   The pipeline has been divided into ``N`` :ref:`info_sections`. Each section
+   groups methods that process the data as :ref:`chunks_data` and
+   :ref:`blocks_data`. A section processes all its input data before the next
+   section starts.
 
-* :code:`Section N with the following methods`
-   Each section contains a number of methods that run sequentially for each :ref:`blocks_data`
-   of data. When all blocks are processed, the user will see the message :code:`Finished processing the last block`. This means that all of the
-   input data have been processed in this section and the pipeline moves to the next section, if it exists.
+``Running loader``
+   The loader runs before the pipeline sections. It initially loads data using
+   the ``projection`` pattern, which is also used by the first section. See
+   :ref:`info_reslice`.
 
-* :code:`50%|#####     | 1/2 [00:02<00:02,  2.52s/block]`
-   These are the progress bars showing how much data is being processed in every section.
-   The percentage progress bar demonstrates how many blocks have been processed by the `M` number of methods of the current section. Specifically in this case
-   we have :code:`1/2`, which means that one of two blocks completed (hence `50%`). Then :code:`00:02<00:02` shows the time in seconds to
-   reach the current block (time elapsed) and the remaining time to complete all iterations over blocks. The :code:`2.52s/block` part is an
-   estimation of how much time it's taking per block. When the time per block is less than one second then this can be presented as :code:`block/s` instead.
-   See :code:`save_to_images` progress report, for instance.
+``Section N with the following methods``
+   The listed methods run sequentially on each block in the section.
+   ``Finished processing the last block`` indicates that the section has
+   processed all its input data.
 
-.. note:: When interpreting progress bars, one possible misunderstanding can be an association of the progress with the methods completed. Because each piece of data (a block) can be processed by multiple methods, we report on how many blocks have been processed instead.
+A progress bar may look like this:
+
+.. code-block:: text
+
+   50%|#####     | 1/2 [00:02<00:02, 2.52s/block]
+
+It reports progress through the data blocks, not through individual methods:
+
+``50%`` and ``1/2``
+   One of two blocks has been processed.
+
+``00:02<00:02``
+   Two seconds have elapsed and approximately two seconds remain.
+
+``2.52s/block``
+   The estimated processing time per block. For faster operations, this may
+   instead be displayed as blocks per second (``block/s``).
+
+.. note::
+
+   A block may be processed by several methods. The progress bar therefore
+   counts completed blocks rather than completed methods.

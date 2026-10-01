@@ -3,34 +3,68 @@
 How to contribute
 *****************
 
-For those who are interested in contributing to HTTomo, we provide here steps to follow. All additional enquires can be left in
-the issues section on `HTTomo's Github page <https://github.com/DiamondLightSource/httomo/issues>`_.
+Use this workflow to expose a new processing method through HTTomo. For changes
+to HTTomo itself, open a pull request with focused tests and documentation. If
+the scope is unclear, discuss it first in the `HTTomo issue tracker
+<https://github.com/DiamondLightSource/httomo/issues>`_.
 
-1. Write a new data processing method in Python.
+1. Put the code in the right project
+====================================
 
-   One needs to write a method and make it accessible in either a separate library or integrating
-   it into the list of already :ref:`backends_list`. The latter option is preferred as some of the packages are
-   maintained by HTTomo developers which will provide support during the integration.
+Implement the processing function in a backend library, such as HTTomolib,
+HTTomolibGPU or TomoPy. Keep HTTomo responsible for orchestration rather than
+scientific algorithms. See :ref:`backends_list` for the supported libraries.
 
-2. Expose the method in the library file in HTTomo
+Add tests and make the function importable from its public module before
+starting the HTTomo integration.
 
-   Then one needs to expose that method to HTTomo by editing the :ref:`pl_library`. You would need to specify
-   the main static descriptors of that method, such as, :code:`pattern`, :code:`implementation`, etc. If the implementation is :code:`cpu` only,
-   then :code:`memory_gpu` must be set to :code:`None`. However, if the method requires GPU, then you would need to provide more information so
-   that HTTomo's framework would account for the memory use on the device. See :code:`HTTomolibgpu` library file for that.
-   In a simple case, one can calculate the memory directly by providing multipliers in the library file. When memory
-   calculation is more complicated, one needs to add a Python script that does this calculation. See more in :ref:`developers_memorycalc`.
+2. Confirm that HTTomo can call it
+==================================
 
-3. Check the wrapper type
+Prefer a function that accepts an array and explicit parameters and returns the
+processed array. Check that it fits an existing :ref:`wrapper <info_wrappers>`.
+Only add or modify a wrapper when the function's interface cannot use an
+existing one. See :ref:`developers_add_own_method` for the basic method
+requirements.
 
-   Every method is executed by using :ref:`info_wrappers`. Check that the method fits the existing wrapper type, and if not, then possibly more work required
-   to accommodate it. In most of the cases the method should fit the existing types.
+3. Register it in ``httomo-backends``
+=====================================
 
-4. Generate the Yaml template
+Add the method's execution metadata, any required memory or shape calculations,
+and its generated pipeline template. Follow
+:ref:`developers_httomo_backends` for the complete procedure.
 
-   HTTomo's UI requires :ref:`reference_templates` to execute the created method. One can either construct that YAML template manually or employ
-   `YAML generator <https://diamondlightsource.github.io/httomo-backends/utilities/yaml_generator.html>`_.
+Do not add scientific processing code to ``httomo-backends``. That repository
+describes how HTTomo should execute the backend function; it does not implement
+the function itself.
 
+4. Test the integration
+=======================
 
+Before submitting the changes:
 
+* run the backend library's tests;
+* test every new ``httomo-backends`` metadata or supporting-function entry;
+* review the generated YAML template;
+* validate a representative pipeline with
+  ``python -m httomo check pipeline.yaml input.nxs``; and
+* run that pipeline on a small representative dataset.
 
+Include CPU or GPU tests appropriate to the implementation. Memory estimates,
+padding and output-shape calculations should cover boundary values, not only a
+single typical input.
+
+5. Submit linked changes
+========================
+
+Submit changes to the backend library before, or together with, the associated
+``httomo-backends`` change. Link the pull requests and identify any minimum
+compatible package versions.
+
+Update HTTomo itself only when the new method requires a framework change, such
+as a new wrapper capability. Include the relevant tests and documentation in
+that pull request.
+
+A contribution is complete when the backend method is tested and importable,
+its metadata and template are available from ``httomo-backends``, and a small
+HTTomo pipeline validates and runs successfully.

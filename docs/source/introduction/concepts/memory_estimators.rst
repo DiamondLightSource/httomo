@@ -14,7 +14,7 @@ at once. This defines the size of the :ref:`blocks <blocks_data>` used within ea
    :align: center
    :width: 100%
 
-   HTTomo selects the largest block size that satisfies the memory requirements of
+   HTTomo selects a safe block size that satisfies the memory requirements of
    every method in a section.
 
 Selecting a block size
@@ -24,9 +24,10 @@ HTTomo first determines the available memory on the selected GPU. For a candidat
 block size, each GPU method in the section estimates its peak memory use, including
 its inputs, outputs and temporary allocations.
 
-The most memory-demanding method limits the block size. HTTomo selects the largest
-block that fits the available memory for every method, then uses that size
-throughout the section.
+The most memory-demanding method limits the block size. HTTomo selects a block
+that fits the available memory for every method, then uses that size throughout
+the section. Iterative estimators may return a safe near-maximum value rather
+than the exact largest possible block.
 
 Why block size matters
 ~~~~~~~~~~~~~~~~~~~~~~

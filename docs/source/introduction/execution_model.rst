@@ -1,29 +1,37 @@
 How HTTomo runs a pipeline
 ==========================
 
-From process list to pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 HTTomo reads the YAML process list, validates its methods and parameters, and
 constructs an executable pipeline. Method wrappers adapt backend functions to
 HTTomo's common data-processing interface.
 
-Distributing the data
-~~~~~~~~~~~~~~~~~~~~~
+.. _fig_execution_model:
 
-The dataset is divided among the available MPI processes. Each process receives
-one :ref:`chunk <chunks_data>` and normally operates independently on its assigned
-data.
+.. figure:: ../_static/execution_model.svg
+   :width: 100%
+   :alt: Diagram of the HTTomo pipeline execution model
 
-Creating sections and blocks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   HTTomo execution from a YAML process list to output. The pipeline is divided
+   into sections; within each section, data is distributed into chunks and
+   processed block by block.
+
+Creating sections
+~~~~~~~~~~~~~~~~~
 
 HTTomo groups compatible methods into :ref:`sections <info_sections>`. For each
 section, it calculates a safe block size from the available memory and the
 requirements of its methods.
 
-Each chunk is then divided into :ref:`blocks <blocks_data>`. A block passes through
-every method in the section before the next block is processed.
+Executing a section
+~~~~~~~~~~~~~~~~~~~
+
+Within each section, the dataset is divided among the available MPI processes.
+Each process receives one :ref:`chunk <chunks_data>` and normally operates
+independently on its assigned data.
+
+Each chunk is then divided into :ref:`blocks <blocks_data>` using the block size
+calculated for the section. A block passes through every method in the section
+before the next block is processed.
 
 Moving between sections
 ~~~~~~~~~~~~~~~~~~~~~~~

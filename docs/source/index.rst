@@ -11,7 +11,7 @@
     introduction/data_proc_concepts
     introduction/execution_model
 
-.. _how_to_content:
+.. _getting_started:
 
 .. toctree::
     :caption: Getting started
@@ -19,43 +19,40 @@
 
     howto/installation
     howto/run_httomo
-    howto/process_lists_guide
+    howto/tutorial
+
+.. _how_to_content:
+
+.. toctree::
+    :caption: User guide
+    :maxdepth: 2
+
+    howto/loading_data
     howto/httomo_features
-    howto/interpret_logger
+
+.. _pipelines_methods_content:
+.. _backends_content:
+.. _tutorials_content:
+
+.. toctree::
+    :caption: Pipelines and methods
+    :maxdepth: 2
+
+    pipelines/yaml
+    backends/templates
+    backends/list
+    pipelines/versioned_downloads
 
 .. _reference_content:
 
 .. toctree::
-    :caption: Reference guides
+    :caption: Reference
     :maxdepth: 2
 
-    reference/loaders
+    howto/how_to_run/run_in_depth
+    reference/pipeline_file
+    howto/interpret_logger
 
-.. _backends_content:
-
-.. toctree::
-    :caption: Data processing
-    :maxdepth: 2
-
-    backends/list
-    backends/templates
-
-.. _tutorials_content:
-
-.. toctree::
-    :caption: Ready-to-use pipelines
-    :maxdepth: 2
-    :glob:
-
-    pipelines/yaml
-
-.. _utilities_content:
-
-.. toctree::
-    :caption: Utilities
-    :maxdepth: 2
-
-    utilities/yaml_checker
 
 .. _developers_content:
 
@@ -67,6 +64,7 @@
     developers/add_own_method
     developers/httomo_backends
     developers/memory_calculation
+    developers/profiling_tracing
     developers/api
 
 .. toctree::

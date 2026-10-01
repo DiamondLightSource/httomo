@@ -3,8 +3,6 @@
 Frequently asked questions
 ==========================
 
-.. _explanation_yaml:
-
 YAML and pipelines
 ------------------
 
@@ -15,31 +13,8 @@ YAML and pipelines
    <explanation_pipelines_templates>` containing the loader and processing
    methods that form a pipeline.
 
-   YAML uses key-value pairs, lists and indentation:
-
-   .. code-block:: yaml
-
-      # A list containing one method
-      - method: median_filter3d
-        module_path: tomopy.misc.corr
-        parameters:
-          size: 3
-
-   In this example:
-
-   - the leading ``-`` starts a list entry
-   - ``method``, ``module_path`` and ``parameters`` are keys
-   - indentation places ``size`` inside ``parameters``
-   - text following ``#`` is a comment
-
-   Important formatting rules:
-
-   - Use spaces for indentation, never tabs.
-   - Keep indentation consistent.
-   - Include a space after each colon.
-   - Use ``true``, ``false`` and ``null`` for Boolean and empty values.
-   - Quote strings when they contain special characters or could be
-     interpreted as another data type.
+   See the :ref:`pipeline_file_reference` for YAML formatting, supported method
+   fields, side-output references and parameter-sweep syntax.
 
 .. dropdown:: What is a YAML template?
 
@@ -114,8 +89,7 @@ Using and extending HTTomo
    First install or load HTTomo, prepare a validated process list and select the
    input data.
 
-   See :ref:`howto_run_at_diamond` when working at Diamond Light Source, or
-   :ref:`howto_run_outside_diamond` for other systems.
+   See :ref:`How to run HTTomo <howto_run>` or :ref:`howto_run_at_diamond` when working at Diamond Light Source.
 
 .. dropdown:: Can HTTomo run my own Python method?
 
