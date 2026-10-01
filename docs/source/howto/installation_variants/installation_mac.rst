@@ -4,7 +4,7 @@ macOS (Apple Silicon)
 *********************
 
 .. note::
-   
+
    HTTomo's GPU-accelerated methods (``httomolibgpu``) depend on `CuPy
    <https://cupy.dev/>`_, which requires an NVIDIA CUDA GPU. Apple Silicon
    Macs (M1/M2/M3/M4) have no CUDA support, so this path installs HTTomo in
@@ -38,12 +38,12 @@ HTTomo requires Python 3.12 or later and NumPy 2.4. CuPy and
 
 .. code-block:: console
 
-   $ conda create --name httomo --channel conda-forge 
-       python=3.12 "numpy==2.4.*" 
-       mpi4py openmpi==4.1.6 "h5py=*=mpi_openmpi*" 
-       tomopy==1.15.3 astra-toolbox 
-       aiofiles click graypy loguru nvtx pillow pyyaml 
-       scikit-image scipy tqdm hdf5plugin pywavelets 
+   $ conda create --name httomo --channel conda-forge \
+       python=3.12 "numpy==2.4.*" \
+       mpi4py openmpi==4.1.6 "h5py=*=mpi_openmpi*" \
+       tomopy==1.15.3 astra-toolbox \
+       aiofiles click graypy loguru nvtx pillow pyyaml \
+       scikit-image scipy tqdm hdf5plugin pywavelets \
        compilers llvm-openmp pip
    $ conda activate httomo
 
@@ -63,7 +63,7 @@ cannot be installed on Apple Silicon.
 
 .. code-block:: console
 
-   $ python -m pip install --no-deps 
+   $ python -m pip install --no-deps \
        httomo httomo-backends httomolib
 
 Do not install ``httomolibgpu`` or ``tomobar`` in this environment. Both are
@@ -82,4 +82,5 @@ Confirm the Python and NumPy versions and verify that parallel HDF5 is enabled:
 The first command should report Python 3.12 or later and NumPy 2.4.x. The
 second command should print ``Parallel HDF5: True``.
 
-5. Optional step. :ref:`run_tests` to make sure that everything works correctly.
+Developers who need to run the source test suite should follow
+:ref:`developer_setup`.

@@ -1,85 +1,10 @@
-.. _howto_run_at_diamond:
+:orphan:
 
-Running HTTomo at Diamond
-=========================
+Diamond guide moved
+===================
 
-HTTomo can be run at Diamond in two ways:
+The Diamond-specific guide is now at :ref:`howto_run_at_diamond`.
 
-* in parallel on the ``wilson`` compute cluster, using the ``httomo_mpi``
-  launcher; or
-* serially on a Diamond workstation, using the ``httomo run`` command.
+.. raw:: html
 
-Parallel execution on the compute cluster is the recommended and most common
-way to process tomography data at Diamond.
-
-Before running HTTomo, load the HTTomo module. If you are unfamiliar with the
-module system, see :ref:`faq_workstation`.
-
-Running HTTomo in parallel
-++++++++++++++++++++++++++
-
-Parallel HTTomo jobs run on the ``wilson`` production compute cluster. The
-``httomo_mpi`` launcher is integrated with the SLURM workload manager and
-submits the requested processing job to the cluster.
-
-Submitting from a Diamond workstation
-#####################################
-
-On a Diamond workstation, load the HTTomo environment:
-
-.. code-block:: console
-
-   $ module load httomo
-
-Then submit the processing job:
-
-.. code-block:: console
-
-   $ httomo_mpi IN_FILE YAML_CONFIG OUT_DIR
-
-Alternatively, log in to ``wilson``, load the HTTomo module and submit the job
-from there:
-
-.. code-block:: console
-
-   $ ssh wilson
-   $ module load httomo
-   $ httomo_mpi IN_FILE YAML_CONFIG OUT_DIR
-
-The command takes the following arguments:
-
-``IN_FILE``
-   The path to the HDF5 file containing the input tomography data.
-
-``YAML_CONFIG``
-   The path to the YAML process list that defines the processing pipeline.
-
-``OUT_DIR``
-   The directory in which HTTomo will write its output.
-
-To see the available launcher options, run:
-
-.. code-block:: console
-
-   $ httomo_mpi --help
-
-Running HTTomo serially on workstation
-++++++++++++++++++++++++++++++++++++++
-
-For smaller jobs or testing pipelines, HTTomo can be run serially on a Diamond
-workstation.
-
-First, load the HTTomo environment:
-
-.. code-block:: console
-
-   $ module load httomo
-
-Then run the pipeline locally:
-
-.. code-block:: console
-
-   $ httomo run IN_FILE YAML_CONFIG OUT_DIR
-
-This command runs HTTomo on the workstation itself and does not submit a job to
-the compute cluster.
+   <meta http-equiv="refresh" content="0; url=../../getting_started/at_diamond.html">

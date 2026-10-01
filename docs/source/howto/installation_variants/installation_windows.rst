@@ -68,7 +68,7 @@ Installation steps
 7. Follow the Conda instructions in :ref:`installation_main` to create an
    environment and install HTTomo.
 
-8. Optionally, :ref:`run_tests` to verify the installation.
+8. Run the verification commands in :ref:`installation_main`.
 
 .. dropdown:: Troubleshooting: WSL has no network connection
 
@@ -98,4 +98,4 @@ Installation steps
    `CUDA on WSL guidance
    <https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl>`_.
 
-   Do not install a Linux NVIDIA display driver inside WSL.   
+   Do not install a Linux NVIDIA display driver inside WSL.

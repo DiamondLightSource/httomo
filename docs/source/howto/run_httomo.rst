@@ -102,7 +102,7 @@ Find and inspect the output
 
 Open the newly created run directory inside ``OUTPUT_DIR``. It contains:
 
-* ``pipeline.yaml``, a copy of the pipeline used for the run;
+* a copy of the pipeline, retaining its source filename;
 * ``user.log``, containing the concise progress information shown in the
   terminal;
 * ``debug.log``, containing more detailed diagnostic information;
@@ -113,9 +113,3 @@ Open the newly created run directory inside ``OUTPUT_DIR``. It contains:
 Inspect HDF5 results with an HDF5-compatible viewer such as DAWN, HDFView or
 silx. See :ref:`info_logger` for help interpreting the logs, progress
 bars and other output files.
-
-
-.. toctree::
-   :maxdepth: 2
-
-   how_to_run/at_diamond

@@ -172,7 +172,11 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     "--max-memory",
     type=click.STRING,
     default="0",
-    help="The maximum amount of the CPU memory per process available on the system (supports strings like 3.2G or bytes)",
+    help=(
+        "Per-process memory ceiling used to select in-memory or disk-backed "
+        "storage and to cap GPU block sizing (supports values such as 3.2G or "
+        "bytes; 0 disables the user ceiling)"
+    ),
 )
 @click.option(
     "--save-snapshots",

@@ -12,6 +12,8 @@ on:
 jobs:
   build-docs-publish:
     runs-on: ubuntu-latest
+    env:
+      HTTOMO_BACKENDS_VERSION: "1.2.0"
     defaults:
       run:
         shell: bash -el {0}
@@ -34,7 +36,7 @@ jobs:
 
         - name: Install httomo-backends
           run: |
-            pip install --no-deps httomo-backends
+            pip install --no-deps "httomo-backends==${HTTOMO_BACKENDS_VERSION}"
 
         - name: Generate full yaml pipelines using pipeline directives
           run: |
@@ -47,7 +49,7 @@ jobs:
             zip -r pipelines_full_artifact.zip ./docs/source/pipelines_full/
 
         - name: Build docs
-          run: sphinx-build -a -E -b html ./docs/source/ ./docs/build/
+          run: sphinx-build -W --keep-going -a -E -b html ./docs/source/ ./docs/build/
 
         - name: Publish docs
           if: github.ref_type == 'tag' || github.ref_name == 'main'

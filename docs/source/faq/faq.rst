@@ -112,52 +112,8 @@ Using and extending HTTomo
 
    See :ref:`developers_howtocontribute` for development guidance.
 
-.. _faq_workstation:
+.. dropdown:: Where should I start when a run fails?
 
-Working at Diamond Light Source
--------------------------------
-
-.. _terminal:
-
-.. dropdown:: What is a terminal?
-
-   A terminal—also called a shell, console or command line—is a text-based
-   interface for running commands. HTTomo is loaded, configured and started from
-   a terminal.
-
-.. dropdown:: How do I load HTTomo at Diamond?
-
-   List the installed versions with:
-
-   .. code-block:: console
-
-      module avail httomo
-
-   Load the default recommended version with:
-
-   .. code-block:: console
-
-      module load httomo
-
-   This configures the Python environment and makes HTTomo and its dependencies
-   available in the current terminal.
-
-.. dropdown:: What does ``module load`` do?
-
-   The module system updates environment variables such as executable and
-   library paths. Loading HTTomo activates the configured software environment
-   without requiring a separate installation.
-
-   See the `Environment Modules documentation
-   <https://modules.readthedocs.io>`_ for more information.
-
-.. dropdown:: How do I change the loaded HTTomo version?
-
-   Unload the current version and then load the required one:
-
-   .. code-block:: console
-
-      module unload httomo
-      module load httomo/<version>
-
-   Run ``module avail httomo`` to see the available version names.
+   Read ``user.log`` and then ``debug.log`` in the run directory. Validate the
+   pipeline against the input file with ``python -m httomo check`` and consult
+   :ref:`troubleshooting` for data, MPI, HDF5, CUDA and memory problems.

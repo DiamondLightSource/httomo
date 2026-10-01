@@ -1,10 +1,11 @@
 .. _detailed_about:
 
-Data processing concepts
-++++++++++++++++++++++++
+Core concepts
+=============
 
-Here we present HTTomo's main data processing interfaces through :ref:`explanation_pipelines_templates` and also framework-related concepts, such as, :ref:`chunks_blocks_data`, :ref:`info_sections`, 
-:ref:`info_reslice`, :ref:`info_wrappers` and :ref:`info_memory_estimators`.
+These pages explain the terms used to describe a pipeline and how HTTomo moves
+data through it. Implementation details about wrappers and memory-estimator
+interfaces belong to :ref:`developer_architecture`.
 
 .. toctree::
    :maxdepth: 2
@@ -13,5 +14,3 @@ Here we present HTTomo's main data processing interfaces through :ref:`explanati
    concepts/chunks_blocks
    concepts/sections
    concepts/reslice
-   concepts/wrappers
-   concepts/memory_estimators

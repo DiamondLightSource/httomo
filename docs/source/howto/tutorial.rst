@@ -10,5 +10,4 @@ and experimental tomography data with HTTomo.
    :maxdepth: 2
 
    tutorial/real_data_example
-   tutorial/synthetic_data   
-
+   tutorial/synthetic_data
