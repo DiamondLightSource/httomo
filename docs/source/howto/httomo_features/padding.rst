@@ -6,7 +6,7 @@ Padding
 
 HTTomo processes data as :ref:`chunks_data` and :ref:`blocks_data`. Methods
 that operate on independent 2D frames, such as 2D denoising filters, do not
-need padding. Methods that operate on 3D volumes need padded blocks to preserve
+need :term:`padding`. Methods that operate on 3D volumes need padded blocks to preserve
 boundary conditions and prevent artefacts.
 
 How this can be useful?

@@ -6,7 +6,9 @@ Versioned downloads
 ===================
 
 Method templates and complete pipelines must match the installed HTTomo
-release. Download both archives from the same row.
+release. Download both archives from the same row. Patch releases within a
+minor series use the same archive unless their release notes state otherwise;
+for example, HTTomo 3.3.2 uses the 3.3 archives.
 
 .. only:: builder_html
 
@@ -40,3 +42,6 @@ release. Download both archives from the same row.
 
 For the current development version, use the generated
 :ref:`reference_templates` and the latest :ref:`tutorials_pl_templates`.
+See :ref:`compatibility` for runtime package requirements and the
+`HTTomo releases page <https://github.com/DiamondLightSource/httomo/releases>`_
+for changes between releases.

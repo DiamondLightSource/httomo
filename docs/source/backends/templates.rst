@@ -21,7 +21,7 @@ The method templates are generated and published by `HTTomo-backends
 <https://diamondlightsource.github.io/httomo-backends/>`_. Select the library
 used by your pipeline:
 
-* `HTTomolibgpu methods (GPU)
+* `HTTomolibGPU methods (GPU)
   <https://diamondlightsource.github.io/httomo-backends/backends/templates.html#httomolibgpu-modules>`_
 * `HTTomolib methods (CPU)
   <https://diamondlightsource.github.io/httomo-backends/backends/templates.html#httomolib-modules>`_

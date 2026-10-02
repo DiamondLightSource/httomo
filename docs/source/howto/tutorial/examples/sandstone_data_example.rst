@@ -65,8 +65,10 @@ configuration details.
 
 .. warning::
 
-   Use :ref:`previewing` of the vertical detector to avoid running full data reconstruction on memory-limited workstations. Use, for instance, 10 slices `preview` in the loader
-   
+   On a memory-limited workstation, use :ref:`previewing` to reconstruct a
+   small vertical range first. For example, select ten detector rows in the
+   loader:
+
    .. code-block:: yaml
 
        preview:

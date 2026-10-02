@@ -61,7 +61,8 @@ Copy the following pipeline into a file named
    .. literalinclude:: ../../../pipelines_full/LPRec3d_tomobar.yaml
       :language: yaml
 
-The standard loader uses automatic NXtomo dataset discovery and this dataset follows that. 
+This dataset follows NXtomo, so the standard loader can discover its datasets
+automatically.
 
 .. warning::
 

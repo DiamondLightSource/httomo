@@ -4,64 +4,69 @@ Processing libraries
 ====================
 
 HTTomo coordinates loading, processing and reconstruction methods supplied by
-several scientific software libraries. A pipeline may combine methods from
-more than one library.
-
-Choose libraries according to the available hardware and the methods required
-by the pipeline:
+scientific software libraries. A pipeline may combine methods from several
+:term:`backends <backend>`.
 
 .. list-table::
    :header-rows: 1
-   :widths: 22 14 64
+   :widths: 20 12 31 37
 
    * - Library
      - Processor
-     - Typical use
-   * - HTTomolibgpu
+     - Choose it for
+     - Notes
+   * - `HTTomolibGPU`_
      - GPU
-     - GPU-accelerated preprocessing and reconstruction methods maintained for
-       HTTomo.
-   * - HTTomolib
+     - Accelerated preprocessing, artefact correction and reconstruction
+     - Uses CuPy and CUDA; several reconstruction methods also use TomoBAR or
+       ASTRA.
+   * - `HTTomolib`_
      - CPU
-     - CPU implementations maintained for HTTomo.
-   * - TomoPy
+     - CPU processing and image-output methods maintained for HTTomo
+     - Useful in CPU pipelines and for output stages following GPU processing.
+   * - `TomoPy`_
      - CPU
-     - Established CPU preprocessing and reconstruction methods from the
-       wider tomography community.
+     - Established tomography preprocessing and reconstruction methods
+     - CPU methods exposed through HTTomo can use local multithreading within
+       each MPI process.
 
-Only methods listed in :ref:`reference_templates` have HTTomo YAML templates
-and can be selected directly in a pipeline.
+Only methods listed in :ref:`reference_templates` have the metadata and YAML
+templates required for direct use in an HTTomo pipeline. Not every function in
+a backend library is exposed.
 
-HTTomolibgpu library (GPU)
---------------------------
-`HTTomolibgpu <https://github.com/DiamondLightSource/httomolibgpu>`_ library is developed at `Diamond Light source  <https://www.diamond.ac.uk/>`_
-by Data Analysis Group to work together with the HTTomo software.
+HTTomolibGPU
+------------
 
-* HTTomolibgpu is a Python library of GPU accelerated methods written using `CuPy <https://cupy.dev/>`_ API and CUDA language.
-* Most of the original methods have been taken from TomoPy or `Savu <https://github.com/DiamondLightSource/Savu>`_ software and then re-optimised and GPU-accelerated.
-* Its methods can also be used independently, although HTTomo's GPU memory
-  management is only available when they run as part of an HTTomo pipeline.
+HTTomolibGPU is developed by the Data Analysis Group at
+`Diamond Light Source`_ for GPU-accelerated tomography. Its methods can be
+called independently, but HTTomo adds pipeline orchestration, block sizing,
+distributed I/O and GPU memory management. See :ref:`reconstruction_ecosystem`
+for the relationship between HTTomolibGPU, TomoBAR, ASTRA and CuPy.
 
-HTTomolib library (CPU)
---------------------------
-`HTTomolib <https://github.com/DiamondLightSource/httomolib>`_ library is similar to HTTomolibgpu, but contains mostly CPU modules.
+HTTomolib
+---------
 
-TomoPy software (CPU)
----------------------
-`TomoPy <https://tomopy.readthedocs.io>`_ is an open-source Python package for
-tomographic data processing and image reconstruction developed at
-`The Advanced Photon Source <https://www.aps.anl.gov/>`_ in Illinois, USA.
-The project is active since 2013 and it gained a `large audience <https://github.com/tomopy/tomopy>`_
-of users and contributors across tomographic imaging community.
+HTTomolib contains CPU methods maintained alongside HTTomo. It also supplies
+utilities such as rescaling and image writing that are commonly used at the
+end of both CPU and GPU pipelines.
 
-* TomoPy is an open-source package in Python and C for data processing and reconstruction. TomoPy is mostly a CPU processing library and in HTTomo we expose the CPU modules only.
-* It is a CPU-multithreaded package. HTTomo controls parallelisation through MPI on a higher level and also supports local CPU multithreading from TomoPy, for every MPI process.
-* Not every TomoPy function is exposed by HTTomo. See
-  :ref:`reference_templates` for the supported methods.
+TomoPy
+------
+
+TomoPy is an open-source tomography package from the wider imaging community.
+HTTomo exposes a selected set of its CPU preprocessing and reconstruction
+functions. HTTomo distributes data between MPI processes; TomoPy may also use
+CPU threads inside each process.
 
 Adding another method or library
 --------------------------------
 
-Information about integrating processing code belongs to the developer guide.
-See :ref:`developers_add_own_method` for method requirements, wrappers and YAML
-template generation.
+Processing-code integration belongs in the developer guide. See
+:ref:`developers_add_own_method` for the complete method workflow and
+:ref:`developers_httomo_backends` for registering metadata after a method has
+been implemented.
+
+.. _HTTomolibGPU: https://github.com/DiamondLightSource/httomolibgpu
+.. _HTTomolib: https://github.com/DiamondLightSource/httomolib
+.. _TomoPy: https://tomopy.readthedocs.io
+.. _Diamond Light Source: https://www.diamond.ac.uk/

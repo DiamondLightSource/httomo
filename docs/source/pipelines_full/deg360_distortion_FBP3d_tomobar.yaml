@@ -36,7 +36,7 @@
     darks_multiplier: 1.0
     upper_bound: null
     lower_bound: null
-# --- Center of Rotation auto-finding. Required for reconstruction bellow. ---
+# --- Center of Rotation auto-finding. Required for reconstruction below. ---
 - method: find_center_360
   module_path: httomolibgpu.recon.rotation
   parameters:

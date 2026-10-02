@@ -23,7 +23,8 @@ if exist "%SCRIPT_DIR%build" (
 rem -a writes all output files.
 rem -E rebuilds the Sphinx environment without using the saved cache.
 rem -b html selects the HTML builder.
-sphinx-build -a -E -b html "%SCRIPT_DIR%source" "%SCRIPT_DIR%build"
+rem -W treats warnings as errors; --keep-going reports all warnings in one run.
+sphinx-build -W --keep-going -a -E -b html "%SCRIPT_DIR%source" "%SCRIPT_DIR%build"
 set "EXIT_CODE=%ERRORLEVEL%"
 
 if not "%EXIT_CODE%"=="0" (

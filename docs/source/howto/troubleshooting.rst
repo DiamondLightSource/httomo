@@ -52,6 +52,44 @@ Check the NVIDIA driver and CuPy runtime before running HTTomo:
 The installed CuPy CUDA package must be compatible with the system driver. Use
 a CPU pipeline when no CUDA-capable GPU is available.
 
+GPU memory is exhausted
+-----------------------
+
+An out-of-memory error can be caused by either the pipeline block size or other
+processes already using the device.
+
+#. Run ``nvidia-smi`` and stop unrelated jobs using the selected GPU.
+#. In a multi-process run, assign one MPI rank to each GPU. Do not allow several
+   ranks to select the same device unless the pipeline and hardware were sized
+   for that arrangement.
+#. Reduce the input :term:`preview`, particularly ``detector_y`` while testing.
+#. Set a smaller per-process ceiling, for example ``--max-memory 12G``. For GPU
+   sections this caps the budget used to calculate the block size. It may also
+   cause section data to use slower disk-backed storage.
+#. If one method still fails while others fit, its GPU memory estimator may be
+   inaccurate. Record the method, parameters, input shape and ``debug.log`` when
+   reporting the problem.
+
+See :ref:`memory_and_performance` for user guidance and
+:ref:`developers_memorycalc` when diagnosing an estimator.
+
+Pipeline and method templates do not match
+------------------------------------------
+
+Errors about an unknown method or parameter often mean that a pipeline was
+generated for a different HTTomo or ``httomo-backends`` version. Use
+:ref:`versioned_downloads` for a released HTTomo version and check the
+:ref:`compatibility` notes before updating one component independently.
+
+The output directory cannot be created or written
+--------------------------------------------------
+
+HTTomo creates a run directory below ``OUT_DIR``. Confirm that the parent
+directory exists where required by the scheduler, is writable by every MPI
+rank and has enough free space for requested intermediate files. With a
+multi-node run, use storage visible from every node. The directory supplied to
+``--reslice-dir`` must already exist and be writable.
+
 Re-slicing is unexpectedly slow
 -------------------------------
 

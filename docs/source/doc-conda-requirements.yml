@@ -1,21 +1,21 @@
 name: httomo-docs
 channels:
-  - conda-forge 
+  - conda-forge
 dependencies:
-  - python
-  - numpy
-  - sphinx
-  - sphinx-book-theme
+  - python=3.12
+  - numpy=2.4
+  - sphinx>=8,<10
+  - sphinx-book-theme>=1.2,<2
   - pandoc
-  - jinja2
-  - nbsphinx
-  - sphinx-design
-  - sphinx-copybutton
+  - jinja2>=3.1,<4
+  - nbsphinx>=0.9,<1
+  - sphinx-design>=0.6,<1
+  - sphinx-copybutton>=0.5,<1
   - pyyaml
   - ipython
   - ghp-import
   - loguru
   - graypy
   - tqdm
-  - ruamel.yaml>=0.18 
+  - ruamel.yaml>=0.18,<1
   - pip

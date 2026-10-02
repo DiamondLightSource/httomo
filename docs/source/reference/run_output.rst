@@ -1,19 +1,99 @@
 .. _info_logger:
 
-Run output and log messages
-===========================
+Run output, logs and monitoring
+===============================
 
-HTTomo uses ``loguru`` for logging. A run can produce:
+Unless ``--output-folder-name`` is supplied, HTTomo creates a timestamped run
+directory named ``DD-MM-YYYY_HH_MM_SS_output`` below ``OUT_DIR``. Every run
+contains:
 
-* ``user.log``, containing the same concise progress information shown in the
-  terminal;
-* ``debug.log``, containing additional information for diagnosing problems;
-* a copy of the pipeline, retaining its source filename;
-* HDF5 files requested with ``save_result: true`` or the ``--save-all`` option;
-  and
-* snapshot images when ``--save-snapshots`` is used.
+``user.log``
+   The concise progress information also shown in the terminal.
+
+``debug.log``
+   Detailed diagnostic information, including messages from individual ranks.
+
+Pipeline copy
+   A copy retaining the source filename, with omitted default parameters added
+   for ordinary YAML runs. JSON input is recorded as ``pipeline.json``.
+
+Depending on the pipeline and command-line options, the directory may also
+contain intermediate HDF5 files, image directories, snapshots and monitoring
+output.
 
 See :ref:`run-httomo-indepth` for the output-related command-line options.
+
+Intermediate HDF5 files
++++++++++++++++++++++++
+
+``save_result: true`` saves the result after that method. ``--save-all`` adds
+equivalent saves after every eligible method. Files normally use this pattern:
+
+.. code-block:: text
+
+   TASK-ID-PACKAGE-METHOD[-ALGORITHM].h5
+
+For reconstruction output, ``--recon-filename-stem NAME`` replaces that stem
+and produces ``NAME.h5``. Each intermediate file stores the main volume at
+``/data`` and also records ``/angles`` and
+``/data_dims/detector_x_y``.
+
+By default, HTTomo selects an HDF5 chunk length automatically.
+``--frames-per-chunk`` can set it explicitly, and
+``--compress-intermediate`` enables BLOSC compression. Compression requires
+chunked storage, so requesting contiguous storage together with compression
+falls back to automatic chunking.
+
+Image output and sweeps
++++++++++++++++++++++++
+
+The ``save_to_images`` method controls the image directory, format and bit
+depth. The backend writer may append the bit depth and format to the configured
+``subfolder_name``; for example, the quickstart's ``images`` configuration
+produces ``images8bit_tif``.
+
+A :term:`parameter sweep` automatically saves images after each swept method;
+do not add a separate ``save_to_images`` immediately after it. Sweep directories
+use the method name and selected bit depth, for example
+``images_sweep_FBP3d_tomobar32bit_tif``.
+
+Snapshots
++++++++++
+
+``--save-snapshots`` writes representative JPEG images to
+``pipeline_stages_snapshots``. Snapshots are intended for rapid inspection and
+debugging, not as quantitative output.
+
+Monitoring output
++++++++++++++++++
+
+Use ``--monitor summary`` for aggregate timing text or ``--monitor bench`` for
+one CSV row per source, method, sink and total timing event. Direct output to a
+file with ``--monitor-output FILE``; the default is standard output. More than
+one ``--monitor`` option may be supplied.
+
+The benchmark CSV contains these fields:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Field
+     - Meaning
+   * - ``Type``, ``Rank``
+     - Event type and MPI rank that produced it.
+   * - ``Name``, ``Task id``, ``Module``
+     - Pipeline operation and its configured identity.
+   * - ``Slicing dim``
+     - Axis along which the block was divided.
+   * - ``Block offset (chunk)``, ``Block offset (global)``
+     - Block position within the rank's chunk and complete dataset.
+   * - ``Block dim z``, ``Block dim y``, ``Block dim x``
+     - Shape of the recorded block.
+   * - ``CPU time``
+     - Host elapsed time for the event.
+   * - ``GPU kernel time``, ``GPU H2D time``, ``GPU D2H time``
+     - GPU execution and transfer times, or zero for CPU-only events.
 
 
 .. _fig_log:

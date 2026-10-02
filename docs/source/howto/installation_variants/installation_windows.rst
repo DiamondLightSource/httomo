@@ -62,7 +62,7 @@ Installation steps
 
    The installer shown above is for x86-64 systems. Select a different
    `Miniforge installer
-   <https://github.com/conda-forge/miniforge#requirements-and-installers>`_
+   <https://github.com/conda-forge/miniforge/releases>`_
    when using another architecture.
 
 7. Follow the Conda instructions in :ref:`installation_main` to create an

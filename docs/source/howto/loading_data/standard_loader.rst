@@ -1,9 +1,11 @@
+.. _standard_tomo_loader:
+
 Standard tomography loader
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-HTTomo provides the :code:`standard_tomo` loader for parallel-beam tomography
-data stored in HDF5/NeXus files. A basic configuration specifies the projection
-data, image keys, and rotation angles:
+HTTomo provides the :code:`standard_tomo` :term:`loader` for parallel-beam
+tomography data stored in HDF5/NeXus files. A basic configuration specifies the
+projection data, :term:`image key`, and rotation angles:
 
 .. code-block:: yaml
 
@@ -49,7 +51,8 @@ following parameters to :code:`auto`:
         image_key_path: auto
         rotation_angles: auto
 
-HTTomo then discovers the projection data, image keys, and rotation angles. The NXtomo compatible data can be created using the script from :ref:`create_nxtomo`.
+HTTomo then discovers the projection data, image keys and rotation angles. Use
+the script in :ref:`create_nxtomo` to create compatible :term:`NXtomo` data.
 
 .. note:: Automatic NXtomo discovery is unavailable when darks or flats are
    loaded from separate files.

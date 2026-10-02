@@ -5,13 +5,14 @@ Generate synthetic data
 
 This tutorial uses `TomoPhantom <https://dkazanc.github.io/TomoPhantom/>`_ to
 create a synthetic tomography dataset that can be processed directly by HTTomo.
-Synthetic data can include controlled artefacts, such as, zingers, stripes, noise, misalignment and others.
-It makes it useful for testing the robustness of processing methods.
+Synthetic data can include controlled artefacts such as zingers, stripes,
+noise and misalignment. This makes it useful for testing the robustness of
+processing methods.
 
 The data output follows the `NXtomo application definition
 <https://manual.nexusformat.org/classes/applications/NXtomo.html>`_ and contains
-projections, flat-field images, dark-field images and rotation angles. See more information about the NXtomo format 
-in :ref:`create_nxtomo`.
+projections, flat-field images, dark-field images and rotation angles. See
+:ref:`create_nxtomo` for more information about the NXtomo format.
 
 Install TomoPhantom
 -------------------
@@ -93,7 +94,8 @@ Inspect the result
    :align: center
    :width: 70%
 
-   Visualising the generated synthethic data in `myHDF5 viewer <https://myhdf5.hdfgroup.org/>`_
+   Visualising the generated synthetic data in `myHDF5 viewer
+   <https://myhdf5.hdfgroup.org/>`_.
 
 The command creates ``tomodata_synth.nxs`` with 10 darks, 20 flats and 512
 projections. You can inspect its hierarchy and datasets with `DAWN

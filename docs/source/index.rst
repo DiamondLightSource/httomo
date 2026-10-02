@@ -13,8 +13,8 @@ Where should I start?
 
    .. grid-item-card:: New to HTTomo?
 
-      Follow the :ref:`quickstart` to create a small dataset, validate a
-      pipeline and run it from start to finish.
+      Follow the :ref:`quickstart` to download a small test dataset, validate
+      a pipeline and run it from start to finish.
 
    .. grid-item-card:: Preparing your own data?
 
@@ -74,9 +74,11 @@ Where should I start?
     :maxdepth: 2
 
     pipelines/yaml
+    pipelines/versioned_downloads    
+    pipelines/choose_pipeline
     backends/templates
     backends/list
-    pipelines/versioned_downloads
+    pipelines/reconstruction_ecosystem
 
 .. _reference_content:
 
@@ -87,6 +89,7 @@ Where should I start?
     reference/cli
     reference/pipeline_file
     reference/run_output
+    reference/compatibility
     reference/glossary
 
 

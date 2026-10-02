@@ -8,12 +8,14 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
+  schedule:
+    - cron: '0 6 * * 1'
 
 jobs:
   build-docs-publish:
     runs-on: ubuntu-latest
-    env:
-      HTTOMO_BACKENDS_VERSION: "1.2.0"
     defaults:
       run:
         shell: bash -el {0}
@@ -35,8 +37,7 @@ jobs:
             init-shell: bash
 
         - name: Install httomo-backends
-          run: |
-            pip install --no-deps "httomo-backends==${HTTOMO_BACKENDS_VERSION}"
+          run: pip install --no-deps -r ./docs/source/doc-pip-requirements.txt
 
         - name: Generate full yaml pipelines using pipeline directives
           run: |
@@ -51,8 +52,16 @@ jobs:
         - name: Build docs
           run: sphinx-build -W --keep-going -a -E -b html ./docs/source/ ./docs/build/
 
+        - name: Check external links
+          if: github.event_name == 'schedule'
+          run: sphinx-build -W --keep-going -a -E -b linkcheck ./docs/source/ ./docs/linkcheck/
+
         - name: Publish docs
-          if: github.ref_type == 'tag' || github.ref_name == 'main'
+          if: >-
+            (github.event_name == 'push' &&
+            (github.ref_type == 'tag' || github.ref_name == 'main')) ||
+            (github.event_name == 'workflow_dispatch' &&
+            github.ref_name == 'main')
           run: ghp-import -n -p -f ./docs/build
           env:
             GITHUB_TOKEN: ${{ github.token }}

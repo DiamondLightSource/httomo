@@ -35,7 +35,7 @@
 - method: minus_log
   module_path: tomopy.prep.normalize
   parameters: {}
-# --- Center of Rotation auto-finding. Required for reconstruction bellow. ---
+# --- Center of Rotation auto-finding. Required for reconstruction below. ---
 - method: find_center_vo
   module_path: tomopy.recon.rotation
   parameters:

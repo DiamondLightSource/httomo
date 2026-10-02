@@ -4,8 +4,8 @@
 Configure a pipeline
 ********************
 
-An HTTomo pipeline, also called a *process list*, is an ordered sequence of
-loading and processing operations defined in YAML. See
+An HTTomo pipeline is an ordered sequence of loading and processing operations
+defined in YAML. See
 :ref:`explanation_process_list` for an introduction to pipelines and
 :ref:`explanation_templates` for the structure of method templates.
 

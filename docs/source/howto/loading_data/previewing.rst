@@ -29,7 +29,7 @@ part of the input data.
 The :code:`preview` parameter
 =============================
 
-The :code:`preview` parameter has one field per axis. Each field accepts
+The :term:`preview` parameter has one field per axis. Each field accepts
 :code:`start` and :code:`stop` values:
 
 .. code-block:: yaml
@@ -45,8 +45,22 @@ The :code:`preview` parameter has one field per axis. Each field accepts
       start:
       stop:
 
-.. warning:: HTTomo loaders do not yet support previewing the :code:`angles`
-   dimension.
+The stop value is excluded, as in a Python slice. For example, the following
+selection loads projections 20 through 99:
+
+.. code-block:: yaml
+
+   preview:
+     angles:
+       start: 20
+       stop: 100
+
+.. note::
+
+   ``continuous_scan_subset`` also selects the angular range. When it is set,
+   it replaces ``preview.angles``. The command-line
+   ``--continuous-scan-subset`` option takes precedence over both values. See
+   :ref:`continuous_scan_subset_selection`.
 
 Using the full dataset
 ======================
@@ -135,8 +149,9 @@ Combine both operations as follows:
 Using :code:`begin`, :code:`mid` and :code:`end` with offsets
 ================================================================
 
-Use :code:`begin`, :code:`mid` and :code:`end` instead of absolute indices when
-the input dimensions are unknown. Adjust them with :code:`start_offset` and
+Use :code:`begin`, :code:`mid` and :code:`end` instead of absolute indices
+when the input dimensions are unknown. They may be used in the angular range
+as well as the detector ranges. Adjust them with :code:`start_offset` and
 :code:`stop_offset`:
 
 .. code-block:: yaml
@@ -179,7 +194,7 @@ This selects the middle three slices of the specified dimension.
 Omitting :code:`preview` fields
 ===============================
 
-You may omit unused dimension, :code:`start` or :code:`stop` fields.
+You may omit unused dimension fields and :code:`start` or :code:`stop` values.
 
 Omitting one or more dimension fields
 -------------------------------------

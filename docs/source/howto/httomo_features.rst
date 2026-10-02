@@ -3,7 +3,9 @@
 Pipeline features
 *****************
 
-This section guides you from the basics of configuring a pipeline to more advanced features, such as parameter sweeps and saving results. It also explains how to use side outputs and padding.
+This section guides you from the basics of configuring a pipeline to advanced
+features such as parameter sweeps, saving results and managing memory. It also
+explains side outputs and padding.
 
 
 .. toctree::
@@ -11,6 +13,7 @@ This section guides you from the basics of configuring a pipeline to more advanc
 
    httomo_features/how_configure_pipeline
    httomo_features/optimise_pipeline
+   httomo_features/memory_and_performance
    httomo_features/side_out
    httomo_features/centering
    httomo_features/parameter_sweeping

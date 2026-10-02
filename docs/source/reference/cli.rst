@@ -87,6 +87,8 @@ calculated from the estimated peak memory for one process multiplied by
 
 The estimate accounts for the input data type and dimensions, loader previews,
 padding, re-slicing and changes in data shape between pipeline sections.
+See :ref:`memory_and_performance` for planning a process count and comparing
+this total with the per-process runtime ceiling.
 
 
 The ``run`` command
@@ -189,6 +191,8 @@ Execution and resource use
    smaller of this ceiling and the available GPU memory. The default is ``0``,
    which disables the user-supplied ceiling. GPU block sizing still respects
    the memory reported by the device.
+
+   See :ref:`memory_and_performance` for practical sizing guidance.
 
 ``--max-cpu-slices INTEGER``
    Set the maximum number of slices in a block for CPU-only pipeline sections.

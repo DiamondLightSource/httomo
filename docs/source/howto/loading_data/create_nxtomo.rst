@@ -162,14 +162,14 @@ no flats or darks, HTTomo supplies dummy calibration arrays. Alternatively,
 set ``flats: ignore`` or ``darks: ignore`` explicitly when the corresponding
 correction should not use stored calibration images; see :ref:`darks_flats`.
 
-Reusable NeXuS writer code
+Reusable NeXus writer code
 ==========================
 
 The core NumPy writer is included below for reference. The downloadable script
 also contains TIFF loading, validation, filename sorting, and its command-line
 interface.
 
-.. dropdown:: Reusable NeXuS writer code
+.. dropdown:: Reusable NeXus writer code
 
     .. literalinclude:: ../../scripts/create_nxtomo.py
         :language: python

@@ -113,12 +113,14 @@ and build with warnings treated as errors:
 
    $ micromamba create --file docs/source/doc-conda-requirements.yml
    $ micromamba activate httomo-docs
-   $ python -m pip install --no-deps httomo-backends==1.2.0
+   $ python -m pip install --no-deps \
+       -r docs/source/doc-pip-requirements.txt
    $ python docs/source/scripts/execute_pipelines_build.py \
        --output docs/source/pipelines_full/
    $ sphinx-build -W --keep-going -a -E -b html \
        docs/source docs/build
 
-Open ``docs/build/index.html`` to inspect the result. When the pinned backend
-version changes in ``.github/workflows/httomo_docs.yml``, use the same version
-for a local documentation build.
+Open ``docs/build/index.html`` to inspect the result. Update
+``docs/source/doc-pip-requirements.txt`` when the complete pipeline examples
+must use a new ``httomo-backends`` release; local and CI builds both consume
+that file.

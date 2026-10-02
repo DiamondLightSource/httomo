@@ -43,11 +43,13 @@ Auto-centering
 ===============
 
 Several methods can estimate the CoR automatically. DLS commonly uses Nghia
-Vo's Fourier-based sinogram method (`paper
-<https://opg.optica.org/directpdfaccess/a01b4da4-e3cf-474a-b428ca517599c609_297315/oe-22-16-19078.pdf?da=1&id=297315&seq=0&mobile=no>`_),
-implemented by TomoPy and HTTomolibgpu. In HTTomo it is available as the
-*find_center_vo* template; see :ref:`reference_templates`. If one auto-centering method fails, try another `method
-<https://diamondlightsource.github.io/httomolibgpu/api/httomolibgpu.recon.rotation.html>`_.
+Vo's Fourier-based sinogram method (`paper`_), implemented by TomoPy and
+HTTomolibGPU. In HTTomo it is available as the ``find_center_vo`` template;
+see :ref:`reference_templates`. If one automatic method fails, try another
+`HTTomolibGPU centring method`_.
+
+.. _paper: https://doi.org/10.1364/OE.22.019078
+.. _HTTomolibGPU centring method: https://diamondlightsource.github.io/httomolibgpu/api/httomolibgpu.recon.rotation.html
 
 To use automatic centering:
 
@@ -96,4 +98,3 @@ To set it without parameter sweeping:
 1. Remove or comment out the automatic centering method.
 2. Replace the side-output reference in the reconstruction method's
    :code:`center` parameter with a numeric value.
-

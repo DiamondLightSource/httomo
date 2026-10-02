@@ -52,7 +52,7 @@ HTTomo uses the ``numpy.ndarray.device`` attribute introduced in NumPy 2.0 to
 identify CPU arrays.
 
 The ``compilers`` and ``llvm-openmp`` packages are needed when building
-HTTomoLib's OpenMP-based extension because the system Clang compiler supplied
+HTTomolib's OpenMP-based extension because the system Clang compiler supplied
 by macOS does not provide OpenMP support by default.
 
 3. Install HTTomo

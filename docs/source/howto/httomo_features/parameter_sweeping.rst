@@ -3,13 +3,13 @@
 Parameter Sweeping
 ^^^^^^^^^^^^^^^^^^
 
-Parameter sweeping refers to providing multiple values for a specific parameter
-and running the method once for each value.
+A :term:`parameter sweep` provides multiple values for one parameter and runs
+the method once for each value.
 
 How would this be useful when processing data?
 ==============================================
 
-Use a parameter sweep when prototyping a process list to compare possible
+Use a parameter sweep when prototyping a pipeline to compare possible
 values, especially for an unfamiliar method or dataset.
 
 What does the output look like?
@@ -25,8 +25,8 @@ What does the output look like?
     see :ref:`centering_manual`.
 
 
-How are parameter sweeps defined in the process list YAML file?
-===============================================================
+How are parameter sweeps defined in the pipeline YAML file?
+===========================================================
 
 Specify sweep values in either of two ways:
 

@@ -1,39 +1,62 @@
-===================================
-How to build the html pages locally
-===================================
+====================================
+How to build the HTML pages locally
+====================================
 
-Create a conda environment
+Create a Conda environment
 ==========================
 
-Setup a new conda environment using the requirements file docs/source/doc-conda-requirements.yml
-If you are using a diamond computer you can load python into your path to do this.
+Create a documentation environment from the requirements file. On a Diamond
+computer, first make Conda available by loading the Python module:
 
-    >>> module load python
-    >>> conda env create -f /path/to/HTTomo/docs/source/doc-conda-requirements.yml
-    >>> conda env create --prefix /path/to/env/doc-env --file /path/to/HTTomo/docs/source/doc-conda-requirements.yml
+.. code-block:: console
 
+   $ module load python
+   $ conda env create --name httomo-docs \
+       --file /path/to/HTTomo/docs/source/doc-conda-requirements.yml
+   $ conda activate httomo-docs
 
-Update API documentation and build
-==================================
+Alternatively, create the environment at a specific path:
 
-While inside your virtual environment, run the sphinx-build.sh script.
+.. code-block:: console
 
-    >>> conda activate /path/to/env/doc-env
-    >>> source /path/to/HTTomo/docs/sphinx-build.sh
+   $ conda env create --prefix /path/to/env/httomo-docs \
+       --file /path/to/HTTomo/docs/source/doc-conda-requirements.yml
+   $ conda activate /path/to/env/httomo-docs
 
-The script will:
+Build the documentation
+=======================
 
-1. Remove previous api and build directories.
-2. Generate current HTTomo api files
-3. Run a python script to add yaml file downloads for every function for every module rst file.
-4. Run sphinx to create html documentation pages in docs/build.
+Run the build script from anywhere after activating the environment:
 
-You can view the completed pages by opening the HTTomo/docs/build/index.html page inside a browser.
+.. code-block:: console
 
-To conclude
-===========
+   $ bash /path/to/HTTomo/docs/sphinx-build.sh
 
-When you have finished, you can deactivate the virtual environment and remove python from your path.
+The script removes old generated API files and build output, then performs a
+clean Sphinx HTML build. Sphinx regenerates the API summaries as part of the
+build. Warnings are treated as errors, matching the documentation check in
+continuous integration.
 
-    >>> conda deactivate
-    >>> module unload python
+Open ``HTTomo/docs/build/index.html`` in a browser to view the result.
+
+Check external links
+====================
+
+The scheduled continuous-integration job also checks external links. Run the
+same check locally when adding or changing links:
+
+.. code-block:: console
+
+   $ sphinx-build -W --keep-going -a -E -b linkcheck \
+       /path/to/HTTomo/docs/source /path/to/HTTomo/docs/linkcheck
+
+Finish
+======
+
+Deactivate the environment when finished. On a Diamond computer, unload the
+Python module as well:
+
+.. code-block:: console
+
+   $ conda deactivate
+   $ module unload python

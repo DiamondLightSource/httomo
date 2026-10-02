@@ -9,9 +9,9 @@ YAML and pipelines
 .. dropdown:: What is YAML and how does HTTomo use it?
 
    YAML is a human-readable format for structured configuration files. HTTomo
-   uses YAML to describe a :ref:`process list
+   uses YAML to describe a :ref:`pipeline
    <explanation_pipelines_templates>` containing the loader and processing
-   methods that form a pipeline.
+   methods.
 
    See the :ref:`pipeline_file_reference` for YAML formatting, supported method
    fields, side-output references and parameter-sweep syntax.
@@ -24,17 +24,17 @@ YAML and pipelines
    Templates can be copied from :ref:`reference_templates` and adapted for a
    particular dataset or processing task.
 
-.. dropdown:: What is a process list?
+.. dropdown:: What is a pipeline?
 
-   A process list is a YAML file containing an ordered sequence of method
-   templates. HTTomo interprets this sequence as a processing pipeline.
+   A pipeline is a YAML file containing an ordered sequence of method
+   templates. Older documentation may call it a *process list*.
 
    The first entry must be a loader. Subsequent methods are executed in order
    from top to bottom, with each method receiving the data produced by the
    preceding operation.
 
-   See :ref:`explanation_pipelines_templates` for an introduction to templates,
-   process lists and pipelines.
+   See :ref:`explanation_pipelines_templates` for an introduction to pipelines
+   and templates.
 
 .. dropdown:: How do I build a pipeline?
 
@@ -48,13 +48,13 @@ YAML and pipelines
    #. Copy their templates into one YAML file.
    #. Place the loader first.
    #. Configure the method parameters.
-   #. Validate the completed process list.
+   #. Validate the completed pipeline.
    #. Run the pipeline.
 
    See :ref:`howto_process_list` for detailed instructions and
    :ref:`tutorials_pl_templates` for complete examples.
 
-.. dropdown:: How do I validate a process list?
+.. dropdown:: How do I validate a pipeline?
 
    Use the HTTomo YAML checker before running the pipeline:
 
@@ -86,10 +86,11 @@ Using and extending HTTomo
 
 .. dropdown:: How do I run HTTomo?
 
-   First install or load HTTomo, prepare a validated process list and select the
+   First install or load HTTomo, prepare a validated pipeline and select the
    input data.
 
-   See :ref:`How to run HTTomo <howto_run>` or :ref:`howto_run_at_diamond` when working at Diamond Light Source.
+   See :ref:`How to run HTTomo <howto_run>` or
+   :ref:`howto_run_at_diamond` when working at Diamond Light Source.
 
 .. dropdown:: Can HTTomo run my own Python method?
 

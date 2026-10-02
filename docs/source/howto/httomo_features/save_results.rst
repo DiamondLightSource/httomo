@@ -31,7 +31,10 @@ disable* saving for an individual method.
 
 .. note::
 
-  Saving intermediate datasets can substantially increase disk use and execution time, so enable it only for results that need to be inspected or reused. The result of any reconstruction method is saved by default into an intermediate file.
+   Saving intermediate datasets can substantially increase disk use and
+   execution time, so enable it only for results that need to be inspected or
+   reused. Reconstruction results are saved to an intermediate file by
+   default.
 
 For other output choices, use a ``save_to_images`` method to write images or
 ``--save-snapshots`` to capture lightweight diagnostic snapshots. See

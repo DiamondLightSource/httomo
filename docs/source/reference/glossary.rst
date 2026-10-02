@@ -19,6 +19,25 @@ Glossary
       The portion of a section's dataset assigned to one MPI process. See
       :ref:`chunks_data`.
 
+   centre of rotation
+      The detector coordinate corresponding to the sample's rotation axis.
+      Accurate centring prevents characteristic reconstruction artefacts. See
+      :ref:`centering`.
+
+   image key
+      A one-dimensional dataset that identifies each input frame as a
+      projection, flat or dark image. See :ref:`darks_flats` and
+      :ref:`create_nxtomo`.
+
+   intermediate dataset
+      A complete volume saved after a pipeline method, usually as an HDF5 file
+      with the main array at ``/data``. See :ref:`info_logger`.
+
+   loader
+      The first pipeline method, responsible for locating input arrays and
+      presenting projection data and auxiliary information to HTTomo. See
+      :ref:`standard_tomo_loader`.
+
    method
       One loader, processing or output operation configured as an entry in a
       pipeline. See :ref:`pipeline_file_reference` for the fields that define
@@ -29,6 +48,24 @@ Glossary
       generated from ``httomo-backends`` metadata. See
       :ref:`explanation_templates` and :ref:`reference_templates`.
 
+   monitor
+      Optional runtime instrumentation that reports aggregate or block-level
+      timings. See :ref:`info_logger` and :ref:`run-httomo-indepth`.
+
+   NXtomo
+      The NeXus application definition for tomography data. An NXtomo entry
+      links projection, image-key and rotation-angle datasets in a standard
+      hierarchy that HTTomo can discover automatically. See
+      :ref:`create_nxtomo`.
+
+   padding
+      Extra neighbouring slices supplied to a method so that operations near a
+      block boundary have sufficient context. See :ref:`padding`.
+
+   parameter sweep
+      Repeated execution of a method for several candidate parameter values,
+      with images saved for comparison. See :ref:`parameter_sweeping`.
+
    pattern
       The orientation in which methods consume data, principally projection or
       sinogram order. Pattern changes determine section boundaries and can
@@ -38,6 +75,10 @@ Glossary
       The ordered sequence of methods that HTTomo executes. Older material may
       call this a *process list*. See :ref:`explanation_process_list`,
       :ref:`pipeline_file_reference` and :ref:`tutorials_pl_templates`.
+
+   preview
+      A loader selection that crops the angular or detector dimensions before
+      processing. See :ref:`previewing`.
 
    rank
       The identifier of one MPI process participating in a parallel run. Each

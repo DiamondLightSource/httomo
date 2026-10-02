@@ -66,7 +66,7 @@ The command takes the following arguments:
    The path to the HDF5 file containing the input tomography data.
 
 ``YAML_CONFIG``
-   The path to the YAML process list that defines the processing pipeline.
+   The path to the YAML file that defines the processing pipeline.
 
 ``OUT_DIR``
    The directory in which HTTomo will write its output.

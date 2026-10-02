@@ -24,7 +24,7 @@
   parameters:
     cutoff: null
     averaging: mean
-# --- Center of Rotation auto-finding. Required for reconstruction bellow. ---
+# --- Center of Rotation auto-finding. Required for reconstruction below. ---
 - method: find_center_vo
   module_path: tomopy.recon.rotation
   parameters:

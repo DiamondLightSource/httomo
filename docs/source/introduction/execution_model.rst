@@ -1,7 +1,7 @@
 How HTTomo runs a pipeline
 ==========================
 
-HTTomo reads the YAML process list, validates its methods and parameters, and
+HTTomo reads the YAML pipeline, validates its methods and parameters, and
 constructs an executable pipeline. Method wrappers adapt backend functions to
 HTTomo's common data-processing interface.
 
@@ -11,7 +11,7 @@ HTTomo's common data-processing interface.
    :width: 100%
    :alt: Diagram of the HTTomo pipeline execution model
 
-   HTTomo execution from a YAML process list to output. The pipeline is divided
+   HTTomo execution from a YAML pipeline to output. The pipeline is divided
    into sections; within each section, data is distributed into chunks and
    processed block by block.
 
@@ -36,12 +36,14 @@ before the next block is processed.
 Moving between sections
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-At a section boundary, HTTomo may synchronise the MPI processes, save intermediate
-data or redistribute the dataset. If the data pattern changes between projections
-and sinograms, HTTomo performs a :ref:`re-slice <info_reslice>`.
+At a section boundary, HTTomo may synchronise the MPI processes, save
+intermediate data or redistribute the dataset. If the data pattern changes
+between projections and sinograms, HTTomo performs a
+:ref:`re-slice <info_reslice>`.
 
 Completing the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Processing continues section by section until every block has passed through the
-pipeline. HTTomo then writes the requested results and monitoring information.
+Processing continues section by section until every block has passed through
+the pipeline. HTTomo then writes the requested results and monitoring
+information.

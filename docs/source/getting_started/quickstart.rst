@@ -9,18 +9,15 @@ pipeline and reconstructs the data with TomoPy. It does not require a GPU.
 Prerequisites
 -------------
 
-Install HTTomo by following :ref:`installation_main`. The example pipeline uses
-TomoPy and HTTomolib. If TomoPy was omitted during installation, add it with:
+Install HTTomo by following :ref:`installation_cpu_only`. The example pipeline uses
+TomoPy and HTTomolib.
 
-.. code-block:: console
-
-   $ conda install --channel conda-forge tomopy==1.15.3
 
 Download the data and pipeline
 ------------------------------
 
-Create an empty working directory and download the test dataset and existing
-CPU pipeline:
+Create an empty working directory and download the test dataset and CPU
+pipeline from the current HTTomo version:
 
 .. code-block:: console
 
@@ -73,3 +70,4 @@ Next steps
 
 * Use :ref:`howto_run` with your own input data.
 * Consult :ref:`troubleshooting` if validation or execution fails.
+* Check :ref:`versioned_downloads` when using another HTTomo release.

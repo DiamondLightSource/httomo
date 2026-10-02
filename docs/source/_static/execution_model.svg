@@ -7,7 +7,7 @@
   role="img"
   aria-labelledby="title desc">
   <title id="title">HTTomo pipeline execution model</title>
-  <desc id="desc">Four-stage overview showing a YAML process list becoming an executable pipeline, the pipeline being divided into sections, data being distributed into MPI rank chunks within each section, chunks being processed block by block through the section methods, and processing moving to the next section or writing results.</desc>
+  <desc id="desc">Four-stage overview showing a YAML pipeline being validated, the pipeline being divided into sections, data being distributed into MPI rank chunks within each section, chunks being processed block by block through the section methods, and processing moving to the next section or writing results.</desc>
 
   <defs>
     <marker
@@ -53,7 +53,7 @@
   <rect class="panel" x="100" y="25" width="1050" height="140" rx="14" />
   <text class="heading" x="130" y="62">Create the pipeline</text>
   <rect class="yaml" x="160" y="88" width="230" height="52" rx="10" />
-  <text class="label" x="275" y="114">YAML process list</text>
+  <text class="label" x="275" y="114">YAML pipeline</text>
   <path class="arrow" d="M390 114 H505" />
   <rect class="pipeline" x="505" y="88" width="230" height="52" rx="10" />
   <text class="label" x="620" y="106">Validate</text>

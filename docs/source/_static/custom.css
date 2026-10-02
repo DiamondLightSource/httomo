@@ -1,0 +1,32 @@
+/* Highlight selected pages in the primary (left) navigation only.
+ *
+ * The direct href selectors cover inactive links. When one of these pages is
+ * active, Sphinx replaces its href with "#". The :has() selectors identify
+ * the same navigation group through the other named link and select the
+ * active entry by its stable first/last position.
+ */
+.bd-sidebar-primary .bd-sidenav a[href$="yaml.html"],
+.bd-sidebar-primary .bd-sidenav:has(a[href$="versioned_downloads.html"])
+    > li:first-child
+    > a,
+.bd-sidebar-primary .bd-sidenav a[href$="versioned_downloads.html"],
+.bd-sidebar-primary .bd-sidenav:has(a[href$="yaml.html"])
+    > li:last-child
+    > a {
+    background-color: rgb(33 150 243 / 18%);
+    box-shadow: inset 4px 0 #2196f3;
+    border-radius: 0.25rem;
+    font-weight: 600;
+}
+
+/* The run_httomo link identifies the Getting started navigation group when
+ * Sphinx replaces the active quickstart link with href="#". */
+.bd-sidebar-primary .bd-sidenav a[href$="quickstart.html"],
+.bd-sidebar-primary .bd-sidenav:has(a[href$="run_httomo.html"])
+    > li:nth-child(2)
+    > a {
+    background-color: rgb(255 193 7 / 22%);
+    box-shadow: inset 4px 0 #d39e00;
+    border-radius: 0.25rem;
+    font-weight: 600;
+}

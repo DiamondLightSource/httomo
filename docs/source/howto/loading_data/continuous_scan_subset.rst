@@ -16,3 +16,6 @@ This example selects indices 90 through 179:
 
 The option can be combined with :ref:`previewing` to crop the detector
 dimensions and with :ref:`darks_flats` to load external darks or flats.
+Its start and stop values replace ``preview.angles``. If
+``--continuous-scan-subset`` is also supplied on the command line, the
+command-line values replace the values in the pipeline.
