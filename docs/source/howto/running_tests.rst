@@ -1,17 +1,11 @@
-.. _run_tests:
+:orphan:
 
-Run HTTomo tests
-----------------
+Testing guide moved
+===================
 
-After installing HTTomo, you can quickly verify that the installation and all required dependencies are working correctly by running the test suite.
+Source-checkout setup and testing are now described in
+:ref:`developer_setup`.
 
-1. Git clone the HTTomo repository :code:`git clone https://github.com/DiamondLightSource/httomo.git`.
+.. raw:: html
 
-2. Install the testing dependencies: :code:`conda install -c conda-forge pytest pytest-cov pytest-xdist pytest-mock plumbum`.
-
-3. **Run the CPU test suite.** Navigate to the root directory of the HTTomo repository and run: :code:`pytest tests/`. This executes the CPU-only tests for the HTTomo framework.
-
-4. **Run the GPU test suite (CUDA-enabled systems only).** If you have a CUDA-compatible GPU, run: :code:`pytest tests/ --cupy`.
-
-5. **Run the small dataset pipeline tests.** Get full YAML `pipelines <https://diamondlightsource.github.io/httomo/pipelines/yaml.html>`_ and place/unzip them into the :code:`/docs/source/pipelines_full` folder of your cloned HTTomo repository. Then you can run :code:`pytest tests/ --small_data`. These tests execute example pipelines using a small test dataset. On systems without a CUDA-compatible GPU, some tests are expected to fail. However, if TomoPy is installed, the TomoPy pipeline test should pass successfully.
-
+   <meta http-equiv="refresh" content="0; url=../developers/development_setup.html">

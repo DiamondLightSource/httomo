@@ -4,28 +4,35 @@
 Padding
 ^^^^^^^
 
-Padding is an important feature of HTTomo when performing computations on :ref:`chunks_data` and :ref:`blocks_data`.
-If the method is a 2D method (work with 2D frames), e.g., a denoising filter, then the data does not require any padding as 
-the boundary conditions between blocks will not be violated. However, when the method is a 3D method and it works 
-with 3D volumes, then in order to satisfy boundary conditions and avoid artefacts, one needs to pad blocks. 
+HTTomo processes data as :ref:`chunks_data` and :ref:`blocks_data`. Methods
+that operate on independent 2D frames, such as 2D denoising filters, do not
+need :term:`padding`. Methods that operate on 3D volumes need padded blocks to preserve
+boundary conditions and prevent artefacts.
 
 How this can be useful?
 =======================
 
-It is useful because when padding feature exists one can use true fully 3D methods which provide a consistent resolution in
-all three dimensions, see the image below. Because of the access to 3D data, one can perform better in removing artefacts,
-improving contrast, etc. 
+Padding enables fully 3D methods, which can provide consistent resolution in
+all dimensions, improve contrast, and remove artefacts more effectively.
 
-.. list-table:: 
+.. list-table::
 
     * - .. figure:: ../../_static/padding/denoising2d.jpg
            :scale: 20 %
 
-           2D denoising applied to 3D data, note the resolution inconsistency in the vertical direction.
+           2D denoising produces inconsistent vertical resolution.
 
-      - .. figure:: ../../_static/padding/denoising3d_pad5.jpg 
+      - .. figure:: ../../_static/padding/denoising3d_pad5.jpg
            :scale: 20 %
 
-           3D denoising applied to 3D data. The resolution is consistent in all three dimensions.
+           3D denoising produces consistent resolution in all dimensions.
 
-.. note:: With padding enabled, HTTomo can perform more state-of-the-art filtering techniques as well as advanced iterative reconstruction in 3D.
+.. note:: Padding supports advanced 3D filters and iterative reconstruction
+   methods.
+
+How to use
+==========
+
+There is no need to do anything specific to enable this feature as it will
+be switched on automatically when the method that requires it added to the
+pipeline.

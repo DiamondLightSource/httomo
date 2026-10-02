@@ -1,0 +1,2 @@
+# Backend metadata used to generate the complete example pipelines.
+httomo-backends==1.2.0

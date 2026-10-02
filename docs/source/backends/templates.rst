@@ -1,41 +1,34 @@
 .. _reference_templates:
 
-======================
-Methods YAML Templates
-======================
+Available methods
+=================
 
-This section refers to YAML templates from the :ref:`backends_list`, which are distributed separately through `HTTomo-backends <https://diamondlightsource.github.io/httomo-backends/>`_.
-Here you can find either fixed (archived) templates that were previously released, or dynamically changing latest templates.
-If you installed HTTomo with a specific version associated with the release, please use the :ref:`archived_templates`. If you are a developer, or
-you need to access the latest developments, please use the :ref:`latest_templates`. 
+HTTomo processing methods are provided by the :ref:`backends_list`. Each
+available method has a YAML template containing its module path, parameters
+and default values. Copy these templates when :ref:`configuring a pipeline
+<how_to_configure_pipeline>`.
+
+The generated references below track the latest HTTomo development version.
+For a tagged HTTomo release, download the matching templates from
+:ref:`versioned_downloads`.
 
 .. _latest_templates:
 
-Latest Templates
-================
+Current method reference
+------------------------
 
-The templates below are generated for the **current/latest** HTTomo development. These templates can be updated frequently and 
-if you need to use templates that are linked to a specific released (tagged) HTTomo version, please see the archives above. 
+The method templates are generated and published by `HTTomo-backends
+<https://diamondlightsource.github.io/httomo-backends/>`_. Select the library
+used by your pipeline:
 
-.. note:: At DLS, the templates bellow should work with the :code:`httomo/latest` module. 
+* `HTTomolibGPU methods (GPU)
+  <https://diamondlightsource.github.io/httomo-backends/backends/templates.html#httomolibgpu-modules>`_
+* `HTTomolib methods (CPU)
+  <https://diamondlightsource.github.io/httomo-backends/backends/templates.html#httomolib-modules>`_
+* `TomoPy methods (CPU)
+  <https://diamondlightsource.github.io/httomo-backends/backends/templates.html#tomopy-modules>`_
 
-`HTTomolibgpu Modules <https://diamondlightsource.github.io/httomo-backends/backends/templates.html#httomolibgpu-modules>`_
-
-`HTTomolib Modules <https://diamondlightsource.github.io/httomo-backends/backends/templates.html#httomolib-modules>`_
-
-`TomoPy Modules <https://diamondlightsource.github.io/httomo-backends/backends/templates.html#tomopy-modules>`_
-
-.. _archived_templates:
-
-Archived Templates
-===================
-
-These are archived YAML templates that can be used with already released and tagged version of HTTomo.
-
-.. only:: builder_html
-
-   :download:`HTTomo version 3.1 templates <../templates_archive/httomo_ver3_1_yaml_templates.zip>`
-
-   :download:`HTTomo version 3.2 templates <../templates_archive/httomo_ver3_2_yaml_templates.zip>`
-   
-   :download:`HTTomo version 3.3 templates <../templates_archive/httomo_ver3_3_yaml_templates.zip>`
+.. note::
+   At Diamond Light Source, the current references correspond to the
+   :code:`httomo/latest` module. Use :ref:`versioned_downloads` for production
+   runs tied to a particular release.

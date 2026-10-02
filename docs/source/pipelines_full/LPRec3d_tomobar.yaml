@@ -1,0 +1,96 @@
+# This pipeline should be supported by the latest developments of HTTomo. Use module load httomo/latest module at Diamond.
+# --- Standard tomography loader for NeXus files. ---
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    data_path: auto
+    image_key_path: auto
+    rotation_angles: auto
+    preview:
+      detector_x:   # horizontal data previewing/cropping.
+        # when null, the full data dimension is used, i.e., no previewing
+        start: null
+        stop: null
+      detector_y:   # vertical data previewing/cropping.
+        # when null, the full data dimension is used, i.e., no previewing
+        start: null
+        stop: null
+    darks: null
+    flats: null
+    continuous_scan_subset: null
+# --- Removing unresponsive/dead pixels in the data, aka zingers. Use if sharp streaks are present in the reconstruction. To be applied before normalisation. ---
+- method: remove_outlier
+  module_path: httomolibgpu.misc.corr
+  parameters:
+    kernel_size: 3  # The size of the 3D neighbourhood surrounding the voxel. Odd integer.
+    dif: 1000 # A difference between the outlier value and the median value of neighbouring pixels.
+# --- Flat-field and dark-field projection correction. --- 
+- method: dark_flat_field_correction
+  module_path: httomolibgpu.prep.normalize
+  parameters:
+    flats_multiplier: 1.0
+    darks_multiplier: 1.0
+    upper_bound: null
+    lower_bound: null
+# --- Center of Rotation auto-finding. Required for reconstruction below. ---
+- method: find_center_vo
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    ind: null  # A vertical slice (sinogram) index to calculate CoR, 'mid' can be used for middle
+    average_radius: 0 # Average several sinograms to improve SNR, one can try 3-5 range
+    cor_initialisation_value: null  # Use if an approximate CoR is known
+    smin: -50
+    smax: 50
+    srad: 6.0
+    step: 0.5
+    ratio: 0.5
+    drop: 20
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation  # An estimated CoR value provided as a side output
+# --- Method to remove stripe artefacts in the data that lead to ring artefacts in the reconstruction. --- 
+- method: remove_all_stripe
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    snr: 3.0
+    la_size: 61
+    sm_size: 21
+    dim: 1
+    normalize: false
+# --- Negative log is required for reconstruction to convert raw intensity measurements into the line integrals of attenuation. --- 
+- method: minus_log
+  module_path: httomolibgpu.prep.normalize
+  parameters: {}
+# --- Reconstruction method. ---
+- method: LPRec3d_tomobar
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}  # Reference to center of rotation side output, a float number or 'null' for a middle of the horizontal dimension.
+    detector_pad: false # Horizontal detector padding to minimise circle/arc-type artifacts in the reconstruction. Set to 'true' to enable automatic padding or an integer
+    filter_type: shepp
+    filter_freq_cutoff: 1.0
+    recon_size: null
+    recon_mask_radius: 0.95 # Zero pixels outside the mask-circle radius. Make radius equal to 2.0 to remove the mask effect.
+# --- Calculate global statistics on the reconstructed volume, required for data rescaling. ---
+- method: calculate_stats
+  module_path: httomo.methods
+  parameters: {}
+  id: statistics
+  side_outputs:
+    glob_stats: glob_stats
+# --- Rescaling the data using min/max obtained from `calculate_stats`. ---
+- method: rescale_to_int
+  module_path: httomolib.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+    glob_stats: ${{statistics.side_outputs.glob_stats}}
+# --- Saving data into images. ---
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif  # `tif` or `jpeg` can be used.
+    asynchronous: true

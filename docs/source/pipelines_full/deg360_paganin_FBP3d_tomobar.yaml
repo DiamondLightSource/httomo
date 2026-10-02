@@ -1,0 +1,98 @@
+# This pipeline should be supported by the latest developments of HTTomo. Use module load httomo/latest module at Diamond.
+# --- Standard tomography loader for NeXus files. ---
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    data_path: auto
+    image_key_path: auto
+    rotation_angles: auto
+    preview:
+      detector_x:   # horizontal data previewing/cropping.
+        # when null, the full data dimension is used, i.e., no previewing
+        start: null
+        stop: null
+      detector_y:   # vertical data previewing/cropping.
+        # when null, the full data dimension is used, i.e., no previewing
+        start: null
+        stop: null
+    darks: null
+    flats: null
+    continuous_scan_subset: null
+# --- Flat-field and dark-field projection correction. --- 
+- method: dark_flat_field_correction
+  module_path: httomolibgpu.prep.normalize
+  parameters:
+    flats_multiplier: 1.0
+    darks_multiplier: 1.0
+    upper_bound: null
+    lower_bound: null
+# --- Center of Rotation auto-finding. Required for reconstruction below. ---
+- method: find_center_360
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    ind: null  # A vertical slice (sinogram) index to calculate CoR, 'mid' can be used for middle
+    win_width: 10
+    side: null # Choose 'left' to stitch to the left side, 'right' to the right side, or null for automated determination
+    denoise: true
+    norm: false
+    use_overlap: false
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation  # An estimated CoR value provided as a side output
+    overlap: overlap # An overlap to use for converting 360 degrees scan to 180 degrees scan.
+    side: side
+    overlap_position: overlap_position
+# --- Using the overlap and side provided, converting 360 degrees scan to 180 degrees scan. --- 
+- method: sino_360_to_180
+  module_path: httomolibgpu.misc.morph
+  parameters:
+    overlap: ${{centering.side_outputs.overlap}}
+    side: ${{centering.side_outputs.side}}
+# --- Method to remove stripe artefacts in the data that lead to ring artefacts in the reconstruction. --- 
+- method: remove_stripe_based_sorting
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    size: 11
+    dim: 1
+# --- Apply a phase contrast filter to improve image contrast. --- 
+- method: paganin_filter
+  module_path: httomolibgpu.prep.phase
+  parameters:
+    pixel_size: 1.28  # Detector pixel size (resolution) in MICRON units.
+    distance: 1.0 # Propagation distance of the wavefront from sample to detector in METRE units.
+    energy: 53.0 # Beam energy in keV.
+    ratio_delta_beta: 250  # The ratio of delta/beta for filter strength control. Larger values lead to more smoothing.
+    calculate_padding_value_method: next_power_of_2 # Select type of padding from 'next_power_of_2', 'next_fast_length' and 'use_pad_x_y'.
+    pad_x_y: null # Manual padding is enabled when 'calculate_padding_value_method' is set to 'use_pad_x_y'.
+# --- Reconstruction method. ---
+- method: FBP3d_tomobar
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}  # Reference to center of rotation side output, a float number or 'null' for a middle of the horizontal dimension.
+    detector_pad: false # Horizontal detector padding to minimise circle/arc-type artifacts in the reconstruction. Set to 'true' to enable automatic padding or an integer
+    filter_freq_cutoff: 0.35
+    recon_size: null
+    recon_mask_radius: 0.95 # Zero pixels outside the mask-circle radius. Make radius equal to 2.0 to remove the mask effect.
+# --- Calculate global statistics on the reconstructed volume, required for data rescaling. ---
+- method: calculate_stats
+  module_path: httomo.methods
+  parameters: {}
+  id: statistics
+  side_outputs:
+    glob_stats: glob_stats
+# --- Rescaling the data using min/max obtained from `calculate_stats`. ---
+- method: rescale_to_int
+  module_path: httomolib.misc.rescale
+  parameters:
+    perc_range_min: 0.0
+    perc_range_max: 100.0
+    bits: 8
+    glob_stats: ${{statistics.side_outputs.glob_stats}}
+# --- Saving data into images. ---
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif  # `tif` or `jpeg` can be used.
+    asynchronous: true

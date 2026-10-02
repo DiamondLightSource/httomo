@@ -58,6 +58,7 @@ def test_run_pipeline_tomopy_gridrec(
 
 
 @pytest.mark.small_data
+@pytest.mark.cupy
 def test_run_pipeline_FBP3d_tomobar(
     get_files: Callable, cmd, standard_data, FBP3d_tomobar, output_folder
 ):
@@ -105,6 +106,7 @@ def test_run_pipeline_FBP3d_tomobar(
 
 
 @pytest.mark.small_data
+@pytest.mark.cupy
 def test_run_pipeline_FBP3d_tomobar_denoising(
     get_files: Callable,
     cmd,

@@ -11,7 +11,7 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either ecpress or implied.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ---------------------------------------------------------------------------
@@ -23,6 +23,8 @@
 import os
 import sys
 from datetime import date
+from importlib.metadata import PackageNotFoundError, version as package_version
+import subprocess
 from unittest import mock
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -57,7 +59,8 @@ class CustomMock(mock.Mock):
 
 sys.modules["scipy"] = CustomMock()
 sys.modules["scipy.signal"] = CustomMock()
-
+sys.modules["loguru"] = CustomMock()
+sys.modules["graypy"] = CustomMock()
 
 # ------------------------------------------------------------------------------
 
@@ -68,11 +71,29 @@ copyright = f"{date.today().year}, Diamond Light Source"
 # Specify a base language to help assistive technology
 language = "en"
 
-# Save the commit hash, this is displayed in the page title
-release = os.popen('git log -1 --format="%H"').read().strip()
 
-# Set version as the latest tag in the current branch
-version = os.popen("git describe --tags --abbrev=0").read().strip()
+def _git_value(*args: str) -> str:
+    """Return a Git value without making documentation builds depend on Git."""
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return ""
+    return result.stdout.strip()
+
+
+try:
+    installed_version = package_version("httomo")
+except PackageNotFoundError:
+    installed_version = "development"
+
+# The commit and nearest tag are displayed in the generated documentation.
+release = _git_value("rev-parse", "HEAD") or installed_version
+version = _git_value("describe", "--tags", "--abbrev=0") or installed_version
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -111,6 +132,7 @@ html_copy_source = True
 html_favicon = "_static/logo_light.png"
 html_last_updated_fmt = ""
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 html_use_smartypants = True
 
 html_theme_options = {
@@ -122,8 +144,17 @@ html_theme_options = {
 }
 
 html_context = {
-    "github_user": "HTTomo",
-    "github_repo": "https://github.com/DiamondLightSource/httomo",
+    "github_user": "DiamondLightSource",
+    "github_repo": "httomo",
     "github_version": "main",
-    "doc_path": "docs",
+    "doc_path": "docs/source",
 }
+
+# These pages are valid in a browser but reject or cannot be verified by the
+# automated link checker. Keep this list narrow so other external links remain
+# covered by the scheduled documentation check.
+linkcheck_ignore = [
+    r"https://www\.diamond\.ac\.uk/$",
+    r"https://www\.diamond\.ac\.uk/Home/About/Vision/Diamond-II\.html$",
+    r"https://www\.silx\.org/doc/silx/latest/applications/view\.html$",
+]
