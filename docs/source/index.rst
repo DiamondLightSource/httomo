@@ -62,8 +62,8 @@ Where should I start?
 
     howto/loading_data
     howto/httomo_features
-    howto/troubleshooting
     howto/tutorial
+    howto/troubleshooting    
     faq/faq
 
 .. _pipelines_methods_content:
