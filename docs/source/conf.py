@@ -71,6 +71,7 @@ copyright = f"{date.today().year}, Diamond Light Source"
 # Specify a base language to help assistive technology
 language = "en"
 
+
 def _git_value(*args: str) -> str:
     """Return a Git value without making documentation builds depend on Git."""
     try:
