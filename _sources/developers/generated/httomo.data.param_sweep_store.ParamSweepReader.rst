@@ -1,0 +1,56 @@
+httomo.data.param\_sweep\_store.ParamSweepReader
+================================================
+
+.. currentmodule:: httomo.data.param_sweep_store
+
+.. autoclass:: ParamSweepReader
+   :members:
+   :undoc-members:
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      
+      ~ParamSweepReader.__init__
+      
+      
+      ~ParamSweepReader.finalize
+      
+      
+      ~ParamSweepReader.read_sweep_results
+      
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      
+      ~ParamSweepReader.aux_data
+      
+      
+      ~ParamSweepReader.extract_dim
+      
+      
+      ~ParamSweepReader.filename
+      
+      
+      ~ParamSweepReader.is_file_based
+      
+      
+      ~ParamSweepReader.no_of_sweeps
+      
+      
+      ~ParamSweepReader.single_shape
+      
+      
+      ~ParamSweepReader.total_shape
+      
+   
+   
