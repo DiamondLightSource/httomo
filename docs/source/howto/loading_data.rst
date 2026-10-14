@@ -18,3 +18,4 @@ individual scan from a continuous acquisition.
    loading_data/previewing
    loading_data/continuous_scan_subset
    loading_data/create_nxtomo
+   loading_data/standard_loader_full_configuration
