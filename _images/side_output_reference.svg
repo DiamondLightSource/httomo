@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="1300"
+   height="420"
+   viewBox="0 0 1300 420"
+   role="img"
+   aria-labelledby="title desc"
+   version="1.1"
+   id="svg15"
+   sodipodi:docname="side_output_reference.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview15"
+     pagecolor="#ffffff"
+     bordercolor="#cccccc"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.67692308"
+     inkscape:cx="618.23864"
+     inkscape:cy="210.51136"
+     inkscape:window-width="1920"
+     inkscape:window-height="1011"
+     inkscape:window-x="0"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg15" />
+  <title
+     id="title">Passing a side output between HTTomo methods</title>
+  <desc
+     id="desc">Data and angles flow directly from a centre-finding method to a reconstruction method. A separate named centre-of-rotation value is referenced by the reconstruction method's center parameter.</desc>
+  <defs
+     id="defs2">
+    <marker
+       id="arrow"
+       markerWidth="10"
+       markerHeight="10"
+       refX="9"
+       refY="5"
+       orient="auto"
+       markerUnits="strokeWidth">
+      <path
+         d="M0,0 L10,5 L0,10 Z"
+         fill="#52606d"
+         id="path1" />
+    </marker>
+    <marker
+       id="side-arrow"
+       markerWidth="10"
+       markerHeight="10"
+       refX="9"
+       refY="5"
+       orient="auto"
+       markerUnits="strokeWidth">
+      <path
+         d="M0,0 L10,5 L0,10 Z"
+         fill="#b45309"
+         id="path2" />
+    </marker>
+    <style
+       id="style2">
+      .bg { fill: #ffffff; }
+      .method { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; }
+      .field { fill: #ffffff; stroke: #93c5fd; stroke-width: 1.5; }
+      .side-value { fill: #ffedd5; stroke: #c2410c; stroke-width: 2; }
+      .heading { fill: #102a43; font: 700 24px Arial, sans-serif; text-anchor: middle; }
+      .label { fill: #243b53; font: 700 18px Arial, sans-serif; }
+      .text { fill: #52606d; font: 16px Arial, sans-serif; }
+      .mono { fill: #243b53; font: 15px &quot;DejaVu Sans Mono&quot;, monospace; }
+      .line-label { fill: #52606d; font: 16px Arial, sans-serif; text-anchor: middle; }
+      .side-label { fill: #9a3412; font: 16px Arial, sans-serif; text-anchor: middle; }
+      .data-arrow { fill: none; stroke: #52606d; stroke-width: 3; marker-end: url(#arrow); }
+      .side-path { fill: none; stroke: #b45309; stroke-width: 3; stroke-dasharray: 8 6; marker-end: url(#side-arrow); }
+    </style>
+  </defs>
+  <rect
+     class="method"
+     x="40"
+     y="55"
+     width="500"
+     height="235"
+     rx="14"
+     id="rect3" />
+  <text
+     class="heading"
+     x="290"
+     y="95"
+     id="text3">Find centre of rotation</text>
+  <rect
+     class="field"
+     x="80"
+     y="120"
+     width="420"
+     height="55"
+     rx="8"
+     id="rect4" />
+  <text
+     class="label"
+     x="105"
+     y="145"
+     id="text4">Method ID</text>
+  <text
+     class="mono"
+     x="285"
+     y="146"
+     id="text5">centering</text>
+  <rect
+     class="side-value"
+     x="80"
+     y="195"
+     width="420"
+     height="68"
+     rx="8"
+     id="rect5" />
+  <text
+     class="label"
+     x="105"
+     y="221"
+     id="text6">Side output</text>
+  <text
+     class="mono"
+     x="105"
+     y="247"
+     id="text7">cor → centre_of_rotation</text>
+  <rect
+     class="method"
+     x="760"
+     y="55"
+     width="500"
+     height="235"
+     rx="14"
+     id="rect7" />
+  <text
+     class="heading"
+     x="1010"
+     y="95"
+     id="text8">Reconstruct</text>
+  <rect
+     class="field"
+     x="800"
+     y="120"
+     width="420"
+     height="55"
+     rx="8"
+     id="rect8" />
+  <text
+     class="label"
+     x="825"
+     y="145"
+     id="text9">Main input</text>
+  <text
+     class="text"
+     x="1010"
+     y="146"
+     id="text10">data, angles</text>
+  <rect
+     class="side-value"
+     x="800"
+     y="195"
+     width="420"
+     height="68"
+     rx="8"
+     id="rect10" />
+  <text
+     class="label"
+     x="825"
+     y="221"
+     id="text11">Parameter</text>
+  <text
+     class="mono"
+     x="825"
+     y="239"
+     id="text12">center: ${{ centering.side_outputs.</text>
+  <text
+     class="mono"
+     x="825"
+     y="258"
+     id="text13">centre_of_rotation }}</text>
+  <path
+     class="data-arrow"
+     d="M540 147 H760"
+     id="path13" />
+  <text
+     class="line-label"
+     x="650"
+     y="129"
+     id="text14">main data flow</text>
+  <path
+     class="side-path"
+     d="M290 263 V350 H1010 V263"
+     id="path14" />
+  <text
+     class="side-label"
+     x="650"
+     y="377"
+     id="text15">named supplementary value</text>
+</svg>
