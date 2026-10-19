@@ -580,7 +580,6 @@ def estimate_cpu_memory(
     data_config, _, _, _, _ = parse_config(in_data_file, config[0]["parameters"])
     with h5py.File(in_data_file, "r") as f:
         dataset = f[data_config.data_path]
-        dtype = dataset.dtype
         full_shape = dataset.shape
 
     if shape is None:
@@ -601,7 +600,7 @@ def estimate_cpu_memory(
             nprocs,
             0,
             None,
-            dtype,
+            np.float32,
             previewed_shape,
             sections,
             idx,
