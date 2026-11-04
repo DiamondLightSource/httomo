@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Literal
 from httomo.method_wrappers import make_method_wrapper
 from httomo.method_wrappers.datareducer import DatareducerWrapper
 from httomo.method_wrappers.generic import GenericMethodWrapper
@@ -28,12 +28,14 @@ class TransformLayer:
         save_all=False,
         bits_sweep_images=32,
         out_dir: Optional[os.PathLike] = None,
+        use_virtual_datasets: Literal["yes", "no", "auto"] = "auto",
     ):
         self._repo = repo
         self._save_all = save_all
         self._bits_sweep_images = bits_sweep_images
         self._comm = comm
         self._out_dir = out_dir if out_dir is not None else httomo.globals.run_out_dir
+        self._use_virtual_datasets = use_virtual_datasets
 
     def transform(self, pipeline: Pipeline) -> Pipeline:
         pipeline_is_sweep = _check_if_pipeline_has_a_sweep(pipeline)
@@ -76,6 +78,7 @@ class TransformLayer:
                         next_method_is_cpu=next_method_is_cpu,
                         task_id=f"save_{m.task_id}",
                         out_dir=self._out_dir,
+                        use_virtual_datasets=self._use_virtual_datasets,
                     )
                 )
         return Pipeline(loader, methods)

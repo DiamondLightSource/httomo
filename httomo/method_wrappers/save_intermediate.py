@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Dict, Optional
+from typing import Dict, Optional, Literal
 import weakref
 from mpi4py.MPI import Comm, MIN
 import httomo
@@ -9,7 +9,7 @@ from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from httomo.runner.methods_repository_interface import MethodRepository
-from httomo.utils import catchtime, xp, gpu_enabled
+from httomo.utils import catchtime, xp, gpu_enabled, log_rank
 import numpy as np
 import h5py
 
@@ -31,7 +31,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         prev_method: Optional[MethodWrapper] = None,
         next_method_is_cpu: bool = False,
         loader: Optional[LoaderInterface] = None,
-        vds_per_rank: bool = True,
+        use_virtual_datasets: Literal["yes", "no", "auto"] = "auto",
         **kwargs,
     ):
         super().__init__(
@@ -61,10 +61,22 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         self._file = h5py.File(
             f"{out_dir}/{filename}.h5", "w", driver="mpio", comm=comm
         )
+
+        if use_virtual_datasets == "yes":
+            vds_per_rank = True
+        elif use_virtual_datasets == "auto" and "SLURM_JOB_NUM_NODES" in os.environ:
+            vds_per_rank = int(os.environ["SLURM_JOB_NUM_NODES"]) > 1
+        else:
+            vds_per_rank = False
+
         self._data_file = self._file
         if vds_per_rank:
             self._data_file = h5py.File(
                 f"{out_dir}/{filename}-rank{comm.rank:02}.h5", "w"
+            )
+            log_rank(
+                f'Writing output data to separate file at "{self._data_file.filename}"',
+                comm=comm,
             )
         # make sure file gets closed properly
         weakref.finalize(self, self._file.close)
