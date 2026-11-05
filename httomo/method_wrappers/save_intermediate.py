@@ -31,7 +31,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         prev_method: Optional[MethodWrapper] = None,
         next_method_is_cpu: bool = False,
         loader: Optional[LoaderInterface] = None,
-        use_virtual_datasets: Literal["yes", "no", "auto"] = "auto",
+        use_virtual_dataset: Literal["yes", "no", "auto"] = "auto",
         **kwargs,
     ):
         super().__init__(
@@ -62,9 +62,9 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             f"{out_dir}/{filename}.h5", "w", driver="mpio", comm=comm
         )
 
-        if use_virtual_datasets == "yes":
+        if use_virtual_dataset == "yes":
             vds_per_rank = True
-        elif use_virtual_datasets == "auto" and "SLURM_JOB_NUM_NODES" in os.environ:
+        elif use_virtual_dataset == "auto" and "SLURM_JOB_NUM_NODES" in os.environ:
             vds_per_rank = int(os.environ["SLURM_JOB_NUM_NODES"]) > 1
         else:
             vds_per_rank = False
