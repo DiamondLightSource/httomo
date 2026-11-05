@@ -1,4 +1,4 @@
-# Exercise 13 of httomo-workshop26: 180-degree distortion-correction data.
+# 180-degree distortion-correction data: https://zenodo.org/records/3339629
 # Run from the dist_corr directory, which contains all three HDF5 files.
 - method: standard_tomo
   module_path: httomo.data.hdf.loaders
