@@ -3,7 +3,7 @@ from datetime import datetime
 from os import PathLike
 from pathlib import Path, PurePath
 import sys
-from typing import List, Optional, TextIO, Union, Any
+from typing import List, Optional, TextIO, Union, Any, Literal
 
 import yaml
 
@@ -262,6 +262,12 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     default=None,
     help="Start and stop indices for selecting subset of projections along angular dimension",
 )
+@click.option(
+    "--use-virtual-dataset",
+    type=click.Choice(["yes", "no", "auto"]),
+    default="auto",
+    help="Controls if each rank should write output to separate HDF5 files, which are collected to the main output file as a Virtual Dataset",
+)
 def run(
     in_data_file: Path,
     pipeline: Union[Path, str],
@@ -285,6 +291,7 @@ def run(
     recon_filename_stem: Optional[str],
     mpi_abort_hook: bool,
     continuous_scan_subset: Optional[tuple[int, int]],
+    use_virtual_dataset: Literal["yes", "no", "auto"],
 ):
     """Run a pipeline on input data."""
     if mpi_abort_hook:
@@ -336,6 +343,7 @@ def run(
         bits_sweep_images,
         method_wrapper_comm,
         format_enum,
+        use_virtual_dataset,
     )
 
     for wrapper in pipeline_object:
@@ -514,6 +522,7 @@ def generate_pipeline(
     bits_sweep_images: int,
     method_wrapper_comm: MPI.Comm,
     pipeline_format: PipelineFormat,
+    use_virtual_dataset: Literal["yes", "no", "auto"],
 ) -> Pipeline:
     # instantiate UiLayer class for pipeline build
     init_UiLayer = UiLayer(
@@ -526,7 +535,10 @@ def generate_pipeline(
 
     # perform transformations on pipeline
     tr = TransformLayer(
-        comm=method_wrapper_comm, save_all=save_all, bits_sweep_images=bits_sweep_images
+        comm=method_wrapper_comm,
+        save_all=save_all,
+        bits_sweep_images=bits_sweep_images,
+        use_virtual_dataset=use_virtual_dataset,
     )
     pipeline_object = tr.transform(pipeline_object)
 

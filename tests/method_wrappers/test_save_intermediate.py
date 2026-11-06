@@ -37,9 +37,6 @@ def test_save_intermediate(
             frames_per_chunk: int,
             minimum_block_length: int,
             path: str,
-            detector_x: int,
-            detector_y: int,
-            angles: np.ndarray,
         ):
             assert isinstance(data, np.ndarray)
             assert data.shape == dummy_block.shape
@@ -49,8 +46,6 @@ def test_save_intermediate(
             assert frames_per_chunk == FRAMES_PER_CHUNK
             assert minimum_block_length == dummy_block.shape[0]
             assert Path(file.filename).name == "task1-testpackage-testmethod-XXX.h5"
-            assert detector_x == 10
-            assert detector_y == 20
             assert path == "/data"
 
     mocker.patch(
@@ -98,9 +93,6 @@ def test_save_intermediate_defaults_out_dir(mocker: MockerFixture, tmp_path: Pat
             frames_per_chunk: int,
             minimum_block_length: int,
             path: str,
-            detector_x: int,
-            detector_y: int,
-            angles: np.ndarray,
         ):
             pass
 
@@ -161,9 +153,6 @@ def test_save_intermediate_leaves_gpu_data(
             frames_per_chunk: int,
             minimum_block_length: int,
             path: str,
-            detector_x: int,
-            detector_y: int,
-            angles: np.ndarray,
         ):
             assert isinstance(data, np.ndarray)
             assert data.device == "cpu"
@@ -252,9 +241,6 @@ def test_writes_core_of_blocks_only(
             frames_per_chunk: int,
             minimum_block_length: int,
             path: str,
-            detector_x: int,
-            detector_y: int,
-            angles: np.ndarray,
         ):
             assert data.shape == BLOCK_SHAPE_UNPADDED
             assert global_index == GLOBAL_INDEX_UNPADDED
@@ -302,6 +288,48 @@ def test_writes_core_of_blocks_only(
     wrp.execute(block)
 
 
+def test_save_intermediate_writes_auxiliary_data(
+    mocker: MockerFixture, dummy_block: DataSetBlock, tmp_path: Path
+):
+    loader: LoaderInterface = mocker.create_autospec(
+        LoaderInterface, instance=True, detector_x=10, detector_y=20
+    )
+    prev_method = mocker.create_autospec(
+        MethodWrapper,
+        instance=True,
+        task_id="task1",
+        package_name="testpackage",
+        method_name="testmethod",
+        module_path="testpackage.notalgorithm",
+        recon_algorithm=None,
+    )
+    wrp = make_method_wrapper(
+        make_mock_repo(mocker, implementation="cpu"),
+        "httomo.methods",
+        "save_intermediate_data",
+        MPI.COMM_WORLD,
+        make_mock_preview_config(mocker),
+        loader=loader,
+        out_dir=tmp_path,
+        prev_method=prev_method,
+        minimum_block_length=dummy_block.shape[0],
+    )
+    assert isinstance(wrp, SaveIntermediateFilesWrapper)
+
+    wrp.execute(dummy_block)
+
+    expected_filename = "task1-testpackage-testmethod.h5"
+    with h5py.File(tmp_path / expected_filename, "r") as file:
+        assert "/data" in file
+        np.testing.assert_array_equal(file["/data"], dummy_block.data)
+        assert "/angles" in file
+        np.testing.assert_array_equal(file["/angles"], dummy_block.angles)
+        assert expected_filename in file
+        np.testing.assert_array_equal(file[expected_filename], [0, 0])
+        assert "data_dims" in file
+        np.testing.assert_array_equal(file["data_dims"]["detector_x_y"], [10, 20])
+
+
 @pytest.mark.parametrize("recon_filename_stem_global_var", [None, "some-recon"])
 @pytest.mark.parametrize(
     "recon_algorithm",
@@ -331,9 +359,6 @@ def test_recon_method_output_filename(
             frames_per_chunk: int,
             minimum_block_length: int,
             path: str,
-            detector_x: int,
-            detector_y: int,
-            angles: np.ndarray,
         ):
             pass
 
@@ -402,9 +427,6 @@ def test_non_recon_method_output_filename(
             frames_per_chunk: int,
             minimum_block_length: int,
             path: str,
-            detector_x: int,
-            detector_y: int,
-            angles: np.ndarray,
         ):
             pass
 
@@ -470,9 +492,6 @@ def test_passes_smallest_minimum_block_length_to_underlying_method_in_all_proces
             frames_per_chunk: int,
             minimum_block_length: int,
             path: str,
-            detector_x: int,
-            detector_y: int,
-            angles: np.ndarray,
         ):
             assert minimum_block_length == MINIMUM_BLOCK_LENGTH
 
@@ -574,9 +593,6 @@ def test_mpi_reduce_call_for_min_block_len(
             frames_per_chunk: int,
             minimum_block_length: int,
             path: str,
-            detector_x: int,
-            detector_y: int,
-            angles: np.ndarray,
         ):
             pass
 
