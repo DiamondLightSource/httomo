@@ -430,6 +430,7 @@ class GenericMethodWrapper(MethodWrapper):
         non_slice_dims_shape: Tuple[int, int],
         angles: np.ndarray,
         available_memory: int,
+        do_gpumem_cleanup: bool = True
     ) -> Tuple[int, int]:
         """If it runs on GPU, determine the maximum number of slices that can fit in the
         available memory in bytes, and return a tuple of
@@ -476,6 +477,7 @@ class GenericMethodWrapper(MethodWrapper):
                         non_slice_dims_shape,
                         angles,
                         available_memory,
+                        do_gpumem_cleanup
                     ),
                     available_memory,
                 )
@@ -501,6 +503,7 @@ class GenericMethodWrapper(MethodWrapper):
         non_slice_dims_shape: Tuple[int, int],
         angles: np.ndarray,
         available_memory: int,
+        do_gpumem_cleanup: bool
     ) -> int:
         def get_mem_bytes(current_slices):
             try:
@@ -516,7 +519,8 @@ class GenericMethodWrapper(MethodWrapper):
             except:
                 return 2**64
             finally:
-                gpumem_cleanup()
+                if do_gpumem_cleanup:
+                    gpumem_cleanup()
 
         return search_max_slices_iterative(available_memory, get_mem_bytes)
 
