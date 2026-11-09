@@ -126,7 +126,15 @@ class BaseBlock(BlockData, BlockTransfer):
     def to_cpu(self):
         if not gpu_enabled or xp.get_array_module(self.data).__name__ == "numpy":
             return
-        self._data = xp.asnumpy(self.data, order="C")
+        d_data = self._data
+        h_data = np.empty_like(d_data)
+        xp.cuda.runtime.memcpy(
+            h_data.ctypes.data,
+            d_data.data.ptr,
+            h_data.nbytes,
+            xp.cuda.runtime.memcpyDeviceToHost,
+        )
+        self._data = h_data
 
     @property
     def is_gpu(self) -> bool:
