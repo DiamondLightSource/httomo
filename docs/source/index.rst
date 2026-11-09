@@ -15,6 +15,9 @@ Where should I start?
 
       Follow the :ref:`quickstart` to download a small test dataset, validate
       a pipeline and run it from start to finish.
+      Also explore the `HTTomo tutorials
+      <https://diamondlightsource.github.io/httomo-workshop/>`_
+      for workshop materials and more examples.
 
    .. grid-item-card:: Preparing your own data?
 

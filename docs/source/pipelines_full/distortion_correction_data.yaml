@@ -1,0 +1,86 @@
+# 180-degree distortion-correction data: https://zenodo.org/records/3339629
+# Run from the dist_corr directory, which contains all three HDF5 files.
+- method: standard_tomo
+  module_path: httomo.data.hdf.loaders
+  parameters:
+    data_path: /entry/data/data
+    image_key_path: null
+    rotation_angles:
+      user_defined:
+        start_angle: 0.0
+        stop_angle: 180.0
+        angles_total: 1801
+    preview:
+      detector_y:
+        start: 1000
+        stop: 1050
+    darks:
+      file: darks.hdf
+      data_path: /entry/data/data
+    flats:
+      file: flats.hdf
+      data_path: /entry/data/data
+
+- method: dark_flat_field_correction
+  module_path: httomolibgpu.prep.normalize
+  parameters: {}
+
+# Apply the supplied calibration to the normalised projections.
+- method: distortion_correction_proj_discorpy
+  module_path: httomolibgpu.prep.alignment
+  parameters:
+    metadata_path: null
+    order: 1
+    mode: reflect
+    xcenter: 1230.99353849
+    ycenter: 1018.86666868
+    list_fact:
+      - 1.00015857686
+      - -1.00246012274e-06
+      - -8.9859016203e-10
+      - -2.31488898858e-12
+      - 7.6288191801e-16
+
+- method: remove_stripe_based_sorting
+  module_path: httomolibgpu.prep.stripe
+  parameters:
+    size: 11
+    dim: 1
+
+- method: find_center_vo
+  module_path: httomolibgpu.recon.rotation
+  parameters:
+    ind: mid
+    average_radius: 3
+    cor_initialisation_value: 1390
+    smin: -100
+    smax: 100
+    srad: 6.0
+    step: 0.5
+    ratio: 0.5
+    drop: 20
+  id: centering
+  side_outputs:
+    cor: centre_of_rotation
+
+- method: minus_log
+  module_path: httomolibgpu.prep.normalize
+  parameters: {}
+
+- method: LPRec3d_tomobar
+  module_path: httomolibgpu.recon.algorithm
+  parameters:
+    center: ${{centering.side_outputs.centre_of_rotation}}
+    detector_pad: true
+    filter_type: shepp
+    filter_freq_cutoff: 1.0
+    recon_size: null
+    recon_mask_radius: 2.0
+
+- method: save_to_images
+  module_path: httomolib.misc.images
+  parameters:
+    subfolder_name: images
+    axis: auto
+    file_format: tif
+    asynchronous: true
