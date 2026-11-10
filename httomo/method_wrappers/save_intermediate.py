@@ -179,7 +179,8 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         )
         index = [slice(None)] * len(layout.shape)
         index[block.slicing_dim] = slice(
-            block.chunk_start, block.chunk_start + block.chunk_shape[block.slicing_dim]
+            block.chunk_start,
+            block.chunk_start + block.chunk_shape_unpadded[block.slicing_dim],
         )
         layout[tuple(index)] = virtual_source
         self._file.create_virtual_dataset(name=dataset_path, layout=layout)

@@ -149,8 +149,8 @@ class DataSetBlock(BaseBlock, BlockIndexing):
 
     @property
     def chunk_start(self) -> int:
-        """Start index of the slicing dimension of the full chunk handled by the current process"""
-        return self._chunk_start
+        """Start index of the slicing dimension of the unpadded chunk handled by the current process"""
+        return self._chunk_start + self._padding[0]
 
     @property
     def global_index(self) -> Tuple[int, int, int]:
