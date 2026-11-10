@@ -143,11 +143,10 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
 
         if block.is_last_in_chunk:
             if vds_per_rank:
-                self._build_virtual_dataset(block, dataset_path)
-            self._file.close()
-            if self._data_file != self._file:
+                data_file_path = self._data_file.filename
                 self._data_file.close()
-
+                self._build_virtual_dataset(block, data_file_path, dataset_path)
+            self._file.close()
         return block
 
     def _save_auxiliary_data_hdf5(
@@ -166,21 +165,27 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
         g1 = self._file.create_group("data_dims")
         g1.create_dataset("detector_x_y", data=[detector_x, detector_y])
 
-    def _build_virtual_dataset(self, block, dataset_path: str):
+    def _build_virtual_dataset(self, block, data_file_path: str, dataset_path: str):
         layout = h5py.VirtualLayout(
             block.global_shape,
             dtype=block.data.dtype,
             filename=self._file.filename,
         )
-        virtual_source = h5py.VirtualSource(
-            path_or_dataset=self._data_file.filename,
-            name=dataset_path,
-            shape=block.chunk_shape_unpadded,
-        )
-        index = [slice(None)] * len(layout.shape)
-        index[block.slicing_dim] = slice(
-            block.chunk_start,
-            block.chunk_start + block.chunk_shape_unpadded[block.slicing_dim],
-        )
-        layout[tuple(index)] = virtual_source
+        chunk_starts = self.comm.allgather(block.chunk_start)
+        chunk_shapes = self.comm.allgather(block.chunk_shape_unpadded)
+        data_file_paths = self.comm.allgather(data_file_path)
+
+        for i in range(self.comm.size):
+            virtual_source = h5py.VirtualSource(
+                path_or_dataset=data_file_paths[i],
+                name=dataset_path,
+                shape=chunk_shapes[i],
+            )
+
+            index = [slice(None)] * len(layout.shape)
+            index[block.slicing_dim] = slice(
+                chunk_starts[i],
+                chunk_starts[i] + chunk_shapes[i][block.slicing_dim],
+            )
+            layout[tuple(index)] = virtual_source
         self._file.create_virtual_dataset(name=dataset_path, layout=layout)
