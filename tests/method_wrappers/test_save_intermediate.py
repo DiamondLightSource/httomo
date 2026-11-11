@@ -199,8 +199,16 @@ def test_save_intermediate_leaves_gpu_data(
     [(0, 0), (2, 3)],
     ids=["zero-padding", "non-zero-padding"],
 )
+@pytest.mark.parametrize(
+    "use_virtual_dataset",
+    ["yes", "no"],
+    ids=["vds", "novds"],
+)
 def test_writes_core_of_blocks_only(
-    mocker: MockerFixture, tmp_path: Path, padding: Tuple[int, int]
+    mocker: MockerFixture,
+    tmp_path: Path,
+    padding: Tuple[int, int],
+    use_virtual_dataset: str,
 ):
     # Define global data which, for a single process, is equal chunk data
     GLOBAL_SHAPE = (10, 10, 30)
@@ -260,6 +268,7 @@ def test_writes_core_of_blocks_only(
         loader=loader,
         prev_method=prev_method,
         minimum_block_length=GLOBAL_SHAPE[0],
+        use_virtual_dataset=use_virtual_dataset,
     )
 
     # Create block from the global/chunk data
