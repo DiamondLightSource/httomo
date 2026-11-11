@@ -28,6 +28,11 @@ class ParamSweepBlock(BaseBlock, BlockIndexing):
         return make_3d_shape_from_array(self._data)
 
     @property
+    def chunk_start(self) -> int:
+        """Start index of the slicing dimension of the full chunk handled by the current process"""
+        return 0
+
+    @property
     def global_index(self) -> Tuple[int, int, int]:
         return (0, 0, 0)
 

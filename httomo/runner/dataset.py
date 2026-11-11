@@ -148,6 +148,11 @@ class DataSetBlock(BaseBlock, BlockIndexing):
         return self._chunk_shape
 
     @property
+    def chunk_start(self) -> int:
+        """Start index of the slicing dimension of the unpadded chunk handled by the current process"""
+        return self._chunk_start + self._padding[0]
+
+    @property
     def global_index(self) -> Tuple[int, int, int]:
         """The index of this block within the global data across all processes"""
         return self._global_index

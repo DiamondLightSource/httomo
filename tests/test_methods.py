@@ -98,9 +98,6 @@ def test_save_intermediate_data(tmp_path: Path):
             frames_per_chunk=0,
             minimum_block_length=GLOBAL_SHAPE[0],
             path="/data",
-            detector_x=10,
-            detector_y=20,
-            angles=b2.angles,
         )
         save_intermediate_data(
             b1.data,
@@ -111,22 +108,12 @@ def test_save_intermediate_data(tmp_path: Path):
             frames_per_chunk=0,
             minimum_block_length=GLOBAL_SHAPE[0],
             path="/data",
-            detector_x=10,
-            detector_y=20,
-            angles=b1.angles,
         )
 
     with h5py.File(tmp_path / "test_file.h5", "r") as file:
         assert "/data" in file
         data = file["/data"]
         np.testing.assert_array_equal(data, global_data)
-        assert "/angles" in file
-        angles = file["/angles"]
-        np.testing.assert_array_equal(angles, aux_data.get_angles())
-        assert "test_file.h5" in file
-        np.testing.assert_array_equal(file["test_file.h5"], [0, 0])
-        assert "data_dims" in file
-        np.testing.assert_array_equal(file["data_dims"]["detector_x_y"], [10, 20])
 
 
 @pytest.mark.mpi
@@ -179,9 +166,6 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
             frames_per_chunk=0,
             minimum_block_length=GLOBAL_SHAPE[0],
             path="/data",
-            detector_x=10,
-            detector_y=20,
-            angles=b2.angles,
         )
         save_intermediate_data(
             b1.data,
@@ -192,9 +176,6 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
             frames_per_chunk=0,
             minimum_block_length=GLOBAL_SHAPE[0],
             path="/data",
-            detector_x=10,
-            detector_y=20,
-            angles=b1.angles,
         )
 
     # open without MPI, looking at the full file
@@ -202,13 +183,6 @@ def test_save_intermediate_data_mpi(tmp_path: Path):
         assert "/data" in file
         data = file["/data"]
         np.testing.assert_array_equal(data, global_data)
-        assert "/angles" in file
-        angles = file["/angles"]
-        np.testing.assert_array_equal(angles, aux_data.get_angles())
-        assert "test_file.h5" in file
-        np.testing.assert_array_equal(file["test_file.h5"], [0, 0])
-        assert "data_dims" in file
-        np.testing.assert_array_equal(file["data_dims"]["detector_x_y"], [10, 20])
 
 
 @pytest.mark.parametrize("frames_per_chunk", [-1, 0, 1, 5, 1000])
@@ -243,9 +217,6 @@ def test_save_intermediate_data_frames_per_chunk(
             frames_per_chunk=frames_per_chunk,
             minimum_block_length=GLOBAL_SHAPE[0],
             path=DATA_PATH,
-            detector_x=block.global_shape[2],
-            detector_y=block.global_shape[1],
-            angles=block.angles,
         )
 
     # Define the expected chunk shape, based on the `frames_per_chunk` value and the slicing
@@ -322,9 +293,6 @@ def test_save_intermediate_data_chunked_compressed(
                 frames_per_chunk=frames_per_chunk,
                 minimum_block_length=GLOBAL_SHAPE[0],
                 path=DATA_PATH,
-                detector_x=block.global_shape[2],
-                detector_y=block.global_shape[1],
-                angles=block.angles,
             )
 
     # Define the expected chunk shape, based on the `frames_per_chunk` value and the slicing
@@ -392,9 +360,6 @@ def test_save_intermediate_data_frames_per_chunk_mpi(
             frames_per_chunk=frames_per_chunk,
             minimum_block_length=GLOBAL_SHAPE[0],
             path=DATA_PATH,
-            detector_x=block.global_shape[2],
-            detector_y=block.global_shape[1],
-            angles=block.angles,
         )
 
     # Define the expected chunk shape, based on the `frames_per_chunk` value and the slicing
@@ -463,9 +428,6 @@ def test_save_intermediate_data_frames_per_chunk_uses_minimum_block_size(
                 frames_per_chunk=FRAMES_PER_CHUNK,
                 minimum_block_length=MINIMUM_BLOCK_LENGTH,
                 path=DATA_PATH,
-                detector_x=block.global_shape[2],
-                detector_y=block.global_shape[1],
-                angles=block.angles,
             )
 
     with h5py.File(tmp_path / FILE_NAME, "r") as f:

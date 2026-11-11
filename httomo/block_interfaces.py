@@ -121,6 +121,11 @@ class BlockIndexing(Protocol):
         ...  # pragma: no cover
 
     @property
+    def chunk_start(self) -> int:
+        """Start index of the slicing dimension of the full chunk handled by the current process"""
+        ...  # pragma: no cover
+
+    @property
     def global_index(self) -> Tuple[int, int, int]:
         """The index of this block within the global data across all processes"""
         ...  # pragma: no cover

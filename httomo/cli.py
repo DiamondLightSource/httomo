@@ -3,7 +3,7 @@ from datetime import datetime
 from os import PathLike
 from pathlib import Path, PurePath
 import sys
-from typing import List, Optional, TextIO, Union, Any
+from typing import List, Optional, TextIO, Union, Any, Literal
 
 import yaml
 
@@ -95,7 +95,7 @@ def memory_check(in_data_file: Path, pipeline: Union[Path, str], nprocs: int):
     Estimate CPU memory requirements for processing input data with a given pipeline and number
     of processes
     """
-    memory_peak = estimate_cpu_memory(in_data_file, pipeline, nprocs)
+    memory_peak = estimate_cpu_memory(in_data_file, pipeline, nprocs, use_virtual_dataset="auto")
     print(
         f"Estimated peak CPU memory usage for {nprocs} process run: {(memory_peak * nprocs) / (1024 ** 3):.3f} GB"
     )
@@ -262,6 +262,12 @@ def check(pipeline: Union[Path, str], in_data_file: Optional[Path] = None):
     default=None,
     help="Start and stop indices for selecting subset of projections along angular dimension",
 )
+@click.option(
+    "--use-virtual-dataset",
+    type=click.Choice(["yes", "no", "auto"]),
+    default="auto",
+    help="Controls if each rank should write output to separate HDF5 files, which are collected to the main output file as a Virtual Dataset",
+)
 def run(
     in_data_file: Path,
     pipeline: Union[Path, str],
@@ -285,6 +291,7 @@ def run(
     recon_filename_stem: Optional[str],
     mpi_abort_hook: bool,
     continuous_scan_subset: Optional[tuple[int, int]],
+    use_virtual_dataset: Literal["yes", "no", "auto"],
 ):
     """Run a pipeline on input data."""
     if mpi_abort_hook:
@@ -336,6 +343,7 @@ def run(
         bits_sweep_images,
         method_wrapper_comm,
         format_enum,
+        use_virtual_dataset,
     )
 
     for wrapper in pipeline_object:
@@ -514,6 +522,7 @@ def generate_pipeline(
     bits_sweep_images: int,
     method_wrapper_comm: MPI.Comm,
     pipeline_format: PipelineFormat,
+    use_virtual_dataset: Literal["yes", "no", "auto"],
 ) -> Pipeline:
     # instantiate UiLayer class for pipeline build
     init_UiLayer = UiLayer(
@@ -526,7 +535,10 @@ def generate_pipeline(
 
     # perform transformations on pipeline
     tr = TransformLayer(
-        comm=method_wrapper_comm, save_all=save_all, bits_sweep_images=bits_sweep_images
+        comm=method_wrapper_comm,
+        save_all=save_all,
+        bits_sweep_images=bits_sweep_images,
+        use_virtual_dataset=use_virtual_dataset,
     )
     pipeline_object = tr.transform(pipeline_object)
 
@@ -571,9 +583,10 @@ def estimate_cpu_memory(
     pipeline_file: Path,
     nprocs: int,
     shape: Optional[tuple[int, int, int]] = None,
+    use_virtual_dataset: Literal["yes", "no", "auto"] = "auto"
 ) -> int:
     pipeline = generate_pipeline(
-        in_data_file, pipeline_file, False, 32, MPI.COMM_WORLD, PipelineFormat.Yaml
+        in_data_file, pipeline_file, False, 32, MPI.COMM_WORLD, PipelineFormat.Yaml, use_virtual_dataset
     )
     sections = sectionize(pipeline)
     config = yaml_loader(pipeline_file)
