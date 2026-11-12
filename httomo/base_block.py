@@ -127,7 +127,7 @@ class BaseBlock(BlockData, BlockTransfer):
         if not gpu_enabled or xp.get_array_module(self.data).__name__ == "numpy":
             return
         d_data = self._data
-        h_data = np.empty_like(d_data)
+        h_data = np.empty(d_data.shape, dtype=d_data.dtype)
         xp.cuda.runtime.memcpy(
             h_data.ctypes.data,
             d_data.data.ptr,
