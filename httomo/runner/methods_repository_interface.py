@@ -52,8 +52,12 @@ class MethodQuery(Protocol):
 
     def calculate_memory_bytes_for_slices(
         self, dims_shape: Tuple[int, int, int], dtype: np.dtype, **kwargs
-    ) -> int:
-        """Calculate the memory required in bytes for a given 3D grid"""
+    ) -> Tuple[int, bool]:
+        """
+        Calculate the memory required in bytes for a given 3D grid.
+
+        Returns: (gpu_memory_bytes, estimation_used_gpu)
+        """
         ...  # pragma: no cover
 
     def calculate_output_dims(

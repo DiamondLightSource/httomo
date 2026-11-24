@@ -208,9 +208,9 @@ Implement a whole-block estimator:
        dims_shape: tuple[int, int, int],
        dtype: np.dtype,
        **kwargs,
-   ) -> int:
+   ) -> Tuple[int, bool]:
        """Return peak bytes for the complete candidate block."""
-       return calculate_peak_bytes(dims_shape, dtype=dtype, **kwargs)
+       return calculate_peak_bytes(dims_shape, dtype=dtype, **kwargs), False
 
 HTTomo inserts a candidate block length into ``dims_shape`` at the section's
 slicing dimension and calls the estimator repeatedly. It first makes a linear
@@ -220,7 +220,8 @@ approximation rather than necessarily the exact largest possible block.
 
 An iterative estimator must therefore:
 
-* return the total peak bytes for the complete candidate block;
+* return the total peak bytes for the complete candidate block AND whether
+  it used the GPU for computation;
 * be monotonically non-decreasing as the candidate slice count increases;
 * be deterministic and safe to call repeatedly; and
 * account for the supplied dimensions, data type and relevant parameters.
