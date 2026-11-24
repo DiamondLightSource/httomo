@@ -4,7 +4,12 @@ import numpy as np
 
 from httomo.block_interfaces import BlockData, BlockTransfer, generic_array
 from httomo.runner.auxiliary_data import AuxiliaryData
-from httomo.utils import gpu_enabled, make_3d_shape_from_array, xp
+from httomo.utils import (
+    gpu_enabled,
+    make_3d_shape_from_array,
+    xp,
+    make_pinned_host_array,
+)
 
 
 class BaseBlock(BlockData, BlockTransfer):
@@ -127,7 +132,7 @@ class BaseBlock(BlockData, BlockTransfer):
         if not gpu_enabled or xp.get_array_module(self.data).__name__ == "numpy":
             return
         d_data = self._data
-        h_data = np.empty(d_data.shape, dtype=d_data.dtype)
+        h_data = make_pinned_host_array(d_data.shape, dtype=d_data.dtype)
         xp.cuda.runtime.memcpy(
             h_data.ctypes.data,
             d_data.data.ptr,
