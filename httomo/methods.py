@@ -47,24 +47,18 @@ def save_intermediate_data(
     frames_per_chunk: int,
     minimum_block_length: int,
     path: str,
-    detector_x: int,
-    detector_y: int,
-    angles: np.ndarray,
 ) -> None:
     """Saves intermediate data to a file, including auxiliary"""
-
-    if isinstance(file, h5py.File):
-        _save_auxiliary_data_hdf5(file, angles, detector_x, detector_y)
-        dataset = setup_dataset(
-            file,
-            path,
-            data,
-            slicing_dim,
-            frames_per_chunk,
-            global_shape,
-            minimum_block_length,
-            filetype="hdf5",
-        )
+    dataset = setup_dataset(
+        file,
+        path,
+        data,
+        slicing_dim,
+        frames_per_chunk,
+        global_shape,
+        minimum_block_length,
+        filetype="hdf5",
+    )
 
     _save_dataset_data(dataset, data, global_shape, global_index)
 
@@ -185,24 +179,6 @@ def _save_dataset_data(
         return
 
     dataset[start[0] : stop[0], start[1] : stop[1], start[2] : stop[2]] = data
-
-
-def _save_auxiliary_data_hdf5(
-    file: h5py.File,
-    angles: np.ndarray,
-    detector_x: int,
-    detector_y: int,
-):
-    # only save if not there yet
-    if "/angles" in file:
-        return
-
-    file.create_dataset("angles", data=angles)
-
-    file_name = pathlib.Path(file.filename).name
-    file.create_dataset(file_name, data=[0, 0])
-    g1 = file.create_group("data_dims")
-    g1.create_dataset("detector_x_y", data=[detector_x, detector_y])
 
 
 def _dcpl_fill_never(

@@ -172,6 +172,12 @@ Output and intermediate data
    ``.h5`` extension. For example, ``--recon-filename-stem my-recon`` produces
    ``my-recon.h5``.
 
+``--use-virtual-dataset [yes|no|auto]``
+   Controls if the output is written to a single HDF5 file, or if each MPI rank writes to a
+   separate HDF5 that is combined into a virtual dataset in the main output file.
+   Using virtual datasets may improve performance when executing on multiple MPI nodes.
+   ``auto`` setting is the default, and it enables virtual dataset when multiple nodes are
+   detected, based on the ``SLURM_JOB_NUM_NODES`` environment variable.
 
 Execution and resource use
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
