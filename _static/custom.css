@@ -1,0 +1,50 @@
+/* Custom highlights for selected links in the primary (left) navigation.
+ *
+ * Sphinx replaces the current page's href with "#". Each :has() fallback
+ * identifies the relevant navigation group through a neighbouring link and
+ * selects the current entry by its stable position in that group.
+ */
+
+/* Remove the theme's current-page highlight. The four intentional highlights
+ * below are declared afterwards and therefore take precedence. */
+.bd-sidebar-primary .bd-sidenav li.current > a.current {
+    background-color: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    color: inherit;
+    font-weight: 400;
+}
+
+/* Installation and 10-minute quickstart: green. */
+.bd-sidebar-primary .bd-sidenav > li > a[href$="installation.html"],
+.bd-sidebar-primary
+    .bd-sidenav:has(> li > a[href$="quickstart.html"])
+    > li:first-child
+    > a[href="#"],
+.bd-sidebar-primary .bd-sidenav > li > a[href$="quickstart.html"],
+.bd-sidebar-primary
+    .bd-sidenav:has(> li > a[href$="run_httomo.html"])
+    > li:nth-child(2)
+    > a[href="#"] {
+    background-color: rgb(40 167 69 / 18%);
+    box-shadow: inset 4px 0 #28a745;
+    border-radius: 0.25rem;
+    font-weight: 600;
+}
+
+/* Ready-to-use pipelines and Versioned downloads: blue. */
+.bd-sidebar-primary .bd-sidenav > li > a[href$="yaml.html"],
+.bd-sidebar-primary
+    .bd-sidenav:has(> li > a[href$="versioned_downloads.html"])
+    > li:first-child
+    > a[href="#"],
+.bd-sidebar-primary .bd-sidenav > li > a[href$="versioned_downloads.html"],
+.bd-sidebar-primary
+    .bd-sidenav:has(> li > a[href$="yaml.html"])
+    > li:nth-child(2)
+    > a[href="#"] {
+    background-color: rgb(33 150 243 / 18%);
+    box-shadow: inset 4px 0 #2196f3;
+    border-radius: 0.25rem;
+    font-weight: 600;
+}
