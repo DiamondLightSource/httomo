@@ -3,11 +3,11 @@
 Stripe-removal data
 ===================
 
-This example processes the ``68067.nxs`` tomography dataset collected at the
+This example processes the ``68067.nxs`` tomography dataset from `stripe-removal data Zenodo record`_ collected at the
 I12 beamline at Diamond Light Source. The data contain full, partial,
 unresponsive, fluctuating and blurry stripes, which appear as ring artefacts in
-reconstructed images. They accompanied the paper `Superior techniques for
-eliminating ring artifacts in X-ray micro-tomography`_ and are available from
+reconstructed images. More details are available in the paper `Superior techniques for
+eliminating ring artifacts in X-ray micro-tomography`_ and the data is available from
 the `stripe-removal data Zenodo record`_.
 
 .. _fig_stripes:

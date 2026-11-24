@@ -3,7 +3,7 @@
 Real data processing
 ====================
 
-This section presents an example of processing real experimental data using HTTomo.
+This section presents examples of processing real experimental data using HTTomo.
 
 
 .. toctree::
@@ -12,3 +12,4 @@ This section presents an example of processing real experimental data using HTTo
    examples/sandstone_data_example
    examples/stripes_data_example
    examples/lorentz_data_example
+   examples/distortion_data_example
