@@ -503,11 +503,12 @@ class GenericMethodWrapper(MethodWrapper):
         available_memory: int,
     ) -> int:
         def get_mem_bytes(current_slices):
+            used_gpu = True
             try:
                 dims_shape = list(non_slice_dims_shape)
                 dims_shape.insert(slicing_dim, current_slices)
 
-                memory_bytes = self._query.calculate_memory_bytes_for_slices(
+                memory_bytes, used_gpu = self._query.calculate_memory_bytes_for_slices(
                     dims_shape=tuple(dims_shape),
                     dtype=data_dtype,
                     **self._unwrap_output_ref_values(),
@@ -516,7 +517,8 @@ class GenericMethodWrapper(MethodWrapper):
             except:
                 return 2**64
             finally:
-                gpumem_cleanup()
+                if used_gpu:
+                    gpumem_cleanup()
 
         return search_max_slices_iterative(available_memory, get_mem_bytes)
 
