@@ -476,6 +476,7 @@ class TaskRunner:
                 non_slice_dims_shape,
                 angles,
                 available_memory,
+                do_gpumem_cleanup = m.method_name != "remove_stripe_fw"
             )
             max_slices_methods[idx] = min(max_slices, slices_estimated)
             non_slice_dims_shape = output_dims
