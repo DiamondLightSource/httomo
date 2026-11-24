@@ -73,7 +73,6 @@ def estimate_section_memory(
     global_shape: Tuple[int, int, int],
     sections: List[Section],
     section_idx: int,
-    consider_pinned_memory_pool: bool = False,
 ) -> tuple[int, tuple[int, int, int]]:
     # Get chunk shape created by reader of section `n` (the current section) that will account
     # for padding. This chunk shape is based on the chunk shape written by the writer of
@@ -128,28 +127,6 @@ def estimate_section_memory(
         )
         reslice_bytes += ring_algorithm_bytes + reslice_output_bytes
 
-    # The default CuPy pinned memory pool allocates sizes that are the smallest power of two equal or above
-    # the requested size. These chunks are reused for the subsequent h2d copies, however, a larger chunk is
-    # not going to be used for a small transfer. E.g. a transfer of 1.5 GiB will allocate a new 2 GiB chunk,
-    # even if a 4 GiB chunk already sits free in the pool.
-    # Therefore, preparing for the worst case, we accumulate all significantly large potential pool chunks below:
-    cupy_pinned_cpu_pool_memory = 0
-    cupy_transfer_overhead = 0
-    if consider_pinned_memory_pool and gpu_enabled:
-        _, total_mem = xp.cuda.Device().mem_info
-        # if the max size fits to the device memory, we can use it as a lower bound
-        max_size = np.prod(global_shape) * np.dtype(dtype).itemsize
-        size_limit = min(clp2(max_size), total_mem)
-
-        mem_allocation = 1 << 27  # 128 MiB
-        while mem_allocation <= size_limit:
-            cupy_pinned_cpu_pool_memory += mem_allocation
-            mem_allocation *= 2
-
-        # CuPy copies the host array before uploading to the device. This is at most the size of the device memory
-        # See https://github.com/cupy/cupy/issues/9813
-        cupy_transfer_overhead = total_mem
-
     # Calculate the shape of the global data of the output of the section to pass back to the
     # caller.
     #
@@ -167,8 +144,6 @@ def estimate_section_memory(
         padded_input_chunk_bytes
         + output_chunk_bytes
         + reslice_bytes
-        + cupy_pinned_cpu_pool_memory
-        + cupy_transfer_overhead,
         output_global_shape,
     )
 
