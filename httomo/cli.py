@@ -95,7 +95,9 @@ def memory_check(in_data_file: Path, pipeline: Union[Path, str], nprocs: int):
     Estimate CPU memory requirements for processing input data with a given pipeline and number
     of processes
     """
-    memory_peak = estimate_cpu_memory(in_data_file, pipeline, nprocs, use_virtual_dataset="auto")
+    memory_peak = estimate_cpu_memory(
+        in_data_file, pipeline, nprocs, use_virtual_dataset="auto"
+    )
     print(
         f"Estimated peak CPU memory usage for {nprocs} process run: {(memory_peak * nprocs) / (1024 ** 3):.3f} GB"
     )
@@ -583,10 +585,16 @@ def estimate_cpu_memory(
     pipeline_file: Path,
     nprocs: int,
     shape: Optional[tuple[int, int, int]] = None,
-    use_virtual_dataset: Literal["yes", "no", "auto"] = "auto"
+    use_virtual_dataset: Literal["yes", "no", "auto"] = "auto",
 ) -> int:
     pipeline = generate_pipeline(
-        in_data_file, pipeline_file, False, 32, MPI.COMM_WORLD, PipelineFormat.Yaml, use_virtual_dataset
+        in_data_file,
+        pipeline_file,
+        False,
+        32,
+        MPI.COMM_WORLD,
+        PipelineFormat.Yaml,
+        use_virtual_dataset,
     )
     sections = sectionize(pipeline)
     config = yaml_loader(pipeline_file)
