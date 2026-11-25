@@ -110,7 +110,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             self._gpu_time_info = GpuTimeInfo()
 
             with catchtime() as t:
-                data = raw_memcpy_d2h(block.data_unpadded)
+                data = raw_memcpy_d2h(xp.ascontiguousarray(block.data_unpadded))
 
             self._gpu_time_info.device2host += t.elapsed
 

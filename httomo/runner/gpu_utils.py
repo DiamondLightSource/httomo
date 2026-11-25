@@ -44,15 +44,16 @@ def raw_memcpy_h2d(h_data: np.ndarray) -> xp.ndarray:
     """
     assert gpu_enabled
     assert h_data.flags.c_contiguous
-    d_data = xp.empty_like(h_data)
+    d_data = xp.empty(h_data.shape, h_data.dtype)
+    stream = xp.cuda.get_current_stream()
     xp.cuda.runtime.memcpyAsync(
         d_data.data.ptr,
         h_data.ctypes.data,
         d_data.nbytes,
         xp.cuda.runtime.memcpyHostToDevice,
-        xp.cuda.get_current_stream().ptr,
+        stream.ptr,
     )
-    xp.cuda.get_current_stream().synchronize()
+    stream.synchronize()
     return d_data
 
 
@@ -64,13 +65,14 @@ def raw_memcpy_d2h(d_data: xp.ndarray) -> np.ndarray:
     """
     assert gpu_enabled
     assert d_data.flags.c_contiguous
-    h_data = np.empty_like(d_data)
+    h_data = np.empty(d_data.shape, d_data.dtype)
+    stream = xp.cuda.get_current_stream()
     xp.cuda.runtime.memcpyAsync(
-        h_data.data.ptr,
-        d_data.ctypes.data,
+        h_data.ctypes.data,
+        d_data.data.ptr,
         h_data.nbytes,
         xp.cuda.runtime.memcpyDeviceToHost,
-        xp.cuda.get_current_stream().ptr,
+        stream.ptr,
     )
-    xp.cuda.get_current_stream().synchronize()
+    stream.synchronize()
     return h_data

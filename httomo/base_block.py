@@ -109,6 +109,8 @@ class BaseBlock(BlockData, BlockTransfer):
     def to_gpu(self):
         if not gpu_enabled:
             raise ValueError("no GPU available")
+        if isinstance(self.data, xp.ndarray):
+            return
         self._data = raw_memcpy_h2d(self.data)
 
     def to_cpu(self):

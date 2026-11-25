@@ -12,7 +12,6 @@ from httomo.utils import (
     make_3d_shape_from_shape,
     gpu_enabled,
     xp,
-    clp2,
 )
 
 
@@ -141,9 +140,7 @@ def estimate_section_memory(
     )
 
     return (
-        padded_input_chunk_bytes
-        + output_chunk_bytes
-        + reslice_bytes
+        padded_input_chunk_bytes + output_chunk_bytes + reslice_bytes,
         output_global_shape,
     )
 
