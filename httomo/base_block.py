@@ -110,17 +110,17 @@ class BaseBlock(BlockData, BlockTransfer):
             raise ValueError("no GPU available")
         if isinstance(self.data, xp.ndarray):
             return
-        # Copies only if the input is not contiguous
+
         h_data = np.ascontiguousarray(self.data)
-        # Allocate array on device
         d_data = xp.empty_like(h_data)
-        # Blocking direct copy avoiding pinned memory shenanigans in CuPy
-        xp.cuda.runtime.memcpy(
+        xp.cuda.runtime.memcpyAsync(
             d_data.data.ptr,
             h_data.ctypes.data,
             h_data.nbytes,
             xp.cuda.runtime.memcpyHostToDevice,
+            xp.cuda.get_current_stream().ptr,
         )
+        xp.cuda.get_current_stream().synchronize()
         self._data = d_data
 
     def to_cpu(self):
@@ -128,12 +128,14 @@ class BaseBlock(BlockData, BlockTransfer):
             return
         d_data = self._data
         h_data = np.empty(d_data.shape, dtype=d_data.dtype)
-        xp.cuda.runtime.memcpy(
+        xp.cuda.runtime.memcpyAsync(
             h_data.ctypes.data,
             d_data.data.ptr,
             h_data.nbytes,
             xp.cuda.runtime.memcpyDeviceToHost,
+            xp.cuda.get_current_stream().ptr,
         )
+        xp.cuda.get_current_stream().synchronize()
         self._data = h_data
 
     @property
