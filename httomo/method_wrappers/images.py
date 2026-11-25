@@ -3,6 +3,7 @@ from httomo.block_interfaces import T
 from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.method_wrapper import GpuTimeInfo
 from httomo.runner.methods_repository_interface import MethodRepository
+from httomo.runner.gpu_utils import raw_memcpy_d2h
 from httomo.utils import _get_slicing_dim, catchtime, xp
 
 
@@ -62,7 +63,7 @@ class ImagesWrapper(GenericMethodWrapper):
         if block.is_gpu:
             with catchtime() as t:
                 # give method a CPU copy of the data
-                args[self.parameters[0]] = xp.asnumpy(block.data)
+                args[self.parameters[0]] = raw_memcpy_d2h(block.data)
             self._gpu_time_info.device2host = t.elapsed
 
         self.method(**args)

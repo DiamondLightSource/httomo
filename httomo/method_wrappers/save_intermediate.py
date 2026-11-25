@@ -9,6 +9,7 @@ from httomo.method_wrappers.generic import GenericMethodWrapper
 from httomo.runner.loader import LoaderInterface
 from httomo.runner.method_wrapper import GpuTimeInfo, MethodWrapper
 from httomo.runner.methods_repository_interface import MethodRepository
+from httomo.runner.gpu_utils import raw_memcpy_d2h
 from httomo.utils import catchtime, xp, gpu_enabled, log_rank
 import numpy as np
 import h5py
@@ -109,7 +110,7 @@ class SaveIntermediateFilesWrapper(GenericMethodWrapper):
             self._gpu_time_info = GpuTimeInfo()
 
             with catchtime() as t:
-                data = xp.asnumpy(block.data_unpadded)
+                data = raw_memcpy_d2h(block.data_unpadded)
 
             self._gpu_time_info.device2host += t.elapsed
 
