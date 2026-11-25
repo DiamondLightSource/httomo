@@ -392,15 +392,15 @@ def search_max_slices_iterative(
 
 
 def make_pinned_host_array(shape, dtype) -> np.ndarray:
-    if gpu_enabled:
-        pinned_ptr = xp.cuda.alloc_pinned_memory(
-            np.prod(shape) * np.dtype(dtype).itemsize
-        )
-        return np.frombuffer(pinned_ptr, dtype=dtype, count=np.prod(shape)).reshape(
-            shape
-        )
-    else:
-        return np.empty(shape, dtype=dtype)
+    # if gpu_enabled:
+    #     pinned_ptr = xp.cuda.alloc_pinned_memory(
+    #         np.prod(shape) * np.dtype(dtype).itemsize
+    #     )
+    #     return np.frombuffer(pinned_ptr, dtype=dtype, count=np.prod(shape)).reshape(
+    #         shape
+    #     )
+    # else:
+    return np.empty(shape, dtype=dtype)
 
 
 def clp2(x: int) -> int:
