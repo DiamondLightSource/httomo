@@ -1,6 +1,7 @@
 from mpi4py import MPI
 
 from httomo.utils import gpu_enabled, xp
+import numpy as np
 
 
 def gpumem_cleanup():
@@ -33,3 +34,45 @@ def get_gpu_id() -> int:
     global_comm = MPI.COMM_WORLD
     local_comm = global_comm.Split_type(MPI.COMM_TYPE_SHARED)
     return local_comm.rank % num_gpus
+
+
+def raw_memcpy_h2d(h_data: np.ndarray) -> xp.ndarray:
+    """
+    Blocking copy from the host to the CUDA device, on the current stream.
+    This function uses the CUDA runtime API directly, without CuPy's management
+    or pinned memory. The input array must be C contiguous.
+    """
+    assert gpu_enabled
+    assert h_data.flags.c_contiguous
+    d_data = xp.empty(h_data.shape, h_data.dtype)
+    stream = xp.cuda.get_current_stream()
+    xp.cuda.runtime.memcpyAsync(
+        d_data.data.ptr,
+        h_data.ctypes.data,
+        d_data.nbytes,
+        xp.cuda.runtime.memcpyHostToDevice,
+        stream.ptr,
+    )
+    stream.synchronize()
+    return d_data
+
+
+def raw_memcpy_d2h(d_data: xp.ndarray) -> np.ndarray:
+    """
+    Blocking copy from the CUDA device to the host, on the current stream.
+    This function uses the CUDA runtime API directly, without CuPy's management
+    or pinned memory. The input array must be C contiguous.
+    """
+    assert gpu_enabled
+    assert d_data.flags.c_contiguous
+    h_data = np.empty(d_data.shape, d_data.dtype)
+    stream = xp.cuda.get_current_stream()
+    xp.cuda.runtime.memcpyAsync(
+        h_data.ctypes.data,
+        d_data.data.ptr,
+        h_data.nbytes,
+        xp.cuda.runtime.memcpyDeviceToHost,
+        stream.ptr,
+    )
+    stream.synchronize()
+    return h_data

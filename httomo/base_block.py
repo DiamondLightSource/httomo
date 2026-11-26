@@ -5,6 +5,7 @@ import numpy as np
 from httomo.block_interfaces import BlockData, BlockTransfer, generic_array
 from httomo.runner.auxiliary_data import AuxiliaryData
 from httomo.utils import gpu_enabled, make_3d_shape_from_array, xp
+from httomo.runner.gpu_utils import raw_memcpy_h2d, raw_memcpy_d2h
 
 
 class BaseBlock(BlockData, BlockTransfer):
@@ -108,12 +109,14 @@ class BaseBlock(BlockData, BlockTransfer):
     def to_gpu(self):
         if not gpu_enabled:
             raise ValueError("no GPU available")
-        self._data = xp.asarray(self.data, order="C")
+        if isinstance(self.data, xp.ndarray):
+            return
+        self._data = raw_memcpy_h2d(self.data)
 
     def to_cpu(self):
         if not gpu_enabled or xp.get_array_module(self.data).__name__ == "numpy":
             return
-        self._data = xp.asnumpy(self.data, order="C")
+        self._data = raw_memcpy_d2h(self.data)
 
     @property
     def is_gpu(self) -> bool:
